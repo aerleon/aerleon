@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Copyright 2022 Aerleon Project All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2582,7 +2583,8 @@ def _ReadFile(filename):
   logging.debug('ReadFile(%s)', filename)
   if os.path.exists(filename):
     try:
-      data = open(filename, 'r').read()
+      with open(filename, 'r') as f:
+        data = f.read()
       return data
     except IOError:
       raise FileReadError('Unable to open or read file %s' % filename)
