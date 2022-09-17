@@ -2582,7 +2582,8 @@ def _ReadFile(filename):
   logging.debug('ReadFile(%s)', filename)
   if os.path.exists(filename):
     try:
-      data = open(filename, 'r').read()
+      with open(filename, 'r') as f:
+        data = f.read()
       return data
     except IOError:
       raise FileReadError('Unable to open or read file %s' % filename)
