@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """Parses the generic policy files and return a policy object for acl rendering.
 """
 
@@ -27,19 +26,15 @@ from capirca.lib import naming
 from ply import lex
 from ply import yacc
 
-
 DEFINITIONS = None
 DEFAULT_DEFINITIONS = './def'
-ACTIONS = set(('accept', 'count', 'deny', 'reject', 'next',
-               'reject-with-tcp-rst'))
+ACTIONS = set(
+    ('accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst'))
 PROTOS_WITH_PORTS = frozenset(('tcp', 'udp', 'udplite', 'sctp'))
-_FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {'byte-offset',
-                                    'bit-offset',
-                                    'bit-length',
-                                    'match-start',
-                                    'range',
-                                    'range-except',
-                                    'flexible-range-name'}
+_FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
+    'byte-offset', 'bit-offset', 'bit-length', 'match-start', 'range',
+    'range-except', 'flexible-range-name'
+}
 _FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 _LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
 _OPTIMIZE = True
@@ -147,10 +142,11 @@ def TranslatePorts(ports, protocols, term_name):
     for port in ports:
       service_by_proto = DEFINITIONS.GetServiceByProto(port, proto)
       if not service_by_proto:
-        logging.warning('Term %s has service %s which is not defined with '
-                        'protocol %s, but will be permitted. Unless intended'
-                        ', you should consider splitting the protocols '
-                        'into separate terms!', term_name, port, proto)
+        logging.warning(
+            'Term %s has service %s which is not defined with '
+            'protocol %s, but will be permitted. Unless intended'
+            ', you should consider splitting the protocols '
+            'into separate terms!', term_name, port, proto)
 
       for p in [x.split('-') for x in service_by_proto]:
         if len(p) == 1:
@@ -202,22 +198,21 @@ class Policy:
         term.port = TranslatePorts(term.port, term.protocol, term.name)
         if not term.port:
           raise TermPortProtocolError(
-              'no ports of the correct protocol for term %s' % (
-                  term.name))
+              'no ports of the correct protocol for term %s' % (term.name))
       if term.source_port:
         term.source_port = TranslatePorts(term.source_port, term.protocol,
                                           term.name)
         if not term.source_port:
           raise TermPortProtocolError(
-              'no source ports of the correct protocol for term %s' % (
-                  term.name))
+              'no source ports of the correct protocol for term %s' %
+              (term.name))
       if term.destination_port:
         term.destination_port = TranslatePorts(term.destination_port,
                                                term.protocol, term.name)
         if not term.destination_port:
           raise TermPortProtocolError(
-              'no destination ports of the correct protocol for term %s' % (
-                  term.name))
+              'no destination ports of the correct protocol for term %s' %
+              (term.name))
 
       # If argument is true, we optimize, otherwise just sort addresses
       term.AddressCleanup(_OPTIMIZE, self._NeedsAddressBook())
@@ -264,11 +259,10 @@ class Policy:
       for prior_index in range(index):
         # Check each term that came before for shading. Terms with next as an
         # action do not terminate evaluation, so cannot shade.
-        if (term in terms[prior_index]
-            and 'next' not in terms[prior_index].action):
-          shading_errors.append(
-              '  %s is shaded by %s.' % (
-                  term.name, terms[prior_index].name))
+        if (term in terms[prior_index] and
+            'next' not in terms[prior_index].action):
+          shading_errors.append('  %s is shaded by %s.' %
+                                (term.name, terms[prior_index].name))
     if shading_errors:
       raise ShadingError('\n'.join(shading_errors))
 
@@ -289,8 +283,10 @@ class Policy:
     return self.filters == obj.filters
 
   def __str__(self):
+
     def tuple_str(tup):
       return '%s:%s' % (tup[0], tup[1])
+
     return 'Policy: {%s}' % ', '.join(map(tuple_str, self.filters))
 
   def __repr__(self):
@@ -338,68 +334,71 @@ class Term:
     source-zone: VarType.SZONE
     vpn: VarType.VPN
   """
-  ICMP_TYPE = {4: {'echo-reply': 0,
-                   'unreachable': 3,
-                   'source-quench': 4,
-                   'redirect': 5,
-                   'alternate-address': 6,
-                   'echo-request': 8,
-                   'router-advertisement': 9,
-                   'router-solicitation': 10,
-                   'time-exceeded': 11,
-                   'parameter-problem': 12,
-                   'timestamp-request': 13,
-                   'timestamp-reply': 14,
-                   'information-request': 15,
-                   'information-reply': 16,
-                   'mask-request': 17,
-                   'mask-reply': 18,
-                   'conversion-error': 31,
-                   'mobile-redirect': 32,
-                  },
-               6: {'destination-unreachable': 1,
-                   'packet-too-big': 2,
-                   'time-exceeded': 3,
-                   'parameter-problem': 4,
-                   'echo-request': 128,
-                   'echo-reply': 129,
-                   'multicast-listener-query': 130,
-                   'multicast-listener-report': 131,
-                   'multicast-listener-done': 132,
-                   'router-solicit': 133,
-                   'router-advertisement': 134,
-                   'neighbor-solicit': 135,
-                   'neighbor-advertisement': 136,
-                   'redirect-message': 137,
-                   'router-renumbering': 138,
-                   'icmp-node-information-query': 139,
-                   'icmp-node-information-response': 140,
-                   'inverse-neighbor-discovery-solicitation': 141,
-                   'inverse-neighbor-discovery-advertisement': 142,
-                   'version-2-multicast-listener-report': 143,
-                   'home-agent-address-discovery-request': 144,
-                   'home-agent-address-discovery-reply': 145,
-                   'mobile-prefix-solicitation': 146,
-                   'mobile-prefix-advertisement': 147,
-                   'certification-path-solicitation': 148,
-                   'certification-path-advertisement': 149,
-                   'multicast-router-advertisement': 151,
-                   'multicast-router-solicitation': 152,
-                   'multicast-router-termination': 153,
-                  },
-              }
-  ICMP_CODE = {'unreachable': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-                               10, 11, 12, 13, 14, 15],
-               'redirect': [0, 1, 2, 3],
-               'router-advertisement': [0, 16],
-               'time-exceeded': [0, 1],
-               'parameter-problem': [0, 1, 2],
-               'destination-unreachable': [0, 1, 2, 3, 4, 5, 6, 7],
-               'parameter-problem': [0, 1, 2, 3],
-               'router-renumbering': [0, 1, 255],
-               'icmp-node-information-query': [0, 1, 2],
-               'icmp-node-information-response': [0, 1, 2],
-              }
+  ICMP_TYPE = {
+      4: {
+          'echo-reply': 0,
+          'unreachable': 3,
+          'source-quench': 4,
+          'redirect': 5,
+          'alternate-address': 6,
+          'echo-request': 8,
+          'router-advertisement': 9,
+          'router-solicitation': 10,
+          'time-exceeded': 11,
+          'parameter-problem': 12,
+          'timestamp-request': 13,
+          'timestamp-reply': 14,
+          'information-request': 15,
+          'information-reply': 16,
+          'mask-request': 17,
+          'mask-reply': 18,
+          'conversion-error': 31,
+          'mobile-redirect': 32,
+      },
+      6: {
+          'destination-unreachable': 1,
+          'packet-too-big': 2,
+          'time-exceeded': 3,
+          'parameter-problem': 4,
+          'echo-request': 128,
+          'echo-reply': 129,
+          'multicast-listener-query': 130,
+          'multicast-listener-report': 131,
+          'multicast-listener-done': 132,
+          'router-solicit': 133,
+          'router-advertisement': 134,
+          'neighbor-solicit': 135,
+          'neighbor-advertisement': 136,
+          'redirect-message': 137,
+          'router-renumbering': 138,
+          'icmp-node-information-query': 139,
+          'icmp-node-information-response': 140,
+          'inverse-neighbor-discovery-solicitation': 141,
+          'inverse-neighbor-discovery-advertisement': 142,
+          'version-2-multicast-listener-report': 143,
+          'home-agent-address-discovery-request': 144,
+          'home-agent-address-discovery-reply': 145,
+          'mobile-prefix-solicitation': 146,
+          'mobile-prefix-advertisement': 147,
+          'certification-path-solicitation': 148,
+          'certification-path-advertisement': 149,
+          'multicast-router-advertisement': 151,
+          'multicast-router-solicitation': 152,
+          'multicast-router-termination': 153,
+      },
+  }
+  ICMP_CODE = {
+      'unreachable': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      'redirect': [0, 1, 2, 3],
+      'router-advertisement': [0, 16],
+      'time-exceeded': [0, 1],
+      'parameter-problem': [0, 1, 2],
+      'destination-unreachable': [0, 1, 2, 3, 4, 5, 6, 7],
+      'parameter-problem': [0, 1, 2, 3],
+      'router-renumbering': [0, 1, 255],
+      'icmp-node-information-query': [0, 1, 2],
+      'icmp-node-information-response': [0, 1, 2],
+  }
   _IPV4_BYTE_SIZE = 1
   _IPV6_BYTE_SIZE = 4
 
@@ -508,8 +507,8 @@ class Term:
         return False
     elif self.protocol_except:
       if other.protocol_except:
-        if not self.CheckProtocolIsContained(
-            self.protocol_except, other.protocol_except):
+        if not self.CheckProtocolIsContained(self.protocol_except,
+                                             other.protocol_except):
           return False
       elif other.protocol:
         for proto in other.protocol:
@@ -526,13 +525,12 @@ class Term:
 
     # flat 'address' is compared against other flat (saddr|daddr).
     # if NONE of these evaluate to True other is not contained.
-    if not (
-        self.CheckAddressIsContained(
-            self.flattened_addr, other.flattened_addr)
-        or self.CheckAddressIsContained(
-            self.flattened_addr, other.flattened_saddr)
-        or self.CheckAddressIsContained(
-            self.flattened_addr, other.flattened_daddr)):
+    if not (self.CheckAddressIsContained(self.flattened_addr,
+                                         other.flattened_addr) or
+            self.CheckAddressIsContained(self.flattened_addr,
+                                         other.flattened_saddr) or
+            self.CheckAddressIsContained(self.flattened_addr,
+                                         other.flattened_daddr)):
       return False
 
     # compare flat address from other to flattened self (saddr|daddr).
@@ -540,20 +538,17 @@ class Term:
         # other's flat address needs both self saddr & daddr to contain in order
         # for the term to be contained. We already compared the flattened_addr
         # attributes of both above, which was not contained.
-        self.CheckAddressIsContained(
-            other.flattened_addr, self.flattened_saddr)
-        and self.CheckAddressIsContained(
-            other.flattened_addr, self.flattened_daddr)):
+        self.CheckAddressIsContained(other.flattened_addr, self.flattened_saddr)
+        and self.CheckAddressIsContained(other.flattened_addr,
+                                         self.flattened_daddr)):
       return False
 
     # basic saddr/daddr check.
-    if not (
-        self.CheckAddressIsContained(
-            self.flattened_saddr, other.flattened_saddr)):
+    if not (self.CheckAddressIsContained(self.flattened_saddr,
+                                         other.flattened_saddr)):
       return False
-    if not (
-        self.CheckAddressIsContained(
-            self.flattened_daddr, other.flattened_daddr)):
+    if not (self.CheckAddressIsContained(self.flattened_daddr,
+                                         other.flattened_daddr)):
       return False
 
     # check ports
@@ -579,8 +574,7 @@ class Term:
           other.source_prefix_except):
         return False
     if self.destination_prefix:
-      if sorted(self.destination_prefix) != sorted(
-          other.destination_prefix):
+      if sorted(self.destination_prefix) != sorted(other.destination_prefix):
         return False
     if self.destination_prefix_except:
       if sorted(self.destination_prefix_except) != sorted(
@@ -735,8 +729,8 @@ class Term:
     if self.forwarding_class:
       ret_str.append('  forwarding_class: %s' % self.forwarding_class)
     if self.forwarding_class_except:
-      ret_str.append('  forwarding_class_except: %s'
-                     % self.forwarding_class_except)
+      ret_str.append('  forwarding_class_except: %s' %
+                     self.forwarding_class_except)
     if self.icmp_type:
       ret_str.append('  icmp_type: %s' % sorted(self.icmp_type))
     if self.icmp_code:
@@ -772,8 +766,8 @@ class Term:
     if self.logging:
       ret_str.append('  logging: %s' % self.logging)
     if self.log_limit:
-      ret_str.append('  log_limit: %s/%s' % (self.log_limit[0],
-                                             self.log_limit[1]))
+      ret_str.append('  log_limit: %s/%s' %
+                     (self.log_limit[0], self.log_limit[1]))
     if self.log_name:
       ret_str.append('  log_name: %s' % self.log_name)
     if self.priority:
@@ -821,22 +815,20 @@ class Term:
     # addresses.
     if not (sorted(self.address) == sorted(other.address) and
             sorted(self.source_address) == sorted(other.source_address) and
-            sorted(self.source_address_exclude) ==
-            sorted(other.source_address_exclude) and
-            sorted(self.destination_address) ==
-            sorted(other.destination_address) and
-            sorted(self.destination_address_exclude) ==
-            sorted(other.destination_address_exclude)):
+            sorted(self.source_address_exclude)
+            == sorted(other.source_address_exclude) and sorted(
+                self.destination_address) == sorted(other.destination_address)
+            and sorted(self.destination_address_exclude) == sorted(
+                other.destination_address_exclude)):
       return False
 
     # prefix lists
     if not (sorted(self.source_prefix) == sorted(other.source_prefix) and
-            sorted(self.source_prefix_except) ==
-            sorted(other.source_prefix_except) and
-            sorted(self.destination_prefix) ==
-            sorted(other.destination_prefix) and
-            sorted(self.destination_prefix_except) ==
-            sorted(other.destination_prefix_except)):
+            sorted(self.source_prefix_except) == sorted(
+                other.source_prefix_except) and sorted(self.destination_prefix)
+            == sorted(other.destination_prefix) and
+            sorted(self.destination_prefix_except) == sorted(
+                other.destination_prefix_except)):
       return False
 
     # ports
@@ -1046,8 +1038,9 @@ class Term:
       if mutate:
         self.destination_address = self.flattened_daddr
     if self.address_exclude:
-      self.flattened_addr = nacaddr.AddressListExclude(
-          self.address, self.address_exclude, collapse_addrs=False)
+      self.flattened_addr = nacaddr.AddressListExclude(self.address,
+                                                       self.address_exclude,
+                                                       collapse_addrs=False)
       if mutate:
         self.address = self.flattened_addr
 
@@ -1168,8 +1161,8 @@ class Term:
           self.destination_zone.append(x.value)
         else:
           raise TermObjectTypeError(
-              '%s isn\'t a type I know how to deal with (contains \'%s\')' % (
-                  type(x), x.value))
+              '%s isn\'t a type I know how to deal with (contains \'%s\')' %
+              (type(x), x.value))
     else:
       # stupid no switch statement in python
       if obj.var_type is VarType.RESTRICT_ADDRESS_FAMILY:
@@ -1254,8 +1247,8 @@ class Term:
       elif obj.var_type is VarType.FILTER_TERM:
         self.filter_term = obj.value
       else:
-        raise TermObjectTypeError(
-            '%s isn\'t a type I know how to deal with' % (type(obj)))
+        raise TermObjectTypeError('%s isn\'t a type I know how to deal with' %
+                                  (type(obj)))
 
   def SanityCheck(self):
     """Sanity check the definition of the term.
@@ -1291,7 +1284,8 @@ class Term:
           not self.port_mirror):
         raise TermNoActionError('no action specified for term %s' % self.name)
       if self.filter_term and self.action:
-        raise InvalidTermActionError('term "%s" has both filter and action tokens.' % self.name)
+        raise InvalidTermActionError(
+            'term "%s" has both filter and action tokens.' % self.name)
       # have we specified a port with a protocol that doesn't support ports?
       protos_no_ports = {p for p in self.protocol if p not in PROTOS_WITH_PORTS}
       if protos_no_ports != set() and (self.source_port or
@@ -1310,18 +1304,11 @@ class Term:
     # eg. tcp-established + tcp-initial?
 
     if self.ether_type and (
-        self.protocol or
-        self.address or
-        self.destination_address or
-        self.destination_address_exclude or
-        self.destination_port or
-        self.destination_prefix or
-        self.destination_prefix_except or
-        self.source_address or
-        self.source_address_exclude or
-        self.source_port or
-        self.source_prefix or
-        self.source_prefix_except):
+        self.protocol or self.address or self.destination_address or
+        self.destination_address_exclude or self.destination_port or
+        self.destination_prefix or self.destination_prefix_except or
+        self.source_address or self.source_address_exclude or
+        self.source_port or self.source_prefix or self.source_prefix_except):
       raise TermProtocolEtherTypeError(
           'ether-type not supported when used with upper-layer protocol '
           'restrictions. Term: %s' % self.name)
@@ -1341,16 +1328,16 @@ class Term:
                             '\nTerm: %s' % (bad_codes, type_name, self.name))
     if self.icmp_type:
       for icmptype in self.icmp_type:
-        if (icmptype not in self.ICMP_TYPE[4] and icmptype not in
-            self.ICMP_TYPE[6]):
+        if (icmptype not in self.ICMP_TYPE[4] and
+            icmptype not in self.ICMP_TYPE[6]):
           raise TermInvalidIcmpType('Term %s contains an invalid icmp-type:'
                                     '%s' % (self.name, icmptype))
 
     if self.ttl:
       if not _MIN_TTL <= self.ttl <= _MAX_TTL:
 
-        raise InvalidTermTTLValue('Term %s contains invalid TTL: %s'
-                                  % (self.name, self.ttl))
+        raise InvalidTermTTLValue('Term %s contains invalid TTL: %s' %
+                                  (self.name, self.ttl))
 
   def AddressCleanup(self, optimize=True, addressbook=False):
     """Do Address and Port collapsing.
@@ -1363,6 +1350,7 @@ class Term:
       optimize: boolean value indicating whether to optimize addresses
       addressbook: Boolean indicating if addressbook is used.
     """
+
     def cleanup(addresses, complement_addresses):
       if not optimize:
         return nacaddr.SortAddrList(addresses)
@@ -1464,8 +1452,8 @@ class Term:
     for sub_port in subset:
       not_contains = True
       for sup_port in superset:
-        if (int(sub_port[0]) >= int(sup_port[0])
-            and int(sub_port[1]) <= int(sup_port[1])):
+        if (int(sub_port[0]) >= int(sup_port[0]) and
+            int(sub_port[1]) <= int(sup_port[1])):
           not_contains = False
           break
       if not_contains:
@@ -1569,7 +1557,6 @@ class VarType:
   SZONE = 65
   DZONE = 66
 
-
   def __init__(self, var_type, value):
     self.var_type = var_type
     if self.var_type == self.COMMENT or self.var_type == self.LOG_NAME:
@@ -1664,10 +1651,8 @@ class Header:
 
   def __str__(self):
     return 'Target[%s], Comments [%s], Apply groups: [%s], except: [%s]' % (
-        ', '.join(map(str, self.target)),
-        ', '.join(self.comment),
-        ', '.join(self.apply_groups),
-        ', '.join(self.apply_groups_except))
+        ', '.join(map(str, self.target)), ', '.join(self.comment), ', '.join(
+            self.apply_groups), ', '.join(self.apply_groups_except))
 
   def __repr__(self):
     return self.__str__()
@@ -2063,9 +2048,11 @@ def p_term_spec(p):
     else:
       p[0] = Term(p[2])
 
+
 def p_restrict_address_family_spec(p):
   """ restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' STRING """
   p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[4])
+
 
 def p_routinginstance_spec(p):
   """ routinginstance_spec : ROUTING_INSTANCE ':' ':' STRING """
@@ -2157,13 +2144,16 @@ def p_icmp_type_spec(p):
   """ icmp_type_spec : ICMP_TYPE ':' ':' one_or_more_strings """
   p[0] = VarType(VarType.ICMP_TYPE, p[4])
 
+
 def p_icmp_code_spec(p):
   """ icmp_code_spec : ICMP_CODE ':' ':' one_or_more_ints """
   p[0] = VarType(VarType.ICMP_CODE, p[4])
 
+
 def p_priority_spec(p):
   """ priority_spec : PRIORITY ':' ':' INTEGER """
   p[0] = VarType(VarType.PRIORITY, p[4])
+
 
 def p_packet_length_spec(p):
   """ packet_length_spec : PACKET_LEN ':' ':' INTEGER
@@ -2381,9 +2371,8 @@ def p_traffic_class_count_spec(p):
 
 def p_expiration_spec(p):
   """ expiration_spec : EXPIRATION ':' ':' INTEGER '-' INTEGER '-' INTEGER """
-  p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[4]),
-                                                   int(p[6]),
-                                                   int(p[8])))
+  p[0] = VarType(VarType.EXPIRATION,
+                 datetime.date(int(p[4]), int(p[6]), int(p[8])))
 
 
 def p_comment_spec(p):
@@ -2401,6 +2390,7 @@ def p_verbatim_spec(p):
                     | VERBATIM ':' ':' STRING ESCAPEDSTRING """
   p[0] = VarType(VarType.VERBATIM, [p[4], p[5].strip('"').replace('\\"', '"')])
 
+
 def p_term_zone_spec(p):
   """ term_zone_spec : SZONE ':' ':' one_or_more_strings
                      | DZONE ':' ':' one_or_more_strings """
@@ -2410,6 +2400,7 @@ def p_term_zone_spec(p):
       p[0].append(VarType(VarType.SZONE, zone))
     elif p[1].find('destination-zone') >= 0:
       p[0].append(VarType(VarType.DZONE, zone))
+
 
 def p_vpn_spec(p):
   """ vpn_spec : VPN ':' ':' STRING STRING
@@ -2476,9 +2467,11 @@ def p_ttl_spec(p):
   """ ttl_spec : TTL ':' ':' INTEGER """
   p[0] = VarType(VarType.TTL, p[4])
 
+
 def p_filter_term_spec(p):
   """ filter_term_spec : FILTER_TERM ':' ':' STRING """
   p[0] = VarType(VarType.FILTER_TERM, p[4])
+
 
 def p_one_or_more_strings(p):
   """ one_or_more_strings : one_or_more_strings STRING
@@ -2490,6 +2483,7 @@ def p_one_or_more_strings(p):
       p[0] = p[1]
     else:
       p[0] = [p[1]]
+
 
 def p_one_or_more_tuples(p):
   """ one_or_more_tuples : LSQUARE one_or_more_tuples RSQUARE
@@ -2553,10 +2547,11 @@ def p_error(p):
     use_token = repr(next_token.value)
 
   if p:
-    raise ParseError(' ERROR on "%s" (type %s, line %d, Next %s)'
-                     % (p.value, p.type, p.lineno, use_token))
+    raise ParseError(' ERROR on "%s" (type %s, line %d, Next %s)' %
+                     (p.value, p.type, p.lineno, use_token))
   else:
     raise ParseError(' ERROR you likely have unablanaced "{"\'s')
+
 
 parser = yacc.yacc(write_tables=False, debug=0, errorlog=yacc.NullLogger())
 
@@ -2610,8 +2605,9 @@ def _Preprocess(data, max_depth=5, base_dir=''):
     RecursionTooDeepError: nested include files exceed maximum
   """
   if not max_depth:
-    raise RecursionTooDeepError('%s' % (
-        'Included files exceed maximum recursion depth of %s.' % max_depth))
+    raise RecursionTooDeepError(
+        '%s' %
+        ('Included files exceed maximum recursion depth of %s.' % max_depth))
   rval = []
   for line in [x.rstrip() for x in data.splitlines()]:
     words = line.split()
@@ -2627,7 +2623,10 @@ def _Preprocess(data, max_depth=5, base_dir=''):
   return rval
 
 
-def ParseFile(filename, definitions=None, optimize=True, base_dir='',
+def ParseFile(filename,
+              definitions=None,
+              optimize=True,
+              base_dir='',
               shade_check=False):
   """Parse the policy contained in file, optionally provide a naming object.
 
@@ -2644,13 +2643,21 @@ def ParseFile(filename, definitions=None, optimize=True, base_dir='',
     policy object or False (if parse error).
   """
   data = _ReadFile(filename)
-  p = ParsePolicy(data, definitions, optimize, base_dir=base_dir,
-                  shade_check=shade_check, filename=filename)
+  p = ParsePolicy(data,
+                  definitions,
+                  optimize,
+                  base_dir=base_dir,
+                  shade_check=shade_check,
+                  filename=filename)
   return p
 
 
-def ParsePolicy(data, definitions=None, optimize=True, base_dir='',
-                shade_check=False, filename=''):
+def ParsePolicy(data,
+                definitions=None,
+                optimize=True,
+                base_dir='',
+                shade_check=False,
+                filename=''):
   """Parse the policy in 'data', optionally provide a naming object.
 
   Parse a blob of policy text into a policy object.
