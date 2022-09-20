@@ -18,10 +18,10 @@ import optparse
 from absl.testing import absltest
 from xml.etree import ElementTree as ET
 
-from capirca.lib import naming
-from capirca.lib import nsxv
-from capirca.lib import policy
-from capirca.tests.lib import nsxv_mocktest
+from aerleon.lib import naming
+from aerleon.lib import nsxv
+from aerleon.lib import policy
+from aerleon.tests.lib import nsxv_mocktest
 
 
 class TermTest(absltest.TestCase):

@@ -23,7 +23,7 @@ from unittest import mock
 from absl import app
 from absl import flags
 from absl.testing import absltest
-from capirca import aclgen
+from aerleon import aclgen
 
 FLAGS = flags.FLAGS
 aclgen.SetupFlags()  # Ensure flags are set up only once
@@ -32,7 +32,7 @@ FLAGS(sys.argv[0:1])
 
 
 class TestAclGenDemo(absltest.TestCase):
-  """Ensure Capirca demo runs successfully out-of-the-box."""
+  """Ensure Aerleon demo runs successfully out-of-the-box."""
 
   def setUp(self):
     super().setUp()

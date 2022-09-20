@@ -64,20 +64,20 @@ jobs:
         cd current
         git status
         python setup.py sdist bdist_wheel
-        python3 -m pip -v install dist/capirca*py3*.whl
+        python3 -m pip -v install dist/aerleon*py3*.whl
         aclgen --output_directory ./output --logtostderr
         cd ./output/ && \
-          zip -r ../../artifacts/capirca_output_${{ env.wfdt }}.zip .
+          zip -r ../../artifacts/aerleon${{ env.wfdt }}.zip .
         cd ..
-        python3 -m pip -v uninstall -y capirca
+        python3 -m pip -v uninstall -y aerleon
     - name: Perform end-to-end testing with master branch
       run: |
         cd master
         git status
         python setup.py sdist bdist_wheel
-        python3 -m pip -v install dist/capirca*py3*.whl
+        python3 -m pip -v install dist/aerleon*py3*.whl
         aclgen --output_directory ./output --logtostderr
-        python3 -m pip -v uninstall -y capirca
+        python3 -m pip -v uninstall -y aerleon
     - name: Compare output files between the branches
       run: |
         mkdir -p artifacts-diff
@@ -94,10 +94,10 @@ jobs:
     - name: Upload generated policies
       uses: actions/upload-artifact@v2
       with:
-        name: capirca_output_${{ matrix.python-version }}_${{ env.wfdt }}
-        path: ./artifacts/capirca_output_${{ env.wfdt }}.zip
+        name: aerleon_output_${{ matrix.python-version }}_${{ env.wfdt }}
+        path: ./artifacts/aerleon_output_${{ env.wfdt }}.zip
     - name: Upload policy differences
       uses: actions/upload-artifact@v2
       with:
-        name: capirca_output_policy_diff
+        name: aerleon_output_policy_diff
         path: ./artifacts-diff

@@ -4,7 +4,7 @@ from absl.testing import absltest
 
 from absl.testing import parameterized
 
-from capirca.lib import gcp
+from aerleon.lib import gcp
 
 
 class HelperFunctionsTest(parameterized.TestCase):

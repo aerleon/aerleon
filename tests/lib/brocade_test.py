@@ -17,9 +17,9 @@ import re
 from absl.testing import absltest
 from unittest import mock
 
-from capirca.lib import brocade
-from capirca.lib import naming
-from capirca.lib import policy
+from aerleon.lib import brocade
+from aerleon.lib import naming
+from aerleon.lib import policy
 
 GOOD_HEADER = """
 header {

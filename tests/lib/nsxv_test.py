@@ -17,10 +17,10 @@ from absl.testing import absltest
 from unittest import mock
 from xml.etree import ElementTree as ET
 
-from capirca.lib import nacaddr
-from capirca.lib import naming
-from capirca.lib import nsxv
-from capirca.lib import policy
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+from aerleon.lib import nsxv
+from aerleon.lib import policy
 
 
 INET_TERM = """\

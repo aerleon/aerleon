@@ -1,14 +1,14 @@
-"""Tests for google3.third_party.py.capirca.lib.cloudarmor."""
+"""Tests for google3.third_party.py.aerleon.lib.cloudarmor."""
 
 import json
 import random
 from absl.testing import absltest
 from unittest import mock
 
-from capirca.lib import cloudarmor
-from capirca.lib import nacaddr
-from capirca.lib import naming
-from capirca.lib import policy
+from aerleon.lib import cloudarmor
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+from aerleon.lib import policy
 
 SUPPORTED_TOKENS = {
     'action',

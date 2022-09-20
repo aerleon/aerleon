@@ -16,8 +16,8 @@
 # Author: watson@google.com (Tony Watson)
 
 rev=`svn up|awk '{print $3}'`
-archive="capirca-r"$rev"tgz"
-filedir='./capirca'
+archive="aerleon-r"$rev"tgz"
+filedir='./aerleon'
 
 echo "Building: $archive"
 find . -name \*.pyc -exec rm {} \;

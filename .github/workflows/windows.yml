@@ -42,11 +42,11 @@ jobs:
     - name: Build, install, and run
       run: |
         python setup.py sdist bdist_wheel
-        python -m pip -v install --find-links=dist --no-index capirca
+        python -m pip -v install --find-links=dist --no-index aerleon
         aclgen --output_directory .\output --logtostderr
         powershell Compress-Archive -Force output\* output.zip
     - name: Upload generated policies
       uses: actions/upload-artifact@v2
       with:
-        name: capirca_output_${{ matrix.python-version }}
+        name: aerleon_output_${{ matrix.python-version }}
         path: ./output.zip
