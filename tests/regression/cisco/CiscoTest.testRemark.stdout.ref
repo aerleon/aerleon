@@ -1,0 +1,11 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no access-list 50
+access-list 50 remark $Id:$
+access-list 50 remark numbered standard
+access-list 50 remark standard-term-1
+access-list 50 permit 10.1.1.1
+
+exit
+

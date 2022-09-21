@@ -1,0 +1,15 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination gt-two-netd_src
+  host 10.1.1.1
+!
+
+netdestination gt-two-netd_dst
+  host 10.1.1.1
+!
+
+ip access-list session test-filter
+  alias gt-two-netd_src alias gt-two-netd_dst 1 permit
+!
+

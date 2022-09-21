@@ -1,0 +1,31 @@
+[
+  {
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "allow-traffic-to-port: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "layer4Configs": [
+            {
+              "ipProtocol": "tcp",
+              "ports": [
+                "80"
+              ]
+            }
+          ],
+          "srcIpRanges": [
+            "10.0.0.0/8"
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "shortName": "displayname",
+    "type": "FIREWALL"
+  }
+]
+
+

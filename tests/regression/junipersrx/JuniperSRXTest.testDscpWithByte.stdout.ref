@@ -1,0 +1,34 @@
+security {
+    replace: address-book {
+        global {
+                address _0 10.0.0.0/8;
+                address-set  {
+                    address _0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good-term-10 {
+                match {
+                    source-address any;
+                    destination-address [  ];
+                    application any;
+                }
+                then {
+                    permit;
+                    dscp b111000;
+                }
+            }
+        }
+    }
+}
+delete: applications;

@@ -1,0 +1,12 @@
+# Iptables foo Policy
+# this is a test acl with a custom chain and no default target
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-N foo
+-N f_good-term-1
+-A foo -j f_good-term-1
+-A f_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

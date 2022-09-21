@@ -1,0 +1,24 @@
+traffic-policies
+   field-set ipv4 prefix src-address-exclusions
+      0.0.0.0/1
+      172.16.0.0/12
+      except 10.0.0.0/8
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match address-exclusions ipv4
+         source prefix field-set src-address-exclusions
+      !
+
+traffic-policies
+   field-set ipv4 prefix dst-address-exclusions
+      0.0.0.0/1
+      172.16.0.0/12
+      except 10.0.0.0/8
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match address-exclusions ipv4
+         destination prefix field-set dst-address-exclusions
+      !
+

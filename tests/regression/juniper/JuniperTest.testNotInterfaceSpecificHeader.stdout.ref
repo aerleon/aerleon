@@ -1,0 +1,29 @@
+firewall {
+    family bridge {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            term good-term-1 {
+                from {
+                    ip-protocol icmp;
+                }
+                then accept;
+            }
+            term good-term-2 {
+                from {
+                    ip-destination-address {
+                        10.0.0.0/8;
+                    }
+                    ip-protocol tcp;
+                    destination-port 25;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

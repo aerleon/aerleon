@@ -1,0 +1,33 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "allow-port-range: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp",
+                "ports": [
+                  "8000-9000"
+                ]
+              }
+            ],
+            "srcIpRanges": [
+              "10.0.0.0/8"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

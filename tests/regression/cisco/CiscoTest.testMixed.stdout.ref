@@ -1,0 +1,25 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended mixed_acl
+ip access-list extended mixed_acl
+ remark $Id:$
+ remark mixed inet/inet6 header test
+
+
+ remark good-term
+ permit tcp any 10.0.0.0 0.255.255.255
+
+exit
+
+no ipv6 access-list ipv6-mixed_acl
+ipv6 access-list ipv6-mixed_acl
+ remark $Id:$
+ remark mixed inet/inet6 header test
+
+
+ remark good-term
+ permit tcp any 2001:4860:8000::/33
+
+exit
+

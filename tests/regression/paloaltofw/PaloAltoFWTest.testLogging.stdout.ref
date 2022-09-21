@@ -1,0 +1,288 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                </udp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-syslog-log">
+                  <description>Testing enabling logging for udp with syslog keyword.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                </udp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-local-log">
+                  <description>Testing enabling logging for udp with local keyword.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                </udp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-pytrue-log">
+                  <description>Testing enabling logging for udp with True keyword.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                </udp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-true-log">
+                  <description>Testing enabling logging for udp with true keyword.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

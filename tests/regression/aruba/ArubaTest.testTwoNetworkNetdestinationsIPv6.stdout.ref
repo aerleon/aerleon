@@ -1,0 +1,15 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination6 gt-mix-netd_src
+  network 2001::/64
+!
+
+netdestination6 gt-mix-netd_dst
+  network 2001::/64
+!
+
+ip access-list session test-filter
+  ipv6 alias gt-mix-netd_src alias gt-mix-netd_dst 1 permit
+!
+

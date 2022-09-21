@@ -1,0 +1,15 @@
+# Iptables INPUT Policy
+# this is a test acl with abbreviation
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_drop-short-initial-FRAGs
+-A INPUT -j I_drop-short-initial-FRAGs
+-A I_drop-short-initial-FRAGs -p all -m u32 --u32 4&0x3FFF=0x2000 -m length --length 1:119 -j DROP
+-N I_drop-header-overwrite
+-A INPUT -j I_drop-header-overwrite
+-A I_drop-header-overwrite -p all -m u32 --u32 4&0x1FFF=1:119 -j DROP
+

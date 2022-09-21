@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_multiport
+-A INPUT -j I_multiport
+-A I_multiport -p tcp --dport 22 -m multiport --sports 80,443 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

@@ -1,0 +1,20 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list test-filter
+ip access-list test-filter
+ remark $Id:$
+ remark this is a test acl
+
+
+ remark good-term-2
+ permit tcp 10.1.1.0/24 any eq ssh
+ permit tcp 10.1.1.0/24 any eq 6537
+
+
+ remark good-term-3
+ permit tcp 10.1.1.0/24 any eq ssh
+ permit tcp 10.1.1.0/24 any eq 6537
+
+exit
+

@@ -1,0 +1,76 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "destinationRanges": [
+      "10.2.3.4/32"
+    ],
+    "direction": "EGRESS",
+    "name": "good-term-1-e"
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "destinationRanges": [
+      "2001:4860:8000::5/128"
+    ],
+    "direction": "EGRESS",
+    "name": "good-term-1-e-v6"
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "default_deny.",
+    "destinationRanges": [
+      "0.0.0.0/0"
+    ],
+    "direction": "EGRESS",
+    "name": "default-deny-e",
+    "priority": 65534
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "default_deny.",
+    "destinationRanges": [
+      "::/0"
+    ],
+    "direction": "EGRESS",
+    "name": "default-deny-e-v6",
+    "priority": 65534
+  }
+]
+
+

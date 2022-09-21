@@ -1,0 +1,48 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-1 {
+                from {
+                    protocol tcp;
+                }
+                then {
+                    port-mirror;
+                }
+            }
+        }
+    }
+}
+
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-2 {
+                from {
+                    protocol tcp;
+                }
+                then {
+                    count count-name;
+                    port-mirror;
+                    discard;
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_good-term-3
+-A INPUT -j I_good-term-3
+-A I_good-term-3 -p tcp --tcp-flags FIN,RST FIN,RST --sport 80 -m state --state ESTABLISHED,RELATED -m state --state ESTABLISHED,RELATED -j ACCEPT
+

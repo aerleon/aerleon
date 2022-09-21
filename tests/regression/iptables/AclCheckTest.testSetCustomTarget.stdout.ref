@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-N foobar
+-N I_good-term-1
+-A INPUT -j I_good-term-1
+-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

@@ -1,0 +1,36 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended test-filter
+ip access-list extended test-filter
+ remark $Id:$
+ remark This long header should be split even on a
+ remark looooooooooooooooooooooooooonnnnnnnnnnnnnnnnnngggggggggg string.
+ remark https://www.google.com/maps/place/1600+Amphitheatre+Parkway,+Mountain+
+ remark View,+CA/@37.507491,-122.2540443,15z/data=!4m5!3m4!1s0x808fb99f8c51e88
+ remark 5:0x169ef02a512c5b28!8m2!3d37.4220579!4d-122.0840897
+
+
+ remark good-term
+ permit 112 any any
+
+exit
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended test-filter
+ip access-list extended test-filter
+ remark $Id:$
+ remark This long header should be split even on a
+ remark looooooooooooooooooooooooooonnnnnnnnnnnnnnnnnngggggggggg string.
+ remark https://www.google.com/maps/place/1600+Amphitheatre+Parkway,+Mountain+
+ remark View,+CA/@37.507491,-122.2540443,15z/data=!4m5!3m4!1s0x808fb99f8c51e88
+ remark 5:0x169ef02a512c5b28!8m2!3d37.4220579!4d-122.0840897
+
+
+ remark good-term
+ permit 112 any any
+
+exit
+

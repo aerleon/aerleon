@@ -1,0 +1,30 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "deny",
+        "description": "default-deny-egress: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "destIpRanges": [
+              "0.0.0.0/0"
+            ],
+            "layer4Configs": [
+              {
+                "ipProtocol": "all"
+              }
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

@@ -1,0 +1,23 @@
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good_term_26-v6 {
+                from {
+                    next-header tcp;
+                    source-port 53;
+                }
+                then {
+                    reject;
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,55 @@
+[
+  {
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "allow-internal-traffic: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "layer4Configs": [
+            {
+              "ipProtocol": "tcp"
+            },
+            {
+              "ipProtocol": "icmp"
+            },
+            {
+              "ipProtocol": "udp"
+            }
+          ],
+          "srcIpRanges": [
+            "10.0.0.0/8"
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      },
+      {
+        "action": "goto_next",
+        "description": "allow-internal-traffic-v6: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "layer4Configs": [
+            {
+              "ipProtocol": "tcp"
+            },
+            {
+              "ipProtocol": "udp"
+            }
+          ],
+          "srcIpRanges": [
+            "2001:4860:8000::5/128"
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 2
+      }
+    ],
+    "shortName": "displayname",
+    "type": "FIREWALL"
+  }
+]
+
+

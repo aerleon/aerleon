@@ -1,0 +1,13 @@
+table <PROD_NETWORK> {10.0.0.0/8}
+# Packetfilter test-filter Policy
+# this is a stateless test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term good-term-tcp
+# Test term 1
+pass quick proto { tcp } from { any } to { <PROD_NETWORK> } port { 25 } no state
+

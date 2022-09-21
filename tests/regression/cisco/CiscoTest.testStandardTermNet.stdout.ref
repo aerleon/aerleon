@@ -1,0 +1,11 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no access-list 99
+access-list 99 remark $Id:$
+access-list 99 remark this is a standard acl
+access-list 99 remark standard-term-2
+access-list 99 permit 10.0.0.0 0.255.255.255
+
+exit
+

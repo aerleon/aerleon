@@ -1,0 +1,41 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    inactive: term good-term-36 {
+                        from {
+                            destination-address {
+                                10.0.0.0/8;
+                            }
+                            application-sets test-filtergood-term-36-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+        applications {
+            application test-filtergood-term-36-app1 {
+                protocol tcp;
+                destination-port 1-65535;
+            }
+            application-set test-filtergood-term-36-app {
+                application test-filtergood-term-36-app1;
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

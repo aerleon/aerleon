@@ -1,0 +1,12 @@
+table <PROD_NETWORK_EXTREAMLY_LONG_VER> {10.0.0.0/8}
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term multiple-name-dns-tcp
+pass out quick proto { tcp } from { any } to { <PROD_NETWORK_EXTREAMLY_LONG_VER> } port { 53 } flags S/SA keep state
+

@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term good-term-icmpv6
+pass quick proto { ipv6-icmp } from { any } to { any } keep state
+

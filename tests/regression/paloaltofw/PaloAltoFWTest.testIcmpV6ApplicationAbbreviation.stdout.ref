@@ -1,0 +1,148 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application>
+            <entry name="icmp6-echo-request">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-echo-request</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>128</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-echo-reply">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-echo-reply</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>129</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-destination-unreachable">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-destination-unreachable</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>1</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-INV-NBR-DSCVR-SOL">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-INV-NBR-DSCVR-SOL</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>141</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-INV-NBR-DSCVR-ADV">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-INV-NBR-DSCVR-ADV</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>142</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-version-2-MCAST-LSNR-repo">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-version-2-MCAST-LSNR-repo</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>143</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-home-agent-ADDR-DSCVR-RPL">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-home-agent-ADDR-DSCVR-RPL</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>145</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+          </application>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-icmpv6-abbreviation-types">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp6-echo-request</member>
+                    <member>icmp6-echo-reply</member>
+                    <member>icmp6-destination-unreachable</member>
+                    <member>icmp6-INV-NBR-DSCVR-SOL</member>
+                    <member>icmp6-INV-NBR-DSCVR-ADV</member>
+                    <member>icmp6-version-2-MCAST-LSNR-repo</member>
+                    <member>icmp6-home-agent-ADDR-DSCVR-RPL</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address/>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

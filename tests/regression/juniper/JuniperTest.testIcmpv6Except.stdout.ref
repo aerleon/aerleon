@@ -1,0 +1,20 @@
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-20-v6 {
+                from {
+                    next-header-except icmpv6;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

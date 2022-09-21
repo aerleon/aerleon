@@ -1,0 +1,31 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            enhanced-mode;
+            term good-term-1 {
+                from {
+                    protocol icmp;
+                }
+                then accept;
+            }
+            term good-term-2 {
+                from {
+                    destination-address {
+                        10.0.0.0/8;
+                    }
+                    protocol tcp;
+                    destination-port 25;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

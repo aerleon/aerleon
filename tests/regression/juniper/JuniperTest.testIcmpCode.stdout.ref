@@ -1,0 +1,23 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good_term_35 {
+                from {
+                    protocol icmp;
+                    icmp-type 3;
+                    icmp-code [ 3 4 ];
+                }
+                then accept;
+            }
+        }
+    }
+}
+

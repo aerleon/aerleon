@@ -1,0 +1,209 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "22"
+        ]
+      }
+    ],
+    "description": "Allow SSH access to all instances from company.",
+    "direction": "INGRESS",
+    "name": "default-test-ssh",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "80"
+        ]
+      }
+    ],
+    "description": "Allow HTTP/S to instances with webserver tag.",
+    "direction": "INGRESS",
+    "name": "default-test-web",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "0.0.0.0/0"
+    ],
+    "targetTags": [
+      "webserver"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "icmp"
+      }
+    ],
+    "description": "Allow ICMP from company.",
+    "direction": "INGRESS",
+    "name": "default-test-icmp",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": 2
+      }
+    ],
+    "description": "Allow IGMP from company.",
+    "direction": "INGRESS",
+    "name": "default-test-igmp",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "1024-65535"
+        ]
+      },
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "1024-65535"
+        ]
+      }
+    ],
+    "description": "Allow TCP/UDP access to all instances from company.",
+    "direction": "INGRESS",
+    "name": "default-test-multiple-protocols",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "Allow all tcp and icmpv6. This should only render tcp.",
+    "direction": "INGRESS",
+    "name": "default-test-multiple-protocols-tcp-icmpv6",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp"
+      },
+      {
+        "IPProtocol": "icmp"
+      }
+    ],
+    "description": "Allow all tcp and icmp.",
+    "direction": "INGRESS",
+    "name": "default-test-multiple-protocols-tcp-icmp",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "200.1.1.3/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp"
+      },
+      {
+        "IPProtocol": "udp"
+      }
+    ],
+    "description": "Allow all GCE network internal traffic.",
+    "direction": "INGRESS",
+    "name": "default-test-internal",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "this is a sample policy to generate GCE filter",
+    "direction": "INGRESS",
+    "name": "default-default-deny",
+    "network": "global/networks/default",
+    "priority": 65534,
+    "sourceRanges": [
+      "0.0.0.0/0"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "25"
+        ]
+      }
+    ],
+    "description": "Outbound to Mail Server",
+    "destinationRanges": [
+      "200.1.1.4/32",
+      "200.1.1.5/32"
+    ],
+    "direction": "EGRESS",
+    "name": "default-test-egress-address-e",
+    "network": "global/networks/default"
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "22"
+        ]
+      }
+    ],
+    "description": "Outbound to RFC1918",
+    "destinationRanges": [
+      "200.1.1.3/32"
+    ],
+    "direction": "EGRESS",
+    "name": "default-test-egress-tag-e",
+    "network": "global/networks/default",
+    "targetTags": [
+      "webserver"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "this is a sample policy to generate EGRESS GCE filter",
+    "destinationRanges": [
+      "0.0.0.0/0"
+    ],
+    "direction": "EGRESS",
+    "name": "default-default-deny-e",
+    "network": "global/networks/default",
+    "priority": 65534
+  }
+]
+

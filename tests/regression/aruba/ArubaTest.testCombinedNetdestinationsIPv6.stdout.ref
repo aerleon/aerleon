@@ -1,0 +1,12 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination6 good-term-combined-netdestinations_src
+  host 2001::
+  network 2002::/64
+!
+
+ip access-list session test-filter
+  ipv6 alias good-term-combined-netdestinations_src any tcp 80 deny
+!
+

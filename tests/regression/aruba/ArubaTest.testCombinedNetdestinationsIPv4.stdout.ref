@@ -1,0 +1,12 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination good-term-combined-netdestinations_src
+  host 10.0.0.1
+  network 100.0.0.0 255.0.0.0
+!
+
+ip access-list session test-filter
+  alias good-term-combined-netdestinations_src any tcp 80 deny
+!
+

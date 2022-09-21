@@ -1,0 +1,11 @@
+# Iptables INPUT Policy
+# this is a test acl with no default target
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-N I_good-term-1
+-A INPUT -j I_good-term-1
+-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

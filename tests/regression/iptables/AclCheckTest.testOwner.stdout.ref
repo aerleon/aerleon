@@ -1,0 +1,14 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_good-term-10
+-A INPUT -j I_good-term-10
+-A I_good-term-10 -m comment --comment "Owner: foo@google.com"
+-A I_good-term-10 -m comment --comment "Owner: foo@google.com"
+-A I_good-term-10 -p all -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

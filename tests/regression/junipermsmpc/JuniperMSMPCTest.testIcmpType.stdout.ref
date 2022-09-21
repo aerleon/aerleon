@@ -1,0 +1,68 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term good-term-3 {
+                        from {
+                            application-sets test-filtergood-term-3-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+        applications {
+            application test-filtergood-term-3-app1 {
+                application-protocol icmp;
+                protocol icmp;
+                icmp-type 0;
+                inactivity-timeout 60;
+            }
+            application test-filtergood-term-3-app2 {
+                application-protocol icmp;
+                protocol icmp;
+                icmp-type 10;
+                inactivity-timeout 60;
+            }
+            application test-filtergood-term-3-app3 {
+                application-protocol icmp;
+                protocol icmp;
+                icmp-type 13;
+                inactivity-timeout 60;
+            }
+            application test-filtergood-term-3-app4 {
+                application-protocol icmp;
+                protocol icmp;
+                icmp-type 15;
+                inactivity-timeout 60;
+            }
+            application test-filtergood-term-3-app5 {
+                application-protocol icmp;
+                protocol icmp;
+                icmp-type 16;
+                inactivity-timeout 60;
+            }
+            application-set test-filtergood-term-3-app {
+                application test-filtergood-term-3-app1;
+                application test-filtergood-term-3-app2;
+                application test-filtergood-term-3-app3;
+                application test-filtergood-term-3-app4;
+                application test-filtergood-term-3-app5;
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

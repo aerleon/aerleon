@@ -1,0 +1,17 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": 58
+      }
+    ],
+    "description": "Good term.",
+    "direction": "INGRESS",
+    "name": "good-term-pingv6-v6",
+    "sourceRanges": [
+      "2001:4860:8000::5/128"
+    ]
+  }
+]
+
+

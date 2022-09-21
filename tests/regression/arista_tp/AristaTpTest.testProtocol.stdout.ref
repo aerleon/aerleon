@@ -1,0 +1,7 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-5 ipv4
+         protocol icmp tcp
+      !
+

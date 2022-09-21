@@ -1,0 +1,90 @@
+security {
+    replace: address-book {
+        global {
+                address FOO_0 10.0.0.2/32;
+                address FOOBAR_0 10.0.0.3/32;
+                address SOMEHOST_0 10.0.0.1/32;
+                address-set FOO {
+                    address FOO_0;
+                }
+                address-set FOOBAR {
+                    address FOOBAR_0;
+                }
+                address-set SOMEHOST {
+                    address SOMEHOST_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good-term-2 {
+                match {
+                    source-address any;
+                    destination-address [ SOMEHOST ];
+                    application good-term-2-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy good_term_20 {
+                match {
+                    source-address any;
+                    destination-address [ FOO ];
+                    application good_term_20-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy dup-of-term-1 {
+                match {
+                    source-address any;
+                    destination-address [ FOOBAR ];
+                    application good-term-2-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        This is a header from untrust to trust
+        */
+        from-zone untrust to-zone trust {
+            policy term_to_split {
+                match {
+                    source-address [ FOOBAR ];
+                    destination-address [ SOMEHOST ];
+                    application good-term-2-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good-term-2-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application good_term_20-app1 {
+        term t1 protocol tcp destination-port 80;
+    }
+    application-set good-term-2-app {
+        application good-term-2-app1;
+    }
+    application-set good_term_20-app {
+        application good_term_20-app1;
+    }
+}
+

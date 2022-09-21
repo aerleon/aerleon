@@ -1,0 +1,17 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": 2
+      }
+    ],
+    "description": "Good term.",
+    "direction": "INGRESS",
+    "name": "good-term-igmp",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ]
+  }
+]
+
+

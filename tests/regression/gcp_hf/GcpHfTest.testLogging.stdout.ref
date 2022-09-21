@@ -1,0 +1,30 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "allow",
+        "description": "term-with-logging: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": true,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp"
+              }
+            ],
+            "srcIpRanges": [
+              "10.0.0.0/8"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

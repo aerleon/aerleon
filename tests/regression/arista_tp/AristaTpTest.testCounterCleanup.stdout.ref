@@ -1,0 +1,17 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+   counter test-cleanup-check
+      match good-term-1 ipv4
+         protocol tcp
+         actions
+            count test-cleanup-check
+         !
+      !
+      match ipv6-good-term-1 ipv6
+         protocol tcp
+         actions
+            count test-cleanup-check
+         !
+      !
+

@@ -1,0 +1,22 @@
+table ip6 filtering_policies {
+    chain good-term-1 {
+         ct state newaccept
+    }
+    chain root0 {
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump good-term-1
+    }
+}
+table inet filtering_policies {
+    chain inet6-icmp {
+        drop
+    }
+    chain root1 {
+        type filter hook output priority 0; policy drop;
+        ct state established,related accept
+        jump inet6-icmp
+    }
+}
+
+

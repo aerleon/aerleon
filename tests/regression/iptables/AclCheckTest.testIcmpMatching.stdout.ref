@@ -1,0 +1,15 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_block-some-icmp
+-A INPUT -j I_block-some-icmp
+-A I_block-some-icmp -p icmp --icmp-type 0 -j DROP
+-A I_block-some-icmp -p icmp --icmp-type 3 -j DROP
+-A I_block-some-icmp -p icmp --icmp-type 10 -j DROP
+-A I_block-some-icmp -p icmp --icmp-type 15 -j DROP
+

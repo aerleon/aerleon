@@ -1,0 +1,13 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list standard test-filter
+ip access-list standard test-filter
+ remark $Id:$
+ remark this is a test standard acl
+ remark good-term-4
+ remark Accept SNMP from internal sources.
+ permit host 10.1.1.1
+
+exit
+

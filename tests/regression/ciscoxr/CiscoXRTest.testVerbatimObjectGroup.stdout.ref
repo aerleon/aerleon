@@ -1,0 +1,15 @@
+
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv4 access-list foo
+ipv4 access-list foo
+ remark $Id:$
+
+
+ remark verb_term
+ permit tcp any
+
+exit
+

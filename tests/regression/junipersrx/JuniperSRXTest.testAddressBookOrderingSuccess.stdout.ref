@@ -1,0 +1,45 @@
+security {
+    replace: address-book {
+        global {
+                address out_of_order_0 1.0.0.0/8;
+                address test_0 10.0.0.0/8;
+                address-set out_of_order {
+                    address out_of_order_0;
+                }
+                address-set test {
+                    address test_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good-term-2 {
+                match {
+                    source-address any;
+                    destination-address [ out_of_order test ];
+                    application good-term-2-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good-term-2-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application-set good-term-2-app {
+        application good-term-2-app1;
+    }
+}
+

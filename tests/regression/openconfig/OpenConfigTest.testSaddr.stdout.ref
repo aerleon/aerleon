@@ -1,0 +1,16 @@
+[
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv4": {
+      "config": {
+        "source-address": "10.2.3.4/32"
+      }
+    }
+  }
+]
+
+

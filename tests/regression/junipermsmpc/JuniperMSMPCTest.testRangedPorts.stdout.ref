@@ -1,0 +1,38 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term ranged-ports-1 {
+                        from {
+                            application-sets test-filterranged-ports-1-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+        applications {
+            application test-filterranged-ports-1-app1 {
+                protocol udp;
+                destination-port 67-68;
+            }
+            application-set test-filterranged-ports-1-app {
+                application test-filterranged-ports-1-app1;
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

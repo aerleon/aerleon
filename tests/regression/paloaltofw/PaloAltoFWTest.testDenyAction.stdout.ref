@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-deny-action">
+                  <description>Testing deny action for tcp.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>deny</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

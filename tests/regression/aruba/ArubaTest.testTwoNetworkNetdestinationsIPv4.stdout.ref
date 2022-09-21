@@ -1,0 +1,15 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination gt-mix-netd_src
+  network 10.0.0.0 255.0.0.0
+!
+
+netdestination gt-mix-netd_dst
+  network 10.0.0.0 255.0.0.0
+!
+
+ip access-list session test-filter
+  alias gt-mix-netd_src alias gt-mix-netd_dst 1 permit
+!
+

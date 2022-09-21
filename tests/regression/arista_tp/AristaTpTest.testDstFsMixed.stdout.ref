@@ -1,0 +1,30 @@
+traffic-policies
+   field-set ipv4 prefix dst-FS_MIXED
+      8.8.4.0/24
+      8.8.8.0/24
+      2001:4860:4860::/64
+      2001:4860:4861::/64
+      except 8.8.4.4/32
+      except 8.8.8.8/32
+      except 2001:4860:4860::8844/128
+      except 2001:4860:4861::8888/128
+   !
+   field-set ipv6 prefix dst-ipv6-FS_MIXED
+      8.8.4.0/24
+      8.8.8.0/24
+      2001:4860:4860::/64
+      2001:4860:4861::/64
+      except 8.8.4.4/32
+      except 8.8.8.8/32
+      except 2001:4860:4860::8844/128
+      except 2001:4860:4861::8888/128
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match FS_MIXED ipv4
+         destination prefix field-set dst-FS_MIXED
+      !
+      match ipv6-FS_MIXED ipv6
+         destination prefix field-set dst-ipv6-FS_MIXED
+      !
+
