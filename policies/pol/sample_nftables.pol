@@ -1,5 +1,5 @@
 #
-# This is a WIP example policy for capirca/nftables
+# This is a WIP example policy for aerleon/nftables
 # Policy terms will be added as code evolves to handle them.
 #
 header {
