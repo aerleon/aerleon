@@ -1,13 +1,5 @@
 # Contributing Guidelines
 
-Before contributing to Capirca please take into mind the following.
-
-## Contributors License Agreements
-
-We require everyone who submits code to us to sign the
-[Contributors License Agreement](https://cla.developers.google.com/clas).
-Please take the time to sign this before sending us a Pull Request.
-
 ## Code Readability
 
 Please take time to become familiar with the
