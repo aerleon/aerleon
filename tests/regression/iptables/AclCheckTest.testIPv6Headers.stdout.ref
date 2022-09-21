@@ -1,0 +1,15 @@
+# Iptables INPUT Policy
+# test header for inet6 terms
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet6
+-P INPUT DROP
+-N I_ipv6-header-1
+-A INPUT -j I_ipv6-header-1
+-A I_ipv6-header-1 -m u32 --u32 "0x3&0xff=0x0" -j DROP
+-N I_ipv6-header-2
+-A INPUT -j I_ipv6-header-2
+-A I_ipv6-header-2 -m u32 --u32 "0x3&0xff=0x2c" -j DROP
+

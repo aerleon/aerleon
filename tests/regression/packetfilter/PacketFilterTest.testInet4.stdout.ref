@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+
+# term good-term-log
+pass quick log inet proto { tcp } from { any } to { any } flags S/SA keep state
+

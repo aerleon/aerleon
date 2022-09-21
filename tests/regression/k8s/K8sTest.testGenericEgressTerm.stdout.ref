@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+      comment: DNS access from corp.
+    name: good-term-4-e
+  spec:
+    egress:
+    - ports:
+      - port: 53
+        protocol: UDP
+      - port: 53
+        protocol: TCP
+      to:
+      - ipBlock:
+          cidr: 10.2.3.4/32
+      - ipBlock:
+          cidr: 2001:4860:8000::5/128
+    podSelector: {}
+    policyTypes:
+    - Egress
+kind: NetworkPolicyList
+

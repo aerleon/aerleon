@@ -1,0 +1,10 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match ANY_MIXED ipv4
+         destination prefix 8.8.4.4/32 8.8.8.8/32
+      !
+      match ipv6-ANY_MIXED ipv6
+         destination prefix 2001:4860:4860::8844/128 2001:4860:4860::8888/128
+      !
+

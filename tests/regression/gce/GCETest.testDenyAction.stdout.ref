@@ -1,0 +1,24 @@
+[
+  {
+    "denied": [
+      {
+        "IPProtocol": "udp"
+      },
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "DNS access from corp.",
+    "direction": "INGRESS",
+    "name": "default-good-term-1",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
+    "targetTags": [
+      "dns-servers"
+    ]
+  }
+]
+
+

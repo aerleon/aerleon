@@ -1,0 +1,12 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list standard FOO
+ip access-list standard FOO
+ remark $Id:$
+ remark this is a standard acl
+ remark standard-term-2
+ permit 10.0.0.0 0.255.255.255
+
+exit
+

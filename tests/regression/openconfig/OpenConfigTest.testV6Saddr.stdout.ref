@@ -1,0 +1,16 @@
+[
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv6": {
+      "config": {
+        "source-address": "2001:4860:8000::5/128"
+      }
+    }
+  }
+]
+
+

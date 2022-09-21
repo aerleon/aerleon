@@ -1,0 +1,22 @@
+# Packetfilter test-filter Policy
+# this is a stateless test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term good-term-log
+pass quick log proto { tcp } from { any } to { any } no state
+
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet6
+
+# term good-term-icmp
+pass quick inet6 proto { icmp } from { any } to { any } no state
+

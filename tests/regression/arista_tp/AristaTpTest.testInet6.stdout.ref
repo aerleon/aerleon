@@ -1,0 +1,11 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-1 ipv6
+         protocol icmpv6
+      !
+      match good-term-2 ipv6
+         destination prefix 2001::/33
+         protocol tcp destination port 25
+      !
+

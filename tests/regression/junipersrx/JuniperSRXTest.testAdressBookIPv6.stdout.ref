@@ -1,0 +1,45 @@
+security {
+    replace: address-book {
+        global {
+                address _0 2001:4860:8000::/33;
+                address-set  {
+                    address _0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            /*
+            This header is very very very very very very very very very very
+            very very very very very very very very very very large
+            */
+            policy good-term-1 {
+                match {
+                    source-address any;
+                    destination-address [  ];
+                    application good-term-1-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good-term-1-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application-set good-term-1-app {
+        application good-term-1-app1;
+    }
+}
+

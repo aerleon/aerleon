@@ -1,0 +1,66 @@
+security {
+    replace: address-book {
+        global {
+                address FOOBAR_0 172.16.0.0/14;
+                address FOOBAR_1 172.22.0.0/15;
+                address FOOBAR_2 172.24.0.0/13;
+                address SOME_HOST_0 10.0.0.0/8;
+                address SOME_HOST_1 172.20.0.0/15;
+                address-set FOOBAR {
+                    address FOOBAR_0;
+                    address FOOBAR_1;
+                    address FOOBAR_2;
+                }
+                address-set SOME_HOST {
+                    address SOME_HOST_0;
+                    address SOME_HOST_1;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy term_to_split {
+                match {
+                    source-address any;
+                    destination-address [ FOOBAR SOME_HOST ];
+                    application term_to_split-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        This is a header from untrust to trust
+        */
+        from-zone untrust to-zone trust {
+            policy good-term-15 {
+                match {
+                    source-address any;
+                    destination-address [ SOME_HOST ];
+                    application term_to_split-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application term_to_split-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application-set term_to_split-app {
+        application term_to_split-app1;
+    }
+}
+

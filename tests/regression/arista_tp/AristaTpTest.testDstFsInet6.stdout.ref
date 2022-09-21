@@ -1,0 +1,13 @@
+traffic-policies
+   field-set ipv6 prefix dst-ipv6-FS_INET6
+      2001:4860:4860::/64
+      2001:4860:4861::/64
+      except 2001:4860:4860::8844/128
+      except 2001:4860:4861::8888/128
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match ipv6-FS_INET6 ipv6
+         destination prefix field-set dst-ipv6-FS_INET6
+      !
+

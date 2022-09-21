@@ -1,0 +1,18 @@
+# begin:ipset-rules
+create good-term-3-src hash:net family inet hashsize 4 maxelem 4
+add good-term-3-src 10.0.0.0/24
+add good-term-3-src 10.1.0.0/24
+create good-term-3-dst hash:net family inet hashsize 4 maxelem 4
+add good-term-3-dst 172.16.0.0/24
+add good-term-3-dst 172.17.0.0/24
+# end:ipset-rules
+# Ipset OUTPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P OUTPUT DROP
+-A OUTPUT -p all -m set --match-set good-term-3-src src -m set --match-set good-term-3-dst dst -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

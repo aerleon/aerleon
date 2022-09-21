@@ -1,0 +1,16 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv6 access-list inet6_acl
+ipv6 access-list inet6_acl
+ remark $Id:$
+ remark inet6 header test
+
+
+ remark good-term-11
+ permit 58 any any 1
+ permit 58 any any 3
+ permit 58 any any 129
+
+exit
+

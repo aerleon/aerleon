@@ -1,0 +1,54 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term good-term-1 {
+                        from {
+                            application-sets test-filtergood-term-1-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                    term good-term-2 {
+                        from {
+                            destination-address {
+                                192.168.0.0/24;
+                            }
+                            application-sets test-filtergood-term-2-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+        applications {
+            application test-filtergood-term-1-app1 {
+                protocol icmp;
+            }
+            application test-filtergood-term-2-app1 {
+                protocol tcp;
+                destination-port 25;
+            }
+            application-set test-filtergood-term-1-app {
+                application test-filtergood-term-1-app1;
+            }
+            application-set test-filtergood-term-2-app {
+                application test-filtergood-term-2-app1;
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

@@ -1,0 +1,34 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-1 {
+                from {
+                    protocol icmp;
+                }
+                then accept;
+            }
+            term good-term-2 {
+                from {
+                    destination-address {
+                        /* this is a very descriptive comment  this is a
+                         ** very descriptive comment  this is a very
+                         ** descriptive comment  this is a very descript */
+                        10.0.0.0/8;
+                    }
+                    protocol tcp;
+                    destination-port 25;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

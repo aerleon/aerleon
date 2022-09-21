@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+      comment: default_deny.
+    name: default-deny-e
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Egress
+kind: NetworkPolicyList
+

@@ -1,0 +1,11 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-1 ipv4
+         protocol icmp
+      !
+      match good-term-2 ipv4
+         destination prefix 10.0.0.0/8
+         protocol tcp destination port 25
+      !
+

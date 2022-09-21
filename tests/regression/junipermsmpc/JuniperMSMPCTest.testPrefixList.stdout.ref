@@ -1,0 +1,31 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term good-term-8 {
+                        from {
+                            source-prefix-list foo_prefix_list;
+                            destination-prefix-list bar_prefix_list;
+                            destination-prefix-list baz_prefix_list;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

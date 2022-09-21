@@ -1,0 +1,29 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "direction": "INGRESS",
+    "name": "good-platform-term",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
+    "targetTags": [
+      "dns-servers"
+    ]
+  }
+]
+
+

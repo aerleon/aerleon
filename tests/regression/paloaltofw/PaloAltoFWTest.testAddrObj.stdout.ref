@@ -1,0 +1,250 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>NET1</member>
+                  </source>
+                  <destination>
+                    <member>NET2</member>
+                    <member>NET3</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="NET1">
+              <static>
+                <member>NET1_0</member>
+              </static>
+            </entry>
+            <entry name="NET2">
+              <static>
+                <member>NET2_0</member>
+              </static>
+            </entry>
+            <entry name="NET3">
+              <static>
+                <member>NET3_0</member>
+                <member>NET3_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="NET1_0">
+              <description>NET1_0</description>
+              <ip-netmask>10.1.0.0/24</ip-netmask>
+            </entry>
+            <entry name="NET2_0">
+              <description>NET2_0</description>
+              <ip-netmask>10.2.0.0/24</ip-netmask>
+            </entry>
+            <entry name="NET3_0">
+              <description>NET3_0</description>
+              <ip-netmask>10.3.1.0/24</ip-netmask>
+            </entry>
+            <entry name="NET3_1">
+              <description>NET3_1</description>
+              <ip-netmask>10.3.2.0/24</ip-netmask>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>NET5</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="NET5">
+              <static>
+                <member>NET5_0</member>
+                <member>NET5_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="NET5_0">
+              <description>NET5_0</description>
+              <ip-netmask>4000::/3</ip-netmask>
+            </entry>
+            <entry name="NET5_1">
+              <description>NET5_1</description>
+              <ip-netmask>6000::/3</ip-netmask>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>NET4</member>
+                  </source>
+                  <destination>
+                    <member>NET5</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="NET4">
+              <static>
+                <member>NET4_0</member>
+              </static>
+            </entry>
+            <entry name="NET5">
+              <static>
+                <member>NET5_0</member>
+                <member>NET5_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="NET4_0">
+              <description>NET4_0</description>
+              <ip-netmask>4000::/128</ip-netmask>
+            </entry>
+            <entry name="NET5_0">
+              <description>NET5_0</description>
+              <ip-netmask>4000::/3</ip-netmask>
+            </entry>
+            <entry name="NET5_1">
+              <description>NET5_1</description>
+              <ip-netmask>6000::/3</ip-netmask>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

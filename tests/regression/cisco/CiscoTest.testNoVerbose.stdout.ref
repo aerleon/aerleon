@@ -1,0 +1,43 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended test-filter
+ip access-list extended test-filter
+
+
+ permit ip any any
+
+exit
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no access-list 99
+access-list 99 permit 10.0.0.0 0.0.0.255
+
+exit
+
+
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended objgroupheader
+ip access-list extended objgroupheader
+
+
+ permit ip any any
+
+exit
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv6 access-list inet6_acl
+ipv6 access-list inet6_acl
+
+
+ permit ipv6 any any
+
+exit
+

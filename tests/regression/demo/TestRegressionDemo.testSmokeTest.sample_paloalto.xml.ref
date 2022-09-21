@@ -1,0 +1,249 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="service-dns-gdns-tcp">
+              <protocol>
+                <tcp>
+                  <port>53</port>
+                </tcp>
+              </protocol>
+            </entry>
+            <entry name="service-allow-web-outbound-tcp">
+              <protocol>
+                <tcp>
+                  <port>80,443</port>
+                </tcp>
+              </protocol>
+            </entry>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+            <entry name="service-allow-pan-app-03-tcp">
+              <protocol>
+                <tcp>
+                  <port>443,993</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="ping-gdns">
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>INTERNAL</member>
+                  </source>
+                  <destination>
+                    <member>GOOGLE_DNS</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp</member>
+                  </application>
+                </entry>
+                <entry name="dns-gdns">
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>INTERNAL</member>
+                  </source>
+                  <destination>
+                    <member>GOOGLE_DNS</member>
+                  </destination>
+                  <service>
+                    <member>service-dns-gdns-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+                <entry name="allow-web-outbound">
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>INTERNAL</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>service-allow-web-outbound-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+                <entry name="allow-icmp">
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp</member>
+                  </application>
+                </entry>
+                <entry name="allow-pan-app-01">
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>web-browsing</member>
+                  </application>
+                </entry>
+                <entry name="allow-pan-app-02">
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>web-browsing</member>
+                  </application>
+                </entry>
+                <entry name="allow-pan-app-03">
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-allow-pan-app-03-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>ssl</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="GOOGLE_DNS">
+              <static>
+                <member>GOOGLE_DNS_0</member>
+                <member>GOOGLE_DNS_1</member>
+              </static>
+            </entry>
+            <entry name="INTERNAL">
+              <static>
+                <member>INTERNAL_0</member>
+                <member>INTERNAL_1</member>
+                <member>INTERNAL_2</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="GOOGLE_DNS_0">
+              <description>GOOGLE_DNS_0</description>
+              <ip-netmask>8.8.4.4/32</ip-netmask>
+            </entry>
+            <entry name="GOOGLE_DNS_1">
+              <description>GOOGLE_DNS_1</description>
+              <ip-netmask>8.8.8.8/32</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_0">
+              <description>INTERNAL_0</description>
+              <ip-netmask>10.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_1">
+              <description>INTERNAL_1</description>
+              <ip-netmask>172.16.0.0/12</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_2">
+              <description>INTERNAL_2</description>
+              <ip-netmask>192.168.0.0/16</ip-netmask>
+            </entry>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

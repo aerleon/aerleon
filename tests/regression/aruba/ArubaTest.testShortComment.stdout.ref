@@ -1,0 +1,9 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+ip access-list session test-filter
+  # Some short comment.
+  # Owner: someowner
+  any any any deny
+!
+

@@ -1,0 +1,7 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+ip access-list session test-filter
+  no any any any permit
+!
+

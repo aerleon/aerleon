@@ -1,0 +1,42 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp"
+      },
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "Allow all GCE network internal traffic.",
+    "direction": "INGRESS",
+    "name": "good-term-1",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
+    "sourceTags": [
+      "internal-servers"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp"
+      },
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "Allow all GCE network internal traffic.",
+    "direction": "INGRESS",
+    "name": "good-term-1-v6",
+    "sourceRanges": [
+      "2001:4860:8000::5/128"
+    ],
+    "sourceTags": [
+      "internal-servers"
+    ]
+  }
+]
+
+

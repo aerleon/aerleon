@@ -1,0 +1,23 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term routing-instance-setting {
+                from {
+                    protocol tcp;
+                }
+                then {
+                    routing-instance EXTERNAL-NAT;
+                }
+            }
+        }
+    }
+}
+

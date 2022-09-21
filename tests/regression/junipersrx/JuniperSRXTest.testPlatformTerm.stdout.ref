@@ -1,0 +1,67 @@
+security {
+    replace: address-book {
+        global {
+                address GOOD_TERM_19_SRC_EXCLUDE_0 10.0.1.0/24;
+                address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;
+                address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;
+                address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;
+                address-set GOOD_TERM_19_SRC_EXCLUDE {
+                    address GOOD_TERM_19_SRC_EXCLUDE_0;
+                    address GOOD_TERM_19_SRC_EXCLUDE_1;
+                    address GOOD_TERM_19_SRC_EXCLUDE_2;
+                    address GOOD_TERM_19_SRC_EXCLUDE_3;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy platform-term {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application platform-term-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy good_term_19 {
+                match {
+                    source-address [ GOOD_TERM_19_SRC_EXCLUDE ];
+                    destination-address any;
+                    application good_term_19-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good_term_19-app1 {
+        term t1 protocol tcp;
+    }
+    application platform-term-app1 {
+        term t1 protocol tcp;
+    }
+    application platform-term-app2 {
+        term t2 protocol udp;
+    }
+    application-set good_term_19-app {
+        application good_term_19-app1;
+    }
+    application-set platform-term-app {
+        application platform-term-app1;
+        application platform-term-app2;
+    }
+}
+

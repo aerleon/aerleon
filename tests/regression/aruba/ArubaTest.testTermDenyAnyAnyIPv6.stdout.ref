@@ -1,0 +1,7 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+ip access-list session test-filter
+  ipv6 any any any deny
+!
+

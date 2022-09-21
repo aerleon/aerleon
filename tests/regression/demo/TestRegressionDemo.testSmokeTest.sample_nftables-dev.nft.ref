@@ -1,0 +1,25 @@
+table ip6 filtering_policies {
+    chain accept-webserver-traffic {
+        comment "Allow webserver inbound traffic."
+        tcp dport { 80, 443 } ct state new accept
+    }
+    chain test-tcp-established {
+        comment "Allow tcp-established traffic."
+        meta l4proto { tcp, udp } ct state new accept
+    }
+    chain test-dns-replies {
+        comment "Allow DNS replies, and test udp established option."
+        comment "This should not be generated since this is a stateful policy."
+        udp sport 53 ct state new log prefix "test-dns-replies" counter accept
+    }
+    chain root0 {
+        comment "This policy validates handling of term.option tcp-established."
+        comment "and UDP 'established'"
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump accept-webserver-traffic
+        jump test-tcp-established
+        jump test-dns-replies
+    }
+}
+

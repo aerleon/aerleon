@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# test header for inet6 terms
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet6
+-P INPUT DROP
+-N I_reject-term2
+-A INPUT -j I_reject-term2
+-A I_reject-term2 -j REJECT --reject-with icmp6-adm-prohibited
+

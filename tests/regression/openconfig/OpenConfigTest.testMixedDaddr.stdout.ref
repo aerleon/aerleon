@@ -1,0 +1,28 @@
+[
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv4": {
+      "config": {
+        "destination-address": "10.2.3.4/32"
+      }
+    }
+  },
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv6": {
+      "config": {
+        "destination-address": "2001:4860:8000::5/128"
+      }
+    }
+  }
+]
+
+

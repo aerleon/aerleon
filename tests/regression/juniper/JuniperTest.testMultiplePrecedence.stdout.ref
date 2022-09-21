@@ -1,0 +1,23 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term precedence-setting {
+                from {
+                    protocol tcp;
+                    destination-port 22;
+                    precedence [ 5 7 ];
+                }
+                then accept;
+            }
+        }
+    }
+}
+

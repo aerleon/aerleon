@@ -1,0 +1,34 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp"
+      },
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "Allow all GCE network internal traffic.",
+    "direction": "INGRESS",
+    "name": "good-term-1",
+    "sourceTags": [
+      "internal-servers"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "default_deny.",
+    "direction": "INGRESS",
+    "name": "default-deny",
+    "priority": 65534,
+    "sourceRanges": [
+      "::/0"
+    ]
+  }
+]
+
+

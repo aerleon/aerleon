@@ -1,0 +1,13 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_foo
+-A INPUT -j I_foo
+-A I_foo -p tcp -m state --state NEW,ESTABLISHED,RELATED -j LOG --log-prefix foo
+-A I_foo -p tcp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

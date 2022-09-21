@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term good-term-icmpv6-types
+block drop quick proto { ipv6-icmp } from { any } to { any } icmp6-type { 129 }
+

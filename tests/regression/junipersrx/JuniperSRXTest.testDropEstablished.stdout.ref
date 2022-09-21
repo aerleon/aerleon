@@ -1,0 +1,86 @@
+security {
+    replace: address-book {
+        global {
+                address FOO_0 10.0.0.1/32;
+                address-set FOO {
+                    address FOO_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            /*
+            This header is very very very very very very very very very very
+            very very very very very very very very very very large
+            */
+            policy good-term-1 {
+                match {
+                    source-address any;
+                    destination-address [ FOO ];
+                    application good-term-1-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy good_term_21 {
+                match {
+                    source-address any;
+                    destination-address [ FOO ];
+                    application good_term_21-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy default-term-1 {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        /*
+        This is a header from untrust to trust
+        */
+        from-zone untrust to-zone trust {
+            policy default-term-1 {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good-term-1-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application good_term_21-app1 {
+        term t1 protocol udp destination-port 443;
+    }
+    application-set good-term-1-app {
+        application good-term-1-app1;
+    }
+    application-set good_term_21-app {
+        application good_term_21-app1;
+    }
+}
+

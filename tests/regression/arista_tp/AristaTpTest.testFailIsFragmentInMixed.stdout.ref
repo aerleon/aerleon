@@ -1,0 +1,8 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match option-term ipv4
+         protocol tcp
+         fragment
+      !
+

@@ -1,0 +1,87 @@
+security {
+    replace: address-book {
+        global {
+                address GOOD_TERM_18_SRC_EXCLUDE_0 0.0.0.0/5;
+                address GOOD_TERM_18_SRC_EXCLUDE_1 8.0.0.0/7;
+                address GOOD_TERM_18_SRC_EXCLUDE_2 10.0.1.0/24;
+                address GOOD_TERM_18_SRC_EXCLUDE_3 10.0.2.0/23;
+                address GOOD_TERM_18_SRC_EXCLUDE_4 10.0.4.0/22;
+                address GOOD_TERM_18_SRC_EXCLUDE_5 10.0.8.0/21;
+                address GOOD_TERM_18_SRC_EXCLUDE_6 10.0.16.0/20;
+                address GOOD_TERM_18_SRC_EXCLUDE_7 10.0.32.0/19;
+                address GOOD_TERM_18_SRC_EXCLUDE_8 10.0.64.0/18;
+                address GOOD_TERM_18_SRC_EXCLUDE_9 10.0.128.0/17;
+                address GOOD_TERM_18_SRC_EXCLUDE_10 10.1.0.0/16;
+                address GOOD_TERM_18_SRC_EXCLUDE_11 10.2.0.0/15;
+                address GOOD_TERM_18_SRC_EXCLUDE_12 10.4.0.0/14;
+                address GOOD_TERM_18_SRC_EXCLUDE_13 10.8.0.0/13;
+                address GOOD_TERM_18_SRC_EXCLUDE_14 10.16.0.0/12;
+                address GOOD_TERM_18_SRC_EXCLUDE_15 10.32.0.0/11;
+                address GOOD_TERM_18_SRC_EXCLUDE_16 10.64.0.0/10;
+                address GOOD_TERM_18_SRC_EXCLUDE_17 10.128.0.0/9;
+                address GOOD_TERM_18_SRC_EXCLUDE_18 11.0.0.0/8;
+                address GOOD_TERM_18_SRC_EXCLUDE_19 12.0.0.0/6;
+                address GOOD_TERM_18_SRC_EXCLUDE_20 16.0.0.0/4;
+                address GOOD_TERM_18_SRC_EXCLUDE_21 32.0.0.0/3;
+                address GOOD_TERM_18_SRC_EXCLUDE_22 64.0.0.0/2;
+                address GOOD_TERM_18_SRC_EXCLUDE_23 128.0.0.0/1;
+                address-set GOOD_TERM_18_SRC_EXCLUDE {
+                    address GOOD_TERM_18_SRC_EXCLUDE_0;
+                    address GOOD_TERM_18_SRC_EXCLUDE_1;
+                    address GOOD_TERM_18_SRC_EXCLUDE_2;
+                    address GOOD_TERM_18_SRC_EXCLUDE_3;
+                    address GOOD_TERM_18_SRC_EXCLUDE_4;
+                    address GOOD_TERM_18_SRC_EXCLUDE_5;
+                    address GOOD_TERM_18_SRC_EXCLUDE_6;
+                    address GOOD_TERM_18_SRC_EXCLUDE_7;
+                    address GOOD_TERM_18_SRC_EXCLUDE_8;
+                    address GOOD_TERM_18_SRC_EXCLUDE_9;
+                    address GOOD_TERM_18_SRC_EXCLUDE_10;
+                    address GOOD_TERM_18_SRC_EXCLUDE_11;
+                    address GOOD_TERM_18_SRC_EXCLUDE_12;
+                    address GOOD_TERM_18_SRC_EXCLUDE_13;
+                    address GOOD_TERM_18_SRC_EXCLUDE_14;
+                    address GOOD_TERM_18_SRC_EXCLUDE_15;
+                    address GOOD_TERM_18_SRC_EXCLUDE_16;
+                    address GOOD_TERM_18_SRC_EXCLUDE_17;
+                    address GOOD_TERM_18_SRC_EXCLUDE_18;
+                    address GOOD_TERM_18_SRC_EXCLUDE_19;
+                    address GOOD_TERM_18_SRC_EXCLUDE_20;
+                    address GOOD_TERM_18_SRC_EXCLUDE_21;
+                    address GOOD_TERM_18_SRC_EXCLUDE_22;
+                    address GOOD_TERM_18_SRC_EXCLUDE_23;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good_term_18 {
+                match {
+                    source-address [ GOOD_TERM_18_SRC_EXCLUDE ];
+                    destination-address any;
+                    application good_term_18-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good_term_18-app1 {
+        term t1 protocol tcp;
+    }
+    application-set good_term_18-app {
+        application good_term_18-app1;
+    }
+}
+

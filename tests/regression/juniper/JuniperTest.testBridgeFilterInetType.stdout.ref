@@ -1,0 +1,22 @@
+firewall {
+    family bridge {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-12 {
+                from {
+                    ip-source-address {
+                        127.0.0.1/32;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

@@ -1,0 +1,27 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-3 {
+                from {
+                    destination-address {
+                        10.0.0.0/8;
+                    }
+                    protocol tcp;
+                    source-port 80;
+                    destination-port 1024-65535;
+                    tcp-established;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

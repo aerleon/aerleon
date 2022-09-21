@@ -1,0 +1,13 @@
+# Iptables INPUT Policy
+# iptables filter without stateful
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_tcp-established-only
+-A INPUT -j I_tcp-established-only
+-A I_tcp-established-only -p tcp --tcp-flags ACK ACK --dport 1024:65535 -j ACCEPT
+-A I_tcp-established-only -p tcp --tcp-flags ACK,FIN,RST,SYN RST --dport 1024:65535 -j ACCEPT
+

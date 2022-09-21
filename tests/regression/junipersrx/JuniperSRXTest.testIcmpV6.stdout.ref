@@ -1,0 +1,39 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy test-ipv6_icmp {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-ipv6_icmp-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application test-ipv6_icmp-app {
+        term t1 protocol icmp6 icmp6-type 1 inactivity-timeout 60;
+        term t2 protocol icmp6 icmp6-type 2 inactivity-timeout 60;
+        term t3 protocol icmp6 icmp6-type 3 inactivity-timeout 60;
+        term t4 protocol icmp6 icmp6-type 3 inactivity-timeout 60;
+        term t5 protocol icmp6 icmp6-type 128 inactivity-timeout 60;
+        term t6 protocol icmp6 icmp6-type 129 inactivity-timeout 60;
+    }
+}
+

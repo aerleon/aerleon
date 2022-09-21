@@ -1,0 +1,27 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good_term_23 {
+                from {
+                    protocol tcp;
+                    source-port 53;
+                    dscp [ af41-af42 5 ];
+                    dscp-except [ be ];
+                }
+                then {
+                    accept;
+                    dscp af42;
+                }
+            }
+        }
+    }
+}
+

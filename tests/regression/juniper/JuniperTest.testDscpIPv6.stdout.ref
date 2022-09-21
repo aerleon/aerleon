@@ -1,0 +1,26 @@
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good_term_23 {
+                from {
+                    next-header tcp;
+                    source-port 53;
+                    traffic-class [ af41-af42 5 ];
+                    traffic-class-except [ be ];
+                }
+                then {
+                    accept;
+                    traffic-class af42;
+                }
+            }
+        }
+    }
+}
+

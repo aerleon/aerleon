@@ -1,0 +1,36 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "allow-internal-traffic: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp"
+              },
+              {
+                "ipProtocol": "icmp"
+              },
+              {
+                "ipProtocol": "udp"
+              }
+            ],
+            "srcIpRanges": [
+              "0.0.0.0/0"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

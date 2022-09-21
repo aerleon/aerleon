@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a stateless test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term tcp-established-only
+pass quick proto { tcp } from { any } to { any } flags A/A no state
+

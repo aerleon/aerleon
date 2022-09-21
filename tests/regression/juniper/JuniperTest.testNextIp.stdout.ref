@@ -1,0 +1,22 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good_term_28 {
+                from {
+                }
+                then {
+                    next-ip 10.1.1.1/32;
+                }
+            }
+        }
+    }
+}
+

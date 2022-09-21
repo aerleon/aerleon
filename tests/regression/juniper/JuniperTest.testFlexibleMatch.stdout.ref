@@ -1,0 +1,30 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term flex-match-term-1 {
+                from {
+                    protocol tcp;
+                    flexible-match-range {
+                        bit-length 8;
+                        range 0x08;
+                        match-start payload;
+                        byte-offset 16;
+                        bit-offset 7;
+                    }
+                }
+                then {
+                    discard;
+                }
+            }
+        }
+    }
+}
+

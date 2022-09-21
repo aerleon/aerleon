@@ -1,0 +1,54 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "direction": "INGRESS",
+    "name": "good-term-1",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
+    "targetTags": [
+      "dns-servers"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "direction": "INGRESS",
+    "name": "good-term-1-v6",
+    "sourceRanges": [
+      "2001:4860:8000::5/128"
+    ],
+    "targetTags": [
+      "dns-servers"
+    ]
+  }
+]
+
+

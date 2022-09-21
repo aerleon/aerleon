@@ -1,0 +1,14 @@
+table <CORP_INTERNAL> {100.96.0.0/11,\
+172.16.0.0/16}
+table <PROD_NETWORK> {10.0.0.0/8}
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term multiple-name
+pass quick proto { tcp } from { <CORP_INTERNAL> } to { <PROD_NETWORK> } port { 25 } flags S/SA keep state
+

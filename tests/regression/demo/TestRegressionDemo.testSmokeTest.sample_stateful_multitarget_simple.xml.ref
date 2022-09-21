@@ -1,0 +1,895 @@
+<?xml version="1.0" ?>
+<config version="8.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application>
+            <entry name="icmp-echo-request">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp-echo-request</description>
+              <default>
+                <ident-by-icmp-type>
+                  <type>8</type>
+                </ident-by-icmp-type>
+              </default>
+              <risk>4</risk>
+            </entry>
+            <entry name="icmp-echo-reply">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp-echo-reply</description>
+              <default>
+                <ident-by-icmp-type>
+                  <type>0</type>
+                </ident-by-icmp-type>
+              </default>
+              <risk>4</risk>
+            </entry>
+            <entry name="icmp6-echo-request">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-echo-request</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>128</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+            <entry name="icmp6-echo-reply">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp6-echo-reply</description>
+              <default>
+                <ident-by-icmp6-type>
+                  <type>129</type>
+                </ident-by-icmp6-type>
+              </default>
+              <risk>2</risk>
+            </entry>
+          </application>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="any-tcp">
+              <protocol>
+                <tcp>
+                  <port>0-65535</port>
+                </tcp>
+              </protocol>
+            </entry>
+            <entry name="any-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                </udp>
+              </protocol>
+            </entry>
+            <entry name="service-accept-honestdns-udp">
+              <protocol>
+                <udp>
+                  <port>53</port>
+                </udp>
+              </protocol>
+            </entry>
+            <entry name="service-accept-traceroute-source-ports-udp">
+              <protocol>
+                <udp>
+                  <port>0-65535</port>
+                  <source-port>33434-33534</source-port>
+                </udp>
+              </protocol>
+            </entry>
+            <entry name="service-accept-webserver-traffic-tcp">
+              <protocol>
+                <tcp>
+                  <port>80,443</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="test-tcp-log-both">
+                  <description>Testing log-both for tcp.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                  <log-start>yes</log-start>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="test-udp-log">
+                  <description>Testing logging for udp.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="test-tcp-udp-any">
+                  <description>Testing any port for tcp, udp, `when destination-port is unspecified.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                    <member>any-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="accept-honestdns">
+                  <description>Allow name resolution using honestdns.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>GOOGLE_DNS</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-honestdns-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="accept-icmp-specific-types">
+                  <description>Allow ICMPv4, with icmp types, and test counters.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>INTERNAL</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp-echo-request</member>
+                    <member>icmp-echo-reply</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="accept-igmp">
+                  <description>Allow IGMP, and test syslog logging.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>INTERNAL</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>igmp</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="accept-traceroute-source-ports">
+                  <description>Allow traceroute with source port range for udp.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-traceroute-source-ports-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="deny-to-bad-destinations">
+                  <description>Deny to bad destinations.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>BOGON</member>
+                    <member>RESERVED</member>
+                    <member>RFC1918</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>deny</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="accept-webserver-traffic">
+                  <description>Allow webserver inbound traffic.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>WEB_SERVERS</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-webserver-traffic-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>external_internal_policy-comment-2</member>
+                  </tag>
+                </entry>
+                <entry name="ipv6-accept-honestdns">
+                  <description>Allow name resolution using honestdns.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>GOOGLE_DNS</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-honestdns-udp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-3</member>
+                  </tag>
+                </entry>
+                <entry name="accept-icmpv6-specific-types">
+                  <description>Allow ICMPv6, with icmpv6 types.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <negate-source>yes</negate-source>
+                  <negate-destination>yes</negate-destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp6-echo-request</member>
+                    <member>icmp6-echo-reply</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-3</member>
+                  </tag>
+                </entry>
+                <entry name="ipv6-deny-to-bad-destinations">
+                  <description>Deny to bad destinations.</description>
+                  <to>
+                    <member>external</member>
+                  </to>
+                  <from>
+                    <member>internal</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>BOGON</member>
+                    <member>RESERVED</member>
+                    <member>RFC1918</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>deny</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>internal_external_policy-comment-3</member>
+                  </tag>
+                </entry>
+                <entry name="ipv6-accept-webserver-traffic">
+                  <description>Allow webserver inbound traffic.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>external</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>WEB_IPV6_SERVERS</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-webserver-traffic-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>external_internal_policy-comment-4</member>
+                  </tag>
+                </entry>
+                <entry name="test-inet6-tcp-icmpv6-traffic-1">
+                  <description>Allow all tcp and icmpv6 traffic. This should be generated since this has no ports specified.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>unknown</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <negate-source>yes</negate-source>
+                  <negate-destination>yes</negate-destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>unknown_internal_policy-comment-5</member>
+                  </tag>
+                </entry>
+                <entry name="test-inet6-tcp-icmpv6-traffic-2">
+                  <description>Allow all tcp and icmpv6 traffic. This should be generated since this has no ports specified.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>unknown</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <negate-source>yes</negate-source>
+                  <negate-destination>yes</negate-destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>ipv6-icmp</member>
+                  </application>
+                  <tag>
+                    <member>unknown_internal_policy-comment-5</member>
+                  </tag>
+                </entry>
+                <entry name="test-inet-tcp-icmp-traffic-1">
+                  <description>Allow all tcp and icmp traffic. This should be generated since this has no ports specified.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>unknown</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>unknown_internal_policy-comment-6</member>
+                  </tag>
+                </entry>
+                <entry name="test-inet-tcp-icmp-traffic-2">
+                  <description>Allow all tcp and icmp traffic. This should be generated since this has no ports specified.</description>
+                  <to>
+                    <member>internal</member>
+                  </to>
+                  <from>
+                    <member>unknown</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp</member>
+                  </application>
+                  <tag>
+                    <member>unknown_internal_policy-comment-6</member>
+                  </tag>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="BOGON">
+              <static>
+                <member>BOGON_0</member>
+                <member>BOGON_1</member>
+                <member>BOGON_2</member>
+                <member>BOGON_3</member>
+                <member>BOGON_4</member>
+                <member>BOGON_5</member>
+                <member>BOGON_6</member>
+                <member>BOGON_7</member>
+                <member>BOGON_8</member>
+                <member>BOGON_9</member>
+                <member>BOGON_10</member>
+                <member>BOGON_11</member>
+              </static>
+            </entry>
+            <entry name="GOOGLE_DNS">
+              <static>
+                <member>GOOGLE_DNS_0</member>
+                <member>GOOGLE_DNS_1</member>
+                <member>GOOGLE_DNS_2</member>
+                <member>GOOGLE_DNS_3</member>
+              </static>
+            </entry>
+            <entry name="INTERNAL">
+              <static>
+                <member>INTERNAL_0</member>
+                <member>INTERNAL_1</member>
+                <member>INTERNAL_2</member>
+              </static>
+            </entry>
+            <entry name="RESERVED">
+              <static>
+                <member>RESERVED_0</member>
+                <member>RESERVED_1</member>
+                <member>RESERVED_2</member>
+                <member>RESERVED_3</member>
+                <member>RESERVED_4</member>
+                <member>RESERVED_5</member>
+                <member>RESERVED_6</member>
+                <member>RESERVED_7</member>
+                <member>RESERVED_8</member>
+                <member>RESERVED_9</member>
+                <member>RESERVED_10</member>
+                <member>RESERVED_11</member>
+                <member>RESERVED_12</member>
+                <member>RESERVED_13</member>
+                <member>RESERVED_14</member>
+                <member>RESERVED_15</member>
+                <member>RESERVED_16</member>
+                <member>RESERVED_17</member>
+                <member>RESERVED_18</member>
+                <member>RESERVED_19</member>
+                <member>RESERVED_20</member>
+                <member>RESERVED_21</member>
+                <member>RESERVED_22</member>
+                <member>RESERVED_23</member>
+                <member>RESERVED_24</member>
+                <member>RESERVED_25</member>
+                <member>RESERVED_26</member>
+                <member>RESERVED_27</member>
+                <member>RESERVED_28</member>
+              </static>
+            </entry>
+            <entry name="RFC1918">
+              <static>
+                <member>RFC1918_0</member>
+                <member>RFC1918_1</member>
+                <member>RFC1918_2</member>
+              </static>
+            </entry>
+            <entry name="WEB_IPV6_SERVERS">
+              <static>
+                <member>WEB_IPV6_SERVERS_0</member>
+              </static>
+            </entry>
+            <entry name="WEB_SERVERS">
+              <static>
+                <member>WEB_SERVERS_0</member>
+                <member>WEB_SERVERS_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="BOGON_0">
+              <description>BOGON_0</description>
+              <ip-netmask>0.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="BOGON_1">
+              <description>BOGON_1</description>
+              <ip-netmask>192.0.0.0/24</ip-netmask>
+            </entry>
+            <entry name="BOGON_2">
+              <description>BOGON_2</description>
+              <ip-netmask>192.0.2.0/24</ip-netmask>
+            </entry>
+            <entry name="BOGON_3">
+              <description>BOGON_3</description>
+              <ip-netmask>198.18.0.0/15</ip-netmask>
+            </entry>
+            <entry name="BOGON_4">
+              <description>BOGON_4</description>
+              <ip-netmask>198.51.100.0/24</ip-netmask>
+            </entry>
+            <entry name="BOGON_5">
+              <description>BOGON_5</description>
+              <ip-netmask>203.0.113.0/24</ip-netmask>
+            </entry>
+            <entry name="BOGON_6">
+              <description>BOGON_6</description>
+              <ip-netmask>224.0.0.0/4</ip-netmask>
+            </entry>
+            <entry name="BOGON_7">
+              <description>BOGON_7</description>
+              <ip-netmask>240.0.0.0/4</ip-netmask>
+            </entry>
+            <entry name="BOGON_8">
+              <description>BOGON_8</description>
+              <ip-netmask>2001:db8::/32</ip-netmask>
+            </entry>
+            <entry name="BOGON_9">
+              <description>BOGON_9</description>
+              <ip-netmask>3ffe::/16</ip-netmask>
+            </entry>
+            <entry name="BOGON_10">
+              <description>BOGON_10</description>
+              <ip-netmask>5f00::/8</ip-netmask>
+            </entry>
+            <entry name="BOGON_11">
+              <description>BOGON_11</description>
+              <ip-netmask>ff00::/8</ip-netmask>
+            </entry>
+            <entry name="GOOGLE_DNS_0">
+              <description>GOOGLE_DNS_0</description>
+              <ip-netmask>8.8.4.4/32</ip-netmask>
+            </entry>
+            <entry name="GOOGLE_DNS_1">
+              <description>GOOGLE_DNS_1</description>
+              <ip-netmask>8.8.8.8/32</ip-netmask>
+            </entry>
+            <entry name="GOOGLE_DNS_2">
+              <description>GOOGLE_DNS_2</description>
+              <ip-netmask>2001:4860:4860::8844/128</ip-netmask>
+            </entry>
+            <entry name="GOOGLE_DNS_3">
+              <description>GOOGLE_DNS_3</description>
+              <ip-netmask>2001:4860:4860::8888/128</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_0">
+              <description>INTERNAL_0</description>
+              <ip-netmask>10.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_1">
+              <description>INTERNAL_1</description>
+              <ip-netmask>172.16.0.0/12</ip-netmask>
+            </entry>
+            <entry name="INTERNAL_2">
+              <description>INTERNAL_2</description>
+              <ip-netmask>192.168.0.0/16</ip-netmask>
+            </entry>
+            <entry name="RESERVED_0">
+              <description>RESERVED_0</description>
+              <ip-netmask>0.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="RESERVED_1">
+              <description>RESERVED_1</description>
+              <ip-netmask>10.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="RESERVED_2">
+              <description>RESERVED_2</description>
+              <ip-netmask>100.64.0.0/10</ip-netmask>
+            </entry>
+            <entry name="RESERVED_3">
+              <description>RESERVED_3</description>
+              <ip-netmask>127.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="RESERVED_4">
+              <description>RESERVED_4</description>
+              <ip-netmask>169.254.0.0/16</ip-netmask>
+            </entry>
+            <entry name="RESERVED_5">
+              <description>RESERVED_5</description>
+              <ip-netmask>172.16.0.0/12</ip-netmask>
+            </entry>
+            <entry name="RESERVED_6">
+              <description>RESERVED_6</description>
+              <ip-netmask>192.168.0.0/16</ip-netmask>
+            </entry>
+            <entry name="RESERVED_7">
+              <description>RESERVED_7</description>
+              <ip-netmask>224.0.0.0/4</ip-netmask>
+            </entry>
+            <entry name="RESERVED_8">
+              <description>RESERVED_8</description>
+              <ip-netmask>240.0.0.0/4</ip-netmask>
+            </entry>
+            <entry name="RESERVED_9">
+              <description>RESERVED_9</description>
+              <ip-netmask>::/8</ip-netmask>
+            </entry>
+            <entry name="RESERVED_10">
+              <description>RESERVED_10</description>
+              <ip-netmask>::1/128</ip-netmask>
+            </entry>
+            <entry name="RESERVED_11">
+              <description>RESERVED_11</description>
+              <ip-netmask>100::/8</ip-netmask>
+            </entry>
+            <entry name="RESERVED_12">
+              <description>RESERVED_12</description>
+              <ip-netmask>200::/7</ip-netmask>
+            </entry>
+            <entry name="RESERVED_13">
+              <description>RESERVED_13</description>
+              <ip-netmask>400::/6</ip-netmask>
+            </entry>
+            <entry name="RESERVED_14">
+              <description>RESERVED_14</description>
+              <ip-netmask>800::/5</ip-netmask>
+            </entry>
+            <entry name="RESERVED_15">
+              <description>RESERVED_15</description>
+              <ip-netmask>1000::/4</ip-netmask>
+            </entry>
+            <entry name="RESERVED_16">
+              <description>RESERVED_16</description>
+              <ip-netmask>4000::/3</ip-netmask>
+            </entry>
+            <entry name="RESERVED_17">
+              <description>RESERVED_17</description>
+              <ip-netmask>6000::/3</ip-netmask>
+            </entry>
+            <entry name="RESERVED_18">
+              <description>RESERVED_18</description>
+              <ip-netmask>8000::/3</ip-netmask>
+            </entry>
+            <entry name="RESERVED_19">
+              <description>RESERVED_19</description>
+              <ip-netmask>a000::/3</ip-netmask>
+            </entry>
+            <entry name="RESERVED_20">
+              <description>RESERVED_20</description>
+              <ip-netmask>c000::/3</ip-netmask>
+            </entry>
+            <entry name="RESERVED_21">
+              <description>RESERVED_21</description>
+              <ip-netmask>e000::/4</ip-netmask>
+            </entry>
+            <entry name="RESERVED_22">
+              <description>RESERVED_22</description>
+              <ip-netmask>f000::/5</ip-netmask>
+            </entry>
+            <entry name="RESERVED_23">
+              <description>RESERVED_23</description>
+              <ip-netmask>f800::/6</ip-netmask>
+            </entry>
+            <entry name="RESERVED_24">
+              <description>RESERVED_24</description>
+              <ip-netmask>fc00::/7</ip-netmask>
+            </entry>
+            <entry name="RESERVED_25">
+              <description>RESERVED_25</description>
+              <ip-netmask>fe00::/9</ip-netmask>
+            </entry>
+            <entry name="RESERVED_26">
+              <description>RESERVED_26</description>
+              <ip-netmask>fe80::/10</ip-netmask>
+            </entry>
+            <entry name="RESERVED_27">
+              <description>RESERVED_27</description>
+              <ip-netmask>fec0::/10</ip-netmask>
+            </entry>
+            <entry name="RESERVED_28">
+              <description>RESERVED_28</description>
+              <ip-netmask>ff00::/8</ip-netmask>
+            </entry>
+            <entry name="RFC1918_0">
+              <description>RFC1918_0</description>
+              <ip-netmask>10.0.0.0/8</ip-netmask>
+            </entry>
+            <entry name="RFC1918_1">
+              <description>RFC1918_1</description>
+              <ip-netmask>172.16.0.0/12</ip-netmask>
+            </entry>
+            <entry name="RFC1918_2">
+              <description>RFC1918_2</description>
+              <ip-netmask>192.168.0.0/16</ip-netmask>
+            </entry>
+            <entry name="WEB_IPV6_SERVERS_0">
+              <description>WEB_IPV6_SERVERS_0</description>
+              <ip-netmask>2620:15c:2c4:202:b0e7:158f:6a7a:3188/128</ip-netmask>
+            </entry>
+            <entry name="WEB_SERVERS_0">
+              <description>WEB_SERVERS_0</description>
+              <ip-netmask>200.1.1.1/32</ip-netmask>
+            </entry>
+            <entry name="WEB_SERVERS_1">
+              <description>WEB_SERVERS_1</description>
+              <ip-netmask>200.1.1.2/32</ip-netmask>
+            </entry>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="internal_external_policy-comment-1">
+              <comments>this is a sample policy for a zone based filter that generates multiple output formats. It checks logging options, tcp, udp and icmp type options.</comments>
+            </entry>
+            <entry name="external_internal_policy-comment-2">
+              <comments>this is a sample policy for a zone based filter that generates multiple output formats. It checks tcp-established and udp  established options.</comments>
+            </entry>
+            <entry name="internal_external_policy-comment-3">
+              <comments>this is a sample policy for a zone based filter that generates multiple output formats. It checks inet6 options and icmpv6.</comments>
+            </entry>
+            <entry name="external_internal_policy-comment-4">
+              <comments>this is a sample policy for a zone based filter that generates multiple output formats. It checks inet6 options.</comments>
+            </entry>
+            <entry name="unknown_internal_policy-comment-5">
+              <comments>this is a test policy for a zone based filter that generates multiple output formats. It checks inet6 options for IPv4 rules.</comments>
+            </entry>
+            <entry name="unknown_internal_policy-comment-6">
+              <comments>this is a test policy for a zone based filter that generates multiple output formats. It checks inet options for IPv6 rules.</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

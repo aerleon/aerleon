@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term tcp-established-good
+pass quick proto { tcp } from { any } to { any } flags A/A keep state
+

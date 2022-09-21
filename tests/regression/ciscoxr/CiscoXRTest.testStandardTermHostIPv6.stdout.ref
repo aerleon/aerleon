@@ -1,0 +1,18 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv6 access-list ipv6-test-filter
+ipv6 access-list ipv6-test-filter
+ remark $Id:$
+ remark this is a test ipv6 acl
+
+
+ remark good-term-2
+ permit tcp any eq 80 host 2001::3
+
+
+ remark good-term-4
+ permit ipv6 host 2001::3 any
+
+exit
+

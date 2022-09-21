@@ -1,0 +1,37 @@
+[
+  {
+    "action": "allow",
+    "description": " [1/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "5.2.3.2/32",
+          "10.2.3.4/32",
+          "23.2.3.3/32",
+          "54.2.3.4/32",
+          "76.2.3.5/32"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  },
+  {
+    "action": "allow",
+    "description": " [2/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "132.2.3.6/32",
+          "197.2.3.7/32"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 2
+  }
+]
+
+

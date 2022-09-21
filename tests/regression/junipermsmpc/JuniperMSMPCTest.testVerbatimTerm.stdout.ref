@@ -1,0 +1,22 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+mary had a little lamb
+                }
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

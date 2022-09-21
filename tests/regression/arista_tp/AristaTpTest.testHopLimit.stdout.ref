@@ -1,0 +1,7 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-v6-hl ipv6
+         ttl 25
+      !
+

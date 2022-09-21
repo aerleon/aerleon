@@ -1,0 +1,18 @@
+[
+  {
+    "action": "deny(404)",
+    "description": "Default Deny term",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "*"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  }
+]
+
+

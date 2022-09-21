@@ -1,0 +1,85 @@
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a sample edge input filter that generates
+         ** multiple output formats.
+         */
+        replace: filter edge-inbound {
+            interface-specific;
+            /*
+             ** this is a sample edge input filter with a very very very long and
+             ** multi-line comment that
+             ** also has multiple entries.
+             */
+            term deny-from-bogons {
+                from {
+                    source-address {
+                        /* IPv6 documentation prefix */
+                        2001:db8::/32;
+                        /* 6bone */
+                        3ffe::/16;
+                        /* 6bone */
+                        5f00::/8;
+                        /* IPv6 multicast */
+                        ff00::/8;
+                    }
+                }
+                then discard;
+            }
+            term deny-from-reserved {
+                from {
+                    source-address {
+                        /* reserved by IETF */
+                        ::/8;
+                        /* ipv6 loopback */
+                        ::1/128;
+                        /* reserved by IETF */
+                        100::/8;
+                        /* reserved by IETF */
+                        200::/7;
+                        /* reserved by IETF */
+                        400::/6;
+                        /* reserved by IETF */
+                        800::/5;
+                        /* reserved by IETF */
+                        1000::/4;
+                        /* reserved by IETF */
+                        4000::/3;
+                        /* reserved by IETF */
+                        6000::/3;
+                        /* reserved by IETF */
+                        8000::/3;
+                        /* reserved by IETF */
+                        a000::/3;
+                        /* reserved by IETF */
+                        c000::/3;
+                        /* reserved by IETF */
+                        e000::/4;
+                        /* reserved by IETF */
+                        f000::/5;
+                        /* reserved by IETF */
+                        f800::/6;
+                        /* unique local unicast */
+                        fc00::/7;
+                        /* reserved by IETF */
+                        fe00::/9;
+                        /* IPv6 link-local */
+                        fe80::/10;
+                        /* Ipv6 Site-local */
+                        fec0::/10;
+                        /* IPv6 multicast */
+                        ff00::/8;
+                    }
+                }
+                then discard;
+            }
+            term default-deny {
+                then discard;
+            }
+        }
+    }
+}

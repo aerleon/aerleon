@@ -1,0 +1,14 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list test-filter
+ip access-list test-filter
+ remark $Id:$
+ remark this is a test extended acl
+
+
+ remark good-term-1
+ permit tcp any any established
+
+exit
+

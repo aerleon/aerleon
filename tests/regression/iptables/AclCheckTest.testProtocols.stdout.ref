@@ -1,0 +1,18 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_good-term-4
+-A INPUT -j I_good-term-4
+-A I_good-term-4 -p tcp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p udp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p esp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p ah -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p gre -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-4 -p 50 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

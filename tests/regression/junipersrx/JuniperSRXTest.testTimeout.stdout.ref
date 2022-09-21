@@ -1,0 +1,34 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy timeout-term {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application timeout-term-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application timeout-term-app {
+        term t1 protocol icmp icmp-type 8 inactivity-timeout 77;
+    }
+}
+

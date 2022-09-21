@@ -1,0 +1,13 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term multiline-comment
+# This is a
+# multiline comment
+pass quick proto { tcp } from { any } to { any } flags S/SA keep state
+

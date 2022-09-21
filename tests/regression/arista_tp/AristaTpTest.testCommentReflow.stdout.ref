@@ -1,0 +1,15 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match ipv6-long-comment-term-1 ipv6
+         !! 0 this is very very very very very very very very very very
+         !! very
+         !! 1 very very very very very very very very very very very
+         !! 2 very very very very very very very very very very very
+         !! 3 very very very very very very very very very very very
+         !! 4 very very very very very very very long comment.
+         protocol icmpv6
+         actions
+            drop
+      !
+

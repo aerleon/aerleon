@@ -1,0 +1,10 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match established-term-1 ipv4
+         protocol tcp flags established source port 53 destination port 1024-65535
+      !
+      match ipv6-established-term-1 ipv6
+         protocol tcp flags established source port 53 destination port 1024-65535
+      !
+

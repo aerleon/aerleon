@@ -1,0 +1,17 @@
+: Windows_ipsec test-filter Policy
+netsh ipsec static add policy name=test-filter-policy assign=yes
+
+: this is a test acl
+:
+: $Id:$
+: $Date:$
+: $Revision:$
+: inet
+netsh ipsec static add filterlist name=t_good-term-icmp-list 
+netsh ipsec static add filteraction name=t_good-term-icmp-action action=permit
+netsh ipsec static add filter filterlist=t_good-term-icmp-list mirrored=yes srcaddr=any  dstaddr=any  protocol=icmp
+netsh ipsec static add filterlist name=t_good-term-icmp-list 
+netsh ipsec static add filteraction name=t_good-term-icmp-action action=permit
+netsh ipsec static add rule name=t_good-term-icmp-rule policy=test-filter filterlist=t_good-term-icmp-list filteraction=t_good-term-icmp-action 
+
+

@@ -1,0 +1,42 @@
+[
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv4": {
+      "config": {
+        "destination-address": "10.2.3.4/32",
+        "protocol": 17,
+        "source-address": "10.2.3.4/32"
+      },
+      "transport": {
+        "config": {
+          "destination-port": 53
+        }
+      }
+    }
+  },
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv4": {
+      "config": {
+        "destination-address": "10.2.3.4/32",
+        "protocol": 6,
+        "source-address": "10.2.3.4/32"
+      },
+      "transport": {
+        "config": {
+          "destination-port": 53
+        }
+      }
+    }
+  }
+]
+
+

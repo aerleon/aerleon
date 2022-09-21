@@ -1,0 +1,8 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match INET_INET ipv4
+         source prefix 8.8.4.4/32 8.8.8.8/32
+         destination prefix 4.4.2.2/32 4.4.4.4/32
+      !
+

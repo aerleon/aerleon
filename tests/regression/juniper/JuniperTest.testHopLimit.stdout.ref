@@ -1,0 +1,20 @@
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-v6-hl {
+                from {
+                    hop-limit 25;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

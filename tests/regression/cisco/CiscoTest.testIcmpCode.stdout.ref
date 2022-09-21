@@ -1,0 +1,15 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended test-filter
+ip access-list extended test-filter
+ remark $Id:$
+ remark this is a test acl
+
+
+ remark good_term_19
+ permit icmp any any 3 3
+ permit icmp any any 3 4
+
+exit
+

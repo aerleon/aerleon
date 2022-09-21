@@ -1,0 +1,14 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv4 access-list test-filter
+ipv4 access-list test-filter
+ remark $Id:$
+ remark this is a test acl
+
+
+ remark good-term-5
+ permit ipv4 any any nexthop1 ipv4 10.1.1.1 nexthop1 ipv4 10.1.1.1 nexthop1 ipv4 10.1.1.1 nexthop1 ipv4 10.1.1.1 nexthop1 ipv4 10.1.1.1
+
+exit
+

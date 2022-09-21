@@ -1,0 +1,13 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_bad-quote-term-1
+-A INPUT -j I_bad-quote-term-1
+-A I_bad-quote-term-1 -m comment --comment "Text describing with quotes"
+-A I_bad-quote-term-1 -p tcp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

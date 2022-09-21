@@ -1,0 +1,12 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match ipv4-default-all ipv4
+         actions
+            drop
+      !
+      match ipv6-default-all ipv6
+         actions
+            drop
+      !
+

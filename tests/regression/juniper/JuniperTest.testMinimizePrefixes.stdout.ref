@@ -1,0 +1,24 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term minimize-prefix-list {
+                from {
+                    source-address {
+                        1.0.0.0/8;
+                        1.1.1.1/32 except;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

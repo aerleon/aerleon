@@ -1,0 +1,36 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a global policy
+        */
+        global {
+            policy global-zone-term {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application global-zone-term-app;
+                    from-zone [ szone1 szone2 ];
+                    to-zone [ dzone1 dzone2 ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application global-zone-term-app {
+        term t1 protocol icmp icmp-type 8 inactivity-timeout 60;
+    }
+}
+

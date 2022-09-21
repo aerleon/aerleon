@@ -1,0 +1,29 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "destinationRanges": [
+      "10.2.3.4/32"
+    ],
+    "direction": "EGRESS",
+    "name": "good-term-1-e",
+    "targetTags": [
+      "dns-servers"
+    ]
+  }
+]
+
+

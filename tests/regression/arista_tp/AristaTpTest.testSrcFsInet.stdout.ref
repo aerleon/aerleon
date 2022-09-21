@@ -1,0 +1,13 @@
+traffic-policies
+   field-set ipv4 prefix src-FS_INET
+      8.8.4.0/24
+      8.8.8.0/24
+      except 8.8.4.4/32
+      except 8.8.8.8/32
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match FS_INET ipv4
+         source prefix field-set src-FS_INET
+      !
+

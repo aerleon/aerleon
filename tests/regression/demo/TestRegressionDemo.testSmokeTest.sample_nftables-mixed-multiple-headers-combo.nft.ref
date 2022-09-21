@@ -1,0 +1,20 @@
+table inet filtering_policies {
+    chain multi-all-families {
+        comment "Validate multiple protocols."
+        ip protocol { udp, tcp, icmp } ct state new accept
+        meta l4proto { udp, tcp, icmpv6 } ct state new accept
+    }
+    chain multi-proto-term {
+        comment "Validate multiple protocols. IPv6 icmp should not render."
+        ip protocol { udp, tcp, icmp } ct state new accept
+        meta l4proto { udp, tcp } ct state new accept
+    }
+    chain root0 {
+        comment "Noverbose + custom priority policy example"
+        type filter hook input priority 300; policy drop;
+        ct state established,related accept
+        jump multi-all-families
+        jump multi-proto-term
+    }
+}
+

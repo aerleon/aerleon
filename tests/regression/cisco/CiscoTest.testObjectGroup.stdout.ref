@@ -1,0 +1,32 @@
+
+
+object-group network ipv4 SOME_HOST
+ 10.0.0.0/8
+exit
+
+object-group port 80-80
+ eq 80
+exit
+
+object-group port 1024-65535
+ range 1024 65535
+exit
+
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended objgroupheader
+ip access-list extended objgroupheader
+ remark $Id:$
+ remark obj group header test
+
+
+ remark good-term-2
+ permit tcp any port-group 80-80 net-group SOME_HOST port-group 1024-65535
+
+
+ remark good-term-18
+ permit ip net-group SOME_HOST net-group SOME_HOST
+
+exit
+

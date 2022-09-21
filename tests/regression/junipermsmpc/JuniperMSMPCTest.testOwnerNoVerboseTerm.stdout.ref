@@ -1,0 +1,25 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term owner-term {
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

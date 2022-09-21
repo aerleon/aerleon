@@ -1,0 +1,43 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter4 {
+            interface-specific;
+            term good-term-12 {
+                from {
+                    source-address {
+                        127.0.0.1/32;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter6 {
+            interface-specific;
+            term good-term-12 {
+                from {
+                    source-address {
+                        ::1/128;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

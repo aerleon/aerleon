@@ -1,0 +1,34 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "deny",
+        "description": "default-deny-ingress-on-target: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "all"
+              }
+            ],
+            "srcIpRanges": [
+              "0.0.0.0/0"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1,
+        "targetResources": [
+          "https://www.googleapis.com/compute/v1/projects/project1/global/networks/vpc1",
+          "https://www.googleapis.com/compute/v1/projects/project2/global/networks/vpc2"
+        ]
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+
