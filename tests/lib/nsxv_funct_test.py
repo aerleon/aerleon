@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 from aerleon.lib import naming
 from aerleon.lib import nsxv
 from aerleon.lib import policy
-from aerleon.tests.lib import nsxv_mocktest
+from tests.lib import nsxv_mocktest
 
 
 class NsxvFunctionalTest(absltest.TestCase):
@@ -31,15 +31,7 @@ class NsxvFunctionalTest(absltest.TestCase):
   def setUp(self):
     """Call before every test case."""
     super().setUp()
-    parser = optparse.OptionParser()
-    parser.add_option(
-        '-d',
-        '--def',
-        dest='definitions',
-        help='definitions directory',
-        default='../def')
-    (FLAGS, args) = _parser.parse_args()
-    self.defs = naming.Naming(FLAGS.definitions)
+    self.defs = naming.Naming('./def')
 
   def tearDown(self):
     super().tearDown()
@@ -102,16 +94,13 @@ class NsxvFunctionalTest(absltest.TestCase):
 
   def test_nsxv_nofiltertype(self):
     pol = policy.ParsePolicy(nsxv_mocktest.POLICY_NO_FILTERTYPE, self.defs)
-    self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv(pol, 2))
+    self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, 2)
 
   def test_nsxv_incorrectfiltertype(self):
     pol = policy.ParsePolicy(nsxv_mocktest.POLICY_INCORRECT_FILTERTYPE,
                              self.defs)
-    self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv(pol, 2))
+    self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, 2)
 
-  def test_nsxv_optionkywd(self):
-    pol = policy.ParsePolicy(nsxv_mocktest.POLICY_OPTION_KYWD, self.defs)
-    self.assertRaises(nsxv.NsxvAclTermError, str(nsxv.Nsxv(pol, 2)))
 
   if __name__ == '__main__':
     absltest.main()

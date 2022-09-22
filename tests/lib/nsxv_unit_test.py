@@ -14,30 +14,23 @@
 #
 """UnitTest class for nsxv.py."""
 
-import optparse
 from absl.testing import absltest
 from xml.etree import ElementTree as ET
+from unittest import mock
 
 from aerleon.lib import naming
 from aerleon.lib import nsxv
 from aerleon.lib import policy
-from aerleon.tests.lib import nsxv_mocktest
+from tests.lib import nsxv_mocktest
 
+from tests.regression_utils import capture
 
 class TermTest(absltest.TestCase):
 
   def setUp(self):
     """Call before every test case."""
     super().setUp()
-    parser = optparse.OptionParser()
-    parser.add_option(
-        '-d',
-        '--def',
-        dest='definitions',
-        help='definitions directory',
-        default='../def')
-    (FLAGS, args) = parser.parse_args()
-    self.defs = naming.Naming(FLAGS.definitions)
+    self.defs = naming.Naming('./def')
 
   def tearDown(self):
     super().setUp()
@@ -54,7 +47,7 @@ class TermTest(absltest.TestCase):
 
   def test_init_forinet6(self):
     """Test for Term._init_."""
-    inet6_term = nsxv.Term(nsxv_mocktest.INET6_TERM, 'inet6', 6)
+    inet6_term = nsxv.Term(nsxv_mocktest.INET6_TERM, 'inet6', af=6)
     self.assertEqual(inet6_term.af, 6)
     self.assertEqual(inet6_term.filter_type, 'inet6')
 
@@ -123,8 +116,9 @@ class TermTest(absltest.TestCase):
     af = 6
     filter_type = 'inet6'
     for _, terms in pol.filters:
-      nsxv_term = nsxv.Term(terms[0], filter_type, af)
+      nsxv_term = nsxv.Term(terms[0], filter_type, af=af)
       rule_str = nsxv.Term.__str__(nsxv_term)
+
 
     # parse xml rule and check if the values are correct
     root = ET.fromstring(rule_str)
