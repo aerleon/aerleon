@@ -54,6 +54,7 @@ setuptools.setup(
         'ply',
         'mock',
         'six',
+        'pre-commit',
         'PyYAML',
         'pytest'
     ],
