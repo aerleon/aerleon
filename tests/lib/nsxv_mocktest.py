@@ -57,7 +57,7 @@ INET6_FILTER = """\
   }
 
   term test-icmpv6 {
-    #destination-address:: WEB_SERVERS
+    destination-address:: WEB_IPV6_SERVERS
     protocol:: icmpv6
     icmp-type:: echo-request echo-reply
     action:: accept

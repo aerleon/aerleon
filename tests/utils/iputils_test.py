@@ -2,8 +2,8 @@ import pytest
 
 import pathlib
 
-from capirca.utils import iputils
-from capirca.lib import nacaddr
+from aerleon.utils import iputils
+from aerleon.lib import nacaddr
 
 
 file_directory = pathlib.Path(__file__).parent.absolute()

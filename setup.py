@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""capirca installation module."""
+"""Aerleon installation module."""
 
 from os import path
 import setuptools
@@ -26,19 +26,19 @@ with open(path.join(root_dir, 'README.md'), encoding='utf-8') as f:
   long_description = f.read()
 
 setuptools.setup(
-    name='capirca',
+    name='aerleon',
     version=version,
-    description='Capirca',
+    description='A firewall generation tool',
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='Apache License, Version 2.0',
-    url='https://github.com/google/capirca/',
-    maintainer='Capirca Team',
-    maintainer_email='capirca-dev@google.com',
-    packages=['capirca', 'capirca.lib', 'capirca.utils'],
+    url='https://github.com/ankben/aerleon/',
+    maintainer='Aerleon Team',
+    maintainer_email='',
+    packages=['aerleon', 'aerleon.lib', 'aerleon.utils'],
     zip_safe=False,
     entry_points={
-        'console_scripts': ['aclgen = capirca.aclgen:EntryPoint'],
+        'console_scripts': ['aclgen = aerleon.aclgen:EntryPoint'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -54,6 +54,7 @@ setuptools.setup(
         'ply',
         'mock',
         'six',
+        'pre-commit',
         'PyYAML',
         'pytest'
     ],

@@ -21,7 +21,7 @@ import tempfile
 from absl import app
 from absl import flags
 from absl.testing import absltest
-from capirca import aclgen
+from aerleon import aclgen
 from tests.regression_utils import capture
 
 FLAGS = flags.FLAGS

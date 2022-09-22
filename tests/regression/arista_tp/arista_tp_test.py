@@ -20,11 +20,11 @@ import re
 from absl.testing import absltest
 from unittest import mock
 
-from capirca.lib import aclgenerator
-from capirca.lib import arista_tp
-from capirca.lib import nacaddr
-from capirca.lib import naming
-from capirca.lib import policy
+from aerleon.lib import aclgenerator
+from aerleon.lib import arista_tp
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+from aerleon.lib import policy
 
 from tests.regression_utils import capture
 

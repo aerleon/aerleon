@@ -18,11 +18,11 @@ from unittest import mock
 from absl import logging
 from absl.testing import absltest
 from absl.testing import parameterized
-from capirca.lib import aclgenerator
-from capirca.lib import nacaddr
-from capirca.lib import naming
-from capirca.lib import nftables
-from capirca.lib import policy
+from aerleon.lib import aclgenerator
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+from aerleon.lib import nftables
+from aerleon.lib import policy
 
 from tests.regression_utils import capture
 

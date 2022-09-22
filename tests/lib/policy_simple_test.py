@@ -16,7 +16,7 @@
 from absl.testing import absltest
 
 from absl import logging
-from capirca.lib import policy_simple
+from aerleon.lib import policy_simple
 
 
 class FieldTest(absltest.TestCase):

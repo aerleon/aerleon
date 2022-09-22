@@ -1,5 +1,5 @@
 #
-# This is an sample policy for capirca
+# This is an sample policy for aerleon
 # Note: Address family 'mixed' includes both IPv4 and IPv6; use 'inet' for IPv4
 # and 'inet6' for IPv6
 #

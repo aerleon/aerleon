@@ -16,7 +16,7 @@
 
 from absl.testing import absltest
 
-from capirca.lib import nacaddr
+from aerleon.lib import nacaddr
 
 
 class NacaddrUnitTest(absltest.TestCase):

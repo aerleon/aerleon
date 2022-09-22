@@ -16,8 +16,8 @@
 
 from absl.testing import absltest
 
-from capirca.lib import nacaddr
-from capirca.lib import naming
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
 
 
 class NamingUnitTest(absltest.TestCase):

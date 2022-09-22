@@ -6,11 +6,11 @@ on:
       - master
 
 env:
-  IMAGE_NAME: capirca
+  IMAGE_NAME: aerleon
 
 jobs:
   build:
-    name: "Build Capirca container"
+    name: "Build Aerleon container"
     runs-on: ubuntu-latest
 
     steps:

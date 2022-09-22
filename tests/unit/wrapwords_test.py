@@ -1,8 +1,8 @@
-from capirca.lib.aclgenerator import WrapWords
+from aerleon.lib.aclgenerator import WrapWords
 import pytest
 
 SINGLE_LINE_OVERFLOW_TEXT_LONG = \
-    "http://github.com/google/capirca/commit/c5" + \
+    "http://github.com/google/aerleon/commit/c5" + \
     "6ddf19e2679892ff078cf27aeb18310c2697ed This " + \
     "is a long header. It's long on purpose. It's " + \
     "purpose is to test that the splitting works co" + \
@@ -10,7 +10,7 @@ SINGLE_LINE_OVERFLOW_TEXT_LONG = \
     ". If it is shorter, it would not test the limit."
 
 SINGLE_LINE_OVERFLOW_TEXT_LONG_EXPECTED = [
-    "http://github.com/google/capirca/commit/c56ddf19e2679892ff078cf27aeb18",
+    "http://github.com/google/aerleon/commit/c56ddf19e2679892ff078cf27aeb18",
     "310c2697ed",
     "This is a long header. It's long on purpose. It's purpose is to test",
     "that the splitting works correctly. It should be well over the line",
