@@ -32,21 +32,21 @@ import os
 from functools import wraps
 from unittest import mock
 
-__all__ = ('files', 'stdout', 'stderr')
+__all__ = ("files", "stdout", "stderr")
 
 
 def mock_half_open(config):
   """
   This mock version of open() will pass through to __main__.open() unless the
   condition defined by 'predicate' is true.
-  
+
   For example the caller may wish to intercept writes to specific files and can
   do so by providing a predicate that examines the arguments to open().
   """
 
   real_open = open
   inner_mocks = defaultdict(mock.mock_open)
-  mock_open = mock.MagicMock(name='open', spec=open)
+  mock_open = mock.MagicMock(name="open", spec=open)
   predicate = config.predicate
   partition_key = config.partition_key
 
@@ -77,64 +77,73 @@ def _testdir(func):
   return os.path.dirname(func.__code__.co_filename)
 
 
+class OpenMockConfig:
+
+  def __init__(self, filenames):
+
+    def predicate(
+        file,
+        mode="r",
+        buffering=-1,
+        encoding=None,
+        errors=None,
+        newline=None,
+        closefd=True,
+        opener=None,
+    ):
+      return mode == "w" and any(
+          _normalize_path(file) == _normalize_path(filename) or
+          _name_from_path(file) == _name_from_path(filename)
+          for filename in filenames)
+
+    def partition_key(
+        file,
+        mode="r",
+        buffering=-1,
+        encoding=None,
+        errors=None,
+        newline=None,
+        closefd=True,
+        opener=None,
+    ):
+
+      def _filter(filename):
+        return (_normalize_path(file) == _normalize_path(filename) or
+                _name_from_path(file) == _name_from_path(filename))
+
+      return next(filter(_filter, filenames), None)
+
+    self.predicate = predicate
+    self.partition_key = partition_key
+
+
 def files(filenames):
 
   def inner_decorator(func):
-
-    class OpenMockConfig:
-
-      def __init__(self, filenames):
-
-        def predicate(file,
-                      mode='r',
-                      buffering=-1,
-                      encoding=None,
-                      errors=None,
-                      newline=None,
-                      closefd=True,
-                      opener=None):
-          return mode == 'w' and any(
-              _normalize_path(file) == _normalize_path(filename) or
-              _name_from_path(file) == _name_from_path(filename)
-              for filename in filenames)
-
-        def partition_key(file,
-                          mode='r',
-                          buffering=-1,
-                          encoding=None,
-                          errors=None,
-                          newline=None,
-                          closefd=True,
-                          opener=None):
-          return next(
-              filter(
-                  lambda filename: _normalize_path(file) == _normalize_path(
-                      filename) or _name_from_path(file) == _name_from_path(
-                          filename), filenames), None)
-
-        self.predicate = predicate
-        self.partition_key = partition_key
 
     @wraps(func)
     def inner(self, *args, **kwargs):
       mock_open_callable, inner_mocks = mock_half_open(
           OpenMockConfig(filenames=filenames))
-      with mock.patch('builtins.open', mock_open_callable):
+      with mock.patch("builtins.open", mock_open_callable):
         retval = func(self, *args, **kwargs)
 
       failed_assertion = None
       for filename in filenames:
-        file_base = '.'.join([func.__qualname__, filename])
-        file_ref = '.'.join([file_base, 'ref'])
+        file_base = ".".join([func.__qualname__, filename])
+        file_ref = ".".join([file_base, "ref"])
         try:
-          with open(os.path.join(_testdir(func), file_ref), 'r') as ref_file:
-            self.assertEqual(ref_file.read(),
-                             _collapse_mock_writes(inner_mocks, filename))
+          with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
+            self.assertEqual(
+                ref_file.read(),
+                _collapse_mock_writes(inner_mocks, filename),
+            )
         except IOError:
           try:
             with open(
-                os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-                'w') as actual:
+                os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                "w",
+            ) as actual:
               actual.write(_collapse_mock_writes(inner_mocks, filename))
           except IOError:
             # In this case the actual content was not written, but this is not critical.
@@ -147,8 +156,9 @@ def files(filenames):
         except AssertionError as e:
           try:
             with open(
-                os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-                'w') as actual:
+                os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                "w",
+            ) as actual:
               actual.write(_collapse_mock_writes(inner_mocks, filename))
           except IOError:
             # In this case the actual content was not written, but this is not critical.
@@ -169,18 +179,19 @@ def stdout(func):
 
   @wraps(func)
   def inner(self, *args, **kwargs):
-    with mock.patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+    with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
       retval = func(self, *args, **kwargs)
-      file_base = '.'.join([func.__qualname__, 'stdout'])
-      file_ref = '.'.join([file_base, 'ref'])
+      file_base = ".".join([func.__qualname__, "stdout"])
+      file_ref = ".".join([file_base, "ref"])
       try:
-        with open(os.path.join(_testdir(func), file_ref), 'r') as ref_file:
+        with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
           self.assertEqual(ref_file.read(), mock_stdout.getvalue())
       except IOError:
         try:
           with open(
-              os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-              'w') as actual:
+              os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+              "w",
+          ) as actual:
             actual.write(mock_stdout.getvalue())
         except IOError:
           # In this case the actual content was not written, but this is not critical.
@@ -193,8 +204,9 @@ def stdout(func):
       except AssertionError as e:
         try:
           with open(
-              os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-              'w') as actual:
+              os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+              "w",
+          ) as actual:
             actual.write(mock_stdout.getvalue())
         except IOError:
           # In this case the actual content was not written, but this is not critical.
@@ -211,18 +223,19 @@ def stderr(func):
 
   @wraps(func)
   def inner(self, *args, **kwargs):
-    with mock.patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+    with mock.patch("sys.stderr", new_callable=StringIO) as mock_stderr:
       retval = func(self, *args, **kwargs)
-      file_base = '.'.join([func.__qualname__, 'stderr'])
-      file_ref = '.'.join([file_base, 'ref'])
+      file_base = ".".join([func.__qualname__, "stderr"])
+      file_ref = ".".join([file_base, "ref"])
       try:
-        with open(os.path.join(_testdir(func), file_ref), 'r') as ref_file:
+        with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
           self.assertEqual(ref_file.read(), mock_stderr.getvalue())
       except IOError:
         try:
           with open(
-              os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-              'w') as actual:
+              os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+              "w",
+          ) as actual:
             actual.write(mock_stderr.getvalue())
         except IOError:
           # In this case the actual content was not written, but this is not critical.
@@ -235,8 +248,9 @@ def stderr(func):
       except AssertionError as e:
         try:
           with open(
-              os.path.join(_testdir(func), '.'.join([file_base, 'actual'])),
-              'w') as actual:
+              os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+              "w",
+          ) as actual:
             actual.write(mock_stderr.getvalue())
         except IOError:
           # In this case the actual content was not written, but this is not critical.
