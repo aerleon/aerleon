@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section id="1009" name="HEADER_WITH_SECTIONID_NAME">
+  <rule logged="false">
+    <name>accept-icmp</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>1</protocol>
+      </service>
+    </services>
+  </rule>
+</section>
+

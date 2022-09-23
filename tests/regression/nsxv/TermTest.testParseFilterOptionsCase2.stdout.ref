@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="HEADER_WITH_SECURITYGROUP_NAME">
+  <rule logged="false">
+    <name>test-icmpv6</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>58</protocol>
+        <subProtocol>128</subProtocol>
+      </service>
+      <service>
+        <protocol>58</protocol>
+        <subProtocol>129</subProtocol>
+      </service>
+    </services>
+    <appliedToList>
+      <appliedTo>
+        <type>SecurityGroup</type>
+        <value>securitygroup-Id1</value>
+      </appliedTo>
+    </appliedToList>
+  </rule>
+</section>
+

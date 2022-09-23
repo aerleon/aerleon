@@ -23,6 +23,8 @@ from aerleon.lib import naming
 from aerleon.lib import nsxv
 from aerleon.lib import policy
 
+from tests.regression_utils import capture
+
 INET_TERM = """\
   term permit-mail-services {
     destination-address:: MAIL_SERVERS
@@ -550,6 +552,7 @@ class TermTest(absltest.TestCase):
       if sub_protocol not in exp_subprotocol:
         self.fail('subProtocol not matched in test_str_forinet6()')
 
+  @capture.stdout
   def testTranslatePolicy(self):
     """Test for Nsxv.test_TranslatePolicy."""
     get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
@@ -578,7 +581,9 @@ class TermTest(absltest.TestCase):
          mock.call('INTERNAL')])
     self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] *
                                                    2)
+    print(translate_pol)
 
+  @capture.stdout
   def testTranslatePolicyMixedFilterInetOnly(self):
     """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet."""
     self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
@@ -596,7 +601,9 @@ class TermTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
     self.naming.GetServiceByProto.assert_has_calls(
         [mock.call('MAIL_SERVICES', 'tcp')] * 1)
+    print(translate_pol)
 
+  @capture.stdout
   def testTranslatePolicyMixedFilterInet6Only(self):
     """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet6."""
     self.naming.GetNetAddr.return_value = [nacaddr.IP('2001:4860:4860::8844')]
@@ -615,7 +622,9 @@ class TermTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
     self.naming.GetServiceByProto.assert_has_calls(
         [mock.call('MAIL_SERVICES', 'tcp')] * 1)
+    print(translate_pol)
 
+  @capture.stdout
   def testTranslatePolicyMixedFilterInetMixed(self):
     """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with mixed."""
     self.naming.GetNetAddr.return_value = [
@@ -637,7 +646,9 @@ class TermTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
     self.naming.GetServiceByProto.assert_has_calls(
         [mock.call('MAIL_SERVICES', 'tcp')] * 1)
+    print(translate_pol)
 
+  @capture.stdout
   def testTranslatePolicyWithEstablished(self):
     """Test for Nsxv.test_TranslatePolicy."""
     get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
@@ -669,7 +680,9 @@ class TermTest(absltest.TestCase):
          mock.call('INTERNAL')])
     self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] *
                                                    2)
+    print(translate_pol)
 
+  @capture.stdout
   def testNsxvStr(self):
     """Test for Nsxv._str_."""
     self.naming.GetNetAddr.side_effect = [[
@@ -739,7 +752,9 @@ class TermTest(absltest.TestCase):
 
     self.naming.GetNetAddr.assert_called_once_with('GOOGLE_DNS')
     self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
+    print(target)
 
+  @capture.stdout
   def testNsxvStrWithSecurityGroup(self):
     """Test for Nsxv._str_."""
     pol = policy.ParsePolicy(POLICY_WITH_SECURITY_GROUP, self.naming, False)
@@ -777,7 +792,9 @@ class TermTest(absltest.TestCase):
     # check appliedTo
     applied_to = root.find('./rule/appliedToList/appliedTo/value').text
     self.assertEqual(applied_to, 'securitygroup-Id')
+    print(target)
 
+  @capture.stdout
   def testBuildTokens(self):
     get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
 
@@ -799,7 +816,9 @@ class TermTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_has_calls(
         [mock.call('NTP_SERVERS'),
          mock.call('INTERNAL')])
+    print(pol1)
 
+  @capture.stdout
   def testBuildWarningTokens(self):
     get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
 
@@ -821,7 +840,9 @@ class TermTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_has_calls(
         [mock.call('NTP_SERVERS'),
          mock.call('INTERNAL')])
+    print(pol1)
 
+  @capture.stdout
   def testParseFilterOptionsCase1(self):
     pol = nsxv.Nsxv(
         policy.ParsePolicy(HEADER_WITH_SECTIONID + TERM, self.naming, False),
@@ -832,7 +853,9 @@ class TermTest(absltest.TestCase):
       self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['filter_type'], 'inet')
       self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['section_id'], '1009')
       self.assertIsNone(nsxv.Nsxv._FILTER_OPTIONS_DICT['applied_to'])
+    print(pol)
 
+  @capture.stdout
   def testParseFilterOptionsCase2(self):
     pol = nsxv.Nsxv(
         policy.ParsePolicy(HEADER_WITH_SECURITYGROUP + INET6_TERM, self.naming,
@@ -844,6 +867,7 @@ class TermTest(absltest.TestCase):
       self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['section_id'], 0)
       self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['applied_to'],
                        'securitygroup-Id1')
+    print(pol)
 
   def testBadHeaderCase(self):
     pol = policy.ParsePolicy(BAD_HEADER + INET6_TERM, self.naming, False)
@@ -1113,6 +1137,7 @@ class TermTest(absltest.TestCase):
     self.assertTrue(ipv4_address)
     self.assertTrue(ipv6_address)
 
+  @capture.stdout
   def testPolicy(self):
     defs = naming.Naming('./def')
     pol = policy.ParsePolicy(POLICY, defs)
@@ -1146,7 +1171,9 @@ class TermTest(absltest.TestCase):
     # check destination port
     destination_port = root.find('./rule/services/service/destinationPort').text
     self.assertEqual(destination_port, '143')
+    print(output)
 
+  @capture.stdout
   def testPolicyNoSectionId(self):
     pol = policy.ParsePolicy(POLICY_NO_SECTION_ID, self.naming)
     exp_info = 2
@@ -1165,6 +1192,7 @@ class TermTest(absltest.TestCase):
     # check protocol
     protocol = int(root.find('./rule/services/service/protocol').text)
     self.assertEqual(protocol, 1)
+    print(output)
 
   def testPolicyNoFilterType(self):
     pol = policy.ParsePolicy(POLICY_NO_FILTERTYPE, self.naming)
