@@ -202,15 +202,6 @@ on the wiki for full details.
 The `aerleon` Python package also provides a Python API. See
 [Python Package](wiki/python-package.md) on the wiki.
 
-Aerleon's `aclgen` script is available as a Docker image. See
-[Docker](wiki/docker.md) on the wiki for details.
-
-```bash
-docker run -v "${PWD}:/data" docker.pkg.github.com/google/capirca/capirca:latest
-docker run -v "${PWD}:/data" docker.pkg.github.com/google/capirca/capirca:latest --helpfull
-docker run -v "${PWD}:/data" docker.pkg.github.com/google/capirca/capirca:latest --config_file /data/path/to/config
-```
-
 To build from source, see
 [Getting Started With Source](wiki/getting-started-source.md) on the wiki.
 
