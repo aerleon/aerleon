@@ -16,6 +16,7 @@ import multiprocessing
 import os
 import shutil
 import tempfile
+from unittest import mock
 
 from absl import app
 from absl.testing import absltest
@@ -88,6 +89,14 @@ class TestRegressionDemo(absltest.TestCase):
         None,
         self.context,
     )
+
+  # Test to ensure existence of the entry point function for installed script.
+  @mock.patch.object(aclgen, 'SetupFlags', autospec=True)
+  @mock.patch.object(app, 'run', autospec=True)
+  def test_entry_point(self, mock_run, mock_flags):
+    aclgen.EntryPoint()
+    mock_flags.assert_called_with()
+    mock_run.assert_called_with(aclgen.main)
 
 
 def main(unused_argv):
