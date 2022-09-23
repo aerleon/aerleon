@@ -2487,8 +2487,7 @@ TEST_IPV6_IP = [nacaddr.IP('2001:4860:8000::5/128')]
 TEST_MIXED_IPS = [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('2001:4860:8000::5/128')]
 ALL_IPV4_IPS = [nacaddr.IP('0.0.0.0/0')]
 ALL_IPV6_IPS = [nacaddr.IP('::/0')]
-MANY_IPS = [nacaddr.IP('192.168.' + str(x) +'.0/32') for x in range(
-    0, 256)]
+MANY_IPS = [nacaddr.IP('192.168.' + str(x) + '.0/32') for x in range(0, 256)]
 MANY_IPS.extend([nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.1.1')])
 
 
@@ -2609,19 +2608,17 @@ class GcpHfTest(parameterized.TestCase):
     """Test that an unknown header option raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_UNKNOWN_OPTION
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
+          policy.ParsePolicy(
+              BAD_HEADER_UNKNOWN_OPTION + TERM_ALLOW_ALL_INTERNAL, self.naming),
           EXP_INFO)
 
   def testRaisesHeaderErrorOnUnknownDirection(self):
     """Test that an unknown direction option raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_UNKNOWN_DIRECTION
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              BAD_HEADER_UNKNOWN_DIRECTION + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   def testRaisesHeaderErrorOnInvalidMaxCost(self):
     """Test that a maximum default cost over 2^16 raises a HeaderError."""
@@ -2653,45 +2650,41 @@ class GcpHfTest(parameterized.TestCase):
     """Test that a long displayName raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_LONG_DISPLAYNAME
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              BAD_HEADER_LONG_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   def testRaisesHeaderErrorOnHeaderWithoutDisplayName(self):
     """Test that a header without a policy name raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_NO_DISPLAYNAME
-                             + TERM_ALLOW_ALL_INTERNAL, self.naming),
+          policy.ParsePolicy(
+              BAD_HEADER_NO_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL, self.naming),
           EXP_INFO)
 
   def testRaisesHeaderErrorOnIncorrectDisplayName1(self):
     """Test that an invalid displayName raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_INVALID_DISPLAYNAME_1
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              BAD_HEADER_INVALID_DISPLAYNAME_1 + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   def testRaisesHeaderErrorOnIncorrectDisplayName2(self):
     """Test that an invalid displayName raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_INVALID_DISPLAYNAME_2
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              BAD_HEADER_INVALID_DISPLAYNAME_2 + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   def testRaisesHeaderErrorOnIncorrectDisplayName3(self):
     """Test that an invalid displayName raises a HeaderError."""
     with self.assertRaises(gcp.HeaderError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(BAD_HEADER_INVALID_DISPLAYNAME_3
-                             + TERM_ALLOW_ALL_INTERNAL,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              BAD_HEADER_INVALID_DISPLAYNAME_3 + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   def testRaisesTermErrorOnTermWithDestinationTag(self):
     """Test that a term with a destination tag raises an error.
@@ -2701,8 +2694,7 @@ class GcpHfTest(parameterized.TestCase):
     with self.assertRaises(gcp.TermError):
       gcp_hf.HierarchicalFirewall(
           policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_DEST_TAG,
-                             self.naming),
-          EXP_INFO)
+                             self.naming), EXP_INFO)
 
   def testRaisesTermErrorOnTermWithSourceTag(self):
     """Test that a term with a source tag raises an error.
@@ -2712,8 +2704,7 @@ class GcpHfTest(parameterized.TestCase):
     with self.assertRaises(gcp.TermError):
       gcp_hf.HierarchicalFirewall(
           policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_SOURCE_TAG,
-                             self.naming),
-          EXP_INFO)
+                             self.naming), EXP_INFO)
 
   @capture.stdout
   def testTermWithNumberedProtocol(self):
@@ -2798,21 +2789,16 @@ class GcpHfTest(parameterized.TestCase):
     """Test that different policy names raises DifferentPolicyNameError."""
     with self.assertRaises(gcp_hf.DifferentPolicyNameError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_DENY_INGRESS
-                             + HEADER_OPTION_EGRESS_2 + TERM_DENY_EGRESS,
-                             self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              HEADER_NO_OPTIONS + TERM_DENY_INGRESS + HEADER_OPTION_EGRESS_2 +
+              TERM_DENY_EGRESS, self.naming), EXP_INFO)
 
-  @capture.stdout
   def testIgnorePolicyFromADifferentPlatform(self):
     """Test that a policy with a header from a different platform is ignored."""
     acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(BAD_HEADER_WRONG_PLATFORM
-                           + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
+        policy.ParsePolicy(BAD_HEADER_WRONG_PLATFORM + TERM_ALLOW_ALL_INTERNAL,
+                           self.naming), EXP_INFO)
     self.assertEqual([], json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
 
   @capture.stdout
   def testIgnoreTermWithPlatformExclude(self):
@@ -2846,10 +2832,8 @@ class GcpHfTest(parameterized.TestCase):
     self.naming.GetNetAddr.return_value = TEST_IP
 
     acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_AF
-                           + BAD_TERM_IP_VERSION_MISMATCH,
-                           self.naming),
-        EXP_INFO)
+        policy.ParsePolicy(HEADER_OPTION_AF + BAD_TERM_IP_VERSION_MISMATCH,
+                           self.naming), EXP_INFO)
     exp = [{'displayName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
     self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
     print(acl)
@@ -2860,10 +2844,8 @@ class GcpHfTest(parameterized.TestCase):
     self.naming.GetNetAddr.return_value = TEST_IP
 
     acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6
-                           + BAD_TERM_ICMP_VERSION_MISMATCH,
-                           self.naming),
-        EXP_INFO)
+        policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_ICMP_VERSION_MISMATCH,
+                           self.naming), EXP_INFO)
     exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
     self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
     print(acl)
@@ -2874,10 +2856,8 @@ class GcpHfTest(parameterized.TestCase):
     self.naming.GetNetAddr.return_value = TEST_IP
 
     acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6
-                           + BAD_TERM_IGMP_VERSION_MISMATCH,
-                           self.naming),
-        EXP_INFO)
+        policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_IGMP_VERSION_MISMATCH,
+                           self.naming), EXP_INFO)
     exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
     self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
     print(acl)
@@ -3029,9 +3009,9 @@ class GcpHfTest(parameterized.TestCase):
     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
     acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL
-                           + TERM_ALLOW_DNS, self.naming),
-        EXP_INFO)
+        policy.ParsePolicy(
+            HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL + TERM_ALLOW_DNS,
+            self.naming), EXP_INFO)
     expected = json.loads(EXPECTED_MULTIPLE_RULE_INGRESS_BETA)
     self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
     print(acl)
@@ -3209,9 +3189,9 @@ class GcpHfTest(parameterized.TestCase):
     self.naming.GetNetAddr.side_effect = [TEST_IP]
     with self.assertRaises(gcp_hf.ExceededCostError):
       gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_VERY_LOW_DEFAULT_MAX
-                             + TERM_ALLOW_ALL_INTERNAL, self.naming),
-          EXP_INFO)
+          policy.ParsePolicy(
+              HEADER_VERY_LOW_DEFAULT_MAX + TERM_ALLOW_ALL_INTERNAL,
+              self.naming), EXP_INFO)
 
   @capture.stdout
   def testChunkedIPRanges(self):
