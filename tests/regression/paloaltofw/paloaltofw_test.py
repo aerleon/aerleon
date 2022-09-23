@@ -615,12 +615,14 @@ class PaloAltoFWTest(absltest.TestCase):
     pol2 = paloaltofw.PaloAltoFW(
         policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_2, definitions), EXP_INFO)
     # The expectation is that there will be a single port mapped.
-    self.assertEqual(
-        pol2.service_map.entries, {
-            ((), ('25',), 'tcp'): {
-                'name': 'service-smtp-term-1-tcp'
-            }
-        }, pol2.service_map.entries)
+    expected_entries = {
+        ((), ('25',), 'tcp'): {
+            'name': 'service-smtp-term-1-tcp'
+        }
+    }
+
+    self.assertEqual(pol2.service_map.entries, expected_entries,
+                     pol2.service_map.entries)
     print(pol2)
 
   @capture.stdout
@@ -743,8 +745,8 @@ term rule-1 {
 """
 
     pol = policy.ParsePolicy(POL % ("", T), self.naming)
-    self.assertRaises(paloaltofw.UnsupportedFilterError,
-                      paloaltofw.PaloAltoFW, pol, EXP_INFO)
+    self.assertRaises(paloaltofw.UnsupportedFilterError, paloaltofw.PaloAltoFW,
+                      pol, EXP_INFO)
 
     T = """
   protocol:: udp icmp
@@ -752,8 +754,8 @@ term rule-1 {
 """
 
     pol = policy.ParsePolicy(POL % ("inet", T), self.naming)
-    self.assertRaises(paloaltofw.UnsupportedFilterError,
-                      paloaltofw.PaloAltoFW, pol, EXP_INFO)
+    self.assertRaises(paloaltofw.UnsupportedFilterError, paloaltofw.PaloAltoFW,
+                      pol, EXP_INFO)
 
     T = """
   protocol:: icmpv6 icmp
@@ -761,15 +763,15 @@ term rule-1 {
 """
 
     pol = policy.ParsePolicy(POL % ("mixed", T), self.naming)
-    self.assertRaises(paloaltofw.UnsupportedFilterError,
-                      paloaltofw.PaloAltoFW, pol, EXP_INFO)
+    self.assertRaises(paloaltofw.UnsupportedFilterError, paloaltofw.PaloAltoFW,
+                      pol, EXP_INFO)
 
     T = """
   protocol:: icmpv6
   icmp-type:: echo echo-reply
 """
-    self.assertRaises(policy.TermInvalidIcmpType,
-                      policy.ParsePolicy, POL % ("inet6", T), self.naming)
+    self.assertRaises(policy.TermInvalidIcmpType, policy.ParsePolicy,
+                      POL % ("inet6", T), self.naming)
 
   def testBadICMPv6Type(self):
     pol = policy.ParsePolicy(GOOD_HEADER_MIXED + BAD_ICMPV6_TYPE_TERM,
@@ -931,7 +933,7 @@ term rule-1 {
                                  "/entry[@name='test-accept-action']/action")
     self.assertEqual(x, 'allow', output)
     print(output)
-  
+
   @capture.stdout
   def testDenyAction(self):
     pol = policy.ParsePolicy(GOOD_HEADER_1 + ACTION_DENY_TERM, self.naming)
@@ -1041,12 +1043,12 @@ term rule-1 {
 
   @capture.stdout
   def testAhTcpMixedProtoTerm(self):
-    pol = policy.ParsePolicy(
-        GOOD_HEADER_1 + AH_TCP_MIXED_PROTO_TERM, self.naming)
+    pol = policy.ParsePolicy(GOOD_HEADER_1 + AH_TCP_MIXED_PROTO_TERM,
+                             self.naming)
     paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
     output = str(paloalto)
-    svc = paloalto.config.find(
-        PATH_RULES + "/entry[@name='test-mixed-protocol-1']/service")
+    svc = paloalto.config.find(PATH_RULES +
+                               "/entry[@name='test-mixed-protocol-1']/service")
     self.assertIsNotNone(svc, output)
     self.assertEqual(len(svc), 1, output)
     self.assertEqual(svc[0].tag, 'member', output)
@@ -1060,8 +1062,8 @@ term rule-1 {
     self.assertEqual(app[0].text, 'any', output)
 
     # Check second policy as well.
-    svc = paloalto.config.find(
-        PATH_RULES + "/entry[@name='test-mixed-protocol-2']/service")
+    svc = paloalto.config.find(PATH_RULES +
+                               "/entry[@name='test-mixed-protocol-2']/service")
     self.assertIsNotNone(svc, output)
     self.assertEqual(len(svc), 1, output)
     self.assertEqual(svc[0].tag, 'member', output)
@@ -1074,7 +1076,6 @@ term rule-1 {
     self.assertEqual(app[0].tag, 'member', output)
     self.assertEqual(app[0].text, 'ipsec-ah', output)
     print(output)
-
 
   @capture.stdout
   def testEspProtoTerm(self):
@@ -1091,12 +1092,12 @@ term rule-1 {
 
   @capture.stdout
   def testEspTcpMixedProtoTerm(self):
-    pol = policy.ParsePolicy(
-        GOOD_HEADER_1 + ESP_TCP_MIXED_PROTO_TERM, self.naming)
+    pol = policy.ParsePolicy(GOOD_HEADER_1 + ESP_TCP_MIXED_PROTO_TERM,
+                             self.naming)
     paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
     output = str(paloalto)
-    svc = paloalto.config.find(
-        PATH_RULES + "/entry[@name='test-mixed-protocol-1']/service")
+    svc = paloalto.config.find(PATH_RULES +
+                               "/entry[@name='test-mixed-protocol-1']/service")
     self.assertIsNotNone(svc, output)
     self.assertEqual(len(svc), 1, output)
     self.assertEqual(svc[0].tag, 'member', output)
@@ -1110,8 +1111,8 @@ term rule-1 {
     self.assertEqual(app[0].text, 'any', output)
 
     # Check second policy as well.
-    svc = paloalto.config.find(
-        PATH_RULES + "/entry[@name='test-mixed-protocol-2']/service")
+    svc = paloalto.config.find(PATH_RULES +
+                               "/entry[@name='test-mixed-protocol-2']/service")
     self.assertIsNotNone(svc, output)
     self.assertEqual(len(svc), 1, output)
     self.assertEqual(svc[0].tag, 'member', output)
@@ -1437,10 +1438,10 @@ term rule-1 {
     self.assertRaisesRegex(paloaltofw.UnsupportedFilterError, regex,
                            paloaltofw.PaloAltoFW, pol, EXP_INFO)
 
-    self.assertRaisesRegex(policy.MixedPortandNonPortProtos,
-                           '^Term rule-1 contains mixed uses of protocols '
-                           'with and without port numbers',
-                           policy.ParsePolicy, POL6, definitions)
+    self.assertRaisesRegex(
+        policy.MixedPortandNonPortProtos,
+        '^Term rule-1 contains mixed uses of protocols '
+        'with and without port numbers', policy.ParsePolicy, POL6, definitions)
 
   @capture.stdout
   def testPanPorts(self):
@@ -1691,8 +1692,8 @@ term rule-1 {
                                 "/entry[@name='rule-1']/destination/member")
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
-    self.assertEqual({"10.2.0.0/24",
-                      "10.3.1.0/24", "10.3.2.0/24"}, addrs, output)
+    self.assertEqual({"10.2.0.0/24", "10.3.1.0/24", "10.3.2.0/24"}, addrs,
+                     output)
 
     T = """
   source-address:: NET4
@@ -1706,8 +1707,8 @@ term rule-1 {
                                 "/entry[@name='rule-1']/source/member")
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
-    self.assertEqual({"2001:db8:0:aa::/64", "2001:db8:0:bb::/64"},
-                     addrs, output)
+    self.assertEqual({"2001:db8:0:aa::/64", "2001:db8:0:bb::/64"}, addrs,
+                     output)
     x = paloalto.config.findall(PATH_RULES +
                                 "/entry[@name='rule-1']/destination/member")
     self.assertTrue(len(x) > 0, output)
@@ -1731,9 +1732,11 @@ term rule-1 {
                                 "/entry[@name='rule-1']/destination/member")
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
-    self.assertEqual({"10.3.1.0/24", "10.3.2.0/24",
-                      "2001:db8:0:aa::/64", "2001:db8:0:bb::/64"},
-                     addrs, output)
+    self.assertEqual(
+        {
+            "10.3.1.0/24", "10.3.2.0/24", "2001:db8:0:aa::/64",
+            "2001:db8:0:bb::/64"
+        }, addrs, output)
     T = """
   source-address:: NET6
   destination-address:: NET7
@@ -1751,8 +1754,8 @@ term rule-1 {
                                 "/entry[@name='rule-1']/destination/member")
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
-    self.assertEqual({"8000::/3",
-                      "a000::/3", "c000::/3", "e000::/3"}, addrs, output)
+    self.assertEqual({"8000::/3", "a000::/3", "c000::/3", "e000::/3"}, addrs,
+                     output)
 
     POL = """
 header {
@@ -1773,10 +1776,10 @@ term rule-1 {
 }"""
 
     pol = policy.ParsePolicy(POL, definitions)
-    self.assertRaisesRegex(paloaltofw.UnsupportedHeaderError,
-                           '^Cannot mix addr-obj and no-addr-obj header '
-                           'option in a single policy file$',
-                           paloaltofw.PaloAltoFW, pol, EXP_INFO)
+    self.assertRaisesRegex(
+        paloaltofw.UnsupportedHeaderError,
+        '^Cannot mix addr-obj and no-addr-obj header '
+        'option in a single policy file$', paloaltofw.PaloAltoFW, pol, EXP_INFO)
 
   @capture.stdout
   def testAddrObj(self):
@@ -1826,8 +1829,7 @@ term rule-1 {
                                 "/entry[@name='rule-1']/destination/member")
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
-    self.assertEqual({"NET2",
-                      "NET3"}, addrs, output)
+    self.assertEqual({"NET2", "NET3"}, addrs, output)
     x = paloalto.config.findall(PATH_ADDRESS_GROUP +
                                 "/entry[@name='NET2']/static/member")
     self.assertTrue(len(x) > 0, output)
@@ -1911,6 +1913,7 @@ term rule-1 {
     self.assertTrue(len(x) > 0, output)
     addrs = {elem.text for elem in x}
     self.assertEqual({"6000::/3"}, addrs, output)
+
 
 if __name__ == '__main__':
   absltest.main()
