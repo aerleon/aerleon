@@ -16,19 +16,12 @@ import multiprocessing
 import os
 import pathlib
 import shutil
-import sys
 import tempfile
 from unittest import mock
 
 from absl import app
-from absl import flags
 from absl.testing import absltest
 from aerleon import aclgen
-
-FLAGS = flags.FLAGS
-aclgen.SetupFlags()  # Ensure flags are set up only once
-# Pass only the program name into absl so it uses the default flags
-FLAGS(sys.argv[0:1])
 
 
 class TestAclGenDemo(absltest.TestCase):
