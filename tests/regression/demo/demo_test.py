@@ -15,19 +15,12 @@
 import multiprocessing
 import os
 import shutil
-import sys
 import tempfile
 
 from absl import app
-from absl import flags
 from absl.testing import absltest
 from aerleon import aclgen
 from tests.regression_utils import capture
-
-FLAGS = flags.FLAGS
-aclgen.SetupFlags()  # Ensure flags are set up only once
-# Pass only the program name into absl so it uses the default flags
-FLAGS(sys.argv[0:1])
 
 
 class TestRegressionDemo(absltest.TestCase):
