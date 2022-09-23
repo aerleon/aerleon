@@ -4,21 +4,22 @@ $Id:$
 $Date:$
 $Revision:$
 -->
-<section id="1007" name="POLICY_NAME">
+<section name="MIXED_HEADER_NAME">
   <rule logged="false">
-    <name>reject-imap-requests</name>
-    <action>reject</action>
+    <name>permit-mail-services</name>
+    <action>allow</action>
     <destinations excluded="false">
       <destination>
-        <type>Ipv4Address</type>
-        <value>200.1.1.4/31</value>
+        <type>Ipv6Address</type>
+        <value>2001:4860:4860::8844</value>
       </destination>
     </destinations>
     <services>
       <service>
         <protocol>6</protocol>
-        <destinationPort>143</destinationPort>
+        <destinationPort>25</destinationPort>
       </service>
     </services>
   </rule>
 </section>
+
