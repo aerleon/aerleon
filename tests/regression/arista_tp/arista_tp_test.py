@@ -1030,16 +1030,20 @@ class AristaTpTest(absltest.TestCase):
 
   @capture.stdout
   def testMixedInet(self):
-    self.naming.GetNetAddr.side_effect = [[
-      nacaddr.IP("8.8.4.4"),
-      nacaddr.IP("8.8.8.8"),
-      nacaddr.IP("2001:4860:4860::8844"),
-      nacaddr.IP("2001:4860:4860::8888")
-    ], [
-      nacaddr.IP("10.0.0.0/8"),
-      nacaddr.IP("172.16.0.0/12"),
-      nacaddr.IP("192.168.0.0/16")
-    ]]
+    mockGetNetAddr1 = [
+        nacaddr.IP("8.8.4.4"),
+        nacaddr.IP("8.8.8.8"),
+        nacaddr.IP("2001:4860:4860::8844"),
+        nacaddr.IP("2001:4860:4860::8888")
+    ]
+
+    mockGetNetAddr2 = [
+        nacaddr.IP("10.0.0.0/8"),
+        nacaddr.IP("172.16.0.0/12"),
+        nacaddr.IP("192.168.0.0/16")
+    ]
+
+    self.naming.GetNetAddr.side_effect = [mockGetNetAddr1, mockGetNetAddr2]
 
     pol = policy.ParsePolicy(GOOD_HEADER + MIXED_INET, self.naming)
     atp = arista_tp.AristaTrafficPolicy(pol, EXP_INFO)
