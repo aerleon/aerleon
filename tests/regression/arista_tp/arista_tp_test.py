@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """unittest for arista traffic-policy rendering module."""
 
 import datetime
@@ -810,13 +809,13 @@ class AristaTpTest(absltest.TestCase):
     self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
     self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
     print(atp)
-    
+
   @capture.stdout
   def testNoVerboseV6(self):
     addr_list = list()
     for octet in range(0, 256):
-      net = nacaddr.IPv6(
-          "2001:db8:1010:" + str(octet) + "::64/64", strict=False)
+      net = nacaddr.IPv6("2001:db8:1010:" + str(octet) + "::64/64",
+                         strict=False)
       addr_list.append(net)
     self.naming.GetNetAddr.return_value = addr_list
     self.naming.GetServiceByProto.return_value = ["25"]
@@ -833,9 +832,8 @@ class AristaTpTest(absltest.TestCase):
 
   def testTermTypeIndexKeys(self):
     # ensure an _INET entry for each _TERM_TYPE entry
-    self.assertCountEqual(
-        arista_tp.Term._TERM_TYPE.keys(),
-        arista_tp.Term.AF_MAP.keys())
+    self.assertCountEqual(arista_tp.Term._TERM_TYPE.keys(),
+                          arista_tp.Term.AF_MAP.keys())
 
   @capture.stdout
   def testCommentReflow(self):
@@ -1033,16 +1031,15 @@ class AristaTpTest(absltest.TestCase):
   @capture.stdout
   def testMixedInet(self):
     self.naming.GetNetAddr.side_effect = [[
-        nacaddr.IP("8.8.4.4"),
-        nacaddr.IP("8.8.8.8"),
-        nacaddr.IP("2001:4860:4860::8844"),
-        nacaddr.IP("2001:4860:4860::8888")
-    ],
-                                          [
-                                              nacaddr.IP("10.0.0.0/8"),
-                                              nacaddr.IP("172.16.0.0/12"),
-                                              nacaddr.IP("192.168.0.0/16")
-                                          ]]
+      nacaddr.IP("8.8.4.4"),
+      nacaddr.IP("8.8.8.8"),
+      nacaddr.IP("2001:4860:4860::8844"),
+      nacaddr.IP("2001:4860:4860::8888")
+    ], [
+      nacaddr.IP("10.0.0.0/8"),
+      nacaddr.IP("172.16.0.0/12"),
+      nacaddr.IP("192.168.0.0/16")
+    ]]
 
     pol = policy.ParsePolicy(GOOD_HEADER + MIXED_INET, self.naming)
     atp = arista_tp.AristaTrafficPolicy(pol, EXP_INFO)
