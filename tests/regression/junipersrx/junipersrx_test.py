@@ -823,9 +823,9 @@ class JuniperSRXTest(absltest.TestCase):
 
   @capture.stdout
   def testLoggingBothAccept(self):
-    srx = junipersrx.JuniperSRX(policy.ParsePolicy(GOOD_HEADER
-                                                   + GOOD_TERM_LOG_1,
-                                                   self.naming), EXP_INFO)
+    srx = junipersrx.JuniperSRX(
+        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LOG_1, self.naming),
+        EXP_INFO)
     output = str(srx)
     self.assertIn('session-init;', output)
     self.assertIn('session-close;', output)
@@ -833,9 +833,9 @@ class JuniperSRXTest(absltest.TestCase):
 
   @capture.stdout
   def testLoggingBothDeny(self):
-    srx = junipersrx.JuniperSRX(policy.ParsePolicy(GOOD_HEADER
-                                                   + GOOD_TERM_LOG_2,
-                                                   self.naming), EXP_INFO)
+    srx = junipersrx.JuniperSRX(
+        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LOG_2, self.naming),
+        EXP_INFO)
     output = str(srx)
     self.assertIn('session-init;', output)
     self.assertIn('session-close;', output)
@@ -843,9 +843,9 @@ class JuniperSRXTest(absltest.TestCase):
 
   @capture.stdout
   def testLoggingTrueAccept(self):
-    srx = junipersrx.JuniperSRX(policy.ParsePolicy(GOOD_HEADER
-                                                   + GOOD_TERM_LOG_3,
-                                                   self.naming), EXP_INFO)
+    srx = junipersrx.JuniperSRX(
+        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LOG_3, self.naming),
+        EXP_INFO)
     output = str(srx)
     self.assertIn('session-close;', output)
     self.assertNotIn('session-init;', output)
@@ -853,9 +853,9 @@ class JuniperSRXTest(absltest.TestCase):
 
   @capture.stdout
   def testLoggingTrueDeny(self):
-    srx = junipersrx.JuniperSRX(policy.ParsePolicy(GOOD_HEADER
-                                                   + GOOD_TERM_LOG_4,
-                                                   self.naming), EXP_INFO)
+    srx = junipersrx.JuniperSRX(
+        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LOG_4, self.naming),
+        EXP_INFO)
     output = str(srx)
     self.assertIn('session-init;', output)
     self.assertNotIn('session-close;', output)
@@ -1686,7 +1686,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER = MIXED rendering
     pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_21, self.naming)
@@ -1733,7 +1733,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER_4 = V6 rendering
     pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_21, self.naming)
@@ -1780,7 +1780,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER_3 = V4 rendering
     pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_21, self.naming)
@@ -1814,7 +1814,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER = MIXED rendering
     pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_21, self.naming)
@@ -1858,7 +1858,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER_4 = V6 rendering
     pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_21, self.naming)
@@ -1892,7 +1892,7 @@ class JuniperSRXTest(absltest.TestCase):
       counter += 1
 
     self.naming.GetServiceByProto.side_effect = [['25', '25']]
-    self.naming.GetNetAddr.side_effect = [overflow_ips+mo_ips]
+    self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
     # GOOD_HEADER_3 = V4 rendering
     pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_21, self.naming)
@@ -1964,6 +1964,7 @@ class JuniperSRXTest(absltest.TestCase):
         # check if each addresssetname referenced in policy occurs more than
         # once i.e. is defined in the address book
         self.assertGreater(address_set_count, 1)
+    print(output)
 
   @capture.stdout
   def testCreateV6AddressEntriesForV6Render2(self):

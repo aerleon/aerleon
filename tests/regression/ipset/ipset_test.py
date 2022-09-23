@@ -187,8 +187,8 @@ class IpsetTest(absltest.TestCase):
     self.assertIn('# end:ipset-rules', result)
 
     self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
+    print(result)
 
-  @capture.stdout
   def testGenerateSetName(self):
     # iptables superclass currently limits term name length to 26 characters,
     # but that could change

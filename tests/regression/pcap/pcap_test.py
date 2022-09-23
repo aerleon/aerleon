@@ -290,7 +290,6 @@ class PcapFilter(absltest.TestCase):
     self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
     print(result)
 
-
   @capture.stdout
   def testLog(self):
     acl = pcap.PcapFilter(policy.ParsePolicy(
@@ -377,14 +376,12 @@ class PcapFilter(absltest.TestCase):
         'did not find actual term for multi-proto')
     print(result)
 
-  @capture.stdout
   def testNextTerm(self):
     acl = pcap.PcapFilter(policy.ParsePolicy(
         GOOD_HEADER + NEXT_TERM, self.naming), EXP_INFO)
     result = str(acl)
     self.assertIn('', result,
                   'did not find actual term for good-term-icmpv6')
-    print(result)
 
   @capture.stdout
   def testTcpOptions(self):

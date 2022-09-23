@@ -494,7 +494,8 @@ term bad-term-source-tags-count {{
   protocol:: tcp
   action:: accept
   source-tag:: {many_source_tags}
-}}""".format(many_source_tags=SAMPLE_TAG*(gce.Term._TERM_SOURCE_TAGS_LIMIT+1))
+}}""".format(many_source_tags=SAMPLE_TAG *
+             (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1))
 
 BAD_TERM_TARGET_TAGS_COUNT = """
 term bad-term-target-tags-count {{
@@ -503,7 +504,8 @@ term bad-term-target-tags-count {{
   protocol:: tcp
   action:: accept
   destination-tag:: {many_target_tags}
-}}""".format(many_target_tags=SAMPLE_TAG*(gce.Term._TERM_TARGET_TAGS_LIMIT+1))
+}}""".format(many_target_tags=SAMPLE_TAG *
+             (gce.Term._TERM_TARGET_TAGS_LIMIT + 1))
 
 GOOD_TERM_EXCLUDE_RANGE = """
 [
@@ -758,7 +760,6 @@ class GCETest(parameterized.TestCase):
         mock.call('DNS', 'tcp')])
     print(acl)
 
-  @capture.stdout
   def testSkipExpiredTerm(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.return_value = ['22']
@@ -769,9 +770,7 @@ class GCETest(parameterized.TestCase):
 
     self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
     self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
-    print(acl)
 
-  @capture.stdout
   def testSkipStatelessReply(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.return_value = ['22']
@@ -791,7 +790,6 @@ class GCETest(parameterized.TestCase):
     self.naming.GetServiceByProto.assert_has_calls([
         mock.call('DNS', 'udp'),
         mock.call('DNS', 'tcp')])
-    print(acl)
 
   @capture.stdout
   def testSourceNetworkSplit(self):
@@ -1018,9 +1016,9 @@ class GCETest(parameterized.TestCase):
   def testIngressTags(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    acl = gce.GCE(policy.ParsePolicy(
-        GOOD_HEADER_INGRESS + GOOD_TERM_INGRESS_SOURCETAG, self.naming),
-                  EXP_INFO)
+    acl = gce.GCE(
+        policy.ParsePolicy(GOOD_HEADER_INGRESS + GOOD_TERM_INGRESS_SOURCETAG,
+                           self.naming), EXP_INFO)
 
     self.assertIn('sourceTags', str(acl))
     self.assertNotIn('targetTags', str(acl))
@@ -1260,14 +1258,12 @@ class GCETest(parameterized.TestCase):
     self.assertNotIn('icmp', str(acl))
     print(acl)
 
-  @capture.stdout
   def testIcmpv6Inet(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     acl = gce.GCE(
         policy.ParsePolicy(GOOD_HEADER_INET + GOOD_TERM_ICMPV6,
                            self.naming), EXP_INFO)
     self.assertNotIn('58', str(acl))
-    print(acl)
 
   @capture.stdout
   def testIgmpInet(self):
@@ -1278,19 +1274,17 @@ class GCETest(parameterized.TestCase):
     self.assertIn('2', str(acl))
     print(acl)
 
-  @capture.stdout
   def testIgmpInet6(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     acl = gce.GCE(
         policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_IGMP,
                            self.naming), EXP_INFO)
     self.assertNotIn('2', str(acl))
-    print(acl)
 
   def testPortsCountExceededError(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.return_value = list(
-        str(i) for i in range(1024, 1024 + (gce.Term._TERM_PORTS_LIMIT)*3, 2))
+        str(i) for i in range(1024, 1024 + (gce.Term._TERM_PORTS_LIMIT) * 3, 2))
     self.assertRaisesRegex(
         gce.GceFirewallError,
         'GCE firewall rule exceeded number of ports per rule: ' +
@@ -1716,6 +1710,7 @@ class GCETest(parameterized.TestCase):
        }, 4))
   def testGetAttributeCount(self, dict_term, expected):
     self.assertEqual(gce.GetAttributeCount(dict_term), expected)
+
 
 if __name__ == '__main__':
   absltest.main()

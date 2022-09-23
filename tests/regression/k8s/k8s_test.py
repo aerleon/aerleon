@@ -647,7 +647,6 @@ class K8sTest(parameterized.TestCase):
     policies = policy_list['items']
     self.assertDictEqual(expected, policies[0])
 
-  @capture.stdout
   def testBadSourceAddressExcludeTerm(self):
     self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
     acl = k8s.K8s(
@@ -655,9 +654,7 @@ class K8sTest(parameterized.TestCase):
         EXP_INFO)
 
     self.assertEqual(str(acl), '')
-    print(acl)
 
-  @capture.stdout
   def testBadDestinationAddressExcludeTerm(self):
     self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
 
@@ -666,7 +663,6 @@ class K8sTest(parameterized.TestCase):
                            self.naming), EXP_INFO)
 
     self.assertEqual(str(acl), '')
-    print(acl)
 
   def testBadSourcePortTerm(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
@@ -717,7 +713,6 @@ class K8sTest(parameterized.TestCase):
                              'name %s is not valid' % name, k8s.K8s, pol,
                              EXP_INFO)
 
-  @capture.stdout
   def testSkipExpiredTerm(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.return_value = ['22']
@@ -729,9 +724,7 @@ class K8sTest(parameterized.TestCase):
 
     self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
     self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
-    print(acl)
 
-  @capture.stdout
   def testSkipStatelessReply(self):
     self.naming.GetNetAddr.return_value = TEST_IPS
     self.naming.GetServiceByProto.return_value = ['22']
@@ -750,7 +743,6 @@ class K8sTest(parameterized.TestCase):
     self.naming.GetServiceByProto.assert_has_calls(
         [mock.call('DNS', 'udp'),
          mock.call('DNS', 'tcp')])
-    print(acl)
 
   @capture.stdout
   def testValidTermProtos(self):
