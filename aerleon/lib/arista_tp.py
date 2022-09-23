@@ -17,11 +17,9 @@
 import copy
 import datetime
 import re
-import textwrap
 
 from absl import logging
 from aerleon.lib import aclgenerator
-import six
 
 #          1         2         3
 # 123456789012345678901234567890123456789
@@ -163,7 +161,7 @@ class Term(aclgenerator.Term):
     if (self.term.platform and self._PLATFORM not in self.term.platform):
       return ""
     if (self.term.platform_exclude and
-        self._PLATFORM in self.term.platform_exclude):
+            self._PLATFORM in self.term.platform_exclude):
       return ""
 
     config = Config()
@@ -218,19 +216,22 @@ class Term(aclgenerator.Term):
     if self.term.owner and not self.noverbose:
       self.term.comment.append("owner: %s" % self.term.owner)
     if self.term.comment and not self.noverbose:
-      reflowed_comments = self._reflowComments(self.term.comment,
-                                               MAX_COMMENT_LENGTH)
+      reflowed_comments = aclgenerator.WrapWords(self.term.comment,
+                                                 MAX_COMMENT_LENGTH)
       for line in reflowed_comments:
         term_block.append([MATCH_INDENT, "!! " + line, False])
 
-    has_match_criteria = (
-        self.term.destination_address or
-        self.term.destination_address_exclude or self.term.destination_port or
-        self.term.destination_prefix or self.term.fragment_offset or
-        self.term.hop_limit or self.term.port or self.term.protocol or
-        self.term.protocol_except or self.term.source_address or
-        self.term.source_address_exclude or self.term.source_port or
-        self.term.source_prefix or self.term.ttl)
+    has_match_criteria = (self.term.destination_address or
+                          self.term.destination_address_exclude or
+                          self.term.destination_port or
+                          self.term.destination_prefix or
+                          self.term.fragment_offset or self.term.hop_limit or
+                          self.term.port or self.term.protocol or
+                          self.term.protocol_except or
+                          self.term.source_address or
+                          self.term.source_address_exclude or
+                          self.term.source_port or self.term.source_prefix or
+                          self.term.ttl)
 
     # if the term name is default-* we will render this into the
     # appropriate default term name to be used in this filter.
@@ -264,8 +265,9 @@ class Term(aclgenerator.Term):
         term_block.append([MATCH_INDENT, src_str, False])
       elif self.term.source_address:
         logging.debug(
-            self.NO_AF_LOG_ADDR.substitute(
-                term=self.term.name, direction="source", af=self.term_type))
+            self.NO_AF_LOG_ADDR.substitute(term=self.term.name,
+                                           direction="source",
+                                           af=self.term_type))
         return ""
 
       # destination address
@@ -286,9 +288,9 @@ class Term(aclgenerator.Term):
 
       elif self.term.destination_address:
         logging.debug(
-            self.NO_AF_LOG_ADDR.substitute(
-                term=self.term.name, direction="destination",
-                af=self.term_type))
+            self.NO_AF_LOG_ADDR.substitute(term=self.term.name,
+                                           direction="destination",
+                                           af=self.term_type))
         return ""
 
       if self.term.source_prefix:
@@ -364,8 +366,8 @@ class Term(aclgenerator.Term):
     # if there's no action, then this is an implicit permit
     current_action = self._ACTIONS.get(self.term.action[0])
     # non-permit/drop actions should be added here
-    has_extra_actions = (
-        self.term.logging or self.term.counter or self.term.dscp_set)
+    has_extra_actions = (self.term.logging or self.term.counter or
+                         self.term.dscp_set)
 
     # if !accept - generate an action statement
     # if accept and there are extra actions generate an actions statement
@@ -400,33 +402,6 @@ class Term(aclgenerator.Term):
       config.Append(tindent, tstr, verbatim=tverb)
 
     return str(config)
-
-  def _reflowComments(self, comments, max_length):
-    """reflows aerleon comments to stay within max_length.
-
-    Args:
-      comments (list): list of comment strings
-      max_length (int):
-
-    Returns:
-      type: list containing the reflowed text.
-
-    if a comment list entry is > max_length it will be reflowed and appended
-    to the returned comment list
-
-    """
-    flowed_comments = []
-
-    for comment in comments:
-      lines = comment.split("\n")
-      for line in lines:
-        if len(line) > max_length:
-          line = textwrap.wrap(line, max_length)
-          flowed_comments.extend(line)
-        else:
-          flowed_comments.append(line)
-
-    return flowed_comments
 
   def _processPorts(self, term):
     port_str = ""
@@ -824,11 +799,14 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
               )
               continue
 
-          has_unsupported_match_criteria = (
-              term.dscp_except or term.dscp_match or term.ether_type or
-              term.flexible_match_range or term.forwarding_class or
-              term.forwarding_class_except or term.next_ip or term.port or
-              term.traffic_type)
+          has_unsupported_match_criteria = (term.dscp_except or
+                                            term.dscp_match or
+                                            term.ether_type or
+                                            term.flexible_match_range or
+                                            term.forwarding_class or
+                                            term.forwarding_class_except or
+                                            term.next_ip or term.port or
+                                            term.traffic_type)
           if has_unsupported_match_criteria:
             logging.warning(
                 "WARNING: term %s in policy %s uses an "
@@ -840,13 +818,13 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
             continue
 
           if (("is-fragment" in term.option or "fragment" in term.option) and
-              filter_type == "inet6"):
+                  filter_type == "inet6"):
             raise AristaTpFragmentInV6Error("the term %s uses is-fragment but "
                                             "is a v6 policy." % term.name)
 
           # this should error out more gracefully in mixed configs
           if (("is-fragment" in term.option or "fragment" in term.option) and
-              ft == "inet6"):
+                  ft == "inet6"):
             logging.warning(
                 "WARNING: term %s in mixed policy %s uses "
                 "fragment the ipv6 version of the term will not be "
@@ -858,7 +836,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
           # check for traffic-policy specific feature interactions
           if (("is-fragment" in term.option or "fragment" in term.option) and
-              (term.source_port or term.destination_port)):
+                  (term.source_port or term.destination_port)):
             logging.warning(
                 "WARNING: term %s uses fragment as well as src/dst "
                 "port matches.  traffic-policies currently do not "
