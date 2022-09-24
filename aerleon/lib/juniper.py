@@ -20,7 +20,6 @@ from absl import logging
 from aerleon.lib import aclgenerator
 from aerleon.lib import nacaddr
 from aerleon.lib import summarizer
-import six
 
 
 # generic error class
@@ -151,25 +150,32 @@ class Term(aclgenerator.Term):
   # it's critical that the members of each filter type be the same, that is
   # to say that if _TERM_TYPE.get('inet').get('foo') returns something,
   # _TERM_TYPE.get('inet6').get('foo') must return the inet6 equivalent.
-  _TERM_TYPE = {'inet': {'addr': 'address',
-                         'saddr': 'source-address',
-                         'daddr': 'destination-address',
-                         'protocol': 'protocol',
-                         'protocol-except': 'protocol-except',
-                         'tcp-est': 'tcp-established'},
-                'inet6': {'addr': 'address',
-                          'saddr': 'source-address',
-                          'daddr': 'destination-address',
-                          'protocol': 'next-header',
-                          'protocol-except': 'next-header-except',
-                          'tcp-est': 'tcp-established'},
-                'bridge': {'addr': 'ip-address',
-                           'saddr': 'ip-source-address',
-                           'daddr': 'ip-destination-address',
-                           'protocol': 'ip-protocol',
-                           'protocol-except': 'ip-protocol-except',
-                           'tcp-est': 'tcp-flags "(ack|rst)"'}
-              }
+  _TERM_TYPE = {
+      'inet': {
+          'addr': 'address',
+          'saddr': 'source-address',
+          'daddr': 'destination-address',
+          'protocol': 'protocol',
+          'protocol-except': 'protocol-except',
+          'tcp-est': 'tcp-established'
+      },
+      'inet6': {
+          'addr': 'address',
+          'saddr': 'source-address',
+          'daddr': 'destination-address',
+          'protocol': 'next-header',
+          'protocol-except': 'next-header-except',
+          'tcp-est': 'tcp-established'
+      },
+      'bridge': {
+          'addr': 'ip-address',
+          'saddr': 'ip-source-address',
+          'daddr': 'ip-destination-address',
+          'protocol': 'ip-protocol',
+          'protocol-except': 'ip-protocol-except',
+          'tcp-est': 'tcp-flags "(ack|rst)"'
+      }
+  }
 
   def __init__(self, term, term_type, enable_dsmo, noverbose, filter_direction=None, interface_type=None):
     super().__init__(term)
@@ -592,9 +598,9 @@ class Term(aclgenerator.Term):
       # "then discard;"
       current_action = self.ACTIONS.get(unique_actions.pop(), 'next_ip')
       if (self.term_type == 'inet' and
-          current_action in ['discard', 'reject', 'reject tcp-reset']
-         ) or (self.term_type == 'inet6' and current_action in
-               ['reject', 'reject tcp-reset']):
+          current_action in ['discard', 'reject', 'reject tcp-reset']) or (
+              self.term_type == 'inet6' and
+              current_action in ['reject', 'reject tcp-reset']):
         config.Append('then {')
         config.Append('%s;' % current_action)
         config.Append('}')
@@ -934,8 +940,9 @@ class Juniper(aclgenerator.ACLGenerator):
             'sample',
             'tcp-established',
             'tcp-initial',
-            'inactive'}
-         })
+            'inactive'
+        }
+    })
     return supported_tokens, supported_sub_tokens
 
   def _TranslatePolicy(self, pol, exp_info):
@@ -1022,14 +1029,14 @@ class Juniper(aclgenerator.ACLGenerator):
           if term.expiration:
             if term.expiration <= exp_info_date:
               logging.info('INFO: Term %s in policy %s expires '
-                          'in less than two weeks.', term.name, filter_name)
+                           'in less than two weeks.', term.name, filter_name)
             if term.expiration <= current_date:
               logging.warning('WARNING: Term %s in policy %s is expired and '
                               'will not be rendered.', term.name, filter_name)
               continue
           if 'is-fragment' in term.option and filter_type == 'inet6':
             raise JuniperFragmentInV6Error('The term %s uses "is-fragment" but '
-                                          'is a v6 policy.' % term.name)
+                                           'is a v6 policy.' % term.name)
 
           new_terms.append(self._TERM(term, filter_type, enable_dsmo, noverbose, filter_direction, interface_type))
 
@@ -1039,8 +1046,8 @@ class Juniper(aclgenerator.ACLGenerator):
   def __str__(self):
     config = Config()
 
-    for (header, filter_name, filter_type, interface_specific, filter_enhanced_mode, terms
-        ) in self.juniper_policies:
+    for (header, filter_name, filter_type, interface_specific,
+         filter_enhanced_mode, terms) in self.juniper_policies:
       # add the header information
       config.Append('firewall {')
       config.Append('family %s {' % filter_type)

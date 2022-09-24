@@ -4,6 +4,5 @@
 
 absl-py
 ply
-PyYAML
-six>=1.12.0
 pytest
+PyYAML
