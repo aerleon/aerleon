@@ -20,7 +20,6 @@ import logging
 from aerleon.lib import aclgenerator
 from aerleon.lib import juniper
 from aerleon.lib import nacaddr
-import six
 
 MAX_IDENTIFIER_LEN = 55  # It is really 63, but leaving room for added chars
 

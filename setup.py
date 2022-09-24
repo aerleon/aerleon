@@ -53,7 +53,6 @@ setuptools.setup(
         'absl-py',
         'ply',
         'mock',
-        'six',
         'pre-commit',
         'PyYAML',
         'pytest'

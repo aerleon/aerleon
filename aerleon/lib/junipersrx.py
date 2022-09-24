@@ -25,7 +25,6 @@ import itertools
 from absl import logging
 from aerleon.lib import aclgenerator
 from aerleon.lib import nacaddr
-import six
 
 
 ICMP_TERM_LIMIT = 8
@@ -151,7 +150,7 @@ class Term(aclgenerator.Term):
 
     # APPLICATION
     if (not self.term.source_port and not self.term.destination_port and not
-        self.term.icmp_type and not self.term.protocol):
+            self.term.icmp_type and not self.term.protocol):
       ret_str.IndentAppend(5, 'application any;')
     else:
       if hasattr(self.term, 'replacement_application_name'):
@@ -332,9 +331,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                          'verbatim',
                          'vpn'}
 
-    supported_sub_tokens.update(
-        {'action': {'accept', 'deny', 'reject', 'count', 'log', 'dscp'},
-        })
+    supported_sub_tokens.update({
+        'action': {'accept', 'deny', 'reject', 'count', 'log', 'dscp'},
+    })
     del supported_sub_tokens['option']
     return supported_tokens, supported_sub_tokens
 
@@ -373,7 +372,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
       # TODO(robankeny): Clean up option section.
       if (len(filter_options) < 4 or filter_options[0] != 'from-zone' or
-          filter_options[2] != 'to-zone'):
+              filter_options[2] != 'to-zone'):
         raise UnsupportedFilterError('SRX filter arguments must specify '
                                      'from-zone and to-zone.')
 
@@ -531,8 +530,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         # policy can be at the same time inet and inet6.
         if self._GLOBAL_ADDR_BOOK in self.addr_book_type:
           for zone in self.addressbook:
-            for unused_name, ips in sorted(
-                self.addressbook[zone].items()):
+            for _, ips in sorted(self.addressbook[zone].items()):
               ips = [i for i in ips]
               if term.source_address == ips:
                 term.source_address = ips
@@ -604,7 +602,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             term.replacement_application_name = application_set['name']
             break
           if (term.name == application_set['name'] and
-              new_application_set != application_set):
+                  new_application_set != application_set):
             raise ConflictingApplicationSetsError(
                 'Application set %s has a conflicting entry' % term.name)
 
@@ -626,14 +624,14 @@ class JuniperSRX(aclgenerator.ACLGenerator):
     general/address-address-sets-limitations.html
     """
 
-    def Chunks(l):
+    def Chunks(addresses):
       """Splits a list of IP addresses into smaller lists based on byte size."""
       return_list = [[]]
       counter = 0
       index = 0
-      for i in l:
+      for i in addresses:
         # Size is split in half due to the max size being a sum of src and dst.
-        if counter > (self._ADDRESS_LENGTH_LIMIT/2):
+        if counter > (self._ADDRESS_LENGTH_LIMIT / 2):
           counter = 0
           index += 1
           return_list.append([])

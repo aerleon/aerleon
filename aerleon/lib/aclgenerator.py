@@ -21,8 +21,8 @@ import re
 import string
 
 from aerleon.lib import policy
-import six
 import hashlib
+
 
 # generic error class
 class Error(Exception):
@@ -69,38 +69,40 @@ class Term:
   """Generic framework for a generator Term."""
   ICMP_TYPE = policy.Term.ICMP_TYPE
   # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
-  PROTO_MAP = {'hopopt': 0,
-               'icmp': 1,
-               'igmp': 2,
-               'ggp': 3,
-               'ipip': 4,
-               'tcp': 6,
-               'egp': 8,
-               'igp': 9,
-               'udp': 17,
-               'rdp': 27,
-               'ipv6': 41,
-               'ipv6-route': 43,
-               'fragment': 44,
-               'rsvp': 46,
-               'gre': 47,
-               'esp': 50,
-               'ah': 51,
-               'icmpv6': 58,
-               'ipv6-nonxt': 59,
-               'ipv6-opts': 60,
-               'ospf': 89,
-               'pim': 103,
-               'vrrp': 112,
-               'l2tp': 115,
-               'sctp': 132,
-               'udplite': 136,
-               'all': -1,  # Used for GCE default deny, do not use in pol file.
-              }
-  AF_MAP = {'inet': 4,
-            'inet6': 6,
-            'bridge': 4  # if this doesn't exist, output includes v4 & v6
-           }
+  PROTO_MAP = {
+      'hopopt': 0,
+      'icmp': 1,
+      'igmp': 2,
+      'ggp': 3,
+      'ipip': 4,
+      'tcp': 6,
+      'egp': 8,
+      'igp': 9,
+      'udp': 17,
+      'rdp': 27,
+      'ipv6': 41,
+      'ipv6-route': 43,
+      'fragment': 44,
+      'rsvp': 46,
+      'gre': 47,
+      'esp': 50,
+      'ah': 51,
+      'icmpv6': 58,
+      'ipv6-nonxt': 59,
+      'ipv6-opts': 60,
+      'ospf': 89,
+      'pim': 103,
+      'vrrp': 112,
+      'l2tp': 115,
+      'sctp': 132,
+      'udplite': 136,
+      'all': -1,  # Used for GCE default deny, do not use in pol file.
+  }
+  AF_MAP = {
+      'inet': 4,
+      'inet6': 6,
+      'bridge': 4  # if this doesn't exist, output includes v4 & v6
+  }
   # These protos are always expressed as numbers instead of name
   #  due to inconsistencies on the end platform's name-to-number
   #  mapping.
@@ -122,9 +124,9 @@ class Term:
     if term.protocol:
       for protocol in term.protocol:
         if (protocol not in self.PROTO_MAP and
-            str(protocol) not in [str(p) for p in self.PROTO_MAP_BY_NUMBER]):
-          raise UnsupportedFilterError('Protocol(s) %s are not supported.'
-                                       % str(term.protocol))
+                str(protocol) not in [str(p) for p in self.PROTO_MAP_BY_NUMBER]):
+          raise UnsupportedFilterError('Protocol(s) %s are not supported.' %
+                                       str(term.protocol))
 
       term.protocol = ProtocolNameToNumber(term.protocol,
                                            self.ALWAYS_PROTO_NUM,
@@ -181,7 +183,7 @@ class Term:
     af = self.NormalizeAddressFamily(af)
     # check that addr family and protocl are appropriate
     if ((af != 4 and protocols == ['icmp']) or
-        (af != 6 and protocols == ['icmpv6'])):
+            (af != 6 and protocols == ['icmpv6'])):
       raise MismatchIcmpInetError('%s %s, %s: %s, %s: %s' % (
           'ICMP/ICMPv6 mismatch with address family IPv4/IPv6 in term',
           self.term.name, 'address family', af, 'protocols',
@@ -291,14 +293,14 @@ class ACLGenerator:
           for el, val in term.__dict__.items():
             # Private attributes do not need to be valid keywords.
             if (val and el not in supported_tokens and not
-                el.startswith('flatten')):
+                    el.startswith('flatten')):
               if val and el not in self.WARN_IF_UNSUPPORTED:
                 err.append(el)
               else:
                 warn.append(el)
             # ignore Liskov's rule.
             if (val and isinstance(val, list) and
-                el in supported_sub_tokens):
+                    el in supported_sub_tokens):
               ns = set(val) - supported_sub_tokens[el]
               # hack support for ArbitraryOptions in junos. todo, add the
               # junos options into the lexer, then we can nuke .*
@@ -374,8 +376,9 @@ class ACLGenerator:
             'reject',
             'reject-with-tcp-rst',
         },
-        'icmp_type': set(list(Term.ICMP_TYPE[4].keys())
-                         + list(Term.ICMP_TYPE[6].keys()))
+        'icmp_type':
+            set(
+                list(Term.ICMP_TYPE[4].keys()) + list(Term.ICMP_TYPE[6].keys()))
     }
     return supported_tokens, supported_sub_tokens
 
