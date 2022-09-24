@@ -8,11 +8,6 @@ packages = ["aerleon", "aerleon.lib", "aerleon.utils"]
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
 
-[tool.black]
-line-length = 99
-skip-string-normalization = true
-target-version = ['py36']
-
 [tool.flake8]
 max-complexity = 10
 max-line-length = 99
@@ -48,7 +43,6 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "coverage",
     "flake8",
     "Flake8-pyproject",
