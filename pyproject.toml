@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["aerleon", "aerleon.lib", "aerleon.utils"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[project]
+name = "aerleon"
+description = "A firewall generation tool"
+readme = "README.md"
+requires-python = ">=3.6"
+keywords = ["firewall", "networking", "security"]
+license = {text = "Apache License"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Firewalls",
+]
+dependencies = [
+    "absl-py",
+    "ply",
+    "PyYaml"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
+
+[project.scripts]
+aclgen = "aerleon.aclgen:EntryPoint"
