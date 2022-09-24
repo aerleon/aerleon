@@ -1,8 +1,8 @@
 repos:
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: '3.8.3'
+  - repo: https://github.com/john-hen/Flake8-pyproject
+    rev: 1.1.0
     hooks:
-      - id: flake8
+      - id: Flake8-pyproject
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.1.0
     hooks:

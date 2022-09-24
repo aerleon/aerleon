@@ -8,6 +8,21 @@ packages = ["aerleon", "aerleon.lib", "aerleon.utils"]
 [tool.setuptools.dynamic]
 version = {file = "VERSION"}
 
+[tool.black]
+line-length = 99
+skip-string-normalization = true
+target-version = ['py36']
+
+[tool.flake8]
+max-complexity = 10
+max-line-length = 99
+extend-ignore = ['E203']
+exclude = ['.git','.github','.venv','site-packages','__pycache__','doc','build','dist','policies']
+
+[tool.coverage.run]
+branch = true
+command_line = '-m pytest'
+
 [project]
 name = "aerleon"
 description = "A firewall generation tool"
@@ -27,13 +42,20 @@ classifiers = [
 dependencies = [
     "absl-py",
     "ply",
-    "PyYaml"
+    "PyYAML",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
+dev = [
+    "black",
+    "coverage",
+    "flake8",
+    "Flake8-pyproject",
+    "pre-commit",
+]
 test = [
-    "pytest"
+    "pytest",
 ]
 
 [project.scripts]
