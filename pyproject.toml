@@ -27,12 +27,14 @@ classifiers = [
 dependencies = [
     "absl-py",
     "ply",
-    "mock",
-    "pre-commit",
-    "PyYAML",
-    "pytest"
+    "PyYaml"
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
 
 [project.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
