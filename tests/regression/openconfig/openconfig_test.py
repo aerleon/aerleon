@@ -325,8 +325,7 @@ header {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = [nacaddr.IP('10.2.3.4/32'),
-            nacaddr.IP('2001:4860:8000::5/128')]
+TEST_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
 
 
 _TERM_SOURCE_TAGS_LIMIT = 30
@@ -335,118 +334,123 @@ _TERM_PORTS_LIMIT = 256
 
 
 class OpenConfigTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def _StripAclHeaders(self, acl):
+        return '\n'.join(
+            [line for line in str(acl).split('\n') if not line.lstrip().startswith('#')]
+        )
 
-  def _StripAclHeaders(self, acl):
-    return '\n'.join([line for line in str(acl).split('\n')
-                      if not line.lstrip().startswith('#')])
+    @capture.stdout
+    def testSaddr(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testSaddr(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SADDR, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_SADDR)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_SADDR, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_SADDR)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testDaddr(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testDaddr(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_DADDR, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_DADDR)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_DADDR, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_DADDR)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testSport(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-  @capture.stdout
-  def testSport(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SPORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_SPORT)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_SPORT, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_SPORT)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
+        print(acl)
 
-    self.naming.GetServiceByProto.assert_has_calls([
-        mock.call('DNS', 'tcp')])
-    print(acl)
+    @capture.stdout
+    def testDport(self):
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-  @capture.stdout
-  def testDport(self):
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_DPORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_DPORT)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_DPORT, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_DPORT)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
+        print(acl)
 
-    self.naming.GetServiceByProto.assert_has_calls([
-        mock.call('DNS', 'tcp')])
-    print(acl)
+    @capture.stdout
+    def testEverything(self):
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testEverything(self):
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_EVERYTHING)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_EVERYTHING)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
+        )
+        print(acl)
 
-    self.naming.GetServiceByProto.assert_has_calls([
-        mock.call('DNS', 'udp'),
-        mock.call('DNS', 'tcp')])
-    print(acl)
+    @capture.stdout
+    def testV6Saddr(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testV6Saddr(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_SADDR, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_V6_SADDR)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER_INET6 + GOOD_SADDR, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_V6_SADDR)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testV6Daddr(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testV6Daddr(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_DADDR, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_V6_DADDR)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER_INET6 + GOOD_DADDR, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_V6_DADDR)
-    self.assertEqual(expected, json.loads(str(acl)))
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testMixedDaddr(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
 
-  @capture.stdout
-  def testMixedDaddr(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_DADDR, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_MIXED_DADDR)
+        self.assertEqual(expected, json.loads(str(acl)))
 
-    acl = openconfig.OpenConfig(policy.ParsePolicy(
-        GOOD_HEADER_MIXED + GOOD_DADDR, self.naming), EXP_INFO)
-    expected = json.loads(GOOD_JSON_MIXED_DADDR)
-    self.assertEqual(expected, json.loads(str(acl)))
-
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    print(acl)
-
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        print(acl)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

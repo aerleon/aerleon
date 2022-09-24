@@ -24,105 +24,110 @@ from aerleon.lib import juniper
 
 
 class Term(juniper.Term):
-  """Single Juniper EVO term representation."""
+    """Single Juniper EVO term representation."""
 
-  _PLATFORM = 'juniperevo'
-  _INGRESS = 'ingress'
-  _EGRESS = 'egress'
-  _INET6 = 'inet6'
-  _PROTOCOL = 'protocol'
-  _PROTOCOL_EXCEPT = 'protocol-except'
-  _NEXT_HEADER = 'next-header'
-  _NEXT_HEADER_EXCEPT = 'next-header-except'
-  _PAYLOAD_PROTOCOL = 'payload-protocol'
-  _PAYLOAD_PROTOCOL_EXCEPT = 'payload-protocol-except'
+    _PLATFORM = 'juniperevo'
+    _INGRESS = 'ingress'
+    _EGRESS = 'egress'
+    _INET6 = 'inet6'
+    _PROTOCOL = 'protocol'
+    _PROTOCOL_EXCEPT = 'protocol-except'
+    _NEXT_HEADER = 'next-header'
+    _NEXT_HEADER_EXCEPT = 'next-header-except'
+    _PAYLOAD_PROTOCOL = 'payload-protocol'
+    _PAYLOAD_PROTOCOL_EXCEPT = 'payload-protocol-except'
 
-  def __str__(self):
-    self._Ipv6ProtocolMatch()
-    term_config = super().__str__()
-    # Reset to original syntax.
-    self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._NEXT_HEADER
-    self._TERM_TYPE[self._INET6][
-        self._PROTOCOL_EXCEPT] = self._NEXT_HEADER_EXCEPT
-    return term_config
+    def __str__(self):
+        self._Ipv6ProtocolMatch()
+        term_config = super().__str__()
+        # Reset to original syntax.
+        self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._NEXT_HEADER
+        self._TERM_TYPE[self._INET6][self._PROTOCOL_EXCEPT] = self._NEXT_HEADER_EXCEPT
+        return term_config
 
-  def _Ipv6ProtocolMatch(self):
-    """Use the correct syntax to match protocols after the IPv6 header.
+    def _Ipv6ProtocolMatch(self):
+        """Use the correct syntax to match protocols after the IPv6 header.
 
-    Refer to juniperevo.md in documentation for matching syntax.
+        Refer to juniperevo.md in documentation for matching syntax.
 
-    Returns:
-      None
+        Returns:
+          None
 
-    Raises:
-      FilterDirectionError: If a direction is not provided for the filter
-        e.g. ingress or egress
-    """
-    self.extension_headers = ['hop-by-hop', 'fragment']
-    # 'hopopt' is renamed to 'hop-by-hop' in juniper base class, add an
-    # additional key with the same protocol number to aid renaming.
-    self.PROTO_MAP['hop-by-hop'] = 0
+        Raises:
+          FilterDirectionError: If a direction is not provided for the filter
+            e.g. ingress or egress
+        """
+        self.extension_headers = ['hop-by-hop', 'fragment']
+        # 'hopopt' is renamed to 'hop-by-hop' in juniper base class, add an
+        # additional key with the same protocol number to aid renaming.
+        self.PROTO_MAP['hop-by-hop'] = 0
 
-    if self.term_type == self._INET6:
-      if self.filter_direction != self._INGRESS and self.filter_direction != self._EGRESS:
-        raise FilterDirectionError('a direction must be specified for Junos '
-                                   'EVO IPv6 filter; this is required to '
-                                   'render the correct syntax when matching '
-                                   'protocols headers that follow the IPv6 '
-                                   'header')
+        if self.term_type == self._INET6:
+            if self.filter_direction != self._INGRESS and self.filter_direction != self._EGRESS:
+                raise FilterDirectionError(
+                    'a direction must be specified for Junos '
+                    'EVO IPv6 filter; this is required to '
+                    'render the correct syntax when matching '
+                    'protocols headers that follow the IPv6 '
+                    'header'
+                )
 
-      # Default to rendering filter for physical interfaces.
-      if self.interface_type is None:
-        self.interface_type = 'physical'
+            # Default to rendering filter for physical interfaces.
+            if self.interface_type is None:
+                self.interface_type = 'physical'
 
-      # Ingress filter.
-      if self.filter_direction == self._INGRESS:
-        if self.interface_type == 'physical':
-          if not any(header in self.term.protocol
-                     for header in self.extension_headers):
-            self._TERM_TYPE[self._INET6][
-                self._PROTOCOL] = self._PAYLOAD_PROTOCOL
+            # Ingress filter.
+            if self.filter_direction == self._INGRESS:
+                if self.interface_type == 'physical':
+                    if not any(header in self.term.protocol for header in self.extension_headers):
+                        self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._PAYLOAD_PROTOCOL
 
-          if not any(header in self.term.protocol_except
-                     for header in self.extension_headers):
-            self._TERM_TYPE[self._INET6][
-                self._PROTOCOL_EXCEPT] = self._PAYLOAD_PROTOCOL_EXCEPT
+                    if not any(
+                        header in self.term.protocol_except for header in self.extension_headers
+                    ):
+                        self._TERM_TYPE[self._INET6][
+                            self._PROTOCOL_EXCEPT
+                        ] = self._PAYLOAD_PROTOCOL_EXCEPT
 
-        if self.interface_type == 'loopback':
-          self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._PAYLOAD_PROTOCOL
-          self._TERM_TYPE[self._INET6][
-              self._PROTOCOL_EXCEPT] = self._PAYLOAD_PROTOCOL_EXCEPT
+                if self.interface_type == 'loopback':
+                    self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._PAYLOAD_PROTOCOL
+                    self._TERM_TYPE[self._INET6][
+                        self._PROTOCOL_EXCEPT
+                    ] = self._PAYLOAD_PROTOCOL_EXCEPT
 
-          self.term.protocol = aclgenerator.ProtocolNameToNumber(
-              self.term.protocol, self.extension_headers, self.PROTO_MAP)
+                    self.term.protocol = aclgenerator.ProtocolNameToNumber(
+                        self.term.protocol, self.extension_headers, self.PROTO_MAP
+                    )
 
-          self.term.protocol_except = aclgenerator.ProtocolNameToNumber(
-              self.term.protocol_except, self.extension_headers, self.PROTO_MAP)
+                    self.term.protocol_except = aclgenerator.ProtocolNameToNumber(
+                        self.term.protocol_except, self.extension_headers, self.PROTO_MAP
+                    )
 
-      # Egress filter.
-      if self.filter_direction == self._EGRESS:
-        self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._PAYLOAD_PROTOCOL
-        self._TERM_TYPE[self._INET6][
-            self._PROTOCOL_EXCEPT] = self._PAYLOAD_PROTOCOL_EXCEPT
+            # Egress filter.
+            if self.filter_direction == self._EGRESS:
+                self._TERM_TYPE[self._INET6][self._PROTOCOL] = self._PAYLOAD_PROTOCOL
+                self._TERM_TYPE[self._INET6][self._PROTOCOL_EXCEPT] = self._PAYLOAD_PROTOCOL_EXCEPT
 
-        self.term.protocol = aclgenerator.ProtocolNameToNumber(
-            self.term.protocol, self.extension_headers, self.PROTO_MAP)
+                self.term.protocol = aclgenerator.ProtocolNameToNumber(
+                    self.term.protocol, self.extension_headers, self.PROTO_MAP
+                )
 
-        self.term.protocol_except = aclgenerator.ProtocolNameToNumber(
-            self.term.protocol_except, self.extension_headers, self.PROTO_MAP)
+                self.term.protocol_except = aclgenerator.ProtocolNameToNumber(
+                    self.term.protocol_except, self.extension_headers, self.PROTO_MAP
+                )
 
 
 class JuniperEvo(juniper.Juniper):
-  """Juniper EVO generator."""
+    """Juniper EVO generator."""
 
-  _PLATFORM = 'juniperevo'
-  SUFFIX = '.evojcl'
-  _TERM = Term
+    _PLATFORM = 'juniperevo'
+    SUFFIX = '.evojcl'
+    _TERM = Term
 
 
 class Error(Exception):
-  pass
+    pass
 
 
 class FilterDirectionError(Error):
-  pass
+    pass

@@ -67,8 +67,7 @@ SUPPORTED_TOKENS = {
 }
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny', 'reject', 'next',
-               'reject-with-tcp-rst'},
+    'action': {'accept', 'deny', 'reject', 'next', 'reject-with-tcp-rst'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
@@ -76,7 +75,8 @@ SUPPORTED_SUB_TOKENS = {
         'conversion-error',
         'destination-unreachable',
         'echo-reply',
-        'echo-request', 'mobile-redirect',
+        'echo-request',
+        'mobile-redirect',
         'home-agent-address-discovery-reply',
         'home-agent-address-discovery-request',
         'icmp-node-information-query',
@@ -85,7 +85,8 @@ SUPPORTED_SUB_TOKENS = {
         'inverse-neighbor-discovery-advertisement',
         'inverse-neighbor-discovery-solicitation',
         'mask-reply',
-        'mask-request', 'information-reply',
+        'mask-request',
+        'information-reply',
         'mobile-prefix-advertisement',
         'mobile-prefix-solicitation',
         'multicast-listener-done',
@@ -111,7 +112,8 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {'established', 'tcp-established'}}
+    'option': {'established', 'tcp-established'},
+}
 
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
@@ -119,25 +121,26 @@ EXP_INFO = 2
 
 
 class CiscoASATest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def testBuildTokens(self):
+        pol1 = ciscoasa.CiscoASA(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = ciscoasa.CiscoASA(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1,
-                                                self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  def testBuildWarningTokens(self):
-    pol1 = ciscoasa.CiscoASA(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2,
-                                                self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = ciscoasa.CiscoASA(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

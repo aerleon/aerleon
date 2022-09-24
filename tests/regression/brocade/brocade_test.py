@@ -73,8 +73,7 @@ SUPPORTED_TOKENS = {
 }
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny', 'reject', 'next',
-               'reject-with-tcp-rst'},
+    'action': {'accept', 'deny', 'reject', 'next', 'reject-with-tcp-rst'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
@@ -119,10 +118,7 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {'established',
-               'tcp-established',
-               'is-fragment',
-               'fragments'}
+    'option': {'established', 'tcp-established', 'is-fragment', 'fragments'},
 }
 
 # Print a info message when a term is set to expire in that many weeks.
@@ -131,40 +127,36 @@ EXP_INFO = 2
 
 
 class BrocadeTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testTcpEstablished(self):
+        acl = brocade.Brocade(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        self.assertTrue(re.search('permit tcp any any established\n', str(acl)), str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testTcpEstablished(self):
-    acl = brocade.Brocade(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertTrue(re.search('permit tcp any any established\n',
-                              str(acl)), str(acl))
-    print(acl)
+    @capture.stdout
+    def testNoTermRemark(self):
+        acl = brocade.Brocade(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        self.assertNotIn('remark good-term-3', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testNoTermRemark(self):
-    acl = brocade.Brocade(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertNotIn('remark good-term-3', str(acl))
-    print(acl)
+    def testBuildTokens(self):
+        pol1 = brocade.Brocade(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = brocade.Brocade(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM,
-                                              self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  def testBuildWarningTokens(self):
-    pol1 = brocade.Brocade(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1,
-                                              self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = brocade.Brocade(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

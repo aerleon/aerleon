@@ -149,8 +149,7 @@ SUPPORTED_TOKENS = {
 }
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny', 'reject', 'next',
-               'reject-with-tcp-rst'},
+    'action': {'accept', 'deny', 'reject', 'next', 'reject-with-tcp-rst'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
@@ -195,10 +194,7 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {'established',
-               'tcp-established',
-               'is-fragment',
-               'fragments'}
+    'option': {'established', 'tcp-established', 'is-fragment', 'fragments'},
 }
 
 # Print a info message when a term is set to expire in that many weeks.
@@ -207,128 +203,119 @@ EXP_INFO = 2
 
 
 class AristaTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testRemark(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
 
-  @capture.stdout
-  def testRemark(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
+        acl = arista.Arista(pol, EXP_INFO)
+        expected = 'remark this is a test standard acl'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = 'remark good-term-4'
+        self.assertIn(expected, str(acl), str(acl))
+        expected = 'test-filter remark'
+        self.assertNotIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4,
-                             self.naming)
-    acl = arista.Arista(pol, EXP_INFO)
-    expected = 'remark this is a test standard acl'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = 'remark good-term-4'
-    self.assertIn(expected, str(acl), str(acl))
-    expected = 'test-filter remark'
-    self.assertNotIn(expected, str(acl), str(acl))
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-    print(acl)
+    @capture.stdout
+    def testExtendedEosSyntax(self):
+        # Extended access-lists should not use the "extended" argument to ip
+        # access-list.
+        acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        self.assertIn('ip access-list test-filter', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testExtendedEosSyntax(self):
-    # Extended access-lists should not use the "extended" argument to ip
-    # access-list.
-    acl = arista.Arista(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertIn('ip access-list test-filter', str(acl))
-    print(acl)
+    @capture.stdout
+    def testESPIsAnInteger(self):
+        acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_5, self.naming), EXP_INFO)
+        self.assertIn('permit 50', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testESPIsAnInteger(self):
-    acl = arista.Arista(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_5, self.naming), EXP_INFO)
-    self.assertIn('permit 50', str(acl))
-    print(acl)
+    @capture.stdout
+    def testAHIsAnInteger(self):
+        acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_6, self.naming), EXP_INFO)
+        self.assertIn('permit 51', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testAHIsAnInteger(self):
-    acl = arista.Arista(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_6, self.naming), EXP_INFO)
-    self.assertIn('permit 51', str(acl))
-    print(acl)
+    @capture.stdout
+    def testAHAndESPAreIntegers(self):
+        acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_7, self.naming), EXP_INFO)
+        self.assertIn('permit 50', str(acl))
+        self.assertIn('permit 51', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testAHAndESPAreIntegers(self):
-    acl = arista.Arista(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_7, self.naming), EXP_INFO)
-    self.assertIn('permit 50', str(acl))
-    self.assertIn('permit 51', str(acl))
-    print(acl)
+    @capture.stdout
+    def testBuildTokens(self):
+        pol1 = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+        print(pol1)
 
-  @capture.stdout
-  def testBuildTokens(self):
-    pol1 = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM,
-                                            self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-    print(pol1)
+    @capture.stdout
+    def testBuildWarningTokens(self):
+        pol1 = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+        print(pol1)
 
-  @capture.stdout
-  def testBuildWarningTokens(self):
-    pol1 = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1,
-                                            self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-    print(pol1)
+    @capture.stdout
+    def testStandardTermHost(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
+        self.naming.GetServiceByProto.return_value = ['22', '6537']
 
-  @capture.stdout
-  def testStandardTermHost(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
-    self.naming.GetServiceByProto.return_value = ['22', '6537']
+        pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
+        acl = arista.Arista(pol, EXP_INFO)
+        print(acl)
+        expected = 'ip access-list test-filter'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = ' permit tcp 10.1.1.0/24 any eq ssh'
+        self.assertIn(expected, str(acl), str(acl))
+        expected = ' permit tcp 10.1.1.0/24 any eq 6537'
+        self.assertIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3,
-                             self.naming)
-    acl = arista.Arista(pol, EXP_INFO)
-    print(acl)
-    expected = 'ip access-list test-filter'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = ' permit tcp 10.1.1.0/24 any eq ssh'
-    self.assertIn(expected, str(acl), str(acl))
-    expected = ' permit tcp 10.1.1.0/24 any eq 6537'
-    self.assertIn(expected, str(acl), str(acl))
+        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST2')])
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('SSH', 'tcp'), mock.call('GOPENFLOW', 'tcp')]
+        )
 
-    self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'),
-                                             mock.call('SOME_HOST2')])
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('SSH', 'tcp'), mock.call('GOPENFLOW', 'tcp')])
+    @capture.stdout
+    def testStandardTermHostV6(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
+        self.naming.GetServiceByProto.return_value = ['22']
 
-  @capture.stdout
-  def testStandardTermHostV6(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
-    self.naming.GetServiceByProto.return_value = ['22']
+        pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
+        acl = arista.Arista(pol, EXP_INFO)
+        print(acl)
+        expected = 'ipv6 access-list test-filter'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = ' permit tcp 2620:1::/64 any eq ssh'
+        self.assertIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
-    acl = arista.Arista(pol, EXP_INFO)
-    print(acl)
-    expected = 'ipv6 access-list test-filter'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = ' permit tcp 2620:1::/64 any eq ssh'
-    self.assertIn(expected, str(acl), str(acl))
+        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
 
-    self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-    self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
+    @capture.stdout
+    def testStandardTermV4(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
 
-  @capture.stdout
-  def testStandardTermV4(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
+        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
+        acl = arista.Arista(pol, EXP_INFO)
+        print(acl)
+        expected = 'ip access-list standard test-filter'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = ' permit 10.1.1.0/24\n'
+        self.assertIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
-    acl = arista.Arista(pol, EXP_INFO)
-    print(acl)
-    expected = 'ip access-list standard test-filter'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = ' permit 10.1.1.0/24\n'
-    self.assertIn(expected, str(acl), str(acl))
-
-    self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
+        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

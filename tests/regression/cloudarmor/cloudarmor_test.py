@@ -12,12 +12,7 @@ from aerleon.lib import policy
 
 from tests.regression_utils import capture
 
-SUPPORTED_TOKENS = {
-    'action',
-    'comment',
-    'priority',
-    'source_address'
-}
+SUPPORTED_TOKENS = {'action', 'comment', 'priority', 'source_address'}
 
 EXP_INFO = 2
 
@@ -726,222 +721,237 @@ EXPECTED_DEFAULT_DENY_SPLIT_JSON = """
 ]
 """
 
-TEST_IPS_NOSPLIT = [nacaddr.IP('10.2.3.4/32'),
-                    nacaddr.IP('2001:4860:8000::5/128')]
+TEST_IPS_NOSPLIT = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
 
-TEST_IPS_SPLIT = [nacaddr.IP('10.2.3.4/32'),
-                  nacaddr.IP('5.2.3.2/32'),
-                  nacaddr.IP('23.2.3.3/32'),
-                  nacaddr.IP('54.2.3.4/32'),
-                  nacaddr.IP('76.2.3.5/32'),
-                  nacaddr.IP('132.2.3.6/32'),
-                  nacaddr.IP('197.2.3.7/32'),
-                  nacaddr.IP('2001:4860:8000::5/128'),
-                  nacaddr.IP('3051:abd2:5400::9/128'),
-                  nacaddr.IP('aee2:37ba:3cc0::3/128'),
-                  nacaddr.IP('6f5d:abd2:1403::1/128'),
-                  nacaddr.IP('577e:5400:3051::6/128'),
-                  nacaddr.IP('af22:32d2:3f00::2/128'),
-                  nacaddr.IP('24da:3ed8:32a0::7/128')]
+TEST_IPS_SPLIT = [
+    nacaddr.IP('10.2.3.4/32'),
+    nacaddr.IP('5.2.3.2/32'),
+    nacaddr.IP('23.2.3.3/32'),
+    nacaddr.IP('54.2.3.4/32'),
+    nacaddr.IP('76.2.3.5/32'),
+    nacaddr.IP('132.2.3.6/32'),
+    nacaddr.IP('197.2.3.7/32'),
+    nacaddr.IP('2001:4860:8000::5/128'),
+    nacaddr.IP('3051:abd2:5400::9/128'),
+    nacaddr.IP('aee2:37ba:3cc0::3/128'),
+    nacaddr.IP('6f5d:abd2:1403::1/128'),
+    nacaddr.IP('577e:5400:3051::6/128'),
+    nacaddr.IP('af22:32d2:3f00::2/128'),
+    nacaddr.IP('24da:3ed8:32a0::7/128'),
+]
 
 
 class CloudArmorTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def _StripAclHeaders(self, acl):
+        return '\n'.join(
+            [line for line in str(acl).split('\n') if not line.lstrip().startswith('#')]
+        )
 
-  def _StripAclHeaders(self, acl):
-    return '\n'.join([line for line in str(acl).split('\n')
-                      if not line.lstrip().startswith('#')])
+    @capture.stdout
+    def testGenericIPv4Term(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testGenericIPv4Term(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV4_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV4_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testGenericIPv6Term(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testGenericIPv6Term(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(
+                GOOD_HEADER_IPV6_ONLY + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV6_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(
-            GOOD_HEADER_IPV6_ONLY + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV6_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testGenericMixedTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testGenericMixedTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MIXED_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MIXED_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testDefaultAddressFamily(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testDefaultAddressFamily(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER_NO_AF + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV4_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER_NO_AF + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV4_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testIPv4TermSplitting(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testIPv4TermSplitting(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV4_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV4_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testIPv6TermSplitting(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testIPv6TermSplitting(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(
+                GOOD_HEADER_IPV6_ONLY + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV6_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(
-            GOOD_HEADER_IPV6_ONLY + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV6_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testMixedTermSplitting(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testMixedTermSplitting(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ALLOW + GOOD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MIXED_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ALLOW + GOOD_TERM_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MIXED_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    def testInvalidAddressFamilyCheck(self):
 
-  def testInvalidAddressFamilyCheck(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        self.assertRaisesRegex(
+            cloudarmor.UnsupportedFilterTypeError,
+            "'inet8' is not a valid filter type",
+            cloudarmor.CloudArmor,
+            policy.ParsePolicy(BAD_HEADER_INVALID_AF + GOOD_TERM_ALLOW, self.naming),
+            EXP_INFO,
+        )
 
-    self.assertRaisesRegex(
-        cloudarmor.UnsupportedFilterTypeError,
-        "'inet8' is not a valid filter type",
-        cloudarmor.CloudArmor,
-        policy.ParsePolicy(
-            BAD_HEADER_INVALID_AF + GOOD_TERM_ALLOW, self.naming),
-        EXP_INFO)
+    def testMaxRuleLimitEnforcement(self):
+        test_1001_ips_list = []
 
-  def testMaxRuleLimitEnforcement(self):
-    test_1001_ips_list = []
+        for _ in range(1001):
+            random_ip_octets = []
+            for _ in range(4):
+                random_ip_octets.append(str(int(random.randint(1, 255))))
+            rand_ip = '.'.join(random_ip_octets)
+            test_1001_ips_list.append(nacaddr.IP(rand_ip + '/32'))
 
-    for _ in range(1001):
-      random_ip_octets = []
-      for _ in range(4):
-        random_ip_octets.append(str(int(random.randint(1, 255))))
-      rand_ip = '.'.join(random_ip_octets)
-      test_1001_ips_list.append(nacaddr.IP(rand_ip + '/32'))
+        self.naming.GetNetAddr.return_value = test_1001_ips_list
 
-    self.naming.GetNetAddr.return_value = test_1001_ips_list
+        self.assertRaisesRegex(
+            cloudarmor.ExceededMaxTermsError,
+            'Exceeded maximum number of rules in a single policy | MAX = 200',
+            cloudarmor.CloudArmor,
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW, self.naming),
+            EXP_INFO,
+        )
 
-    self.assertRaisesRegex(
-        cloudarmor.ExceededMaxTermsError,
-        'Exceeded maximum number of rules in a single policy | MAX = 200',
-        cloudarmor.CloudArmor,
-        policy.ParsePolicy(
-            GOOD_HEADER + GOOD_TERM_ALLOW, self.naming),
-        EXP_INFO)
+    @capture.stdout
+    def testNoCommentWithSplit(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testNoCommentWithSplit(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_NO_COMMENT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_NOCOMMENT_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_NO_COMMENT, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_NOCOMMENT_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testNoCommentWithoutSplit(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testNoCommentWithoutSplit(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_NO_COMMENT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_NOCOMMENT_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_NO_COMMENT, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_NOCOMMENT_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testLargeCommentWithSplit(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testLargeCommentWithSplit(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LARGE_COMMENT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_LARGECOMMENT_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LARGE_COMMENT, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_LARGECOMMENT_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testLargeCommentWithoutSplit(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testLargeCommentWithoutSplit(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LARGE_COMMENT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_LARGECOMMENT_NOSPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LARGE_COMMENT, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_LARGECOMMENT_NOSPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testNoVerbose(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testNoVerbose(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER_NOVERBOSE + GOOD_TERM_LARGE_COMMENT, self.naming),
+            EXP_INFO,
+        )
+        self.assertNotIn('description', str(acl))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER_NOVERBOSE + GOOD_TERM_LARGE_COMMENT,
-                           self.naming), EXP_INFO)
-    self.assertNotIn('description', str(acl))
-    print(acl)
+    @capture.stdout
+    def testDefaultDenyStandalone(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
-  @capture.stdout
-  def testDefaultDenyStandalone(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_DEFAULT_DENY, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_DEFAULT_DENY_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_DEFAULT_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_DEFAULT_DENY_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
+    @capture.stdout
+    def testDefaultDenyWithSplit(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
 
-  @capture.stdout
-  def testDefaultDenyWithSplit(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS_SPLIT
+        acl = cloudarmor.CloudArmor(
+            policy.ParsePolicy(
+                GOOD_HEADER_MIXED + GOOD_TERM_ALLOW + GOOD_TERM_DENY + GOOD_TERM_DEFAULT_DENY,
+                self.naming,
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_DEFAULT_DENY_SPLIT_JSON)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
 
-    acl = cloudarmor.CloudArmor(
-        policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ALLOW
-                           + GOOD_TERM_DENY + GOOD_TERM_DEFAULT_DENY,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_DEFAULT_DENY_SPLIT_JSON)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

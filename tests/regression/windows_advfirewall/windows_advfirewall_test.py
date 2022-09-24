@@ -218,7 +218,8 @@ SUPPORTED_SUB_TOKENS = {
         'conversion-error',
         'destination-unreachable',
         'echo-reply',
-        'echo-request', 'mobile-redirect',
+        'echo-request',
+        'mobile-redirect',
         'home-agent-address-discovery-reply',
         'home-agent-address-discovery-request',
         'icmp-node-information-query',
@@ -227,7 +228,8 @@ SUPPORTED_SUB_TOKENS = {
         'inverse-neighbor-discovery-advertisement',
         'inverse-neighbor-discovery-solicitation',
         'mask-reply',
-        'mask-request', 'information-reply',
+        'mask-request',
+        'information-reply',
         'mobile-prefix-advertisement',
         'mobile-prefix-solicitation',
         'multicast-listener-done',
@@ -261,150 +263,183 @@ EXP_INFO = 2
 
 
 class WindowsAdvFirewallTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def assertTrue(self, strings, result, term):
+        for string in strings:
+            fullstring = 'netsh advfirewall firewall add rule %s' % (string)
+            super().assertIn(
+                fullstring,
+                result,
+                'did not find "%s" for %s\nGot:\n%s' % (fullstring, term, result),
+            )
 
-  def assertTrue(self, strings, result, term):
-    for string in strings:
-      fullstring = 'netsh advfirewall firewall add rule %s' % (string)
-      super().assertIn(
-          fullstring, result,
-          'did not find "%s" for %s\nGot:\n%s' % (fullstring, term, result))
+    @capture.stdout
+    def testTcp(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming.GetServiceByProto.return_value = ['25']
 
-  @capture.stdout
-  def testTcp(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-    self.naming.GetServiceByProto.return_value = ['25']
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_TCP, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_good-term-tcp enable=yes interfacetype=any dir=out localip=any'
+                ' remoteip=10.0.0.0/8 remoteport=25 protocol=tcp action=allow'
+            ],
+            result,
+            'did not find actual term for good-term-tcp',
+        )
 
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + GOOD_TERM_TCP, self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_good-term-tcp enable=yes interfacetype=any dir=out localip=any'
-         ' remoteip=10.0.0.0/8 remoteport=25 protocol=tcp action=allow'],
-        result,
-        'did not find actual term for good-term-tcp')
+        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
+        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
+        print(result)
 
-    self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
-    self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
-    print(result)
+    @capture.stdout
+    def testIcmp(self):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_ICMP, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_good-term-icmp enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=icmpv4 action=allow'
+            ],
+            result,
+            'did not find actual term for good-term-icmp',
+        )
+        print(result)
 
-  @capture.stdout
-  def testIcmp(self):
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + GOOD_TERM_ICMP, self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_good-term-icmp enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=icmpv4 action=allow'],
-        result,
-        'did not find actual term for good-term-icmp')
-    print(result)
+    @capture.stdout
+    def testIcmpTypes(self):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_ICMP_TYPES, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=icmpv4:0,any action=block',
+                'name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=icmpv4:3,any action=block',
+                'name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=icmpv4:11,any action=block',
+            ],
+            result,
+            'did not find actual term for good-term-icmp-types',
+        )
+        print(result)
 
-  @capture.stdout
-  def testIcmpTypes(self):
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + GOOD_TERM_ICMP_TYPES, self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=icmpv4:0,any action=block',
-         'name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=icmpv4:3,any action=block',
-         'name=o_good-term-icmp-types enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=icmpv4:11,any action=block'],
-        result,
-        'did not find actual term for good-term-icmp-types')
-    print(result)
+    def testBadIcmp(self):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + BAD_TERM_ICMP, self.naming), EXP_INFO
+        )
+        self.assertRaises(aclgenerator.UnsupportedFilterError, str, acl)
 
-  def testBadIcmp(self):
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + BAD_TERM_ICMP, self.naming), EXP_INFO)
-    self.assertRaises(aclgenerator.UnsupportedFilterError,
-                      str, acl)
+    @mock.patch.object(windows.logging, 'warning')
+    def testExpiredTerm(self, mock_warn):
+        windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + EXPIRED_TERM, self.naming), EXP_INFO
+        )
 
-  @mock.patch.object(windows.logging, 'warning')
-  def testExpiredTerm(self, mock_warn):
-    windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + EXPIRED_TERM, self.naming), EXP_INFO)
+        mock_warn.assert_called_once_with(
+            'WARNING: Term %s in policy %s is expired ' 'and will not be rendered.',
+            'expired_test',
+            'out',
+        )
 
-    mock_warn.assert_called_once_with(
-        'WARNING: Term %s in policy %s is expired '
-        'and will not be rendered.',
-        'expired_test', 'out')
+    @mock.patch.object(windows.logging, 'info')
+    def testExpiringTerm(self, mock_info):
+        exp_date = datetime.date.today() + datetime.timedelta(weeks=EXP_INFO)
+        windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(
+                GOOD_HEADER_OUT + EXPIRING_TERM % exp_date.strftime('%Y-%m-%d'), self.naming
+            ),
+            EXP_INFO,
+        )
 
-  @mock.patch.object(windows.logging, 'info')
-  def testExpiringTerm(self, mock_info):
-    exp_date = datetime.date.today() + datetime.timedelta(weeks=EXP_INFO)
-    windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + EXPIRING_TERM % exp_date.strftime('%Y-%m-%d'),
-        self.naming), EXP_INFO)
+        mock_info.assert_called_once_with(
+            'INFO: Term %s in policy %s expires in ' 'less than two weeks.', 'is_expiring', 'out'
+        )
 
-    mock_info.assert_called_once_with(
-        'INFO: Term %s in policy %s expires in '
-        'less than two weeks.', 'is_expiring',
-        'out')
+    @capture.stdout
+    def testMultiprotocol(self):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + MULTIPLE_PROTOCOLS_TERM, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
+                ' remoteip=any protocol=tcp action=allow',
+                'name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
+                ' remoteip=any protocol=udp action=allow',
+                'name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
+                ' remoteip=any protocol=icmpv4 action=allow',
+            ],
+            result,
+            'did not find actual term for multi-proto',
+        )
+        print(result)
 
-  @capture.stdout
-  def testMultiprotocol(self):
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + MULTIPLE_PROTOCOLS_TERM, self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
-         ' remoteip=any protocol=tcp action=allow',
-         'name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
-         ' remoteip=any protocol=udp action=allow',
-         'name=o_multi-proto enable=yes interfacetype=any dir=out localip=any'
-         ' remoteip=any protocol=icmpv4 action=allow'],
-        result,
-        'did not find actual term for multi-proto')
-    print(result)
+    @capture.stdout
+    def testAnyProtocol(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_ANYPROTO, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_good-term-anyproto enable=yes interfacetype=any dir=out'
+                ' localip=10.0.0.0/8 remoteip=10.0.0.0/8 protocol=any action=allow'
+            ],
+            result,
+            '"any" proto',
+        )
+        print(result)
 
-  @capture.stdout
-  def testAnyProtocol(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + GOOD_TERM_ANYPROTO, self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_good-term-anyproto enable=yes interfacetype=any dir=out'
-         ' localip=10.0.0.0/8 remoteip=10.0.0.0/8 protocol=any action=allow'],
-        result,
-        '"any" proto')
-    print(result)
+    @capture.stdout
+    def testMiscProtocol(self):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(
+                GOOD_HEADER_OUT + GOOD_TERM_MISCPROTO + GOOD_TERM_HOPOPT, self.naming
+            ),
+            EXP_INFO,
+        )
+        result = str(acl)
+        self.assertTrue(
+            [
+                'name=o_good-term-miscproto enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=112 action=allow',
+                'name=o_good-term-hopopt enable=yes interfacetype=any dir=out'
+                ' localip=any remoteip=any protocol=0 action=allow',
+            ],
+            result,
+            'explicit miscellaneous proto',
+        )
+        print(result)
 
-  @capture.stdout
-  def testMiscProtocol(self):
-    acl = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_OUT + GOOD_TERM_MISCPROTO + GOOD_TERM_HOPOPT, self.naming),
-                                                 EXP_INFO)
-    result = str(acl)
-    self.assertTrue(
-        ['name=o_good-term-miscproto enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=112 action=allow',
-         'name=o_good-term-hopopt enable=yes interfacetype=any dir=out'
-         ' localip=any remoteip=any protocol=0 action=allow'],
-        result,
-        'explicit miscellaneous proto')
-    print(result)
+    def testBuildTokens(self):
+        pol1 = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN + GOOD_SIMPLE, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_IN + GOOD_SIMPLE, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  def testBuildWarningTokens(self):
-    pol1 = windows_advfirewall.WindowsAdvFirewall(policy.ParsePolicy(
-        GOOD_HEADER_IN + GOOD_SIMPLE_WARNING, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN + GOOD_SIMPLE_WARNING, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()
