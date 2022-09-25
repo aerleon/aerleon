@@ -4,6 +4,7 @@ import os
 import pathlib
 
 import nox
+from nox_poetry import session, Session
 
 
 nox.options.error_on_missing_interpreters = True
@@ -11,41 +12,41 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@nox.session(python=["3.7", "3.8", "3.9", "3.10"])
+@session(python=["3.7", "3.8", "3.9", "3.10"])
 def test(session):
     """Runs pytest"""
-    session.install(".[test]")
+    session.run_always("poetry", "install", external=True)
     session.run("pytest", "--durations=20")
 
 
-@nox.session(python="3.10")
+@session(python="3.10")
 def coverage(session):
     """Runs pytest and generates the code coverage report"""
-    session.install(".[coverage]")
+    session.run_always("poetry", "install", external=True)
     session.run("coverage", "run")
     session.run("coverage", "report")
     session.run("coverage", "html")
 
 
-@nox.session
+@session
 def format(session):
     """Runs black"""
-    session.install(".[dev]")
+    session.run_always("poetry", "install", external=True)
     session.run("black", "aerleon", "tests")
 
 
-@nox.session
+@session
 def lint(session):
     """Runs flake8 and other pre-commit linter hooks"""
-    session.install(".[dev]")
+    session.run_always("poetry", "install", external=True)
     session.run("pre-commit", "run")
 
 
 VENV_DIR = pathlib.Path('./.venv').resolve()
 
 
-@nox.session
-def dev_setup(session: nox.Session) -> None:
+@session
+def dev_setup(session: Session) -> None:
     """
     Sets up a python development environment for the project.
 
