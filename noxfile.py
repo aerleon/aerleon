@@ -1,13 +1,10 @@
 """ Define nox sessions for Aerleon """
 
-import os
-import pathlib
-
 import nox
 from nox_poetry import session, Session
 
 
-nox.options.error_on_missing_interpreters = True
+nox.options.error_on_missing_interpreters = False
 nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
@@ -42,29 +39,7 @@ def lint(session):
     session.run("pre-commit", "run")
 
 
-VENV_DIR = pathlib.Path('./.venv').resolve()
-
-
 @session
 def dev_setup(session: Session) -> None:
-    """
-    Sets up a python development environment for the project.
-
-    This session will:
-    - Create a python virtualenv for the session
-    - Install the `virtualenv` cli tool into this environment
-    - Use `virtualenv` to create a global project virtual environment
-    - Invoke the python interpreter from the global project environment to install
-      the project and all it's development dependencies.
-    """
-
-    session.install("virtualenv")
-    # the VENV_DIR constant is explained above
-    session.run("virtualenv", os.fsdecode(VENV_DIR), silent=True)
-
-    python = os.fsdecode(VENV_DIR.joinpath("bin/python"))
-
-    # Use the venv's interpreter to install the project along with
-    # all it's dev dependencies, this ensures it's installed in the right way
-    session.run(python, "-m", "pip", "install", "-e", ".[dev]", external=True)
-    session.run(python, "-m", "pre-commit", "install")
+    """Installs pre-commit hooks using pre-commit"""
+    session.run("pre-commit", "install")
