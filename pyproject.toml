@@ -9,15 +9,16 @@ packages = ["aerleon", "aerleon.lib", "aerleon.utils"]
 version = {file = "VERSION"}
 
 [tool.black]
+# extend-exclude = "/__pycache__|\.ref/"
 line-length = 99
 skip-string-normalization = true
-target-version = ['py36']
+target-version = ['py37']
 
 [tool.flake8]
 max-complexity = 10
 max-line-length = 99
 extend-ignore = ['E203']
-exclude = ['.git','.github','.venv','site-packages','__pycache__','doc','build','dist','policies']
+exclude = ['.git','.github','venv','site-packages','__pycache__','doc','build','dist','policies']
 
 [tool.coverage.run]
 branch = true
@@ -27,7 +28,7 @@ command_line = '-m pytest'
 name = "aerleon"
 description = "A firewall generation tool"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 keywords = ["firewall", "networking", "security"]
 license = {text = "Apache License"}
 classifiers = [
@@ -47,15 +48,37 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = [
-    "black",
+benchmark = [
+    "aerleon[test]",
+    "pyperf",
+    "psutil",
+]
+ci = [
+    "aerleon[nox]",
+]
+coverage = [
+    "aerleon[test]",
     "coverage",
-    "flake8",
-    "Flake8-pyproject",
+]
+dev = [
+    "aerleon[benchmark]",
+    "aerleon[coverage]",
+    "aerleon[lint]",
+    "aerleon[test]",
+    "aerleon[nox]",
+    "black",
     "pre-commit",
+]
+lint = [
+    "flake8",
+    "flake8-black",
+    "Flake8-pyproject",
 ]
 test = [
     "pytest",
+]
+nox = [
+    "nox",
 ]
 
 [project.scripts]
