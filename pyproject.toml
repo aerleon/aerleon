@@ -15,7 +15,7 @@ include = [
 packages = [{include = "aerleon"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.6"
 PyYAML = "^6.0"
 ply = "^3.11"
 absl-py = "^1.2.0"
