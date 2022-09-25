@@ -2,7 +2,7 @@
 name = "aerleon"
 version = "0.0.1"
 description = "A firewall generation tool"
-authors = ["Rob Ankeny <ankenyr@gmail.com>"]
+authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/ankben/aerleon"
