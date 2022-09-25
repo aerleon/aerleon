@@ -8,6 +8,15 @@ readme = "README.md"
 homepage = "https://github.com/ankben/aerleon"
 repository = "https://github.com/ankben/aerleon"
 keywords = ["firewall", "networking", "security"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Firewalls"
+]
 include = [
     "LICENSE",
     "README.md",
