@@ -1,8 +1,17 @@
+default_language_version:
+    python: python3.10
+exclude: '\.ref$'
 repos:
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: '3.8.3'
+  # - repo: https://github.com/python/black.git
+  #   rev: 22.8.0
+  #   hooks:
+  #     - id: black
+  - repo: https://github.com/john-hen/Flake8-pyproject
+    rev: 1.1.0
     hooks:
-      - id: flake8
+      - id: Flake8-pyproject
+        additional_dependencies:
+          - flake8-black>=0.1.1
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.1.0
     hooks:
@@ -10,6 +19,4 @@ repos:
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
-exclude: '\.ref$'
