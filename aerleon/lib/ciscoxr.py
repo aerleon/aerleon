@@ -19,49 +19,48 @@ from aerleon.lib import cisco
 
 
 class CiscoXR(cisco.Cisco):
-  """A cisco policy object."""
+    """A cisco policy object."""
 
-  _PLATFORM = 'ciscoxr'
-  _DEFAULT_PROTOCOL = 'ip'
-  SUFFIX = '.xacl'
-  _PROTO_INT = False
+    _PLATFORM = 'ciscoxr'
+    _DEFAULT_PROTOCOL = 'ip'
+    SUFFIX = '.xacl'
+    _PROTO_INT = False
 
-  def _AppendTargetByFilterType(self, filter_name, filter_type):
-    """Takes in the filter name and type and appends headers.
+    def _AppendTargetByFilterType(self, filter_name, filter_type):
+        """Takes in the filter name and type and appends headers.
 
-    Args:
-      filter_name: Name of the current filter
-      filter_type: Type of current filter
+        Args:
+          filter_name: Name of the current filter
+          filter_type: Type of current filter
 
-    Returns:
-      list of strings
-    """
-    target = []
-    if filter_type == 'inet6':
-      target.append('no ipv6 access-list %s' % filter_name)
-      target.append('ipv6 access-list %s' % filter_name)
-    else:
-      target.append('no ipv4 access-list %s' % filter_name)
-      target.append('ipv4 access-list %s' % filter_name)
-    return target
+        Returns:
+          list of strings
+        """
+        target = []
+        if filter_type == 'inet6':
+            target.append('no ipv6 access-list %s' % filter_name)
+            target.append('ipv6 access-list %s' % filter_name)
+        else:
+            target.append('no ipv4 access-list %s' % filter_name)
+            target.append('ipv4 access-list %s' % filter_name)
+        return target
 
-  def _BuildTokens(self):
-    """Build supported tokens for platform.
+    def _BuildTokens(self):
+        """Build supported tokens for platform.
 
-    Returns:
-      tuple containing both supported tokens and sub tokens
-    """
-    supported_tokens, supported_sub_tokens = super()._BuildTokens()
+        Returns:
+          tuple containing both supported tokens and sub tokens
+        """
+        supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-    supported_tokens |= {'next_ip'}
+        supported_tokens |= {'next_ip'}
 
-    return supported_tokens, supported_sub_tokens
+        return supported_tokens, supported_sub_tokens
 
-  def _GetObjectGroupTerm(self, term, filter_name, verbose=True):
-    """Returns an ObjectGroupTerm object."""
-    return CiscoXRObjectGroupTerm(term, filter_name,
-                                  platform=self._PLATFORM, verbose=verbose)
+    def _GetObjectGroupTerm(self, term, filter_name, verbose=True):
+        """Returns an ObjectGroupTerm object."""
+        return CiscoXRObjectGroupTerm(term, filter_name, platform=self._PLATFORM, verbose=verbose)
 
 
 class CiscoXRObjectGroupTerm(cisco.ObjectGroupTerm):
-  ALLOWED_PROTO_STRINGS = cisco.Term.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']
+    ALLOWED_PROTO_STRINGS = cisco.Term.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']

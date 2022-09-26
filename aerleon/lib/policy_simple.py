@@ -25,308 +25,310 @@ from absl import logging
 
 
 class Field:
-  """A name-value assignment within a block."""
+    """A name-value assignment within a block."""
 
-  def __init__(self, value):
-    self.value = value
+    def __init__(self, value):
+        self.value = value
 
-  def __str__(self):
-    t = type(self)
-    f = 'UNKNOWN'
-    for k, v in field_map.items():
-      if t == v:
-        f = k
-        break
-    indent = len(f) + 5
-    return '%s::%s' % (f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
+    def __str__(self):
+        t = type(self)
+        f = 'UNKNOWN'
+        for k, v in field_map.items():
+            if t == v:
+                f = k
+                break
+        indent = len(f) + 5
+        return '%s::%s' % (f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
 
-  def __eq__(self, o):
-    if not isinstance(o, self.__class__):
-      return False
-    return self.value == o.value
+    def __eq__(self, o):
+        if not isinstance(o, self.__class__):
+            return False
+        return self.value == o.value
 
-  def __ne__(self, o):
-    return not self == o
+    def __ne__(self, o):
+        return not self == o
 
-  def Append(self, value):
-    self.value += value
+    def Append(self, value):
+        self.value += value
 
-  def ValueStr(self):
-    return self.value
+    def ValueStr(self):
+        return self.value
 
 
 class IntegerField(Field):
-
-  def __init__(self, value):
-    super().__init__(value)
-    try:
-      _ = int(value)
-    except ValueError:
-      raise ValueError('Invalid integer field: "%s"' % str(self))
+    def __init__(self, value):
+        super().__init__(value)
+        try:
+            _ = int(value)
+        except ValueError:
+            raise ValueError('Invalid integer field: "%s"' % str(self))
 
 
 class NamingField(Field):
-  """A naming field is one that refers to names in used in naming.py."""
+    """A naming field is one that refers to names in used in naming.py."""
 
-  def __init__(self, value):
-    super().__init__(value)
-    self.value = self.ParseString(value)
+    def __init__(self, value):
+        super().__init__(value)
+        self.value = self.ParseString(value)
 
-  def ParseString(self, value):
-    """Split and validate a string value into individual names."""
-    parts = set(value.split())
-    for p in parts:
-      self.ValidatePart(p)
-    return parts
+    def ParseString(self, value):
+        """Split and validate a string value into individual names."""
+        parts = set(value.split())
+        for p in parts:
+            self.ValidatePart(p)
+        return parts
 
-  def ValidatePart(self, part):
-    """Validate that a string smells like a naming.py name."""
-    for c in part:
-      if c not in '-_.' and not c.isdigit() and not c.isupper():
-        raise ValueError('Invalid name reference: "%s"' % part)
+    def ValidatePart(self, part):
+        """Validate that a string smells like a naming.py name."""
+        for c in part:
+            if c not in '-_.' and not c.isdigit() and not c.isupper():
+                raise ValueError('Invalid name reference: "%s"' % part)
 
-  def Append(self, value):
-    """Split, validate, and add name contained within a string."""
-    parts = self.ParseString(value)
-    self.value.update(parts)
+    def Append(self, value):
+        """Split, validate, and add name contained within a string."""
+        parts = self.ParseString(value)
+        self.value.update(parts)
 
-  def ValueStr(self):
-    """Return the value as a series of lines no longer than 60 chars each."""
-    values = sorted(self.value)
-    line_wrap = 60
-    length = 0
-    line_buf = []
-    value_buf = []
-    for v in values:
-      if length + len(v) > line_wrap:
-        value_buf.append(' '.join(line_buf))
+    def ValueStr(self):
+        """Return the value as a series of lines no longer than 60 chars each."""
+        values = sorted(self.value)
+        line_wrap = 60
         length = 0
         line_buf = []
-      else:
+        value_buf = []
+        for v in values:
+            if length + len(v) > line_wrap:
+                value_buf.append(' '.join(line_buf))
+                length = 0
+                line_buf = []
+            else:
+                if line_buf:
+                    length += 1
+                line_buf.append(v)
+                length += len(v)
         if line_buf:
-          length += 1
-        line_buf.append(v)
-        length += len(v)
-    if line_buf:
-      value_buf.append(' '.join(line_buf))
-    return ' ' + '\n'.join(value_buf)
+            value_buf.append(' '.join(line_buf))
+        return ' ' + '\n'.join(value_buf)
 
 
 class Action(Field):
-  """An action field."""
+    """An action field."""
 
 
 class Address(NamingField):
-  """An address field."""
+    """An address field."""
 
 
 class Port(NamingField):
-  """A port field."""
+    """A port field."""
 
 
 class Comment(Field):
-  """A comment field."""
+    """A comment field."""
 
-  def ValueStr(self):
-    # Comments should align with the string contents, after the leading
-    # quotation mark.
-    return self.value.replace('\n', '\n ')
+    def ValueStr(self):
+        # Comments should align with the string contents, after the leading
+        # quotation mark.
+        return self.value.replace('\n', '\n ')
 
 
 class Counter(Field):
-  """A counter field."""
+    """A counter field."""
 
 
 class Encapsulate(Field):
-  """An encapsulate field."""
+    """An encapsulate field."""
 
 
 class DestinationAddress(Address):
-  """A destination-address field."""
+    """A destination-address field."""
 
 
 class DestinationExclude(Address):
-  """A destination-exclude field."""
+    """A destination-exclude field."""
 
 
 class DestinationInterface(Field):
-  """A destination-interface field."""
+    """A destination-interface field."""
 
 
 class DestinationPort(Port):
-  """A destination-port field."""
+    """A destination-port field."""
 
 
 class DestinationPrefix(Field):
-  """A destination-prefix field."""
+    """A destination-prefix field."""
 
 
 class DestinationPrefixExcept(Field):
-  """A destination-prefix-except field."""
+    """A destination-prefix-except field."""
 
 
 class DestinationTag(Field):
-  """A destination tag field."""
+    """A destination tag field."""
+
 
 class DestinationZone(Field):
-  """A destination-zone field."""
+    """A destination-zone field."""
+
 
 class DscpMatch(Field):
-  """A dscp-match field."""
+    """A dscp-match field."""
 
 
 class DscpSet(Field):
-  """A dscp-set field."""
+    """A dscp-set field."""
 
 
 class EtherType(Field):
-  """An ether-type field."""
+    """An ether-type field."""
 
 
 class Expiration(Field):
-  """An expiration field."""
+    """An expiration field."""
 
 
 class FragmentOffset(Field):
-  """A fragment-offset field."""
+    """A fragment-offset field."""
 
 
 class ForwardingClass(Field):
-  """A forwarding-class field."""
+    """A forwarding-class field."""
 
 
 class ForwardingClassExcept(Field):
-  """A forwarding-class-except field."""
+    """A forwarding-class-except field."""
 
 
 class IcmpCode(Field):
-  """A icmp-code field."""
+    """A icmp-code field."""
 
 
 class IcmpType(Field):
-  """A icmp-type field."""
+    """A icmp-type field."""
 
 
 class Logging(Field):
-  """A logging field."""
+    """A logging field."""
 
 
 class LossPriority(Field):
-  """A loss-priority field."""
+    """A loss-priority field."""
 
 
 class Option(Field):
-  """An Option field."""
+    """An Option field."""
 
 
 class Owner(Field):
-  """An owner field."""
+    """An owner field."""
 
 
 class NextIP(Field):
-  """An owner field."""
+    """An owner field."""
 
 
 class PacketLength(Field):
-  """A packet-length field."""
+    """A packet-length field."""
 
 
 class Platform(Field):
-  """A platform field."""
+    """A platform field."""
 
 
 class PlatformExclude(Field):
-  """A platform-exclude field."""
+    """A platform-exclude field."""
 
 
 class Policer(Field):
-  """A rate-limit-icmp field."""
+    """A rate-limit-icmp field."""
 
 
 class PortMirror(Field):
-  """A port-mirror field."""
+    """A port-mirror field."""
 
 
 class Precedence(Field):
-  """A precedence field."""
+    """A precedence field."""
 
 
 class Protocol(Field):
-  """A Protocol field."""
+    """A Protocol field."""
 
 
 class ProtocolExcept(Field):
-  """A protocol-except field."""
+    """A protocol-except field."""
 
 
 class Qos(Field):
-  """A rate-limit-icmp field."""
+    """A rate-limit-icmp field."""
 
 
 class PANApplication(Field):
-  """A rate-limit-icmp field."""
+    """A rate-limit-icmp field."""
 
 
 class RoutingInstance(Field):
-  """A routing-instance field."""
+    """A routing-instance field."""
 
 
 class SourceAddress(Address):
-  """A source-address field."""
+    """A source-address field."""
 
 
 class SourceExclude(Address):
-  """A source-exclude field."""
+    """A source-exclude field."""
 
 
 class SourceInterface(Field):
-  """A source-interface field."""
+    """A source-interface field."""
 
 
 class SourcePort(Port):
-  """A source-port field."""
+    """A source-port field."""
 
 
 class SourcePrefix(Field):
-  """A source-prefix field."""
+    """A source-prefix field."""
 
 
 class SourcePrefixExcept(Field):
-  """A source-prefix-except field."""
+    """A source-prefix-except field."""
 
 
 class SourceTag(Field):
-  """A source tag field."""
+    """A source tag field."""
+
 
 class SourceZone(Field):
-  """A source-zone field."""
+    """A source-zone field."""
+
 
 class Target(Field):
-  """A target field."""
+    """A target field."""
 
 
 class Timeout(IntegerField):
-  """A timeout field."""
+    """A timeout field."""
 
 
 class TrafficType(Field):
-  """A traffic-type field."""
+    """A traffic-type field."""
 
 
 class TrafficClassCount(Field):
-  """A traffic-class-count field."""
+    """A traffic-class-count field."""
 
 
 class Verbatim(Field):
-  """A verbatim field."""
+    """A verbatim field."""
 
 
 class Vpn(Field):
-  """A vpn field."""
+    """A vpn field."""
 
 
-destination_address_fields = (DestinationAddress, DestinationExclude,
-                              DestinationPrefix)
+destination_address_fields = (DestinationAddress, DestinationExclude, DestinationPrefix)
 
 field_map = {
     'action': Action,
@@ -386,375 +388,373 @@ field_map = {
 
 
 class Block:
-  """A section containing fields."""
+    """A section containing fields."""
 
-  def __init__(self):
-    self.fields = []
+    def __init__(self):
+        self.fields = []
 
-  def __iter__(self):
-    return iter(self.fields)
+    def __iter__(self):
+        return iter(self.fields)
 
-  def __getitem__(self, i):
-    return self.fields[i]
+    def __getitem__(self, i):
+        return self.fields[i]
 
-  def __str__(self):
-    buf = []
-    buf.append(type(self).__name__.lower())
-    buf.append(' ')
-    if self.Name():
-      buf.append(self.Name())
-      buf.append(' ')
-    buf.append('{')  # }
-    buf.append('\n')
-    for field in self.fields:
-      buf.append('  ')
-      buf.append(str(field))
-      buf.append('\n')
-    buf.append('}')
-    buf.append('\n')
-    return ''.join(buf)
+    def __str__(self):
+        buf = []
+        buf.append(type(self).__name__.lower())
+        buf.append(' ')
+        if self.Name():
+            buf.append(self.Name())
+            buf.append(' ')
+        buf.append('{')  # }
+        buf.append('\n')
+        for field in self.fields:
+            buf.append('  ')
+            buf.append(str(field))
+            buf.append('\n')
+        buf.append('}')
+        buf.append('\n')
+        return ''.join(buf)
 
-  def AddField(self, field):
-    if not issubclass(type(field), Field):
-      raise TypeError('%s not subclass of Field.' % field)
-    self.fields.append(field)
+    def AddField(self, field):
+        if not issubclass(type(field), Field):
+            raise TypeError('%s not subclass of Field.' % field)
+        self.fields.append(field)
 
-  def FieldsWithType(self, f_type):
-    if not issubclass(f_type, Field):
-      raise TypeError('%s not subclass of Field.' % f_type)
-    return [x for x in self.fields if isinstance(x, f_type)]
+    def FieldsWithType(self, f_type):
+        if not issubclass(f_type, Field):
+            raise TypeError('%s not subclass of Field.' % f_type)
+        return [x for x in self.fields if isinstance(x, f_type)]
 
-  def Match(self, match_fn):
-    """Yield the fields and their indices for which match_fn is True."""
-    for i, f in enumerate(self.fields):
-      if match_fn(f):
-        yield i, f
+    def Match(self, match_fn):
+        """Yield the fields and their indices for which match_fn is True."""
+        for i, f in enumerate(self.fields):
+            if match_fn(f):
+                yield i, f
 
-  def Name(self):
-    return ''
+    def Name(self):
+        return ''
 
-  def __eq__(self, o):
-    if not isinstance(o, self.__class__):
-      return False
-    if len(self.fields) != len(o.fields):
-      return False
-    for mine, theirs in zip(self.fields, o.fields):
-      logging.debug('testing "%s" vs "%s"', mine, theirs)
-      if mine != theirs:
-        return False
-    return True
+    def __eq__(self, o):
+        if not isinstance(o, self.__class__):
+            return False
+        if len(self.fields) != len(o.fields):
+            return False
+        for mine, theirs in zip(self.fields, o.fields):
+            logging.debug('testing "%s" vs "%s"', mine, theirs)
+            if mine != theirs:
+                return False
+        return True
 
-  def __ne__(self, o):
-    return not self == o
+    def __ne__(self, o):
+        return not self == o
 
 
 class Header(Block):
-  """A header block."""
+    """A header block."""
 
 
 class Term(Block):
-  """A policy term."""
+    """A policy term."""
 
-  def __init__(self, name):
-    super().__init__()
-    self.name = name
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
 
-  def Name(self):
-    return self.name
+    def Name(self):
+        return self.name
 
-  def __eq__(self, o):
-    if not super().__eq__(o):
-      return False
-    return self.name == o.name
+    def __eq__(self, o):
+        if not super().__eq__(o):
+            return False
+        return self.name == o.name
 
-  def Describe(self):
-    """Return a human-readable description of the term."""
-    verbatims = self.FieldsWithType(Verbatim)
-    if verbatims:
-      return 'Verbatim: %s' % verbatims
+    def Describe(self):
+        """Return a human-readable description of the term."""
+        verbatims = self.FieldsWithType(Verbatim)
+        if verbatims:
+            return 'Verbatim: %s' % verbatims
 
-    handled = set()
-    handled.update(self.FieldsWithType(Comment))
+        handled = set()
+        handled.update(self.FieldsWithType(Comment))
 
-    pieces = []
-    actions = self.FieldsWithType(Action)
-    if len(actions) != 1:
-      raise ValueError('No action or multiple actions.')
-    handled.update(actions)
-    pieces.append(actions[0].value.title() + ' traffic')
+        pieces = []
+        actions = self.FieldsWithType(Action)
+        if len(actions) != 1:
+            raise ValueError('No action or multiple actions.')
+        handled.update(actions)
+        pieces.append(actions[0].value.title() + ' traffic')
 
-    protocols = self.FieldsWithType(Protocol)
-    all_protocols = set()
-    if protocols:
-      handled.update(protocols)
-      for protocol in protocols:
-        all_protocols.update(protocol.value.split())
-      pieces.append('using ' + ' or '.join(sorted(all_protocols)))
+        protocols = self.FieldsWithType(Protocol)
+        all_protocols = set()
+        if protocols:
+            handled.update(protocols)
+            for protocol in protocols:
+                all_protocols.update(protocol.value.split())
+            pieces.append('using ' + ' or '.join(sorted(all_protocols)))
 
-    icmp_code = self.FieldsWithType(IcmpCode)
-    all_icmp_code = set()
-    if icmp_code:
-      handled.update(icmp_code)
-      for code in icmp_code:
-        all_icmp_code.update(code.value.split())
-      pieces.append('(ICMP code %s)' % ', '.join(sorted(all_icmp_code)))
+        icmp_code = self.FieldsWithType(IcmpCode)
+        all_icmp_code = set()
+        if icmp_code:
+            handled.update(icmp_code)
+            for code in icmp_code:
+                all_icmp_code.update(code.value.split())
+            pieces.append('(ICMP code %s)' % ', '.join(sorted(all_icmp_code)))
 
-    icmp_types = self.FieldsWithType(IcmpType)
-    all_icmp_types = set()
-    if icmp_types:
-      handled.update(icmp_types)
-      for icmp_type in icmp_types:
-        all_icmp_types.update(icmp_type.value.split())
-      pieces.append('(ICMP types %s)' % ', '.join(sorted(all_icmp_types)))
+        icmp_types = self.FieldsWithType(IcmpType)
+        all_icmp_types = set()
+        if icmp_types:
+            handled.update(icmp_types)
+            for icmp_type in icmp_types:
+                all_icmp_types.update(icmp_type.value.split())
+            pieces.append('(ICMP types %s)' % ', '.join(sorted(all_icmp_types)))
 
-    sources = self.FieldsWithType(SourceAddress)
-    if sources:
-      handled.update(sources)
-      pieces.append('originating from')
-      all_sources = set()
-      for source in sources:
-        all_sources.update(source.value)
-      pieces.append(', '.join(sorted(all_sources)))
+        sources = self.FieldsWithType(SourceAddress)
+        if sources:
+            handled.update(sources)
+            pieces.append('originating from')
+            all_sources = set()
+            for source in sources:
+                all_sources.update(source.value)
+            pieces.append(', '.join(sorted(all_sources)))
 
-    source_ports = self.FieldsWithType(SourcePort)
-    if source_ports:
-      handled.update(source_ports)
-      if sources:
-        pieces.append('using port')
-      else:
-        pieces.append('originating port')
-      all_sources = set()
-      for source in source_ports:
-        all_sources.update(source.value)
-      pieces.append(', '.join(sorted(all_sources)))
+        source_ports = self.FieldsWithType(SourcePort)
+        if source_ports:
+            handled.update(source_ports)
+            if sources:
+                pieces.append('using port')
+            else:
+                pieces.append('originating port')
+            all_sources = set()
+            for source in source_ports:
+                all_sources.update(source.value)
+            pieces.append(', '.join(sorted(all_sources)))
 
-    destinations = self.FieldsWithType(DestinationAddress)
-    if destinations:
-      handled.update(destinations)
-      pieces.append('destined for')
-      all_destinations = set()
-      for destination in destinations:
-        all_destinations.update(destination.value)
-      pieces.append(', '.join(sorted(all_destinations)))
+        destinations = self.FieldsWithType(DestinationAddress)
+        if destinations:
+            handled.update(destinations)
+            pieces.append('destined for')
+            all_destinations = set()
+            for destination in destinations:
+                all_destinations.update(destination.value)
+            pieces.append(', '.join(sorted(all_destinations)))
 
-    destination_ports = self.FieldsWithType(DestinationPort)
-    if destination_ports:
-      handled.update(destination_ports)
-      if destinations:
-        pieces.append('on port')
-      else:
-        pieces.append('destined for port')
-      all_destinations = set()
-      for destination in destination_ports:
-        all_destinations.update(destination.value)
-      pieces.append(', '.join(sorted(all_destinations)))
+        destination_ports = self.FieldsWithType(DestinationPort)
+        if destination_ports:
+            handled.update(destination_ports)
+            if destinations:
+                pieces.append('on port')
+            else:
+                pieces.append('destined for port')
+            all_destinations = set()
+            for destination in destination_ports:
+                all_destinations.update(destination.value)
+            pieces.append(', '.join(sorted(all_destinations)))
 
-    vpns = self.FieldsWithType(Vpn)
-    if vpns:
-      handled.update(vpns)
-      pieces.append('via VPNs')
-      pieces.append(','.join(x.value for x in vpns))
+        vpns = self.FieldsWithType(Vpn)
+        if vpns:
+            handled.update(vpns)
+            pieces.append('via VPNs')
+            pieces.append(','.join(x.value for x in vpns))
 
-    # Ignore some fields
-    for ignored_type in (Expiration, Owner):
-      ignored_fields = self.FieldsWithType(ignored_type)
-      if ignored_fields:
-        handled.update(ignored_fields)
+        # Ignore some fields
+        for ignored_type in (Expiration, Owner):
+            ignored_fields = self.FieldsWithType(ignored_type)
+            if ignored_fields:
+                handled.update(ignored_fields)
 
-    for field in self:
-      if field not in handled:
-        raise ValueError('Uncovered field: ' + str(field))
-    return ' '.join(pieces)
+        for field in self:
+            if field not in handled:
+                raise ValueError('Uncovered field: ' + str(field))
+        return ' '.join(pieces)
 
 
 class BlankLine:
-  """A blank line."""
+    """A blank line."""
 
-  def __str__(self):
-    return '\n'
+    def __str__(self):
+        return '\n'
 
-  def __eq__(self, o):
-    return isinstance(o, self.__class__)
+    def __eq__(self, o):
+        return isinstance(o, self.__class__)
 
-  def __ne__(self, o):
-    return not self == o
+    def __ne__(self, o):
+        return not self == o
 
 
 class CommentLine:
-  """A comment in the file."""
+    """A comment in the file."""
 
-  def __init__(self, data):
-    self.data = data
+    def __init__(self, data):
+        self.data = data
 
-  def __str__(self):
-    return str(self.data) + '\n'
+    def __str__(self):
+        return str(self.data) + '\n'
 
-  def __eq__(self, o):
-    if not isinstance(o, self.__class__):
-      return False
-    return self.data == o.data
+    def __eq__(self, o):
+        if not isinstance(o, self.__class__):
+            return False
+        return self.data == o.data
 
-  def __ne__(self, o):
-    return not self == o
+    def __ne__(self, o):
+        return not self == o
 
 
 class Include:
-  """A reference to another policy definition."""
+    """A reference to another policy definition."""
 
-  def __init__(self, identifier):
-    self.identifier = identifier
+    def __init__(self, identifier):
+        self.identifier = identifier
 
-  def __str__(self):
-    return '#include %s' % self.identifier
+    def __str__(self):
+        return '#include %s' % self.identifier
 
-  def __eq__(self, o):
-    if not isinstance(o, self.__class__):
-      return False
-    return self.identifier == o.identifier
+    def __eq__(self, o):
+        if not isinstance(o, self.__class__):
+            return False
+        return self.identifier == o.identifier
 
-  def __ne__(self, o):
-    return not self == o
+    def __ne__(self, o):
+        return not self == o
 
 
 class Policy:
-  """An ordered list of headers, terms, comments, blank lines and includes."""
+    """An ordered list of headers, terms, comments, blank lines and includes."""
 
-  def __init__(self, identifier):
-    self.identifier = identifier
-    self.members = []
+    def __init__(self, identifier):
+        self.identifier = identifier
+        self.members = []
 
-  def AddMember(self, member):
-    m_type = type(member)
-    if (m_type not in (Include, CommentLine, BlankLine)
-        and not issubclass(m_type, Block)):
-      raise TypeError('%s must be a Block, CommentLine, BlankLine,'
-                      ' or Include' % m_type)
-    self.members.append(member)
+    def AddMember(self, member):
+        m_type = type(member)
+        if m_type not in (Include, CommentLine, BlankLine) and not issubclass(m_type, Block):
+            raise TypeError('%s must be a Block, CommentLine, BlankLine,' ' or Include' % m_type)
+        self.members.append(member)
 
-  def __str__(self):
-    return ''.join(str(x) for x in self.members)
+    def __str__(self):
+        return ''.join(str(x) for x in self.members)
 
-  def __iter__(self):
-    return iter(self.members)
+    def __iter__(self):
+        return iter(self.members)
 
-  def __getitem__(self, i):
-    return self.members[i]
+    def __getitem__(self, i):
+        return self.members[i]
 
-  def Match(self, match_fn):
-    """Yield the members and their indices for which match_fn is True."""
-    for i, m in enumerate(self.members):
-      if match_fn(m):
-        yield i, m
+    def Match(self, match_fn):
+        """Yield the members and their indices for which match_fn is True."""
+        for i, m in enumerate(self.members):
+            if match_fn(m):
+                yield i, m
 
-  def MatchFields(self, block_match_fn, field_match_fn):
-    for match_idx, m in self.Match(block_match_fn):
-      if not isinstance(m, Block):
-        continue
-      for field_idx, f in m.Match(field_match_fn):
-        yield match_idx, field_idx, f
+    def MatchFields(self, block_match_fn, field_match_fn):
+        for match_idx, m in self.Match(block_match_fn):
+            if not isinstance(m, Block):
+                continue
+            for field_idx, f in m.Match(field_match_fn):
+                yield match_idx, field_idx, f
 
 
 class PolicyParser:
-  """Parse a policy object from a data buffer."""
+    """Parse a policy object from a data buffer."""
 
-  def __init__(self, data, identifier):
-    self.data = data
-    self.identifier = identifier
-    self.block_in_progress = None
-    self.policy = None
+    def __init__(self, data, identifier):
+        self.data = data
+        self.identifier = identifier
+        self.block_in_progress = None
+        self.policy = None
 
-  def Parse(self):
-    """Do the needful."""
-    self.policy = Policy(self.identifier)
-    for line in self.data.split('\n'):
-      line = line.strip()
-      logging.debug('Processing line: "%s"', line)
-      if self.block_in_progress:
-        self.ParseInBlock(line)
-      else:
-        self.ParseTopLevel(line)
-    if self.block_in_progress:
-      raise ValueError('Unexpected EOF reading "%s"' % self.block_in_progress)
-    return self.policy
+    def Parse(self):
+        """Do the needful."""
+        self.policy = Policy(self.identifier)
+        for line in self.data.split('\n'):
+            line = line.strip()
+            logging.debug('Processing line: "%s"', line)
+            if self.block_in_progress:
+                self.ParseInBlock(line)
+            else:
+                self.ParseTopLevel(line)
+        if self.block_in_progress:
+            raise ValueError('Unexpected EOF reading "%s"' % self.block_in_progress)
+        return self.policy
 
-  def ParseTopLevel(self, line):
-    """Parse a line not nested within a block."""
-    if line == '':  # pylint: disable=g-explicit-bool-comparison
-      self.policy.AddMember(BlankLine())
-      return
-    if line.startswith('#'):
-      if line.startswith('#include '):
-        self.ParseIncludeLine(line)
-        return
-      self.ParseCommentLine(line)
-      return
-    if line.startswith('header {') or line.startswith('header{'):  # }
-      self.ParseHeaderLine(line)
-      return
-    if line.startswith('term '):
-      self.ParseTermLine(line)
-      return
-    raise ValueError('Unhandled top-level line %s' % line)
+    def ParseTopLevel(self, line):
+        """Parse a line not nested within a block."""
+        if line == '':  # pylint: disable=g-explicit-bool-comparison
+            self.policy.AddMember(BlankLine())
+            return
+        if line.startswith('#'):
+            if line.startswith('#include '):
+                self.ParseIncludeLine(line)
+                return
+            self.ParseCommentLine(line)
+            return
+        if line.startswith('header {') or line.startswith('header{'):  # }
+            self.ParseHeaderLine(line)
+            return
+        if line.startswith('term '):
+            self.ParseTermLine(line)
+            return
+        raise ValueError('Unhandled top-level line %s' % line)
 
-  def ParseCommentLine(self, line):
-    """Parse a line with a line level comment."""
-    if self.block_in_progress:
-      raise ValueError('Found comment line in block: %s' % line)
-    self.policy.AddMember(CommentLine(line))
+    def ParseCommentLine(self, line):
+        """Parse a line with a line level comment."""
+        if self.block_in_progress:
+            raise ValueError('Found comment line in block: %s' % line)
+        self.policy.AddMember(CommentLine(line))
 
-  def ParseIncludeLine(self, line):
-    """Parse an #include line refering to another file."""
-    if self.block_in_progress:
-      raise ValueError('Found include line in block: %s' % line)
-    line_parts = line.split()
-    if len(line_parts) < 2:
-      raise ValueError('Invalid include: %s' % line)
-    inc_ref = line_parts[1]
-    if '#' in inc_ref:
-      inc_ref, _ = inc_ref.split('#', 1)
-    self.policy.AddMember(Include(inc_ref))
+    def ParseIncludeLine(self, line):
+        """Parse an #include line refering to another file."""
+        if self.block_in_progress:
+            raise ValueError('Found include line in block: %s' % line)
+        line_parts = line.split()
+        if len(line_parts) < 2:
+            raise ValueError('Invalid include: %s' % line)
+        inc_ref = line_parts[1]
+        if '#' in inc_ref:
+            inc_ref, _ = inc_ref.split('#', 1)
+        self.policy.AddMember(Include(inc_ref))
 
-  def ParseHeaderLine(self, line):
-    """Parse a line beginning a header block."""
-    if self.block_in_progress:
-      raise ValueError('Nested blocks not allowed: %s' % line)
-    self.block_in_progress = Header()
+    def ParseHeaderLine(self, line):
+        """Parse a line beginning a header block."""
+        if self.block_in_progress:
+            raise ValueError('Nested blocks not allowed: %s' % line)
+        self.block_in_progress = Header()
 
-  def ParseTermLine(self, line):
-    """Parse a line beginning a term block."""
-    if self.block_in_progress:
-      raise ValueError('Nested blocks not allowed: %s' % line)
-    line_parts = line.split()
+    def ParseTermLine(self, line):
+        """Parse a line beginning a term block."""
+        if self.block_in_progress:
+            raise ValueError('Nested blocks not allowed: %s' % line)
+        line_parts = line.split()
 
-    # Some terms don't have a space after the name
-    if '{' in line_parts[1]:  # }
-      brace_idx = line_parts[1].index('{')  # }
-      line_parts[1] = line_parts[1][:brace_idx]
-    else:
-      if not line_parts[2].startswith('{'):  # }
-        raise ValueError('Invalid term line: %s' % line)
-    term_name = line_parts[1]
-    self.block_in_progress = Term(term_name)
+        # Some terms don't have a space after the name
+        if '{' in line_parts[1]:  # }
+            brace_idx = line_parts[1].index('{')  # }
+            line_parts[1] = line_parts[1][:brace_idx]
+        else:
+            if not line_parts[2].startswith('{'):  # }
+                raise ValueError('Invalid term line: %s' % line)
+        term_name = line_parts[1]
+        self.block_in_progress = Term(term_name)
 
-  def ParseInBlock(self, line):
-    """Parse a line when inside a block definition."""
-    if line == '' or line.startswith('#'):  # pylint: disable=g-explicit-bool-comparison
-      return
-    if '::' in line:
-      self.ParseField(line)
-      return
-    if line.startswith('}'):
-      self.policy.AddMember(self.block_in_progress)
-      self.block_in_progress = None
-      return
-    if self.block_in_progress is not None:
-      self.block_in_progress.fields[-1].Append('\n' + line)
+    def ParseInBlock(self, line):
+        """Parse a line when inside a block definition."""
+        if line == '' or line.startswith('#'):  # pylint: disable=g-explicit-bool-comparison
+            return
+        if '::' in line:
+            self.ParseField(line)
+            return
+        if line.startswith('}'):
+            self.policy.AddMember(self.block_in_progress)
+            self.block_in_progress = None
+            return
+        if self.block_in_progress is not None:
+            self.block_in_progress.fields[-1].Append('\n' + line)
 
-  def ParseField(self, line):
-    """Parse a line containing a block field."""
-    name, value = line.split('::', 1)
-    name = name.strip().lower()
-    f_type = field_map.get(name)
-    if not f_type:
-      raise ValueError('Invalid field line: %s' % line)
-    self.block_in_progress.AddField(f_type(value))
+    def ParseField(self, line):
+        """Parse a line containing a block field."""
+        name, value = line.split('::', 1)
+        name = name.strip().lower()
+        f_type = field_map.get(name)
+        if not f_type:
+            raise ValueError('Invalid field line: %s' % line)
+        self.block_in_progress.AddField(f_type(value))

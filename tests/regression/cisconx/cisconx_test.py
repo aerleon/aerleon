@@ -201,12 +201,7 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {
-        'established',
-        'tcp-established',
-        'is-fragment',
-        'fragments'
-    }
+    'option': {'established', 'tcp-established', 'is-fragment', 'fragments'},
 }
 
 # Print a info message when a term is set to expire in that many weeks.
@@ -215,123 +210,119 @@ EXP_INFO = 2
 
 
 class CiscoNXTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testRemark(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
 
-  @capture.stdout
-  def testRemark(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_4, self.naming)
+        acl = cisconx.CiscoNX(pol, EXP_INFO)
+        expected = 'remark this is a test extended acl'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = 'remark good-term-4'
+        self.assertIn(expected, str(acl), str(acl))
+        expected = 'test-filter remark'
+        self.assertNotIn(expected, str(acl), str(acl))
+        self.assertNotIn(' remark %sId:%s' % ('$', '$'), str(acl), str(acl))
+        self.assertIn(' remark "%sRevision:%s"' % ('$', '$'), str(acl), str(acl))
+        self.assertNotIn(' remark $', str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_4, self.naming)
-    acl = cisconx.CiscoNX(pol, EXP_INFO)
-    expected = 'remark this is a test extended acl'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = 'remark good-term-4'
-    self.assertIn(expected, str(acl), str(acl))
-    expected = 'test-filter remark'
-    self.assertNotIn(expected, str(acl), str(acl))
-    self.assertNotIn(' remark %sId:%s' % ('$', '$'), str(acl), str(acl))
-    self.assertIn(' remark "%sRevision:%s"' % ('$', '$'), str(acl), str(acl))
-    self.assertNotIn(' remark $', str(acl), str(acl))
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-    print(acl)
+    @capture.stdout
+    def testExtendedNXosSyntax(self):
+        # Extended access-lists should not use the "extended" argument to ip
+        # access-list.
+        acl = cisconx.CiscoNX(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        self.assertIn('ip access-list test-filter', str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testExtendedNXosSyntax(self):
-    # Extended access-lists should not use the "extended" argument to ip
-    # access-list.
-    acl = cisconx.CiscoNX(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertIn('ip access-list test-filter', str(acl))
-    print(acl)
+    def testBuildTokens(self):
+        pol1 = cisconx.CiscoNX(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = cisconx.CiscoNX(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = cisconx.CiscoNX(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildWarningTokens(self):
-    pol1 = cisconx.CiscoNX(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    @capture.stdout
+    def testStandardTermHost(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
+        self.naming.GetServiceByProto.return_value = ['22', '6537']
 
-  @capture.stdout
-  def testStandardTermHost(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
-    self.naming.GetServiceByProto.return_value = ['22', '6537']
+        pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
+        acl = cisconx.CiscoNX(pol, EXP_INFO)
+        expected = 'ip access-list test-filter'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 22'
+        self.assertIn(expected, str(acl), str(acl))
+        expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 6537'
+        self.assertIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3,
-                             self.naming)
-    acl = cisconx.CiscoNX(pol, EXP_INFO)
-    expected = 'ip access-list test-filter'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 22'
-    self.assertIn(expected, str(acl), str(acl))
-    expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 6537'
-    self.assertIn(expected, str(acl), str(acl))
+        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST2')])
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('SSH', 'tcp'), mock.call('GOPENFLOW', 'tcp')]
+        )
+        print(acl)
 
-    self.naming.GetNetAddr.assert_has_calls(
-        [mock.call('SOME_HOST'),
-         mock.call('SOME_HOST2')])
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('SSH', 'tcp'),
-         mock.call('GOPENFLOW', 'tcp')])
-    print(acl)
+    @capture.stdout
+    def testStandardTermHostV6(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
+        self.naming.GetServiceByProto.return_value = ['22']
 
-  @capture.stdout
-  def testStandardTermHostV6(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
-    self.naming.GetServiceByProto.return_value = ['22']
+        pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
+        acl = cisconx.CiscoNX(pol, EXP_INFO)
+        expected = 'ipv6 access-list test-filter'
+        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        expected = ' permit tcp 2620:1::/64 any eq 22'
+        self.assertIn(expected, str(acl), str(acl))
 
-    pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
-    acl = cisconx.CiscoNX(pol, EXP_INFO)
-    expected = 'ipv6 access-list test-filter'
-    self.assertIn(expected, str(acl), '[%s]' % str(acl))
-    expected = ' permit tcp 2620:1::/64 any eq 22'
-    self.assertIn(expected, str(acl), str(acl))
+        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
+        print(acl)
 
-    self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-    self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
-    print(acl)
+    @capture.stdout
+    def testIcmpTypes(self):
+        acl = cisconx.CiscoNX(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_10, self.naming), EXP_INFO
+        )
+        # echo-reply = 0
+        expected = 'permit icmp any any 0'
+        self.assertIn(expected, str(acl), str(acl))
+        # unreachable = 3
+        expected = 'permit icmp any any 3'
+        self.assertIn(expected, str(acl), str(acl))
+        # time-exceeded = 11
+        expected = 'permit icmp any any 11'
+        self.assertIn(expected, str(acl), str(acl))
+        print(acl)
 
-  @capture.stdout
-  def testIcmpTypes(self):
-    acl = cisconx.CiscoNX(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_10, self.naming), EXP_INFO)
-    # echo-reply = 0
-    expected = 'permit icmp any any 0'
-    self.assertIn(expected, str(acl), str(acl))
-    # unreachable = 3
-    expected = 'permit icmp any any 3'
-    self.assertIn(expected, str(acl), str(acl))
-    # time-exceeded = 11
-    expected = 'permit icmp any any 11'
-    self.assertIn(expected, str(acl), str(acl))
-    print(acl)
-
-  @capture.stdout
-  def testIpv6IcmpTypes(self):
-    acl = cisconx.CiscoNX(
-        policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_11, self.naming),
-        EXP_INFO)
-    # echo-reply = icmp-type code 129
-    expected = 'permit icmp any any 129'
-    self.assertIn(expected, str(acl), str(acl))
-    # destination-unreachable = icmp-type code 1
-    expected = 'permit icmp any any 1'
-    self.assertIn(expected, str(acl), str(acl))
-    # time-exceeded = icmp-type code 3
-    expected = 'permit icmp any any 3'
-    self.assertIn(expected, str(acl), str(acl))
-    print(acl)
+    @capture.stdout
+    def testIpv6IcmpTypes(self):
+        acl = cisconx.CiscoNX(
+            policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_11, self.naming), EXP_INFO
+        )
+        # echo-reply = icmp-type code 129
+        expected = 'permit icmp any any 129'
+        self.assertIn(expected, str(acl), str(acl))
+        # destination-unreachable = icmp-type code 1
+        expected = 'permit icmp any any 1'
+        self.assertIn(expected, str(acl), str(acl))
+        # time-exceeded = icmp-type code 3
+        expected = 'permit icmp any any 3'
+        self.assertIn(expected, str(acl), str(acl))
+        print(acl)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

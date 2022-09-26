@@ -20,25 +20,26 @@ from aerleon.lib import iptables
 
 
 class Error(Exception):
-  pass
+    pass
 
 
 class Term(iptables.Term):
-  """Generate Iptables policy terms."""
-  _PLATFORM = 'speedway'
-  _PREJUMP_FORMAT = None
-  _POSTJUMP_FORMAT = Template('-A $filter -j $term')
+    """Generate Iptables policy terms."""
+
+    _PLATFORM = 'speedway'
+    _PREJUMP_FORMAT = None
+    _POSTJUMP_FORMAT = Template('-A $filter -j $term')
 
 
 class Speedway(iptables.Iptables):
-  """Generates filters and terms from provided policy object."""
+    """Generates filters and terms from provided policy object."""
 
-  _PLATFORM = 'speedway'
-  _DEFAULT_PROTOCOL = 'all'
-  SUFFIX = '.ipt'
+    _PLATFORM = 'speedway'
+    _DEFAULT_PROTOCOL = 'all'
+    SUFFIX = '.ipt'
 
-  _RENDER_PREFIX = '*filter'
-  _RENDER_SUFFIX = 'COMMIT'
-  _DEFAULTACTION_FORMAT = ':%s %s'
+    _RENDER_PREFIX = '*filter'
+    _RENDER_SUFFIX = 'COMMIT'
+    _DEFAULTACTION_FORMAT = ':%s %s'
 
-  _TERM = Term
+    _TERM = Term

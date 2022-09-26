@@ -281,502 +281,477 @@ TEST_IPV6_ONLY = [nacaddr.IP('2001:4860:8000::5/128')]
 
 
 class K8sTest(parameterized.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testGenericTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-  @capture.stdout
-  def testGenericTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        expected = {
+            'apiVersion': k8s.K8s._API_VERSION,
+            'kind': k8s.K8s._RESOURCE_KIND,
+            'items': [
+                {
+                    'apiVersion': k8s.Term._API_VERSION,
+                    'kind': k8s.Term._RESOURCE_KIND,
+                    'metadata': {
+                        'name': 'good-term-1',
+                        'annotations': {'owner': 'myself', 'comment': 'DNS access from corp.'},
+                    },
+                    'spec': {
+                        'podSelector': {},
+                        'policyTypes': ['Ingress'],
+                        'ingress': [
+                            {
+                                'from': [
+                                    {'ipBlock': {'cidr': '10.2.3.4/32'}},
+                                    {'ipBlock': {'cidr': '2001:4860:8000::5/128'}},
+                                ],
+                                'ports': [
+                                    {'port': 53, 'protocol': 'UDP'},
+                                    {'port': 53, 'protocol': 'TCP'},
+                                ],
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
 
-    expected = {
-        'apiVersion':
-            k8s.K8s._API_VERSION,
-        'kind':
-            k8s.K8s._RESOURCE_KIND,
-        'items': [{
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+
+        policy_list = yaml.safe_load(str(acl))
+        self.assertDictEqual(expected, policy_list)
+
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
+        )
+        print(acl)
+
+    @capture.stdout
+    def testGenericEgressTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+
+        expected = {
+            'apiVersion': k8s.K8s._API_VERSION,
+            'kind': k8s.K8s._RESOURCE_KIND,
+            'items': [
+                {
+                    'apiVersion': k8s.Term._API_VERSION,
+                    'kind': k8s.Term._RESOURCE_KIND,
+                    'metadata': {
+                        'name': 'good-term-4-e',
+                        'annotations': {'comment': 'DNS access from corp.'},
+                    },
+                    'spec': {
+                        'podSelector': {},
+                        'policyTypes': ['Egress'],
+                        'egress': [
+                            {
+                                'to': [
+                                    {'ipBlock': {'cidr': '10.2.3.4/32'}},
+                                    {'ipBlock': {'cidr': '2001:4860:8000::5/128'}},
+                                ],
+                                'ports': [
+                                    {'port': 53, 'protocol': 'UDP'},
+                                    {'port': 53, 'protocol': 'TCP'},
+                                ],
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM_EGRESS, self.naming), EXP_INFO
+        )
+
+        policy_list = yaml.safe_load(str(acl))
+        self.assertDictEqual(expected, policy_list)
+
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
+        )
+        print(acl)
+
+    @capture.stdout
+    def testAllProtosTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53'], ['53']]
+
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_PROTO_ALL, self.naming), EXP_INFO)
+
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertLen(policies, 1)
+        net_policy = policies[0]
+        self.assertLen(net_policy['spec']['ingress'], 1)
+        ingress_rule = net_policy['spec']['ingress'][0]
+        self.assertLen(ingress_rule['ports'], 3)
+        unique_protos = {port_selector['protocol'] for port_selector in ingress_rule['ports']}
+        self.assertSetEqual({'UDP', 'TCP', 'SCTP'}, unique_protos)
+        print(acl)
+
+    @capture.stdout
+    def testPortRangeTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.return_value = ['0-1024']
+
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+
+        self.assertLen(policies, 1)
+        net_policy = policies[0]
+        self.assertLen(net_policy['spec']['ingress'], 1)
+        ingress_rule = net_policy['spec']['ingress'][0]
+        self.assertLen(ingress_rule['ports'], 2)
+        expected = {'endPort': 1024, 'port': 0}
+        for port_selector in ingress_rule['ports']:
+            self.assertEqual(port_selector, {**port_selector, **expected})
+        print(acl)
+
+    @capture.stdout
+    def testAllowAllTcpTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.return_value = ['53']
+        expected_ingress_ports = [{'protocol': 'TCP'}]
+
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW_ALL_TCP, self.naming), EXP_INFO
+        )
+
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertLen(policies, 1)
+        net_policy = policies[0]
+        self.assertLen(net_policy['spec']['ingress'], 1)
+        ingress_rule = net_policy['spec']['ingress'][0]
+        self.assertLen(ingress_rule['ports'], 1)
+        self.assertSequenceEqual(ingress_rule['ports'], expected_ingress_ports)
+        print(acl)
+
+    @capture.stdout
+    def testDefaultDenyTerm(self):
+        expected = {
             'apiVersion': k8s.Term._API_VERSION,
             'kind': k8s.Term._RESOURCE_KIND,
             'metadata': {
-                'name': 'good-term-1',
-                'annotations': {
-                    'owner': 'myself',
-                    'comment': 'DNS access from corp.'
-                },
+                'name': 'default-deny',
+                'annotations': {'comment': 'default_deny.'},
+            },
+            'spec': {'podSelector': {}, 'policyTypes': ['Ingress']},
+        }
+
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + DEFAULT_DENY, self.naming), EXP_INFO)
+
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertDictEqual(expected, policies[0])
+        print(acl)
+
+    @capture.stdout
+    def testDefaultDenyEgressTerm(self):
+        expected = {
+            'apiVersion': k8s.Term._API_VERSION,
+            'kind': k8s.Term._RESOURCE_KIND,
+            'metadata': {
+                'name': 'default-deny-e',
+                'annotations': {'comment': 'default_deny.'},
+            },
+            'spec': {'podSelector': {}, 'policyTypes': ['Egress']},
+        }
+
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER_EGRESS + DEFAULT_DENY, self.naming), EXP_INFO)
+
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertLen(policies, 1)
+        self.assertDictEqual(expected, policies[0])
+        print(acl)
+
+    def testBadDenyTerm(self):
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            'not support explicit deny',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_DENY, self.naming),
+            EXP_INFO,
+        )
+
+    def testBadSourceExclusionTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            'missing required field',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_INVALID_SOURCE_EXCLUDE, self.naming),
+            EXP_INFO,
+        )
+
+    def testBadIngressNoAddressTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            'missing required field.+source',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_NO_ADDR, self.naming),
+            EXP_INFO,
+        )
+
+    def testBadEgressNoAddressTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            'missing required field.+destination',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_NO_ADDR, self.naming),
+            EXP_INFO,
+        )
+
+    @parameterized.named_parameters(
+        {
+            'testcase_name': 'IPv4',
+            'ip_block_cidr': TEST_INCLUDE_RANGE,
+            'ip_block_exclude': TEST_EXCLUDE_RANGE,
+        },
+        {
+            'testcase_name': 'IPv6',
+            'ip_block_cidr': ANY_IPV6,
+            'ip_block_exclude': TEST_IPV6_ONLY,
+        },
+        {
+            'testcase_name': 'MultiExclude',
+            'ip_block_cidr': TEST_INCLUDE_IPS,
+            'ip_block_exclude': TEST_EXCLUDE_RANGE + TEST_EXCLUDE_IPS,
+        },
+    )
+    def testGoodSourceAddressExcludeTerm(self, ip_block_cidr, ip_block_exclude):
+        expected_peer_specs = []
+        expected_peer_spec_except = [str(ex) for ex in ip_block_exclude[::-1]]
+        for ip in ip_block_cidr:
+            expected_peer_specs.append(
+                {'ipBlock': {'cidr': str(ip), 'except': expected_peer_spec_except}}
+            )
+
+        expected = {
+            'apiVersion': k8s.Term._API_VERSION,
+            'kind': k8s.Term._RESOURCE_KIND,
+            'metadata': {
+                'name': 'good-term-exclude-source',
+                'annotations': {'comment': 'term with source exclusions'},
             },
             'spec': {
+                'ingress': [
+                    {
+                        'from': expected_peer_specs,
+                        'ports': [{'protocol': 'TCP'}],
+                    }
+                ],
                 'podSelector': {},
                 'policyTypes': ['Ingress'],
-                'ingress': [{
-                    'from': [{
-                        'ipBlock': {
-                            'cidr': '10.2.3.4/32'
-                        }
-                    }, {
-                        'ipBlock': {
-                            'cidr': '2001:4860:8000::5/128'
-                        }
-                    }],
-                    'ports': [{
-                        'port': 53,
-                        'protocol': 'UDP'
-                    }, {
-                        'port': 53,
-                        'protocol': 'TCP'
-                    }],
-                }]
             },
-        }]
-    }
+        }
+        self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXCLUDE_SOURCE, self.naming), EXP_INFO
+        )
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertDictEqual(expected, policies[0])
 
-    policy_list = yaml.safe_load(str(acl))
-    self.assertDictEqual(expected, policy_list)
+    @parameterized.named_parameters(
+        {
+            'testcase_name': 'IPv4',
+            'ip_block_cidr': TEST_INCLUDE_RANGE,
+            'ip_block_exclude': TEST_EXCLUDE_RANGE,
+        },
+        {
+            'testcase_name': 'IPv6',
+            'ip_block_cidr': ANY_IPV6,
+            'ip_block_exclude': TEST_IPV6_ONLY,
+        },
+        {
+            'testcase_name': 'MultiExclude',
+            'ip_block_cidr': TEST_INCLUDE_IPS,
+            'ip_block_exclude': TEST_EXCLUDE_RANGE + TEST_EXCLUDE_IPS,
+        },
+    )
+    def testGoodDestAddressExcludeTerm(self, ip_block_cidr, ip_block_exclude):
+        expected_peer_specs = []
+        expected_peer_spec_except = [str(ex) for ex in ip_block_exclude[::-1]]
+        for ip in ip_block_cidr:
+            expected_peer_specs.append(
+                {'ipBlock': {'cidr': str(ip), 'except': expected_peer_spec_except}}
+            )
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('DNS', 'udp'),
-         mock.call('DNS', 'tcp')])
-    print(acl)
-
-  @capture.stdout
-  def testGenericEgressTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
-    expected = {
-        'apiVersion':
-            k8s.K8s._API_VERSION,
-        'kind':
-            k8s.K8s._RESOURCE_KIND,
-        'items': [{
+        expected = {
             'apiVersion': k8s.Term._API_VERSION,
             'kind': k8s.Term._RESOURCE_KIND,
             'metadata': {
-                'name': 'good-term-4-e',
-                'annotations': {
-                    'comment': 'DNS access from corp.'
-                },
+                'name': 'good-term-exclude-destination-e',
+                'annotations': {'comment': 'term with destination exclusions'},
             },
             'spec': {
+                'egress': [
+                    {
+                        'to': expected_peer_specs,
+                        'ports': [{'protocol': 'TCP'}],
+                    }
+                ],
                 'podSelector': {},
                 'policyTypes': ['Egress'],
-                'egress': [{
-                    'to': [{
-                        'ipBlock': {
-                            'cidr': '10.2.3.4/32'
-                        }
-                    }, {
-                        'ipBlock': {
-                            'cidr': '2001:4860:8000::5/128'
-                        }
-                    }],
-                    'ports': [{
-                        'port': 53,
-                        'protocol': 'UDP'
-                    }, {
-                        'port': 53,
-                        'protocol': 'TCP'
-                    }],
-                }]
             },
-        }]
-    }
+        }
+        self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM_EXCLUDE_DEST, self.naming), EXP_INFO
+        )
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM_EGRESS, self.naming),
-        EXP_INFO)
+        policy_list = yaml.safe_load(str(acl))
+        policies = policy_list['items']
+        self.assertDictEqual(expected, policies[0])
 
-    policy_list = yaml.safe_load(str(acl))
-    self.assertDictEqual(expected, policy_list)
+    def testBadSourceAddressExcludeTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_EMPTY_SOURCE, self.naming), EXP_INFO
+        )
 
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('DNS', 'udp'),
-         mock.call('DNS', 'tcp')])
-    print(acl)
+        self.assertEqual(str(acl), '')
 
-  @capture.stdout
-  def testAllProtosTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53'], ['53']]
+    def testBadDestinationAddressExcludeTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_PROTO_ALL, self.naming),
-        EXP_INFO)
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_EMPTY_DEST, self.naming), EXP_INFO
+        )
 
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertLen(policies, 1)
-    net_policy = policies[0]
-    self.assertLen(net_policy['spec']['ingress'], 1)
-    ingress_rule = net_policy['spec']['ingress'][0]
-    self.assertLen(ingress_rule['ports'], 3)
-    unique_protos = {
-        port_selector['protocol'] for port_selector in ingress_rule['ports']
-    }
-    self.assertSetEqual({'UDP', 'TCP', 'SCTP'}, unique_protos)
-    print(acl)
+        self.assertEqual(str(acl), '')
 
-  @capture.stdout
-  def testPortRangeTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.return_value = ['0-1024']
+    def testBadSourcePortTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53']]
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            'not support source port',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_SOURCE_PORT, self.naming),
+            EXP_INFO,
+        )
 
-    self.assertLen(policies, 1)
-    net_policy = policies[0]
-    self.assertLen(net_policy['spec']['ingress'], 1)
-    ingress_rule = net_policy['spec']['ingress'][0]
-    self.assertLen(ingress_rule['ports'], 2)
-    expected = {'endPort': 1024, 'port': 0}
-    for port_selector in ingress_rule['ports']:
-      self.assertEqual(port_selector, {**port_selector, **expected})
-    print(acl)
+    def testBadIngressDestinationTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53']]
 
-  @capture.stdout
-  def testAllowAllTcpTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.return_value = ['53']
-    expected_ingress_ports = [{'protocol': 'TCP'}]
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            '[Ii]ngress rules cannot include.+destination',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER + BAD_TERM_INGRESS_DESTINATION, self.naming),
+            EXP_INFO,
+        )
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ALLOW_ALL_TCP, self.naming),
-        EXP_INFO)
+    def testBadEgressSourceTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertLen(policies, 1)
-    net_policy = policies[0]
-    self.assertLen(net_policy['spec']['ingress'], 1)
-    ingress_rule = net_policy['spec']['ingress'][0]
-    self.assertLen(ingress_rule['ports'], 1)
-    self.assertSequenceEqual(ingress_rule['ports'], expected_ingress_ports)
-    print(acl)
+        self.assertRaisesRegex(
+            k8s.K8sNetworkPolicyError,
+            '[Ee]gress rules cannot include.+source',
+            k8s.K8s,
+            policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM, self.naming),
+            EXP_INFO,
+        )
 
-  @capture.stdout
-  def testDefaultDenyTerm(self):
-    expected = {
-        'apiVersion': k8s.Term._API_VERSION,
-        'kind': k8s.Term._RESOURCE_KIND,
-        'metadata': {
-            'name': 'default-deny',
-            'annotations': {
-                'comment': 'default_deny.'
-            },
-        },
-        'spec': {
-            'podSelector': {},
-            'policyTypes': ['Ingress']
-        },
-    }
+    @capture.stdout
+    def testValidTermNames(self):
+        for name in VALID_TERM_NAMES:
+            self.naming.GetNetAddr.return_value = TEST_IPS
+            self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+            pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name, self.naming)
+            acl = k8s.K8s(pol, EXP_INFO)
+            self.assertIsNotNone(str(acl))
+            print(acl)
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + DEFAULT_DENY, self.naming), EXP_INFO)
+    def testInvalidTermNames(self):
+        for name in INVALID_TERM_NAMES:
+            self.naming.GetNetAddr.return_value = TEST_IPS
+            self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+            pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name, self.naming)
+            self.assertRaisesRegex(
+                k8s.K8sNetworkPolicyError, 'name %s is not valid' % name, k8s.K8s, pol, EXP_INFO
+            )
 
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertDictEqual(expected, policies[0])
-    print(acl)
+    def testSkipExpiredTerm(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.return_value = ['22']
 
-  @capture.stdout
-  def testDefaultDenyEgressTerm(self):
-    expected = {
-        'apiVersion': k8s.Term._API_VERSION,
-        'kind': k8s.Term._RESOURCE_KIND,
-        'metadata': {
-            'name': 'default-deny-e',
-            'annotations': {
-                'comment': 'default_deny.'
-            },
-        },
-        'spec': {
-            'podSelector': {},
-            'policyTypes': ['Egress']
-        },
-    }
+        acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming), EXP_INFO)
+        self.assertEqual(str(acl), '')
 
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER_EGRESS + DEFAULT_DENY, self.naming),
-        EXP_INFO)
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertLen(policies, 1)
-    self.assertDictEqual(expected, policies[0])
-    print(acl)
+    def testSkipStatelessReply(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.return_value = ['22']
 
-  def testBadDenyTerm(self):
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, 'not support explicit deny', k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_DENY, self.naming), EXP_INFO)
+        # Add stateless_reply to terms, there is no current way to include it in the
+        # term definition.
+        ret = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming)
+        _, terms = ret.filters[0]
+        for term in terms:
+            term.stateless_reply = True
 
-  def testBadSourceExclusionTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, 'missing required field', k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_INVALID_SOURCE_EXCLUDE,
-                           self.naming), EXP_INFO)
+        acl = k8s.K8s(ret, EXP_INFO)
+        self.assertEqual(str(acl), '')
 
-  def testBadIngressNoAddressTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, 'missing required field.+source', k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_NO_ADDR, self.naming),
-        EXP_INFO)
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
+        )
 
-  def testBadEgressNoAddressTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, 'missing required field.+destination',
-        k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_NO_ADDR,
-                           self.naming), EXP_INFO)
+    @capture.stdout
+    def testValidTermProtos(self):
+        for proto in SUPPORTED_PROTOS:
+            self.naming.GetNetAddr.return_value = TEST_IPS
+            self.naming.GetServiceByProto.return_value = ['53']
+            pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
+            acl = k8s.K8s(pol, EXP_INFO)
+            self.assertIsNotNone(str(acl))
+            print(acl)
 
-  @parameterized.named_parameters(
-      {
-          'testcase_name': 'IPv4',
-          'ip_block_cidr': TEST_INCLUDE_RANGE,
-          'ip_block_exclude': TEST_EXCLUDE_RANGE,
-      }, {
-          'testcase_name': 'IPv6',
-          'ip_block_cidr': ANY_IPV6,
-          'ip_block_exclude': TEST_IPV6_ONLY,
-      }, {
-          'testcase_name': 'MultiExclude',
-          'ip_block_cidr': TEST_INCLUDE_IPS,
-          'ip_block_exclude': TEST_EXCLUDE_RANGE + TEST_EXCLUDE_IPS,
-      })
-  def testGoodSourceAddressExcludeTerm(self, ip_block_cidr, ip_block_exclude):
-    expected_peer_specs = []
-    expected_peer_spec_except = [str(ex) for ex in ip_block_exclude[::-1]]
-    for ip in ip_block_cidr:
-      expected_peer_specs.append(
-          {'ipBlock': {
-              'cidr': str(ip),
-              'except': expected_peer_spec_except
-          }})
+    def testInvalidTermProtos(self):
+        for proto in UNSUPPORTED_PROTOS:
+            self.naming.GetNetAddr.return_value = TEST_IPS
+            self.naming.GetServiceByProto.return_value = ['53']
+            pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
+            self.assertRaises(aclgenerator.UnsupportedFilterError, k8s.K8s, pol, EXP_INFO)
 
-    expected = {
-        'apiVersion': k8s.Term._API_VERSION,
-        'kind': k8s.Term._RESOURCE_KIND,
-        'metadata': {
-            'name': 'good-term-exclude-source',
-            'annotations': {
-                'comment': 'term with source exclusions'
-            },
-        },
-        'spec': {
-            'ingress': [{
-                'from': expected_peer_specs,
-                'ports': [{
-                    'protocol': 'TCP'
-                }],
-            }],
-            'podSelector': {},
-            'policyTypes': ['Ingress'],
-        },
-    }
-    self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXCLUDE_SOURCE, self.naming),
-        EXP_INFO)
+    @capture.stdout
+    def testMultipleTerms(self):
+        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming.GetServiceByProto.return_value = ['53']
 
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertDictEqual(expected, policies[0])
+        acl = k8s.K8s(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM + GOOD_TERM_ALLOW_ALL_TCP, self.naming),
+            EXP_INFO,
+        )
 
-  @parameterized.named_parameters(
-      {
-          'testcase_name': 'IPv4',
-          'ip_block_cidr': TEST_INCLUDE_RANGE,
-          'ip_block_exclude': TEST_EXCLUDE_RANGE,
-      }, {
-          'testcase_name': 'IPv6',
-          'ip_block_cidr': ANY_IPV6,
-          'ip_block_exclude': TEST_IPV6_ONLY,
-      }, {
-          'testcase_name': 'MultiExclude',
-          'ip_block_cidr': TEST_INCLUDE_IPS,
-          'ip_block_exclude': TEST_EXCLUDE_RANGE + TEST_EXCLUDE_IPS,
-      })
-  def testGoodDestAddressExcludeTerm(self, ip_block_cidr, ip_block_exclude):
-    expected_peer_specs = []
-    expected_peer_spec_except = [str(ex) for ex in ip_block_exclude[::-1]]
-    for ip in ip_block_cidr:
-      expected_peer_specs.append(
-          {'ipBlock': {
-              'cidr': str(ip),
-              'except': expected_peer_spec_except
-          }})
-
-    expected = {
-        'apiVersion': k8s.Term._API_VERSION,
-        'kind': k8s.Term._RESOURCE_KIND,
-        'metadata': {
-            'name': 'good-term-exclude-destination-e',
-            'annotations': {
-                'comment': 'term with destination exclusions'
-            },
-        },
-        'spec': {
-            'egress': [{
-                'to': expected_peer_specs,
-                'ports': [{
-                    'protocol': 'TCP'
-                }],
-            }],
-            'podSelector': {},
-            'policyTypes': ['Egress'],
-        },
-    }
-    self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM_EXCLUDE_DEST,
-                           self.naming), EXP_INFO)
-
-    policy_list = yaml.safe_load(str(acl))
-    policies = policy_list['items']
-    self.assertDictEqual(expected, policies[0])
-
-  def testBadSourceAddressExcludeTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_EMPTY_SOURCE, self.naming),
-        EXP_INFO)
-
-    self.assertEqual(str(acl), '')
-
-  def testBadDestinationAddressExcludeTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
-
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_EMPTY_DEST,
-                           self.naming), EXP_INFO)
-
-    self.assertEqual(str(acl), '')
-
-  def testBadSourcePortTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53']]
-
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, 'not support source port', k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_SOURCE_PORT, self.naming),
-        EXP_INFO)
-
-  def testBadIngressDestinationTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53']]
-
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError,
-        '[Ii]ngress rules cannot include.+destination', k8s.K8s,
-        policy.ParsePolicy(GOOD_HEADER + BAD_TERM_INGRESS_DESTINATION,
-                           self.naming), EXP_INFO)
-
-  def testBadEgressSourceTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
-    self.assertRaisesRegex(
-        k8s.K8sNetworkPolicyError, '[Ee]gress rules cannot include.+source',
-        k8s.K8s, policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM,
-                                    self.naming), EXP_INFO)
-
-  @capture.stdout
-  def testValidTermNames(self):
-    for name in VALID_TERM_NAMES:
-      self.naming.GetNetAddr.return_value = TEST_IPS
-      self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-      pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name,
-                               self.naming)
-      acl = k8s.K8s(pol, EXP_INFO)
-      self.assertIsNotNone(str(acl))
-      print(acl)
-
-  def testInvalidTermNames(self):
-    for name in INVALID_TERM_NAMES:
-      self.naming.GetNetAddr.return_value = TEST_IPS
-      self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-      pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name,
-                               self.naming)
-      self.assertRaisesRegex(k8s.K8sNetworkPolicyError,
-                             'name %s is not valid' % name, k8s.K8s, pol,
-                             EXP_INFO)
-
-  def testSkipExpiredTerm(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.return_value = ['22']
-
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming),
-        EXP_INFO)
-    self.assertEqual(str(acl), '')
-
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
-
-  def testSkipStatelessReply(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.return_value = ['22']
-
-    # Add stateless_reply to terms, there is no current way to include it in the
-    # term definition.
-    ret = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming)
-    _, terms = ret.filters[0]
-    for term in terms:
-      term.stateless_reply = True
-
-    acl = k8s.K8s(ret, EXP_INFO)
-    self.assertEqual(str(acl), '')
-
-    self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('DNS', 'udp'),
-         mock.call('DNS', 'tcp')])
-
-  @capture.stdout
-  def testValidTermProtos(self):
-    for proto in SUPPORTED_PROTOS:
-      self.naming.GetNetAddr.return_value = TEST_IPS
-      self.naming.GetServiceByProto.return_value = ['53']
-      pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto,
-                               self.naming)
-      acl = k8s.K8s(pol, EXP_INFO)
-      self.assertIsNotNone(str(acl))
-      print(acl)
-
-  def testInvalidTermProtos(self):
-    for proto in UNSUPPORTED_PROTOS:
-      self.naming.GetNetAddr.return_value = TEST_IPS
-      self.naming.GetServiceByProto.return_value = ['53']
-      pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto,
-                               self.naming)
-      self.assertRaises(aclgenerator.UnsupportedFilterError, k8s.K8s, pol,
-                        EXP_INFO)
-
-  @capture.stdout
-  def testMultipleTerms(self):
-    self.naming.GetNetAddr.return_value = TEST_IPS
-    self.naming.GetServiceByProto.return_value = ['53']
-
-    acl = k8s.K8s(
-        policy.ParsePolicy(GOOD_HEADER + GOOD_TERM + GOOD_TERM_ALLOW_ALL_TCP,
-                           self.naming), EXP_INFO)
-
-    policy_list = yaml.safe_load(str(acl))
-    self.assertLen(policy_list['items'], 2)
-    print(acl)
+        policy_list = yaml.safe_load(str(acl))
+        self.assertLen(policy_list['items'], 2)
+        print(acl)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()
