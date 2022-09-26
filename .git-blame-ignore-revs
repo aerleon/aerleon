@@ -1,0 +1,3 @@
+# .git-blame-ignore-revs
+# Reformat everything using 'black'
+f8937ef224b027ef20bd915f35bdb02312e8d6e5

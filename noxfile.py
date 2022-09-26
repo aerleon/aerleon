@@ -43,3 +43,4 @@ def lint(session):
 def dev_setup(session: Session) -> None:
     """Installs pre-commit hooks using pre-commit"""
     session.run("pre-commit", "install")
+    session.run("git", "config", "blame.ignoreRevsFile", ".git-blame-ignore-revs")
