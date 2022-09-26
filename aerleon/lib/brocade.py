@@ -19,14 +19,14 @@ from aerleon.lib import cisco
 
 
 class Brocade(cisco.Cisco):
-  """A brocade policy object.
+    """A brocade policy object.
 
-  Brocade devices do not like protocol numbers. Revert the protocol numbers to
-  names just before emitting acl lines to minimize difference from Cisco logic.
-  """
+    Brocade devices do not like protocol numbers. Revert the protocol numbers to
+    names just before emitting acl lines to minimize difference from Cisco logic.
+    """
 
-  _PLATFORM = 'brocade'
-  SUFFIX = '.bacl'
-  # Protocols should be emitted as they were in the policy (names).
-  _PROTO_INT = False
-  _TERM_REMARK = False
+    _PLATFORM = 'brocade'
+    SUFFIX = '.bacl'
+    # Protocols should be emitted as they were in the policy (names).
+    _PROTO_INT = False
+    _TERM_REMARK = False

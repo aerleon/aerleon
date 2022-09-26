@@ -2454,31 +2454,29 @@ EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_WITH_ICMPV6_GA = """
 ]
 """
 
-SUPPORTED_TOKENS = frozenset({
-    'action',
-    'comment',
-    'destination_address',
-    'destination_port',
-    'destination_tag',
-    'logging',
-    'name',
-    'option',
-    'protocol',
-    'source_address',
-    'source_port',
-    'source_tag',
-    'stateless_reply',
-    'target_resources',
-    'translated',
-    'platform',
-    'platform_exclude',
-})
-
-SUPPORTED_SUB_TOKENS = {
-    'action': {
-        'accept', 'deny', 'next'
+SUPPORTED_TOKENS = frozenset(
+    {
+        'action',
+        'comment',
+        'destination_address',
+        'destination_port',
+        'destination_tag',
+        'logging',
+        'name',
+        'option',
+        'protocol',
+        'source_address',
+        'source_port',
+        'source_tag',
+        'stateless_reply',
+        'target_resources',
+        'translated',
+        'platform',
+        'platform_exclude',
     }
-}
+)
+
+SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny', 'next'}}
 
 EXP_INFO = 2
 
@@ -2492,909 +2490,994 @@ MANY_IPS.extend([nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.1.1')])
 
 
 class GcpHfTest(parameterized.TestCase):
-
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
-
-  def _StripAclHeaders(self, acl):
-    return '\n'.join([line for line in str(acl).split('\n')
-                      if not line.lstrip().startswith('#')])
-
-  @capture.stdout
-  def testDefaultHeader(self):
-    """Test that a header without options is accepted."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionMaxHeader(self):
-    """Test that a header with a default maximum cost is accepted."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MAX + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionEgressHeader(self):
-    """Test that a header with direction is accepted."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_RESTRICT_EGRESS,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionAFHeader(self):
-    """Test that a header with address family is accepted."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_AF + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionEgressAndMaxHeader(self):
-    """Test a header with direction and default maximum cost is accepted."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_MAX + TERM_RESTRICT_EGRESS,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionEgressAndAF(self):
-    """Test a header with a direction and address family is accepted."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionMaxAndAF(self):
-    """Test a header with default maximum cost & address family is accepted."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MAX_AND_AF + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testOptionApiVersionAFHeader(self):
-    """Test that a header with api_version is accepted."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_BETA + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  def testRaisesHeaderErrorOnUnknownOption(self):
-    """Test that an unknown header option raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_UNKNOWN_OPTION + TERM_ALLOW_ALL_INTERNAL, self.naming),
-          EXP_INFO)
-
-  def testRaisesHeaderErrorOnUnknownDirection(self):
-    """Test that an unknown direction option raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_UNKNOWN_DIRECTION + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesHeaderErrorOnInvalidMaxCost(self):
-    """Test that a maximum default cost over 2^16 raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_INVALID_MAX_COST + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesHeaderErrorOnUnequalMaxCostInMultiplePolicies(self):
-    """Test that unequal max costs across multiple policies raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              HEADER_OPTION_MAX + TERM_ALLOW_ALL_INTERNAL +
-              HEADER_OPTION_HIGH_QUOTA + TERM_ALLOW_ALL_INTERNAL, self.naming),
-          EXP_INFO)
-
-  def testRaisesHeaderErrorOnUnequalMaxCostInMultiplePoliciesWithDefault(self):
-    """Test that unspecified, and set max costs across multiple policies raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              HEADER_OPTION_MAX + TERM_ALLOW_ALL_INTERNAL +
-              HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL, self.naming),
-          EXP_INFO)
-
-  def testRaisesHeaderErrorOnLongDisplayName(self):
-    """Test that a long displayName raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_LONG_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesHeaderErrorOnHeaderWithoutDisplayName(self):
-    """Test that a header without a policy name raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_NO_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL, self.naming),
-          EXP_INFO)
-
-  def testRaisesHeaderErrorOnIncorrectDisplayName1(self):
-    """Test that an invalid displayName raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_INVALID_DISPLAYNAME_1 + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesHeaderErrorOnIncorrectDisplayName2(self):
-    """Test that an invalid displayName raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_INVALID_DISPLAYNAME_2 + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesHeaderErrorOnIncorrectDisplayName3(self):
-    """Test that an invalid displayName raises a HeaderError."""
-    with self.assertRaises(gcp.HeaderError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              BAD_HEADER_INVALID_DISPLAYNAME_3 + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  def testRaisesTermErrorOnTermWithDestinationTag(self):
-    """Test that a term with a destination tag raises an error.
-
-    Tags are not supported in HF.
-    """
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_DEST_TAG,
-                             self.naming), EXP_INFO)
-
-  def testRaisesTermErrorOnTermWithSourceTag(self):
-    """Test that a term with a source tag raises an error.
-
-    Tags are not supported in HF.
-    """
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_SOURCE_TAG,
-                             self.naming), EXP_INFO)
-
-  @capture.stdout
-  def testTermWithNumberedProtocol(self):
-    """Test that a protocol number is supported."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_NUMBERED_PROTOCOL,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_NUMBERED_PROTOCOL_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  def testRaisesTermErrorOnTermWithSourcePort(self):
-    """Test that a term with a source port raises Term error."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-    self.naming.GetServiceByProto.side_effect = [['53']]
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_SOURCE_PORT,
-                             self.naming), EXP_INFO)
-
-  def testRaisesTermErrorOnTermWithTooManyTargetResources(self):
-    """Test that a term with > 256 targetResources raises TermError."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_TARGET_RESOURCES,
-                             self.naming), EXP_INFO)
-
-  def testRaisesTermErrorOnTermWithTooManyDestinationPorts(self):
-    """Test that a term with > 256 destination ports raises TermError."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    # Create a list of 260 numbers to use as destination ports and raise an error
-    # Using even numbers ensures that the port list does not get condensed to a range.
-    se_array = []
-    for x in range(2000, 2520):
-      if x % 2 == 0:
-        se_array.append([str(x)])
-    # Use destination port list to successively mock return values.
-    self.naming.GetServiceByProto.side_effect = se_array
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_DESTINATION_PORTS,
-                             self.naming), EXP_INFO)
-
-  def testRaisesTermErrorOnTermWithOptions(self):
-    """Test that a term with a source port raises Term error."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_OPTIONS,
-                             self.naming),
-          EXP_INFO)
-
-  def testRaisesTermErrorOnInvalidProjectID(self):
-    """Test that an invalid project ID on target resources raises Term error."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_NON_VALID_PROJECT_ID,
-                             self.naming),
-          EXP_INFO)
-
-  def testRaisesTermErrorOnInvalidVPCName(self):
-    """Test that an invalid VPC name on target resources raises Term error."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    with self.assertRaises(gcp.TermError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_NON_VALID_VPC_NAME,
-                             self.naming),
-          EXP_INFO)
-
-  def testRaisesDifferentPolicyNameErrorWhenDifferentPolicyNames(self):
-    """Test that different policy names raises DifferentPolicyNameError."""
-    with self.assertRaises(gcp_hf.DifferentPolicyNameError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              HEADER_NO_OPTIONS + TERM_DENY_INGRESS + HEADER_OPTION_EGRESS_2 +
-              TERM_DENY_EGRESS, self.naming), EXP_INFO)
-
-  def testIgnorePolicyFromADifferentPlatform(self):
-    """Test that a policy with a header from a different platform is ignored."""
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(BAD_HEADER_WRONG_PLATFORM + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming), EXP_INFO)
-    self.assertEqual([], json.loads(self._StripAclHeaders(str(acl))))
-
-  @capture.stdout
-  def testIgnoreTermWithPlatformExclude(self):
-    """Test that a term with platform exclude is ignored."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(
-            HEADER_OPTION_AF + TERM_PLATFORM_EXCLUDE + TERM_ALLOW_ALL_INTERNAL,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testTermWithPlatformExists(self):
-    """Test that a term with platform is rendered."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(
-            HEADER_OPTION_AF + TERM_PLATFORM_ALLOW_ALL_INTERNAL,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testIgnoreTermWithICMPv6(self):
-    """Test that a term with only an icmpv6 protocol is not rendered."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_AF + BAD_TERM_IP_VERSION_MISMATCH,
-                           self.naming), EXP_INFO)
-    exp = [{'displayName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
-    self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6IgnoreTermWithICMP(self):
-    """Test that a term with only an icmp protocol is not rendered for inet6."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_ICMP_VERSION_MISMATCH,
-                           self.naming), EXP_INFO)
-    exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
-    self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6IgnoreTermWithIGMP(self):
-    """Test that a term with only an igmp protocol is not rendered for inet6."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_IGMP_VERSION_MISMATCH,
-                           self.naming), EXP_INFO)
-    exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
-    self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6TermWithIPv6Addresses(self):
-    """Test that IPv6 addresses are supported with inet6."""
-    self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_IPV6_PROTOCOL_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6TermWithMixedAddresses(self):
-    """Test that Mixed addresses are supported with inet6."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_IPV6_PROTOCOL_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6TermWithIPv4Addresses(self):
-    """Test that IPv4 addresses are not rendered with inet6."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
-    self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInetTermWithMixedAddresses(self):
-    """Test that Mixed addresses are supported with inet."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInetTermWithIPv6Addresses(self):
-    """Test that IPv6 addresses are not rendered with inet."""
-    self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS,
-                           self.naming), EXP_INFO)
-    exp = [{'displayName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
-    self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedTermWithMixedAddresses(self):
-    """Test that IPv4 and IPv6 addresses are supported with mixed."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedTermWithIPv4Addresses(self):
-    """Test that IPv4 addresses are supported with mixed."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV4_PROTOCOL_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedTermWithIPv6Addresses(self):
-    """Test that IPv6 addresses are supported with mixed."""
-    self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV6_PROTOCOL_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedTermWithICMP(self):
-    """Test that ICMP protocol is supported with mixed."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_WITH_ICMP_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedTermWithICMPv6(self):
-    """Test that ICMPv6 protocol is supported with mixed."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(
-            HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL_ICMPV6,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_WITH_ICMPV6_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInetIsDefaultInetVersion(self):
-    """Test that inet is the default inet version when not specified."""
-    self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-    self.naming.GetServiceByProto.side_effect = [['80']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_GA_NO_INET_OPTIONS + TERM_ALLOW_PORT,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV4_PROTOCOL_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testPriority(self):
-    """Test that priority is set based on terms' ordering."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(
-            HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL + TERM_ALLOW_DNS,
-            self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MULTIPLE_RULE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testLogging(self):
-    """Test that logging is used when it is set on a term."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-    self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_LOGGING, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_ONE_RULE_INGRESS_W_LOGGING_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testTargetResources(self):
-    """Test that the target resources is used correctly."""
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_DENY_INGRESS_ON_TARGET_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testSecondWayOfPassingTargetResources(self):
-    """Test that the target resources is used correctly."""
-    self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES_2,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_DENY_INGRESS_ON_TARGET_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMultiplePolicies(self):
-    """Tests that both ingress and egress rules are included in one policy."""
-    self.maxDiff = None
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL +
-                           TERM_DENY_INGRESS + HEADER_OPTION_EGRESS +
-                           TERM_RESTRICT_EGRESS + TERM_DENY_EGRESS,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_INGRESS_AND_EGRESS_W_DENY_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testPortRange(self):
-    """Test that a port range is accepted and used correctly."""
-    self.naming.GetNetAddr.return_value = TEST_IP
-    self.naming.GetServiceByProto.side_effect = [['8000-9000']]
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_PORT_RANGE,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_PORT_RANGE_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testTermLongComment(self):
-    """Test that a term's long comment gets truncated and prefixed with term name."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_LONG_COMMENT,
-                           self.naming),
-        EXP_INFO)
-    comment_truncated = EXPECTED_ONE_RULE_INGRESS_BETA.replace(
-        'Generic description',
-        'This is a very long description, it is l')
-    expected = json.loads(comment_truncated)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testDefaultDenyIngressCreation(self):
-    """Test that the correct IP is correctly set on a deny all ingress term."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_DENY_INGRESS, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_DENY_INGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6DefaultDenyIngressCreation(self):
-    """Test that the IPv6 IP is correctly set on a deny all ingress term."""
-    self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_DENY_INGRESS,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV6_DENY_INGRESS_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedDefaultDenyIngressCreation(self):
-    """Test that the mixed IPs are correctly set on a deny all ingress term."""
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_DENY_INGRESS,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MIXED_DENY_INGRESS_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testDefaultDenyEgressCreation(self):
-    """Test that the correct IP is correctly set on a deny all egress term."""
-    self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_DENY_EGRESS,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_DENY_EGRESS_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testInet6DefaultDenyEgressCreation(self):
-    """Test that the IPv6 IP is correctly set on a deny all egress term."""
-    self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_INET6 + TERM_DENY_EGRESS,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_IPV6_DENY_EGRESS_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testMixedDefaultDenyEgressCreation(self):
-    """Test that the mixed IPs are correctly set on a deny all egress term."""
-
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_MIXED + TERM_DENY_EGRESS,
-                           self.naming), EXP_INFO)
-    expected = json.loads(EXPECTED_MIXED_DENY_EGRESS_GA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  def testBuildTokens(self):
-    """Test that _BuildTokens generates the expected list of tokens."""
-    self.naming.GetNetAddr.side_effect = [TEST_IP]
-
-    pol1 = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL,
-                           self.naming),
-        EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  def testRaisesExceededCostError(self):
-    """Test that ExceededCostError is raised when policy exceeds max cost."""
-    self.naming.GetNetAddr.side_effect = [TEST_IP]
-    with self.assertRaises(gcp_hf.ExceededCostError):
-      gcp_hf.HierarchicalFirewall(
-          policy.ParsePolicy(
-              HEADER_VERY_LOW_DEFAULT_MAX + TERM_ALLOW_ALL_INTERNAL,
-              self.naming), EXP_INFO)
-
-  @capture.stdout
-  def testChunkedIPRanges(self):
-    """Test that source IP ranges that exceed limit are chunked."""
-    self.maxDiff = None
-    self.naming.GetNetAddr.side_effect = [MANY_IPS]
-    self.naming.GetServiceByProto.side_effect = [['80']]
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_HIGH_QUOTA + TERM_ALLOW_PORT,
-                           self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_CHUNKED_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @capture.stdout
-  def testChunkedEgressIPRanges(self):
-    """Test that destination IP ranges that exceed limit are chunked."""
-    self.maxDiff = None
-    self.naming.GetNetAddr.side_effect = [MANY_IPS]
-    self.naming.GetServiceByProto.side_effect = [['80']]
-    acl = gcp_hf.HierarchicalFirewall(
-        policy.ParsePolicy(HEADER_OPTION_EGRESS_HIGH_QUOTA +
-                           TERM_ALLOW_EGRESS_PORT, self.naming),
-        EXP_INFO)
-    expected = json.loads(EXPECTED_EGRESS_CHUNKED_BETA)
-    self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
-    print(acl)
-
-  @parameterized.named_parameters(
-      ('1 ip, 2 protocols',
-       {'match': {
-           'config': {
-               'destIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp'},
-                   {'ipProtocol': 'icmp'}
-               ]
-           }
-       }}, 3),
-      ('1 ip, 3 protocols, ',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp'},
-                   {'ipProtocol': 'icmp'},
-                   {'ipProtocol': 'udp'}
-               ]
-           }
-       }}, 4),
-      ('1 ip, 1 protocol with 1 port',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp', 'ports': ['22']}
-               ]
-           }
-       }}, 3),
-      ('1 ip, 2 protocols with 2 ports each',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp', 'ports': ['22']},
-                   {'ipProtocol': 'udp', 'ports': ['22']}
-               ]
-           }
-       }}, 5),
-      ('1 ip, 1 protocol with 2 ports',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp', 'ports': ['22', '23']}
-               ]
-           }
-       }}, 4),
-      ('2 ips, 1 protocol with 2 ports',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp', 'ports': ['22', '23']}
-               ]
-           }
-       }}, 5),
-      ('2 ips, 2 protocols with 2 ports each',
-       {'match': {
-           'config': {
-               'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp', 'ports': ['22', '23']},
-                   {'ipProtocol': 'udp', 'ports': ['22', '23']}
-               ]
-           }
-       }}, 8),
-      ('1 ip, 2 protocols, 2 targets',
-       {'match': {
-           'config': {
-               'destIpRanges': ['0.0.0.0/0'],
-               'layer4Configs': [
-                   {'ipProtocol': 'tcp'},
-                   {'ipProtocol': 'icmp'}
-               ]
-           }
-       },
-        'targetResources': ['target1', 'target2']
-       }, 5),
-  )
-  def testGetRuleTupleCount(self, dict_term, expected):
-    self.assertEqual(gcp_hf.GetRuleTupleCount(dict_term, 'beta'), expected)
-
-  @parameterized.named_parameters(
-      ('1 ip, 2 protocols', {
-          'match': {
-              'destIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp'
-              }, {
-                  'ipProtocol': 'icmp'
-              }]
-          }
-      }, 3),
-      ('1 ip, 3 protocols, ', {
-          'match': {
-              'srcIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp'
-              }, {
-                  'ipProtocol': 'icmp'
-              }, {
-                  'ipProtocol': 'udp'
-              }]
-          }
-      }, 4),
-      ('1 ip, 1 protocol with 1 port', {
-          'match': {
-              'srcIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp',
-                  'ports': ['22']
-              }]
-          }
-      }, 3),
-      ('1 ip, 2 protocols with 2 ports each', {
-          'match': {
-              'srcIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp',
-                  'ports': ['22']
-              }, {
-                  'ipProtocol': 'udp',
-                  'ports': ['22']
-              }]
-          }
-      }, 5),
-      ('1 ip, 1 protocol with 2 ports', {
-          'match': {
-              'srcIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp',
-                  'ports': ['22', '23']
-              }]
-          }
-      }, 4),
-      ('2 ips, 1 protocol with 2 ports', {
-          'match': {
-              'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp',
-                  'ports': ['22', '23']
-              }]
-          }
-      }, 5),
-      ('2 ips, 2 protocols with 2 ports each', {
-          'match': {
-              'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp',
-                  'ports': ['22', '23']
-              }, {
-                  'ipProtocol': 'udp',
-                  'ports': ['22', '23']
-              }]
-          }
-      }, 8),
-      ('1 ip, 2 protocols, 2 targets', {
-          'match': {
-              'destIpRanges': ['0.0.0.0/0'],
-              'layer4Configs': [{
-                  'ipProtocol': 'tcp'
-              }, {
-                  'ipProtocol': 'icmp'
-              }]
-          },
-          'targetResources': ['target1', 'target2']
-      }, 5),
-  )
-  def testGAGetRuleTupleCount(self, dict_term, expected):
-    self.assertEqual(gcp_hf.GetRuleTupleCount(dict_term, 'ga'), expected)
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
+
+    def _StripAclHeaders(self, acl):
+        return '\n'.join(
+            [line for line in str(acl).split('\n') if not line.lstrip().startswith('#')]
+        )
+
+    @capture.stdout
+    def testDefaultHeader(self):
+        """Test that a header without options is accepted."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionMaxHeader(self):
+        """Test that a header with a default maximum cost is accepted."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MAX + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionEgressHeader(self):
+        """Test that a header with direction is accepted."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_RESTRICT_EGRESS, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionAFHeader(self):
+        """Test that a header with address family is accepted."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_AF + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionEgressAndMaxHeader(self):
+        """Test a header with direction and default maximum cost is accepted."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_MAX + TERM_RESTRICT_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionEgressAndAF(self):
+        """Test a header with a direction and address family is accepted."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionMaxAndAF(self):
+        """Test a header with default maximum cost & address family is accepted."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MAX_AND_AF + TERM_ALLOW_ALL_INTERNAL, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testOptionApiVersionAFHeader(self):
+        """Test that a header with api_version is accepted."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_BETA + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    def testRaisesHeaderErrorOnUnknownOption(self):
+        """Test that an unknown header option raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_UNKNOWN_OPTION + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnUnknownDirection(self):
+        """Test that an unknown direction option raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_UNKNOWN_DIRECTION + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnInvalidMaxCost(self):
+        """Test that a maximum default cost over 2^16 raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_INVALID_MAX_COST + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnUnequalMaxCostInMultiplePolicies(self):
+        """Test that unequal max costs across multiple policies raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    HEADER_OPTION_MAX
+                    + TERM_ALLOW_ALL_INTERNAL
+                    + HEADER_OPTION_HIGH_QUOTA
+                    + TERM_ALLOW_ALL_INTERNAL,
+                    self.naming,
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnUnequalMaxCostInMultiplePoliciesWithDefault(self):
+        """Test that unspecified, and set max costs across multiple policies raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    HEADER_OPTION_MAX
+                    + TERM_ALLOW_ALL_INTERNAL
+                    + HEADER_NO_OPTIONS
+                    + TERM_ALLOW_ALL_INTERNAL,
+                    self.naming,
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnLongDisplayName(self):
+        """Test that a long displayName raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_LONG_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnHeaderWithoutDisplayName(self):
+        """Test that a header without a policy name raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_NO_DISPLAYNAME + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnIncorrectDisplayName1(self):
+        """Test that an invalid displayName raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_INVALID_DISPLAYNAME_1 + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnIncorrectDisplayName2(self):
+        """Test that an invalid displayName raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_INVALID_DISPLAYNAME_2 + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesHeaderErrorOnIncorrectDisplayName3(self):
+        """Test that an invalid displayName raises a HeaderError."""
+        with self.assertRaises(gcp.HeaderError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    BAD_HEADER_INVALID_DISPLAYNAME_3 + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testRaisesTermErrorOnTermWithDestinationTag(self):
+        """Test that a term with a destination tag raises an error.
+
+        Tags are not supported in HF.
+        """
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_DEST_TAG, self.naming),
+                EXP_INFO,
+            )
+
+    def testRaisesTermErrorOnTermWithSourceTag(self):
+        """Test that a term with a source tag raises an error.
+
+        Tags are not supported in HF.
+        """
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_SOURCE_TAG, self.naming),
+                EXP_INFO,
+            )
+
+    @capture.stdout
+    def testTermWithNumberedProtocol(self):
+        """Test that a protocol number is supported."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_NUMBERED_PROTOCOL, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_NUMBERED_PROTOCOL_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    def testRaisesTermErrorOnTermWithSourcePort(self):
+        """Test that a term with a source port raises Term error."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming.GetServiceByProto.side_effect = [['53']]
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_SOURCE_PORT, self.naming), EXP_INFO
+            )
+
+    def testRaisesTermErrorOnTermWithTooManyTargetResources(self):
+        """Test that a term with > 256 targetResources raises TermError."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_TARGET_RESOURCES, self.naming),
+                EXP_INFO,
+            )
+
+    def testRaisesTermErrorOnTermWithTooManyDestinationPorts(self):
+        """Test that a term with > 256 destination ports raises TermError."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        # Create a list of 260 numbers to use as destination ports and raise an error
+        # Using even numbers ensures that the port list does not get condensed to a range.
+        se_array = []
+        for x in range(2000, 2520):
+            if x % 2 == 0:
+                se_array.append([str(x)])
+        # Use destination port list to successively mock return values.
+        self.naming.GetServiceByProto.side_effect = se_array
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_DESTINATION_PORTS, self.naming),
+                EXP_INFO,
+            )
+
+    def testRaisesTermErrorOnTermWithOptions(self):
+        """Test that a term with a source port raises Term error."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_OPTIONS, self.naming), EXP_INFO
+            )
+
+    def testRaisesTermErrorOnInvalidProjectID(self):
+        """Test that an invalid project ID on target resources raises Term error."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_NON_VALID_PROJECT_ID, self.naming),
+                EXP_INFO,
+            )
+
+    def testRaisesTermErrorOnInvalidVPCName(self):
+        """Test that an invalid VPC name on target resources raises Term error."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        with self.assertRaises(gcp.TermError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_NON_VALID_VPC_NAME, self.naming),
+                EXP_INFO,
+            )
+
+    def testRaisesDifferentPolicyNameErrorWhenDifferentPolicyNames(self):
+        """Test that different policy names raises DifferentPolicyNameError."""
+        with self.assertRaises(gcp_hf.DifferentPolicyNameError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    HEADER_NO_OPTIONS
+                    + TERM_DENY_INGRESS
+                    + HEADER_OPTION_EGRESS_2
+                    + TERM_DENY_EGRESS,
+                    self.naming,
+                ),
+                EXP_INFO,
+            )
+
+    def testIgnorePolicyFromADifferentPlatform(self):
+        """Test that a policy with a header from a different platform is ignored."""
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(BAD_HEADER_WRONG_PLATFORM + TERM_ALLOW_ALL_INTERNAL, self.naming),
+            EXP_INFO,
+        )
+        self.assertEqual([], json.loads(self._StripAclHeaders(str(acl))))
+
+    @capture.stdout
+    def testIgnoreTermWithPlatformExclude(self):
+        """Test that a term with platform exclude is ignored."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(
+                HEADER_OPTION_AF + TERM_PLATFORM_EXCLUDE + TERM_ALLOW_ALL_INTERNAL, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testTermWithPlatformExists(self):
+        """Test that a term with platform is rendered."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_AF + TERM_PLATFORM_ALLOW_ALL_INTERNAL, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testIgnoreTermWithICMPv6(self):
+        """Test that a term with only an icmpv6 protocol is not rendered."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_AF + BAD_TERM_IP_VERSION_MISMATCH, self.naming),
+            EXP_INFO,
+        )
+        exp = [{'displayName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
+        self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6IgnoreTermWithICMP(self):
+        """Test that a term with only an icmp protocol is not rendered for inet6."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_ICMP_VERSION_MISMATCH, self.naming),
+            EXP_INFO,
+        )
+        exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
+        self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6IgnoreTermWithIGMP(self):
+        """Test that a term with only an igmp protocol is not rendered for inet6."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_IGMP_VERSION_MISMATCH, self.naming),
+            EXP_INFO,
+        )
+        exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
+        self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6TermWithIPv6Addresses(self):
+        """Test that IPv6 addresses are supported with inet6."""
+        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_IPV6_PROTOCOL_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6TermWithMixedAddresses(self):
+        """Test that Mixed addresses are supported with inet6."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_IPV6_PROTOCOL_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6TermWithIPv4Addresses(self):
+        """Test that IPv4 addresses are not rendered with inet6."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        exp = [{'shortName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
+        self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInetTermWithMixedAddresses(self):
+        """Test that Mixed addresses are supported with inet."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_EGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInetTermWithIPv6Addresses(self):
+        """Test that IPv6 addresses are not rendered with inet."""
+        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        exp = [{'displayName': 'displayname', 'rules': [], 'type': 'FIREWALL'}]
+        self.assertEqual(exp, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedTermWithMixedAddresses(self):
+        """Test that IPv4 and IPv6 addresses are supported with mixed."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedTermWithIPv4Addresses(self):
+        """Test that IPv4 addresses are supported with mixed."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV4_PROTOCOL_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedTermWithIPv6Addresses(self):
+        """Test that IPv6 addresses are supported with mixed."""
+        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV6_PROTOCOL_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedTermWithICMP(self):
+        """Test that ICMP protocol is supported with mixed."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_WITH_ICMP_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedTermWithICMPv6(self):
+        """Test that ICMPv6 protocol is supported with mixed."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(
+                HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL_ICMPV6, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MULTIPLE_MIXED_RULE_INGRESS_WITH_ICMPV6_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInetIsDefaultInetVersion(self):
+        """Test that inet is the default inet version when not specified."""
+        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming.GetServiceByProto.side_effect = [['80']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_GA_NO_INET_OPTIONS + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_MIXED_IPV4_PROTOCOL_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testPriority(self):
+        """Test that priority is set based on terms' ordering."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(
+                HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL + TERM_ALLOW_DNS, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MULTIPLE_RULE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testLogging(self):
+        """Test that logging is used when it is set on a term."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_LOGGING, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_ONE_RULE_INGRESS_W_LOGGING_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testTargetResources(self):
+        """Test that the target resources is used correctly."""
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_DENY_INGRESS_ON_TARGET_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testSecondWayOfPassingTargetResources(self):
+        """Test that the target resources is used correctly."""
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES_2, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_DENY_INGRESS_ON_TARGET_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMultiplePolicies(self):
+        """Tests that both ingress and egress rules are included in one policy."""
+        self.maxDiff = None
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(
+                HEADER_NO_OPTIONS
+                + TERM_ALLOW_ALL_INTERNAL
+                + TERM_DENY_INGRESS
+                + HEADER_OPTION_EGRESS
+                + TERM_RESTRICT_EGRESS
+                + TERM_DENY_EGRESS,
+                self.naming,
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_INGRESS_AND_EGRESS_W_DENY_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testPortRange(self):
+        """Test that a port range is accepted and used correctly."""
+        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming.GetServiceByProto.side_effect = [['8000-9000']]
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_PORT_RANGE, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_PORT_RANGE_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testTermLongComment(self):
+        """Test that a term's long comment gets truncated and prefixed with term name."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_LONG_COMMENT, self.naming), EXP_INFO
+        )
+        comment_truncated = EXPECTED_ONE_RULE_INGRESS_BETA.replace(
+            'Generic description', 'This is a very long description, it is l'
+        )
+        expected = json.loads(comment_truncated)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testDefaultDenyIngressCreation(self):
+        """Test that the correct IP is correctly set on a deny all ingress term."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_DENY_INGRESS, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_DENY_INGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6DefaultDenyIngressCreation(self):
+        """Test that the IPv6 IP is correctly set on a deny all ingress term."""
+        self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_DENY_INGRESS, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_IPV6_DENY_INGRESS_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedDefaultDenyIngressCreation(self):
+        """Test that the mixed IPs are correctly set on a deny all ingress term."""
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_DENY_INGRESS, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_MIXED_DENY_INGRESS_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testDefaultDenyEgressCreation(self):
+        """Test that the correct IP is correctly set on a deny all egress term."""
+        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_DENY_EGRESS, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_DENY_EGRESS_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testInet6DefaultDenyEgressCreation(self):
+        """Test that the IPv6 IP is correctly set on a deny all egress term."""
+        self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_INET6 + TERM_DENY_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_IPV6_DENY_EGRESS_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testMixedDefaultDenyEgressCreation(self):
+        """Test that the mixed IPs are correctly set on a deny all egress term."""
+
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_EGRESS_MIXED + TERM_DENY_EGRESS, self.naming),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_MIXED_DENY_EGRESS_GA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    def testBuildTokens(self):
+        """Test that _BuildTokens generates the expected list of tokens."""
+        self.naming.GetNetAddr.side_effect = [TEST_IP]
+
+        pol1 = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+
+    def testRaisesExceededCostError(self):
+        """Test that ExceededCostError is raised when policy exceeds max cost."""
+        self.naming.GetNetAddr.side_effect = [TEST_IP]
+        with self.assertRaises(gcp_hf.ExceededCostError):
+            gcp_hf.HierarchicalFirewall(
+                policy.ParsePolicy(
+                    HEADER_VERY_LOW_DEFAULT_MAX + TERM_ALLOW_ALL_INTERNAL, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    @capture.stdout
+    def testChunkedIPRanges(self):
+        """Test that source IP ranges that exceed limit are chunked."""
+        self.maxDiff = None
+        self.naming.GetNetAddr.side_effect = [MANY_IPS]
+        self.naming.GetServiceByProto.side_effect = [['80']]
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(HEADER_OPTION_HIGH_QUOTA + TERM_ALLOW_PORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(EXPECTED_CHUNKED_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @capture.stdout
+    def testChunkedEgressIPRanges(self):
+        """Test that destination IP ranges that exceed limit are chunked."""
+        self.maxDiff = None
+        self.naming.GetNetAddr.side_effect = [MANY_IPS]
+        self.naming.GetServiceByProto.side_effect = [['80']]
+        acl = gcp_hf.HierarchicalFirewall(
+            policy.ParsePolicy(
+                HEADER_OPTION_EGRESS_HIGH_QUOTA + TERM_ALLOW_EGRESS_PORT, self.naming
+            ),
+            EXP_INFO,
+        )
+        expected = json.loads(EXPECTED_EGRESS_CHUNKED_BETA)
+        self.assertEqual(expected, json.loads(self._StripAclHeaders(str(acl))))
+        print(acl)
+
+    @parameterized.named_parameters(
+        (
+            '1 ip, 2 protocols',
+            {
+                'match': {
+                    'config': {
+                        'destIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [{'ipProtocol': 'tcp'}, {'ipProtocol': 'icmp'}],
+                    }
+                }
+            },
+            3,
+        ),
+        (
+            '1 ip, 3 protocols, ',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [
+                            {'ipProtocol': 'tcp'},
+                            {'ipProtocol': 'icmp'},
+                            {'ipProtocol': 'udp'},
+                        ],
+                    }
+                }
+            },
+            4,
+        ),
+        (
+            '1 ip, 1 protocol with 1 port',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22']}],
+                    }
+                }
+            },
+            3,
+        ),
+        (
+            '1 ip, 2 protocols with 2 ports each',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [
+                            {'ipProtocol': 'tcp', 'ports': ['22']},
+                            {'ipProtocol': 'udp', 'ports': ['22']},
+                        ],
+                    }
+                }
+            },
+            5,
+        ),
+        (
+            '1 ip, 1 protocol with 2 ports',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22', '23']}],
+                    }
+                }
+            },
+            4,
+        ),
+        (
+            '2 ips, 1 protocol with 2 ports',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
+                        'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22', '23']}],
+                    }
+                }
+            },
+            5,
+        ),
+        (
+            '2 ips, 2 protocols with 2 ports each',
+            {
+                'match': {
+                    'config': {
+                        'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
+                        'layer4Configs': [
+                            {'ipProtocol': 'tcp', 'ports': ['22', '23']},
+                            {'ipProtocol': 'udp', 'ports': ['22', '23']},
+                        ],
+                    }
+                }
+            },
+            8,
+        ),
+        (
+            '1 ip, 2 protocols, 2 targets',
+            {
+                'match': {
+                    'config': {
+                        'destIpRanges': ['0.0.0.0/0'],
+                        'layer4Configs': [{'ipProtocol': 'tcp'}, {'ipProtocol': 'icmp'}],
+                    }
+                },
+                'targetResources': ['target1', 'target2'],
+            },
+            5,
+        ),
+    )
+    def testGetRuleTupleCount(self, dict_term, expected):
+        self.assertEqual(gcp_hf.GetRuleTupleCount(dict_term, 'beta'), expected)
+
+    @parameterized.named_parameters(
+        (
+            '1 ip, 2 protocols',
+            {
+                'match': {
+                    'destIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [{'ipProtocol': 'tcp'}, {'ipProtocol': 'icmp'}],
+                }
+            },
+            3,
+        ),
+        (
+            '1 ip, 3 protocols, ',
+            {
+                'match': {
+                    'srcIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [
+                        {'ipProtocol': 'tcp'},
+                        {'ipProtocol': 'icmp'},
+                        {'ipProtocol': 'udp'},
+                    ],
+                }
+            },
+            4,
+        ),
+        (
+            '1 ip, 1 protocol with 1 port',
+            {
+                'match': {
+                    'srcIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22']}],
+                }
+            },
+            3,
+        ),
+        (
+            '1 ip, 2 protocols with 2 ports each',
+            {
+                'match': {
+                    'srcIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [
+                        {'ipProtocol': 'tcp', 'ports': ['22']},
+                        {'ipProtocol': 'udp', 'ports': ['22']},
+                    ],
+                }
+            },
+            5,
+        ),
+        (
+            '1 ip, 1 protocol with 2 ports',
+            {
+                'match': {
+                    'srcIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22', '23']}],
+                }
+            },
+            4,
+        ),
+        (
+            '2 ips, 1 protocol with 2 ports',
+            {
+                'match': {
+                    'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
+                    'layer4Configs': [{'ipProtocol': 'tcp', 'ports': ['22', '23']}],
+                }
+            },
+            5,
+        ),
+        (
+            '2 ips, 2 protocols with 2 ports each',
+            {
+                'match': {
+                    'srcIpRanges': ['1.4.6.8/10', '1.2.3.4/5'],
+                    'layer4Configs': [
+                        {'ipProtocol': 'tcp', 'ports': ['22', '23']},
+                        {'ipProtocol': 'udp', 'ports': ['22', '23']},
+                    ],
+                }
+            },
+            8,
+        ),
+        (
+            '1 ip, 2 protocols, 2 targets',
+            {
+                'match': {
+                    'destIpRanges': ['0.0.0.0/0'],
+                    'layer4Configs': [{'ipProtocol': 'tcp'}, {'ipProtocol': 'icmp'}],
+                },
+                'targetResources': ['target1', 'target2'],
+            },
+            5,
+        ),
+    )
+    def testGAGetRuleTupleCount(self, dict_term, expected):
+        self.assertEqual(gcp_hf.GetRuleTupleCount(dict_term, 'ga'), expected)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

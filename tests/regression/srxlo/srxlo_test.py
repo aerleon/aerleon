@@ -173,14 +173,16 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {'established',
-               'first-fragment',
-               'inactive',
-               'is-fragment',
-               '.*',  # not actually a lex token!
-               'sample',
-               'tcp-established',
-               'tcp-initial'}
+    'option': {
+        'established',
+        'first-fragment',
+        'inactive',
+        'is-fragment',
+        '.*',  # not actually a lex token!
+        'sample',
+        'tcp-established',
+        'tcp-initial',
+    },
 }
 
 # Print a info message when a term is set to expire in that many weeks.
@@ -189,98 +191,99 @@ EXP_INFO = 2
 
 
 class SRXloTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testIcmp(self):
+        output = str(
+            srxlo.SRXlo(
+                policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1 + GOOD_TERM_4, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('protocol icmp;', output, 'missing or incorrect ICMP specification')
+        self.assertNotIn('icmp6;', output, 'missing or incorrect ICMP specification')
+        self.assertNotIn('icmpv6;', output, 'missing or incorrect ICMP specification')
+        print(output)
 
-  @capture.stdout
-  def testIcmp(self):
-    output = str(srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1 +
-                                                GOOD_TERM_4, self.naming),
-                 EXP_INFO))
-    self.assertIn('protocol icmp;', output,
-                  'missing or incorrect ICMP specification')
-    self.assertNotIn('icmp6;', output,
-                     'missing or incorrect ICMP specification')
-    self.assertNotIn('icmpv6;', output,
-                     'missing or incorrect ICMP specification')
-    print(output)
+    @capture.stdout
+    def testIcmpv6(self):
+        output = str(
+            srxlo.SRXlo(
+                policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_TERM_4, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('next-header icmp6;', output, 'missing or incorrect ICMPv6 specification')
+        self.assertNotIn('icmp;', output, 'missing or incorrect ICMPv6 specification')
+        print(output)
 
-  @capture.stdout
-  def testIcmpv6(self):
-    output = str(srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 +
-                                                GOOD_TERM_4, self.naming),
-                 EXP_INFO))
-    self.assertIn('next-header icmp6;', output,
-                  'missing or incorrect ICMPv6 specification')
-    self.assertNotIn('icmp;', output,
-                     'missing or incorrect ICMPv6 specification')
-    print(output)
+    @capture.stdout
+    def testIcmpv6Type(self):
+        output = str(
+            srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO)
+        )
+        self.assertIn('next-header icmp6;', output, 'missing or incorrect ICMPv6 specification')
+        self.assertIn('icmp-type 1;', output, 'missing or incorrect ICMPv6 type specification')
+        print(output)
 
-  @capture.stdout
-  def testIcmpv6Type(self):
-    output = str(srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2,
-                                                self.naming), EXP_INFO))
-    self.assertIn('next-header icmp6;', output,
-                  'missing or incorrect ICMPv6 specification')
-    self.assertIn('icmp-type 1;', output,
-                  'missing or incorrect ICMPv6 type specification')
-    print(output)
+    def testBuildTokens(self):
+        # self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
+        pol1 = srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.max_diff = None
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    # self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
-    pol1 = srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1,
-                                          self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.max_diff = None
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildWarningTokens(self):
-    pol1 = srxlo.SRXlo(policy.ParsePolicy(
-        GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    @capture.stdout
+    def testInactiveTerm(self):
+        output = str(
+            srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
+        )
+        self.assertIn('inactive: term good-term-3 {', output)
+        print(output)
 
-  @capture.stdout
-  def testInactiveTerm(self):
-    output = str(srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3,
-                                                self.naming), EXP_INFO))
-    self.assertIn('inactive: term good-term-3 {', output)
-    print(output)
+    @capture.stdout
+    def testIcmpExcept(self):
+        output = str(
+            srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_5, self.naming), EXP_INFO)
+        )
+        self.assertIn(
+            'protocol-except icmp;',
+            output,
+            'missing or incorrect ICMP specification in protocol-except',
+        )
+        self.assertNotIn(
+            'icmp6;', output, 'missing or incorrect ICMP specification in protocol-except'
+        )
+        self.assertNotIn(
+            'icmpv6;', output, 'missing or incorrect ICMP specification in protocol-except'
+        )
+        print(output)
 
-  @capture.stdout
-  def testIcmpExcept(self):
-    output = str(
-        srxlo.SRXlo(
-            policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_5, self.naming),
-            EXP_INFO))
-    self.assertIn('protocol-except icmp;', output,
-                  'missing or incorrect ICMP specification in protocol-except')
-    self.assertNotIn(
-        'icmp6;', output,
-        'missing or incorrect ICMP specification in protocol-except')
-    self.assertNotIn(
-        'icmpv6;', output,
-        'missing or incorrect ICMP specification in protocol-except')
-    print(output)
-
-  @capture.stdout
-  def testIcmpv6Except(self):
-    output = str(
-        srxlo.SRXlo(
-            policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_6, self.naming),
-            EXP_INFO))
-    self.assertIn(
-        'next-header-except icmp6;', output,
-        'missing or incorrect ICMPv6 specification in protocol-except')
-    self.assertNotIn(
-        'icmp;', output,
-        'missing or incorrect ICMPv6 specification in protocol-except')
-    print(output)
+    @capture.stdout
+    def testIcmpv6Except(self):
+        output = str(
+            srxlo.SRXlo(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_6, self.naming), EXP_INFO)
+        )
+        self.assertIn(
+            'next-header-except icmp6;',
+            output,
+            'missing or incorrect ICMPv6 specification in protocol-except',
+        )
+        self.assertNotIn(
+            'icmp;', output, 'missing or incorrect ICMPv6 specification in protocol-except'
+        )
+        print(output)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

@@ -104,7 +104,8 @@ SUPPORTED_SUB_TOKENS = {
         'conversion-error',
         'destination-unreachable',
         'echo-reply',
-        'echo-request', 'mobile-redirect',
+        'echo-request',
+        'mobile-redirect',
         'home-agent-address-discovery-reply',
         'home-agent-address-discovery-request',
         'icmp-node-information-query',
@@ -113,7 +114,8 @@ SUPPORTED_SUB_TOKENS = {
         'inverse-neighbor-discovery-advertisement',
         'inverse-neighbor-discovery-solicitation',
         'mask-reply',
-        'mask-request', 'information-reply',
+        'mask-request',
+        'information-reply',
         'mobile-prefix-advertisement',
         'mobile-prefix-solicitation',
         'multicast-listener-done',
@@ -147,36 +149,40 @@ EXP_INFO = 2
 
 
 class WindowsGeneratorTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def testBuildTokens(self):
+        pol1 = windows.WindowsGenerator(
+            policy.ParsePolicy(GOOD_HEADER + MULTIPLE_PROTOCOLS_TERM, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = windows.WindowsGenerator(
-        policy.ParsePolicy(GOOD_HEADER + MULTIPLE_PROTOCOLS_TERM, self.naming),
-        EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = windows.WindowsGenerator(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_WARNING_TERM, self.naming), EXP_INFO
+        )
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildWarningTokens(self):
-    pol1 = windows.WindowsGenerator(policy.ParsePolicy(
-        GOOD_HEADER + GOOD_WARNING_TERM, self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  def testSkipEstablished(self):
-    # self.naming.GetNetAddr.return_value = _IPSET
-    self.naming.GetServiceByProto.return_value = ['123']
-    pol = windows.WindowsGenerator(policy.ParsePolicy(
-        GOOD_HEADER + TCP_ESTABLISHED_TERM + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertEqual(len(pol.windows_policies[0][4]), 1)
-    pol = windows.WindowsGenerator(policy.ParsePolicy(
-        GOOD_HEADER + UDP_ESTABLISHED_TERM + GOOD_TERM, self.naming), EXP_INFO)
-    self.assertEqual(len(pol.windows_policies[0][4]), 1)
+    def testSkipEstablished(self):
+        # self.naming.GetNetAddr.return_value = _IPSET
+        self.naming.GetServiceByProto.return_value = ['123']
+        pol = windows.WindowsGenerator(
+            policy.ParsePolicy(GOOD_HEADER + TCP_ESTABLISHED_TERM + GOOD_TERM, self.naming),
+            EXP_INFO,
+        )
+        self.assertEqual(len(pol.windows_policies[0][4]), 1)
+        pol = windows.WindowsGenerator(
+            policy.ParsePolicy(GOOD_HEADER + UDP_ESTABLISHED_TERM + GOOD_TERM, self.naming),
+            EXP_INFO,
+        )
+        self.assertEqual(len(pol.windows_policies[0][4]), 1)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()

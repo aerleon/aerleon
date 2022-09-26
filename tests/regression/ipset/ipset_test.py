@@ -149,20 +149,22 @@ SUPPORTED_SUB_TOKENS = {
         'unreachable',
         'version-2-multicast-listener-report',
     },
-    'option': {'established',
-               'first-fragment',
-               'initial',
-               'sample',
-               'tcp-established',
-               'tcp-initial',
-               'syn',
-               'ack',
-               'fin',
-               'rst',
-               'urg',
-               'psh',
-               'all',
-               'none'}
+    'option': {
+        'established',
+        'first-fragment',
+        'initial',
+        'sample',
+        'tcp-established',
+        'tcp-initial',
+        'syn',
+        'ack',
+        'fin',
+        'rst',
+        'urg',
+        'psh',
+        'all',
+        'none',
+    },
 }
 
 # Print a info message when a term is set to expire in that many weeks.
@@ -171,179 +173,176 @@ EXP_INFO = 2
 
 
 class IpsetTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    @capture.stdout
+    def testMarkers(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
 
-  @capture.stdout
-  def testMarkers(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn('# begin:ipset-rules', result)
+        self.assertIn('# end:ipset-rules', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('# begin:ipset-rules', result)
-    self.assertIn('# end:ipset-rules', result)
+        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
+        print(result)
 
-    self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
-    print(result)
+    def testGenerateSetName(self):
+        # iptables superclass currently limits term name length to 26 characters,
+        # but that could change
+        policy_term = mock.MagicMock()
+        policy_term.name = 'filter_name'
+        policy_term.protocol = ['tcp']
+        term = ipset.Term(policy_term, 'filter_name', False, None)
+        self.assertEqual(term._GenerateSetName('good-term-1', 'src'), 'good-term-1-src')
+        self.assertEqual(
+            term._GenerateSetName('good-but-way-too-long-term-name', 'src'),
+            'good-but-way-too-long-term--src',
+        )
+        print(term)
+        term = ipset.Term(policy_term, 'filter_name', False, None, 'inet6')
+        self.assertEqual(term._GenerateSetName('good-term-1', 'src'), 'good-term-1-src-v6')
+        self.assertEqual(
+            term._GenerateSetName('good-but-way-too-long-term-name', 'src'),
+            'good-but-way-too-long-te-src-v6',
+        )
+        print(term)
 
-  def testGenerateSetName(self):
-    # iptables superclass currently limits term name length to 26 characters,
-    # but that could change
-    policy_term = mock.MagicMock()
-    policy_term.name = 'filter_name'
-    policy_term.protocol = ['tcp']
-    term = ipset.Term(policy_term, 'filter_name', False, None)
-    self.assertEqual(term._GenerateSetName('good-term-1', 'src'),
-                     'good-term-1-src')
-    self.assertEqual(term._GenerateSetName('good-but-way-too-long-term-name',
-                                           'src'),
-                     'good-but-way-too-long-term--src')
-    print(term)
-    term = ipset.Term(policy_term, 'filter_name', False, None, 'inet6')
-    self.assertEqual(term._GenerateSetName('good-term-1', 'src'),
-                     'good-term-1-src-v6')
-    self.assertEqual(term._GenerateSetName('good-but-way-too-long-term-name',
-                                           'src'),
-                     'good-but-way-too-long-te-src-v6')
-    print(term)
+    @capture.stdout
+    def testOneSourceAddress(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
 
-  @capture.stdout
-  def testOneSourceAddress(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn('-s 10.0.0.0/8', result)
+        self.assertNotIn('-m set --match-set good-term-3-src src', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('-s 10.0.0.0/8', result)
-    self.assertNotIn('-m set --match-set good-term-3-src src', result)
+        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
-    print(acl)
+    @capture.stdout
+    def testOneDestinationAddress(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('172.16.0.0/12')]
 
-  @capture.stdout
-  def testOneDestinationAddress(self):
-    self.naming.GetNetAddr.return_value = [nacaddr.IPv4('172.16.0.0/12')]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn('-d 172.16.0.0/12', result)
+        self.assertNotIn('-m set --match-set good-term-2-dst dst', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('-d 172.16.0.0/12', result)
-    self.assertNotIn('-m set --match-set good-term-2-dst dst', result)
+        self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testOneSourceAndDestinationAddress(self):
+        self.naming.GetNetAddr.side_effect = [
+            [nacaddr.IPv4('10.0.0.0/8')],
+            [nacaddr.IPv4('172.16.0.0/12')],
+        ]
 
-  @capture.stdout
-  def testOneSourceAndDestinationAddress(self):
-    self.naming.GetNetAddr.side_effect = [
-        [nacaddr.IPv4('10.0.0.0/8')],
-        [nacaddr.IPv4('172.16.0.0/12')]]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn('-s 10.0.0.0/8', result)
+        self.assertIn('-d 172.16.0.0/12', result)
+        self.assertNotIn('-m set --match-set good-term-3-src src', result)
+        self.assertNotIn('-m set --match-set good-term-3-dst dst', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('-s 10.0.0.0/8', result)
-    self.assertIn('-d 172.16.0.0/12', result)
-    self.assertNotIn('-m set --match-set good-term-3-src src', result)
-    self.assertNotIn('-m set --match-set good-term-3-dst dst', result)
+        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('EXTERNAL')])
+        print(acl)
 
-    self.naming.GetNetAddr.assert_has_calls([
-        mock.call('INTERNAL'),
-        mock.call('EXTERNAL')])
-    print(acl)
+    @capture.stdout
+    def testManySourceAddresses(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IPv4('10.0.0.0/24'),
+            nacaddr.IPv4('10.1.0.0/24'),
+        ]
 
-  @capture.stdout
-  def testManySourceAddresses(self):
-    self.naming.GetNetAddr.return_value = [
-        nacaddr.IPv4('10.0.0.0/24'), nacaddr.IPv4('10.1.0.0/24')]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn(
+            'create good-term-1-src hash:net family inet hashsize' ' 4 maxelem 4', result
+        )
+        self.assertIn('add good-term-1-src 10.0.0.0/24', result)
+        self.assertIn('add good-term-1-src 10.1.0.0/24', result)
+        self.assertIn('-m set --match-set good-term-1-src src', result)
+        self.assertNotIn('-s ', result)
+        self.assertNotIn('-exist', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('create good-term-1-src hash:net family inet hashsize'
-                  ' 4 maxelem 4', result)
-    self.assertIn('add good-term-1-src 10.0.0.0/24', result)
-    self.assertIn('add good-term-1-src 10.1.0.0/24', result)
-    self.assertIn('-m set --match-set good-term-1-src src', result)
-    self.assertNotIn('-s ', result)
-    self.assertNotIn('-exist', result)
+        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
-    print(acl)
+    @capture.stdout
+    def testManyDestinationAddresses(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IPv4('172.16.0.0/24'),
+            nacaddr.IPv4('172.17.0.0/24'),
+        ]
 
-  @capture.stdout
-  def testManyDestinationAddresses(self):
-    self.naming.GetNetAddr.return_value = [
-        nacaddr.IPv4('172.16.0.0/24'), nacaddr.IPv4('172.17.0.0/24')]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn(
+            'create good-term-2-dst hash:net family inet hashsize ' '4 maxelem 4', result
+        )
+        self.assertIn('add good-term-2-dst 172.16.0.0/24', result)
+        self.assertIn('add good-term-2-dst 172.17.0.0/24', result)
+        self.assertIn('-m set --match-set good-term-2-dst dst', result)
+        self.assertNotIn('-s ', result)
+        self.assertNotIn('-exist', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('create good-term-2-dst hash:net family inet hashsize '
-                  '4 maxelem 4', result)
-    self.assertIn('add good-term-2-dst 172.16.0.0/24', result)
-    self.assertIn('add good-term-2-dst 172.17.0.0/24', result)
-    self.assertIn('-m set --match-set good-term-2-dst dst', result)
-    self.assertNotIn('-s ', result)
-    self.assertNotIn('-exist', result)
+        self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
+        print(acl)
 
-    self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
-    print(acl)
+    @capture.stdout
+    def testManySourceAndDestinationAddresses(self):
+        self.naming.GetNetAddr.side_effect = [
+            [nacaddr.IPv4('10.0.0.0/24'), nacaddr.IPv4('10.1.0.0/24')],
+            [nacaddr.IPv4('172.16.0.0/24'), nacaddr.IPv4('172.17.0.0/24')],
+        ]
 
-  @capture.stdout
-  def testManySourceAndDestinationAddresses(self):
-    self.naming.GetNetAddr.side_effect = [
-        [nacaddr.IPv4('10.0.0.0/24'), nacaddr.IPv4('10.1.0.0/24')],
-        [nacaddr.IPv4('172.16.0.0/24'), nacaddr.IPv4('172.17.0.0/24')]]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
+        result = str(acl)
+        self.assertIn(
+            'create good-term-3-src hash:net family inet hashsize ' '4 maxelem 4', result
+        )
+        self.assertIn(
+            'create good-term-3-dst hash:net family inet hashsize ' '4 maxelem 4', result
+        )
+        self.assertIn('add good-term-3-src 10.0.0.0/24', result)
+        self.assertIn('add good-term-3-src 10.1.0.0/24', result)
+        self.assertIn('add good-term-3-dst 172.16.0.0/24', result)
+        self.assertIn('add good-term-3-dst 172.17.0.0/24', result)
+        self.assertIn('-m set --match-set good-term-3-src src', result)
+        self.assertIn('-m set --match-set good-term-3-dst dst', result)
+        self.assertNotIn('-s ', result)
+        self.assertNotIn('-d ', result)
 
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3,
-                                         self.naming), EXP_INFO)
-    result = str(acl)
-    self.assertIn('create good-term-3-src hash:net family inet hashsize '
-                  '4 maxelem 4', result)
-    self.assertIn('create good-term-3-dst hash:net family inet hashsize '
-                  '4 maxelem 4', result)
-    self.assertIn('add good-term-3-src 10.0.0.0/24', result)
-    self.assertIn('add good-term-3-src 10.1.0.0/24', result)
-    self.assertIn('add good-term-3-dst 172.16.0.0/24', result)
-    self.assertIn('add good-term-3-dst 172.17.0.0/24', result)
-    self.assertIn('-m set --match-set good-term-3-src src', result)
-    self.assertIn('-m set --match-set good-term-3-dst dst', result)
-    self.assertNotIn('-s ', result)
-    self.assertNotIn('-d ', result)
+        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('EXTERNAL')])
+        print(acl)
 
-    self.naming.GetNetAddr.assert_has_calls([
-        mock.call('INTERNAL'),
-        mock.call('EXTERNAL')])
-    print(acl)
+    def testBuildTokens(self):
+        pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildTokens(self):
-    pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3,
-                                          self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+    def testBuildWarningTokens(self):
+        pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_4, self.naming), EXP_INFO)
+        st, sst = pol1._BuildTokens()
+        self.assertEqual(st, SUPPORTED_TOKENS)
+        self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-  def testBuildWarningTokens(self):
-    pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_4,
-                                          self.naming), EXP_INFO)
-    st, sst = pol1._BuildTokens()
-    self.assertEqual(st, SUPPORTED_TOKENS)
-    self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-
-  @capture.stdout
-  def testAddsExistsOption(self):
-    self.naming.GetNetAddr.return_value = [
-        nacaddr.IPv4('10.0.0.0/24'), nacaddr.IPv4('10.1.0.0/24')]
-    acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1,
-                                         self.naming), EXP_INFO)
-    self.assertIn('create -exist', str(acl))
-    self.assertIn('add -exist', str(acl))
-    print(acl)
+    @capture.stdout
+    def testAddsExistsOption(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IPv4('10.0.0.0/24'),
+            nacaddr.IPv4('10.1.0.0/24'),
+        ]
+        acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1, self.naming), EXP_INFO)
+        self.assertIn('create -exist', str(acl))
+        self.assertIn('add -exist', str(acl))
+        print(acl)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()
