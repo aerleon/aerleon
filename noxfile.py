@@ -1,5 +1,8 @@
 """ Define nox sessions for Aerleon """
 
+from datetime import datetime
+import os
+
 import nox
 from nox_poetry import session, Session
 
@@ -23,6 +26,68 @@ def coverage(session):
     session.run("coverage", "run")
     session.run("coverage", "report")
     session.run("coverage", "html")
+
+
+@session(python="3.10")
+def benchmark(session):
+    """Runs pyperf and produces a report"""
+    session.run_always("poetry", "install", external=True)
+    tune_system = '__benchmark_tune' in session.posargs
+    suite_name = 'SampleSuiteV1'
+    benchmark_result_path = './benchmark_result'
+    start_time = datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
+    result_filename_base = f'{suite_name}-result-{"tuned-" if tune_system else ""}{start_time}'
+    result_filename = f'{result_filename_base}.json'
+    result_meta_filename = f'{result_filename_base}-metadata.json'
+    session.run(
+        "python",
+        "-c",
+        f"import os; os.makedirs('{benchmark_result_path}', exist_ok=True)",
+    )
+
+    def inner():
+        setup = f'from tools.benchmarks.demo_benchmark import {suite_name}; suite = {suite_name}({session.posargs})'  # noqa E501
+        statement = 'suite.run()'
+        # session.run("pyperf", "timeit", "--copy-env", "--no-locale", "--setup", setup, statement)
+        # setup = 'import pytest'
+        # tests = 'tests/regression/cisco/cisco_test.py'
+        # tests = 'tests/regression/demo/demo_test.py'
+        # statement = f'pytest.main(["-q", "-x", "{tests}"])'
+
+        session.run(
+            "pyperf",
+            "timeit",
+            "--quiet",
+            "--stats",
+            "--metadata",
+            "--copy-env",
+            "--no-locale",
+            f"--output={os.path.join(benchmark_result_path, result_filename)}",
+            "--setup",
+            setup,
+            statement,
+        )
+        end_time = datetime.now().strftime("%Y-%m-%d-%H.%M.%S")
+        session.run(
+            "python",
+            "-c",
+            f"with open('{result_meta_filename}') as file: file.write('file={result_filename} suite_name={suite_name} tune_system={tune_system} start_time={start_time} end_time={end_time} posargs={session.posargs}')", # noqa E501
+        )
+
+    if tune_system:
+        session.run("pyperf", "system", "tune")
+        try:
+            inner()
+        finally:
+            session.run("pyperf", "system", "reset")
+    else:
+        inner()
+
+
+@session(python="3.10")
+def benchmark_tuned(session):
+    """Runs pyperf with system tuning on and produces a report"""
+    session.notify('benchmark', ['__benchmark_tune'])
 
 
 @session
