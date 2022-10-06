@@ -842,7 +842,8 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         """Create the address book configuration entries.
 
         Args:
-          zones: a mapping from zone name to a list of naming library address objects
+          zone: the zone these objects will reside in
+          address_list: a list of naming library address objects
             that will reside in the zone
           memo: a set used to check for duplicate addresses in the same zone/parent_token group
         """
