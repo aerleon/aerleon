@@ -20,6 +20,8 @@
 import collections
 import copy
 import datetime
+import heapq
+import ipaddress
 import itertools
 
 from absl import logging
@@ -562,6 +564,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                                 term.destination_address = ips
 
                 # Filter source_address based on filter_type & add to address book
+                zones = collections.OrderedDict()
                 if term.source_address:
                     valid_addrs = []
                     for addr in term.source_address:
@@ -573,8 +576,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         )
                         continue
                     term.source_address = valid_addrs
-                    for addr in term.source_address:
-                        self._BuildAddressBook(self.from_zone, addr)
+                    zones[self.from_zone] = term.source_address
 
                 # Filter destination_address based on filter_type & add to address book
                 if term.destination_address:
@@ -588,8 +590,10 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         )
                         continue
                     term.destination_address = valid_addrs
-                    for addr in term.destination_address:
-                        self._BuildAddressBook(self.to_zone, addr)
+                    zones[self.to_zone] = term.destination_address
+
+                if len(zones):
+                    self._BuildAddressBook(zones)
 
                 new_term = Term(term, self.from_zone, self.to_zone, self.expresspath, verbose)
                 new_terms.append(new_term)
@@ -705,25 +709,125 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildAddressBook(self, zone, address):
+    def _BuildAddressBook(self, zones):
         """Create the address book configuration entries.
 
         Args:
-          zone: the zone these objects will reside in
-          address: a naming library address object
+          zones: a mapping from zone name to a list of naming library address objects
+            that will reside in the zone
         """
-        if zone not in self.addressbook:
-            self.addressbook[zone] = collections.defaultdict(list)
-        name = address.parent_token
-        for ip in self.addressbook[zone][name]:
-            if ip.supernet_of(address):
-                return
-            if address.supernet_of(ip):
-                for index, ip_addr in enumerate(self.addressbook[zone][name]):
-                    if ip_addr == ip:
-                        self.addressbook[zone][name][index] = address
-                return
-        self.addressbook[zone][name].append(address)
+
+        def _drop_subnets(address_list):
+            """Remove any network contained by another network in this list
+
+            Args:
+                address_list: a list of IP objects sorted ascending by version and address.
+            """
+            # Partition by IP version: address_list may contain mixed IPv4 / IPv6 addresses
+            for _, address_list in itertools.groupby(
+                address_list, key=lambda address: address.version
+            ):
+                last_broadcast_addr = None
+                for address in address_list:
+                    if (
+                        last_broadcast_addr is not None
+                        and address.broadcast_address <= last_broadcast_addr
+                    ):
+                        continue
+                    last_broadcast_addr = address.broadcast_address
+                    yield address
+
+        for zone, address_list in zones.items():
+            if not len(address_list):
+                continue
+
+            if zone not in self.addressbook:
+                self.addressbook[zone] = collections.defaultdict(list)
+
+            # sort by (parent_token, version, address),
+            # then partition by parent_token
+            for parent_token, address_list in itertools.groupby(
+                sorted(
+                    address_list,
+                    key=lambda address: (
+                        address.parent_token,
+                        ipaddress.get_mixed_type_key(
+                            address
+                        ),  # (version, _ip) or (version, network_address, netmask)
+                    ),
+                ),
+                key=lambda address: address.parent_token,
+            ):
+
+                # drop redundant addresses and networks (first pass)
+                address_list = list(_drop_subnets(address_list))
+
+                # merge sorted lists of IP objects
+                self.addressbook[zone][parent_token] = list(
+                    heapq.merge(
+                        self.addressbook[zone][parent_token],
+                        address_list,
+                        key=ipaddress.get_mixed_type_key,
+                    )
+                )
+
+                # drop redundant addresses and networks (second pass)
+                self.addressbook[zone][parent_token] = list(
+                    _drop_subnets(self.addressbook[zone][parent_token])
+                )
+        """
+        JB: Notes:
+        (1) Observations:
+        (A) Unlike PA, this builds a table zone > name > address_list; it does not maintain order and does not produce names.
+        (B) Unlike PA, this will drop address ranges if they are contained within a single other address range.
+        (C) The goal is not strictly de-duplication.
+        (D) The current approach is like O(n^3) in the pathological case and O(n^2) in most normal cases.
+
+        (2) We can solve without out-of-bound memory if we leverage sorting.
+        (A) Keep the address list sorted as we go (so we can subset check more quickly)
+
+        (3) ipaddress.collapse_addresses is similar to what we want to do
+        (A) It does sort the IPs
+        (B) It does collapse adjacent and overlapping nets as well as supernets
+        (C) Question: would we prefer to fully collaps adjacent and overlapping nets?
+
+        (4) Something more direct would look like this:
+        (A) Can we use a TreeList / HeapList kind of thing? If so it would be like n*log(n)
+        (B) Can we binary search a sorted list? Also n*log(n)
+        (C) This function will be called more than once, so sorting the input list has mixed value.
+            Worst case, lots of filters, each one requires a "walk" or a "skip"...
+
+        Input: sorted([Net, Net, Net])
+        Address book: sorted([Net, Net, Net])
+
+        When _BuildAddress book is called on an input list, we will partition and sort it
+        Once sorted we can de-dup the input partition lists cheaply (does this save steps?)
+        Then merge the input list with the existing partition.
+
+        Ordering notes:
+        (1) If network address is equal, one is definitely a subset of the other;
+        (2) Otherwise, rank by network address. If duplicates by network address appear all with lower prefixlen can be dropped.
+        (3) _BaseNetwork.__lt__ is pretty close. Might be good enough to just use sort().
+
+        Merge algo:
+        (1) Assume both lists are sorted.
+        (2) Use heapq.merge to merge the input into the address book partition.
+        (3) Now we scan the list for drops:
+            * A = next()
+            * If A.broadcast_address <= occlusion_limit
+            *   Then A is occluded, drop A
+            * set occlusion_limit = A.broadcast_address
+
+        """
+        # for ip in self.addressbook[zone][name]:
+        #     if ip.supernet_of(address):
+        #         return
+        #     if address.supernet_of(ip):
+        #         for index, ip_addr in enumerate(self.addressbook[zone][name]):
+        #             if ip_addr == ip:
+        #                 self.addressbook[zone][name][index] = address
+        #         return
+        # self.addressbook[zone][name].append(address)
 
     def _SortAddressBookNumCheck(self, item):
         """Used to give a natural order to the list of acl entries.
