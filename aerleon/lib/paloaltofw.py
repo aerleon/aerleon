@@ -393,6 +393,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         current_date = datetime.date.today()
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         first_addr_obj = None
+        address_book_dup_check = set()
 
         for header, terms in pol.filters:
             if self._PLATFORM not in header.platforms:
@@ -452,7 +453,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 )
 
             term_dup_check = set()
-            address_book_dup_check = set()
             new_terms = []
 
             for term in terms:
@@ -840,6 +840,9 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
           memo: a set used to check for duplicate addresses in the same zone/parent_token group
         """
         for zone, address_list in zones.items():
+            if not len(address_list):
+                continue
+
             if zone not in self.addressbook:
                 self.addressbook[zone] = collections.OrderedDict()
 
