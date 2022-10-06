@@ -48,11 +48,6 @@ def benchmark(session):
     def inner():
         setup = f'from tools.benchmarks.demo_benchmark import {suite_name}; suite = {suite_name}({session.posargs})'  # noqa E501
         statement = 'suite.run()'
-        # session.run("pyperf", "timeit", "--copy-env", "--no-locale", "--setup", setup, statement)
-        # setup = 'import pytest'
-        # tests = 'tests/regression/cisco/cisco_test.py'
-        # tests = 'tests/regression/demo/demo_test.py'
-        # statement = f'pytest.main(["-q", "-x", "{tests}"])'
 
         session.run(
             "pyperf",
