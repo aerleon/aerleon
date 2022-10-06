@@ -745,7 +745,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             (5) A network is a subnet of another network if and only if it has broacast_address less than or equal
                 to the highest broadcast address seen thus far. All networks seen thus far have network_address
                 lower than or equal to network_address (the low end), so any time broadcast_address (the high end) is
-                lower than or equal to the previous max we have definitely found a redundant subset. And because all
+                lower than or equal to the previous max we have definitely found a redundant subnet. And because all
                 networks seen thus far have network_address lower than or equal to network_address AND a lower netmask,
                 no previous network can be a subnet of the current network (unless they are exactly equal).
             """
