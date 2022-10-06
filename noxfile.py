@@ -66,7 +66,7 @@ def benchmark(session):
         session.run(
             "python",
             "-c",
-            f"with open('{result_meta_filename}') as file: file.write('file={result_filename} suite_name={suite_name} tune_system={tune_system} start_time={start_time} end_time={end_time} posargs={session.posargs}')", # noqa E501
+            f"with open('{os.path.join(benchmark_result_path, result_meta_filename)}', 'x') as file: print('file={result_filename} suite_name={suite_name} tune_system={tune_system} start_time={start_time} end_time={end_time} posargs={session.posargs}', file=file)", # noqa E501
         )
 
     if tune_system:
