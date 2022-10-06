@@ -672,6 +672,17 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         else:
                             saddr_split.append(saddr)
                     term.source_address = saddr_split
+                    source_address = [
+                        addr
+                        for addr in term.source_address
+                        if addr.version not in exclude_address_family
+                    ]
+                    if source_address:
+                        self._BuildAddressBook(
+                            self.from_zone,
+                            source_address,
+                            address_book_dup_check,
+                        )
                 if term.destination_address:
                     daddr_split = []
                     for daddr in term.destination_address:
@@ -682,21 +693,17 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         else:
                             daddr_split.append(daddr)
                     term.destination_address = daddr_split
-
-                # Build address book for the addresses referenced in the term.
-                zones = collections.OrderedDict()
-                zones[self.from_zone] = [
-                    addr
-                    for addr in term.source_address
-                    if addr.version not in exclude_address_family
-                ]
-                zones[self.to_zone] = [
-                    addr
-                    for addr in term.destination_address
-                    if addr.version not in exclude_address_family
-                ]
-
-                self._BuildAddressBook(zones, address_book_dup_check)
+                    destination_address = [
+                        addr
+                        for addr in term.destination_address
+                        if addr.version not in exclude_address_family
+                    ]
+                    if destination_address:
+                        self._BuildAddressBook(
+                            self.to_zone,
+                            destination_address,
+                            address_book_dup_check,
+                        )
 
                 # Handle ICMP/ICMPv6 terms.
                 if term.icmp_type and (
@@ -831,7 +838,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
             self.pafw_policies.append((header, ruleset, filter_options))
 
-    def _BuildAddressBook(self, zones, memo):
+    def _BuildAddressBook(self, zone, address_list, memo):
         """Create the address book configuration entries.
 
         Args:
@@ -839,28 +846,24 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             that will reside in the zone
           memo: a set used to check for duplicate addresses in the same zone/parent_token group
         """
-        for zone, address_list in zones.items():
-            if not len(address_list):
+        if zone not in self.addressbook:
+            self.addressbook[zone] = collections.OrderedDict()
+
+        for address in address_list:
+            parent_token = address.parent_token
+            address_str = str(address)
+
+            if (zone, parent_token, address_str) in memo:
                 continue
 
-            if zone not in self.addressbook:
-                self.addressbook[zone] = collections.OrderedDict()
+            memo.add((zone, parent_token, address_str))
 
-            for address in address_list:
-                parent_token = address.parent_token
-                address_str = str(address)
+            if parent_token not in self.addressbook[zone]:
+                self.addressbook[zone][parent_token] = []
 
-                if (zone, parent_token, address_str) in memo:
-                    continue
-
-                memo.add((zone, parent_token, address_str))
-
-                if parent_token not in self.addressbook[zone]:
-                    self.addressbook[zone][parent_token] = []
-
-                counter = len(self.addressbook[zone][parent_token])
-                name = "%s_%s" % (parent_token, str(counter))
-                self.addressbook[zone][parent_token].append((address, name))
+            counter = len(self.addressbook[zone][parent_token])
+            name = "%s_%s" % (parent_token, str(counter))
+            self.addressbook[zone][parent_token].append((address, name))
 
     def _SortAddressBookNumCheck(self, item):
         """Used to give a natural order to the list of acl entries.
