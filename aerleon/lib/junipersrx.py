@@ -564,7 +564,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                                 term.destination_address = ips
 
                 # Filter source_address based on filter_type & add to address book
-                zones = collections.OrderedDict()
                 if term.source_address:
                     valid_addrs = []
                     for addr in term.source_address:
