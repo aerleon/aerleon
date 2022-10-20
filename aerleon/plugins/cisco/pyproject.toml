@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "aerleon-cisco"
+version = "0.0.1"
+description = "Cisco plugin for Aerleon firewall config generation tool"
+authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/ankben/aerleon"
+repository = "https://github.com/ankben/aerleon"
+keywords = ["firewall", "networking", "security"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Firewalls"
+]
+include = [
+    "LICENSE",
+    "README.md",
+]
+packages = [{include = "cisco"}]
+
+[tool.poetry.dependencies]
+aerleon = "^0.0"
+python = "^3.7"
+
+[tool.poetry.plugins."aerleon.plugin"]
+cisco = "cisco:AerleonPlugin"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
