@@ -157,7 +157,7 @@ def initPlugins(config: PluginSupervisorConfiguration = None):
                     f"Plugin misconfiguration: more than one plugin is installed for {target=}. Plugin 1: {target_generator}. Plugin 2: {constructor}."  # noqa E501
                 )
 
-        logging.info(f"{len(_plugins_active)} plugins active.")
+    logging.info(f"{len(_plugins_active)} plugins active.")
 
 
 def getGenerator(target):
