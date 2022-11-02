@@ -1,5 +1,6 @@
 """YAML front-end. Loads a Policy model from a .pol.yaml file."""
 
+import os
 from typing import Tuple
 import yaml
 from yaml.loader import SafeLoader
@@ -7,18 +8,27 @@ from yaml.error import YAMLError
 
 from absl import logging
 
-from aerleon.lib import frontend
+from aerleon.lib import policy
+from aerleon.lib.policy_builder import (
+    PolicyBuilder,
+    RawFilter,
+    RawFilterHeader,
+    RawPolicy,
+    RawTerm,
+)
 
 
 class PolicyTypeError(Exception):
-    pass
+    """Invalid policy."""
 
 
 class ExcessiveRecursionError(Exception):
-    pass
+    """Include depth limit exceeded."""
 
 
-# TODO(jb) extract to error.py
+# TODO(jb) extract to error.py.
+# Consider making this span-oriented
+# (file > line > (start_ch, end_ch))
 class UserMessage:
     """A user-facing error message encountered during file processing.
 
@@ -67,32 +77,56 @@ class UserMessage:
         return f"UserMessage(\"{str(self)}\")"
 
 
-def load(filename):
-    """Load a policy yaml file and produce a Policy data model."""
-    with open(filename, 'r') as file:
+def load(filename, base_dir, definitions, optimize=False, shade_check=False):
+    """Load a policy yaml file and produce a Policy data model.
+
+    Arguments:
+      filename: Policy file path. Any output configs will share
+                the same file name (except the file extension).
+      naming: Naming database (see Naming class). Resolves network
+              names to networks or lists of networks.
+      optimize: bool - Whether to summarize networks and services.
+      shade_check: bool - Whether to raise an exception when a term is shaded.
+
+    Raises:
+      PolicyTypeError: The policy file provided is not valid.
+    """
+    with open(os.path.join(base_dir, filename), 'r') as file:
         try:
             file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
             ) from yaml_error
-    raw_policy = _file_to_raw_policy(filename, file_data)
-    return _raw_policy_to_policy(raw_policy)
+    raw_policy = _file_to_raw_policy(filename, base_dir, file_data)
+    return _raw_policy_to_policy(raw_policy, definitions, optimize, shade_check)
 
 
-def load_str(file, *, filename):
+def load_str(file, *, filename, base_dir, definitions, optimize=False, shade_check=False):
     """Load a policy yaml file (provided as a string) and produce a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
-    determine the output filename."""
+    determine the output filename.
+
+    Arguments:
+      file: The contents of the policy file.
+      filename: Any output configs base their file name on this value. (except the file extension).
+      naming: Naming database (see Naming class). Resolves network
+              names to networks or lists of networks.
+      optimize: bool - Whether to summarize networks and services.
+      shade_check: bool - Whether to raise an exception when a term is shaded.
+
+    Raises:
+      PolicyTypeError: The policy file provided is not valid.
+    """
     try:
         file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
         ) from yaml_error
-    raw_policy = _file_to_raw_policy(filename, file_data)
-    return _raw_policy_to_policy(raw_policy)
+    raw_policy = _file_to_raw_policy(filename, base_dir, file_data)
+    return _raw_policy_to_policy(raw_policy, definitions, optimize, shade_check)
 
 
 def _make_yaml_safe_loader(*, filename):
@@ -119,7 +153,7 @@ def _make_yaml_safe_loader(*, filename):
     return PluginYamlLoader
 
 
-def _file_to_raw_policy(filename, file_data):
+def _file_to_raw_policy(filename, base_dir, file_data):
     """Construct a RawPolicy from file data."""
 
     filters_model = []
@@ -170,7 +204,7 @@ def _file_to_raw_policy(filename, file_data):
 
         header = filter['header']
         if 'targets' not in header or (
-            header['targets'] is not None and not isinstance(header['targets'], list)
+            header['targets'] is not None and not isinstance(header['targets'], dict)
         ):
             raise PolicyTypeError(
                 UserMessage(
@@ -180,7 +214,7 @@ def _file_to_raw_policy(filename, file_data):
                 )
             )
         # Filters with an empty target list can be ignored with a warning
-        elif not header['targets'] or header['targets'] is None:
+        elif not header['targets']:
             logging.warning(
                 UserMessage(
                     "Ignoring filter with zero targets.",
@@ -189,20 +223,25 @@ def _file_to_raw_policy(filename, file_data):
                 )
             )
             continue
-        targets = header['targets']
-        targets_model = [frontend.RawTarget(target=target) for target in targets]
-        header_kvs_model = [
-            frontend.RawKV(keyname=key, value=value)
+
+        targets_model = {
+            target: options
+            for target, options in header['targets'].items()
+            if target not in ('__line__', '__filename__')
+        }
+
+        header_kvs_model = {
+            key: value
             for key, value in header.items()
             if key not in ('targets', '__line__', '__filename__')
-        ]
-        header_model = frontend.RawFilterHeader(targets=targets_model, kvs=header_kvs_model)
+        }
+        header_model = RawFilterHeader(targets=targets_model, kvs=header_kvs_model)
 
         found_terms = []
         max_include_depth = 5
 
         def process_include(depth, stack, inc_filename):
-            with open(inc_filename, 'r') as include_file:
+            with open(os.path.join(base_dir, inc_filename), 'r') as include_file:
                 try:
                     include_data = yaml.load(
                         include_file, Loader=_make_yaml_safe_loader(filename=inc_filename)
@@ -281,17 +320,17 @@ def _file_to_raw_policy(filename, file_data):
                     )
                 )
             name = term_item['name']
-            term_kvs_model = [
-                frontend.RawKV(keyname=key, value=value)
+            term_kvs_model = {
+                key: value
                 for key, value in term_item.items()
                 if key not in ('name', '__filename__', '__line__')
-            ]
-            terms_model.append(frontend.RawTerm(name=name, kvs=term_kvs_model))
-        filters_model.append(frontend.RawFilter(header=header_model, terms=terms_model))
+            }
+            terms_model.append(RawTerm(name=name, kvs=term_kvs_model))
+        filters_model.append(RawFilter(header=header_model, terms=terms_model))
 
-    return frontend.RawPolicy(filename=filename, filters=filters_model)
+    return RawPolicy(filename=filename, filters=filters_model)
 
 
-def _raw_policy_to_policy(raw_policy):
-    policy_builder = frontend.ConsultativePolicyBuilder()
-    return policy_builder.raw_to_policy(raw_policy)
+def _raw_policy_to_policy(raw_policy, definitions, optimize=False, shade_check=False):
+    policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)
+    return policy.FromBuilder(policy_builder)

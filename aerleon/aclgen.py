@@ -16,6 +16,7 @@
 
 import copy
 import multiprocessing
+import os
 import pathlib
 import sys
 from typing import Iterator, List, Tuple
@@ -52,6 +53,7 @@ from aerleon.lib import pcap
 from aerleon.lib import policy
 from aerleon.lib import speedway
 from aerleon.lib import srxlo
+from aerleon.lib import yaml
 from aerleon.lib import windows_advfirewall
 from aerleon.utils import config
 
@@ -228,9 +230,23 @@ def RenderFile(
         raise
 
     try:
-        pol = policy.ParsePolicy(
-            conf, definitions, optimize=optimize, base_dir=base_directory, shade_check=shade_check
-        )
+        if os.path.splitext(input_file)[1] == '.yaml':
+            pol = yaml.load_str(
+                conf,
+                filename=input_file,
+                base_dir=base_directory,
+                definitions=definitions,
+                optimize=optimize,
+                shade_check=shade_check,
+            )
+        else:
+            pol = policy.ParsePolicy(
+                conf,
+                definitions,
+                optimize=optimize,
+                base_dir=base_directory,
+                shade_check=shade_check,
+            )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', input_file, e)
         return
@@ -500,7 +516,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         policy_directories = filter(Filtering, policy_directories)
 
     for directory in policy_directories:
-        directory_policies = list(directory.glob('*.pol'))
+        directory_policies = list(directory.glob('*.pol')) + list(directory.glob('*.pol.yaml'))
         depth = len(directory.parents) - 1
         logging.warning(
             '-' * (2 * depth) + '> %s (%d pol files found)' % (directory, len(directory_policies))
