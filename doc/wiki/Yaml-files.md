@@ -327,7 +327,7 @@ A Term must contain a `name` field naming the term.
 | terms[].forwarding-class-except   |            | list of words                | `forwarding-class-except: ["[TRAFFIC_CLASS]", ...]`                                                        |
 | terms[].logging                   |            | word                         | `logging: "{disable \| local \| log-both \| syslog}"`                                                      |
 | terms[].logging                   |            | word                         | `logging: "{true \| false \| True \| False}"`                                                              |
-| terms[].logging                   |            | boolean                      | `logging: true \| false"`                                                                                  |
+| terms[].logging                   |            | boolean                      | `logging: true \| false`                                                                                  |
 | terms[].log-limit                 |            | rate                         | `log-limit: "[FREQUENCY]/[PERIOD]"`                                                                        |
 | terms[].log-name                  |            | any string                   | `log-name: "[LOG_MESSAGE_PREFIX]"`                                                                         |
 | terms[].loss-priority             |            | word                         | `loss-priority: "[LOSS_PRIORITY]"`                                                                         |

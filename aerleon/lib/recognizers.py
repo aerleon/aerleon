@@ -5,16 +5,16 @@ Classes:
 ## RawPolicy, RawFilter, RawTerm, RawKV
 
 These classes act as an intermediate representation between a raw file representation
-and the main data models (Policy, Naming). They exist mainly to support the consultative
-extension system (consulting the generators during the parse process through the hooks
-RecognizeKeyword(), RecognizeKeywordValue()).
+and the main Policy data model.
 
-## ConsultativePolicyBuilder
+## TValue, TComposite
 
-This class executes the consultative parse process. It transforms RawPolicy into Policy
-by consulting all loaded generators (through the hooks RecognizeKeyword(),
-RecognizeKeywordValue()) to understand what keywords are considered valid and what options
-are valid.
+These are recognizers (they have a method .recognize(value)). They will parse value expressions
+and extract normalized data from within.
+
+## BuiltinRecognizer
+
+This class uses recognizers to parse, validate and normalize all built-in fields in the Policy.
 """
 from __future__ import annotations
 
@@ -91,8 +91,8 @@ class TValue(enum.Enum):
 
     """
 
-    Any = enum.auto()  # any value expression
-    Str = enum.auto()  # \w+
+    AnyString = enum.auto()  # any value expression
+    WordString = enum.auto()  # \w+
     Integer = enum.auto()  # \d+ string or YAML integer
     Hex = enum.auto()  # hex
     IntegerRange = enum.auto()  # Integer '-' Integer
@@ -110,13 +110,13 @@ class TValue(enum.Enum):
         if value is None:
             value = ""
 
-        if self == TValue.Any:
+        if self == TValue.AnyString:
             if not isinstance(value, str):
                 # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected string.")
             return value
 
-        elif self == TValue.Str:
+        elif self == TValue.WordString:
             if not isinstance(value, str):
                 # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected string.")
@@ -185,7 +185,6 @@ class TValue(enum.Enum):
             if match is None:
                 raise TypeError("Expected value class 'DSCPRange'.")
             return match[0]
-            # return {key: match[key] for key in ('start', 'end')}
 
         elif self == TValue.LogLimit:
             if not isinstance(value, str):
@@ -209,7 +208,7 @@ class TValue(enum.Enum):
                 first, second = (
                     (match[1], match[2]) if match[1] is not None else (match[3], match[4])
                 )
-            return (TValue.Str.recognize(first), TValue.Str.recognize(second))
+            return (TValue.WordString.recognize(first), TValue.WordString.recognize(second))
 
 
 # TODO(jb) need good reprs for telling users what composite failed.
@@ -251,7 +250,7 @@ class TList(TComposition):
 
         def _isSpaceFreeValue(value_type: TValue):
             return isinstance(value_type, TValue) and value_type not in (
-                TValue.Any,
+                TValue.AnyString,
                 TValue.TargetResourceTuple,
             )
 
@@ -318,51 +317,51 @@ class TSection(TComposition):
 
 
 # Pre-instantiate frequently used composite structures
-TListStr = TList(of=TValue.Str)
-TListStrCollapsible = TList(of=TValue.Str, collapsible=True)
+TListStr = TList(of=TValue.WordString)
+TListStrCollapsible = TList(of=TValue.WordString, collapsible=True)
 
 BUILTIN_HEADER_SPEC: dict[str, TValue | TComposition] = {
     'apply-groups': TListStrCollapsible,
     'apply-groups-except': TListStrCollapsible,
-    'comment': TValue.Any,
-    'targets': TSection(of=[(TValue.Str, TListStrCollapsible)]),
+    'comment': TValue.AnyString,
+    'targets': TSection(of=[(TValue.WordString, TListStrCollapsible)]),
 }
 BUILTIN_TERM_SPEC: dict[str, TValue | TComposition] = {
-    'name': TValue.Str,
+    'name': TValue.WordString,
     'action': TListStrCollapsible,
     'address': TListStrCollapsible,
     'address-exclude': TListStrCollapsible,
-    'restrict-address-family': TValue.Str,
-    'comment': TValue.Any,
-    'counter': TValue.Str,
+    'restrict-address-family': TValue.WordString,
+    'comment': TValue.AnyString,
+    'counter': TValue.WordString,
     'expiration': TValue.YearMonthDay,
     'destination-address': TListStrCollapsible,
     'destination-exclude': TListStrCollapsible,
     'destination-port': TListStrCollapsible,
     'destination-prefix': TListStrCollapsible,
-    'filter-term': TValue.Str,
-    'forwarding-class': TList(of=TValue.Str),
-    'forwarding-class-except': TList(of=TValue.Str),
+    'filter-term': TValue.WordString,
+    'forwarding-class': TList(of=TValue.WordString),
+    'forwarding-class-except': TList(of=TValue.WordString),
     'logging': TListStrCollapsible,
     'log-limit': TValue.LogLimit,
-    'log-name': TValue.Any,
-    'loss-priority': TValue.Str,
+    'log-name': TValue.AnyString,
+    'loss-priority': TValue.WordString,
     'option': TListStr,
-    'owner': TValue.Str,
-    'policer': TValue.Str,
+    'owner': TValue.WordString,
+    'policer': TValue.WordString,
     'port': TListStrCollapsible,
     'precedence': TList(of=TValue.Integer),
-    'protocol': TList(of=TUnion(of=[TValue.Integer, TValue.Str]), collapsible=True),
-    'protocol-except': TList(of=TUnion(of=[TValue.Integer, TValue.Str]), collapsible=True),
-    'qos': TValue.Str,
+    'protocol': TList(of=TUnion(of=[TValue.Integer, TValue.WordString]), collapsible=True),
+    'protocol-except': TList(of=TUnion(of=[TValue.Integer, TValue.WordString]), collapsible=True),
+    'qos': TValue.WordString,
     'pan-application': TListStrCollapsible,
-    'routing-instance': TValue.Str,
+    'routing-instance': TValue.WordString,
     'source-address': TListStrCollapsible,
     'source-exclude': TListStrCollapsible,
     'source-port': TListStrCollapsible,
     'source-prefix': TListStrCollapsible,
     'ttl': TValue.Integer,
-    'verbatim': TSection(of=[(TValue.Str, TValue.Any)]),
+    'verbatim': TSection(of=[(TValue.WordString, TValue.AnyString)]),
     # juniper specific.
     # TODO(jb) these ranges (and DSCP ranges) might also be expressed as a mapping
     # with start: , end: keys - raise in design meet
@@ -372,30 +371,30 @@ BUILTIN_TERM_SPEC: dict[str, TValue | TComposition] = {
     'icmp-type': TListStrCollapsible,
     'icmp-code': TList(of=TValue.Integer, collapsible=True),
     'ether-type': TListStrCollapsible,
-    'traffic-class-count': TValue.Str,
+    'traffic-class-count': TValue.WordString,
     'traffic-type': TListStrCollapsible,
     'dscp-set': TValue.DSCP,
     'dscp-match': TList(of=TUnion(of=[TValue.DSCP, TValue.DSCPRange]), collapsible=True),
     'dscp-except': TList(of=TUnion(of=[TValue.DSCP, TValue.DSCPRange]), collapsible=True),
-    'next-ip': TValue.Str,
+    'next-ip': TValue.WordString,
     'flexible-match-range': TSection(
-        of=[(TValue.Str, TUnion(of=[TValue.Integer, TValue.Hex, TValue.Str]))]
+        of=[(TValue.WordString, TUnion(of=[TValue.Integer, TValue.Hex, TValue.WordString]))]
     ),
     'source-prefix-except': TListStrCollapsible,
     'destination-prefix-except': TListStrCollapsible,
-    'encapsulate': TValue.Str,
-    'port-mirror': TValue.Str,
+    'encapsulate': TValue.WordString,
+    'port-mirror': TValue.WordString,
     # srx specific
     'destination-zone': TListStrCollapsible,
     'source-zone': TListStrCollapsible,
-    'vpn': TSection(of=[('name', TValue.Str), ('policy', TValue.Str)]),
+    'vpn': TSection(of=[('name', TValue.WordString), ('policy', TValue.WordString)]),
     # gce specific
     'source-tag': TListStrCollapsible,
     'destination-tag': TListStrCollapsible,
     'priority': TValue.Integer,
     # iptables specific
-    'source-interface': TValue.Str,
-    'destination-interface': TValue.Str,
+    'source-interface': TValue.WordString,
+    'destination-interface': TValue.WordString,
     'platform': TListStrCollapsible,
     'platform-exclude': TListStrCollapsible,
     'target-resources': TList(of=TValue.TargetResourceTuple),

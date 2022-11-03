@@ -38,7 +38,7 @@ class PrebuiltRecognizerTest(absltest.TestCase):
             ("multi\nline\nstring", False, None),
             ("", False, None),
         ]
-        tokenizer = TValue.Str
+        tokenizer = TValue.WordString
         self.assertBehaviorTable(tests, tokenizer)
 
     def testValueAny(self):
@@ -47,7 +47,7 @@ class PrebuiltRecognizerTest(absltest.TestCase):
             ("NAME1 NAME2", True, "NAME1 NAME2"),
             ("multi\nline\nstring", True, "multi\nline\nstring"),
         ]
-        tokenizer = TValue.Any
+        tokenizer = TValue.AnyString
         self.assertBehaviorTable(tests, tokenizer)
 
     def testValueYearMonthDay(self):
@@ -131,7 +131,7 @@ class PrebuiltRecognizerTest(absltest.TestCase):
             (["SINGLE_VALUE"], True, ["SINGLE_VALUE"]),
             ("", True, []),
         ]
-        tokenizer = TList(of=TValue.Str)
+        tokenizer = TList(of=TValue.WordString)
         self.assertBehaviorTableList(tests, tokenizer)
 
     def testListInteger(self):
@@ -184,7 +184,7 @@ class PrebuiltRecognizerTest(absltest.TestCase):
             ),
         ]
         tokenizer = TSection(
-            of=[(TValue.Str, TUnion(of=[TValue.Integer, TValue.Hex, TValue.Str]))]
+            of=[(TValue.WordString, TUnion(of=[TValue.Integer, TValue.Hex, TValue.WordString]))]
         )
         self.assertBehaviorTable(tests, tokenizer)
 
