@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import typing
+from typing import Annotated
 
 from absl import logging
 
@@ -12,37 +13,25 @@ from aerleon.lib.recognizers import (
 if typing.TYPE_CHECKING:
     from aerleon.lib import naming
 
-# TODO(jb) clarify future direction for RawTarget
-RawTarget = typing.Union[str, dict]
-# @dataclass
-# class RawTarget:
-#     """
-#     targets:
-#         cisco:
-#             option:
-#                 - INPUT
-#                 - OUTPUT
-#             custom-kv: custom-value
-#         srx:
-#             option: INPUT
-#     """
-
-#     option: list[str] = field(default_factory=list)
-#     kvs: dict[str, typing.Any] = field(default_factory=dict)
+RawTarget = Annotated[
+    str,
+    """
+    RawTarget contains an partially evaluated representation of platform-specific target options.
+    At the time of writing only a string can be provided for target options but that may change
+    in the future.
+    """,
+]
 
 
 @dataclass
 class RawFilterHeader:
     """
-    filters:
-    -
-        header:
-            comment: >-
-                Example comment.
-            targets:
-                cisco: INPUT
-                srx: INPUT
-            custom-kv: custom-value
+    RawFilterHeader contains an partially evaluated representation
+    of the "header" section within a Filter.
+
+    Fields:
+    - targets: table mapping targets to target options.
+    - kvs: table containing any other key/value pairs in the header.
     """
 
     targets: dict[str, RawTarget]
@@ -52,19 +41,12 @@ class RawFilterHeader:
 @dataclass
 class RawTerm:
     """
-    filters:
-    -
-        terms:
-        -
-            name: allow-internal
-            source-address: INTERNAL
-            protocol:
-            -   tcp
-            -   udp
-            action: allow
-        -
-            name: blanket-deny
-            action: deny
+    RawTerm contains an partially evaluated representation
+    of a Term item within a Filter.
+
+    Fields:
+    - name: name for this term.
+    - kvs: table containing all other key/value pairs in the term.
     """
 
     name: str
@@ -74,12 +56,12 @@ class RawTerm:
 @dataclass
 class RawFilter:
     """
-    filters:
-    -
-        header:
-            targets: ...
-        terms:
-        -   ...
+    RawFilter contains an partially evaluated representation
+    of a Filter.
+
+    Fields:
+    - header: header for this filter.
+    - terms: term list for this filter.
     """
 
     header: RawFilterHeader
@@ -88,29 +70,49 @@ class RawFilter:
 
 @dataclass
 class RawPolicy:
+    """
+    RawPolicy contains an partially evaluated representation
+    of a Policy.
+
+    Fields:
+    - filename: filename for this policy.
+    - filters: list of filters in this policy.
+    """
+
     filename: str
     filters: list[RawFilter]
 
 
 class PolicyBuilder:
     """
-    This class executes the consultative parse process. It transforms RawPolicy into Policy
-    by consulting all loaded generators (through the hooks RecognizeKeyword(),
-    RecognizeKeywordValue()) to understand what keywords are considered valid and what options
-    are valid.
+    PolicyBuilder produces a Policy model from a RawPolicy. This allows a Policy
+    model to be constructed without having or creating a .pol file.
+
+    PolicyBuilder works by constructing Term, Header, Target, and Policy models
+    directly. These models expect to be constructed incrementally by ply during
+    ply's parsing procedure using methods like Term.AddObject(), Header.AddObject()
+    and Policy.AddFilter(). PolicyBuilder walks through the given RawPolicy
+    and incrementally constructs the models using the same API.
+
+    PolicyBuilder is responsible for recognizing the keys and values in the
+    given RawPolicy. Unexpected keywords or unexpected value formats are ignored
+    with a warning. The recognizer process also parses information from values.
+
+    PolicyBuilder is responsible for normalizing values across equivalent inputs.
+    A .pol file is essentially composed of strings, but RawPolicy is a
+    structure of Python native objects, where date values might be represented
+    as a Python date and numeric values might be represented as numbers.
+
+    PolicyBuilder also carries configuration forward to the Policy model. The
+    Policy model may optionally perform optimization or shade checking during
+    model construction. This behavior is configured through module-global
+    variables within policy.py. policy.FromBuilder() will read this configuration
+    off the PolicyBuilder and pass it through the module-global channel.
 
     Usage:
 
-    config = {
-        generatorTable: generatorTable
-    }
-    policy_builder = PolicyBuilder(**config)
-
-    policy = policy_builder.buildPolicy(raw_policy)
-
-    Strategy:
-
-
+    policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)
+    return policy.FromBuilder(policy_builder)
     """
 
     raw_policy: RawPolicy
@@ -125,9 +127,9 @@ class PolicyBuilder:
         self.shade_check = shade_check
 
     def buildPolicy(self):
-        """Build a Policy model from a RawPolicy using the consultative extension system.
+        """Build a Policy model from a RawPolicy.
 
-        See description in PolicyBuilder for more details.
+        Do not call this method directly. See "Usage" in the class docstring.
         """
 
         # Process each raw filter into a filter model instance and attach to the policy
@@ -179,9 +181,6 @@ class PolicyBuilder:
         for keyword, value in policy_filter.header.kvs.items():
             if keyword == 'comment':
                 obj = VarType(VarType.COMMENT, value)
-            # TODO(jb) double check (1) if APPLY_GROUPS is indeed a list of groups,
-            # (2) whether it was properly validated as a list,
-            # (3) whether collapsing is working
             elif keyword == 'apply-groups':
                 obj = [VarType(VarType.APPLY_GROUPS, group) for group in value]
             elif keyword == 'apply-groups-except':
@@ -195,14 +194,13 @@ class PolicyBuilder:
 
         # It is an error for a term to be empty or
         # to only contain a name.
-
         if term.name is None:
-            # TODO(jb) revisit these errors
             raise TypeError("Term must have a name.")
 
         if not len(term.kvs):
             raise TypeError("Term must have at least one keyword.")
 
+        # Run recognizers over all term items.
         kvs_parsed = {}
         for keyword, value in term.kvs.items():
             recognizer_context = RecognizerContext(
@@ -230,12 +228,15 @@ class PolicyBuilder:
         return self._buildTermModel(term)
 
     def _buildTermModel(self, term: RawTerm):
-        # Notes on manually constructing a Term using AddObject:
+        # _buildTermModel() constructs a Term model. This is not especially
+        # straightforward.
         #
-        # Initializing Term(): policy.Term() will crash if initialized
-        # without a VarType object. Initialize the Term on the
-        # first iteration cycle over the kvs and call AddObject on
-        # subsequent passes.
+        # This method expects its input RawTerm to already have been normalized
+        # and parsed by recognizers.
+        #
+        # policy.Term() will crash if initialized without a VarType object.
+        # This method will initialize the Term on the first iteration cycle over
+        # the kvs and call AddObject on subsequent passes.
         #
         # Constructing VarType objects: AddObject has unique expectations
         # of structure per keyword. Common patterns dominate the list of keywords
@@ -256,13 +257,6 @@ class PolicyBuilder:
         #   VPN value is given.
         # * Integer ranges are expected as a string like "2 - 100".
         # * DSCP ranges are expected as a string like "b000001-b001000"
-
-        # Many lists need to be expanded into lists of vartype objects
-        # Expiration should be OK
-        # Integer ranges need to be converted to a string format (Hop Limit, Fragment Offset)
-        # FlexMatch has a whole transformation on the result
-        # In DSCP there is this line: t.type = reserved.get(t.value, 'DSCP_RANGE') - unclear
-        # VPN one vs two string modes (transform to list)
 
         # List of common patterns.
         TERM_SINGLE_VALUES_VAR_TYPES = {
@@ -343,8 +337,6 @@ class PolicyBuilder:
 
         term_model = None  # Will initialize on first cycle
 
-        # TODO(jb) resume below. Switch to using the common cases above, then do
-        # special cases
         for keyword, value in term.kvs.items():
             # Handle each common calling convention for AddObject.
             if keyword in TERM_SINGLE_VALUES_VAR_TYPES:

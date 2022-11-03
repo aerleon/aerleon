@@ -26,7 +26,6 @@ class ExcessiveRecursionError(Exception):
     """Include depth limit exceeded."""
 
 
-# TODO(jb) extract to error.py.
 # Consider making this span-oriented
 # (file > line > (start_ch, end_ch))
 class UserMessage:
