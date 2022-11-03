@@ -1,0 +1,57 @@
+################
+### RULEBASE ###
+################
+
+# NOTE: makes sure zone names correspond to those specified in your firewall setup
+
+filters:
+  - header:
+      targets:
+        paloalto: from-zone internal to-zone external
+
+    terms:
+      - name: ping-gdns
+        source-address: INTERNAL
+        destination-address: GOOGLE_DNS
+        protocol: icmp
+        action: accept
+
+      - name: dns-gdns
+        source-address: INTERNAL
+        destination-address: GOOGLE_DNS
+        destination-port: DNS
+        protocol: tcp
+        action: accept
+
+      - name: allow-web-outbound
+        source-address: INTERNAL
+        destination-port: WEB_SERVICES
+        protocol: tcp
+        action: accept
+
+  - header:
+      targets:
+        paloalto: from-zone external to-zone internal
+
+    terms:
+      - name: allow-icmp
+        protocol: icmp
+        action: accept
+
+      # pan-application only: service application-default
+      - name: allow-pan-app-01
+        pan-application: web-browsing
+        action: accept
+
+      # pan-application + tcp: service any-tcp
+      - name: allow-pan-app-02
+        pan-application: web-browsing
+        protocol: tcp
+        action: accept
+
+      # pan-application + ports: service custom service objects
+      - name: allow-pan-app-03
+        pan-application: ssl
+        protocol: tcp
+        destination-port: HTTPS IMAPS
+        action: accept

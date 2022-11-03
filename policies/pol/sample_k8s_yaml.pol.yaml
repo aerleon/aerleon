@@ -1,0 +1,83 @@
+#
+# This is an example policy for aerleon
+# Target defaults to INGRESS is not specified in the header
+#
+filters:
+  - header:
+      comment:
+        "this is a sample policy to generate Kubernetes NetworkPolicy filter"
+      targets:
+        k8s:
+
+    terms:
+      - name: test-ssh
+        comment: "Allow SSH access to all pods from company."
+        source-address: PUBLIC_NAT
+        protocol: tcp
+        destination-port: SSH
+        action: accept
+
+      - name: test-web
+        comment: "Allow HTTP to pods"
+        source-address: ANY
+        protocol: tcp
+        destination-port: HTTP
+        action: accept
+
+      - name: test-multiple-protocols
+        comment: "Allow TCP/UDP access to all pods from company."
+        source-address: PUBLIC_NAT
+        protocol: tcp udp
+        destination-port: HIGH_PORTS
+        action: accept
+
+      - name: test-multiple-protocols-tcp-sctp
+        comment: "Allow all tcp and sctp."
+        source-address: PUBLIC_NAT
+        protocol: tcp sctp
+        action: accept
+
+      - name: test-internal
+        comment: "Allow all network internal traffic."
+        source-address: RFC1918
+        protocol: tcp udp
+        action: accept
+
+      - name: default-deny
+        action: deny
+
+  #
+  # Sample EGRESS policy
+  # If source-tag is included, it maps to targetTags in the Kubernetes NetworkPolicy Egress rule
+  #
+  - header:
+      comment:
+        "this is a sample policy to generate EGRESS Kubernetes NetworkPolicy
+        filter"
+      targets:
+        k8s: EGRESS
+
+    terms:
+      - name: test-egress-address
+        comment: "Outbound to Mail Server"
+        protocol: tcp
+        destination-port: SMTP
+        destination-address: MAIL_SERVERS
+        action: accept
+
+      - name: test-egress-tag
+        comment: "Outbound to RFC1918"
+        protocol: tcp
+        destination-port: SSH
+        destination-address: PUBLIC_NAT
+        action: accept
+
+      - name: test-egress-address-v6-only
+        comment: "Outbound to IPv6 Server"
+        protocol: tcp
+        destination-port: SMTP
+        destination-address: PUBLIC_IPV6_SERVERS
+        action: accept
+
+      - name: default-deny
+        action: deny
