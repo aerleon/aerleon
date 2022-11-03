@@ -472,9 +472,8 @@ class BuiltinRecognizer:
                             raise TypeError(f"Flexible match range: {key} value is not valid")
 
             elif context.keyword == "vpn":
-                # TODO(jb) this implies term.vpn.vpn ...
-                if 'vpn' not in repr:
-                    raise TypeError("VPN: key 'vpn' is mising.")
+                if 'name' not in repr:
+                    raise TypeError("VPN: keyword 'name' is mising.")
         except TypeError:
             return RecognizerValueResult(recognized=False)
 

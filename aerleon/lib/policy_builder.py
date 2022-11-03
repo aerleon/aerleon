@@ -398,7 +398,7 @@ class PolicyBuilder:
                 # AddObject must be called exactly once.
                 # The VarType value must be a list of length 2 or a 2-tuple
                 # where the second slot is the empty string if a policy name is not given.
-                value = (value['vpn'], value.get('policy', ''))
+                value = (value['name'], value.get('policy', ''))
                 obj_calls = [VarType(VarType.LOG_LIMIT, value)]  # One call
 
             for obj in obj_calls:
