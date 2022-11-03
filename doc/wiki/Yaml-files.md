@@ -40,7 +40,7 @@ This section assumes some familiarity with the YAML file format.
 
 Policy files written in YAML look similar to .pol files. Most value expressions
 (right hand side values) accept a single word or a space-separated list of words
-and that continues to the the case in YAML files.
+and that continues to be the case in YAML files.
 
 ```
       - name: accept-icmp
@@ -189,9 +189,10 @@ value.
 
 ### Alternative Representation: Lists
 
-Any value that can be expressed as space-separated list of words may also be
-expressed as a YAML list of words. This representation is more canonical and may
-be easier to construct during programmatic assembly of YAML.
+Any value that can be expressed as a space-separated list of words may also be
+expressed as a YAML list of one word per item. This representation is a more
+typical use of YAML. Authors intending to programmatically construct YAML files
+may find this representation easier to assemble.
 
 ```
         icmp-type: echo-request echo-reply
@@ -207,10 +208,11 @@ be easier to construct during programmatic assembly of YAML.
 
 ### Includes
 
-Place a term item in the list of terms with a key "include" containing a file
-path to include that file. All terms found in the include file will be inserted
-into the terms list. The include file will be resolved relative to the base
-directory. The include file name must match \*.pol-include.yaml.
+Place an item in the list of terms with a key "include" containing a file path
+to include that file. All terms found in the include file will be inserted into
+the terms list, replacing the "include" item. The include file will be resolved
+relative to the base directory. The include file name must match
+\*.pol-include.yaml.
 
 ```
 # example.pol.yaml
@@ -235,6 +237,9 @@ terms:
   destination-address: RESERVED
   action: deny
 ```
+
+Recursive includes are supported up to a recursion limit of 5. This is the same
+recursion limit as for .pol files.
 
 ### YAML Aliases and Anchors
 
