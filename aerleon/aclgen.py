@@ -230,7 +230,7 @@ def RenderFile(
         raise
 
     try:
-        if os.path.splitext(input_file)[1] == '.yaml':
+        if pathlib.Path(input_file).suffix == '.yaml':
             pol = yaml.load_str(
                 conf,
                 filename=input_file,

@@ -281,10 +281,6 @@ A Term must contain a `name` field naming the term.
 
 ## Full Field Syntax Reference
 
-- TODO - flesh out targets
-- TODO - flesh out action spec, options list, etc
-- TODO - double check for platform-specific keys or value constraints
-
 | Path                              | Platform   | Value Type                   | Allowed Syntax                                                                                             |
 | --------------------------------- | ---------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | header.targets                    |            | mapping                      | `"[TARGET_NAME]": "[PLATFORM_OPTION] ..."`                                                                 |
@@ -327,7 +323,7 @@ A Term must contain a `name` field naming the term.
 | terms[].forwarding-class-except   |            | list of words                | `forwarding-class-except: ["[TRAFFIC_CLASS]", ...]`                                                        |
 | terms[].logging                   |            | word                         | `logging: "{disable \| local \| log-both \| syslog}"`                                                      |
 | terms[].logging                   |            | word                         | `logging: "{true \| false \| True \| False}"`                                                              |
-| terms[].logging                   |            | boolean                      | `logging: true \| false`                                                                                  |
+| terms[].logging                   |            | boolean                      | `logging: true \| false`                                                                                   |
 | terms[].log-limit                 |            | rate                         | `log-limit: "[FREQUENCY]/[PERIOD]"`                                                                        |
 | terms[].log-name                  |            | any string                   | `log-name: "[LOG_MESSAGE_PREFIX]"`                                                                         |
 | terms[].loss-priority             |            | word                         | `loss-priority: "[LOSS_PRIORITY]"`                                                                         |

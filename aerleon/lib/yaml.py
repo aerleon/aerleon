@@ -1,6 +1,7 @@
 """YAML front-end. Loads a Policy model from a .pol.yaml file."""
 
 import os
+import pathlib
 from typing import Tuple
 import yaml
 from yaml.loader import SafeLoader
@@ -90,7 +91,7 @@ def load(filename, base_dir, definitions, optimize=False, shade_check=False):
     Raises:
       PolicyTypeError: The policy file provided is not valid.
     """
-    with open(os.path.join(base_dir, filename), 'r') as file:
+    with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
             file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
         except YAMLError as yaml_error:

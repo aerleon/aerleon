@@ -1,6 +1,7 @@
 """Regression tests for YAML front-end."""
 import multiprocessing
 import os
+import pathlib
 import shutil
 import tempfile
 
@@ -18,8 +19,8 @@ class YAMLRegressionTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
         self.test_subdirectory = tempfile.mkdtemp()
-        self.def_dir = os.path.join(self.test_subdirectory, 'def')
-        self.pol_dir = os.path.join(self.test_subdirectory, 'policies')
+        self.def_dir = pathlib.Path(self.test_subdirectory).joinpath('def')
+        self.pol_dir = pathlib.Path(self.test_subdirectory).joinpath('policies')
         shutil.rmtree(self.test_subdirectory, ignore_errors=True)
         os.mkdir(self.test_subdirectory)
         shutil.copytree('def', self.def_dir)
@@ -42,12 +43,16 @@ class YAMLRegressionTest(absltest.TestCase):
         for file_name in test_files:
             pol_filename = f"{file_name}.pol"
 
-            policy_file = os.path.join(self.test_subdirectory, 'policies/pol/', pol_filename)
+            policy_file = (
+                pathlib.Path(self.test_subdirectory)
+                .joinpath('policies/pol/')
+                .joinpath(pol_filename)
+            )
             aclgen.Run(
-                self.pol_dir,
-                self.def_dir,
-                policy_file,
-                self.test_subdirectory,
+                str(self.pol_dir),
+                str(self.def_dir),
+                str(policy_file),
+                str(self.test_subdirectory),
                 self.exp_info,
                 self.max_renderers,
                 self.ignore_directories,
@@ -57,12 +62,16 @@ class YAMLRegressionTest(absltest.TestCase):
             )
 
             yaml_filename = f"{file_name}_yaml.pol.yaml"
-            policy_file = os.path.join(self.test_subdirectory, 'policies/pol/', yaml_filename)
+            policy_file = (
+                pathlib.Path(self.test_subdirectory)
+                .joinpath('policies/pol/')
+                .joinpath(yaml_filename)
+            )
             aclgen.Run(
-                self.pol_dir,
-                self.def_dir,
-                policy_file,
-                self.test_subdirectory,
+                str(self.pol_dir),
+                str(self.def_dir),
+                str(policy_file),
+                str(self.test_subdirectory),
                 self.exp_info,
                 self.max_renderers,
                 self.ignore_directories,
