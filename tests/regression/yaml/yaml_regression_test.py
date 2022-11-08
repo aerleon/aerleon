@@ -169,6 +169,15 @@ filters:
   terms:
   - include: include_test_terms.pol-include.yaml
 """
+YAML_POLICY_BASE_HF_1 = """
+filters:
+- header:
+    comment: This is a test of HF INGRESS Policy.
+    targets:
+      gcp_hf: INGRESS
+  terms:
+  - include: include_test_terms.pol-include.yaml
+"""
 
 
 @mock.patch.object(yaml_frontend.logging, "warning")
@@ -1309,6 +1318,71 @@ class YAMLPolicyTermTest(absltest.TestCase):
         expected_destination = 'destination_zone: %s' % zones
         self.assertIn(expected_source, str(pol))
         self.assertIn(expected_destination, str(pol))
+
+    @capture.stdout
+    def testLogLimit(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-44
+          logging: syslog
+          log-limit: 999/day
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_4,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        term = pol.filters[0][1][0]
+        self.assertEqual((u'999', u'day'), term.log_limit)
+
+    @capture.stdout
+    def testTargetServiceAccount(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-45
+          source-address: ANY
+          action: accept
+          target-service-accounts: acct1@blah.com
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_HF_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        term = pol.filters[0][1][0]
+        self.assertEqual(['acct1@blah.com'], term.target_service_accounts)
+
+    @capture.stdout
+    def testParsePolicyMultipleTargetResources(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: target-resource-term
+          action: deny
+          target-resources:
+          - (proj1,vpc1)
+          - (proj2,vpc2)
+          - (proj3,vpc3)
+          - (proj4,vpc4)
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_HF_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertIsInstance(pol, policy.Policy)
+        _, terms = pol.filters[0]
+        self.assertIn('deny', terms[0].action)
+        expected_target_resources = [
+            ('proj1', 'vpc1'),
+            ('proj2', 'vpc2'),
+            ('proj3', 'vpc3'),
+            ('proj4', 'vpc4'),
+        ]
+        self.assertListEqual(expected_target_resources, terms[0].target_resources)
 
     def testBadTermName(self, mock_open_include, _mock_warn):
         mock_open_include.return_value = """terms:

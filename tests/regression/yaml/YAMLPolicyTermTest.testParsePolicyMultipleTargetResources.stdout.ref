@@ -1,0 +1,3 @@
+Policy: {Target[gcp_hf], Comments [This is a test of HF INGRESS Policy.], Apply groups: [], except: []:[ name: target-resource-term
+  target_resources: [('proj1', 'vpc1'), ('proj2', 'vpc2'), ('proj3', 'vpc3'), ('proj4', 'vpc4')]
+  action: ['deny']]}
