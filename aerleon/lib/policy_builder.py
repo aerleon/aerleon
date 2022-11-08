@@ -178,16 +178,17 @@ class PolicyBuilder:
             target = Target(target_args)
             header.AddObject(target)
 
-        for keyword, value in policy_filter.header.kvs.items():
+        for keyword, value in kvs_parsed.items():
             if keyword == 'comment':
-                obj = VarType(VarType.COMMENT, value)
+                obj_calls = [VarType(VarType.COMMENT, line) for line in value]
             elif keyword == 'apply-groups':
-                obj = [VarType(VarType.APPLY_GROUPS, group) for group in value]
+                obj_calls = [[VarType(VarType.APPLY_GROUPS, group) for group in value]]
             elif keyword == 'apply-groups-except':
-                obj = [VarType(VarType.APPLY_GROUPS_EXCEPT, group) for group in value]
+                obj_calls = [[VarType(VarType.APPLY_GROUPS_EXCEPT, group) for group in value]]
             else:
                 continue
-            header.AddObject(obj)
+            for obj in obj_calls:
+                header.AddObject(obj)
         return (header, [self._buildTerm(term) for term in policy_filter.terms])
 
     def _buildTerm(self, term: RawTerm):
@@ -199,6 +200,21 @@ class PolicyBuilder:
 
         if not len(term.kvs):
             raise TypeError("Term must have at least one keyword.")
+
+        # Validate name
+        term_name_recognizer_result = BuiltinRecognizer.recognizeKeywordValue(
+            RecognizerContext(
+                policy=None,
+                filter=None,
+                header=None,
+                target=None,
+                term=term,
+                keyword='name',
+                value=term.name,
+            )
+        )
+        if not term_name_recognizer_result.recognized:
+            raise TypeError("Invalid term name.")
 
         # Run recognizers over all term items.
         kvs_parsed = {}
@@ -226,6 +242,9 @@ class PolicyBuilder:
         term.kvs = kvs_parsed
 
         return self._buildTermModel(term)
+
+    # TODO(jb) Migrate this into policy.py as Term.fromPlainObject(term)
+    # TODO(jb) Also re-write to be enum-driven where each keyword links to a vartype and a calling convention
 
     def _buildTermModel(self, term: RawTerm):
         # _buildTermModel() constructs a Term model. This is not especially
@@ -261,7 +280,6 @@ class PolicyBuilder:
         # List of common patterns.
         TERM_SINGLE_VALUES_VAR_TYPES = {
             'next-ip': VarType.NEXT_IP,
-            'comment': VarType.COMMENT,
             'restrict-address-family': VarType.RESTRICT_ADDRESS_FAMILY,
             'owner': VarType.OWNER,
             'expiration': VarType.EXPIRATION,
@@ -321,6 +339,7 @@ class PolicyBuilder:
         }
         TERM_MULTI_VALUE_VAR_TYPES = {
             'action': VarType.ACTION,
+            'comment': VarType.COMMENT,
             'logging': VarType.LOGGING,
             'target-resources': VarType.TARGET_RESOURCES,
             'target-service-accounts': VarType.TARGET_SERVICE_ACCOUNTS,
@@ -385,21 +404,25 @@ class PolicyBuilder:
                 # The VarType value is expected as list of lists with
                 # each inner list having length 2.
                 value = value.items()
-                obj_calls = [[VarType(var_type, item) for item in value]]  # One call
+                obj_calls = [
+                    [VarType(VarType.FLEXIBLE_MATCH_RANGE, item) for item in value]
+                ]  # One call
 
             elif keyword == 'verbatim':
                 # AddObject must be called once per item.
                 # The VarType value is expected as list of lists with
                 # each inner list having length 2.
                 value = value.items()
-                obj_calls = [VarType(var_type, item) for item in value]  # One call per item
+                obj_calls = [
+                    VarType(VarType.VERBATIM, item) for item in value
+                ]  # One call per item
 
             elif keyword == 'vpn':
                 # AddObject must be called exactly once.
                 # The VarType value must be a list of length 2 or a 2-tuple
                 # where the second slot is the empty string if a policy name is not given.
                 value = (value['name'], value.get('policy', ''))
-                obj_calls = [VarType(VarType.LOG_LIMIT, value)]  # One call
+                obj_calls = [VarType(VarType.VPN, value)]  # One call
 
             for obj in obj_calls:
                 if term_model is None:

@@ -1,0 +1,5 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-27
+  address: [IPv4('10.1.0.0/16'), IPv4('10.2.0.0/16'), IPv4('10.3.0.0/16'), IPv4('192.168.0.0/16')]
+  address_exclude: [IPv4('10.2.0.0/15')]
+  protocol: ['tcp']
+  action: ['accept']]}

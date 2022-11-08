@@ -105,7 +105,7 @@ class TValue(enum.Enum):
     def recognize(self, value):
         # .pol files allow strings with value "true" "True" "false" "False" and have no concept of a boolean type.
         if isinstance(value, bool):
-            value = str(value)
+            value = str(value).lower()
 
         if value is None:
             value = ""
@@ -127,14 +127,14 @@ class TValue(enum.Enum):
 
         elif self == TValue.Integer:
             if isinstance(value, int):
-                return str(value)
+                return value
             if not isinstance(value, str):
                 # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected integer or string.")
             match = re.fullmatch(r'\d+', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'Integer'.")
-            return match[0]
+            return int(match[0])
 
         elif self == TValue.Hex:
             if not isinstance(value, str):
@@ -449,9 +449,15 @@ class BuiltinRecognizer:
         except TypeError:
             return RecognizerValueResult(recognized=False)
 
-        # Last-minute validations
+        # Last-minute validations and normalization
         try:
-            if context.keyword == "flexible-match-range":
+            # Plain term objects should specify a comment as a single string,
+            # potentially a multi-line string. The Policy model will represent
+            # the comment as a list of lines, so we perform the transformation here.
+            if context.keyword == "comment" and isinstance(repr, str):
+                repr = repr.splitlines()
+
+            elif context.keyword == "flexible-match-range":
                 for key, value in repr.items():
                     if key not in BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
                         raise TypeError(f"Flexible match range: {key} is not a valid attribute")
@@ -490,6 +496,13 @@ class BuiltinRecognizer:
 
         try:
             repr = tokenizer.recognize(context.value)
-            return RecognizerValueResult(recognized=True, valueKV={context.keyword: repr})
         except TypeError:
             return RecognizerValueResult(recognized=False)
+
+        # Plain term objects should specify a comment as a single string,
+        # potentially a multi-line string. The Policy model will represent
+        # the comment as a list of lines, so we perform the transformation here.
+        if context.keyword == "comment" and isinstance(repr, str):
+            repr = repr.splitlines()
+
+        return RecognizerValueResult(recognized=True, valueKV={context.keyword: repr})

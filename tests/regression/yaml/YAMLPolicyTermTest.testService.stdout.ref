@@ -1,0 +1,7 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-1
+  protocol: ['icmp']
+  action: ['accept'],  name: good-term-3
+  source_address: [IPv4('10.0.0.0/8')]
+  protocol: ['tcp']
+  destination_port: [(25, 25)]
+  action: ['accept']]}

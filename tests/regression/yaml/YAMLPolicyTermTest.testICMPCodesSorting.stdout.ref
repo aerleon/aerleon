@@ -1,0 +1,4 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-11
+  icmp_type: ['unreachable']
+  icmp_code: [1, 4, 9, 15]
+  action: ['accept']]}

@@ -241,25 +241,20 @@ def _file_to_raw_policy(filename, base_dir, file_data):
         max_include_depth = 5
 
         def process_include(depth, stack, inc_filename):
-            with open(os.path.join(base_dir, inc_filename), 'r') as include_file:
-                try:
-                    include_data = yaml.load(
-                        include_file, Loader=_make_yaml_safe_loader(filename=inc_filename)
+            try:
+                include_file = _load_include_file(base_dir, inc_filename)
+                include_data = yaml.load(
+                    include_file, Loader=_make_yaml_safe_loader(filename=inc_filename)
+                )
+            except YAMLError as yaml_error:
+                raise PolicyTypeError(
+                    UserMessage(
+                        "Unable to read file as YAML.",
+                        filename=inc_filename,
+                        include_chain=stack,
                     )
-                except YAMLError as yaml_error:
-                    raise PolicyTypeError(
-                        UserMessage(
-                            "Unable to read file as YAML.",
-                            filename=inc_filename,
-                            include_chain=stack,
-                        )
-                    ) from yaml_error
-            if (
-                include_data is None
-                or not include_data
-                or 'terms' not in include_data
-                or not include_data['terms']
-            ):
+                ) from yaml_error
+            if not include_data or 'terms' not in include_data or not include_data['terms']:
                 logging.warning(
                     UserMessage(
                         "Ignoring empty policy include source.",
@@ -325,10 +320,22 @@ def _file_to_raw_policy(filename, base_dir, file_data):
                 for key, value in term_item.items()
                 if key not in ('name', '__filename__', '__line__')
             }
+
+            # strip any nested debugging data
+            for value in term_kvs_model.values():
+                if isinstance(value, dict):
+                    value.pop('__line__')
+                    value.pop('__filename__')
+
             terms_model.append(RawTerm(name=name, kvs=term_kvs_model))
         filters_model.append(RawFilter(header=header_model, terms=terms_model))
 
     return RawPolicy(filename=filename, filters=filters_model)
+
+
+def _load_include_file(base_dir, inc_filename):
+    with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
+        return include_file
 
 
 def _raw_policy_to_policy(raw_policy, definitions, optimize=False, shade_check=False):
