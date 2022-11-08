@@ -477,6 +477,10 @@ class BuiltinRecognizer:
                         if int(value) not in list(range(256)):
                             raise TypeError(f"Flexible match range: {key} value is not valid")
 
+            # Protocol lists expect numeric protocols as strings
+            elif context.keyword in ("protocol", "protocol-except"):
+                repr = [str(value) for value in repr]
+
             elif context.keyword == "vpn":
                 if 'name' not in repr:
                     raise TypeError("VPN: keyword 'name' is mising.")
