@@ -350,7 +350,7 @@ BUILTIN_TERM_SPEC: dict[str, TValue | TComposition] = {
     'owner': TValue.WordString,
     'policer': TValue.WordString,
     'port': TListStrCollapsible,
-    'precedence': TList(of=TValue.Integer),
+    'precedence': TList(of=TValue.Integer, collapsible=True),
     'protocol': TList(of=TUnion(of=[TValue.Integer, TValue.WordString]), collapsible=True),
     'protocol-except': TList(of=TUnion(of=[TValue.Integer, TValue.WordString]), collapsible=True),
     'qos': TValue.WordString,
