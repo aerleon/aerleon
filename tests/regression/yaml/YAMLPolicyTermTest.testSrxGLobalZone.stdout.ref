@@ -1,0 +1,5 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-48
+  protocol: ['icmp']
+  action: ['accept']
+  source_zone: ['zone1', 'zone2']
+  destination_zone: ['zone1', 'zone2']]}

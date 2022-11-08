@@ -1,0 +1,3 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-47
+  protocol: ['ah', 'esp', 'gre', 'icmp', 'sctp', 'tcp', 'udp']
+  port_mirror: true]}

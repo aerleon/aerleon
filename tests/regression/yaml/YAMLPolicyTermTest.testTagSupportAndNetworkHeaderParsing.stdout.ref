@@ -1,0 +1,4 @@
+Policy: {Target[gce], Comments [test header 5], Apply groups: [], except: []:[ name: good-term-34
+  source_tag: ['src-tag']
+  destination_tag: ['dest-tag']
+  action: ['accept']]}

@@ -1,0 +1,4 @@
+Policy: {Target[juniper], Comments [this goes in the other direction], Apply groups: [], except: []:[ name: good-term-35
+  source_address: [IPv4('10.0.0.0/8')]
+  next_ip: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}

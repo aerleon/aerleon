@@ -1,0 +1,5 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-32
+  forwarding_class: ['fritzy']
+  action: ['accept'],  name: good-term-33
+  forwarding_class: ['flashy']
+  action: ['accept']]}

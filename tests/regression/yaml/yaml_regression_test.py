@@ -922,6 +922,394 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].destination_prefix, ['bar_prefix_list'])
         self.assertEqual(terms[0].destination_prefix_except, ['bar_prefix_list_except'])
 
+    @capture.stdout
+    def testEtherTypes(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-16
+          ether-type: arp ipv4 vlan
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].ether_type[0], 'arp')
+        self.assertEqual(terms[0].ether_type[1], 'ipv4')
+        self.assertEqual(terms[0].ether_type[2], 'vlan')
+
+    @capture.stdout
+    def testTrafficTypes(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-17
+          traffic-type: broadcast unknown-unicast multicast
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].traffic_type[0], 'broadcast')
+        self.assertEqual(terms[0].traffic_type[1], 'unknown-unicast')
+        self.assertEqual(terms[0].traffic_type[2], 'multicast')
+
+    @capture.stdout
+    def testVerbatimTerm(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-18
+          comment: test verbatim output
+          verbatim:
+            iptables: mary had a little lamb
+            juniper: mary had another lamb
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].verbatim[0][0], 'iptables')
+        self.assertEqual(terms[0].verbatim[0][1], 'mary had a little lamb')
+        self.assertEqual(terms[0].verbatim[1][0], 'juniper')
+        self.assertEqual(terms[0].verbatim[1][1], 'mary had another lamb')
+
+    @capture.stdout
+    def testIntegerFilterName(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-0
+          protocol: icmp
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_3,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(pol.headers[0].target[0].options[0], '50')
+
+    @capture.stdout
+    def testPrecedence(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: precedence-term
+          protocol: icmp
+          precedence: 1
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].precedence, [1])
+
+    @capture.stdout
+    def testLossPriority(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: loss-priority-term
+          source-port: SSH
+          protocol: tcp
+          loss-priority: low
+          action: accept
+        """
+        self.naming.GetServiceByProto.return_value = ['22']
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].loss_priority, 'low')
+        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
+
+    @capture.stdout
+    def testRoutingInstance(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: routing-instance-term
+          source-port: SSH
+          protocol: tcp
+          routing-instance: foobar-router
+          action: accept
+        """
+        self.naming.GetServiceByProto.return_value = ['22']
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(terms[0].routing_instance, 'foobar-router')
+        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
+
+    @capture.stdout
+    def testSourceInterface(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: source-interface-term
+          source-port: SSH
+          protocol: tcp
+          source-interface: foo0
+          action: accept
+        """
+        self.naming.GetServiceByProto.return_value = ['22']
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_4,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        header, terms = pol.filters[0]
+        self.assertEqual(str(header.target[0]), 'iptables')
+        self.assertEqual(terms[0].source_interface, 'foo0')
+        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
+
+    @capture.stdout
+    def testVpnConfigWithoutPairPolicy(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-30
+          protocol: tcp
+          action: accept
+          vpn:
+            name: special-30
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_4,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        self.assertEqual('special-30', pol.filters[0][1][0].vpn[0])
+        self.assertEqual('', pol.filters[0][1][0].vpn[1])
+
+    @capture.stdout
+    def testVpnConfigWithPairPolicy(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-31
+          protocol: tcp
+          action: accept
+          vpn:
+            name: special-31
+            policy: policy-11
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_4,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        self.assertEqual('special-31', pol.filters[0][1][0].vpn[0])
+        self.assertEqual('policy-11', pol.filters[0][1][0].vpn[1])
+
+    @capture.stdout
+    def testForwardingClassPolicy(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-32
+          forwarding-class: fritzy
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(['fritzy'], pol.filters[0][1][0].forwarding_class)
+
+    @capture.stdout
+    def testMultipleForwardingClassPolicy(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-36
+          forwarding-class: flashy fritzy
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(['flashy', 'fritzy'], pol.filters[0][1][0].forwarding_class)
+
+    @capture.stdout
+    def testForwardingClassEqual(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-32
+          forwarding-class: fritzy
+          action: accept
+        - name: good-term-33
+          forwarding-class: flashy
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        _, terms = pol.filters[0]
+        self.assertEqual(len(terms), 2)
+        self.assertNotEqual(terms[0], terms[1])
+
+    @capture.stdout
+    def testTagSupportAndNetworkHeaderParsing(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-34
+          source-tag: src-tag
+          destination-tag: dest-tag
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_5,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertEqual(len(pol.filters), 1)
+        header, terms = pol.filters[0]
+        self.assertEqual(str(header.target[0]), 'gce')
+        self.assertEqual(header.FilterOptions('gce'), ['global/networks/default'])
+        self.assertEqual(terms[0].source_tag, ['src-tag'])
+        self.assertEqual(terms[0].destination_tag, ['dest-tag'])
+
+    @capture.stdout
+    def testNextIP(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-35
+          source-address: PROD_NETWORK
+          next-ip: NEXT_IP
+          action: accept
+        """
+        self.naming.GetNetAddr.side_effect = [
+            [nacaddr.IPv4('10.0.0.0/8')],
+            [nacaddr.IPv4('10.1.1.1/32')],
+        ]
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_2,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        expected = nacaddr.IPv4('10.1.1.1/32')
+        self.assertEqual(pol.filters[0][1][0].next_ip[0], expected)
+        self.naming.GetNetAddr.assert_has_calls([mock.call('PROD_NETWORK'), mock.call('NEXT_IP')])
+
+    @capture.stdout
+    def testTermAddressByteLength(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-2
+          protocol: tcp
+          source-address: PROD_NETWORK
+          action: accept
+        """
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IPv4('10.0.0.1/32'),
+            nacaddr.IPv4('10.0.0.2/32'),
+            nacaddr.IPv6('2001:4860:4860::8844/128'),
+            nacaddr.IPv6('2001:4860:4860::8888/128'),
+        ]
+
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        term = pol.filters[0][1][0]
+        self.assertEqual(2, term.AddressesByteLength([4]))
+        self.assertEqual(8, term.AddressesByteLength([6]))
+        self.assertEqual(10, term.AddressesByteLength())
+
+    @capture.stdout
+    def testEncapsulate(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-46
+          protocol: icmp tcp udp gre esp ah sctp
+          encapsulate: stuff_and_things
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertIn('encapsulate: stuff_and_things', str(pol))
+
+    @capture.stdout
+    def testPortMirror(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-47
+          protocol: icmp tcp udp gre esp ah sctp
+          port-mirror: true
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        self.assertIn('port_mirror: true', str(pol))
+
+    @capture.stdout
+    def testSrxGLobalZone(self, mock_open_include, _mock_warn):
+        mock_open_include.return_value = """terms:
+        - name: good-term-48
+          protocol: icmp
+          source-zone: zone1 zone2
+          destination-zone: zone1 zone2
+          action: accept
+        """
+        pol = yaml_frontend.load_str(
+            YAML_POLICY_BASE_1,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        print(pol)
+        zones = ['zone1', 'zone2']
+        expected_source = 'source_zone: %s' % zones
+        expected_destination = 'destination_zone: %s' % zones
+        self.assertIn(expected_source, str(pol))
+        self.assertIn(expected_destination, str(pol))
+
     def testBadTermName(self, mock_open_include, _mock_warn):
         mock_open_include.return_value = """terms:
         - name: bad-term -name
