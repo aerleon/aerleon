@@ -292,7 +292,6 @@ class PolicyBuilder:
             'traffic-class-count': VarType.TRAFFIC_CLASS_COUNT,
             'icmp-type': VarType.ICMP_TYPE,
             'icmp-code': VarType.ICMP_CODE,
-            'log-limit': VarType.LOG_LIMIT,
             'log-name': VarType.LOG_NAME,
             'policer': VarType.POLICER,
             'priority': VarType.PRIORITY,
