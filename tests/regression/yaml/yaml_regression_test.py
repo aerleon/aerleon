@@ -1516,5 +1516,291 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertRegex(mock_warn.call_args[0][0], regex)
 
 
+@mock.patch.object(yaml_frontend, "_load_include_file")
+class YAMLRepresentationsTest(absltest.TestCase):
+    """Ensure that equivalent representations produce identical policy models."""
+
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
+        self.base_dir = ""
+
+    def assertEqualPolicyModel(self, mock_open_include, term_list, other_term_list):
+        mock_open_include.return_value = term_list
+        policy = yaml_frontend.load_str(
+            YAML_POLICY_WITH_INCLUDE,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        mock_open_include.reset_mock()
+        mock_open_include.return_value = other_term_list
+        other_policy = yaml_frontend.load_str(
+            YAML_POLICY_WITH_INCLUDE,
+            filename="policy_test.pol.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        self.assertEqual(policy, other_policy)
+
+    def testWordLists(self, mock_open_include):
+        src_addr_strlist = """terms:
+        - name: source-addr-term
+          source-addr: RESTRICTED BOGON 83.0.0.0/24
+          protocol: icmp
+          action: deny
+        """
+        src_addr_list = """terms:
+        - name: source-addr-term
+          source-addr:
+          - RESTRICTED
+          - BOGON
+          - 83.0.0.0/24
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, src_addr_strlist, src_addr_list)
+        src_addr_single = """terms:
+        - name: source-addr-term
+          source-addr: 83.0.0.0/24
+          protocol: icmp
+          action: deny
+        """
+        src_addr_single_list = """terms:
+        - name: source-addr-term
+          source-addr:
+          - 83.0.0.0/24
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, src_addr_single, src_addr_single_list)
+
+    def testYearMonthDay(self, mock_open_include):
+        expiration_date = """terms:
+        - name: expiration-term
+          expiration: 2020-01-01
+          protocol: icmp
+          action: deny
+        """
+        expiration_str = """terms:
+        - name: expiration-term
+          expiration: "2020-01-01"
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, expiration_date, expiration_str)
+
+    def testIntegerLists(self, mock_open_include):
+        precedence_strlist = """terms:
+        - name: precedence-term
+          precedence: 100 50
+          protocol: icmp
+          action: deny
+        """
+        precedence_list = """terms:
+        - name: precedence-term
+          precedence:
+          - 100
+          - 50
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, precedence_strlist, precedence_list)
+        single_int = """terms:
+        - name: precedence-term
+          precedence: 100
+          protocol: icmp
+          action: deny
+        """
+        single_str = """terms:
+        - name: precedence-term
+          precedence: "100"
+          protocol: icmp
+          action: deny
+        """
+        single_list = """terms:
+        - name: precedence-term
+          precedence:
+          - 100
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, single_int, single_str)
+        self.assertEqualPolicyModel(mock_open_include, single_int, single_list)
+
+    def testProtocol(self, mock_open_include):
+        protocol_mixed_list = """terms:
+        - name: protocol-term
+          protocol:
+          - 22
+          - 80
+          - tcp
+          - 50
+          action: deny
+        """
+        protocol_mixed_str = """terms:
+        - name: protocol-term
+          protocol: 22 80 tcp 50
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, protocol_mixed_list, protocol_mixed_str)
+        single_int = """terms:
+        - name: protocol-term
+          protocol: 22
+          action: deny
+        """
+        single_int_list = """terms:
+        - name: protocol-term
+          protocol:
+          - 22
+          action: deny
+        """
+        single_int_str = """terms:
+        - name: protocol-term
+          protocol: "22"
+          action: deny
+        """
+        single_int_list_str = """terms:
+        - name: protocol-term
+          protocol:
+          - "22"
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_list)
+        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_str)
+        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_list_str)
+
+    def testIntegerRanges(self, mock_open_include):
+        hop_limit_single_int = """terms:
+        - name: hop-limit-term
+          hop-limit: 8
+          protocol: icmp
+          action: deny
+        """
+        hop_limit_single_int_str = """terms:
+        - name: hop-limit-term
+          hop-limit: "8"
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(
+            mock_open_include, hop_limit_single_int, hop_limit_single_int_str
+        )
+        hop_limit_range_nospace = """terms:
+        - name: hop-limit-term
+          hop-limit: 8-20
+          protocol: icmp
+          action: deny
+        """
+        hop_limit_range_spaces = """terms:
+        - name: hop-limit-term
+          hop-limit: 8 - 20
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(
+            mock_open_include, hop_limit_range_nospace, hop_limit_range_spaces
+        )
+
+    def testLogging(self, mock_open_include):
+        logging_bool_lower = """terms:
+        - name: logging-term
+          logging: "true"
+          protocol: icmp
+          action: deny
+        """
+        logging_bool_bool = """terms:
+        - name: logging-term
+          logging: true
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, logging_bool_lower, logging_bool_bool)
+
+    def testLogLimit(self, mock_open_include):
+        log_limit_nospace = """terms:
+        - name: log-limit-term
+          log-limit: 1000/day
+          protocol: icmp
+          action: deny
+        """
+        log_limit_spaces = """terms:
+        - name: log-limit-term
+          log-limit: 1000 / day
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, log_limit_nospace, log_limit_spaces)
+
+    def testFlexMatchRange(self, mock_open_include):
+        flexmatch_normal = """terms:
+        - name: flexible-match-range-term
+          flexible-match-range:
+            match-start: layer-4
+            byte-offset: 16
+            range: 0x08
+          protocol: icmp
+          action: deny
+        """
+        flexmatch_str = """terms:
+        - name: log-limit-term
+          flexible-match-range:
+            match-start: layer-4
+            byte-offset: "16"
+            range: 0x08
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, flexmatch_normal, flexmatch_str)
+
+    def testTuples(self, mock_open_include):
+        tuple_inline_list = """terms:
+        - name: target-resources-term
+          target-resources: ["(proj1,vpc1)","(proj2,vpc2)"]
+          protocol: icmp
+          action: deny
+        """
+        tuple_splay_list = """terms:
+        - name: target-resources-term
+          target-resources: 
+            - (proj1,vpc1)
+            - (proj2,vpc2)
+          protocol: icmp
+          action: deny
+        """
+        tuple_splay_list_noparen = """terms:
+        - name: target-resources-term
+          target-resources: 
+            - proj1,vpc1
+            - proj2,vpc2
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, tuple_inline_list, tuple_splay_list)
+        self.assertEqualPolicyModel(mock_open_include, tuple_inline_list, tuple_splay_list_noparen)
+
+        tuple_single_str = """terms:
+        - name: target-resources-term
+          target-resources: (proj1,vpc1)
+          protocol: icmp
+          action: deny
+        """
+        tuple_single_inline_list = """terms:
+        - name: target-resources-term
+          target-resources: ["(proj1,vpc1)"]
+          protocol: icmp
+          action: deny
+        """
+        tuple_single_splay_list = """terms:
+        - name: target-resources-term
+          target-resources: 
+            - (proj1,vpc1)
+          protocol: icmp
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open_include, tuple_single_str, tuple_single_inline_list)
+        self.assertEqualPolicyModel(mock_open_include, tuple_single_str, tuple_single_splay_list)
+
+
 if __name__ == '__main__':
     absltest.main()
