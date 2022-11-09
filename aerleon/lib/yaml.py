@@ -77,7 +77,7 @@ class UserMessage:
         return f"UserMessage(\"{str(self)}\")"
 
 
-def load(filename, base_dir, definitions, optimize=False, shade_check=False):
+def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False):
     """Load a policy yaml file and produce a Policy data model.
 
     Arguments:
@@ -102,7 +102,7 @@ def load(filename, base_dir, definitions, optimize=False, shade_check=False):
     return _raw_policy_to_policy(raw_policy, definitions, optimize, shade_check)
 
 
-def load_str(file, *, filename, base_dir, definitions, optimize=False, shade_check=False):
+def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_check=False):
     """Load a policy yaml file (provided as a string) and produce a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to

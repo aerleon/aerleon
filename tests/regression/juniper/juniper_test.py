@@ -2010,10 +2010,10 @@ class JuniperTest(parameterized.TestCase):
             self.assertNotIn(notexpect, output, output)
 
 
-def _shimYamlParsePolicy(
+def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
 ):
-    return yaml_frontend.load_str(
+    return yaml_frontend.ParsePolicy(
         data,
         filename=filename,
         base_dir=base_dir,
@@ -2027,7 +2027,7 @@ class JuniperYAMLTest(JuniperTest):
     def setUp(self):
         super().setUp()
         # patch policy.ParsePolicy into a wrapper that calls YAML.load_str
-        self.patchers = [mock.patch.object(policy, 'ParsePolicy', _shimYamlParsePolicy)]
+        self.patchers = [mock.patch.object(policy, 'ParsePolicy', _YamlParsePolicy)]
         [patcher.start() for patcher in self.patchers]
         self.setUpFixtures()
 

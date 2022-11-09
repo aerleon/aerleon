@@ -231,7 +231,7 @@ def RenderFile(
 
     try:
         if pathlib.Path(input_file).suffix == '.yaml':
-            pol = yaml.load_str(
+            pol = yaml.ParsePolicy(
                 conf,
                 filename=input_file,
                 base_dir=base_directory,

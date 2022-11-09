@@ -168,7 +168,7 @@ class YAMLFrontEndTest(absltest.TestCase):
 
     def testTypeErrors(self):
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 "other_key:",
                 filename="policy_empty.pol.yaml",
                 base_dir=self.base_dir,
@@ -181,7 +181,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 "filters: scalar-value",
                 filename="policy_scalar_filter.pol.yaml",
                 base_dir=self.base_dir,
@@ -194,7 +194,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_HEADER,
                 filename="policy_no_header.pol.yaml",
                 base_dir=self.base_dir,
@@ -207,7 +207,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_SCALAR_HEADER,
                 filename="policy_scalar_header.pol.yaml",
                 base_dir=self.base_dir,
@@ -220,7 +220,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_TARGET,
                 filename="policy_no_target.pol.yaml",
                 base_dir=self.base_dir,
@@ -233,7 +233,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_TERMS,
                 filename="policy_no_terms.pol.yaml",
                 base_dir=self.base_dir,
@@ -246,7 +246,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_SCALAR_TERMS,
                 filename="policy_scalar_terms.pol.yaml",
                 base_dir=self.base_dir,
@@ -259,7 +259,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_TERM_NO_NAME,
                 filename="policy_term_no_name.pol.yaml",
                 base_dir=self.base_dir,
@@ -271,7 +271,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 IGNORED_YAML_POLICY_NO_TARGET,
                 filename="policy_no_targets.pol.yaml",
                 base_dir=self.base_dir,
@@ -286,7 +286,7 @@ class YAMLFrontEndTest(absltest.TestCase):
     @mock.patch.object(yaml_frontend, "_raw_policy_to_policy")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testWarnings(self, mock_warning, _mock_raw_to_policy):
-        yaml_frontend.load_str(
+        yaml_frontend.ParsePolicy(
             "",
             filename="policy_empty.pol.yaml",
             base_dir=self.base_dir,
@@ -295,7 +295,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring empty policy file.")
         mock_warning.reset_mock()
 
-        yaml_frontend.load_str(
+        yaml_frontend.ParsePolicy(
             IGNORED_YAML_POLICY_NO_TERMS,
             filename="policy_no_targets.pol.yaml",
             base_dir=self.base_dir,
@@ -308,7 +308,7 @@ class YAMLFrontEndTest(absltest.TestCase):
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testIncludeEmptySource(self, mock_warning, _mock_raw_to_policy):
         with mock.patch("builtins.open", mock.mock_open(read_data="")):
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 GOOD_YAML_POLICY_INCLUDE,
                 filename="policy_with_empty_include.pol.yaml",
                 base_dir=self.base_dir,
@@ -324,7 +324,7 @@ class YAMLFrontEndTest(absltest.TestCase):
             "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INFINITE_RECURSION)
         ):
             with self.assertRaises(yaml_frontend.ExcessiveRecursionError) as arcm:
-                yaml_frontend.load_str(
+                yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.pol.yaml",
                     base_dir=self.base_dir,
@@ -361,7 +361,7 @@ Include stack:
             "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_FILENAME)
         ):
             with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-                yaml_frontend.load_str(
+                yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.pol.yaml",
                     base_dir=self.base_dir,
@@ -385,7 +385,7 @@ Include stack:
     def testIncludeInvalidYAML(self):
         with mock.patch("builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_YAML)):
             with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
-                yaml_frontend.load_str(
+                yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.pol.yaml",
                     base_dir=self.base_dir,
@@ -403,7 +403,7 @@ Include stack:
             )
 
     def testBasicPolicyModel(self):
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             GOOD_YAML_POLICY_BASIC,
             filename="policy_basic.pol.yaml",
             base_dir=self.base_dir,

@@ -188,6 +188,9 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming = mock.create_autospec(naming.Naming)
         self.base_dir = ""
 
+    ######################################
+    # Positive tests from policy_test.py #
+    ######################################
     @capture.stdout
     def testGoodPol(self, mock_open_include, _mock_warn):
         mock_open_include.return_value = """terms:
@@ -200,7 +203,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -236,7 +239,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
         self.naming.GetServiceByProto.return_value = ['25']
 
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -260,7 +263,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: 1
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -278,7 +281,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           hop-limit: 5
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -296,7 +299,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           hop-limit: 5-7
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -314,7 +317,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         - name: good-term-5
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -336,7 +339,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             second comment
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -356,7 +359,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           log-name: my special prefix
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_6,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -377,7 +380,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.naming.GetServiceByProto.return_value = ['3306']
         self.naming.GetServiceByProto.return_value = ['1024-65535']
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -401,7 +404,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -472,7 +475,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             ['3306'],
             ['443'],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -521,7 +524,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.62.0.0/15')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -548,7 +551,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.62.0.0/15')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -575,7 +578,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.62.0.0/15')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -602,7 +605,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.62.0.0/15'), nacaddr.IPv4('10.129.0.0/15', strict=False)],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -652,7 +655,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             ],
             [nacaddr.IPv4('10.2.0.0/15')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -686,7 +689,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             ],
             [nacaddr.IPv4('10.0.0.0/8')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -708,7 +711,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           logging: true
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -727,7 +730,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           icmp-type: echo-reply echo-request unreachable
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -746,7 +749,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           icmp-type: unreachable echo-request echo-reply
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -765,7 +768,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           icmp-code: 15 4 9 1
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -781,7 +784,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
           qos: af4
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -802,7 +805,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetServiceByProto.side_effect = [['22', '160-162'], ['161']]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -824,7 +827,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           source-prefix: foo_prefix_list
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -842,7 +845,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-prefix: bar_prefix_list baz_prefix_list
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -860,7 +863,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           source-prefix-except: foo_prefix_list
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -878,7 +881,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-prefix-except: bar_prefix_list baz_prefix_list
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -899,7 +902,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           source-prefix-except: foo_prefix_list_except
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -919,7 +922,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-prefix-except: bar_prefix_list_except
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -938,7 +941,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           ether-type: arp ipv4 vlan
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -958,7 +961,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           traffic-type: broadcast unknown-unicast multicast
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -980,7 +983,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             iptables: mary had a little lamb
             juniper: mary had another lamb
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1001,7 +1004,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: icmp
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_3,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1020,7 +1023,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           precedence: 1
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1041,7 +1044,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetServiceByProto.return_value = ['22']
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1063,7 +1066,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetServiceByProto.return_value = ['22']
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1085,7 +1088,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
         """
         self.naming.GetServiceByProto.return_value = ['22']
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_4,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1107,7 +1110,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           vpn:
             name: special-30
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_4,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1128,7 +1131,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             name: special-31
             policy: policy-11
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_4,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1146,7 +1149,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           forwarding-class: fritzy
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1162,7 +1165,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           forwarding-class: flashy fritzy
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1181,7 +1184,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           forwarding-class: flashy
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1201,7 +1204,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-tag: dest-tag
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_5,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1227,7 +1230,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.1.1.1/32')],
         ]
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_2,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1253,7 +1256,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             nacaddr.IPv6('2001:4860:4860::8888/128'),
         ]
 
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1272,7 +1275,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: icmp tcp udp gre esp ah sctp
           encapsulate: stuff_and_things
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1288,7 +1291,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: icmp tcp udp gre esp ah sctp
           port-mirror: true
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1306,7 +1309,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-zone: zone1 zone2
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1327,7 +1330,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           log-limit: 999/day
           action: accept
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_4,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1345,7 +1348,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           action: accept
           target-service-accounts: acct1@blah.com
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_HF_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1366,7 +1369,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           - (proj3,vpc3)
           - (proj4,vpc4)
         """
-        pol = yaml_frontend.load_str(
+        pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_HF_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1383,6 +1386,10 @@ class YAMLPolicyTermTest(absltest.TestCase):
             ('proj4', 'vpc4'),
         ]
         self.assertListEqual(expected_target_resources, terms[0].target_resources)
+
+    ######################################
+    # Negative tests from policy_test.py #
+    ######################################
 
     def testBadTermName(self, mock_open_include, _mock_warn):
         mock_open_include.return_value = """terms:
@@ -1499,7 +1506,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
 
     def assertTermRaises(self, error_type):
         with self.assertRaises(error_type):
-            yaml_frontend.load_str(
+            yaml_frontend.ParsePolicy(
                 YAML_POLICY_WITH_INCLUDE,
                 filename="policy_test.pol.yaml",
                 base_dir=self.base_dir,
@@ -1507,7 +1514,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
             )
 
     def assertTermWarns(self, mock_warn, *, regex):
-        yaml_frontend.load_str(
+        yaml_frontend.ParsePolicy(
             YAML_POLICY_WITH_INCLUDE,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1527,7 +1534,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
 
     def assertEqualPolicyModel(self, mock_open_include, term_list, other_term_list):
         mock_open_include.return_value = term_list
-        policy = yaml_frontend.load_str(
+        policy = yaml_frontend.ParsePolicy(
             YAML_POLICY_WITH_INCLUDE,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
@@ -1535,7 +1542,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
         )
         mock_open_include.reset_mock()
         mock_open_include.return_value = other_term_list
-        other_policy = yaml_frontend.load_str(
+        other_policy = yaml_frontend.ParsePolicy(
             YAML_POLICY_WITH_INCLUDE,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
