@@ -150,7 +150,7 @@ class TValue(enum.Enum):
             match = re.fullmatch(r'(?P<start>\d+)\s*-\s*(?P<end>\d+)', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'IntegerRange'.")
-            return {key: match[key] for key in ('start', 'end')}
+            return f"{match['start']}-{match['end']}"
 
         elif self == TValue.YearMonthDay:
             if isinstance(value, datetime.date):
@@ -165,26 +165,28 @@ class TValue(enum.Enum):
             return datetime.date(int(match['year']), int(match['month']), int(match['day']))
 
         elif self == TValue.DSCP:
+            if isinstance(value, int):
+                return str(value)
             if not isinstance(value, str):
-                raise TypeError("Expected string.")
+                raise TypeError("Expected string or integer.")
+            match = re.fullmatch(r'\d+', value.strip())
+            if match:
+                return match[0]
             match = re.fullmatch(
                 r'\b((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))(?![\w-])\b',
                 value.strip(),
             )
-            if match is None:
-                raise TypeError("Expected value class 'DSCP'.")
-            return match[0]
+            if match:
+                return match[0]
+            raise TypeError("Expected value class 'DSCP'.")
 
         elif self == TValue.DSCPRange:
-            if not isinstance(value, str):
-                raise TypeError("Expected string.")
-            match = re.fullmatch(
-                r'\b(?P<start>(b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))([-]{1})(?P<end>(b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))\b',
-                value.strip(),
-            )
-            if match is None:
-                raise TypeError("Expected value class 'DSCPRange'.")
-            return match[0]
+            try:
+                return TValue.DSCP.recognize(value)
+            except TypeError:
+                return '-'.join(
+                    [TValue.DSCP.recognize(subvalue) for subvalue in value.strip().split('-')]
+                )
 
         elif self == TValue.LogLimit:
             if not isinstance(value, str):
@@ -378,7 +380,7 @@ BUILTIN_TERM_SPEC: dict[str, TValue | TComposition] = {
     'dscp-except': TList(of=TUnion(of=[TValue.DSCP, TValue.DSCPRange]), collapsible=True),
     'next-ip': TValue.WordString,
     'flexible-match-range': TSection(
-        of=[(TValue.WordString, TUnion(of=[TValue.Integer, TValue.Hex, TValue.WordString]))]
+        of=[(TValue.WordString, TUnion(of=[TValue.Hex, TValue.Integer, TValue.WordString]))]
     ),
     'source-prefix-except': TListStrCollapsible,
     'destination-prefix-except': TListStrCollapsible,
@@ -458,6 +460,7 @@ class BuiltinRecognizer:
                 repr = repr.splitlines()
 
             elif context.keyword == "flexible-match-range":
+                new_repr = {}
                 for key, value in repr.items():
                     if key not in BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
                         raise TypeError(f"Flexible match range: {key} is not a valid attribute")
@@ -476,10 +479,17 @@ class BuiltinRecognizer:
                     elif key == "byte-offset":
                         if int(value) not in list(range(256)):
                             raise TypeError(f"Flexible match range: {key} value is not valid")
+                    # Policy model expects "range" in hex format, the rest as strings
+                    new_repr[key] = str(value)
+                repr = new_repr
 
-            # Protocol lists expect numeric protocols as strings
+            # Protocol lists, numeric ranges expect numeric protocols as strings
+            # TODO(jb) possibly another enum driven normalization
             elif context.keyword in ("protocol", "protocol-except"):
                 repr = [str(value) for value in repr]
+
+            elif context.keyword in ("hop-limit", "packet-length", "fragment-offset"):
+                repr = str(repr)
 
             elif context.keyword == "vpn":
                 if 'name' not in repr:
