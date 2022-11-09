@@ -270,6 +270,19 @@ class YAMLFrontEndTest(absltest.TestCase):
             str(user_message), "Term must have a name. File=policy_term_no_name.pol.yaml, Line=7."
         )
 
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            yaml_frontend.load_str(
+                IGNORED_YAML_POLICY_NO_TARGET,
+                filename="policy_no_targets.pol.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(
+            str(user_message),
+            "Filter header cannot be empty. File=policy_no_targets.pol.yaml, Line=3.",
+        )
+
     @mock.patch.object(yaml_frontend, "_raw_policy_to_policy")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testWarnings(self, mock_warning, _mock_raw_to_policy):
@@ -280,17 +293,6 @@ class YAMLFrontEndTest(absltest.TestCase):
             definitions=self.naming,
         )
         self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring empty policy file.")
-        mock_warning.reset_mock()
-
-        yaml_frontend.load_str(
-            IGNORED_YAML_POLICY_NO_TARGET,
-            filename="policy_no_targets.pol.yaml",
-            base_dir=self.base_dir,
-            definitions=self.naming,
-        )
-        self.assertEqual(
-            mock_warning.call_args[0][0].message, "Ignoring filter with zero targets."
-        )
         mock_warning.reset_mock()
 
         yaml_frontend.load_str(
