@@ -25,6 +25,7 @@ from aerleon.lib import junipersrx
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
 from aerleon.lib import policy
+from aerleon.lib import yaml as yaml_frontend
 
 from tests.regression_utils import capture
 
@@ -311,14 +312,6 @@ term good_term_19 {
 GOOD_TERM_20 = """
 term good_term_20 {
   destination-address:: FOO
-  destination-port:: HTTP
-  protocol:: tcp
-  action:: accept
-}
-"""
-GOOD_TERM_21 = """
-term good_term_21 {
-  destination-address:: UDON
   destination-port:: HTTP
   protocol:: tcp
   action:: accept
@@ -2070,6 +2063,662 @@ class JuniperSRXTest(absltest.TestCase):
         pattern = re.compile(r'delete: applications;')
         self.assertTrue(pattern.search(str(''.join(output))), ''.join(output))
         print(output)
+
+
+YAML_GOOD_HEADER = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust
+  terms:
+"""
+YAML_GOOD_HEADER_2 = """
+filters:
+- header:
+    comment: This is a header from untrust to trust
+    targets:
+      srx: from-zone untrust to-zone trust
+  terms:
+"""
+YAML_GOOD_HEADER_3 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust inet
+  terms:
+"""
+YAML_GOOD_HEADER_4 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust inet6
+  terms:
+"""
+YAML_GOOD_HEADER_5 = """
+filters:
+- header:
+    targets:
+      srx: from-zone trust to-zone untrust inet
+    apply-groups: tcp-test1 tcp-test2
+  terms:
+"""
+YAML_GOOD_HEADER_6 = """
+filters:
+- header:
+    targets:
+      srx: from-zone trust to-zone untrust inet
+    apply-groups-except: tcp-test1 tcp-test2
+  terms:
+"""
+YAML_GOOD_HEADER_7 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust address-book-zone inet
+  terms:
+"""
+
+YAML_GOOD_HEADER_8 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust address-book-zone inet6
+  terms:
+"""
+
+YAML_GOOD_HEADER_9 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust address-book-zone
+  terms:
+"""
+
+YAML_GOOD_HEADER_10 = """
+filters:
+- header:
+    comment: This is a test acl with a global policy
+    targets:
+      srx: from-zone all to-zone all address-book-global
+  terms:
+"""
+
+YAML_GOOD_HEADER_11 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone dmz
+  terms:
+"""
+
+YAML_GOOD_HEADER_12 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone untrust to-zone trust address-book-zone inet
+  terms:
+"""
+
+YAML_GOOD_HEADER_13 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust inet expresspath
+  terms:
+"""
+
+YAML_GOOD_HEADER_14 = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust expresspath inet
+  terms:
+"""
+
+YAML_GOOD_HEADER_NOVERBOSE = """
+filters:
+- header:
+    comment: This is a test acl with a comment
+    targets:
+      srx: from-zone trust to-zone untrust noverbose
+  terms:
+"""
+
+YAML_BAD_HEADER = """
+filters:
+- header:
+    targets:
+      srx: something
+  terms:
+"""
+
+YAML_BAD_HEADER_1 = """
+filters:
+- header:
+    comment: This header has two address families
+    targets:
+      srx: from-zone trust to-zone untrust inet6 mixed
+  terms:
+"""
+
+YAML_BAD_HEADER_3 = """
+filters:
+- header:
+    comment: This is a test acl with a global policy
+    targets:
+      srx: from-zone all to-zone all address-book-zone
+  terms:
+"""
+
+YAML_BAD_HEADER_4 = """
+filters:
+- header:
+    comment: This is a test acl with a global policy
+    targets:
+      srx: from-zone test to-zone all
+  terms:
+"""
+
+YAML_GOOD_TERM_1 = """
+  - name: good-term-1
+    comment: This header is very very very very very very very very very very very very very very very very very very very very large
+    destination-address: SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_2 = """
+  - name: good-term-2
+    destination-address: SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_3 = """
+  - name: good-term-3
+    destination-address: SOME_HOST
+    protocol: tcp
+    action: accept
+    vpn:
+      name: good-vpn-3
+"""
+
+YAML_GOOD_TERM_4 = """
+  - name: good-term-4
+    destination-address: SOME_HOST
+    protocol: tcp
+    action: accept
+    vpn:
+      name: good-vpn-4
+      policy: policy-4
+"""
+
+YAML_GOOD_TERM_LOG_1 = """
+  - name: good-term-5
+    action: accept
+    logging: log-both
+"""
+YAML_GOOD_TERM_LOG_2 = """
+  - name: good-term-5
+    action: deny
+    logging: log-both
+"""
+
+YAML_GOOD_TERM_LOG_3 = """
+  - name: good-term-5
+    action: accept
+    logging: true
+"""
+YAML_GOOD_TERM_LOG_4 = """
+  - name: good-term-5
+    action: deny
+    logging: true
+"""
+
+YAML_GOOD_TERM_10 = """
+  - name: good-term-10
+    destination-address: SOME_HOST
+    action: accept
+    dscp-set: b111000
+"""
+
+YAML_GOOD_TERM_11 = """
+  - name: good-term-11
+    destination-address: SOME_HOST
+    action: accept
+    dscp-set: af42
+    dscp-match: af41-af42 5
+    dscp-except: be
+"""
+
+YAML_GOOD_TERM_12 = """
+  - name: dup-of-term-1
+    destination-address: FOOBAR
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_13 = """
+  - name: dup-of-term-1
+    destination-address: FOOBAR SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_14 = """
+  - name: term_to_split
+    source-address: FOOBAR
+    destination-address: SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_15 = """
+  - name: good-term-15
+    destination-address: SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    policer: batman
+    action: accept
+"""
+
+YAML_GOOD_TERM_16 = """
+  - name: good-term-16
+    destination-address: BAZ
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_17 = """
+  - name: term_to_split
+    destination-address: FOOBAR SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_18 = """
+  - name: good_term_18
+    source-exclude: SMALL
+    protocol: tcp
+    action: accept
+"""
+YAML_GOOD_TERM_19 = """
+  - name: good_term_19
+    source-address: LARGE
+    source-exclude: SMALL
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_20 = """
+  - name: good_term_20
+    destination-address: FOO
+    destination-port: HTTP
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_21 = """
+  - name: good_term_21
+    destination-address: FOO
+    destination-port: QUIC
+    protocol: udp
+    action: accept
+"""
+
+YAML_GOOD_TERM_23 = """
+  - name: good_term_23
+    action: accept
+"""
+
+YAML_BAD_TERM_1 = """
+  - name: bad-term-1
+    destination-address: SOME_HOST
+    protocol: tcp
+    action: deny
+    vpn:
+      name: good-vpn-4
+      policy: policy-4
+"""
+
+YAML_TCP_ESTABLISHED_TERM = """
+  - name: tcp-established-term
+    source-address: SOME_HOST
+    source-port: SMTP
+    protocol: tcp
+    option: tcp-established
+    action: accept
+"""
+
+YAML_UDP_ESTABLISHED_TERM = """
+  - name: udp-established-term
+    source-address: FOO
+    source-port: QUIC
+    protocol: udp
+    option: established
+    action: accept
+"""
+
+YAML_ICMP_RESPONSE_TERM = """
+  - name: icmp_response-term
+    protocol: icmp
+    icmp-type: echo-reply
+    action: accept
+"""
+
+YAML_EXPIRED_TERM_1 = """
+  - name: expired_test
+    expiration: 2000-1-1
+    action: deny
+"""
+
+YAML_EXPIRING_TERM = """
+  - name: is_expiring
+    expiration: %s
+    action: accept
+"""
+
+YAML_ICMP_TYPE_TERM_1 = """
+  - name: test-icmp
+    protocol: icmp
+    icmp-type: echo-request echo-reply
+    action: accept
+"""
+
+# For testing when the number of terms is at the 8 term application limit
+YAML_LONG_IPV6_ICMP_TERM = """
+  - name: accept-icmpv6-types
+    protocol: icmpv6
+    icmp-type: 
+    - echo-request 
+    - echo-reply 
+    - neighbor-solicit
+    - neighbor-advertisement 
+    - router-advertisement 
+    - packet-too-big
+    - parameter-problem 
+    - time-exceeded
+    action: accept
+"""
+
+# For testing when the number of terms goes over the 8 term application limit
+YAML_LONG_IPV6_ICMP_TERM2 = """
+  - name: accept-icmpv6-types
+    protocol: icmpv6
+    icmp-type: 
+    - echo-request 
+    - echo-reply 
+    - neighbor-solicit
+    - neighbor-advertisement 
+    - router-advertisement 
+    - packet-too-big
+    - parameter-problem 
+    - time-exceeded 
+    - destination-unreachable
+    action: accept
+"""
+
+YAML_ICMP_ALL_TERM = """
+  - name: accept-icmp-types
+    protocol: icmp
+    icmp-type: 
+    - echo-reply 
+    - unreachable 
+    - source-quench 
+    - redirect 
+    - alternate-address
+    - echo-request 
+    - router-advertisement 
+    - router-solicitation
+    - time-exceeded 
+    - parameter-problem 
+    - timestamp-request
+    - timestamp-reply 
+    - information-request 
+    - information-reply
+    - mask-request 
+    - mask-reply 
+    - conversion-error 
+    - mobile-redirect
+    action: accept
+"""
+
+YAML_ICMP6_ALL_TERM = """
+  - name: accept-icmpv6-types
+    protocol: icmpv6
+    icmp-type: 
+    - destination-unreachable 
+    - packet-too-big 
+    - time-exceeded
+    - parameter-problem 
+    - echo-request 
+    - echo-reply
+    - multicast-listener-query 
+    - multicast-listener-report
+    - multicast-listener-done 
+    - router-solicit 
+    - router-advertisement
+    - neighbor-solicit 
+    - neighbor-advertisement 
+    - redirect-message
+    - router-renumbering 
+    - icmp-node-information-query
+    - icmp-node-information-response
+    - inverse-neighbor-discovery-solicitation
+    - inverse-neighbor-discovery-advertisement
+    - version-2-multicast-listener-report
+    - home-agent-address-discovery-request
+    - home-agent-address-discovery-reply 
+    - mobile-prefix-solicitation
+    - mobile-prefix-advertisement 
+    - certification-path-solicitation
+    - certification-path-advertisement 
+    - multicast-router-advertisement
+    - multicast-router-solicitation 
+    - multicast-router-termination
+    action: accept
+"""
+
+YAML_IPV6_ICMP_TERM = """
+  - name: test-ipv6_icmp
+    protocol: icmpv6
+    icmp-type: 
+    - destination-unreachable 
+    - packet-too-big 
+    - time-exceeded 
+    - time-exceeded 
+    - echo-request 
+    - echo-reply
+    action: accept
+"""
+
+YAML_BAD_ICMP_TERM_1 = """
+  - name: test-icmp
+    icmp-type: echo-request echo-reply
+    action: accept
+"""
+
+YAML_ICMP_ONLY_TERM_1 = """
+  - name: test-icmp
+    protocol: icmp
+    action: accept
+"""
+
+YAML_OWNER_TERM = """
+  - name: owner-test
+    owner: foo@google.com
+    action: accept
+"""
+
+YAML_MULTIPLE_PROTOCOLS_TERM = """
+  - name: multi-proto
+    protocol: tcp udp icmp
+    action: accept
+"""
+
+YAML_DEFAULT_TERM_1 = """
+  - name: default-term-1
+    action: deny
+"""
+
+YAML_TIMEOUT_TERM = """
+  - name: timeout-term
+    protocol: icmp
+    icmp-type: echo-request
+    timeout: 77
+    action: accept
+"""
+
+YAML_GLOBAL_ZONE_TERM = """
+  - name: global-zone-term
+    protocol: icmp
+    icmp-type: echo-request
+    source-zone: szone2 szone1
+    destination-zone: dzone2 dzone1
+    action: accept
+"""
+
+YAML_PLATFORM_EXCLUDE_TERM = """
+  - name: platform-exclude-term
+    protocol: tcp udp
+    platform-exclude: srx
+    action: accept
+"""
+
+YAML_PLATFORM_TERM = """
+  - name: platform-term
+    protocol: tcp udp
+    platform: srx juniper
+    action: accept
+"""
+
+YAML_PLATFORM_EXCLUDE_ADDRESS_TERM = """
+  - name: platform-exclude-term
+    protocol: tcp udp
+    source-address: FOO
+    platform-exclude: srx
+    action: accept
+"""
+
+
+def _YamlParsePolicy(
+    data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
+):
+    """Test shim for patching policy.ParsePolicy with yaml.ParsePolicy."""
+
+    # Erase any subsequent copies of "filters:". Multi-filter tests must not
+    # contain copies of the "filters:" key
+    data = "filters:" + ''.join(data.split("filters:\n"))
+    
+    return yaml_frontend.ParsePolicy(
+        data,
+        filename=filename,
+        base_dir=base_dir,
+        definitions=definitions,
+        optimize=optimize,
+        shade_check=shade_check,
+    )
+
+
+class JuniperSRXYAMLTest(JuniperSRXTest):
+    def setUp(self):
+        super().setUp()
+        # patch policy.ParsePolicy into a wrapper that calls YAML.load_str
+        self.patchers = [mock.patch.object(policy, 'ParsePolicy', _YamlParsePolicy)]
+        [patcher.start() for patcher in self.patchers]
+        self.setUpFixtures()
+        self.fixture_patcher.start()
+
+    def tearDown(self):
+        [patcher.stop() for patcher in self.patchers]
+        self.tearDownFixtures()
+
+    def tearDownFixtures(self):
+        self.fixture_patcher.stop()
+
+    def setUpFixtures(self):
+        self.fixture_patcher = mock.patch.multiple(
+            'junipersrx_test',
+            GOOD_HEADER=YAML_GOOD_HEADER,
+            GOOD_HEADER_2=YAML_GOOD_HEADER_2,
+            GOOD_HEADER_3=YAML_GOOD_HEADER_3,
+            GOOD_HEADER_4=YAML_GOOD_HEADER_4,
+            GOOD_HEADER_5=YAML_GOOD_HEADER_5,
+            GOOD_HEADER_6=YAML_GOOD_HEADER_6,
+            GOOD_HEADER_7=YAML_GOOD_HEADER_7,
+            GOOD_HEADER_8=YAML_GOOD_HEADER_8,
+            GOOD_HEADER_9=YAML_GOOD_HEADER_9,
+            GOOD_HEADER_10=YAML_GOOD_HEADER_10,
+            GOOD_HEADER_11=YAML_GOOD_HEADER_11,
+            GOOD_HEADER_12=YAML_GOOD_HEADER_12,
+            GOOD_HEADER_13=YAML_GOOD_HEADER_13,
+            GOOD_HEADER_14=YAML_GOOD_HEADER_14,
+            GOOD_HEADER_NOVERBOSE=YAML_GOOD_HEADER_NOVERBOSE,
+            BAD_HEADER=YAML_BAD_HEADER,
+            BAD_HEADER_1=YAML_BAD_HEADER_1,
+            BAD_HEADER_3=YAML_BAD_HEADER_3,
+            BAD_HEADER_4=YAML_BAD_HEADER_4,
+            GOOD_TERM_1=YAML_GOOD_TERM_1,
+            GOOD_TERM_2=YAML_GOOD_TERM_2,
+            GOOD_TERM_3=YAML_GOOD_TERM_3,
+            GOOD_TERM_4=YAML_GOOD_TERM_4,
+            GOOD_TERM_LOG_1=YAML_GOOD_TERM_LOG_1,
+            GOOD_TERM_LOG_2=YAML_GOOD_TERM_LOG_2,
+            GOOD_TERM_LOG_3=YAML_GOOD_TERM_LOG_3,
+            GOOD_TERM_LOG_4=YAML_GOOD_TERM_LOG_4,
+            GOOD_TERM_10=YAML_GOOD_TERM_10,
+            GOOD_TERM_11=YAML_GOOD_TERM_11,
+            GOOD_TERM_12=YAML_GOOD_TERM_12,
+            GOOD_TERM_13=YAML_GOOD_TERM_13,
+            GOOD_TERM_14=YAML_GOOD_TERM_14,
+            GOOD_TERM_15=YAML_GOOD_TERM_15,
+            GOOD_TERM_16=YAML_GOOD_TERM_16,
+            GOOD_TERM_17=YAML_GOOD_TERM_17,
+            GOOD_TERM_18=YAML_GOOD_TERM_18,
+            GOOD_TERM_19=YAML_GOOD_TERM_19,
+            GOOD_TERM_20=YAML_GOOD_TERM_20,
+            GOOD_TERM_21=YAML_GOOD_TERM_21,
+            GOOD_TERM_23=YAML_GOOD_TERM_23,
+            BAD_TERM_1=YAML_BAD_TERM_1,
+            TCP_ESTABLISHED_TERM=YAML_TCP_ESTABLISHED_TERM,
+            UDP_ESTABLISHED_TERM=YAML_UDP_ESTABLISHED_TERM,
+            ICMP_RESPONSE_TERM=YAML_ICMP_RESPONSE_TERM,
+            EXPIRED_TERM_1=YAML_EXPIRED_TERM_1,
+            EXPIRING_TERM=YAML_EXPIRING_TERM,
+            ICMP_TYPE_TERM_1=YAML_ICMP_TYPE_TERM_1,
+            LONG_IPV6_ICMP_TERM=YAML_LONG_IPV6_ICMP_TERM,
+            LONG_IPV6_ICMP_TERM2=YAML_LONG_IPV6_ICMP_TERM2,
+            ICMP_ALL_TERM=YAML_ICMP_ALL_TERM,
+            ICMP6_ALL_TERM=YAML_ICMP6_ALL_TERM,
+            IPV6_ICMP_TERM=YAML_IPV6_ICMP_TERM,
+            BAD_ICMP_TERM_1=YAML_BAD_ICMP_TERM_1,
+            ICMP_ONLY_TERM_1=YAML_ICMP_ONLY_TERM_1,
+            OWNER_TERM=YAML_OWNER_TERM,
+            MULTIPLE_PROTOCOLS_TERM=YAML_MULTIPLE_PROTOCOLS_TERM,
+            DEFAULT_TERM_1=YAML_DEFAULT_TERM_1,
+            TIMEOUT_TERM=YAML_TIMEOUT_TERM,
+            GLOBAL_ZONE_TERM=YAML_GLOBAL_ZONE_TERM,
+            PLATFORM_EXCLUDE_TERM=YAML_PLATFORM_EXCLUDE_TERM,
+            PLATFORM_TERM=YAML_PLATFORM_TERM,
+            PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
+        )
 
 
 if __name__ == '__main__':
