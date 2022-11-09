@@ -484,11 +484,14 @@ class BuiltinRecognizer:
                 repr = new_repr
 
             # Protocol lists, numeric ranges expect numeric protocols as strings
-            # TODO(jb) possibly another enum driven normalization
+            # TODO(jb) the following conditional stringify steps should be enum-driven
             elif context.keyword in ("protocol", "protocol-except"):
                 repr = [str(value) for value in repr]
 
             elif context.keyword in ("hop-limit", "packet-length", "fragment-offset"):
+                repr = str(repr)
+
+            elif context.keyword in ("ttl", "priority", "timeout"):
                 repr = str(repr)
 
             elif context.keyword == "vpn":
