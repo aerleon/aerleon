@@ -296,6 +296,9 @@ class PolicyBuilder:
             'policer': VarType.POLICER,
             'priority': VarType.PRIORITY,
             'qos': VarType.QOS,
+            'packet-length': VarType.PACKET_LEN,
+            'fragment-offset': VarType.FRAGMENT_OFFSET,
+            'hop-limit': VarType.HOP_LIMIT,
             'source-interface': VarType.SINTERFACE,
             'destination-interface': VarType.DINTERFACE,
             'timeout': VarType.TIMEOUT,
@@ -330,7 +333,6 @@ class PolicyBuilder:
             'platform-exclude': VarType.PLATFORMEXCLUDE,
             'source-tag': VarType.STAG,
             'destination-tag': VarType.DTAG,
-            'flexible-match-range': VarType.FLEXIBLE_MATCH_RANGE,
             'target-resources': VarType.TARGET_RESOURCES,
             'target-service-accounts': VarType.TARGET_SERVICE_ACCOUNTS,
             'source-zone': VarType.SZONE,
@@ -342,11 +344,6 @@ class PolicyBuilder:
             'logging': VarType.LOGGING,
             'target-resources': VarType.TARGET_RESOURCES,
             'target-service-accounts': VarType.TARGET_SERVICE_ACCOUNTS,
-        }
-        TERM_SINGLE_VALUE_INT_RANGE_VAR_TYPES = {
-            'packet-length': VarType.PACKET_LEN,
-            'fragment-offset': VarType.FRAGMENT_OFFSET,
-            'hop-limit': VarType.HOP_LIMIT,
         }
         TERM_LIST_VALUES_DSCP_RANGE_VAR_TYPES = {
             'dscp-match': VarType.DSCP_MATCH,
@@ -376,16 +373,6 @@ class PolicyBuilder:
                 var_type = TERM_MULTI_VALUE_VAR_TYPES[keyword]
                 obj_calls = [VarType(var_type, item) for item in value]  # One call per item
 
-            elif keyword in TERM_SINGLE_VALUE_INT_RANGE_VAR_TYPES:
-                # AddObject must be called exactly once.
-                # The argument must be an instance of VarType.
-                # The VarType value must be a string containing a single number
-                # or a range expression like "1-40".
-                var_type = TERM_SINGLE_VALUE_INT_RANGE_VAR_TYPES[keyword]
-                if isinstance(value, dict):
-                    value = f"{value['start']}-{value['end']}"
-                obj_calls = [VarType(var_type, value)]  # One call
-
             elif keyword in TERM_LIST_VALUES_DSCP_RANGE_VAR_TYPES:
                 # AddObject may be called with a list of VarType objects.
                 # The VarType value, if it contains a DSCP range,
@@ -402,9 +389,11 @@ class PolicyBuilder:
                 # AddObject may be called with a list of VarType objects.
                 # The VarType value is expected as list of lists with
                 # each inner list having length 2.
-                value = value.items()
                 obj_calls = [
-                    [VarType(VarType.FLEXIBLE_MATCH_RANGE, item) for item in value]
+                    [
+                        VarType(VarType.FLEXIBLE_MATCH_RANGE, [key, value])
+                        for key, value in value.items()
+                    ]
                 ]  # One call
 
             elif keyword == 'verbatim':
