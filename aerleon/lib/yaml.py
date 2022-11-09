@@ -215,9 +215,9 @@ def _file_to_raw_policy(filename, base_dir, file_data):
             )
         # Filters with an empty target list can be ignored with a warning
         elif not header['targets']:
-            logging.warning(
+            raise PolicyTypeError(
                 UserMessage(
-                    "Ignoring filter with zero targets.",
+                    "Filter header cannot be empty.",
                     filename=filename,
                     line=filter['__line__'],
                 )
