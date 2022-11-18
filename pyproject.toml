@@ -13,7 +13,10 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Security",
     "Topic :: System :: Networking :: Firewalls"
 ]
@@ -21,7 +24,7 @@ include = [
     "LICENSE",
     "README.md",
 ]
-packages = [{include = "aerleon"}]
+# packages = [{include = "aerleon"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -32,14 +35,19 @@ absl-py = "^1.2.0"
 [tool.poetry.dev-dependencies]
 black = {version = "^22.8.0"}
 coverage = {version = "^6.4.4"}
-flake8 = {version = "^5.0.4"}
-Flake8-pyproject = {version = "^1.1.0.post0"}
+flake8 = {version = "*"}
+Flake8-pyproject = {version = "*"}
 nox = {version = "^2022.8.7"}
 nox-poetry = {version = "^1.0.1"}
 pre-commit = {version = "^2.20.0"}
 pytest = {version = "^7.1.3"}
 pyperf = {version = "^2.4.1"}
 psutil = {version = "^5.9.2"}
+mkdocs = "1.3.1"
+mkdocs-material = "8.3.9"
+mkdocstrings = "0.19"
+mkdocstrings-python = "0.7.1"
+mkdocs-version-annotations = "1.0.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
@@ -53,6 +61,24 @@ build-backend = "poetry.core.masonry.api"
 line-length = 99
 skip-string-normalization = true
 target-version = ['py37']
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | settings.py     # This is where you define files that should not be stylized by black
+                     # the root of the project
+)
+'''
 
 [tool.flake8]
 max-complexity = 10

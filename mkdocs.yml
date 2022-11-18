@@ -1,0 +1,145 @@
+---
+dev_addr: "127.0.0.1:8001"
+edit_uri: "edit/develop/docs"
+site_dir: "aerleon/static/aerleon/docs"
+site_name: "Aerleon Documentation"
+site_url: "https://aerleon.readthedocs.io/en/latest/"
+repo_url: "https://github.com/ankben/aerleon"
+copyright: "Copyright &copy; The Authors"
+theme:
+  name: "material"
+  navigation_depth: 4
+  custom_dir: "docs/assets/overrides"
+  hljs_languages:
+    - "python"
+    - "yaml"
+  features:
+    - "navigation.tracking"
+    - "navigation.tabs"
+    - "navigation.tabs.sticky"
+    - "search.suggest"
+    - "search.highlight"
+    - "search.share"
+    - "navigation.indexes"
+  favicon: "assets/favicon.ico"
+  logo: "assets/aerleon_logo.png"
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: "default"
+      primary: "black"
+      toggle:
+        icon: "material/weather-sunny"
+        name: "Switch to dark mode"
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: "slate"
+      primary: "black"
+      toggle:
+        icon: "material/weather-night"
+        name: "Switch to light mode"
+extra_css:
+  - "assets/extra.css"
+
+# needed for RTD version flyout menu
+# jquery is not (yet) injected by RTD automatically and it might be dropped
+# as a dependency in the future
+extra_javascript:
+  - "https://code.jquery.com/jquery-3.6.0.min.js"
+
+extra:
+  generator: false
+  social:
+    - icon: "fontawesome/brands/slack"
+      link: "https://slack.networktocode.com/"
+      name: "Network to Code Community"
+    - icon: "fontawesome/brands/github"
+      link: "https://github.com/ankben"
+      name: "GitHub Organization"
+    - icon: "fontawesome/brands/twitter"
+      link: "https://twitter.com/<tbd>"
+      name: "<Aerleon> Twitter"
+markdown_extensions:
+  - "admonition"
+  - "toc":
+      permalink: true
+  - "attr_list"
+  - "md_in_html"
+  - "pymdownx.highlight":
+      anchor_linenums: true
+  - "pymdownx.inlinehilite"
+  - "pymdownx.snippets"
+  - "pymdownx.superfences"
+  - "footnotes"
+plugins:
+  - "search"
+  - "mkdocs-version-annotations"
+  - "mkdocstrings":
+      default_handler: "python"
+      handlers:
+        python:
+          paths: ["."]
+          options:
+            show_root_heading: true
+            heading_level: 2
+            show_category_heading: true
+watch:
+  - "README.md"
+
+nav:
+  - Overview: "index.md"
+  - User Guide:
+      - Library Overview: "user/lib_overview.md"
+      - Getting Started: "user/lib_getting_started.md"
+      - Address Files: "user/lib_address.md"
+      - Service Files: "user/lib_service.md"
+      - Policy Files: "user/lib_policy.md"
+      - Platforms: "user/lib_platforms.md"
+      - Generators:
+          - arista: "user/generators/arista.md"
+          - arista_tp: "user/generators/arista_tp.md"
+          - aruba: "user/generators/aruba.md"
+          - brocade: "user/generators/brocade.md"
+          - cisco: "user/generators/cisco.md"
+          - ciscoasa: "user/generators/ciscoasa.md"
+          - cisconx: "user/generators/cisconx.md"
+          - ciscoxr: "user/generators/ciscoxr.md"
+          - gce: "user/generators/gce.md"
+          - ipset: "user/generators/ipset.md"
+          - iptables: "user/generators/iptables.md"
+          - juniper: "user/generators/juniper.md"
+          - juniperevo: "user/generators/juniperevo.md"
+          - junipermsmpc: "user/generators/junipermsmpc.md"
+          - junipersrx: "user/generators/junipersrx.md"
+          - k8s: "user/generators/k8s.md"
+          - nftables: "user/generators/nftables.md"
+          - nsxv: "user/generators/nsxv.md"
+          - packetfilter: "user/generators/packetfilter.md"
+          - paloaltofw: "user/generators/paloaltofw.md"
+          - pcap: "user/generators/pcap.md"
+          - speedway: "user/generators/speedway.md"
+          - srxlo: "user/generators/srxlo.md"
+          - windows_advfirewall.md: "user/generators/windows_advfirewall.md"
+      - Frequently Asked Questions: "user/faq.md"
+  - Administrator Guide:
+      - Install and Configure: "admin/install.md"
+      - Upgrade: "admin/upgrade.md"
+      - Uninstall: "admin/uninstall.md"
+      - Release Notes:
+          - "admin/release_notes/index.md"
+          - v1.0: "admin/release_notes/version_1.0.md"
+  - Developer Guide:
+      - Extending the Library: "dev/extending.md"
+      - Contributing to the Library: "dev/contributing.md"
+      - Development Environment: "dev/dev_environment.md"
+      - Generator Development: "dev/generator_patterns.md"
+      - Aerleon Design: "dev/design/aerleon-design.md"
+      - Library Class Overview:
+          - Naming: "dev/design/naming.md"
+          - Policy: "dev/design/policy.md"
+          - Policy Reader: "dev/design/policy-reader.md"
+          - AclCheck: "dev/design/aclcheck.md"
+      - Code Reference:
+          - Core: "dev/code_reference/core.md"
+          - Generators: "dev/code_reference/generators.md"
