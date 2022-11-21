@@ -60,7 +60,7 @@ class PrebuiltRecognizerTest(parameterized.TestCase):
         self.assertTokenizerBehavior([(value, acceptable, expected)], tokenizer)
 
     @parameterized.named_parameters(
-        ("FrequencyOverPeriod", "100 / day", True, {"frequency": "100", "period": "day"}),
+        ("FrequencyOverPeriod", "100 / day", True, ("100", "day")),
         ("Frequency", "100", False, None),
         ("FailEmpty", "", False, None),
     )

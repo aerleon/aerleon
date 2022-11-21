@@ -29,10 +29,6 @@ from ply import yacc
 
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
-from aerleon.lib.recognizers import (
-    BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
-    BUILTIN_FLEXIBLE_MATCH_START_OPTIONS,
-)
 
 if TYPE_CHECKING:
     from aerleon.lib.policy_builder import PolicyBuilder
@@ -163,6 +159,18 @@ def TranslatePorts(ports, protocols, term_name):
                 else:
                     ret_array.append((int(p[0]), int(p[1])))
     return ret_array
+
+
+BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
+    'byte-offset',
+    'bit-offset',
+    'bit-length',
+    'match-start',
+    'range',
+    'range-except',
+    'flexible-range-name',
+}
+BUILTIN_FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 
 
 # classes for storing the object types in the policy files.
