@@ -1,7 +1,0 @@
-{
-    "python.testing.pytestEnabled": true,
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": [
-        "--line-length=99"
-    ]
-}
