@@ -37,6 +37,16 @@ DEFINITIONS = None
 DEFAULT_DEFINITIONS = './def'
 ACTIONS = set(('accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst'))
 PROTOS_WITH_PORTS = frozenset(('tcp', 'udp', 'udplite', 'sctp'))
+FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
+    'byte-offset',
+    'bit-offset',
+    'bit-length',
+    'match-start',
+    'range',
+    'range-except',
+    'flexible-range-name',
+}
+FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 _LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
 _OPTIMIZE = True
 _SHADE_CHECK = False
@@ -160,17 +170,6 @@ def TranslatePorts(ports, protocols, term_name):
                     ret_array.append((int(p[0]), int(p[1])))
     return ret_array
 
-
-BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
-    'byte-offset',
-    'bit-offset',
-    'bit-length',
-    'match-start',
-    'range',
-    'range-except',
-    'flexible-range-name',
-}
-BUILTIN_FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 
 
 # classes for storing the object types in the policy files.
@@ -2136,10 +2135,10 @@ def p_flex_match_key_values(p):
     if len(p) < 1:
         return
 
-    if p[1] not in BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
+    if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
         raise FlexibleMatchError('%s is not a valid attribute' % p[1])
     if p[1] == 'match-start':
-        if p[2] not in BUILTIN_FLEXIBLE_MATCH_START_OPTIONS:
+        if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
             raise FlexibleMatchError('%s value is not valid' % p[1])
     # per Juniper, max bit length is 32
     elif p[1] == 'bit-length':

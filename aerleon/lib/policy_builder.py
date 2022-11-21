@@ -11,8 +11,8 @@ from aerleon.lib.policy import (
     Target,
     Term,
     VarType,
-    BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
-    BUILTIN_FLEXIBLE_MATCH_START_OPTIONS,
+    FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
+    FLEXIBLE_MATCH_START_OPTIONS,
 )
 from aerleon.lib.recognizers import (
     RecognizerContext,
@@ -707,10 +707,10 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             # SanityCheck step and removed from both the lex/yacc code and this builder code.
             new_repr = {}
             for key, value in repr.items():
-                if key not in BUILTIN_FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
+                if key not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
                     raise TypeError(f"Flexible match range: {key} is not a valid attribute")
                 if key == "match-start":
-                    if value not in BUILTIN_FLEXIBLE_MATCH_START_OPTIONS:
+                    if value not in FLEXIBLE_MATCH_START_OPTIONS:
                         raise TypeError(f"Flexible match range: {key} value is not valid")
                 # per Juniper, max bit length is 32
                 elif key == "bit-length":
