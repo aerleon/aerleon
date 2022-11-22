@@ -35,6 +35,14 @@ class UserMessage:
     Users can be shown:
     * An error message only (user_message.message).
     * An error message with file / line / include stack (user_message.__repr__()).
+
+    Attributes:
+        message: The error message.
+        filename: The name of the file in which this error or message originated.
+        line: The line where this error or message originated.
+        include_chain: If the error or message originated while processing an included
+            file, include_chain will list the include file chain as a list of file/line tuples.
+            The top-level file should be the first item in the list.
     """
 
     message: str
@@ -78,18 +86,18 @@ class UserMessage:
 
 
 def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False):
-    """Load a policy yaml file and produce a Policy data model.
+    """Load a policy yaml file and return a Policy data model.
 
-    Arguments:
-      filename: Policy file path. Any output configs will share
-                the same file name (except the file extension).
-      naming: Naming database (see Naming class). Resolves network
-              names to networks or lists of networks.
-      optimize: bool - Whether to summarize networks and services.
-      shade_check: bool - Whether to raise an exception when a term is shaded.
+    Args:
+        filename: Policy file path. Any output configs will share
+            the same file name (except the file extension).
+        naming: Naming database (see Naming class). Resolves network
+            names to networks or lists of networks.
+        optimize: bool - Whether to summarize networks and services.
+        shade_check: bool - Whether to raise an exception when a term is shaded.
 
     Raises:
-      PolicyTypeError: The policy file provided is not valid.
+        PolicyTypeError: The policy file provided is not valid.
     """
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
@@ -103,21 +111,21 @@ def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False
 
 
 def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_check=False):
-    """Load a policy yaml file (provided as a string) and produce a Policy data model.
+    """Load a policy yaml file (provided as a string) and return a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
     determine the output filename.
 
-    Arguments:
-      file: The contents of the policy file.
-      filename: Any output configs base their file name on this value. (except the file extension).
-      naming: Naming database (see Naming class). Resolves network
-              names to networks or lists of networks.
-      optimize: bool - Whether to summarize networks and services.
-      shade_check: bool - Whether to raise an exception when a term is shaded.
+    Args:
+        file: The contents of the policy file.
+        filename: Any output configs base their file name on this value (except the file extension).
+        naming: Naming database (see Naming class). Resolves network
+            names to networks or lists of networks.
+        optimize: bool - Whether to summarize networks and services.
+        shade_check: bool - Whether to raise an exception when a term is shaded.
 
     Raises:
-      PolicyTypeError: The policy file provided is not valid.
+        PolicyTypeError: The policy file provided is not valid.
     """
     try:
         file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
@@ -154,7 +162,7 @@ def _make_yaml_safe_loader(*, filename):
 
 
 def _file_to_raw_policy(filename, base_dir, file_data):
-    """Construct a RawPolicy from file data."""
+    """Construct and return a RawPolicy from file data."""
 
     filters_model = []
 
@@ -334,10 +342,14 @@ def _file_to_raw_policy(filename, base_dir, file_data):
 
 
 def _load_include_file(base_dir, inc_filename):
+    """Open an include file."""
+
     with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
         return include_file
 
 
 def _raw_policy_to_policy(raw_policy, definitions, optimize=False, shade_check=False):
+    """Construct and return a policy.Policy model from a RawPolicy."""
+
     policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)
     return policy.FromBuilder(policy_builder)
