@@ -1,3 +1,5 @@
+"""Builds Policy objects from a plain Python object representation."""
+
 from dataclasses import dataclass, field
 import enum
 import typing
@@ -34,22 +36,19 @@ if typing.TYPE_CHECKING:
 RawTarget = Annotated[
     str,
     """
-    RawTarget contains an partially evaluated representation of platform-specific target options.
-    At the time of writing only a string can be provided for target options but that may change
-    in the future.
+    RawTarget contains a partially evaluated representation of platform-specific target options.
+    This type may change to accomodate complex target-specific options.
     """,
 ]
 
 
 @dataclass
 class RawFilterHeader:
-    """
-    RawFilterHeader contains an partially evaluated representation
-    of the "header" section within a Filter.
+    """Contains a partially evaluated representation of a filter header.
 
-    Fields:
-    - targets: table mapping targets to target options.
-    - kvs: table containing any other key/value pairs in the header.
+    Attributes:
+        targets: A mapping from target name to target-specific options.
+        kvs: A mapping containing any other key/value pairs in the header.
     """
 
     targets: dict[str, RawTarget]
@@ -58,13 +57,11 @@ class RawFilterHeader:
 
 @dataclass
 class RawTerm:
-    """
-    RawTerm contains an partially evaluated representation
-    of a Term item within a Filter.
+    """Contains a partially evaluated representation of a filter term.
 
-    Fields:
-    - name: name for this term.
-    - kvs: table containing all other key/value pairs in the term.
+    Attributes:
+        name: The term name.
+        kvs A mapping containing all other key/value pairs in the term.
     """
 
     name: str
@@ -73,13 +70,11 @@ class RawTerm:
 
 @dataclass
 class RawFilter:
-    """
-    RawFilter contains an partially evaluated representation
-    of a Filter.
+    """Contains a partially evaluated representation of a policy filter.
 
-    Fields:
-    - header: header for this filter.
-    - terms: term list for this filter.
+    Attributes:
+        header: The filter header.
+        terms: The filter term list.
     """
 
     header: RawFilterHeader
@@ -88,13 +83,11 @@ class RawFilter:
 
 @dataclass
 class RawPolicy:
-    """
-    RawPolicy contains an partially evaluated representation
-    of a Policy.
+    """Contains a partially evaluated representation of a Policy.
 
-    Fields:
-    - filename: filename for this policy.
-    - filters: list of filters in this policy.
+    Attributes:
+        filename: filename for this policy.
+        filters: list of filters in this policy.
     """
 
     filename: str
@@ -102,15 +95,14 @@ class RawPolicy:
 
 
 class PolicyBuilder:
-    """
-    PolicyBuilder produces a Policy model from a RawPolicy. This allows a Policy
-    model to be constructed without having or creating a .pol file.
+    """PolicyBuilder produces a Policy object from a RawPolicy. This allows a Policy
+    object to be constructed without having or creating a .pol file.
 
     PolicyBuilder works by constructing Term, Header, Target, and Policy models
     directly. These models expect to be constructed incrementally by ply during
     ply's parsing procedure using methods like Term.AddObject(), Header.AddObject()
     and Policy.AddFilter(). PolicyBuilder walks through the given RawPolicy
-    and incrementally constructs the models using the same API.
+    and incrementally constructs the models using the same API used by ply.
 
     PolicyBuilder is responsible for recognizing the keys and values in the
     given RawPolicy. Unexpected keywords or unexpected value formats are ignored
@@ -131,6 +123,14 @@ class PolicyBuilder:
 
     policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)
     return policy.FromBuilder(policy_builder)
+
+    Attributes:
+        raw_policy: The given RawPolicy, an intermediate representation
+            containing filters, headers, terms, etc.
+        definitions: The collection of network and service name
+            definitions used to resolve names found in the RawPolicy.
+        optimize: Enables policy optimization if true.
+        shade_check: Enable shade checking if true.
     """
 
     raw_policy: RawPolicy
@@ -149,9 +149,6 @@ class PolicyBuilder:
 
         Do not call this method directly. See "Usage" in the class docstring.
         """
-
-        # Process each raw filter into a filter model instance and attach to the policy
-        # return models.Policy(filename=policy.filename, filters=filter_models)
         policy_model = None
         obj_calls = [self._buildFilter(policy_filter) for policy_filter in self.raw_policy.filters]
         for obj in obj_calls:
@@ -163,11 +160,11 @@ class PolicyBuilder:
         return policy_model
 
     def _buildFilter(self, policy_filter: RawFilter):
-
         kvs_parsed = {}
         header_kvs = policy_filter.header.kvs
         header_kvs["targets"] = policy_filter.header.targets
 
+        # Run the builtin recognizers against each key/value pair.
         for keyword, value in header_kvs.items():
             recognizer_context = RecognizerContext(
                 policy=None,
@@ -191,6 +188,7 @@ class PolicyBuilder:
             for repr_key, repr_value in val_recognizer_result.valueKV.items():
                 kvs_parsed[repr_key] = repr_value
 
+        # Construct the Header instance and its Target.
         header = Header()
         for target, target_options in kvs_parsed["targets"].items():
             target_args = [target]
@@ -198,27 +196,30 @@ class PolicyBuilder:
             target = Target(target_args)
             header.AddObject(target)
 
+        # Add all remaining fields to the header.
         for keyword, value in kvs_parsed.items():
             if keyword == 'targets':
                 continue
 
+            # Build the call sequence for Header.AddObject for each field.
+            # The correct call sequence depends on the keyword.
+            # See class docstring for _CallType for details.
             obj_calls = _Builtin.fromKeyword(keyword).addObjectCallSequence(value)
             for obj in obj_calls:
                 header.AddObject(obj)
 
+        # Now construct all Term instances and asseble the call sequence for Policy / Policy.AddObject
         return (header, [self._buildTerm(term) for term in policy_filter.terms])
 
     def _buildTerm(self, term: RawTerm):
-
-        # It is an error for a term to be empty or
-        # to only contain a name.
-        if term.name is None:
-            raise TypeError("Term must have a name.")
-
+        # It is an error for a term to be empty or to only contain a name.
         if not len(term.kvs):
             raise TypeError("Term must have at least one keyword.")
 
-        # Validate name
+        if term.name is None:
+            raise TypeError("Term must have a name.")
+
+        # Validate name using the builtin recognizers.
         term_name_recognizer_result = TermBuiltinRecognizer.recognizeKeywordValue(
             RecognizerContext(
                 policy=None,
@@ -233,7 +234,7 @@ class PolicyBuilder:
         if not term_name_recognizer_result.recognized:
             raise TypeError("Invalid term name.")
 
-        # Run recognizers over all term items.
+        # Run recognizers over all term items. This validates, parses and normalizes each value.
         kvs_parsed = {}
         for keyword, value in term.kvs.items():
             recognizer_context = RecognizerContext(
@@ -258,37 +259,15 @@ class PolicyBuilder:
 
         term.kvs = kvs_parsed
 
-        # _buildTermModel() constructs a Term model. This is not especially
-        # straightforward.
+        # Construct a Term model. This is not especially straightforward.
         #
-        # This method expects its input RawTerm to already have been normalized
-        # and parsed by recognizers.
+        # At this point the values in term.kvs have been parsed and normalized.
         #
         # policy.Term() will crash if initialized without a VarType object.
-        # This method will initialize the Term on the first iteration cycle over
+        # This will initialize the Term on the first iteration cycle over
         # the kvs and call AddObject on subsequent passes.
         #
-        # Constructing VarType objects: AddObject has unique expectations
-        # of structure per keyword. Common patterns dominate the list of keywords
-        # but a handful of special cases exist. The common representations are:
-        # 1. Single value: can only be set once per Term.
-        # 2. List of values: a whole list can be given and can be set
-        #    more than once per Term.
-        # 3. Single value given multiple times: only a single value can be
-        #    given but can be set more than once per Term.
-        #
-        # The special cases are:
-        # * LOG_LIMIT is expected as a 2-tuple.
-        # * EXPIRATION is expected as a date.
-        # * FLEXIBLE_MATCH_RANGE is expected as list of length 2.
-        # * VERBATIM is expected as a list of length 2.
-        # * VPN is expected as a list of length 2.
-        #   An empty string must be in the second slot if only one
-        #   VPN value is given.
-        # * Integer ranges are expected as a string like "2 - 100".
-        # * DSCP ranges are expected as a string like "b000001-b001000"
-
-        # TODO(jb) the comments above would be better in the Builtin enum docstring
+        # More details are provided in the class docstring for _CallType.
 
         term_model = None  # Will initialize on first cycle
 
@@ -308,10 +287,10 @@ class PolicyBuilder:
 
 
 # ### BUILTINS ###
-# The following section deals with the recognition of built-in keywords and values
+# The following section deals with the recognition and normalization of built-in keywords.
 
 BUILTIN_SPEC: dict[str, TValue | TComposition] = {
-# fmt: off
+    # fmt: off
     'apply-groups':               TListStrCollapsible,
     'apply-groups-except':        TListStrCollapsible,
     'comment':                    TValue.AnyString,
@@ -384,7 +363,7 @@ BUILTIN_SPEC: dict[str, TValue | TComposition] = {
     'target-resources':           TList(of=TValue.TargetResourceTuple),
     'target-service-accounts':    TListStrCollapsible,
     'timeout':                    TValue.Integer,
-# fmt: on
+    # fmt: on
 }
 
 
@@ -404,16 +383,16 @@ class _CallType(enum.Enum):
     semantics broadly fall into three cases, enumerated by this class.
 
     Attributes:
-      SingleValue: AddObject should only be called zero or one times for this
-        VarType type. 'obj' should contain a single VarType instance.
-      SingleList: AddObject should only be called zero or one times for this
-        VarType type. 'obj' should contain a list of VarType instances.
-      MultiCall: AddObject should be called once per value. 'obj' should contain
-        a single VarType instance.
+        SingleValue: AddObject should only be called zero or one times for this
+            VarType type. 'obj' should contain a single VarType instance.
+        SingleList: AddObject should only be called zero or one times for this
+            VarType type. 'obj' should contain a list of VarType instances.
+        MultiCall: AddObject should be called once per value. 'obj' should contain
+            a single VarType instance.
 
-    N.b. A few VarType types expect the VarType object value to be a list.
-    This pattern is used to represent tuple-like values. It does not affect the
-    AddObject call convention.
+    N.b. A few VarType types expect the VarType object value to be a list
+    in order to represent tuple-like values. It does not affect the AddObject
+    calling convention.
     """
 
     SingleValue = enum.auto()
@@ -425,7 +404,9 @@ class _Builtin:
     """_Builtin represents all possible built-in key-value pairs found
     in Policy Term and Header sections.
 
-    These mirror the attributes of the Term and Header models.
+    This class sort of serves to reverse-engineer Header.AddObject and
+    Term.AddObject. See the _CallType class docstring for more details on
+    what we are working around.
     """
 
     # fmt: off
@@ -524,6 +505,7 @@ class _Builtin:
 
     @property
     def recognizer(self):
+        """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
     def addObjectCallSequence(self, value: typing.Any):
@@ -546,31 +528,67 @@ class _Builtin:
 
 
 class BuiltinRecognizer:
-    """BuiltinRecognizer recognizes built-in keywords, values, and options. It
-    flags these as SecurityCritical where required."""
+    """BuiltinRecognizer recognizes and normalizes built-in keywords and values.
+
+    Attributes:
+        ALLOWED_BUILTIN_KEYS: Subclasses of BuiltinRecognizer can set this
+            class attribute to control the behavior of the default implementation
+            of recognizeKeyword().
+    """
 
     ALLOWED_BUILTIN_KEYS = ()
 
     @classmethod
     def recognizeKeyword(cls, context: RecognizerContext) -> RecognizerKeywordResult:
+        """Examines the given RecognizerContext and determines whether
+        the keyword (context.keyword) is valid in context.
+
+        The default implementation checks whether the keyword is found in ALLOWED_BUILTIN_KEYS.
+
+        Args:
+            context: The given RecognizerContext. This contains the keyword in question
+                and additional context about where the keyword is located in the policy.
+
+        Returns:
+            A RecognizerKeywordResult with the 'recognized' field set to True if and only if
+            the keyword is valid in the current context. The 'securityCritical' field is always
+            set to False and should be ignored.
+        """
         securityCritical = False
         recognized = context.keyword in cls.ALLOWED_BUILTIN_KEYS
         return RecognizerKeywordResult(recognized=recognized, securityCritical=securityCritical)
 
     @classmethod
     def recognizeKeywordValue(cls, context: RecognizerContext) -> RecognizerValueResult:
-        # The idea here is to do a full parse of every possible input and convert it to some KV
-        # representation. Look out for invalid options, syntax, etc.
-        #
-        # Note that some of these representations are still up in the air. The Capirca representations
-        # are pretty well defined (by code) but YAML/JSON provides an opportunity to use more structured
-        # representations, e.g. a YAML list of strings instead of a space-separated list. YAML users
-        # can even use ['a', 'b'] repr for single-line or &ref references for common blocks.
-        #
-        # Goal:
-        # For each possible keyname, (1) assert the YAML structure, (2) extract values out of sub-representations into KV,
-        # (3) assemble the model value, (4) make a determination about Security Critical.
-        # Unrecognized values will be flagged with recognized=false
+        """Examines the given RecognizerContext and determines whether
+        the key/value pair is valid in context.
+
+        Args:
+            context: The given RecognizerContext. This contains the keyword in question,
+                the value in question and additional context about where the keyword
+                is located in the policy.
+
+        Returns:
+            A RecognizerKeywordResult with the 'recognized' field set to True if and only if
+            the key/value pair is valid in the current context. The 'securityCritical' field is always
+            set to False and should be ignored. If the key/value pair is valid the valueKV field will
+            contain a dict with a single key (the input keyword) mapped to a parsed and normalized
+            representation of the input value.
+
+            Value parsing is performed by executing a small program specific to the input keyword
+            against the input value. Each program is written using the TValue / TComposite
+            classes defined in recognizers.py . For example, for the keyword 'packet-length', the input value
+            must be either an integer, a string containing an integer, or a string containing two
+            integers separated by a dash (a range) and the recognizer program would be
+            "TUnion(of=[TValue.Integer, TValue.IntegerRange])".
+
+            Value parsing does provide some normalization across values, for example TList understands that
+            a list might be given as a Python list or a string containing space-separated values and will
+            produce the same parsed output for both cases. Lists of integers, dates, DSCP values, and others
+            all have a little flexibility in representation that is normalized by TValue / TComposite.
+
+            Subclasses can implement the normalizeValues class method to apply further adjustments to the output.
+        """
 
         try:
             recognizer = _Builtin.fromKeyword(context.keyword).recognizer
@@ -614,10 +632,28 @@ class BuiltinRecognizer:
 
     @classmethod
     def normalizeValues(cls, _context: RecognizerContext, repr: typing.Any) -> typing.Any:
+        """Subclasses of BuiltinRecognizer can implement this method to adjust the output
+        of recognizeKeywordValue.
+
+        Args:
+            context: The RecognizerContext given to recognizeKeywordValue.
+            repr: The value representation produced by recognizeKeywordValue.
+
+        Returns:
+            An adjusted version of the input value "repr". The default implementation returns
+            the input value unchanged.
+
+        Raises:
+            TypeError: The input value does not match requirements. The default implementation
+            will never raise this error.
+        """
+
         return repr
 
 
 class HeaderBuiltinRecognizer(BuiltinRecognizer):
+    """Implements BuiltinRecognizer for filter header values. See BuiltinRecognizer."""
+
     ALLOWED_BUILTIN_KEYS = frozenset(
         {
             'apply-groups',
@@ -629,6 +665,8 @@ class HeaderBuiltinRecognizer(BuiltinRecognizer):
 
 
 class TermBuiltinRecognizer(BuiltinRecognizer):
+    """Implements BuiltinRecognizer for filter term values. See BuiltinRecognizer."""
+
     ALLOWED_BUILTIN_KEYS = frozenset(
         {
             'name',
@@ -701,6 +739,8 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
 
     @classmethod
     def normalizeValues(cls, context: RecognizerContext, repr):
+        """See BuiltinRecognizer.normalizeValues()."""
+
         if context.keyword == "flexible-match-range":
             # Flexible match range values are validated during the lex/yacc parsing phase.
             # TODO(jb) This validation step can be performed once within the Term model in the

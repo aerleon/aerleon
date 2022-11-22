@@ -2730,7 +2730,7 @@ def ParsePolicy(
 
 
 def FromBuilder(builder: PolicyBuilder):
-    """Construct a Policy model instance from a PolicyBuilder."""
+    """Construct and return a Policy model instance from a PolicyBuilder."""
     if builder.definitions:
         globals()['DEFINITIONS'] = builder.definitions
     else:
