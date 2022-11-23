@@ -2738,7 +2738,7 @@ def FromBuilder(builder: PolicyBuilder):
     globals()['_OPTIMIZE'] = builder.optimize
     globals()['_SHADE_CHECK'] = builder.shade_check
 
-    return builder.buildPolicy()
+    return builder.BuildPolicy()
 
 
 # if you call this from the command line, you can specify a pol file for it to

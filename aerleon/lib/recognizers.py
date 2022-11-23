@@ -9,7 +9,7 @@ and the main Policy data model.
 
 ## TValue, TComposite
 
-These are recognizers (they have a method .recognize(value)). They will parse value expressions
+These are recognizers (they have a method .Recognize(value)). They will parse value expressions
 and extract normalized data from within.
 
 ## BuiltinRecognizer
@@ -88,7 +88,7 @@ class TValue(enum.Enum):
     LogLimit = enum.auto()  # Integer '/' Str
     TargetResourceTuple = enum.auto()  # '(' Str ',' Str ')'
 
-    def recognize(self, value: typing.Any):
+    def Recognize(self, value: typing.Any):
         """Match and parse the input value.
 
         Arguments:
@@ -177,10 +177,10 @@ class TValue(enum.Enum):
 
         elif self == TValue.DSCPRange:
             try:
-                return TValue.DSCP.recognize(value)
+                return TValue.DSCP.Recognize(value)
             except TypeError:
                 return '-'.join(
-                    [TValue.DSCP.recognize(subvalue) for subvalue in value.strip().split('-')]
+                    [TValue.DSCP.Recognize(subvalue) for subvalue in value.strip().split('-')]
                 )
 
         elif self == TValue.LogLimit:
@@ -205,13 +205,13 @@ class TValue(enum.Enum):
                 first, second = (
                     (match[1], match[2]) if match[1] is not None else (match[3], match[4])
                 )
-            return (TValue.WordString.recognize(first), TValue.WordString.recognize(second))
+            return (TValue.WordString.Recognize(first), TValue.WordString.Recognize(second))
 
 
 class TComposition:
     of: typing.Any
 
-    def recognize(self, value: typing.Any) -> typing.Any:
+    def Recognize(self, value: typing.Any) -> typing.Any:
         """Match and parse the input value."""
         pass
 
@@ -226,7 +226,7 @@ class TUnion(TComposition):
 
     of: list[TValue | TComposition]
 
-    def recognize(self, value):
+    def Recognize(self, value):
         """Match and parse the input value using the list of sub-recognizers given in the 'of'
         class attribute.
 
@@ -241,7 +241,7 @@ class TUnion(TComposition):
         # Try each tokenizer on input
         for tokenizer in self.of:
             try:
-                return tokenizer.recognize(value)
+                return tokenizer.Recognize(value)
             except TypeError:
                 continue
         raise TypeError('Not recognized by this union type.')
@@ -259,7 +259,7 @@ class TList(TComposition):
     of: TValue | TComposition
     collapsible: bool = False
 
-    def recognize(self, value):
+    def Recognize(self, value):
         """Match and parse the input value using the recognizer given in the 'of' class attribute.
 
         Arguments:
@@ -297,23 +297,23 @@ class TList(TComposition):
             value = []
 
         if isinstance(value, str) and _isSpaceFreeValue(self.of):
-            return list(map(self.of.recognize, value.split()))
+            return list(map(self.of.Recognize, value.split()))
 
         if (
             isinstance(value, str)
             and isinstance(self.of, TUnion)
             and all((_isSpaceFreeValue(value_type) for value_type in self.of.of))
         ):
-            return list(map(self.of.recognize, value.split()))
+            return list(map(self.of.Recognize, value.split()))
 
         if self.collapsible:
             try:
-                return [self.of.recognize(value)]
+                return [self.of.Recognize(value)]
             except TypeError:
                 pass
 
         if isinstance(value, list):
-            return list(map(self.of.recognize, value))
+            return list(map(self.of.Recognize, value))
         else:
             if self.collapsible:
                 raise TypeError("Expected a list or collapsed list.")
@@ -345,7 +345,7 @@ class TSection(TComposition):
 
     of: list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]
 
-    def recognize(self, value: dict):
+    def Recognize(self, value: dict):
         """Match and parse the input value using the list of rules given in the 'of' class attribute.
         See class docstring for more details on how to specify the rules list.
 
@@ -377,11 +377,11 @@ class TSection(TComposition):
                         continue
                 else:
                     try:
-                        keyword = key_rule.recognize(keyword)
+                        keyword = key_rule.Recognize(keyword)
                     except TypeError:
                         continue
                 try:
-                    keyword_value = value_rule.recognize(keyword_value)
+                    keyword_value = value_rule.Recognize(keyword_value)
                     result[keyword] = keyword_value
                     break
                 except TypeError as e:

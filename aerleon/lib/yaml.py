@@ -101,13 +101,13 @@ def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False
     """
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
-            file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
+            file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
             ) from yaml_error
-    raw_policy = _file_to_raw_policy(filename, base_dir, file_data)
-    return _raw_policy_to_policy(raw_policy, definitions, optimize, shade_check)
+    raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
+    return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
 
 def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_check=False):
@@ -128,16 +128,16 @@ def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_
         PolicyTypeError: The policy file provided is not valid.
     """
     try:
-        file_data = yaml.load(file, Loader=_make_yaml_safe_loader(filename=filename))
+        file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
         ) from yaml_error
-    raw_policy = _file_to_raw_policy(filename, base_dir, file_data)
-    return _raw_policy_to_policy(raw_policy, definitions, optimize, shade_check)
+    raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
+    return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
 
-def _make_yaml_safe_loader(*, filename):
+def _SpanSafeYamlLoader(*, filename):
     """Configure yaml.load to:
     * Force safe_load mode (disable unpickling).
     * Augment mappings with debug context: __line__, __filename__.
@@ -161,7 +161,7 @@ def _make_yaml_safe_loader(*, filename):
     return PluginYamlLoader
 
 
-def _file_to_raw_policy(filename, base_dir, file_data):
+def _RawPolicyFromFile(filename, base_dir, file_data):
     """Construct and return a RawPolicy from file data."""
 
     filters_model = []
@@ -250,9 +250,9 @@ def _file_to_raw_policy(filename, base_dir, file_data):
 
         def process_include(depth, stack, inc_filename):
             try:
-                include_file = _load_include_file(base_dir, inc_filename)
+                include_file = _LoadIncludeFile(base_dir, inc_filename)
                 include_data = yaml.load(
-                    include_file, Loader=_make_yaml_safe_loader(filename=inc_filename)
+                    include_file, Loader=_SpanSafeYamlLoader(filename=inc_filename)
                 )
             except YAMLError as yaml_error:
                 raise PolicyTypeError(
@@ -341,14 +341,14 @@ def _file_to_raw_policy(filename, base_dir, file_data):
     return RawPolicy(filename=filename, filters=filters_model)
 
 
-def _load_include_file(base_dir, inc_filename):
+def _LoadIncludeFile(base_dir, inc_filename):
     """Open an include file."""
 
     with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
         return include_file
 
 
-def _raw_policy_to_policy(raw_policy, definitions, optimize=False, shade_check=False):
+def _PolicyFromRawPolicy(raw_policy, definitions, optimize=False, shade_check=False):
     """Construct and return a policy.Policy model from a RawPolicy."""
 
     policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)

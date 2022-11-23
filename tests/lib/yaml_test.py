@@ -283,7 +283,7 @@ class YAMLFrontEndTest(absltest.TestCase):
             "Filter header cannot be empty. File=policy_no_targets.pol.yaml, Line=3.",
         )
 
-    @mock.patch.object(yaml_frontend, "_raw_policy_to_policy")
+    @mock.patch.object(yaml_frontend, "_PolicyFromRawPolicy")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testWarnings(self, mock_warning, _mock_raw_to_policy):
         yaml_frontend.ParsePolicy(
@@ -304,7 +304,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring filter with zero terms.")
         mock_warning.reset_mock()
 
-    @mock.patch.object(yaml_frontend, "_raw_policy_to_policy")
+    @mock.patch.object(yaml_frontend, "_PolicyFromRawPolicy")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testIncludeEmptySource(self, mock_warning, _mock_raw_to_policy):
         with mock.patch("builtins.open", mock.mock_open(read_data="")):

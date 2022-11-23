@@ -181,7 +181,7 @@ filters:
 
 
 @mock.patch.object(yaml_frontend.logging, "warning")
-@mock.patch.object(yaml_frontend, "_load_include_file")
+@mock.patch.object(yaml_frontend, "_LoadIncludeFile")
 class YAMLPolicyTermTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
@@ -1523,7 +1523,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertRegex(mock_warn.call_args[0][0], regex)
 
 
-@mock.patch.object(yaml_frontend, "_load_include_file")
+@mock.patch.object(yaml_frontend, "_LoadIncludeFile")
 class YAMLRepresentationsTest(absltest.TestCase):
     """Ensure that equivalent representations produce identical policy models."""
 

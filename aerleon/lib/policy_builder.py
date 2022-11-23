@@ -144,13 +144,13 @@ class PolicyBuilder:
         self.optimize = optimize
         self.shade_check = shade_check
 
-    def buildPolicy(self):
+    def BuildPolicy(self):
         """Build a Policy model from a RawPolicy.
 
         Do not call this method directly. See "Usage" in the class docstring.
         """
         policy_model = None
-        obj_calls = [self._buildFilter(policy_filter) for policy_filter in self.raw_policy.filters]
+        obj_calls = [self._BuildFilter(policy_filter) for policy_filter in self.raw_policy.filters]
         for obj in obj_calls:
             if policy_model is None:
                 policy_model = Policy(*obj)
@@ -159,7 +159,7 @@ class PolicyBuilder:
         policy_model.filename = self.raw_policy.filename
         return policy_model
 
-    def _buildFilter(self, policy_filter: RawFilter):
+    def _BuildFilter(self, policy_filter: RawFilter):
         kvs_parsed = {}
         header_kvs = policy_filter.header.kvs
         header_kvs["targets"] = policy_filter.header.targets
@@ -175,11 +175,11 @@ class PolicyBuilder:
                 keyword=keyword,
                 value=value,
             )
-            kw_recognizer_result = HeaderBuiltinRecognizer.recognizeKeyword(recognizer_context)
+            kw_recognizer_result = HeaderBuiltinRecognizer.RecognizeKeyword(recognizer_context)
             if not kw_recognizer_result.recognized:
                 logging.warning(f"Unexpected term keyword {keyword}")
                 continue
-            val_recognizer_result = HeaderBuiltinRecognizer.recognizeKeywordValue(
+            val_recognizer_result = HeaderBuiltinRecognizer.RecognizeKeywordValue(
                 recognizer_context
             )
             if not val_recognizer_result.recognized:
@@ -204,14 +204,14 @@ class PolicyBuilder:
             # Build the call sequence for Header.AddObject for each field.
             # The correct call sequence depends on the keyword.
             # See class docstring for _CallType for details.
-            obj_calls = _Builtin.fromKeyword(keyword).addObjectCallSequence(value)
+            obj_calls = _Builtin.FromKeyword(keyword).AddObjectCallSequence(value)
             for obj in obj_calls:
                 header.AddObject(obj)
 
         # Now construct all Term instances and asseble the call sequence for Policy / Policy.AddObject
-        return (header, [self._buildTerm(term) for term in policy_filter.terms])
+        return (header, [self._BuildTerm(term) for term in policy_filter.terms])
 
-    def _buildTerm(self, term: RawTerm):
+    def _BuildTerm(self, term: RawTerm):
         # It is an error for a term to be empty or to only contain a name.
         if not len(term.kvs):
             raise TypeError("Term must have at least one keyword.")
@@ -220,7 +220,7 @@ class PolicyBuilder:
             raise TypeError("Term must have a name.")
 
         # Validate name using the builtin recognizers.
-        term_name_recognizer_result = TermBuiltinRecognizer.recognizeKeywordValue(
+        term_name_recognizer_result = TermBuiltinRecognizer.RecognizeKeywordValue(
             RecognizerContext(
                 policy=None,
                 filter=None,
@@ -246,11 +246,11 @@ class PolicyBuilder:
                 keyword=keyword,
                 value=value,
             )
-            kw_recognizer_result = TermBuiltinRecognizer.recognizeKeyword(recognizer_context)
+            kw_recognizer_result = TermBuiltinRecognizer.RecognizeKeyword(recognizer_context)
             if not kw_recognizer_result.recognized:
                 logging.warning(f"Unexpected term keyword {keyword}")
                 continue
-            val_recognizer_result = TermBuiltinRecognizer.recognizeKeywordValue(recognizer_context)
+            val_recognizer_result = TermBuiltinRecognizer.RecognizeKeywordValue(recognizer_context)
             if not val_recognizer_result.recognized:
                 logging.warning(f"Unrecognized value format for {keyword}: {value}")
                 continue
@@ -275,7 +275,7 @@ class PolicyBuilder:
             if keyword == 'name':
                 continue
 
-            obj_calls = _Builtin.fromKeyword(keyword).addObjectCallSequence(value)
+            obj_calls = _Builtin.FromKeyword(keyword).AddObjectCallSequence(value)
 
             for obj in obj_calls:
                 if term_model is None:
@@ -489,7 +489,7 @@ class _Builtin:
         self.var_type = var_type
 
     @classmethod
-    def fromKeyword(cls, keyname: str):
+    def FromKeyword(cls, keyname: str):
         """Construct a Builtin instance from keyname.
 
         Args:
@@ -508,7 +508,7 @@ class _Builtin:
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
-    def addObjectCallSequence(self, value: typing.Any):
+    def AddObjectCallSequence(self, value: typing.Any):
         """Construct a calling sequence for Term.AddObject or Header.AddObject for
         this builtin type.
 
@@ -539,7 +539,7 @@ class BuiltinRecognizer:
     ALLOWED_BUILTIN_KEYS = ()
 
     @classmethod
-    def recognizeKeyword(cls, context: RecognizerContext) -> RecognizerKeywordResult:
+    def RecognizeKeyword(cls, context: RecognizerContext) -> RecognizerKeywordResult:
         """Examines the given RecognizerContext and determines whether
         the keyword (context.keyword) is valid in context.
 
@@ -559,7 +559,7 @@ class BuiltinRecognizer:
         return RecognizerKeywordResult(recognized=recognized, securityCritical=securityCritical)
 
     @classmethod
-    def recognizeKeywordValue(cls, context: RecognizerContext) -> RecognizerValueResult:
+    def RecognizeKeywordValue(cls, context: RecognizerContext) -> RecognizerValueResult:
         """Examines the given RecognizerContext and determines whether
         the key/value pair is valid in context.
 
@@ -591,8 +591,8 @@ class BuiltinRecognizer:
         """
 
         try:
-            recognizer = _Builtin.fromKeyword(context.keyword).recognizer
-            repr = recognizer.recognize(context.value)
+            recognizer = _Builtin.FromKeyword(context.keyword).recognizer
+            repr = recognizer.Recognize(context.value)
         except KeyError:
             return RecognizerValueResult(recognized=False)
         except TypeError:
@@ -622,7 +622,7 @@ class BuiltinRecognizer:
                 repr = [str(value) for value in repr]
 
             # Allow for additional section-specific normalizations
-            repr = cls.normalizeValues(context, repr)
+            repr = cls._NormalizeValues(context, repr)
         except TypeError:
             return RecognizerValueResult(recognized=False)
 
@@ -631,7 +631,7 @@ class BuiltinRecognizer:
         return RecognizerValueResult(recognized=True, valueKV={context.keyword: repr})
 
     @classmethod
-    def normalizeValues(cls, _context: RecognizerContext, repr: typing.Any) -> typing.Any:
+    def _NormalizeValues(cls, _context: RecognizerContext, repr: typing.Any) -> typing.Any:
         """Subclasses of BuiltinRecognizer can implement this method to adjust the output
         of recognizeKeywordValue.
 
@@ -738,7 +738,7 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
     )
 
     @classmethod
-    def normalizeValues(cls, context: RecognizerContext, repr):
+    def _NormalizeValues(cls, context: RecognizerContext, repr):
         """See BuiltinRecognizer.normalizeValues()."""
 
         if context.keyword == "flexible-match-range":

@@ -16,18 +16,18 @@ class PrebuiltRecognizerTest(parameterized.TestCase):
     def assertTokenizerBehavior(self, tests, tokenizer):
         for (value, acceptable, expected) in tests:
             if acceptable:
-                self.assertEqual(tokenizer.recognize(value), expected)
+                self.assertEqual(tokenizer.Recognize(value), expected)
             else:
                 with self.assertRaises(TypeError):
-                    tokenizer.recognize(value)
+                    tokenizer.Recognize(value)
 
     def assertListTokenizerBehavior(self, tests, tokenizer):
         for (value, acceptable, expected) in tests:
             if acceptable:
-                self.assertEqual(list(tokenizer.recognize(value)), expected)
+                self.assertEqual(list(tokenizer.Recognize(value)), expected)
             else:
                 with self.assertRaises(TypeError):
-                    list(tokenizer.recognize(value))
+                    list(tokenizer.Recognize(value))
 
     @parameterized.named_parameters(
         ("Name", "INBOUND", True, "INBOUND"),
