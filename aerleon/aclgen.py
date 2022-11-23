@@ -230,7 +230,7 @@ def RenderFile(
 
     try:
         # PolicySource[extension].ParsePolicy(conf)
-        if pathlib.Path(input_file).suffix == '.yaml':
+        if pathlib.Path(input_file).suffix == '.yaml' or pathlib.Path(input_file).suffix == '.yml':
             pol = yaml.ParsePolicy(
                 conf,
                 filename=input_file,
@@ -518,7 +518,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
     for directory in policy_directories:
         # Build glob strings from PolicySources.keys()
         # Or just match by extension
-        directory_policies = list(directory.glob('*.pol')) + list(directory.glob('*.pol.yaml'))
+        directory_policies = list(directory.glob('*.pol')) + list(directory.glob('*.pol.yaml')) + list(directory.glob('*.pol.yml'))
         depth = len(directory.parents) - 1
         logging.warning(
             '-' * (2 * depth) + '> %s (%d pol files found)' % (directory, len(directory_policies))

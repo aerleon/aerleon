@@ -287,7 +287,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                                 include_chain=new_stack,
                             )
                         )
-                    if term_item['include'][-17:] != '.pol-include.yaml':
+                    if term_item['include'][-17:] != '.pol-include.yaml' and term_item['include'][-16:] != '.pol-include.yml':
                         raise PolicyTypeError(
                             UserMessage(
                                 f"Policy include source {term_item['include']} must end in \".pol-include.yaml\".",  # noqa: E501
