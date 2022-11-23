@@ -180,19 +180,49 @@ class PrebuiltRecognizerTest(parameterized.TestCase):
         tokenizer = TList(of=TValue.Integer, collapsible=True)
         self.assertListTokenizerBehavior([(value, acceptable, expected)], tokenizer)
 
-    def testFlexMatch(self):
-        # Collapsible section list
-        tests = [
-            (
-                {"match-start": "layer-3", "bit-length": 16, "range": "0x08"},
-                True,
-                {"match-start": "layer-3", "bit-length": 16, "range": "0x08"},
-            ),
-        ]
+    @parameterized.named_parameters(
+        (
+            "Simple",
+            {"match-start": "layer-3", "bit-length": 16, "range": "0x08"},
+            True,
+            {"match-start": "layer-3", "bit-length": 16, "range": "0x08"},
+        ),
+        (
+            "FailInvalidValueExpr",
+            {"match-start": "layer 3", "bit-length": 16, "range": "0x08"},
+            False,
+            None,
+        ),
+    )
+    def testFlexMatch(self, value, acceptable, expected):
         tokenizer = TSection(
             of=[(TValue.WordString, TUnion(of=[TValue.Integer, TValue.Hex, TValue.WordString]))]
         )
-        self.assertTokenizerBehavior(tests, tokenizer)
+        self.assertTokenizerBehavior([(value, acceptable, expected)], tokenizer)
+
+    @parameterized.named_parameters(
+        (
+            "CompleteMatch",
+            {"name": "vpn1", "policy": "policy1"},
+            True,
+            {"name": "vpn1", "policy": "policy1"},
+        ),
+        (
+            "PartialMatch",
+            {"name": "vpn1"},
+            True,
+            {"name": "vpn1"},
+        ),
+        (
+            "FailUnexpectedKeys",
+            {"unexpected": "vpn1", "name": "vpn1"},
+            False,
+            None,
+        ),
+    )
+    def testDeterminiteSectionKeys(self, value, acceptable, expected):
+        tokenizer = TSection(of=[('name', TValue.WordString), ('policy', TValue.WordString)])
+        self.assertTokenizerBehavior([(value, acceptable, expected)], tokenizer)
 
 
 if __name__ == '__main__':

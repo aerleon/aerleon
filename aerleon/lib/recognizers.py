@@ -65,18 +65,16 @@ class RecognizerOptionResult:
 
 
 class TValue(enum.Enum):
-    """Recognizer types.
+    """Common recognizer types.
 
-    Note these names are based loosely on Capirca's policy file
-    YACC tokenizer token names. Conventions like "string" meaning
-    essentially /\w+/ come from that vocabulary.
+    These names are based loosely on the token names in Capirca's policy file
+    parser. "WordString" is based on "STRING" and "AnyString" is based on "ANY".
 
     Generators that recognize extra keywords are encouraged
     but not required to use these types when implementing
     recognizeKeywordValue(). For the sake of consistency Generator
     authors should try to map their input to one of these value
     types, or a composition of value types (see TComposite).
-
     """
 
     AnyString = enum.auto()  # any value expression
@@ -90,7 +88,19 @@ class TValue(enum.Enum):
     LogLimit = enum.auto()  # Integer '/' Str
     TargetResourceTuple = enum.auto()  # '(' Str ',' Str ')'
 
-    def recognize(self, value):
+    def recognize(self, value: typing.Any):
+        """Match and parse the input value.
+
+        Arguments:
+            value: The input value.
+
+        Returns: The input value after some parsing and normalization. For example,
+            TValue.YearMonthDay would accept both a date object and a string of
+            the form YYYY-MM-DD and return a date object in both cases.
+
+        Raises:
+            TypeError: If the input value does not match.
+        """
         # .pol files allow strings with value "true" "True" "false" "False" and have no concept of a boolean type.
         if isinstance(value, bool):
             value = str(value).lower()
@@ -100,13 +110,11 @@ class TValue(enum.Enum):
 
         if self == TValue.AnyString:
             if not isinstance(value, str):
-                # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected string.")
             return value
 
         elif self == TValue.WordString:
             if not isinstance(value, str):
-                # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected string.")
             match = re.fullmatch(r'\w+([-_+.@/]\w*)*', value.strip())
             if match is None:
@@ -117,7 +125,6 @@ class TValue(enum.Enum):
             if isinstance(value, int):
                 return value
             if not isinstance(value, str):
-                # TODO(jb) some kind of debug context is needed here
                 raise TypeError("Expected integer or string.")
             match = re.fullmatch(r'\d+', value.strip())
             if match is None:
@@ -201,31 +208,51 @@ class TValue(enum.Enum):
             return (TValue.WordString.recognize(first), TValue.WordString.recognize(second))
 
 
-# TODO(jb) need good reprs for telling users what composite failed.
 class TComposition:
-    pass
+    of: typing.Any
+
+    def recognize(self, value: typing.Any) -> typing.Any:
+        """Match and parse the input value."""
+        pass
 
 
 @dataclass
 class TUnion(TComposition):
+    """Recognizer that multiplexes a list of sub-recognizers.
+
+    Attributes:
+        of: A list of allowed types. The input must match one of these types.
+    """
+
     of: list[TValue | TComposition]
 
     def recognize(self, value):
+        """Match and parse the input value using the list of sub-recognizers given in the 'of'
+        class attribute.
+
+        Arguments:
+            value: The input value.
+
+        Returns: The value processed by the first recognizer that matches it.
+
+        Raises:
+            TypeError: If none of the sub-recognizers match the input.
+        """
         # Try each tokenizer on input
         for tokenizer in self.of:
             try:
                 return tokenizer.recognize(value)
             except TypeError:
                 continue
-        # TODO(jb) need error context spans and repr for this union type:
         raise TypeError('Not recognized by this union type.')
 
 
 @dataclass
 class TList(TComposition):
-    """
+    """Recognizer for list inputs.
+
     Attributes:
-        of: The allowed value or composition type for members of this list.
+        of: The allowed type for members of this list.
         collapsible: Whether a list with a single item can be given directly.
     """
 
@@ -233,6 +260,28 @@ class TList(TComposition):
     collapsible: bool = False
 
     def recognize(self, value):
+        """Match and parse the input value using the recognizer given in the 'of' class attribute.
+
+        Arguments:
+            value: The input value. Can be a list of values, a string (if space-separated list
+            criteria are met), or a value that directly matches the 'of' recognizer.
+
+        Returns: A list with each value processed by the recognizer given in attribute 'of'.
+
+            If the 'collapsible' attribute is true, the input can be a value that matches the 'of'
+            recognizer directly. For example, if 'of' is TValue.Integer, value=list(100) and
+            value=100 are both acceptable inputs.
+
+            If the 'of' attribute is a space-free TValue or a union of space-free TValues, a string
+            input may be passed to this function. That string will be split by whitespace and the
+            resulting list will be used as the input.
+
+        Raises:
+            TypeError: If any value in the list is not recognized by the 'of' attribute or
+                if a non-list was provided when the collapsible list or space-separated list
+                criteria are not met.
+        """
+
         # TList accepts three modes of input:
         # (1) A list where each value is recognized by self.of
         # (2) A single value, dist or list recognized by self.of if collapsible=True.
@@ -266,7 +315,6 @@ class TList(TComposition):
         if isinstance(value, list):
             return list(map(self.of.recognize, value))
         else:
-            # TODO(jb) more error context please
             if self.collapsible:
                 raise TypeError("Expected a list or collapsed list.")
             else:
@@ -275,21 +323,54 @@ class TList(TComposition):
 
 @dataclass
 class TSection(TComposition):
+    """Recognizer for dict inputs.
+
+    Attributes:
+        of: A list of rules for this section. Each rule is a 2-tuple with the first
+            part containing the 'key rule' and the second part the 'value rule'.
+
+            A 'key rule' can be:
+                * A string literal.
+                * A TValue recognizer.
+                * A TUnion recognizer.
+
+            A 'value rule' can be:
+                * A TValue reconizer.
+                * Any TComposition recognizer.
+
+            A string literal key rule matches a key exactly. A TValue or TUnion key rule matches
+            any key recognized by the given recognizer. A TValue or TComposition value rule matches
+            any value recognized by the given recognizer.
+    """
+
     of: list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]
 
-    def recognize(self, value):
+    def recognize(self, value: dict):
+        """Match and parse the input value using the list of rules given in the 'of' class attribute.
+        See class docstring for more details on how to specify the rules list.
+
+        Arguments:
+            value: The input dict.
+
+        Returns: A dict with the same keys as the input and with each value processed by the first
+            matching value rule.
+
+            Rules are processed in the order the appear in the 'of' list. In the event that a key
+            rule matches but the value rule does not match, processing will continue through the
+            list of rules.
+
+        Raises:
+            TypeError: If any key/value pair present in the input did not match any of the rules.
+        """
         if value is None:
             value = {}
         if not isinstance(value, dict):
             raise TypeError("Expected a dictionary.")
-        # Rules:
-        # (1) All keys must match one of the key rules. Key rules are checked in the order given.
-        # (2) All values must match the value rule for that key
-        # TODO(jb) move the above into docstring
 
         rules = self.of
         result = {}
         for keyword, keyword_value in value.items():
+            last_error = None
             for key_rule, value_rule in rules:
                 if isinstance(key_rule, str):
                     if keyword != key_rule:
@@ -299,10 +380,22 @@ class TSection(TComposition):
                         keyword = key_rule.recognize(keyword)
                     except TypeError:
                         continue
-                # Let any TypeError propagate
-                keyword_value = value_rule.recognize(keyword_value)
-                result[keyword] = keyword_value
-                break
+                try:
+                    keyword_value = value_rule.recognize(keyword_value)
+                    result[keyword] = keyword_value
+                    break
+                except TypeError as e:
+                    # Collect any TypeError but continue to search for another matching key_rule.
+                    # If a subsequent key_rule / value_rule pair matches we can ignore the stored error.
+                    # If no subsequent match is found we will raise the last value rule TypeError.
+                    last_error = e
+                    continue
+            else:
+                if last_error:
+                    # A value rule TypeError was collected and no subsequent key rules matched.
+                    raise last_error
+                # None of the key rules matched `keyword`
+                raise TypeError(f"Unexpected key {keyword} in section.")
         return result
 
 
