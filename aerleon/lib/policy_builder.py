@@ -138,7 +138,7 @@ class PolicyBuilder:
     optimize: bool
     shade_check: bool
 
-    def __init__(self, raw_policy, definitions, optimize=False, shade_check=False):
+    def __init__(self, raw_policy: RawPolicy, definitions: "naming.Naming", optimize=False, shade_check=False):
         self.raw_policy = raw_policy
         self.definitions = definitions
         self.optimize = optimize
@@ -483,13 +483,13 @@ class _Builtin:
     }
     # fmt: on
 
-    def __init__(self, keyname, call_convention, var_type):
+    def __init__(self, keyname: str, call_convention: _CallType, var_type: VarType):
         self.keyname = keyname
         self.call_convention = call_convention
         self.var_type = var_type
 
     @classmethod
-    def fromKeyword(cls, keyname):
+    def fromKeyword(cls, keyname: str):
         """Construct a Builtin instance from keyname.
 
         Args:
@@ -504,7 +504,7 @@ class _Builtin:
         return cls(keyname, *cls.BUILTINS[keyname])
 
     @property
-    def recognizer(self):
+    def recognizer(self) -> TValue | TComposition:
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
