@@ -132,14 +132,14 @@ strings.
         - (proj1,vpc1)
         - (proj2,vpc2)
 --- or ---
-      target-resources: ["(proj1,vpc1)", "(proj1,vpc1)"]
+      target-resources: ["(proj1,vpc1)", "(proj2,vpc2)"]
 ```
 
 ```
-  target-resources:: [(proj1,vpc1), (proj1,vpc1)]
+  target-resources:: [(proj1,vpc1), (proj2,vpc2)]
 --- or ---
   target-resources:: (proj1,vpc1)
-  target-resources:: (proj1,vpc1)
+  target-resources:: (proj2,vpc2)
 ```
 
 ### Flexible-Match-Range

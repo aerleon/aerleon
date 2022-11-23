@@ -16,7 +16,6 @@
 
 import copy
 import multiprocessing
-import os
 import pathlib
 import sys
 from typing import Iterator, List, Tuple
@@ -230,6 +229,7 @@ def RenderFile(
         raise
 
     try:
+        # PolicySource[extension].ParsePolicy(conf)
         if pathlib.Path(input_file).suffix == '.yaml':
             pol = yaml.ParsePolicy(
                 conf,
@@ -516,6 +516,8 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         policy_directories = filter(Filtering, policy_directories)
 
     for directory in policy_directories:
+        # Build glob strings from PolicySources.keys()
+        # Or just match by extension
         directory_policies = list(directory.glob('*.pol')) + list(directory.glob('*.pol.yaml'))
         depth = len(directory.parents) - 1
         logging.warning(
