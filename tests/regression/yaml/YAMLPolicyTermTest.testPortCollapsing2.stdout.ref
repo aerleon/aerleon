@@ -1,0 +1,4 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-8
+  protocol: ['tcp', 'udp']
+  destination_port: [(53, 53)]
+  action: ['accept']]}

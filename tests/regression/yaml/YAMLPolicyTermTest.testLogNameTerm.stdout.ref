@@ -1,0 +1,4 @@
+Policy: {Target[nftables], Comments [this is a test nftable acl], Apply groups: [], except: []:[ name: good-term-37
+  protocol: ['icmp']
+  action: ['accept']
+  log_name: my special prefix]}

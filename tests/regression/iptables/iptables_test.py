@@ -24,6 +24,7 @@ from aerleon.lib import iptables
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
 from aerleon.lib import policy
+from aerleon.lib import yaml as yaml_frontend
 
 from tests.regression_utils import capture
 
@@ -1389,6 +1390,519 @@ class AclCheckTest(absltest.TestCase):
             '-m u32 --u32 "0x3&0xff=0x0"', result, 'match for hop-by-hop header is missing'
         )
         print(acl)
+
+
+YAML_GOOD_HEADER_1 = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: INPUT ACCEPT
+  terms:
+"""
+
+YAML_GOOD_HEADER_2 = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: OUTPUT DROP
+  terms:
+"""
+
+YAML_GOOD_HEADER_3 = """
+filters:
+- header:
+    comment: this is a test acl with abbreviation
+    targets:
+      iptables: INPUT ACCEPT abbreviateterms
+  terms:
+"""
+
+YAML_GOOD_HEADER_4 = """
+filters:
+- header:
+    comment: this is a test acl with truncation
+    targets:
+      iptables: INPUT ACCEPT truncateterms
+  terms:
+"""
+
+YAML_GOOD_HEADER_5 = """
+filters:
+- header:
+    comment: this is a test acl with no default target
+    targets:
+      iptables: INPUT
+  terms:
+"""
+
+YAML_GOOD_HEADER_6 = """
+filters:
+- header:
+    comment: this is a test acl with a custom chain and no default target
+    targets:
+      iptables: foo
+  terms:
+"""
+
+YAML_GOOD_HEADER_7 = """
+filters:
+- header:
+    comment: this is a test acl with a custom chain and no default target
+    targets:
+      iptables: foo noverbose
+  terms:
+"""
+
+YAML_IPV6_HEADER_1 = """
+filters:
+- header:
+    comment: test header for inet6 terms
+    targets:
+      iptables: INPUT DROP inet6
+  terms:
+"""
+
+YAML_NON_STANDARD_CHAIN = """
+filters:
+- header:
+    comment: this is a test acl with non-standard chain
+    targets:
+      iptables: foo ACCEPT
+  terms:
+"""
+
+YAML_NOSTATE_HEADER = """
+filters:
+- header:
+    comment: iptables filter without stateful
+    targets:
+      iptables: INPUT ACCEPT nostate
+  terms:
+"""
+
+YAML_CHAIN_HEADER_1 = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: foobar_chain nostate
+  terms:
+"""
+
+YAML_BAD_HEADER_2 = """
+filters:
+- header:
+    targets:
+      juniper:
+  terms:
+"""
+
+YAML_BAD_HEADER_3 = """
+filters:
+- header:
+    targets:
+      iptables: INPUT MAYBE
+  terms:
+"""
+
+YAML_GOOD_TERM_1 = """
+  - name: good-term-1
+    protocol: icmp
+    action: accept
+"""
+
+YAML_GOOD_TERM_2 = """
+  - name: good-term-2
+    source-address: INTERNAL
+    source-exclude: OOB_NET
+    protocol: tcp
+    source-port: HTTP
+    action: accept
+"""
+
+YAML_GOOD_TERM_3 = """
+  - name: good-term-3
+    source-port: HTTP
+    protocol: tcp
+    option: rst fin tcp-established established
+    action: accept
+"""
+
+YAML_GOOD_TERM_4 = """
+  - name: good-term-4
+    protocol: tcp udp esp ah gre icmp 50
+    action: accept
+"""
+
+YAML_GOOD_TERM_5 = """
+  - name: good-term-5
+    verbatim:
+      iptables: mary had a little lamb
+      cisco: mary had second lamb
+      juniper: mary had third lamb
+"""
+
+YAML_GOOD_TERM_6 = """
+  - name: good-term-6
+    comment: |
+        Some text describing what this block does,
+        possibly including newines, blank lines,
+        and extra-long comments (over 255 characters)
+        %(long_line)s
+
+        All these cause problems if passed verbatim to iptables.
+               
+    protocol: tcp
+    action: accept
+
+""" % {
+    'long_line': '-' * 260
+}
+
+
+YAML_GOOD_TERM_7 = """
+  - name: drop-short-initial-fragments
+    option: first-fragment
+    packet-length: 1-119
+    action: deny
+
+  - name: drop-header-overwrite
+    fragment-offset: 1-119
+    action: deny
+"""
+
+YAML_GOOD_TERM_8 = """
+  - name: block-some-icmp
+    protocol: icmp
+    icmp-type: router-solicitation information-request unreachable echo-reply
+    action: deny
+"""
+
+YAML_GOOD_TERM_9 = """
+  - name: good-term-9
+    source-address: SOME_SOURCE
+    destination-address: SOME_DEST
+    protocol: tcp
+    source-port: HTTP
+    action: accept
+"""
+
+YAML_GOOD_TERM_10 = """
+  - name: good-term-10
+    owner: foo@google.com
+    action: accept
+"""
+
+YAML_GOOD_TERM_11 = """
+  - name: good_term_11
+    protocol: icmp
+    icmp-type: unreachable
+    icmp-code: 3 4
+    action: accept
+"""
+
+YAML_GOOD_TERM_12 = """
+  - name: good_term_12
+    comment: FOOO
+    action: accept
+"""
+
+YAML_GOOD_TERM_13 = """
+  - name: good_term_13
+    logging: syslog
+    log-limit: 99/day
+    action: accept
+"""
+
+YAML_HOPOPT_TERM = """
+  - name: hopopt-term
+    protocol: hopopt
+    action: accept
+"""
+
+YAML_BAD_LOGGING_TERM = """
+  - name: bad_logging_term
+    log-limit: 99/day
+    action: accept
+"""
+
+YAML_BAD_QUOTE_TERM_1 = """
+  - name: bad-quote-term-1
+    comment: Text describing without quotes
+    protocol: tcp
+    action: accept
+"""
+
+YAML_IPV6_TERM_1 = """
+  - name: inet6-icmp
+    protocol: icmpv6
+    icmp-type: destination-unreachable time-exceeded echo-reply
+    action: deny
+"""
+
+YAML_IPV6_HEADERS = """
+  - name: ipv6-header-1
+    protocol: hopopt
+    action: deny
+
+  - name: ipv6-header-2
+    protocol: fragment
+    action: deny
+"""
+
+YAML_ICMPV6_TERM_1 = """
+  - name: inet6-icmp
+    source-address: IPV6_INTERNAL
+    protocol: icmpv6
+    icmp-type: destination-unreachable
+    action: deny
+"""
+
+YAML_LOGGING_TERM_1 = """
+  - name: foo
+    protocol: tcp
+    logging: syslog
+    action: accept
+"""
+
+YAML_UDP_STATE_TERM = """
+  - name: test-conntrack-udp
+    protocol: udp
+    option: established
+    action: accept
+"""
+
+YAML_TCP_STATE_TERM = """
+  - name: tcp-established-only
+    protocol: tcp
+    option: established
+    action: accept
+"""
+
+YAML_STATEFUL_ONLY_TERM = """
+  - name: stateful-only
+    option: established
+    action: accept
+"""
+
+YAML_BAD_LONG_TERM_NAME = """
+  - name: this-term-name-is-really-far-too-long
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_LONG_TERM_NAME = """
+  - name: google-experiment-abbreviations
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_MULTIPORT = """
+  - name: multiport
+    source-port: FOURTEEN_PORTS
+    protocol: tcp
+    action: accept
+"""
+
+YAML_MULTIPORT_SWAP = """
+  - name: multiport
+    source-port: HTTP HTTPS
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+"""
+
+YAML_EXPIRED_TERM = """
+  - name: is_expired
+    expiration: 2001-01-01
+    action: accept
+"""
+
+YAML_EXPIRING_TERM = """
+  - name: is_expiring
+    expiration: %s
+    action: accept
+"""
+
+YAML_GOOD_MULTIPORT_RANGE = """
+  - name: bad-mport-ranges
+    destination-port: FIFTEEN_PORTS_WITH_RANGES
+    protocol: tcp
+    action: accept
+"""
+
+YAML_LARGE_MULTIPORT = """
+  - name: bad-multiport
+    destination-port: LOTS_OF_PORTS
+    protocol: tcp
+    action: accept
+"""
+
+YAML_DUAL_LARGE_MULTIPORT = """
+  - name: bad-multiport
+    source-port: LOTS_OF_SPORTS
+    destination-port: LOTS_OF_DPORTS
+    protocol: tcp
+    action: accept
+"""
+
+YAML_UNSUPPORTED_TERM = """
+  - name: ether-type-filter
+    ether-type: arp
+    action: accept
+"""
+
+YAML_UNKNOWN_TERM_KEYWORD = """
+  - name: unknown-keyword
+    comment: |
+        imaginary new keyword added to the policy library.
+        i.e. ip-options-count:: 2-255
+        must be added in tests due to checking in policy library.
+    action: deny
+"""
+
+YAML_UNSUPPORTED_EXCEPT = """
+  - name: block-non-standard
+    protocol-except: tcp udp icmp
+    action: deny
+"""
+
+YAML_REJECT_TERM1 = """
+  - name: reject-term1
+    action: reject-with-tcp-rst
+"""
+
+YAML_REJECT_TERM2 = """
+  - name: reject-term2
+    action: reject
+"""
+
+YAML_NEXT_TERM1 = """
+  - name: next-term1
+    action: next
+"""
+
+YAML_BAD_PROTOCOL_MATCHES = """
+  - name: proto-accept-and-reject
+    protocol: tcp udp icmp
+    protocol-except: gre
+    action: accept
+"""
+
+YAML_SOURCE_INTERFACE_TERM = """
+  - name: src-interface
+    protocol: tcp
+    source-interface: eth0
+    action: accept
+"""
+
+YAML_DESTINATION_INTERFACE_TERM = """
+  - name: dst-interface
+    protocol: tcp
+    destination-interface: eth0
+    action: accept
+"""
+
+YAML_GOOD_WARNING_TERM = """
+  - name: good-warning-term
+    source-port: HTTP
+    protocol: tcp
+    option: rst fin tcp-established established
+    policer: batman
+    action: accept
+"""
+
+
+def _YamlParsePolicy(
+    data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
+):
+    return yaml_frontend.ParsePolicy(
+        data,
+        filename=filename,
+        base_dir=base_dir,
+        definitions=definitions,
+        optimize=optimize,
+        shade_check=shade_check,
+    )
+
+
+class IPTablesYAMLTest(AclCheckTest):
+    def setUp(self):
+        super().setUp()
+        # patch policy.ParsePolicy into a wrapper that calls YAML.load_str
+        self.patchers = [mock.patch.object(policy, 'ParsePolicy', _YamlParsePolicy)]
+        [patcher.start() for patcher in self.patchers]
+        self.setUpFixtures()
+        self.fixture_patcher.start()
+
+    def tearDown(self):
+        [patcher.stop() for patcher in self.patchers]
+        self.tearDownFixtures()
+
+    def tearDownFixtures(self):
+        self.fixture_patcher.stop()
+
+    def setUpFixtures(self):
+        self.fixture_patcher = mock.patch.multiple(
+            'iptables_test',
+            GOOD_HEADER_1=YAML_GOOD_HEADER_1,
+            GOOD_HEADER_2=YAML_GOOD_HEADER_2,
+            GOOD_HEADER_3=YAML_GOOD_HEADER_3,
+            GOOD_HEADER_4=YAML_GOOD_HEADER_4,
+            GOOD_HEADER_5=YAML_GOOD_HEADER_5,
+            GOOD_HEADER_6=YAML_GOOD_HEADER_6,
+            GOOD_HEADER_7=YAML_GOOD_HEADER_7,
+            IPV6_HEADER_1=YAML_IPV6_HEADER_1,
+            NON_STANDARD_CHAIN=YAML_NON_STANDARD_CHAIN,
+            NOSTATE_HEADER=YAML_NOSTATE_HEADER,
+            CHAIN_HEADER_1=YAML_CHAIN_HEADER_1,
+            BAD_HEADER_2=YAML_BAD_HEADER_2,
+            BAD_HEADER_3=YAML_BAD_HEADER_3,
+            GOOD_TERM_1=YAML_GOOD_TERM_1,
+            GOOD_TERM_2=YAML_GOOD_TERM_2,
+            GOOD_TERM_3=YAML_GOOD_TERM_3,
+            GOOD_TERM_4=YAML_GOOD_TERM_4,
+            GOOD_TERM_5=YAML_GOOD_TERM_5,
+            GOOD_TERM_6=YAML_GOOD_TERM_6,
+            GOOD_TERM_7=YAML_GOOD_TERM_7,
+            GOOD_TERM_8=YAML_GOOD_TERM_8,
+            GOOD_TERM_9=YAML_GOOD_TERM_9,
+            GOOD_TERM_10=YAML_GOOD_TERM_10,
+            GOOD_TERM_11=YAML_GOOD_TERM_11,
+            GOOD_TERM_12=YAML_GOOD_TERM_12,
+            GOOD_TERM_13=YAML_GOOD_TERM_13,
+            HOPOPT_TERM=YAML_HOPOPT_TERM,
+            BAD_LOGGING_TERM=YAML_BAD_LOGGING_TERM,
+            BAD_QUOTE_TERM_1=YAML_BAD_QUOTE_TERM_1,
+            IPV6_TERM_1=YAML_IPV6_TERM_1,
+            IPV6_HEADERS=YAML_IPV6_HEADERS,
+            ICMPV6_TERM_1=YAML_ICMPV6_TERM_1,
+            LOGGING_TERM_1=YAML_LOGGING_TERM_1,
+            UDP_STATE_TERM=YAML_UDP_STATE_TERM,
+            TCP_STATE_TERM=YAML_TCP_STATE_TERM,
+            STATEFUL_ONLY_TERM=YAML_STATEFUL_ONLY_TERM,
+            BAD_LONG_TERM_NAME=YAML_BAD_LONG_TERM_NAME,
+            GOOD_LONG_TERM_NAME=YAML_GOOD_LONG_TERM_NAME,
+            GOOD_MULTIPORT=YAML_GOOD_MULTIPORT,
+            MULTIPORT_SWAP=YAML_MULTIPORT_SWAP,
+            EXPIRED_TERM=YAML_EXPIRED_TERM,
+            EXPIRING_TERM=YAML_EXPIRING_TERM,
+            GOOD_MULTIPORT_RANGE=YAML_GOOD_MULTIPORT_RANGE,
+            LARGE_MULTIPORT=YAML_LARGE_MULTIPORT,
+            DUAL_LARGE_MULTIPORT=YAML_DUAL_LARGE_MULTIPORT,
+            UNSUPPORTED_TERM=YAML_UNSUPPORTED_TERM,
+            UNKNOWN_TERM_KEYWORD=YAML_UNKNOWN_TERM_KEYWORD,
+            UNSUPPORTED_EXCEPT=YAML_UNSUPPORTED_EXCEPT,
+            REJECT_TERM1=YAML_REJECT_TERM1,
+            REJECT_TERM2=YAML_REJECT_TERM2,
+            NEXT_TERM1=YAML_NEXT_TERM1,
+            BAD_PROTOCOL_MATCHES=YAML_BAD_PROTOCOL_MATCHES,
+            SOURCE_INTERFACE_TERM=YAML_SOURCE_INTERFACE_TERM,
+            DESTINATION_INTERFACE_TERM=YAML_DESTINATION_INTERFACE_TERM,
+            GOOD_WARNING_TERM=YAML_GOOD_WARNING_TERM,
+        )
 
 
 if __name__ == '__main__':

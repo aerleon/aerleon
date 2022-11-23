@@ -1,0 +1,5 @@
+Policy: {Target[iptables], Comments [test header 4], Apply groups: [], except: []:[ name: source-interface-term
+  protocol: ['tcp']
+  source_port: [(22, 22)]
+  action: ['accept']
+  source_interface: foo0]}

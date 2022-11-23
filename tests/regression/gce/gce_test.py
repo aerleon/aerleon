@@ -25,6 +25,7 @@ from aerleon.lib import gcp
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
 from aerleon.lib import policy
+from aerleon.lib import yaml as yaml_frontend
 
 from tests.regression_utils import capture
 
@@ -1704,6 +1705,516 @@ class GCETest(parameterized.TestCase):
     )
     def testGetAttributeCount(self, dict_term, expected):
         self.assertEqual(gce.GetAttributeCount(dict_term), expected)
+
+
+YAML_GOOD_HEADER = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: global/networks/default
+  terms:
+"""
+
+YAML_GOOD_HEADER_INGRESS = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS
+  terms:
+"""
+
+YAML_GOOD_HEADER_EGRESS = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: EGRESS
+  terms:
+"""
+
+YAML_GOOD_HEADER_NO_NETWORK = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce:
+  terms:
+"""
+
+YAML_GOOD_HEADER_MAX_ATTRIBUTE_COUNT = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS global/networks/default 2
+  terms:
+"""
+
+YAML_GOOD_HEADER_INET = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS inet
+  terms:
+"""
+
+YAML_GOOD_HEADER_EGRESS_INET = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS inet
+  terms:
+"""
+
+YAML_GOOD_HEADER_INET6 = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS inet6
+  terms:
+"""
+
+YAML_GOOD_HEADER_EGRESS_INET6 = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: EGRESS inet6
+  terms:
+"""
+
+YAML_GOOD_HEADER_MIXED = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: INGRESS mixed
+  terms:
+"""
+
+YAML_GOOD_HEADER_EGRESS_MIXED = """
+filters:
+- header:
+    comment: The general policy comment.
+    targets:
+      gce: EGRESS mixed
+  terms:
+"""
+
+YAML_GOOD_TERM = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_2 = """
+  - name: good-term-2
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    policer: batman
+    action: accept
+"""
+
+YAML_GOOD_TERM_3 = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    priority: 1
+    action: accept
+"""
+
+YAML_GOOD_TERM_EXCLUDE = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    source-exclude: GUEST_WIRELESS_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_4 = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+YAML_GOOD_TERM_5 = """
+  - name: good-term-5
+    comment: ICMP from IP.
+    source-address: CORP_EXTERNAL
+    protocol: icmp
+    action: accept
+"""
+
+YAML_GOOD_TERM_EGRESS = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_EGRESS_SOURCETAG = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    source-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_INGRESS_SOURCETAG = """
+  - name: good-term-1
+    comment: Allow all GCE network internal traffic.
+    source-tag: internal-servers
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_INGRESS_ADDRESS_SOURCETAG = """
+  - name: good-term-1
+    comment: Allow all GCE network internal traffic.
+    source-tag: internal-servers
+    source-address: CORP_EXTERNAL
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_PLATFORM_EXCLUDE_TERM = """
+  - name: good-platform-exclude-term
+    comment: DNS access from corp.
+    destination-tag: dns-servers
+    protocol: udp tcp
+    action: accept
+    platform-exclude: gce
+"""
+
+YAML_GOOD_PLATFORM_TERM = """
+  - name: good-platform-term
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+    platform: gce
+"""
+
+
+YAML_GOOD_TERM_EXPIRED = """
+  - name: good-term-expired
+    comment: Management access from corp.
+    expiration: 2001-01-01
+    source-address: CORP_EXTERNAL
+    destination-tag: ssh-servers
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_LOGGING = """
+  - name: good-term-logging
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+    logging: true
+"""
+
+YAML_GOOD_TERM_CUSTOM_NAME = """
+  - name: %s
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_GOOD_TERM_OWNERS = """
+  - name: good-term-owners
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    owner: test-owner
+    action: accept
+"""
+
+YAML_GOOD_TERM_ICMP = """
+  - name: good-term-ping
+    comment: Good term.
+    source-address: CORP_EXTERNAL
+    protocol: icmp
+    action: accept
+"""
+
+YAML_GOOD_TERM_ICMPV6 = """
+  - name: good-term-pingv6
+    comment: Good term.
+    source-address: CORP_EXTERNAL
+    protocol: icmpv6
+    action: accept
+"""
+
+YAML_GOOD_TERM_IGMP = """
+  - name: good-term-igmp
+    comment: Good term.
+    source-address: CORP_EXTERNAL
+    protocol: igmp
+    action: accept
+"""
+
+YAML_GOOD_TERM_NO_PROTOCOL = """
+  - name: good-term-no-protocol
+    comment: Good term.
+    source-address: CORP_EXTERNAL
+    action: accept
+"""
+
+YAML_BAD_TERM_NO_SOURCE = """
+  - name: bad-term-no-source
+    comment: Management access from corp.
+    destination-tag: ssh-servers
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_SOURCE_EXCLUDE_ONLY = """
+  - name: bad-term-source-ex-only
+    comment: Management access from corp.
+    destination-port: SSH
+    source-tag: ssh-bastion
+    source-exclude: GUEST_WIRELESS_EXTERNAL
+    protocol: tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_SOURCE_PORT = """
+  - name: bad-term-source-port
+    comment: Management access from corp.
+    source-address: CORP_EXTERNAL
+    source-port: SSH
+    destination-tag: ssh-servers
+    protocol: tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_NAME_TOO_LONG = """
+  - name: good-term-whith-a-name-which-is-way-way-too-long-for-gce-to-accept
+    comment: Management access from corp.
+    source-address: CORP_EXTERNAL
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_UNSUPPORTED_PORT = """
+  - name: good-term-unsupported-port
+    comment: Management access from corp.
+    source-address: CORP_EXTERNAL
+    destination-port: SSH
+    protocol: tcp icmp
+    action: accept
+"""
+
+YAML_BAD_TERM_UNSUPPORTED_OPTION = """
+  - name: bad-term-unsupported-option
+    comment: Management access from corp.
+    source-address: CORP_EXTERNAL
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+    option: tcp-initial
+"""
+
+YAML_BAD_TERM_EGRESS = """
+  - name: bad-term-dest-tag
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_EGRESS_SOURCE_ADDRESS = """
+  - name: bad-term-source-address
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    source-address: CORP_EXTERNAL
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_EGRESS_SOURCE_DEST_TAG = """
+  - name: bad-term-source-dest-tag
+    comment: DNS access from corp.
+    destination-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    source-tag: ssh-bastion
+    destination-port: DNS
+    protocol: udp tcp
+    action: accept
+"""
+YAML_BAD_TERM_PORTS_COUNT = """
+  - name: bad-term-ports-count
+    comment: This term has way too many ports.
+    source-address: CORP_EXTERNAL
+    source-tag: ssh-bastion
+    destination-port: SSH
+    protocol: tcp
+    action: accept
+"""
+
+YAML_BAD_TERM_SOURCE_TAGS_COUNT = """
+  - name: bad-term-source-tags-count
+    comment: This term has way too many source tags.
+    protocol: tcp
+    action: accept
+    source-tag: {many_source_tags}
+""".format(
+    many_source_tags=SAMPLE_TAG * (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1)
+)
+
+YAML_BAD_TERM_TARGET_TAGS_COUNT = """
+  - name: bad-term-target-tags-count
+    comment: This term has way too many target tags.
+    source-address: CORP_EXTERNAL
+    protocol: tcp
+    action: accept
+    destination-tag: {many_target_tags}
+""".format(
+    many_target_tags=SAMPLE_TAG * (gce.Term._TERM_TARGET_TAGS_LIMIT + 1)
+)
+
+YAML_DEFAULT_DENY = """
+  - name: default-deny
+    comment: default_deny.
+    action: deny
+"""
+
+YAML_GOOD_TERM_DENY = """
+  - name: good-term-1
+    comment: DNS access from corp.
+    source-address: CORP_EXTERNAL
+    destination-tag: dns-servers
+    protocol: udp tcp
+    action: deny
+"""
+
+
+def _YamlParsePolicy(
+    data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
+):
+    """Test shim for patching policy.ParsePolicy with yaml.ParsePolicy."""
+
+    # Erase any subsequent copies of "filters:". Multi-filter tests must not
+    # contain copies of the "filters:" key
+    data = "filters:" + ''.join(data.split("filters:\n"))
+
+    return yaml_frontend.ParsePolicy(
+        data,
+        filename=filename,
+        base_dir=base_dir,
+        definitions=definitions,
+        optimize=optimize,
+        shade_check=shade_check,
+    )
+
+
+class GCETestYAMLTest(GCETest):
+    def setUp(self):
+        super().setUp()
+        # patch policy.ParsePolicy into a wrapper that calls YAML.load_str
+        self.patchers = [mock.patch.object(policy, 'ParsePolicy', _YamlParsePolicy)]
+        [patcher.start() for patcher in self.patchers]
+        self.setUpFixtures()
+        self.fixture_patcher.start()
+
+    def tearDown(self):
+        [patcher.stop() for patcher in self.patchers]
+        self.tearDownFixtures()
+
+    def tearDownFixtures(self):
+        self.fixture_patcher.stop()
+
+    def setUpFixtures(self):
+        self.fixture_patcher = mock.patch.multiple(
+            'gce_test',
+            GOOD_HEADER=YAML_GOOD_HEADER,
+            GOOD_HEADER_INGRESS=YAML_GOOD_HEADER_INGRESS,
+            GOOD_HEADER_EGRESS=YAML_GOOD_HEADER_EGRESS,
+            GOOD_HEADER_NO_NETWORK=YAML_GOOD_HEADER_NO_NETWORK,
+            GOOD_HEADER_MAX_ATTRIBUTE_COUNT=YAML_GOOD_HEADER_MAX_ATTRIBUTE_COUNT,
+            GOOD_HEADER_INET=YAML_GOOD_HEADER_INET,
+            GOOD_HEADER_EGRESS_INET=YAML_GOOD_HEADER_EGRESS_INET,
+            GOOD_HEADER_INET6=YAML_GOOD_HEADER_INET6,
+            GOOD_HEADER_EGRESS_INET6=YAML_GOOD_HEADER_EGRESS_INET6,
+            GOOD_HEADER_MIXED=YAML_GOOD_HEADER_MIXED,
+            GOOD_HEADER_EGRESS_MIXED=YAML_GOOD_HEADER_EGRESS_MIXED,
+            GOOD_TERM=YAML_GOOD_TERM,
+            GOOD_TERM_2=YAML_GOOD_TERM_2,
+            GOOD_TERM_3=YAML_GOOD_TERM_3,
+            GOOD_TERM_EXCLUDE=YAML_GOOD_TERM_EXCLUDE,
+            GOOD_TERM_4=YAML_GOOD_TERM_4,
+            GOOD_TERM_5=YAML_GOOD_TERM_5,
+            GOOD_TERM_EGRESS=YAML_GOOD_TERM_EGRESS,
+            GOOD_TERM_EGRESS_SOURCETAG=YAML_GOOD_TERM_EGRESS_SOURCETAG,
+            GOOD_TERM_INGRESS_SOURCETAG=YAML_GOOD_TERM_INGRESS_SOURCETAG,
+            GOOD_TERM_INGRESS_ADDRESS_SOURCETAG=YAML_GOOD_TERM_INGRESS_ADDRESS_SOURCETAG,
+            GOOD_PLATFORM_EXCLUDE_TERM=YAML_GOOD_PLATFORM_EXCLUDE_TERM,
+            GOOD_PLATFORM_TERM=YAML_GOOD_PLATFORM_TERM,
+            GOOD_TERM_EXPIRED=YAML_GOOD_TERM_EXPIRED,
+            GOOD_TERM_LOGGING=YAML_GOOD_TERM_LOGGING,
+            GOOD_TERM_CUSTOM_NAME=YAML_GOOD_TERM_CUSTOM_NAME,
+            GOOD_TERM_OWNERS=YAML_GOOD_TERM_OWNERS,
+            GOOD_TERM_ICMP=YAML_GOOD_TERM_ICMP,
+            GOOD_TERM_ICMPV6=YAML_GOOD_TERM_ICMPV6,
+            GOOD_TERM_IGMP=YAML_GOOD_TERM_IGMP,
+            GOOD_TERM_NO_PROTOCOL=YAML_GOOD_TERM_NO_PROTOCOL,
+            BAD_TERM_NO_SOURCE=YAML_BAD_TERM_NO_SOURCE,
+            BAD_TERM_SOURCE_EXCLUDE_ONLY=YAML_BAD_TERM_SOURCE_EXCLUDE_ONLY,
+            BAD_TERM_SOURCE_PORT=YAML_BAD_TERM_SOURCE_PORT,
+            BAD_TERM_NAME_TOO_LONG=YAML_BAD_TERM_NAME_TOO_LONG,
+            BAD_TERM_UNSUPPORTED_PORT=YAML_BAD_TERM_UNSUPPORTED_PORT,
+            BAD_TERM_UNSUPPORTED_OPTION=YAML_BAD_TERM_UNSUPPORTED_OPTION,
+            BAD_TERM_EGRESS=YAML_BAD_TERM_EGRESS,
+            BAD_TERM_EGRESS_SOURCE_ADDRESS=YAML_BAD_TERM_EGRESS_SOURCE_ADDRESS,
+            BAD_TERM_EGRESS_SOURCE_DEST_TAG=YAML_BAD_TERM_EGRESS_SOURCE_DEST_TAG,
+            BAD_TERM_PORTS_COUNT=YAML_BAD_TERM_PORTS_COUNT,
+            BAD_TERM_SOURCE_TAGS_COUNT=YAML_BAD_TERM_SOURCE_TAGS_COUNT,
+            BAD_TERM_TARGET_TAGS_COUNT=YAML_BAD_TERM_TARGET_TAGS_COUNT,
+            DEFAULT_DENY=YAML_DEFAULT_DENY,
+            GOOD_TERM_DENY=YAML_GOOD_TERM_DENY,
+        )
 
 
 if __name__ == '__main__':

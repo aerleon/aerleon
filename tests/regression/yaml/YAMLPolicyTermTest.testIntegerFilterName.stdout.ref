@@ -1,0 +1,3 @@
+Policy: {Target[cisco], Comments [test header 3], Apply groups: [], except: []:[ name: good-term-0
+  protocol: ['icmp']
+  action: ['accept']]}

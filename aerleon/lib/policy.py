@@ -16,21 +16,28 @@
 """Parses the generic policy files and return a policy object for acl rendering.
 """
 
+from __future__ import annotations
+
 import datetime
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from absl import logging
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
 from ply import lex
 from ply import yacc
+
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+
+if TYPE_CHECKING:
+    from aerleon.lib.policy_builder import PolicyBuilder
 
 DEFINITIONS = None
 DEFAULT_DEFINITIONS = './def'
 ACTIONS = set(('accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst'))
 PROTOS_WITH_PORTS = frozenset(('tcp', 'udp', 'udplite', 'sctp'))
-_FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
+FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
     'byte-offset',
     'bit-offset',
     'bit-length',
@@ -39,7 +46,7 @@ _FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
     'range-except',
     'flexible-range-name',
 }
-_FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
+FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 _LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
 _OPTIMIZE = True
 _SHADE_CHECK = False
@@ -162,6 +169,7 @@ def TranslatePorts(ports, protocols, term_name):
                 else:
                     ret_array.append((int(p[0]), int(p[1])))
     return ret_array
+
 
 
 # classes for storing the object types in the policy files.
@@ -401,7 +409,6 @@ class Term:
         'redirect': [0, 1, 2, 3],
         'router-advertisement': [0, 16],
         'time-exceeded': [0, 1],
-        'parameter-problem': [0, 1, 2],
         'destination-unreachable': [0, 1, 2, 3, 4, 5, 6, 7],
         'parameter-problem': [0, 1, 2, 3],
         'router-renumbering': [0, 1, 255],
@@ -2128,10 +2135,10 @@ def p_flex_match_key_values(p):
     if len(p) < 1:
         return
 
-    if p[1] not in _FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
+    if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
         raise FlexibleMatchError('%s is not a valid attribute' % p[1])
     if p[1] == 'match-start':
-        if p[2] not in _FLEXIBLE_MATCH_START_OPTIONS:
+        if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
             raise FlexibleMatchError('%s value is not valid' % p[1])
     # per Juniper, max bit length is 32
     elif p[1] == 'bit-length':
@@ -2720,6 +2727,18 @@ def ParsePolicy(
 
     except IndexError:
         return False
+
+
+def FromBuilder(builder: PolicyBuilder):
+    """Construct and return a Policy model instance from a PolicyBuilder."""
+    if builder.definitions:
+        globals()['DEFINITIONS'] = builder.definitions
+    else:
+        globals()['DEFINITIONS'] = naming.Naming(DEFAULT_DEFINITIONS)
+    globals()['_OPTIMIZE'] = builder.optimize
+    globals()['_SHADE_CHECK'] = builder.shade_check
+
+    return builder.BuildPolicy()
 
 
 # if you call this from the command line, you can specify a pol file for it to

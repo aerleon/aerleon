@@ -922,7 +922,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                     new_terms.append(self._TERM(term, ft, noverbose))
 
             self.arista_traffic_policies.append(
-                (header, filter_name, filter_type, new_terms, policy_counters, policy_field_sets)
+                (header, filter_name, filter_type, new_terms, sorted(policy_counters), policy_field_sets)
             )
 
     def __str__(self):

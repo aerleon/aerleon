@@ -1,0 +1,269 @@
+filters:
+  - header:
+      comment: sample arista traffic policy
+      targets:
+        arista_tp: MIXED-TRAFFIC-POLICY mixed
+    terms:
+      - name: accept-icmp
+        protocol: icmp
+        counter: icmp-loopback
+        icmp-type: echo-request echo-reply
+        action: accept
+
+      - name: wonky-prots
+        protocol: igmp egp rdp
+        counter: wonky-prots-loopback
+        action: accept
+        owner: foo@arista.com
+
+      - name: wonky-prots-except
+        protocol-except: igmp egp rdp hopopt
+        counter: wonky-prots-loopback
+        action: accept
+
+      - name: accept-traceroute
+        comment: "allow inbound traceroute from any source."
+        destination-port: TRACEROUTE
+        protocol: udp
+        counter: inbound-traceroute
+        action: accept
+        expiration: 2001-12-31
+
+      - name: accept-bgp-requests
+        comment: "Allow BGP requests from peers."
+        source-prefix: configured-neighbors-only
+        destination-port: BGP
+        protocol: tcp
+        counter: bgp-requests
+        action: accept
+
+      - name: accept-bgp-replies
+        comment: "Allow inbound replies to BGP requests."
+        source-prefix: configured-neighbors-only
+        source-port: BGP
+        protocol: tcp
+        option: tcp-established
+        counter: bgp-replies
+        action: accept
+
+      - name: accept-ospf
+        comment: "Allow outbound OSPF traffic from other RFC1918 routers."
+        source-address: INTERNAL
+        protocol: ospf
+        counter: ospf
+        action: accept
+
+      - name: LONG_MULTI_LINE_COMMENTS
+        comment: |
+          this is a sample inet6 edge input filter that has very long comments
+          10 this term has several lines in its output.
+          20 this term has several lines in its output.
+          30 this term has several lines in its output.
+        protocol: icmp
+        action: accept
+
+      - name: allow-vrrp
+        protocol: vrrp
+        counter: vrrp
+        action: accept
+
+      - name: accept-ike
+        source-port: IKE
+        destination-port: IKE
+        protocol: udp
+        counter: ipsec-ike
+        action: accept
+
+      - name: accept-ipsec
+        protocol: esp
+        counter: ipsec-esp
+        action: accept
+
+      - name: accept-pim
+        source-address: INTERNAL
+        protocol: pim
+        action: accept
+
+      - name: accept-igmp
+        source-address: INTERNAL
+        protocol: igmp
+        action: accept
+
+      - name: accept-ssh-requests
+        source-address: INTERNAL
+        destination-port: SSH
+        protocol: tcp
+        counter: ssh
+        action: accept
+
+      - name: accept-ssh-replies
+        source-port: SSH
+        protocol: tcp
+        option: tcp-established
+        counter: ssh-replies
+        action: accept
+
+      - name: accept-snmp-requests
+        source-address: INTERNAL
+        destination-address: INTERNAL
+        destination-port: SNMP
+        protocol: udp
+        action: accept
+
+      - name: accept-dns-replies
+        source-address: INTERNAL
+        destination-address: INTERNAL
+        source-port: DNS
+        protocol: udp
+        option: established
+        counter: dns-replies
+        action: accept
+
+      - name: allow-ntp-request
+        source-address: NTP_SERVERS
+        destination-address: INTERNAL
+        destination-port: NTP
+        protocol: udp
+        counter: ntp-request
+        action: accept
+
+      - name: allow-ntp-replies
+        source-address: INTERNAL
+        destination-address: NTP_SERVERS
+        source-port: NTP
+        protocol: udp
+        option: established
+        counter: ntp-replies
+        action: accept
+
+      - name: allow-radius-replies
+        source-address: INTERNAL
+        destination-address: INTERNAL
+        source-port: RADIUS
+        protocol: udp
+        counter: radius-replies
+        action: accept
+
+      - name: allow-tacacs-requests
+        source-address: INTERNAL
+        destination-address: TACACS_SERVERS
+        destination-port: TACACS
+        protocol: tcp
+        counter: tacacs-requests
+        action: accept
+
+      - name: allow-tacacs-replies
+        source-address: TACACS_SERVERS
+        destination-address: INTERNAL
+        source-port: TACACS
+        protocol: tcp
+        option: tcp-established
+        counter: tacacs-replies
+        action: accept
+
+      # feature conflict, will not be rendered
+      - name: allow-dns-fragments
+        source-address: ANY
+        source-exclude: PUBLIC_NAT
+        destination-address: GOOGLE_DNS
+        destination-port: DNS
+        protocol: tcp udp
+        option: is-fragment
+        action: accept
+
+      # will be rendered
+      - name: allow-dns-foo-exc-test
+        source-address: ANY
+        source-exclude: GOOGLE_DNS
+        destination-port: DNS
+        protocol: tcp udp
+        action: accept
+
+      - name: ratelimit-large-dns
+        destination-address: GOOGLE_DNS
+        destination-port: DNS
+        protocol: udp
+        packet-length: 500-5000
+        counter: large-dns-counter
+        action: accept
+
+      - name: invalid-action-next
+        destination-address: GOOGLE_DNS
+        destination-port: DNS
+        protocol: udp
+        packet-length: 500-5000
+        counter: large-dns-counter
+        action: next
+
+      - name: reject-large-dns
+        destination-address: GOOGLE_DNS
+        destination-port: DNS
+        protocol: udp
+        packet-length: 500-5000
+        action: reject
+
+      - name: reject-imap-requests
+        destination-address: MAIL_SERVERS
+        destination-port: IMAP
+        protocol: tcp
+        counter: reject.imap.requests
+        action: reject-with-tcp-rst
+
+      - name: MIXED_INET
+        source-address: GOOGLE_DNS
+        destination-address: INTERNAL
+        protocol: tcp udp
+        action: accept
+
+      - name: INET_MIXED
+        source-address: INTERNAL
+        destination-address: GOOGLE_DNS
+        protocol: tcp udp
+        action: accept
+
+      - name: MIXED_INET6
+        source-address: GOOGLE_DNS
+        destination-address: SITELOCAL
+        action: accept
+
+      - name: INET6_MIXED
+        source-address: SITELOCAL
+        destination-address: GOOGLE_DNS
+        action: accept
+
+      - name: MIXED_MIXED
+        source-address: GOOGLE_DNS
+        destination-address: GOOGLE_DNS
+        action: accept
+
+      - name: MIXED_ANY
+        source-address: GOOGLE_DNS
+        action: accept
+
+      - name: ANY_MIXED
+        destination-address: GOOGLE_DNS
+        action: accept
+
+      - name: INET_INET
+        source-address: NTP_SERVERS
+        destination-address: INTERNAL
+        action: accept
+
+      - name: INET6_INET6
+        source-address: SITELOCAL
+        destination-address: SITELOCAL
+        action: accept
+
+      - name: INET_INET6
+        source-address: INTERNAL
+        destination-address: SITELOCAL
+        action: accept
+
+      - name: INET6_INET
+        source-address: SITELOCAL
+        destination-address: INTERNAL
+        action: accept
+
+      - name: default-discard
+        counter: default-discard
+        action: deny

@@ -147,10 +147,8 @@ acls:
         output formats. It checks logging options, tcp, udp and icmp type
         options.
       targets:
-        - target: paloalto
-          options: from-zone internal to-zone external
-        - target: srx
-          options: from-zone internal to-zone external
+        paloalto: from-zone internal to-zone external
+        srx: from-zone internal to-zone external
     terms:
       - name: test-tcp-log-both
         comment: Testing log-both for tcp.
