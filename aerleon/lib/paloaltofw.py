@@ -885,23 +885,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             return (alpha, int(num))
         return (alpha, 0)
 
-    def _BuildPort(self, ports):
-        """Transform specified ports into list and ranges.
-
-        Args:
-          ports: a policy terms list of ports
-
-        Returns:
-          port_list: list of ports and port ranges
-        """
-        port_list = []
-        for i in ports:
-            if i[0] == i[1]:
-                port_list.append(str(i[0]))
-            else:
-                port_list.append("%s-%s" % (str(i[0]), str(i[1])))
-        return port_list
-
     def __str__(self):
         """Render the output of the PaloAltoFirewall policy into config."""
 

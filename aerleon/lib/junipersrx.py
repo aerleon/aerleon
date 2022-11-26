@@ -792,26 +792,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 _drop_subnets(self.addressbook[zone][parent_token])
             )
 
-    def _SortAddressBookNumCheck(self, item):
-        """Used to give a natural order to the list of acl entries.
-
-        Args:
-          item: string of the address book entry name
-
-        Returns:
-          returns the characters and number
-        """
-
-        item_list = item.split('_')
-        num = item_list.pop(-1)
-        if isinstance(item_list[-1], int):
-            set_number = item_list.pop(-1)
-            num = int(set_number) * 1000 + int(num)
-        alpha = '_'.join(item_list)
-        if num:
-            return (alpha, int(num))
-        return (alpha, 0)
-
     def _BuildPort(self, ports):
         """Transform specified ports into list and ranges.
 
