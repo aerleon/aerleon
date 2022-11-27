@@ -906,9 +906,8 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
             # building individual address-group dictionary
             for nested_group in groups:
-                group_names = []
-                for ip in self.addressbook.addressbook[''][nested_group]:
-                    group_names.append(ip.parent_token)
+                group_names = [i for i in address_book_names_dict.keys() if nested_group in i]
+                
                 address_book_groups_dict[nested_group] = group_names
 
         # sort address books and address sets
