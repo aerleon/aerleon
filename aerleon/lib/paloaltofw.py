@@ -895,7 +895,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         for group in groups:
             count = 0
             for ip in self.addressbook.addressbook[''][group]:
-                
                 name = f'{ip.parent_token}_{count}'
                 count = count + 1
                 address = ip.with_prefixlen
@@ -917,6 +916,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         address_book_keys = sorted(
             list(address_book_names_dict.keys()), key=self._SortAddressBookNumCheck
         )
+        
         # INITAL CONFIG
         config = etree.Element("config", {"version": "8.1.0", "urldb": "paloaltonetworks"})
         devices = etree.SubElement(config, "devices")
