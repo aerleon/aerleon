@@ -1,6 +1,5 @@
 """YAML front-end. Loads a Policy model from a .pol.yaml file."""
 
-import os
 import pathlib
 from typing import Tuple
 import yaml
