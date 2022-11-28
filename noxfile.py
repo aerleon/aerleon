@@ -26,6 +26,7 @@ def coverage(session):
     session.run("coverage", "run")
     session.run("coverage", "report")
     session.run("coverage", "html")
+    session.run("coverage", "xml")
 
 
 @session(python="3.10")
