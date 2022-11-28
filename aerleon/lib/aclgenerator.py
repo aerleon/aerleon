@@ -182,8 +182,8 @@ class Term:
         if (
             protocols != ['icmp']
             and protocols != ['icmpv6']
-            and protocols != self.PROTO_MAP['icmp']
-            and protocols != self.PROTO_MAP['icmpv6']
+            and protocols != [self.PROTO_MAP['icmp']]
+            and protocols != [self.PROTO_MAP['icmpv6']]
         ):
             raise UnsupportedFilterError(
                 '%s %s' % ('icmp-types specified for non-icmp protocols in term: ', self.term.name)
