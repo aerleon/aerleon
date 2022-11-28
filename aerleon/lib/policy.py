@@ -133,6 +133,8 @@ class InvalidTermTTLValue(Error):
 class MixedPortandNonPortProtos(Error):
     """Error when protocols that use ports are mixed with protocols that do not"""
 
+class InvalidNumericProtoValue(Error):
+    """Error when protocols are numeric and not between -1 and 255."""
 
 def TranslatePorts(ports, protocols, term_name):
     """Return all ports of all protocols requested.
@@ -1384,6 +1386,13 @@ class Term:
                 raise InvalidTermTTLValue(
                     'Term %s contains invalid TTL: %s' % (self.name, self.ttl)
                 )
+        for proto in self.protocol:
+            if proto.isnumeric():
+              iproto = int(proto)
+              if iproto > 255  or 0 > iproto:
+                  raise InvalidNumericProtoValue(
+                      f'Term {self.name} can only have a numeric protocol value between 0 and 255: {self.protocol}'
+                  )
 
     def AddressCleanup(self, optimize=True, addressbook=False):
         """Do Address and Port collapsing.
