@@ -21,7 +21,7 @@ include = [
     "LICENSE",
     "README.md",
 ]
-packages = [{include = "aerleon"}]
+packages = [{include = "aerleon"}, {include = "aerleon/lib"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
