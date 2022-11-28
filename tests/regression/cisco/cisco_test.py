@@ -937,7 +937,28 @@ class CiscoTest(absltest.TestCase):
         )
         self.assertIn(('remark 5:0x169ef02a512c5b28!8m2!3d37.4220579!4d-122.084' '0897'), str(acl))
         print(acl)
-
+    
+    @capture.stdout
+    def testNumericProtocols(self):
+      
+      pol = policy.ParsePolicy(
+        """header {
+  comment:: "Test policy for numeric proto"
+  target:: cisco ProtoTest extended
+  target:: ciscoxr ProtoTest extended
+}
+term allow-ntp-numeric-proto {
+  comment:: "Allow example ntp servers"
+  destination-address:: NTP_SERVERS
+  protocol:: 50
+  action:: accept
+}
+term default {
+  action:: deny
+}""",self.naming)
+      acl = cisco.Cisco(pol, EXP_INFO)
+      print(acl)
+      self.assertIn('permit 50 any any', str(acl))
 
 if __name__ == '__main__':
     absltest.main()
