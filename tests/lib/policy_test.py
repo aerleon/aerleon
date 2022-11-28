@@ -1769,9 +1769,9 @@ class PolicyTest(parameterized.TestCase):
     @parameterized.named_parameters(
         ('TestLowestValid', ['0'], True),
         ('SingleValidProto', ['1'], True),
-        ('MultipleValid', ['1','2'], True),
+        ('MultipleValid', ['1', '2'], True),
         ('SingleInvalid', ['999'], False),
-        ('ValidThenInvalid', ['58', '555'], False)        
+        ('ValidThenInvalid', ['58', '555'], False),
     )
     def testInvalidNumbericProtocol(self, protocol, ok):
         TERM = f"""
@@ -1784,7 +1784,9 @@ term bad-term-16 {{
             result = policy.ParsePolicy(pol, self.naming)
             self.assertIn(str(protocol), str(result))
         else:
-            self.assertRaises(policy.InvalidNumericProtoValue, policy.ParsePolicy, pol, self.naming)
+            self.assertRaises(
+                policy.InvalidNumericProtoValue, policy.ParsePolicy, pol, self.naming
+            )
 
 
 if __name__ == '__main__':
