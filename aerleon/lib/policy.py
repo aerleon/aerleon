@@ -1389,7 +1389,7 @@ class Term:
                 )
         for proto in self.protocol:
             if proto.isnumeric():
-                if 0 > int(proto) > 255:
+                if int(proto) < 0  or 255 < int(proto):
                     raise InvalidNumericProtoValue(
                         f'Term {self.name} has protocol={self.protocol}. Numeric protocol values must be between 0 and 255.'
                     )
