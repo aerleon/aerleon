@@ -121,10 +121,6 @@ class ACLParserError(Error):
     """Raised when the ACL parser fails."""
 
 
-class ACLGeneratorNotFoundError(Error):
-    """Raised when a target platform is specified but no generator is found for that platform."""
-
-
 def SkipLines(text, skip_line_func=False):
     """Apply skip_line_func to the given text.
 
@@ -228,11 +224,11 @@ def RenderFile(
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', input_file, e)
         return
-    except (policy.Error, naming.Error):
+    except (policy.Error, naming.Error) as e:
         raise ACLParserError(
             'Error parsing policy file %s:\n%s%s'
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
-        )
+        ) from e
 
     platforms = set()
     for header in pol.headers:
@@ -242,10 +238,10 @@ def RenderFile(
     plugin_supervisor.PluginSupervisor.Start()
 
     for target in platforms:
-        try:
-            generator = plugin_supervisor.PluginSupervisor.generators.get(target)
-        except KeyError:
-            raise ACLGeneratorNotFoundError
+        generator = plugin_supervisor.PluginSupervisor.generators.get(target)
+        if not generator:
+            logging.warning(f"No generator found for target \"{target}\", skipping target.")
+            continue
 
         try:
             # special handling for pcap
@@ -271,7 +267,9 @@ def RenderFile(
                 RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError('Error generating target ACL for %s:\n%s' % (input_file, e))
+            raise ACLGeneratorError(
+                'Error generating target ACL for %s:\n%s' % (input_file, e)
+            ) from e
 
 
 def RenderACL(
