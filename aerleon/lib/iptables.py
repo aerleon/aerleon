@@ -207,12 +207,12 @@ class Term(aclgenerator.Term):
             self.term.destination_address_exclude,
         )
         if not term_saddr:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
             )
             return ''
         if not term_daddr:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(
                     term=self.term.name, direction='destination', af=self.af
                 )
