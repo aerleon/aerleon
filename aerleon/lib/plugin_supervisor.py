@@ -1,20 +1,11 @@
-"""Plug-in Supervisor.
+"""Plugin Supervisor.
 
 ## Configuring the Plug-in Supervisor
 
-PluginSupervisor.initPlugins will by default search for and load any installed
-packages with a plug-in entrypoint matching "aerleon.plugin". It can be
-configured with the following options:
+PluginSupervisor.Start() will by default search for and load any installed
+packages with a plugin entrypoint matching "aerleon.plugin".
 
-    ignore - a list of plug-ins to ignore, given by package name.
-    include - a list of plug-ins to include, given by package name. Through this
-        option, plug-in packages can be included if they are present in the same
-        Python installation but not registered through the normal Python plugin
-        entrypoint system. Plug-ins included this way are expeted to implement a
-        top-level function called "AerleonPlugin" that returns an instance of
-        aerleon.lib.Plugin .
-
-## Plug-in Lifecycle
+## Plugin Lifecycle
 
 Aerleon does "interrogate" each plug-in on start-up. During the interrogation
 process, Aerleon determines:
@@ -50,8 +41,10 @@ undocumented and subject to change.
 """
 from __future__ import annotations
 
-from collections import OrderedDict
 from dataclasses import dataclass
+from importlib import import_module
+import importlib.util
+import pathlib
 import sys
 from typing import Annotated, Tuple
 
@@ -64,25 +57,71 @@ from absl import logging
 
 from aerleon.lib import plugin
 
+__all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", "SystemMetadata"]
+
+
+class _PluginSupervisor:
+    is_setup: bool
+    plugins: list[Tuple]
+    generators: dict
+
+    def __init__(self):
+        self.is_setup = False
+
+    def Start(self, config: PluginSupervisorConfiguration = None):
+        setup = _PluginSetup(config)
+        self.plugins, self.generators = setup.plugins, setup.generators
+        self.is_setup = True
+
+
+__doc_PluginSupervisor__ = """Singleton PluginSupervisor instance."""
+PluginSupervisor = _PluginSupervisor()
+
 
 @dataclass
 class SystemMetadata:
     engine_version: str
 
 
-SYSTEM_METADATA: SystemMetadata = Annotated[
-    SystemMetadata(engine_version=version("aerleon")),
-    """Public module constant system metadata.""",
+__doc_SYSTEM_METADATA__ = """Public module constant system metadata."""
+SYSTEM_METADATA: SystemMetadata = SystemMetadata(engine_version=version("aerleon"))
+
+__doc_BUILTIN_PLUGINS__ = (
+    """Built-in plugins included with this project. These will always be loaded.""",
+)
+BUILTIN_GENERATORS: list[Tuple] = [
+    # fmt: off
+    #Target                  Module                              Constructor
+    ('juniper',              'aerleon.lib.juniper',              'Juniper'),
+    ('juniperevo',           'aerleon.lib.juniperevo',           'JuniperEvo'),
+    ('msmpc',                'aerleon.lib.junipermsmpc',         'JuniperMSMPC'),
+    ('srx',                  'aerleon.lib.junipersrx',           'JuniperSRX'),
+    ('cisco',                'aerleon.lib.cisco',                'Cisco'),
+    ('ciscoasa',             'aerleon.lib.ciscoasa',             'CiscoASA'),
+    ('aruba',                'aerleon.lib.aruba',                'Aruba'),
+    ('brocade',              'aerleon.lib.brocade',              'Brocade'),
+    ('arista',               'aerleon.lib.arista',               'Arista'),
+    ('arista_tp',            'aerleon.lib.arista_tp',            'AristaTrafficPolicy'),
+    ('ipset',                'aerleon.lib.ipset',                'Ipset'),
+    ('iptables',             'aerleon.lib.iptables',             'Iptables'),
+    ('nsxv',                 'aerleon.lib.nsxv',                 'Nsxv'),
+    ('openconfig',           'aerleon.lib.openconfig',           'OpenConfig'),
+    ('speedway',             'aerleon.lib.speedway',             'Speedway'),
+    ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
+    ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
+    ('packetfilter',         'aerleon.lib.packetfilter',         'PacketFilter'),
+    ('windows_advfirewall',  'aerleon.lib.windows_advfirewall',  'WindowsAdvFirewall'),
+    ('srxlo',                'aerleon.lib.srxlo',                'SRXlo'),
+    ('cisconx',              'aerleon.lib.cisconx',              'CiscoNX'),
+    ('ciscoxr',              'aerleon.lib.ciscoxr',              'CiscoXR'),
+    ('nftables',             'aerleon.lib.nftables',             'Nftables'),
+    ('gce',                  'aerleon.lib.gce',                  'GCE'),
+    ('gcp_hf',               'aerleon.lib.gcp_hf',               'HierarchicalFirewall'),
+    ('paloalto',             'aerleon.lib.paloaltofw',           'PaloAltoFW'),
+    ('cloudarmor',           'aerleon.lib.cloudarmor',           'CloudArmor'),
+    ('k8s',                  'aerleon.lib.k8s',                  'K8s'),
+    # fmt: on
 ]
-
-# TODO just use a single list with state vars
-SYSTEM_PLUGINS: list[Tuple] = list()
-
-_plugins_loaded = list()
-_plugins_active = list()
-_plugins_inactive = list()
-
-_generator_table = OrderedDict()
 
 
 class PluginSetupCollisionError(Exception):
@@ -92,92 +131,168 @@ class PluginSetupCollisionError(Exception):
 @dataclass
 class PluginSupervisorConfiguration:
     """
-    ignore - a list of plug-ins to ignore, given by package name.
-    include - a list of plug-ins to include, given by package name. Through this
-        option, plug-in packages can be included if they are present in the same
-        Python installation but not registered through the normal Python plugin
-        entrypoint system. Plug-ins included this way are expeted to implement a
-        top-level function called "AerleonPlugin" that returns an instance of
-        aerleon.lib.Plugin .
+    Attributes:
+        disable_discovery: Plugin discovery via pip will not be performed if True. Consider
+            this setting if plugin discovery is not needed and problematic modules are present
+            in this pip installation or discovery is taking a long time.
+
+        disable_plugin: A list of discovered plugins to ignore, given by plugin name. Consider
+            this setting if one or more specific plugins are causing problems.
+
+        disable_builtin: A list of built-in generators to ignore, given by module name (e.g.
+            'juniper'). Use this setting if you plan to use an alternative generator for
+            a firewall platform with built-in support.
+
+        include_path: A list of plug-ins to include, given by package name. Through this
+            option, plug-in packages can be included if they are present in the same
+            Python installation but not registered through the normal Python plugin
+            entrypoint system. Plug-ins included this way are expeted to implement a
+            top-level function called "AerleonPlugin" that returns an instance of
+            aerleon.lib.Plugin .
     """
 
-    ignore: list[str] = None
-    include: list[str] = None
+    disable_discovery: bool = False
+    disable_plugin: list[str] = None
+    disable_builtin: list[str] = None
+    include_path: list[list[str]] = None
 
 
-def initPlugins(config: PluginSupervisorConfiguration = None):
+class _PluginSetup:
     """
     Discover, load, interrogate and initialize all available plugins.
 
-    config - an instance of PluginSupervisorConfiguration.
+    Attributes:
+        generators: All generators loaded from plugins.
+        plugins: All loaded plugins.
+        disable_discovery: See PluginSupervisorConfiguration.
+        disable_plugin: See PluginSupervisorConfiguration.
+        disable_builtin: See PluginSupervisorConfiguration.
+        include_path: See PluginSupervisorConfiguration.
     """
-    config_ignore = None
-    config_include = None
-    if config is not None:
-        if config.ignore is not None:
-            config_ignore = config.ignore
-        if config.include is not None:
-            config_include = config.include
 
-    ep_plugins = entry_points(group='aerleon.plugin')
-    # TODO(jb) implement config_include, find a way to extend the EntryPoints list
+    disable_discovery: bool = False
+    disable_plugin: list[str] = None
+    disable_builtin: list[str] = None
+    include_path: list[list[str]] = None
+    
+    generators = {}
+    plugins = []
 
-    for ep_plugin in ep_plugins:
-        if config_ignore is not None and ep_plugin.name in config_ignore:
-            continue
+    def __init__(self, config: PluginSupervisorConfiguration = None):
+        """Initialize self.generators, self.plugins."""
 
-        try:
-            loaded_plugin = ep_plugin.load()
-            _plugins_loaded.append(loaded_plugin)
-            plugin_instance = loaded_plugin()
-            metadata = plugin_instance.getMetadata(SYSTEM_METADATA)
-        except plugin.PluginCompatibilityError as exception:
-            logging.warning(
-                f"Ignoring plugin {ep_plugin.name=}: Aerleon version not supported by plugin. {SYSTEM_METADATA.engine_version=}",  # noqa E501
-                exc_info=exception,
-            )
-            _plugins_inactive.append((ep_plugin, exception))
-            continue
-        except Exception as exception:
-            logging.warning(f"Failed to load plugin {ep_plugin.name=}", exc_info=exception)
-            _plugins_inactive.append((ep_plugin, exception))
-            continue
+        # Apply configuration if provided
+        if config is not None:
+            self.disable_discovery = getattr(config, 'disable_discovery', False)
+            self.disable_plugin = getattr(config, 'disable_plugin', None)
+            self.disable_builtin = getattr(config, 'disable_builtin', None)
+            self.include_path = getattr(config, 'include_path', None)
 
-        if not isinstance(metadata, plugin.PluginMetadata) or any(
-            filter(lambda c: not isinstance(c, plugin.PluginCapability), metadata.capabilities)
-        ):
-            logging.warning(
-                f"Ignoring plugin {ep_plugin.name=}: non-compliant plugin. {SYSTEM_METADATA.engine_version=}"  # noqa E501
-            )
+        # Initialize generator list with built-in generators
+        self.generators.update(self._CollectBuiltinGenerators(BUILTIN_GENERATORS))
 
-        if plugin.PluginCapability.GENERATOR not in metadata.capabilities:
-            continue
+        # Collect plugins from various sources
+        loaded_plugins = []
+        if not self.disable_discovery:
+            loaded_plugins.extend(self._CollectEntrypointPlugins())
+        if self.include_path:
+            loaded_plugins.extend(self._CollectPluginsByPath())
 
-        try:
-            plugin_generator_items = plugin_instance.generators.items()
-        except Exception as exception:
-            logging.warning(
-                f"Ignoring plugin {ep_plugin.name=}: crashed during setup", exc_info=exception
-            )
-            continue
-        _plugins_active.append((ep_plugin, metadata))
+        # Attempt to load, initialize, interrogate, and register generators from each plugin
+        for plugin_name, loaded_plugin in loaded_plugins:
 
-        for target, constructor in plugin_generator_items:
-            target_generator = _generator_table.setdefault(target, constructor)
-            if target_generator != constructor:
-                # collision: two plugins claim to provide support for the same platform
-                raise PluginSetupCollisionError(
-                    f"Plugin misconfiguration: more than one plugin is installed for {target=}. Plugin 1: {target_generator}. Plugin 2: {constructor}."  # noqa E501
+            # Initialize entrypoint class or function and request metadata
+            try:
+                plugin_instance: plugin.BasePlugin = loaded_plugin()
+                metadata = plugin_instance.RequestMetadata(SYSTEM_METADATA)
+                if not isinstance(metadata, plugin.PluginMetadata) or any(
+                    filter(
+                        lambda c: not isinstance(c, plugin.PluginCapability), metadata.capabilities
+                    )
+                ):
+                    logging.warning(
+                        f"Ignoring plugin {plugin_name=}: unrecognized plugin metadata format. {SYSTEM_METADATA.engine_version=}"  # noqa E501
+                    )
+                    continue
+                self.plugins.append((loaded_plugin, metadata))
+            except plugin.PluginCompatibilityError as exception:
+                logging.warning(
+                    f"Ignoring plugin {plugin_name=}: Aerleon version not supported by plugin. {SYSTEM_METADATA.engine_version=}",  # noqa E501
+                    exc_info=exception,
                 )
+                continue
 
-    logging.info(f"{len(_plugins_active)} plugins active.")
+            # Register generators
+            if plugin.PluginCapability.GENERATOR not in metadata.capabilities:
+                logging.warning(
+                    f"Ignoring plugin {plugin_name=}: GENERATOR capability not found. {SYSTEM_METADATA.engine_version=}"  # noqa E501
+                )
+                continue
 
+            try:
+                plugin_generator_items = plugin_instance.generators
+            except Exception as exception:
+                logging.warning(
+                    f"Plugin {plugin_name=} crashed while registering generator.",
+                    exc_info=exception,
+                )
+                continue
 
-def getGenerator(target):
-    """Locates the generator that supports the target platform."""
-    return _generator_table[target]
+            for target, constructor in plugin_generator_items.items():
+                found = self.generators.setdefault(target, constructor)
+                if found != constructor:
+                    # collision: two plugins claim to provide support for the same platform
+                    raise PluginSetupCollisionError(
+                        f"Plugin misconfiguration: more than one plugin is installed for {target=}. Plugin 1: {found}. Plugin 2: {constructor}."  # noqa E501
+                    )
 
+        logging.info(f"{len(self.plugins)} plugins active.")
+        logging.info(f"{len(self.generators)} generators registered.")
 
-def getGenerators():
-    """Return all loaded generators"""
-    return _generator_table
+    def _CollectEntrypointPlugins(self):
+        """Locate and import modules using entrypoint discovery."""
+        loaded_plugins = []
+        for ep_plugin in entry_points(group='aerleon.plugin'):
+            if self.disable_plugin and ep_plugin.name in self.disable_plugin:
+                continue
+            try:
+                loaded_plugins.append((ep_plugin.name, ep_plugin.load()))
+            except Exception as exception:
+                logging.warning(f"Failed to load plugin {ep_plugin.name=}", exc_info=exception)
+                continue
+        return loaded_plugins
+
+    def _CollectPluginsByPath(self):
+        """Import modules given by file path."""
+        loaded_plugins = []
+        for module_name, file_path, klass_or_func in self.include_path:
+            try:
+                file_path = pathlib.Path(file_path)
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                loaded_plugins.append((module_name, getattr(module, klass_or_func)))
+            except Exception as exception:
+                logging.warning(
+                    f"Failed to load plugin module={module_name}, class={klass_or_func} at {file_path=}",
+                    exc_info=exception,
+                )
+                continue
+        return loaded_plugins
+
+    def _CollectBuiltinGenerators(self, builtin_generators):
+        """Import built-in modules by name."""
+        loaded_generators = []
+        for target, module_name, klass_or_func in builtin_generators:
+            if self.disable_builtin and module_name in self.disable_builtin or target in self.disable_builtin:
+                continue
+            try:
+                module = import_module(module_name)
+                loaded_generators.append((target, getattr(module, klass_or_func)))
+            except Exception as exception:
+                logging.warning(
+                    f"Failed to load built-in generator module={module_name}, class={klass_or_func}",
+                    exc_info=exception,
+                )
+                continue
+        return loaded_generators
