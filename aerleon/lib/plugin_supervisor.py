@@ -284,7 +284,7 @@ class _PluginSetup:
         """Import built-in modules by name."""
         loaded_generators = []
         for target, module_name, klass_or_func in builtin_generators:
-            if self.disable_builtin and module_name in self.disable_builtin or target in self.disable_builtin:
+            if self.disable_builtin and (module_name in self.disable_builtin or target in self.disable_builtin):
                 continue
             try:
                 module = import_module(module_name)
