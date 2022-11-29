@@ -65,8 +65,12 @@ methods __init__() and Generate().
 
 from __future__ import annotations
 
+import typing
 from dataclasses import dataclass
 from enum import Enum
+
+if typing.TYPE_CHECKING:
+    from aerleon.lib import aclgenerator
 
 
 class PluginCompatibilityError(BaseException):
@@ -107,13 +111,5 @@ class BasePlugin:
         raise NotImplementedError
 
     @property
-    def generators(self) -> dict[str, BaseGenerator]:
-        raise NotImplementedError
-
-
-class BaseGenerator:
-    def __init__(self):
-        raise NotImplementedError
-
-    def generate(self):
+    def generators(self) -> dict[str, aclgenerator.ACLGenerator]:
         raise NotImplementedError
