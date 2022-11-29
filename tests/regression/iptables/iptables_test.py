@@ -466,6 +466,12 @@ term good-warning-term {
   action:: accept
 }
 """
+BAD_ICMP_TERM = """
+term permit-icmp {
+	protocol:: icmp icmpv6
+	action:: accept
+}
+"""
 
 SUPPORTED_TOKENS = {
     'action',
@@ -1391,6 +1397,15 @@ class AclCheckTest(absltest.TestCase):
         )
         print(acl)
 
+    def testMixedICMPWarns(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + BAD_ICMP_TERM, self.naming)
+        with self.assertLogs(level='WARNING') as log:
+            acl = iptables.Iptables(pol, EXP_INFO)
+            self.assertIn(
+                "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet6 address family.",
+                ''.join(log.output),
+            )
+
 
 YAML_GOOD_HEADER_1 = """
 filters:
@@ -1813,7 +1828,11 @@ YAML_GOOD_WARNING_TERM = """
     policer: batman
     action: accept
 """
-
+YAML_BAD_ICMP_TERM= """
+  - name: 
+    protocol: icmp icmpv6
+    action: accept
+"""
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
@@ -1902,6 +1921,7 @@ class IPTablesYAMLTest(AclCheckTest):
             SOURCE_INTERFACE_TERM=YAML_SOURCE_INTERFACE_TERM,
             DESTINATION_INTERFACE_TERM=YAML_DESTINATION_INTERFACE_TERM,
             GOOD_WARNING_TERM=YAML_GOOD_WARNING_TERM,
+            BAD_ICMP_TERM=YAML_BAD_ICMP_TERM,
         )
 
 
