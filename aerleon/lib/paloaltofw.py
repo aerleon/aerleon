@@ -25,7 +25,7 @@ from aerleon.lib import nacaddr
 from aerleon.lib import policy
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """generic error class."""
 
 

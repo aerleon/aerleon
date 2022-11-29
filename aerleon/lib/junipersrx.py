@@ -36,7 +36,7 @@ def JunipersrxList(name, data):
     return '%s [ %s ];' % (name, ' '.join(data))
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """generic error class."""
 
 

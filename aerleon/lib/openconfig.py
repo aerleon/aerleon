@@ -29,11 +29,10 @@ import re
 from typing import Dict, Any
 
 from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
 from collections import defaultdict
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 

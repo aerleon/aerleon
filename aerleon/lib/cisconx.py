@@ -18,7 +18,7 @@ from aerleon.lib import aclgenerator
 from aerleon.lib import cisco
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 

@@ -18,7 +18,7 @@
 from aerleon.lib import cisco
 
 
-class Error(Exception):
+class Error(cisco.Error):
     """Base error class."""
 
 
