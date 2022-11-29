@@ -36,28 +36,20 @@ _ACTION_TABLE = {
 
 
 # generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
-
-    pass
 
 
 class UnsupportedCiscoAccessListError(Error):
     """Raised when we're give a non named access list."""
 
-    pass
-
 
 class StandardAclTermError(Error):
     """Raised when there is a problem in a standard access list."""
 
-    pass
-
 
 class NoCiscoPolicyError(Error):
     """Raised when a policy is errantly passed to this module for rendering."""
-
-    pass
 
 
 class Term(cisco.Term):

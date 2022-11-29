@@ -125,7 +125,7 @@ class JuniperEvo(juniper.Juniper):
     _TERM = Term
 
 
-class Error(Exception):
+class Error(juniper.Error):
     pass
 
 

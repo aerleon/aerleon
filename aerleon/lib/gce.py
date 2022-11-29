@@ -33,7 +33,7 @@ from aerleon.lib import gcp
 from aerleon.lib import nacaddr
 
 
-class Error(Exception):
+class Error(gcp.Error):
     """Generic error class."""
 
 

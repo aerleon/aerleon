@@ -33,7 +33,7 @@ from absl import logging
 from aerleon.lib import aclgenerator
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 

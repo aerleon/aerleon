@@ -13,7 +13,7 @@ from aerleon.lib import aclgenerator
 
 
 # Generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 

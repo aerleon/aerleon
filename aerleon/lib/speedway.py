@@ -19,7 +19,7 @@ from string import Template
 from aerleon.lib import iptables
 
 
-class Error(Exception):
+class Error(iptables.Error):
     pass
 
 

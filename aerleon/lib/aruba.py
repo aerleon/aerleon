@@ -25,7 +25,7 @@ _COMMENT_MARKER = '#'
 _TERMINATOR_MARKER = '!'
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 

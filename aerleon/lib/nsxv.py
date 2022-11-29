@@ -83,7 +83,7 @@ _NSXV_SUPPORTED_KEYWORDS = [
 
 
 # generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
     pass

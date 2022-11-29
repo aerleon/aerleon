@@ -37,7 +37,7 @@ _COMMENT_MAX_WIDTH = 70
 
 
 # generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 
@@ -510,11 +510,8 @@ class Term(aclgenerator.Term):
         ret_str = ['\n']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
-        if (
-            (self.af == 6 and 'icmp' in self.term.protocol)
-            or (self.af == 6 and self.PROTO_MAP['icmp'] in self.term.protocol)
-            or (self.af == 4 and 'icmpv6' in self.term.protocol)
-            or (self.af == 4 and self.PROTO_MAP['icmpv6'] in self.term.protocol)
+        if (self.af == 6 and 'icmp' in self.term.protocol) or (
+            self.af == 4 and 'icmpv6' in self.term.protocol
         ):
             logging.debug(
                 self.NO_AF_LOG_PROTO.substitute(
@@ -547,14 +544,11 @@ class Term(aclgenerator.Term):
                 protocol = ['ipv4']
             else:
                 protocol = ['ip']
-        elif self.term.protocol == ['hopopt'] or self.term.protocol == self.PROTO_MAP['hopopt']:
+        elif self.term.protocol == ['hopopt']:
             protocol = ['hbh']
         elif self.proto_int:
-
             protocol = [
-                proto
-                if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
-                else self.PROTO_MAP.get(proto)
+                proto if proto in self.ALLOWED_PROTO_STRINGS else self.PROTO_MAP.get(proto)
                 for proto in self.term.protocol
             ]
         else:
@@ -897,9 +891,7 @@ class ObjectGroupTerm(Term):
 
         else:
             protocol = [
-                proto
-                if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
-                else self.PROTO_MAP.get(proto)
+                proto if proto in self.ALLOWED_PROTO_STRINGS else self.PROTO_MAP.get(proto)
                 for proto in self.term.protocol
             ]
 

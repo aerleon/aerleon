@@ -25,7 +25,7 @@ from aerleon.lib import aclgenerator
 from aerleon.lib import nacaddr
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 
