@@ -165,34 +165,6 @@ def RenderFile(
     logging.debug('rendering file: %s into %s', input_file, output_directory)
 
     pol = None
-    jcl = False
-    evojcl = False
-    acl = False
-    atp = False
-    asacl = False
-    aacl = False
-    bacl = False
-    eacl = False
-    gca = False
-    gcefw = False
-    gcphf = False
-    ips = False
-    ipt = False
-    msmpc = False
-    spd = False
-    nsx = False
-    oc = False
-    pcap_accept = False
-    pcap_deny = False
-    pf = False
-    srx = False
-    jsl = False
-    nft = False
-    win_afw = False
-    nxacl = False
-    xacl = False
-    paloalto = False
-    k8s_pol = False
 
     try:
         with open(input_file) as f:
@@ -230,6 +202,16 @@ def RenderFile(
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
 
+    RenderPolicy(pol, input_file, output_directory, exp_info, write_files)
+
+
+def RenderPolicy(
+    pol: policy.Policy,
+    input_file: pathlib.Path,
+    output_directory: pathlib.Path,
+    exp_info: int,
+    write_files: WriteList,
+):
     platforms = set()
     for header in pol.headers:
         platforms.update(header.platforms)
