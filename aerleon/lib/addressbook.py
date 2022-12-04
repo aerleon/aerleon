@@ -9,7 +9,7 @@ class Addressbook:
     self.addressbook = collections.OrderedDict()
 
   def AddAddresses(self, zone, address_list):
-        """Create the address book configuration entries.
+        """Create the address book configuration entries. 
 
         Args:
           zone: the zone these objects will reside in
