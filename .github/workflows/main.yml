@@ -23,9 +23,10 @@ jobs:
       with:
         path: main
         ref: main
-    - name: Install poetry
-      run: sudo apt install poetry
-    - name: Install dependencies
+    - name: "Install Poetry"
+      run: "curl -sSL https://install.python-poetry.org | python -"
+      shell: "bash"
+    - name: "Add poetry to bin"
+      run: "ln -s /root/.local/bin/poetry /usr/local/bin/poetry"
+    - name: Install Dependencies
       run: poetry install
-    - name: Run tests
-      run: nox -s test
