@@ -1,5 +1,4 @@
-# Our 
-
+# Our Pledge
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation, neurodiversity.
 
 We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
@@ -31,7 +30,7 @@ Community leaders have the right and responsibility to remove, edit, or reject c
 This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces. Examples of representing our community include using an official e-mail address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
 
 # Enforcement
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [INSERT CONTACT METHOD]. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement. All complaints will be reviewed and investigated promptly and fairly. Please see the [Community Leader](#Community-Leaders) section for contact information.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -57,6 +56,12 @@ Community leaders will follow these Community Impact Guidelines in determining t
 **Community Impact:** Demonstrating a pattern of violation of community standards, including sustained inappropriate behavior, harassment of an individual, or aggression toward or disparagement of classes of individuals.
 
 **Consequence:** A permanent ban from any sort of public interaction within the community.
+
+# Community Leaders
+
+Rob Ankeny <ankenyr@gmail.com>
+
+Jason Benterou <jason.benterou@gmail.com>
 
 # Attribution
 This Code of Conduct is adapted from the Contributor Covenant, version 2.1, available at https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
