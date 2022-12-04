@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Renders policy source files into actual Access Control Lists."""
+"""Renders policy source files into  actual Access Control Lists."""
 
 import copy
 import multiprocessing
