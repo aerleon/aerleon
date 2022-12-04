@@ -18,11 +18,11 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: current
-    - name: Checkout master branch
+    - name: Checkout main branch
       uses: actions/checkout@v2
       with:
-        path: master
-        ref: master
+        path: main
+        ref: main
     - name: Install poetry
       run: sudo apt install poetry
     - name: Install dependencies
