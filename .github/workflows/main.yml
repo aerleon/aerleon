@@ -29,4 +29,4 @@ jobs:
     - name: "Add poetry to bin"
       run: "ln -s /root/.local/bin/poetry /usr/local/bin/poetry"
     - name: Install Dependencies
-      run: poetry install
+      run: tree /
