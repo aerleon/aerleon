@@ -31,12 +31,6 @@ GOOD_PORTS_1 = {
             "protocol": "tcp",
             "port": 80,
         },
-    ],
-    "SVC1": [
-        {
-            "protocol": "tcp",
-            "port": 80,
-        },
         {
             "protocol": "udp",
             "port": 81,
