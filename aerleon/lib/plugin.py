@@ -111,5 +111,5 @@ class BasePlugin:
         raise NotImplementedError
 
     @property
-    def generators(self) -> dict[str, aclgenerator.ACLGenerator]:
+    def generators(self) -> "dict[str, aclgenerator.ACLGenerator]":
         raise NotImplementedError
