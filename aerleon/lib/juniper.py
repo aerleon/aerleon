@@ -23,7 +23,7 @@ from aerleon.lib import summarizer
 
 
 # generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     pass
 
 

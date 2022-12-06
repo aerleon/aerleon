@@ -746,7 +746,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         return str(target) + '\n'
 
 
-class Error(Exception):
+class Error(juniper.Error):
     pass
 
 

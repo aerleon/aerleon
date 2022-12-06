@@ -37,7 +37,7 @@ _COMMENT_MAX_WIDTH = 70
 
 
 # generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 

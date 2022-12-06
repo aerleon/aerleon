@@ -961,7 +961,7 @@ class Iptables(aclgenerator.ACLGenerator):
         return '\n'.join(target)
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 

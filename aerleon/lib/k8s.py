@@ -28,7 +28,7 @@ from aerleon.lib import aclgenerator
 import yaml
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 

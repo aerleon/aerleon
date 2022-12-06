@@ -56,7 +56,7 @@ MAX_COMMENT_LENGTH = 60
 # generic error class
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     pass
 
 
