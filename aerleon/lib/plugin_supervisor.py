@@ -46,7 +46,7 @@ from importlib import import_module
 import importlib.util
 import pathlib
 import sys
-from typing import Annotated, Tuple
+from typing import Tuple
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points, version
@@ -211,13 +211,13 @@ class _PluginSetup:
                     )
                 ):
                     logging.warning(
-                        f"Ignoring plugin {plugin_name=}: unrecognized plugin metadata format. {SYSTEM_METADATA.engine_version=}"  # noqa E501
+                        f"Ignoring plugin {plugin_name}: unrecognized plugin metadata format. engine_version={SYSTEM_METADATA.engine_version}"  # noqa E501
                     )
                     continue
                 self.plugins.append((loaded_plugin, metadata))
             except plugin.PluginCompatibilityError as exception:
                 logging.warning(
-                    f"Ignoring plugin {plugin_name=}: Aerleon version not supported by plugin. {SYSTEM_METADATA.engine_version=}",  # noqa E501
+                    f"Ignoring plugin {plugin_name}: Aerleon version not supported by plugin. engine_version={SYSTEM_METADATA.engine_version}",  # noqa E501
                     exc_info=exception,
                 )
                 continue
@@ -225,7 +225,7 @@ class _PluginSetup:
             # Register generators
             if plugin.PluginCapability.GENERATOR not in metadata.capabilities:
                 logging.warning(
-                    f"Ignoring plugin {plugin_name=}: GENERATOR capability not found. {SYSTEM_METADATA.engine_version=}"  # noqa E501
+                    f"Ignoring plugin {plugin_name}: GENERATOR capability not found. engine_version={SYSTEM_METADATA.engine_version}"  # noqa E501
                 )
                 continue
 
@@ -233,7 +233,7 @@ class _PluginSetup:
                 plugin_generator_items = plugin_instance.generators
             except Exception as exception:
                 logging.warning(
-                    f"Plugin {plugin_name=} crashed while registering generator.",
+                    f"Plugin {plugin_name} crashed while registering generator.",
                     exc_info=exception,
                 )
                 continue
@@ -243,7 +243,7 @@ class _PluginSetup:
                 if found != constructor:
                     # collision: two plugins claim to provide support for the same platform
                     raise PluginSetupCollisionError(
-                        f"Plugin misconfiguration: more than one plugin is installed for {target=}. Plugin 1: {found}. Plugin 2: {constructor}."  # noqa E501
+                        f"Plugin misconfiguration: more than one plugin is installed for {target}. Plugin 1: {found}. Plugin 2: {constructor}."  # noqa E501
                     )
 
         logging.info(f"{len(self.plugins)} plugins active.")
@@ -258,7 +258,7 @@ class _PluginSetup:
             try:
                 loaded_plugins.append((ep_plugin.name, ep_plugin.load()))
             except Exception as exception:
-                logging.warning(f"Failed to load plugin {ep_plugin.name=}", exc_info=exception)
+                logging.warning(f"Failed to load plugin {ep_plugin.name}", exc_info=exception)
                 continue
         return loaded_plugins
 
@@ -274,7 +274,7 @@ class _PluginSetup:
                 loaded_plugins.append((module_name, getattr(module, klass_or_func)))
             except Exception as exception:
                 logging.warning(
-                    f"Failed to load plugin module={module_name}, class={klass_or_func} at {file_path=}",
+                    f"Failed to load plugin module={module_name}, class={klass_or_func} at {file_path}",
                     exc_info=exception,
                 )
                 continue
@@ -283,15 +283,15 @@ class _PluginSetup:
     def _CollectBuiltinGenerators(self, builtin_generators):
         """Import built-in modules by name."""
         loaded_generators = []
-        for target, module_name, klass_or_func in builtin_generators:
+        for target, module_name, class_or_func in builtin_generators:
             if self.disable_builtin and (module_name in self.disable_builtin or target in self.disable_builtin):
                 continue
             try:
                 module = import_module(module_name)
-                loaded_generators.append((target, getattr(module, klass_or_func)))
+                loaded_generators.append((target, getattr(module, class_or_func)))
             except Exception as exception:
                 logging.warning(
-                    f"Failed to load built-in generator module={module_name}, class={klass_or_func}",
+                    f"Failed to load built-in generator module={module_name}, class={class_or_func}",
                     exc_info=exception,
                 )
                 continue

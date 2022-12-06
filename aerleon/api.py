@@ -26,7 +26,7 @@ def Generate(
     optimize=False,
     shade_check=False,
     exp_info=2,
-) -> dict[str, str]:
+) -> "dict[str, str]":
 
     context = multiprocessing.get_context()
     return _Generate(
@@ -51,7 +51,7 @@ def _Generate(
     shade_check=False,
     exp_info=2,
     max_renderers=1,
-) -> dict[str, str]:
+) -> "dict[str, str]":
 
     definitions = naming.Naming()
     definitions.ParseServiceList(_BuildNamingLines(service_names, "services"))
@@ -201,7 +201,7 @@ def _GenerateACL(
             ) from e
 
 
-def _BuildNamingLines(data: dict[str, dict], definition_type: str):
+def _BuildNamingLines(data: "dict[str, str]", definition_type: str):
     """Convert to Naming line format.
 
     Arguments:

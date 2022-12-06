@@ -224,7 +224,7 @@ class TUnion(TComposition):
         of: A list of allowed types. The input must match one of these types.
     """
 
-    of: list[TValue | TComposition]
+    of: "list[TValue | TComposition]"
 
     def Recognize(self, value):
         """Match and parse the input value using the list of sub-recognizers given in the 'of'
@@ -256,7 +256,7 @@ class TList(TComposition):
         collapsible: Whether a list with a single item can be given directly.
     """
 
-    of: TValue | TComposition
+    of: "TValue | TComposition"
     collapsible: bool = False
 
     def Recognize(self, value):
@@ -343,7 +343,7 @@ class TSection(TComposition):
             any value recognized by the given recognizer.
     """
 
-    of: list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]
+    of: "list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]"
 
     def Recognize(self, value: dict):
         """Match and parse the input value using the list of rules given in the 'of' class attribute.
