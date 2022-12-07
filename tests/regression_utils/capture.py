@@ -61,7 +61,7 @@ def mock_half_open(config):
 
 
 def _collapse_mock_writes(open_mocks, key):
-    return "".join([str(c.args[0]) for c in list(open_mocks[key]().write.mock_calls)])
+    return "".join([str(c[1][0]) for c in list(open_mocks[key]().write.mock_calls)])
 
 
 def _normalize_path(path):

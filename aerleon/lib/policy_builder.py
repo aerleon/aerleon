@@ -29,7 +29,7 @@ from aerleon.lib.recognizers import (
     TListStrCollapsible,
 )
 
-if sys.version_info <= (3, 8):
+if sys.version_info < (3, 9):
     from typing_extensions import Annotated
 else:
     from typing import Annotated
