@@ -1,0 +1,10 @@
+clear configure access-list test-filter
+access-list test-filter remark $Id:$
+access-list test-filter remark $Date:$
+access-list test-filter remark $Revision:$
+access-list test-filter remark this is a test acl
+
+
+access-list test-filter remark verbatim-term
+foo bar
+biz baz

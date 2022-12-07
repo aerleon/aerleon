@@ -21,6 +21,8 @@ from aerleon.lib import ciscoasa
 from aerleon.lib import naming
 from aerleon.lib import policy
 
+from tests.regression_utils import capture
+
 GOOD_HEADER = """
 header {
   comment:: "this is a test acl"
@@ -43,6 +45,12 @@ term good-term-2 {
 }
 """
 
+VERBATIM_TERM = """
+term verbatim-term {
+    verbatim:: ciscoasa "foo bar"
+    verbatim:: ciscoasa "biz baz"
+}
+"""
 SUPPORTED_TOKENS = {
     'action',
     'comment',
@@ -141,6 +149,14 @@ class CiscoASATest(absltest.TestCase):
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
+    @capture.stdout
+    def testVerbatim(self):
+        pol = ciscoasa.CiscoASA(
+            policy.ParsePolicy(GOOD_HEADER + VERBATIM_TERM, self.naming), EXP_INFO
+            )
+        print(pol)
+        expect = 'access-list test-filter remark verbatim-term\nfoo bar\nbiz baz'
+        self.assertIn(expect, str(pol))
 
 if __name__ == '__main__':
     absltest.main()
