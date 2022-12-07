@@ -47,7 +47,7 @@ class UserMessage:
     message: str
     filename: str
     line: int
-    include_chain: list[Tuple[str, int]]
+    include_chain: "list[Tuple[str, int]]"
 
     def __init__(self, message, *, filename, line=None, include_chain=None):
         self.message = message
@@ -75,7 +75,7 @@ class UserMessage:
         if self.include_chain is not None and len(self.include_chain) > 1:
             error_context += "\nInclude stack:"
             for i, (File, Line) in enumerate(self.include_chain):
-                error_context += f"\n> {File=}, {Line=}"
+                error_context += f"\n> File='{File}', Line={Line}"
                 if i == 0:
                     error_context += " (Top Level)"
         return error_context

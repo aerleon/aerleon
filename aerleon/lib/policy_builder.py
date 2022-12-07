@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 import enum
 import typing
-from typing import Annotated
+import sys
 
 from absl import logging
 
@@ -29,6 +29,11 @@ from aerleon.lib.recognizers import (
     TListStrCollapsible,
 )
 
+if sys.version_info < (3, 9):
+    from typing_extensions import Annotated
+else:
+    from typing import Annotated
+
 if typing.TYPE_CHECKING:
     from aerleon.lib import naming
 
@@ -51,8 +56,8 @@ class RawFilterHeader:
         kvs: A mapping containing any other key/value pairs in the header.
     """
 
-    targets: dict[str, RawTarget]
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    targets: typing.Dict[str, RawTarget]
+    kvs: typing.Dict[str, typing.Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -65,7 +70,7 @@ class RawTerm:
     """
 
     name: str
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    kvs: typing.Dict[str, typing.Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -78,7 +83,7 @@ class RawFilter:
     """
 
     header: RawFilterHeader
-    terms: list[RawTerm]
+    terms: "list[RawTerm]"
 
 
 @dataclass
@@ -91,7 +96,7 @@ class RawPolicy:
     """
 
     filename: str
-    filters: list[RawFilter]
+    filters: "list[RawFilter]"
 
 
 class PolicyBuilder:
@@ -138,7 +143,13 @@ class PolicyBuilder:
     optimize: bool
     shade_check: bool
 
-    def __init__(self, raw_policy: RawPolicy, definitions: "naming.Naming", optimize=False, shade_check=False):
+    def __init__(
+        self,
+        raw_policy: RawPolicy,
+        definitions: "naming.Naming",
+        optimize=False,
+        shade_check=False,
+    ):
         self.raw_policy = raw_policy
         self.definitions = definitions
         self.optimize = optimize
@@ -289,7 +300,7 @@ class PolicyBuilder:
 # ### BUILTINS ###
 # The following section deals with the recognition and normalization of built-in keywords.
 
-BUILTIN_SPEC: dict[str, TValue | TComposition] = {
+BUILTIN_SPEC: "dict[str, TValue | TComposition]" = {
     # fmt: off
     'apply-groups':               TListStrCollapsible,
     'apply-groups-except':        TListStrCollapsible,
@@ -504,7 +515,7 @@ class _Builtin:
         return cls(keyname, *cls.BUILTINS[keyname])
 
     @property
-    def recognizer(self) -> TValue | TComposition:
+    def recognizer(self) -> "TValue | TComposition":
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 

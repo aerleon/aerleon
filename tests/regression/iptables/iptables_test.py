@@ -1292,29 +1292,29 @@ class AclCheckTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('IPV6_INTERNAL')
         print(result)
 
-    @mock.patch.object(iptables.logging, 'debug')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    @mock.patch.object(iptables.logging, 'warning')
+    def testIcmpv6InetMismatch(self, mock_warning):
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + IPV6_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term inet6-icmp will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(iptables.logging, 'debug')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    @mock.patch.object(iptables.logging, 'warning')
+    def testIcmpInet6Mismatch(self, mock_warning):
         acl = iptables.Iptables(
             policy.ParsePolicy(IPV6_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-1 will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'
@@ -1401,10 +1401,11 @@ class AclCheckTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + BAD_ICMP_TERM, self.naming)
         with self.assertLogs(level='WARNING') as log:
             acl = iptables.Iptables(pol, EXP_INFO)
-            self.assertIn(
-                "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet6 address family.",
-                ''.join(log.output),
-            )
+            result = str(acl)
+        self.assertIn(
+            "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet address family.",
+            ''.join(log.output),
+        )
 
 
 YAML_GOOD_HEADER_1 = """
@@ -1829,7 +1830,7 @@ YAML_GOOD_WARNING_TERM = """
     action: accept
 """
 YAML_BAD_ICMP_TERM= """
-  - name: 
+  - name: permit-icmp
     protocol: icmp icmpv6
     action: accept
 """
