@@ -943,7 +943,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         )
 
         # INITAL CONFIG
-        config = etree.Element("config", collections.OrderedDict(urldb="paloaltonetworks", version= "8.1.0"))
+        config = etree.Element("config", {"urldb": "paloaltonetworks", "version": "8.1.0"})
         devices = etree.SubElement(config, "devices")
         device_entry = etree.SubElement(devices, "entry", {"name": "localhost.localdomain"})
         vsys = etree.SubElement(device_entry, "vsys")
