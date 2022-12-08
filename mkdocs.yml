@@ -1,7 +1,7 @@
 ---
 dev_addr: "127.0.0.1:8001"
 edit_uri: "edit/develop/docs"
-site_dir: "aerleon/static/aerleon/docs"
+site_dir: "site/docs"
 site_name: "Aerleon Documentation"
 site_url: "https://aerleon.readthedocs.io/en/latest/"
 repo_url: "https://github.com/ankben/aerleon"
