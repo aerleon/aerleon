@@ -2,14 +2,14 @@
 
 The cisconx header designation has the following format:
 ```
-target:: cisconx [filter name] {extended|object-group|inet6|mixed} {dsmo}
+target:: cisconx [filter name] {extended|object-group|inet6|mixed} {enable_dsmo}
 ```
   * _filter name_: defines the name or number of the cisconx filter.
   * _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
   * _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
   * _inet6_: specifies the output be for IPv6 only filters.
   * _mixed_: specifies output will include both IPv6 and IPv4 filters.
-  * _dsmo_: Enable discontinuous subnet mask summarization.
+  * _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
 The default format is _inet4_, and is implied if not other argument is given.
 
