@@ -57,12 +57,6 @@ Community leaders will follow these Community Impact Guidelines in determining t
 
 **Consequence:** A permanent ban from any sort of public interaction within the community.
 
-# Community Leaders
-
-Rob Ankeny <ankenyr@gmail.com>
-
-Jason Benterou <jason.benterou@gmail.com>
-
 # Attribution
 This Code of Conduct is adapted from the Contributor Covenant, version 2.1, available at https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
 
