@@ -45,6 +45,7 @@ psutil = {version = "^5.9.2"}
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
+aclsearch = "aerleon.aclsearch:EntryPoint"
 
 [build-system]
 requires = ["poetry-core"]
