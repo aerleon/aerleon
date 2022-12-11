@@ -516,7 +516,7 @@ class Term(aclgenerator.Term):
             or (self.af == 4 and 'icmpv6' in self.term.protocol)
             or (self.af == 4 and self.PROTO_MAP['icmpv6'] in self.term.protocol)
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=', '.join(self.term.protocol), af=self.text_af
                 )
@@ -575,7 +575,7 @@ class Term(aclgenerator.Term):
             if source_address_exclude:
                 source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
             if not source_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='source', af=self.text_af
                     )
@@ -598,7 +598,7 @@ class Term(aclgenerator.Term):
                     destination_address, destination_address_exclude
                 )
             if not destination_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='destination', af=self.text_af
                     )

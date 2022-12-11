@@ -493,7 +493,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     )
                     continue
                 if set(['established', 'tcp-established']).intersection(term.option):
-                    logging.debug(
+                    logging.warning(
                         'Skipping established term %s because SRX is stateful.', term.name
                     )
                     continue
