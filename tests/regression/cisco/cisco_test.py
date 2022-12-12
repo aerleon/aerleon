@@ -771,7 +771,7 @@ class CiscoTest(absltest.TestCase):
         self.assertTrue(re.search('permit 58 any any 3', str(acl)), str(acl))
         print(acl)
 
-    @mock.patch.object(cisco.logging, 'debug')
+    @mock.patch.object(cisco.logging, 'warning')
     def testIcmpv6InetMismatch(self, mock_debug):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_11, self.naming), EXP_INFO)
         # output happens in __str_
@@ -783,7 +783,7 @@ class CiscoTest(absltest.TestCase):
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(cisco.logging, 'debug')
+    @mock.patch.object(cisco.logging, 'warning')
     def testIcmpInet6Mismatch(self, mock_debug):
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_1, self.naming), EXP_INFO

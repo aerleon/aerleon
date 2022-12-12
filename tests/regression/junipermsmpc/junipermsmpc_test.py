@@ -855,7 +855,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         # ensure an _INET entry for each _TERM_TYPE entry
         self.assertCountEqual(junipermsmpc.Term._TERM_TYPE.keys(), junipermsmpc.Term.AF_MAP.keys())
 
-    @mock.patch.object(junipermsmpc.logging, 'debug')
+    @mock.patch.object(junipermsmpc.logging, 'warning')
     def testIcmpv6InetMismatch(self, mock_debug):
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_1, self.naming), EXP_INFO
@@ -869,7 +869,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(junipermsmpc.logging, 'debug')
+    @mock.patch.object(junipermsmpc.logging, 'warning')
     def testIcmpInet6Mismatch(self, mock_debug):
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER_V6 + BAD_ICMPTYPE_TERM_2, self.naming), EXP_INFO

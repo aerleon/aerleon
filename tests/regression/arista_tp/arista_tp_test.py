@@ -905,7 +905,7 @@ class AristaTpTest(absltest.TestCase):
         self.assertIn(" log\n", output)
         print(atp)
 
-    @mock.patch.object(arista_tp.logging, "debug")
+    @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testIcmpv6InetMismatch(self, mock_debug):
         atp = arista_tp.AristaTrafficPolicy(
@@ -920,7 +920,7 @@ class AristaTpTest(absltest.TestCase):
         )
         print(atp)
 
-    @mock.patch.object(arista_tp.logging, "debug")
+    @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testIcmpInet6Mismatch(self, mock_debug):
         atp = arista_tp.AristaTrafficPolicy(
@@ -937,7 +937,7 @@ class AristaTpTest(absltest.TestCase):
         print(atp)
 
     # icmptype-mismatch test for mixed filter type
-    @mock.patch.object(arista_tp.logging, "debug")
+    @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testIcmpMismatchMixedInet(self, mock_debug):
         atp = arista_tp.AristaTrafficPolicy(
@@ -953,7 +953,7 @@ class AristaTpTest(absltest.TestCase):
         )
         print(atp)
 
-    @mock.patch.object(arista_tp.logging, "debug")
+    @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testIcmpMismatchMixedInet6(self, mock_debug):
         atp = arista_tp.AristaTrafficPolicy(

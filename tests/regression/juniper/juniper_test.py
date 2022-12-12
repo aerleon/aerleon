@@ -1394,7 +1394,7 @@ class JuniperTest(parameterized.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
         print(output)
 
-    @mock.patch.object(juniper.logging, 'debug')
+    @mock.patch.object(juniper.logging, 'warning')
     def testIcmpv6InetMismatch(self, mock_debug):
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_1, self.naming), EXP_INFO
@@ -1408,7 +1408,7 @@ class JuniperTest(parameterized.TestCase):
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(juniper.logging, 'debug')
+    @mock.patch.object(juniper.logging, 'warning')
     def testIcmpInet6Mismatch(self, mock_debug):
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_V6 + BAD_ICMPTYPE_TERM_2, self.naming), EXP_INFO
