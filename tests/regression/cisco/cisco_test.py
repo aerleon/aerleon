@@ -772,26 +772,26 @@ class CiscoTest(absltest.TestCase):
         print(acl)
 
     @mock.patch.object(cisco.logging, 'warning')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    def testIcmpv6InetMismatch(self, mock_warning):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_11, self.naming), EXP_INFO)
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-11 will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
     @mock.patch.object(cisco.logging, 'warning')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    def testIcmpInet6Mismatch(self, mock_warning):
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-1 will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'
