@@ -130,7 +130,7 @@ class Term(aclgenerator.Term):
         # source address
         term_saddrs = self._CheckAddressAf(self.term.source_address)
         if not term_saddrs:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
             )
             return ''
@@ -142,7 +142,7 @@ class Term(aclgenerator.Term):
         # destination address
         term_daddrs = self._CheckAddressAf(self.term.destination_address)
         if not term_daddrs:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(
                     term=self.term.name, direction='destination', af=self.af
                 )
