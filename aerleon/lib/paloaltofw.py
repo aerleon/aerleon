@@ -887,7 +887,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         # Name to IP addresses
         address_book_names_dict = {}
         address_book_groups_dict = {}
-        #{'GROUPA_0': IPv4('1.1.1.1/32'), 'GROUPA_1': IPv4('2.2.2.2/32'), 'GROUPA_2': IPv4('3.3.3.3/32'), 'GROUPC_0': IPv4('10.0.0.0/8'), 'INTO_C_0': IPv4('10.0.0.2/32'), 'INTO_C_1': IPv4('192.168.1.1/32'), 'WEB_SERVERS_0': IPv4('200.1.1.1/32'), 'WEB_SERVERS_1': IPv4('200.1.1.2/32'), 'GROUPB_0': IPv4('1.1.1.1/32'), 'GROUPB_1': IPv4('4.4.4.4/32'), 'RFC1918_0': IPv4('10.0.0.0/8'), 'RFC1918_1': IPv4('172.16.0.0/12'), 'RFC1918_2': IPv4('192.168.0.0/16')}
         try:
           groups = sorted(self.addressbook.addressbook[''].keys())
         except:
