@@ -1,3 +1,6 @@
+![GitHub](https://img.shields.io/github/license/aerleon/aerleon) [![PyPI version](https://badge.fury.io/py/aerleon.svg)](https://badge.fury.io/py/aerleon) ![PyPI - Status](https://img.shields.io/pypi/status/aerleon) ![PyPI - Downloads](https://img.shields.io/pypi/dm/aerleon)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/main.yml?branch=main) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon)
+
 # Aerleon
 
 Generate firewall configs for multiple platforms at once.
@@ -24,7 +27,7 @@ ACLs from high-level policy files.
 
 Each [policy file](#policy-files) in the input directory is visited and ACLs are
 generated from the _term_ and _header_ blocks within. ACLs are then rendered to
-one or more platform-specific configs according to the ‘target’ keyword(s) used.
+one or more platform-specific configs according to the 'target' keyword(s) used.
 
 Symbolic names can be used for IP networks, hosts, and services defined in the
 [Address Book](#address-book).
