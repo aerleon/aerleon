@@ -336,6 +336,49 @@ class CiscoXRTest(absltest.TestCase):
         self.assertIn('permit tcp any', str(acl))
         print(acl)
 
+    #@capture.stdout
+    def test174(self):
+        pol = """
+            header {
+  target:: ciscoxr INBOUND_INTERNET_V4 object-group
+}
 
+term accept-tcp-replies {
+  comment:: "Allow tcp replies to internal hosts."
+  destination-address:: INTERNAL
+  protocol:: tcp
+  option:: established
+  action:: accept
+}
+
+term permit-offices {
+  comment:: "Allow Remote Offices"
+  destination-address:: REMOTE_OFFICES
+  action:: accept
+}
+
+term permit-login-queue {
+  comment:: "Allow Login Queue Servers"
+  destination-address:: LQ_SERVERS
+  protocol:: tcp
+  destination-port:: LOGINQUEUE
+  action:: accept
+  logging:: true
+}
+
+term default-permit {
+  comment:: "Allow what's left."
+  action:: deny
+}
+            """
+        definitions = naming.Naming()
+        definitions._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        definitions._ParseLine('REMOTE_OFFICES = 200.1.0.0/19 200.2.1.0/24 200.5.1.0/24 2620:0:10a1::/48', 'networks')
+        definitions._ParseLine('LQ_SERVERS = 10.0.0.64/29', 'networks')
+        definitions._ParseLine('LOGINQUEUE = 80/tcp 443/tcp', 'services')
+        pol = ciscoxr.CiscoXR(
+            policy.ParsePolicy(pol, definitions), EXP_INFO
+        )
+        print(pol)
 if __name__ == '__main__':
     absltest.main()
