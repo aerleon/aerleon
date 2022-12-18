@@ -2,7 +2,7 @@
 
 ## Install the App
 
-To install the App, please follow the instructions detailed in the [Installation Guide](../admin/install.md).
+To install the App, please follow the instructions detailed in the [Installation Guide](../user/install.md).
 
 ## Add Addresses
 

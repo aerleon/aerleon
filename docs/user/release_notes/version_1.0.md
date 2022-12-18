@@ -16,7 +16,7 @@ This document describes all new features and changes in the release `1.0`. The f
 
 ### Fixed
 
-- [#123](https://github.com/ankben/aerleon/issues/123) Fixed major issue
+- [#123](https://github.com/aerleon/aerleon/issues/123) Fixed major issue
 
 ## [v1.0.0] - 2021-08-03
 
