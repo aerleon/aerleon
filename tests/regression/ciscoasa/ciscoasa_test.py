@@ -188,7 +188,6 @@ class CiscoASATest(parameterized.TestCase):
             nacaddr.IPv4('10.0.1.0/24'),
         ]
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
-        print(pol)
         self.assertIn(expected, str(pol))
 
 

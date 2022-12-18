@@ -230,25 +230,25 @@ class Term(cisco.Term):
                 saddr = '%s %s' % (saddr.network_address, saddr.netmask)
             else:
                 saddr = 'host %s' % (saddr.network_address)
-        if isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
+        elif isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
             daddr = cast(self.IPV4_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = '%s %s' % (daddr.network_address, daddr.netmask)
             else:
                 daddr = 'host %s' % (daddr.network_address)
-        if isinstance(saddr, summarizer.DSMNet):
+        elif isinstance(saddr, summarizer.DSMNet):
             saddr = '%s %s' % summarizer.ToDottedQuad(saddr, negate=False)
 
         if isinstance(daddr, summarizer.DSMNet):
             daddr = '%s %s' % summarizer.ToDottedQuad(daddr, negate=False)
         # inet6
-        if isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
+        elif isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
             saddr = cast(self.IPV6_ADDRESS, saddr)
             if saddr.num_addresses > 1:
                 saddr = '%s/%s' % (saddr.network_address, saddr.prefixlen)
             else:
                 saddr = 'host %s' % (saddr.network_address)
-        if isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
+        elif isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
             daddr = cast(self.IPV6_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = '%s/%s' % (daddr.network_address, daddr.prefixlen)
