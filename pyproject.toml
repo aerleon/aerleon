@@ -5,8 +5,8 @@ description = "A firewall generation tool"
 authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/ankben/aerleon"
-repository = "https://github.com/ankben/aerleon"
+homepage = "https://github.com/aerleon/aerleon"
+repository = "https://github.com/aerleon/aerleon"
 keywords = ["firewall", "networking", "security"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

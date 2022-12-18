@@ -4,7 +4,7 @@ edit_uri: "edit/develop/docs"
 site_dir: "site/docs"
 site_name: "Aerleon Documentation"
 site_url: "https://aerleon.readthedocs.io/en/latest/"
-repo_url: "https://github.com/ankben/aerleon"
+repo_url: "https://github.com/aerleon/aerleon"
 copyright: "Copyright &copy; The Authors"
 theme: readthedocs
 
@@ -15,7 +15,7 @@ extra:
       link: "https://slack.networktocode.com/"
       name: "Network to Code Community"
     - icon: "fontawesome/brands/github"
-      link: "https://github.com/ankben"
+      link: "https://github.com/aerleon"
       name: "GitHub Organization"
     - icon: "fontawesome/brands/twitter"
       link: "https://twitter.com/<tbd>"
@@ -51,6 +51,9 @@ nav:
   - Overview: "index.md"
   - User Guide:
       - Library Overview: "user/lib_overview.md"
+      - Install and Configure: "user/install.md"
+      - Upgrade: "user/upgrade.md"
+      - Uninstall: "user/uninstall.md"
       - Getting Started: "user/lib_getting_started.md"
       - Address Files: "user/lib_address.md"
       - Service Files: "user/lib_service.md"
@@ -82,13 +85,9 @@ nav:
           - srxlo: "user/generators/srxlo.md"
           - windows_advfirewall.md: "user/generators/windows_advfirewall.md"
       - Frequently Asked Questions: "user/faq.md"
-  - Administrator Guide:
-      - Install and Configure: "admin/install.md"
-      - Upgrade: "admin/upgrade.md"
-      - Uninstall: "admin/uninstall.md"
       - Release Notes:
-          - "admin/release_notes/index.md"
-          - v1.0: "admin/release_notes/version_1.0.md"
+          - "user/release_notes/index.md"
+          - v1.0: "user/release_notes/version_1.0.md"
   - Developer Guide:
       - Extending the Library: "dev/extending.md"
       - Contributing to the Library: "dev/contributing.md"
