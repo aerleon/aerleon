@@ -5,7 +5,7 @@
 
 Generate firewall configs for multiple platforms at once.
 
-Aerleon is a fork of Capirca with the following enhancements:
+Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following enhancements:
 
 - Support for new firewall platforms can be added through plugins. Plugins for
   common platforms are built-in. Users with experimental or non-public platforms
@@ -216,7 +216,7 @@ information on how to approach code changes to this project.
 
 ## Resources
 
-Aerleon is a fork of Capirca.
+Aerleon is a fork of [Capirca](https://github.com/google/capirca).
 
 Additional documentation:
 
@@ -230,6 +230,7 @@ External links, resources and references:
 
 - [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
+- [Aerleon Slack](https://aerleon.slack.com/)
 - [#aerleon at NetworkToCode Slack](https://networktocode.slack.com/)
 
 ## Credit
