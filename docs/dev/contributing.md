@@ -21,8 +21,6 @@ The branching policy includes the following tenets:
 
 Aerleon will observe semantic versioning. This may result in an quick turn around in minor versions to keep pace with an ever growing feature set.
 
-TODO: Confirm that main will be primary branch.
-
 ## Release Policy
 
 Aerleon has currently no intended scheduled release schedule, and will release new features in minor versions.

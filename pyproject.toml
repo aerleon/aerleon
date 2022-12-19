@@ -85,7 +85,7 @@ exclude = '''
 [tool.flake8]
 max-complexity = 10
 max-line-length = 99
-extend-ignore = ['E203']
+extend-ignore = ['E203', 'C901']
 exclude = ['.git','.github','venv','site-packages','__pycache__','doc','build','dist','policies']
 
 [tool.coverage.run]
