@@ -52,8 +52,6 @@ nav:
   - User Guide:
       - Library Overview: "user/lib_overview.md"
       - Install and Configure: "user/install.md"
-      - Upgrade: "user/upgrade.md"
-      - Uninstall: "user/uninstall.md"
       - Getting Started: "user/lib_getting_started.md"
       - Address Files: "user/lib_address.md"
       - Service Files: "user/lib_service.md"
