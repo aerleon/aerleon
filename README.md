@@ -230,6 +230,7 @@ External links, resources and references:
 
 - [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
+- [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
 - [Aerleon Slack](https://aerleon.slack.com/)
 - [#aerleon at NetworkToCode Slack](https://networktocode.slack.com/)
 
