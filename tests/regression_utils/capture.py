@@ -177,7 +177,11 @@ def stdout(func):
     def inner(self, *args, **kwargs):
         with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             retval = func(self, *args, **kwargs)
-            file_base = ".".join([func.__qualname__, "stdout"])
+            if 'name' in kwargs:
+                file_base = ".".join([kwargs['name'], "stdout"])
+                
+            else:
+                file_base = ".".join([func.__qualname__, "stdout"])
             file_ref = ".".join([file_base, "ref"])
             try:
                 with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:

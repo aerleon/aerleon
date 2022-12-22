@@ -64,6 +64,7 @@ term good-dst-term-3 {
     action:: accept
 }
 """
+
 VERBATIM_TERM = """
 term verbatim-term {
     verbatim:: ciscoasa "foo bar"
@@ -178,18 +179,28 @@ class CiscoASATest(parameterized.TestCase):
         expect = 'access-list test-filter remark verbatim-term\nfoo bar\nbiz baz'
         self.assertIn(expect, str(pol))
 
-    @parameterized.named_parameters(
+    # @capture.stdout
+    def printer(self, pol, **kwargs):
+         pol = ciscoasa.CiscoASA(pol, EXP_INFO)
+         print(pol)
+         return pol
+
+    @parameterized.parameters(
         ('source', GOOD_TERM_3, 'permit ip 10.0.0.0 255.255.254.0 any'),
         ('destination', GOOD_TERM_4, 'permit ip any 10.0.0.0 255.255.254.0'),
     )
-    def testDSMO(self, term, expected):
+    
+    def testDSMO(self, name, term, expected):
         self.naming.GetNetAddr.return_value = [
             nacaddr.IP('10.0.0.0/24'),
             nacaddr.IPv4('10.0.1.0/24'),
         ]
-        pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
+        
+        foo = policy.ParsePolicy(DSMO_HEADER + term, self.naming)
+        pol = self.printer(foo, name=name)
         self.assertIn(expected, str(pol))
 
-
+    def testAll(self):
+        ciscoasa.CiscoASA
 if __name__ == '__main__':
     absltest.main()
