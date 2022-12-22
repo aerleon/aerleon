@@ -20,6 +20,7 @@ from unittest import mock
 from aerleon.lib import ciscoasa
 from aerleon.lib import naming
 from aerleon.lib import policy
+from tests.regression import test_terms
 
 GOOD_HEADER = """
 header {
@@ -27,20 +28,13 @@ header {
   target:: ciscoasa test-filter
 }
 """
-
-GOOD_TERM_1 = """
-term good-term-1 {
-  verbatim:: ciscoasa "mary had a little lamb"
-  verbatim:: iptables "mary had second lamb"
-  verbatim:: juniper "mary had third lamb"
-}
-"""
-
-GOOD_TERM_2 = """
-term good-term-2 {
-  verbatim:: ciscoasa "mary had a little lamb"
-  policer:: batman
-}
+YAML_GOOD_HEADER = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      ciscoasa: test-filter
+  terms:
 """
 
 SUPPORTED_TOKENS = {
@@ -119,28 +113,56 @@ SUPPORTED_SUB_TOKENS = {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-
+YAML_MAP = test_terms.GetTermMap()
 class CiscoASATest(absltest.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
 
     def testBuildTokens(self):
+        print()
         pol1 = ciscoasa.CiscoASA(
-            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER + YAML_MAP.VERBATIM_TERM, self.naming), EXP_INFO
         )
+        
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
         pol1 = ciscoasa.CiscoASA(
-            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER + YAML_MAP.CISCOASA_POLICER_TERM, self.naming), EXP_INFO
         )
         st, sst = pol1._BuildTokens()
+        
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
+class CiscoASAYAMLTest(CiscoASATest):
+    def setUp(self):
+        super().setUp()
+        # patch policy.ParsePolicy into a wrapper that calls YAML.load_str
+        self.patchers = [mock.patch.object(policy, 'ParsePolicy', test_terms._YamlParsePolicy)]
+        [patcher.start() for patcher in self.patchers]
+        self.setUpFixtures()
 
+    def tearDown(self):
+        [patcher.stop() for patcher in self.patchers]
+        self.tearDownFixtures()
+
+    def tearDownFixtures(self):
+        self.fixture_patcher.stop()
+
+    def setUpFixtures(self):
+        self.fixture_patcher = mock.patch.multiple(
+            'ciscoasa_test',
+            GOOD_HEADER=YAML_GOOD_HEADER,
+            **YAML_MAP
+        )
+        self.fixture_patcher.start()
+    def testFailFlexibleMatch(self):
+        # The parent test asserts that invalid flexmatch configuration crashes the run
+        # The YAML parser will reject the flexmatch rule with a warning.
+        self.assertTrue(True)
 if __name__ == '__main__':
     absltest.main()
