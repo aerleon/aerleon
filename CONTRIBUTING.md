@@ -3,10 +3,13 @@
 Thank you for your curiosity on how to contribute! There are many different ways to help out. Please see below for different ways.
 
 ## Community Engagement
-The easiest way to contribute is to engage with the community. Join our slack, make a blog post, join discussions. Getting the project name to people who could use it is one of the most impactful things you can do. If you have ideas on places we should be engaging in ourselves, conferences we should be attending, please let us know!
+The easiest way to contribute is to engage with the community. Join our [slack](https://aerleon.slack.com/), make a blog post, join discussions. Getting the project name to people who could use it is one of the most impactful things you can do. If you have ideas on places we should be engaging in ourselves, conferences we should be attending, please let us know!
 
 ## Sponsorships
-If you are using Aerleon and wish to sponsor us, please visit the following link where you can do that. Sponsorships help pay for development and hardware costs.
+Sponsorships our project is a great opprtunity for companies or individuals to show their support for and investment in our community. It shows commitment to collaborating with us and advancing the project. If you would like to sponsor us there are multiple ways in which you can, including but not limited to
+
+* Donating money via [insert links]
+* Donating hardware we can use to test against
 
 ## File issues
 No one likes bugs, especially us! If you think you found one please file an issue. Be as detailed as possible in your description including example files to replicate the issue. This will help us to expedite a fix as quickly as possible. Even better, submit the fix with the issue! If the issue is possibly a vulnerability, please instead see our [SECURITY.md](SECURITY.md) file instead on how to report.
