@@ -29,8 +29,6 @@ Writing code can include adding new features or fixing issues that have been rep
 We have adopted [Black](https://github.com/ambv/black) as our code formatter. This takes a lot of guesswork out of formatting our code. The code we forked from adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) which we still adopt where it does not conflict with Black. Generally this means following the [Language Rules](https://google.github.io/styleguide/pyguide.html#s2-python-language-rules) while ignoring the [Style Rules](https://google.github.io/styleguide/pyguide.html#s3-python-style-rules)
 
 ## Testing
-After modifying any code we recommend you run tests
-
 ```
 poetry run pytest
 ```
