@@ -15,7 +15,7 @@ Sponsorships our project is a great opprtunity for companies or individuals to s
 No one likes bugs, especially us! If you think you found one please file an issue. Be as detailed as possible in your description including example files to replicate the issue. This will help us to expedite a fix as quickly as possible. Even better, submit the fix with the issue! If the issue is possibly a vulnerability, please instead see our [SECURITY.md](SECURITY.md) file instead on how to report.
 
 ## Documentation
-Writing documentation can sometimes be thankless work. We however appreciate it! Wether it is writing an entire new page providing a tutorial, fixing a single typo or anything inbetween.
+Writing documentation can sometimes be thankless work. We, however, appreciate it! Whether it is writing an entire new page providing a tutorial, fixing a single typo or anything in between.
 
 ## Code contributions
 Writing code can include adding new features or fixing issues that have been reported. To get started with contributing code you will want to familiarize yourself with our guidelines and tools.
