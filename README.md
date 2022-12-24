@@ -222,9 +222,9 @@ General discussions can be had either in [Github Discussions](https://github.com
 You can always reach out to us on  [Slack]((https://aerleon.slack.com/)
 You many also reach out to us via e-mail
 
-Rob Ankeny (ankenyr@gmail.com)
+Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
 
-Jason Benterou (jason.benterou@gmail.com)
+Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 
 ## Resources
 
