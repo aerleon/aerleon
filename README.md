@@ -211,6 +211,21 @@ conduct for this project.
 The [Getting Started With Source](wiki/getting-started-source.md) guide has
 information on how to approach code changes to this project.
 
+## Contact
+
+Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues)
+
+General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server]((https://aerleon.slack.com/)
+
+### Contact Maintainers
+
+You can always reach out to us on  [Slack]((https://aerleon.slack.com/)
+You many also reach out to us via e-mail
+
+Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
+
+Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
+
 ## Resources
 
 Aerleon is a fork of Capirca.
