@@ -6,7 +6,7 @@ Thank you for your curiosity on how to contribute! There are many different ways
 The easiest way to contribute is to engage with the community. Join our [slack](https://aerleon.slack.com/), make a blog post, join discussions. Getting the project name to people who could use it is one of the most impactful things you can do. If you have ideas on places we should be engaging in ourselves, conferences we should be attending, please let us know!
 
 ## Sponsorships
-Sponsorships our project is a great opprtunity for companies or individuals to show their support for and investment in our community. It shows commitment to collaborating with us and advancing the project. If you would like to sponsor us there are multiple ways in which you can, including but not limited to
+Sponsoring our project is a great opportunity for companies or individuals to show their support for and investment in our community. It shows commitment to collaborating with us and advancing the project. If you would like to sponsor us there are multiple ways in which you can, including but not limited to:
 
 * Monetary: Donating money is the most straightforward way of showing support for the project. It will go towards paying for licenses and fees incurred in running the project, aquiring hardware needed to validate ACLs, or paying our time in supporting the project.
 * Hardware: We try to validate our project against harware, either virtual or physical. If believe you have hardware that would be helpful for the project to have, please reach out and [contact us](README.md#Contact).
