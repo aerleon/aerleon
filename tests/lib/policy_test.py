@@ -1137,7 +1137,8 @@ class PolicyTest(parameterized.TestCase):
 
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
-    def testShadingDetection(self):
+    @mock.patch.object(policy.logging, "warning")
+    def testShadingDetection(self, mock_logger):
         pol2 = HEADER + GOOD_TERM_2 + GOOD_TERM_3
         self.naming.GetNetAddr.side_effect = [
             [nacaddr.IPv4('10.0.0.0/8')],
@@ -1146,13 +1147,13 @@ class PolicyTest(parameterized.TestCase):
         self.naming.GetServiceByProto.return_value = ['25']
 
         # same protocol, same saddr, shaded term defines a port.
-        self.assertRaises(
-            policy.ShadingError, policy.ParsePolicy, pol2, self.naming, shade_check=True
-        )
+        _ = policy.ParsePolicy(pol2, self.naming, shade_check=True)
 
         self.naming.GetNetAddr.assert_has_calls(
             [mock.call('PROD_NETWRK'), mock.call('PROD_NETWRK')]
         )
+        mock_logger.assert_called_with('good-term-3 is shaded by good-term-2')
+
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
 
     def testVpnConfigWithoutPairPolicy(self):
@@ -1267,9 +1268,7 @@ class PolicyTest(parameterized.TestCase):
 
     def testShadeCheckConsistency(self):
         pol = HEADER + TERM_SUPER_3 + TERM_SUB_2
-        self.assertRaises(
-            policy.ShadingError, policy.ParsePolicy, pol, self.naming, shade_check=True
-        )
+        _ = policy.ParsePolicy(pol, self.naming, shade_check=True)
         self.assertTrue(policy._SHADE_CHECK)
         _ = policy.ParsePolicy(pol, self.naming)
         self.assertFalse(policy._SHADE_CHECK)
