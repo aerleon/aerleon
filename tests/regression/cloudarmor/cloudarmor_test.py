@@ -854,6 +854,7 @@ class CloudArmorTest(absltest.TestCase):
     def testMaxRuleLimitEnforcement(self):
         test_1001_ips_list = []
 
+        random.seed(72345879)
         for _ in range(1001):
             random_ip_octets = []
             for _ in range(4):
