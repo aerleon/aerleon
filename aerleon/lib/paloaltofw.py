@@ -1109,7 +1109,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 else:
                     # Adds services.
                     for x in options["service"]:
-                        #import ipdb;ipdb.set_trace()
                         member = etree.SubElement(service, "member")
                         member.text = x
 
