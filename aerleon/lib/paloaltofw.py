@@ -207,7 +207,6 @@ class Rule:
 
             # check to see if this service already exists
             for p in sorted(term.protocol):
-                #import ipdb;ipdb.set_trace()
                 service_name = service_map.get_service_name(term.name, src_ports, ports, p)
                 if service_name not in options["service"]:
                     options["service"].append(service_name)
@@ -234,7 +233,6 @@ class Rule:
                 # use prefix "" to avoid service name clash with term named "any"
                 service_name = service_map.get_service_name("any", (), ports, p, "")
                 if service_name not in options["service"]:
-                    #import ipdb;ipdb.set_trace()
                     options["service"].append(service_name)
 
         if term.protocol:
