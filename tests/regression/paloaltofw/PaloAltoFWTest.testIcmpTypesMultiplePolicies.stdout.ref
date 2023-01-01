@@ -68,8 +68,8 @@
                   <action>allow</action>
                   <rule-type>interzone</rule-type>
                   <application>
-                    <member>icmp-echo-request</member>
                     <member>icmp-echo-reply</member>
+                    <member>icmp-echo-request</member>
                     <member>icmp-unreachable</member>
                   </application>
                   <tag>
@@ -94,8 +94,8 @@
                   </service>
                   <action>allow</action>
                   <application>
-                    <member>icmp-echo-request</member>
                     <member>icmp-echo-reply</member>
+                    <member>icmp-echo-request</member>
                     <member>icmp-unreachable</member>
                   </application>
                   <tag>

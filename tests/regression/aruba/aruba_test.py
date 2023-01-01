@@ -895,6 +895,26 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(textwrap.dedent(expected_result), str(aru))
         print(aru)
 
+    @capture.stdout
+    def testMultiplePorts(self):
+        # self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
+        # self.naming.GetServiceByProto.return_value = [['53'], ['54'], ['100'], ['102']]
+        definitions = naming.Naming()
+        definitions._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        definitions._ParseLine(
+            'DNS = 53/tcp 54/tcp 55/tcp 60/tcp 61/tcp 62/tcp 63/tcp 65/tcp', 'services'
+        )
+        aru = aruba.Aruba(
+            policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, definitions),
+            EXP_INFO,
+        )
+        expect = """  alias good-term-destination-is-user_src user tcp 53 55 permit
+  alias good-term-destination-is-user_src user tcp 60 63 permit
+  alias good-term-destination-is-user_src user tcp 65 permit"""
+
+        self.assertIn(expect, str(aru))
+        print(aru)
+
 
 if __name__ == '__main__':
     absltest.main()
