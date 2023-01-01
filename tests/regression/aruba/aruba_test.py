@@ -897,8 +897,6 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMultiplePorts(self):
-        # self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        # self.naming.GetServiceByProto.return_value = [['53'], ['54'], ['100'], ['102']]
         definitions = naming.Naming()
         definitions._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
         definitions._ParseLine(
