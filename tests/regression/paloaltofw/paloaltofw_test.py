@@ -1276,7 +1276,7 @@ term %s {
             aclgenerator.TermNameTooLongError, regex, paloaltofw.PaloAltoFW, pol, EXP_INFO
         )
 
-    # @capture.stdout
+    @capture.stdout
     def testPanApplication(self):
         POL1 = """
 header {
@@ -1528,7 +1528,7 @@ term rule-1 {
         services = {elem.text for elem in x}
         self.assertEqual({"any-tcp", "any-udp"}, services, output)
 
-    # @capture.stdout
+    @capture.stdout
     def testPortLessNonPort(self):
         POL = """
 header {

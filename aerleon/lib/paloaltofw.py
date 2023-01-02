@@ -206,7 +206,7 @@ class Rule:
                 ports = pan_ports([("0", "65535")])
 
             # check to see if this service already exists
-            for p in term.protocol:
+            for p in sorted(term.protocol):
                 service_name = service_map.get_service_name(term.name, src_ports, ports, p)
                 if service_name not in options["service"]:
                     options["service"].append(service_name)
@@ -228,7 +228,7 @@ class Rule:
                 new_term.protocol = list(others)
                 term.protocol = list(services)
                 options["application"] = []
-            for p in term.protocol:
+            for p in sorted(term.protocol):
                 ports = pan_ports([("0", "65535")])
                 # use prefix "" to avoid service name clash with term named "any"
                 service_name = service_map.get_service_name("any", (), ports, p, "")
@@ -1130,7 +1130,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     member = etree.SubElement(app, "member")
                     member.text = "any"
                 else:
-                    for x in options["application"]:
+                    for x in sorted(options["application"]):
                         member = etree.SubElement(app, "member")
                         member.text = x
 

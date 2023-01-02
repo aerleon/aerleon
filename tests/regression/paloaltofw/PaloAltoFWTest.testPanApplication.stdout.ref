@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -54,7 +54,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -109,7 +109,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -165,7 +165,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -222,7 +222,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -285,7 +285,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -349,7 +349,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -414,7 +414,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -469,7 +469,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -532,7 +532,7 @@
 </config>
 
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
