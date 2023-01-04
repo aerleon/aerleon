@@ -1,8 +1,11 @@
+![GitHub](https://img.shields.io/github/license/aerleon/aerleon) [![PyPI version](https://badge.fury.io/py/aerleon.svg)](https://badge.fury.io/py/aerleon) ![PyPI - Status](https://img.shields.io/pypi/status/aerleon) ![PyPI - Downloads](https://img.shields.io/pypi/dm/aerleon)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/main.yml?branch=main) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon)
+
 # Aerleon
 
 Generate firewall configs for multiple platforms at once.
 
-Aerleon is a fork of Capirca with the following enhancements:
+Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following enhancements:
 
 - Support for new firewall platforms can be added through plugins. Plugins for
   common platforms are built-in. Users with experimental or non-public platforms
@@ -24,7 +27,7 @@ ACLs from high-level policy files.
 
 Each [policy file](#policy-files) in the input directory is visited and ACLs are
 generated from the _term_ and _header_ blocks within. ACLs are then rendered to
-one or more platform-specific configs according to the ‘target’ keyword(s) used.
+one or more platform-specific configs according to the 'target' keyword(s) used.
 
 Symbolic names can be used for IP networks, hosts, and services defined in the
 [Address Book](#address-book).
@@ -228,7 +231,7 @@ Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 
 ## Resources
 
-Aerleon is a fork of Capirca.
+Aerleon is a fork of [Capirca](https://github.com/google/capirca).
 
 Additional documentation:
 
@@ -242,7 +245,9 @@ External links, resources and references:
 
 - [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
-- [Capirca Slack at NetworkToCode](https://networktocode.slack.com/)
+- [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
+- [Aerleon Slack](https://aerleon.slack.com/)
+- [#aerleon at NetworkToCode Slack](https://networktocode.slack.com/)
 
 ## Credit
 
