@@ -270,21 +270,13 @@ class Policy:
 
         Args:
           terms: list of Term objects.
-
-        Raises:
-          ShadingError: When a term is impossible to reach.
         """
-        shading_errors = []
         for index, term in enumerate(terms):
             for prior_index in range(index):
                 # Check each term that came before for shading. Terms with next as an
                 # action do not terminate evaluation, so cannot shade.
                 if term in terms[prior_index] and 'next' not in terms[prior_index].action:
-                    shading_errors.append(
-                        '  %s is shaded by %s.' % (term.name, terms[prior_index].name)
-                    )
-        if shading_errors:
-            raise ShadingError('\n'.join(shading_errors))
+                    logging.warning(f"{term.name} is shaded by {terms[prior_index].name}")
 
     def __eq__(self, obj):
         """Compares for equality against another Policy object.
@@ -1389,7 +1381,7 @@ class Term:
                 )
         for proto in self.protocol:
             if proto.isnumeric():
-                if int(proto) < 0  or 255 < int(proto):
+                if int(proto) < 0 or 255 < int(proto):
                     raise InvalidNumericProtoValue(
                         f'Term {self.name} has protocol={self.protocol}. Numeric protocol values must be between 0 and 255.'
                     )
