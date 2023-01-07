@@ -11,6 +11,14 @@
   "commitConvention": "none",
   "contributors": [
     {
+      "login": "itdependsnetworks",
+      "name": "Ken Celenza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9260483?v=4",
+      "profile": "https://github.com/itdependsnetworks",
+      "contributions": [
+        "doc"
+      ]},
+    {
       "login": "fischa",
       "name": "Axel F",
       "avatar_url": "https://avatars.githubusercontent.com/u/11302991?v=4",
