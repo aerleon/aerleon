@@ -9,7 +9,17 @@
   "imageSize": 100,
   "commit": true,
   "commitConvention": "none",
-  "contributors": [],
+  "contributors": [
+    {
+      "login": "itdependsnetworks",
+      "name": "Ken Celenza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9260483?v=4",
+      "profile": "https://github.com/itdependsnetworks",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
   "contributorsPerLine": 7,
   "linkToUsage": true
 }
