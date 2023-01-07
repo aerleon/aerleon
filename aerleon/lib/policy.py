@@ -270,9 +270,6 @@ class Policy:
 
         Args:
           terms: list of Term objects.
-
-        Raises:
-          ShadingError: When a term is impossible to reach.
         """
         for index, term in enumerate(terms):
             for prior_index in range(index):

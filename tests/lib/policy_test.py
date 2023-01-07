@@ -1147,7 +1147,7 @@ class PolicyTest(parameterized.TestCase):
         self.naming.GetServiceByProto.return_value = ['25']
 
         # same protocol, same saddr, shaded term defines a port.
-        _ = policy.ParsePolicy(pol2, self.naming, shade_check=True)
+        policy.ParsePolicy(pol2, self.naming, shade_check=True)
 
         self.naming.GetNetAddr.assert_has_calls(
             [mock.call('PROD_NETWRK'), mock.call('PROD_NETWRK')]
