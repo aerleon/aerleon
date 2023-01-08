@@ -56,7 +56,7 @@ MAX_COMMENT_LENGTH = 60
 # generic error class
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     pass
 
 
@@ -174,7 +174,7 @@ class Term(aclgenerator.Term):
         if (self.term_type == "inet6" and "icmp" in self.term.protocol) or (
             self.term_type == "inet" and "icmpv6" in self.term.protocol
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name,
                     proto=", ".join(self.term.protocol),
@@ -263,7 +263,7 @@ class Term(aclgenerator.Term):
 
                 term_block.append([MATCH_INDENT, src_str, False])
             elif self.term.source_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction="source", af=self.term_type
                     )
@@ -286,7 +286,7 @@ class Term(aclgenerator.Term):
                 term_block.append([MATCH_INDENT, dst_str, False])
 
             elif self.term.destination_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction="destination", af=self.term_type
                     )

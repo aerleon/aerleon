@@ -13,7 +13,7 @@ from aerleon.lib import aclgenerator
 
 
 # Generic error class
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Generic error class."""
 
 
@@ -221,7 +221,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
 
             if filter_options is None or not filter_options:
                 filter_type = 'inet'
-                logging.debug('No filter_type specified. Defaulting to inet (IPv4)')
+                logging.warning('No filter_type specified. Defaulting to inet (IPv4)')
 
             else:
                 filter_type = filter_options[self._FILTER_OPTIONS_MAP['filter_type']]

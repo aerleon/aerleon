@@ -21,11 +21,12 @@ import re
 from xml.dom import minidom
 import xml.etree.ElementTree as etree
 from aerleon.lib import aclgenerator
+from aerleon.lib import addressbook
 from aerleon.lib import nacaddr
 from aerleon.lib import policy
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """generic error class."""
 
 
@@ -205,7 +206,7 @@ class Rule:
                 ports = pan_ports([("0", "65535")])
 
             # check to see if this service already exists
-            for p in term.protocol:
+            for p in sorted(term.protocol):
                 service_name = service_map.get_service_name(term.name, src_ports, ports, p)
                 if service_name not in options["service"]:
                     options["service"].append(service_name)
@@ -227,7 +228,7 @@ class Rule:
                 new_term.protocol = list(others)
                 term.protocol = list(services)
                 options["application"] = []
-            for p in term.protocol:
+            for p in sorted(term.protocol):
                 ports = pan_ports([("0", "65535")])
                 # use prefix "" to avoid service name clash with term named "any"
                 service_name = service_map.get_service_name("any", (), ports, p, "")
@@ -318,7 +319,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
     def __init__(self, pol, exp_info):
         self.pafw_policies = []
-        self.addressbook = collections.OrderedDict()
+        self.addressbook = addressbook.Addressbook()
         self.applications = []
         self.application_refs = {}
         self.application_groups = []
@@ -678,10 +679,9 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         if addr.version not in exclude_address_family
                     ]
                     if source_address:
-                        self._BuildAddressBook(
-                            self.from_zone,
+                        self.addressbook.AddAddresses(
+                            '',
                             source_address,
-                            address_book_dup_check,
                         )
                 if term.destination_address:
                     daddr_split = []
@@ -699,10 +699,9 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         if addr.version not in exclude_address_family
                     ]
                     if destination_address:
-                        self._BuildAddressBook(
-                            self.to_zone,
+                        self.addressbook.AddAddresses(
+                            '',
                             destination_address,
-                            address_book_dup_check,
                         )
 
                 # Handle ICMP/ICMPv6 terms.
@@ -838,34 +837,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
             self.pafw_policies.append((header, ruleset, filter_options))
 
-    def _BuildAddressBook(self, zone, address_list, memo):
-        """Create the address book configuration entries.
-
-        Args:
-          zone: the zone these objects will reside in
-          address_list: a list of naming library address objects
-            that will reside in the zone
-          memo: a set used to check for duplicate addresses in the same zone/parent_token group
-        """
-        if zone not in self.addressbook:
-            self.addressbook[zone] = collections.OrderedDict()
-
-        for address in address_list:
-            parent_token = address.parent_token
-            address_str = str(address)
-
-            if (zone, parent_token, address_str) in memo:
-                continue
-
-            memo.add((zone, parent_token, address_str))
-
-            if parent_token not in self.addressbook[zone]:
-                self.addressbook[zone][parent_token] = []
-
-            counter = len(self.addressbook[zone][parent_token])
-            name = "%s_%s" % (parent_token, str(counter))
-            self.addressbook[zone][parent_token].append((address, name))
-
     def _SortAddressBookNumCheck(self, item):
         """Used to give a natural order to the list of acl entries.
 
@@ -913,37 +884,40 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         # destination address are not specified (any any).
         ANY_IPV4_RANGE = "0.0.0.0-255.255.255.255"
         add_any_ipv4 = False
-
+        # Name to IP addresses
         address_book_names_dict = {}
         address_book_groups_dict = {}
-        for zone in self.addressbook:
-            # building individual addresses dictionary
-            groups = sorted(self.addressbook[zone])
-            for group in groups:
-                for address, name in self.addressbook[zone][group]:
-                    if name in address_book_names_dict:
-                        if address_book_names_dict[name].supernet_of(address):
-                            continue
-                    address_book_names_dict[name] = address
+        try:
+          groups = sorted(self.addressbook.addressbook[''].keys())
+        except:
+            groups = []
+        for group in groups:
+            count = 0
+            for ip in self.addressbook.addressbook[''][group]:
+                name = f'{ip.parent_token}_{count}'
+                count = count + 1
+                address = ip.with_prefixlen
+                if name in address_book_names_dict:
+                    if address_book_names_dict[name].supernet_of(address):
+                        continue
+                address_book_names_dict[name] = address
 
-                # building individual address-group dictionary
-                for nested_group in groups:
-                    group_names = []
-                    for address, name in self.addressbook[zone][nested_group]:
-                        group_names.append(name)
-                    address_book_groups_dict[nested_group] = group_names
+            # building individual address-group dictionary
+            for nested_group in groups:
+                group_names = [i for i in address_book_names_dict.keys() if nested_group in i]
+                
+                address_book_groups_dict[nested_group] = group_names
 
-            # sort address books and address sets
-            address_book_groups_dict = collections.OrderedDict(
-                sorted(address_book_groups_dict.items())
-            )
-
+        # sort address books and address sets
+        address_book_groups_dict = collections.OrderedDict(
+            sorted(address_book_groups_dict.items())
+        )
         address_book_keys = sorted(
             list(address_book_names_dict.keys()), key=self._SortAddressBookNumCheck
         )
-
+        
         # INITAL CONFIG
-        config = etree.Element("config", {"version": "8.1.0", "urldb": "paloaltonetworks"})
+        config = etree.Element("config", {"urldb": "paloaltonetworks", "version": "8.1.0"})
         devices = etree.SubElement(config, "devices")
         device_entry = etree.SubElement(devices, "entry", {"name": "localhost.localdomain"})
         vsys = etree.SubElement(device_entry, "vsys")
@@ -1156,7 +1130,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     member = etree.SubElement(app, "member")
                     member.text = "any"
                 else:
-                    for x in options["application"]:
+                    for x in sorted(options["application"]):
                         member = etree.SubElement(app, "member")
                         member.text = x
 
@@ -1198,7 +1172,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
         vsys_entry.append(etree.Comment(" Addresses "))
         addr = etree.SubElement(vsys_entry, "address")
-
+        
         for name in address_book_keys:
             entry = etree.SubElement(addr, "entry", {"name": name})
             desc = etree.SubElement(entry, "description")

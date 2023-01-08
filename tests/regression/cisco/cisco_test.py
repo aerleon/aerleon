@@ -771,27 +771,27 @@ class CiscoTest(absltest.TestCase):
         self.assertTrue(re.search('permit 58 any any 3', str(acl)), str(acl))
         print(acl)
 
-    @mock.patch.object(cisco.logging, 'debug')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    @mock.patch.object(cisco.logging, 'warning')
+    def testIcmpv6InetMismatch(self, mock_warning):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_11, self.naming), EXP_INFO)
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-11 will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(cisco.logging, 'debug')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    @mock.patch.object(cisco.logging, 'warning')
+    def testIcmpInet6Mismatch(self, mock_warning):
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-1 will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'
@@ -937,6 +937,30 @@ class CiscoTest(absltest.TestCase):
         )
         self.assertIn(('remark 5:0x169ef02a512c5b28!8m2!3d37.4220579!4d-122.084' '0897'), str(acl))
         print(acl)
+
+    @capture.stdout
+    def testNumericProtocols(self):
+
+        pol = policy.ParsePolicy(
+            """header {
+  comment:: "Test policy for numeric proto"
+  target:: cisco ProtoTest extended
+  target:: ciscoxr ProtoTest extended
+}
+term allow-ntp-numeric-proto {
+  comment:: "Allow example ntp servers"
+  destination-address:: NTP_SERVERS
+  protocol:: 50
+  action:: accept
+}
+term default {
+  action:: deny
+}""",
+            self.naming,
+        )
+        acl = cisco.Cisco(pol, EXP_INFO)
+        print(acl)
+        self.assertIn('permit 50 any any', str(acl))
 
 
 if __name__ == '__main__':

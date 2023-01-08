@@ -18,6 +18,8 @@
 import datetime
 import logging
 
+from typing import List, Tuple
+
 from aerleon.lib import aclgenerator
 
 _PLATFORM = 'aruba'
@@ -25,7 +27,7 @@ _COMMENT_MARKER = '#'
 _TERMINATOR_MARKER = '!'
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 
@@ -194,12 +196,12 @@ class Term(aclgenerator.Term):
 
         return '%s %s %s' % (self._NETWORK_STRING, address.network_address, address.netmask)
 
-    def _GeneratePortTokens(self, protocols, ports):
+    def _GeneratePortTokens(self, protocols:List[str], ports:List[Tuple[int, int]]):
         """Generates string tokens for ports.
 
         Args:
           protocols: protocol to use (e.g. tcp, udp, etc.)
-          ports: port number.
+          ports: A list of tuples representing port ranges.
         Returns:
           A list of strings to be used as the port selector in Aruba ACLs.
         """
@@ -208,13 +210,8 @@ class Term(aclgenerator.Term):
         for protocol in protocols:
             if protocol in self._PROTOCOL_MAP:
                 return [str(self._PROTOCOL_MAP[protocol])]
-
-            for start_port, end_port in ports:
-                ret_ports.append(
-                    '%s %s'
-                    % (protocol.lower(), ' '.join(str(x) for x in set([start_port, end_port])))
-                )
-
+            for start_port, end_port in sorted(ports):
+                ret_ports.append(f'{protocol.lower()} {start_port}{" " + str(end_port) if start_port != end_port else ""}')
         return ret_ports
 
 

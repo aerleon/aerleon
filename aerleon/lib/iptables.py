@@ -119,7 +119,7 @@ class Term(aclgenerator.Term):
         if (self.af == 'inet6' and 'icmp' in self.term.protocol) or (
             self.af == 'inet' and 'icmpv6' in self.term.protocol
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=', '.join(self.term.protocol), af=self.af
                 )
@@ -207,12 +207,12 @@ class Term(aclgenerator.Term):
             self.term.destination_address_exclude,
         )
         if not term_saddr:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
             )
             return ''
         if not term_daddr:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(
                     term=self.term.name, direction='destination', af=self.af
                 )
@@ -230,6 +230,7 @@ class Term(aclgenerator.Term):
         # icmp-types
         icmp_types = ['']
         if self.term.icmp_type:
+            
             icmp_types = self.NormalizeIcmpTypes(self.term.icmp_type, protocol, self.af)
 
         source_interface = ''
@@ -960,7 +961,7 @@ class Iptables(aclgenerator.ACLGenerator):
         return '\n'.join(target)
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 

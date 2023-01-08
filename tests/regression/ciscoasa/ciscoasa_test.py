@@ -14,10 +14,11 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
 from unittest import mock
 
 from aerleon.lib import ciscoasa
+from aerleon.lib import nacaddr
 from aerleon.lib import naming
 from aerleon.lib import policy
 from tests.regression import test_terms
@@ -28,6 +29,12 @@ header {
   target:: ciscoasa test-filter
 }
 """
+
+DSMO_HEADER = """
+header {
+  target:: ciscoasa foo enable_dsmo
+}
+"""
 YAML_GOOD_HEADER = """
 filters:
 - header:
@@ -35,6 +42,25 @@ filters:
     targets:
       ciscoasa: test-filter
   terms:
+"""
+
+GOOD_TERM_3 = """
+term good-src-term-3 {
+    source-address:: CORP
+    action:: accept
+}
+"""
+GOOD_TERM_4 = """
+term good-dst-term-3 {
+    destination-address:: CORP
+    action:: accept
+}
+"""
+VERBATIM_TERM = """
+term verbatim-term {
+    verbatim:: ciscoasa "foo bar"
+    verbatim:: ciscoasa "biz baz"
+}
 """
 
 SUPPORTED_TOKENS = {
@@ -114,7 +140,7 @@ SUPPORTED_SUB_TOKENS = {
 EXP_INFO = 2
 
 YAML_MAP = test_terms.GetTermMap()
-class CiscoASATest(absltest.TestCase):
+class CiscoASATest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
@@ -137,6 +163,27 @@ class CiscoASATest(absltest.TestCase):
         
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
+
+    @capture.stdout
+    def testVerbatim(self):
+        pol = ciscoasa.CiscoASA(
+            policy.ParsePolicy(GOOD_HEADER + VERBATIM_TERM, self.naming), EXP_INFO
+        )
+        print(pol)
+        expect = 'access-list test-filter remark verbatim-term\nfoo bar\nbiz baz'
+        self.assertIn(expect, str(pol))
+
+    @parameterized.named_parameters(
+        ('source', GOOD_TERM_3, 'permit ip 10.0.0.0 255.255.254.0 any'),
+        ('destination', GOOD_TERM_4, 'permit ip any 10.0.0.0 255.255.254.0'),
+    )
+    def testDSMO(self, term, expected):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('10.0.0.0/24'),
+            nacaddr.IPv4('10.0.1.0/24'),
+        ]
+        pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
+        self.assertIn(expected, str(pol))
 
 class CiscoASAYAMLTest(CiscoASATest):
     def setUp(self):

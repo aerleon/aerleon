@@ -14,7 +14,7 @@
 
 """Unit tests for policy.py library."""
 
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
 from unittest import mock
 
 from absl import logging
@@ -588,7 +588,7 @@ term bad-term-16 {
 # pylint: disable=maybe-no-member
 
 
-class PolicyTest(absltest.TestCase):
+class PolicyTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
@@ -1765,6 +1765,28 @@ class PolicyTest(absltest.TestCase):
             ('proj4', 'vpc4'),
         ]
         self.assertListEqual(expected_target_resources, terms[0].target_resources)
+
+    @parameterized.named_parameters(
+        ('TestLowestValid', ['0'], True),
+        ('SingleValidProto', ['1'], True),
+        ('MultipleValid', ['1', '2'], True),
+        ('SingleInvalid', ['999'], False),
+        ('ValidThenInvalid', ['58', '555'], False),
+    )
+    def testInvalidNumbericProtocol(self, protocol, ok):
+        TERM = f"""
+term bad-term-16 {{
+  protocol:: {' '.join(protocol)}
+  action:: accept
+}}"""
+        pol = HEADER + TERM
+        if ok:
+            result = policy.ParsePolicy(pol, self.naming)
+            self.assertIn(str(protocol), str(result))
+        else:
+            self.assertRaises(
+                policy.InvalidNumericProtoValue, policy.ParsePolicy, pol, self.naming
+            )
 
 
 if __name__ == '__main__':

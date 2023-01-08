@@ -134,6 +134,10 @@ class MixedPortandNonPortProtos(Error):
     """Error when protocols that use ports are mixed with protocols that do not"""
 
 
+class InvalidNumericProtoValue(Error):
+    """Error when protocols are numeric and not between -1 and 255."""
+
+
 def TranslatePorts(ports, protocols, term_name):
     """Return all ports of all protocols requested.
 
@@ -169,7 +173,6 @@ def TranslatePorts(ports, protocols, term_name):
                 else:
                     ret_array.append((int(p[0]), int(p[1])))
     return ret_array
-
 
 
 # classes for storing the object types in the policy files.
@@ -1384,6 +1387,12 @@ class Term:
                 raise InvalidTermTTLValue(
                     'Term %s contains invalid TTL: %s' % (self.name, self.ttl)
                 )
+        for proto in self.protocol:
+            if proto.isnumeric():
+                if int(proto) < 0  or 255 < int(proto):
+                    raise InvalidNumericProtoValue(
+                        f'Term {self.name} has protocol={self.protocol}. Numeric protocol values must be between 0 and 255.'
+                    )
 
     def AddressCleanup(self, optimize=True, addressbook=False):
         """Do Address and Port collapsing.

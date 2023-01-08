@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<config version="8.1.0" urldb="paloaltonetworks">
+<config urldb="paloaltonetworks" version="8.1.0">
   <devices>
     <entry name="localhost.localdomain">
       <vsys>
@@ -68,9 +68,9 @@
                   <action>allow</action>
                   <rule-type>interzone</rule-type>
                   <application>
-                    <member>icmp6-echo-request</member>
-                    <member>icmp6-echo-reply</member>
                     <member>icmp6-destination-unreachable</member>
+                    <member>icmp6-echo-reply</member>
+                    <member>icmp6-echo-request</member>
                   </application>
                   <tag>
                     <member>trust_untrust_policy-comment-1</member>

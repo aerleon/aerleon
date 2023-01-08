@@ -210,7 +210,7 @@ class Term(juniper.Term):
                 (has_icmpv6 and not has_icmp and suffix == 'inet')
                 or (has_icmp and not has_icmpv6 and suffix == 'inet6')
             ) and self.term_type != 'mixed':
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
                         term=self.term.name, proto=', '.join(self.term.protocol), af=suffix
                     )
@@ -579,7 +579,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     )
                     continue
                 if set(['established', 'tcp-established']).intersection(term.option):
-                    logging.debug(
+                    logging.warning(
                         'Skipping established term %s because MSMPC is stateful.', term.name
                     )
                     continue
@@ -746,7 +746,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         return str(target) + '\n'
 
 
-class Error(Exception):
+class Error(juniper.Error):
     pass
 
 

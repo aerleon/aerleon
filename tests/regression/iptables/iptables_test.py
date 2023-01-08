@@ -466,6 +466,12 @@ term good-warning-term {
   action:: accept
 }
 """
+BAD_ICMP_TERM = """
+term permit-icmp {
+	protocol:: icmp icmpv6
+	action:: accept
+}
+"""
 
 SUPPORTED_TOKENS = {
     'action',
@@ -1286,29 +1292,29 @@ class AclCheckTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('IPV6_INTERNAL')
         print(result)
 
-    @mock.patch.object(iptables.logging, 'debug')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    @mock.patch.object(iptables.logging, 'warning')
+    def testIcmpv6InetMismatch(self, mock_warning):
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + IPV6_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term inet6-icmp will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(iptables.logging, 'debug')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    @mock.patch.object(iptables.logging, 'warning')
+    def testIcmpInet6Mismatch(self, mock_warning):
         acl = iptables.Iptables(
             policy.ParsePolicy(IPV6_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-1 will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'
@@ -1390,6 +1396,16 @@ class AclCheckTest(absltest.TestCase):
             '-m u32 --u32 "0x3&0xff=0x0"', result, 'match for hop-by-hop header is missing'
         )
         print(acl)
+
+    def testMixedICMPWarns(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + BAD_ICMP_TERM, self.naming)
+        with self.assertLogs(level='WARNING') as log:
+            acl = iptables.Iptables(pol, EXP_INFO)
+            result = str(acl)
+        self.assertIn(
+            "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet address family.",
+            ''.join(log.output),
+        )
 
 
 YAML_GOOD_HEADER_1 = """
@@ -1813,7 +1829,11 @@ YAML_GOOD_WARNING_TERM = """
     policer: batman
     action: accept
 """
-
+YAML_BAD_ICMP_TERM= """
+  - name: permit-icmp
+    protocol: icmp icmpv6
+    action: accept
+"""
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
@@ -1902,6 +1922,7 @@ class IPTablesYAMLTest(AclCheckTest):
             SOURCE_INTERFACE_TERM=YAML_SOURCE_INTERFACE_TERM,
             DESTINATION_INTERFACE_TERM=YAML_DESTINATION_INTERFACE_TERM,
             GOOD_WARNING_TERM=YAML_GOOD_WARNING_TERM,
+            BAD_ICMP_TERM=YAML_BAD_ICMP_TERM,
         )
 
 

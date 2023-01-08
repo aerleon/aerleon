@@ -73,7 +73,7 @@ def ChainFormat(kind, name, ruleset):
     return '\n'.join(chain_output)
 
 
-class Error(Exception):
+class Error(aclgenerator.Error):
     """Base error class."""
 
 
