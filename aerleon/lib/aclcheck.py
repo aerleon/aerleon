@@ -25,9 +25,9 @@
 __author__ = 'watson@google.com (Tony Watson)'
 
 import sys
-from capirca import nacaddr
-from capirca import policy
-from capirca import port
+from aerleon.lib import nacaddr
+from aerleon.lib import policy
+from aerleon.lib import port
 
 
 class Error(Exception):
