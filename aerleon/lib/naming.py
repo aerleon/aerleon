@@ -632,7 +632,7 @@ class Naming:
                 if self.current_symbol in self.networks:
                     raise NamespaceCollisionError(
                         '%s %s'
-                        % ('\nMultiple definitions found for service: ', self.current_symbol)
+                        % ('\nMultiple definitions found for network: ', self.current_symbol)
                     )
 
             self.unit = _ItemUnit(self.current_symbol)
