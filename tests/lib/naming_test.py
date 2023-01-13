@@ -181,5 +181,133 @@ class NamingUnitTest(absltest.TestCase):
         self.assertEqual([], self.defs.GetNetChildren('NET1'))
 
 
+class DefinitionYAMLUnitTest(NamingUnitTest):
+    """Runs the NamingUnitTest suite against YAML input.
+    
+    Behavior should be identical."""
+
+    def setUp(self):
+        super().setUp()
+        defs_yaml = """
+services:
+    SVC1:
+        -
+            protocol: tcp
+            port: 80
+        -
+            protocol: udp
+            port: 81
+        -
+            protocol: tcp
+            port: 82
+    SVC2:
+        -
+            protocol: tcp
+            port: 80
+        -
+            protocol: udp
+            port: 81
+        -
+            protocol: tcp
+            port: 82
+        - SVC2
+    SVC3:
+        -
+            protocol: tcp
+            port: 80
+        -
+            protocol: udp
+            port: 81
+    SVC4:
+        -
+            protocol: tcp
+            port: 80
+            comment: "some service"
+    TCP_90:
+        -
+            protocol: tcp
+            port: 90
+    SVC5:
+        - TCP_90
+    SVC6:
+        - SVC1
+        - SVC5
+networks:
+    NET1:
+        values:
+            -
+                ip: 10.1.0.0/8
+                comment: "network1"
+    NET2:
+        values:
+            -
+                ip: 10.2.0.0/16
+                comment: "network2.0"
+            - NET1
+    9OCLOCK:
+        values:
+            -
+                ip: 1.2.3.4/32
+                comment: "9 is the time"
+    FOOBAR:
+        values:
+            - 9OCLOCK
+    FOO_V6:
+        values:
+            - 
+                ip: ::FFFF:FFFF:FFFF:FFFF
+    FOO_V6:
+        values:
+            - 
+                ip: ::1/128
+    BAZ:
+        values:
+            - FOO_V6
+            - BAR_V6
+    BING:
+        values:
+            -
+                name: NET1
+                comment: "foo"
+            - FOO_V6
+"""
+        self.defs = naming.Naming(None)
+        self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
+
+
+class DefinitionObjectUnitTest(NamingUnitTest):
+    """Runs the NamingUnitTest suite against object input.
+    
+    This is the object representation used by YAML definition files and API calls.
+    
+    Behavior should be identical."""
+
+    def setUp(self):
+        super().setUp()
+        defs_obj = {
+         
+        }
+        # servicedata.append('SVC1 = 80/tcp 81/udp 82/tcp')
+        # servicedata.append('SVC2 = 80/tcp 81/udp 82/tcp SVC2')
+        # servicedata.append('SVC3 = 80/tcp 81/udp')
+        # servicedata.append('SVC4 = 80/tcp # some service')
+        # servicedata.append('TCP_90 = 90/tcp')
+        # servicedata.append('SVC5 = TCP_90')
+        # servicedata.append('SVC6 = SVC1 SVC5')
+        # networkdata = []
+        # networkdata.append('NET1 = 10.1.0.0/8 # network1')
+        # networkdata.append('NET2 = 10.2.0.0/16 # network2.0')
+        # networkdata.append('       NET1')
+        # networkdata.append('9OCLOCK = 1.2.3.4/32 # 9 is the time')
+        # networkdata.append('FOOBAR = 9OCLOCK')
+        # networkdata.append('FOO_V6 = ::FFFF:FFFF:FFFF:FFFF')
+        # networkdata.append('BAR_V6 = ::1/128')
+        # networkdata.append('BAZ = FOO_V6')
+        # networkdata.append('      BAR_V6')
+        # networkdata.append('BING = NET1 # foo')
+        # networkdata.append('       FOO_V6')
+        self.defs = naming.Naming(None)
+        self.defs.ParseDefinitionsObject(defs_obj, "example_defs.yaml")
+
 if __name__ == '__main__':
     absltest.main()

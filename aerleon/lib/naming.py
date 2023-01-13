@@ -43,10 +43,15 @@ DNS = 53/tcp
       53/udp
 
 """
+# TODO(jb) - IT's awkward to have a file, yaml.py. Either rename yaml.py to yaml front-end or consolidate overlapping code.
+
 
 import os
 from pathlib import Path
 import re
+from typing import Tuple
+import yaml
+from yaml import SafeLoader, YAMLError
 
 from absl import logging
 
@@ -98,6 +103,93 @@ class NamingSyntaxError(Error):
     """A general syntax error for the definition."""
 
 
+class DefinitionFileTypeError(Error):
+    """Invalid Definition File"""
+
+
+
+def _SpanSafeYamlLoader(*, filename):
+    """Configure yaml.load to:
+    * Force safe_load mode (disable unpickling).
+    * Augment mappings with debug context: __line__, __filename__.
+
+    Post-load user error messages need to provide a filename and line number back to the user.
+    Including debugging context in the mappings gives post-load code access to this information.
+    Code operating on the native representation must filter out __line__, __filename__ from all
+    mappings (dicts) when iterating over user data. This assumes __line__, __filename__ are not
+    valid keys in any user data.
+    """
+
+    class PluginYamlLoader(SafeLoader):
+        def construct_mapping(self, node, deep=False):
+            mapping = super(PluginYamlLoader, self).construct_mapping(node, deep=deep)
+            # Add 1 so line numbering starts at 1
+            # TODO(jb) look at cases where line number does not match up, e.g. filter['__line__']
+            mapping['__line__'] = node.start_mark.line + 1
+            mapping['__filename__'] = filename
+            return mapping
+
+    return PluginYamlLoader
+
+# Consider making this span-oriented
+# (file > line > (start_ch, end_ch))
+class UserMessage:
+    """A user-facing error message encountered during file processing.
+
+    Users can be shown:
+    * An error message only (user_message.message).
+    * An error message with file / line / include stack (user_message.__repr__()).
+
+    Attributes:
+        message: The error message.
+        filename: The name of the file in which this error or message originated.
+        line: The line where this error or message originated.
+        include_chain: If the error or message originated while processing an included
+            file, include_chain will list the include file chain as a list of file/line tuples.
+            The top-level file should be the first item in the list.
+    """
+
+    message: str
+    filename: str
+    line: int
+    include_chain: "list[Tuple[str, int]]"
+
+    def __init__(self, message, *, filename, line=None, include_chain=None):
+        self.message = message
+        self.filename = filename
+        self.line = line
+        self.include_chain = include_chain
+
+    def __str__(self):
+        """Display user-facing error message with include chain (if present).
+
+        e.g.
+        Excessive recursion: include depth limit of 5 reached. File=include_1.pol-include.yaml, Line=3.
+        Include stack:
+        > File='policy_with_include.pol.yaml', Line=11 (Top Level)
+        > File='include_1.pol-include.yaml', Line=3
+        > File='include_1.pol-include.yaml', Line=3
+        > File='include_1.pol-include.yaml', Line=3
+        > File='include_1.pol-include.yaml', Line=3
+        > File='include_1.pol-include.yaml', Line=3
+        """  # noqa: E501
+        error_context = f"{self.message} File={self.filename}"
+        if self.line is not None:
+            error_context += f", Line={self.line}"
+        error_context += "."
+        if self.include_chain is not None and len(self.include_chain) > 1:
+            error_context += "\nInclude stack:"
+            for i, (File, Line) in enumerate(self.include_chain):
+                error_context += f"\n> File='{File}', Line={Line}"
+                if i == 0:
+                    error_context += " (Top Level)"
+        return error_context
+
+    def __repr__(self):
+        return f"UserMessage(\"{str(self)}\")"
+
+
+# TODO(jb) could probably be a dataclass...
 class _ItemUnit:
     """This class is a container for an index key and a list of associated values.
 
@@ -126,6 +218,7 @@ class Naming:
        port_re: Regular Expression matching valid port entries.
     """
 
+    # TODO(jb): for API usage, allow something like naming_file_data or naming_file_object...
     def __init__(self, naming_dir=None, naming_file=None, naming_type=None):
         """Set the default values for a new Naming object."""
         self.current_symbol = None
@@ -507,6 +600,10 @@ class Naming:
             i.parent_token = token
         return returnlist
 
+    # TODO(jb) It's odd that _Parse and _ParseLine validate definition_type despite underscore names
+    # Is there not a more correct boundary? Or are the private methods actually used? If so, add public names.
+    # Note that it appears that _ParseLines might be used by external automation use cases already.
+
     def _Parse(self, defdirectory, definition_type):
         """Parse files of a particular type for tokens and values.
 
@@ -543,17 +640,23 @@ class Naming:
                 f'No definition files found in {defdirectory} for type {definition_type}.'
             )
 
-        for current_file in file_names:
+        for current_file_path in file_names:
             try:
-                with open(current_file, 'r') as file_handle:
-                    self._ParseFile(file_handle, def_type)
+                with open(current_file_path, 'r') as file:
+                    if current_file_path.suffix == '.yaml':
+                        self.ParseYaml(file, current_file_path.name, definition_type)
+                    else:
+                        self._ParseFile(file, definition_type)
             except IOError as error_info:
                 raise NoDefinitionsError('%s' % error_info)
 
+    # Now _ParseFile or _Parse should accept YAML files
     def _ParseFile(self, file_handle, def_type):
+        # Branch here - if file name is YAML, load through YAML path
         for line in file_handle:
             self._ParseLine(line, def_type)
 
+    # non-YAML only
     def ParseServiceList(self, data):
         """Take an array of service data and import into class.
 
@@ -566,6 +669,7 @@ class Naming:
         for line in data:
             self._ParseLine(line, DEF_TYPE_SERVICES)
 
+    # non-YAML only
     def ParseNetworkList(self, data):
         """Take an array of network data and import into class.
 
@@ -596,6 +700,14 @@ class Naming:
           ParseError: If errors occur
           NamingSyntaxError: Syntax error parsing config.
         """
+
+        #
+        # NOTE: The "unseen name" logic defined in this function (_ParseLine) is duplicated in
+        # function _ParseDefinitionYamlFile. Any changes to how "unseen name" checking is done
+        # need to be made in both places.
+        #
+        # TODO(jb): Consider splitting up _ParseLine so that it generates an intermediate
+        #  representation (ItemUnit) and "unseen name" checks are done on the IR (by both _Parse* flows).
         if definition_type not in ['services', 'networks']:
             raise UnexpectedDefinitionTypeError(
                 '%s %s' % ('Received an unexpected definition type:', definition_type)
@@ -615,7 +727,7 @@ class Naming:
                 logging.info(
                     '\nService name does not match recommended criteria: %s\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                     % current_symbol
-                )
+                ) # TODO(jb) This error is incorrect when current_symbol is a network name
             self.current_symbol = current_symbol
             if definition_type == DEF_TYPE_SERVICES:
                 for port in line_parts[1].strip().split():
@@ -673,3 +785,193 @@ class Naming:
                         if value_piece not in self.networks:
                             if value_piece not in self.unseen_networks:
                                 self.unseen_networks[value_piece] = True
+
+
+    def ParseYaml(self, file_handle, file_name):
+        """Load a definition yaml file as a string.
+
+        Arguments:
+            file: A string containing the file contents.
+            filename: The original filename of the file.
+        """
+        # Load using safe loader (w debug possibly)
+        # Validate basic structure
+        # Convert into an intermediate representation
+        # Run something like ParseLine but for raw entries... ParseEntry? Maybe there is even a data model that I can load into
+
+        try:
+            file_data = yaml.load(file_handle, Loader=_SpanSafeYamlLoader(filename=file_name))
+        except YAMLError as yaml_error:
+            raise DefinitionFileTypeError(
+                UserMessage("Unable to read file as YAML.", filename=file_name)
+            ) from yaml_error
+
+        self.ParseDefinitionsObject(file_data, file_name)
+
+
+    def ParseDefinitionsObject(self, file_data, file_name):
+        # Empty files are ignored with a warning
+        if not file_data:
+            logging.warning(UserMessage("Ignoring empty address book file.", filename=file_name))
+            return
+            
+        # Check for at least one essential key, ignore with warning
+        essential_keys = ['networks', 'services']
+
+        if not any((key in file_data for key in essential_keys)):
+            logging.warning(UserMessage("File contains no network or service data.", filename=file_name))
+            return
+
+        # Try networks (FUNC 1) TODO(jb) split up into functions (thunks)
+        if 'networks' in file_data and not isinstance(file_data['networks'], dict):
+            logging.warning(UserMessage("Network definition type error: dictionary expected.", filename=file_name))
+            return # TODO(jb) return from network load only
+
+        # Construct ItemUnit for each data point
+        for symbol, symbol_def in file_data['networks'].items():
+
+            if symbol in ["__line__", "__filename__"]:
+                continue
+
+            if not ('values' in symbol_def and isinstance(symbol_def['values'], list)):
+                logging.info(
+                    f'\nNetwork definition must be a list. Ignoring definition for network: {symbol}.'
+                )
+                continue
+
+            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
+            if not self.token_re.match(symbol):
+                logging.info(
+                    f'\nNetwork name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
+                )
+
+            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
+            if symbol in self.networks:
+                raise NamespaceCollisionError(
+                    f'\nMultiple definitions found for network: {symbol}'
+                )
+
+            unit = _ItemUnit(symbol)
+
+            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
+            self.networks[symbol] = unit
+            if symbol in self.unseen_networks:
+                self.unseen_networks.pop(symbol)
+
+
+            for item in symbol_def['values']:
+                # 'item' can be:
+                # 1. A string, understood as a network name reference
+                # 2. A dictionary, with these fields:
+                #    'ip': A specific IP address or CIDR range
+                #    'name': A network name reference
+                #    'comment': An optional comment
+                # 'ip' or 'name' must be present in any dictionary item
+
+                value = None
+                service_ref = None
+                ip = None
+                comment = None
+                if isinstance(item, str):
+                    value = service_ref = item
+                elif isinstance(item, dict):
+                    if 'name' in item and isinstance(item['name'], str):
+                        value = service_ref = item['name']
+                    elif 'ip' in item and isinstance(item['ip'], str):
+                        value = ip = item['ip']
+                    else:
+                        logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
+                        continue
+
+                    if 'comment' in item and isinstance(item['comment'], str):
+                        comment = item['comment']
+                else:
+                    logging.info(f'\nUnexpected symbol definition: {symbol}')
+                    continue
+
+                if comment is None:
+                    unit.items.append(value)
+                else:
+                    unit.items.append(f'{value} # {comment}')
+                
+                if service_ref not in self.networks:
+                    if service_ref not in self.unseen_networks:
+                        self.unseen_networks[service_ref] = True
+
+        # Try services (FUNC 2)
+        if 'services' in file_data and not isinstance(file_data['services'], dict):
+            logging.warning(UserMessage("Service definition type error: dictionary expected.", filename=file_name))
+            return # TODO(jb) return from services load only
+
+        # Construct ItemUnit for each data point
+        for symbol, symbol_def in file_data['services'].items():
+            
+            if symbol in ["__line__", "__filename__"]:
+                continue
+
+            if not isinstance(symbol_def, list):
+                logging.info(
+                    f'\Service definition must be a list. Ignoring definition for service: {symbol}.'
+                )
+                continue
+
+            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
+            if not self.token_re.match(symbol):
+                logging.info(
+                    f'\Service name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
+                )
+
+            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
+            if symbol in self.services:
+                raise NamespaceCollisionError(
+                    f'\nMultiple definitions found for service: {symbol}'
+                )
+
+            unit = _ItemUnit(symbol)
+
+            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
+            self.services[symbol] = unit
+            if symbol in self.unseen_services:
+                self.unseen_services.pop(symbol)
+
+
+            for item in symbol_def:
+                # 'item' can be:
+                # 1. A string, understood as a service name reference
+                # 2. A dictionary, with these fields:
+                #    'protocol': A logical or numeric protocol (e.g. 'tcp')
+                #    'port': A port number
+                #    'name': A service name reference
+                #    'comment': An optional comment
+                # ('protocol' and 'port') or 'name' must be present in any dictionary item
+
+                value = None
+                service_ref = None
+                service_port = None
+                comment = None
+                if isinstance(item, str):
+                    value = service_ref = item
+                elif isinstance(item, dict):
+                    if 'name' in item and isinstance(item['name'], str):
+                        value = service_ref = item['name']
+                    elif 'port' in item and isinstance(item['port'], str) and 'protocol' in item and (isinstance(item['protocol'], str) or isinstance(item['protocol'], int)):
+                        protocol = item['protocol']
+                        port = item['port']
+                        value = service_port = f'{protocol}/{port}'
+                    else:
+                        logging.info(f'\Service name or port definition expected for: {symbol}')
+                        continue
+                    if 'comment' in item and isinstance(item['comment'], str):
+                        comment = item['comment']
+                else:
+                    logging.info(f'\nUnexpected symbol definition: {symbol}')
+                    continue
+
+                if comment is None:
+                    unit.items.append(value)
+                else:
+                    unit.items.append(f'{value} # {comment}')
+                
+                if service_ref not in self.services:
+                    if service_ref not in self.unseen_services:
+                        self.unseen_services[service_ref] = True
