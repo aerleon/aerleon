@@ -183,7 +183,7 @@ class NamingUnitTest(absltest.TestCase):
 
 class DefinitionYAMLUnitTest(NamingUnitTest):
     """Runs the NamingUnitTest suite against YAML input.
-    
+
     Behavior should be identical."""
 
     def setUp(self):
@@ -277,7 +277,7 @@ networks:
 
 class DefinitionObjectUnitTest(NamingUnitTest):
     """Runs the NamingUnitTest suite against object input.
-    
+
     This is the object representation used by YAML definition files and API calls.
 
     Behavior should be identical."""
@@ -285,29 +285,38 @@ class DefinitionObjectUnitTest(NamingUnitTest):
     def setUp(self):
         super().setUp()
         defs_obj = {
-         
+            'networks': {
+                '9OCLOCK': {'values': [{'comment': '9 is the time', 'ip': '1.2.3.4/32'}]},
+                'BAR_V6': {'values': [{'ip': '::1/128'}]},
+                'BAZ': {'values': ['FOO_V6', 'BAR_V6']},
+                'BING': {'values': [{'comment': 'foo', 'name': 'NET1'}, 'FOO_V6']},
+                'FOOBAR': {'values': ['9OCLOCK']},
+                'FOO_V6': {'values': [{'ip': '::FFFF:FFFF:FFFF:FFFF'}]},
+                'NET1': {'values': [{'comment': 'network1', 'ip': '10.1.0.0/8'}]},
+                'NET2': {'values': [{'comment': 'network2.0', 'ip': '10.2.0.0/16'}, 'NET1']},
+            },
+            'services': {
+                'SVC1': [
+                    {'port': 80, 'protocol': 'tcp'},
+                    {'port': 81, 'protocol': 'udp'},
+                    {'port': 82, 'protocol': 'tcp'},
+                ],
+                'SVC2': [
+                    {'port': 80, 'protocol': 'tcp'},
+                    {'port': 81, 'protocol': 'udp'},
+                    {'port': 82, 'protocol': 'tcp'},
+                    'SVC2',
+                ],
+                'SVC3': [{'port': 80, 'protocol': 'tcp'}, {'port': 81, 'protocol': 'udp'}],
+                'SVC4': [{'comment': 'some service', 'port': 80, 'protocol': 'tcp'}],
+                'SVC5': ['TCP_90'],
+                'SVC6': ['SVC1', 'SVC5'],
+                'TCP_90': [{'port': 90, 'protocol': 'tcp'}],
+            },
         }
-        # servicedata.append('SVC1 = 80/tcp 81/udp 82/tcp')
-        # servicedata.append('SVC2 = 80/tcp 81/udp 82/tcp SVC2')
-        # servicedata.append('SVC3 = 80/tcp 81/udp')
-        # servicedata.append('SVC4 = 80/tcp # some service')
-        # servicedata.append('TCP_90 = 90/tcp')
-        # servicedata.append('SVC5 = TCP_90')
-        # servicedata.append('SVC6 = SVC1 SVC5')
-        # networkdata = []
-        # networkdata.append('NET1 = 10.1.0.0/8 # network1')
-        # networkdata.append('NET2 = 10.2.0.0/16 # network2.0')
-        # networkdata.append('       NET1')
-        # networkdata.append('9OCLOCK = 1.2.3.4/32 # 9 is the time')
-        # networkdata.append('FOOBAR = 9OCLOCK')
-        # networkdata.append('FOO_V6 = ::FFFF:FFFF:FFFF:FFFF')
-        # networkdata.append('BAR_V6 = ::1/128')
-        # networkdata.append('BAZ = FOO_V6')
-        # networkdata.append('      BAR_V6')
-        # networkdata.append('BING = NET1 # foo')
-        # networkdata.append('       FOO_V6')
         self.defs = naming.Naming(None)
         self.defs.ParseDefinitionsObject(defs_obj, "example_defs.yaml")
+
 
 if __name__ == '__main__':
     absltest.main()
