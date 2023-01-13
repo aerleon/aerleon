@@ -43,12 +43,9 @@ plugins:
             show_root_heading: true
             heading_level: 2
             show_category_heading: true
-watch:
-  - README.md
 nav:
   - Overview: index.md
   - User Guide:
-      - Library Overview: user/lib_overview.md
       - Install and Configure: user/install.md
       - Getting Started: user/lib_getting_started.md
       - Address Files: user/lib_address.md
