@@ -2,9 +2,11 @@
 
 ## Prerequisites
 * [Python 3.7+](https://www.python.org/downloads/)
+  * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
+* [pyenv](https://github.com/pyenv/pyenv).
 * [pip](https://pip.pypa.io/en/stable/getting-started/)
 
-**_NOTE:_** It is recommended to use a virtual environment such as [pyenv](https://github.com/pyenv/pyenv) or [virtualenv](https://virtualenv.pypa.io/en/latest/).
+**_NOTE:_** It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package. 
 
 Option 1: Install from PyPI.
 
@@ -20,7 +22,7 @@ $ pip install git+https://github.com/aerleon/aerleon.git@main
 
 ## Verifying installation
 
-At each release we sign build artifacts with [Sigstore](https://www.sigstore.dev/) to allow for validation [SLSA](https://slsa.dev/) file to help provide integrity from supply chain attacks. The instructions provided here will work on most linux distrobutions. Windows may require a different but comparable tool listed in the prerequisites and modifications to the instructions. Some of the tools may already be installed, if not they are likely available via your package management system.
+At each release we sign build artifacts with [Sigstore](https://www.sigstore.dev/) to allow for validation [SLSA](https://slsa.dev/) file to help provide integrity from supply chain attacks. The instructions provided here will work on most linux distributions. Windows may require a different but comparable tool listed in the prerequisites and modifications to the instructions. Some of the tools may already be installed, if not they are likely available via your package management system.
 
 ## Prerequisites
 - [openssl](https://github.com/openssl/openssl)
