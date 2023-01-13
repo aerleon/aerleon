@@ -107,7 +107,6 @@ class DefinitionFileTypeError(Error):
     """Invalid Definition File"""
 
 
-
 def _SpanSafeYamlLoader(*, filename):
     """Configure yaml.load to:
     * Force safe_load mode (disable unpickling).
@@ -130,6 +129,7 @@ def _SpanSafeYamlLoader(*, filename):
             return mapping
 
     return PluginYamlLoader
+
 
 # Consider making this span-oriented
 # (file > line > (start_ch, end_ch))
@@ -727,7 +727,7 @@ class Naming:
                 logging.info(
                     '\nService name does not match recommended criteria: %s\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                     % current_symbol
-                ) # TODO(jb) This error is incorrect when current_symbol is a network name
+                )  # TODO(jb) This error is incorrect when current_symbol is a network name
             self.current_symbol = current_symbol
             if definition_type == DEF_TYPE_SERVICES:
                 for port in line_parts[1].strip().split():
@@ -786,7 +786,6 @@ class Naming:
                             if value_piece not in self.unseen_networks:
                                 self.unseen_networks[value_piece] = True
 
-
     def ParseYaml(self, file_handle, file_name):
         """Load a definition yaml file as a string.
 
@@ -808,24 +807,29 @@ class Naming:
 
         self.ParseDefinitionsObject(file_data, file_name)
 
-
     def ParseDefinitionsObject(self, file_data, file_name):
         # Empty files are ignored with a warning
         if not file_data:
             logging.warning(UserMessage("Ignoring empty address book file.", filename=file_name))
             return
-            
+
         # Check for at least one essential key, ignore with warning
         essential_keys = ['networks', 'services']
 
         if not any((key in file_data for key in essential_keys)):
-            logging.warning(UserMessage("File contains no network or service data.", filename=file_name))
+            logging.warning(
+                UserMessage("File contains no network or service data.", filename=file_name)
+            )
             return
 
         # Try networks (FUNC 1) TODO(jb) split up into functions (thunks)
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
-            logging.warning(UserMessage("Network definition type error: dictionary expected.", filename=file_name))
-            return # TODO(jb) return from network load only
+            logging.warning(
+                UserMessage(
+                    "Network definition type error: dictionary expected.", filename=file_name
+                )
+            )
+            return  # TODO(jb) return from network load only
 
         # Construct ItemUnit for each data point
         for symbol, symbol_def in file_data['networks'].items():
@@ -857,7 +861,6 @@ class Naming:
             self.networks[symbol] = unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
-
 
             for item in symbol_def['values']:
                 # 'item' can be:
@@ -893,19 +896,23 @@ class Naming:
                     unit.items.append(value)
                 else:
                     unit.items.append(f'{value} # {comment}')
-                
+
                 if service_ref not in self.networks:
                     if service_ref not in self.unseen_networks:
                         self.unseen_networks[service_ref] = True
 
         # Try services (FUNC 2)
         if 'services' in file_data and not isinstance(file_data['services'], dict):
-            logging.warning(UserMessage("Service definition type error: dictionary expected.", filename=file_name))
-            return # TODO(jb) return from services load only
+            logging.warning(
+                UserMessage(
+                    "Service definition type error: dictionary expected.", filename=file_name
+                )
+            )
+            return  # TODO(jb) return from services load only
 
         # Construct ItemUnit for each data point
         for symbol, symbol_def in file_data['services'].items():
-            
+
             if symbol in ["__line__", "__filename__"]:
                 continue
 
@@ -934,7 +941,6 @@ class Naming:
             if symbol in self.unseen_services:
                 self.unseen_services.pop(symbol)
 
-
             for item in symbol_def:
                 # 'item' can be:
                 # 1. A string, understood as a service name reference
@@ -954,10 +960,17 @@ class Naming:
                 elif isinstance(item, dict):
                     if 'name' in item and isinstance(item['name'], str):
                         value = service_ref = item['name']
-                    elif 'port' in item and isinstance(item['port'], str) and 'protocol' in item and (isinstance(item['protocol'], str) or isinstance(item['protocol'], int)):
+                    elif (
+                        'port' in item
+                        and (isinstance(item['port'], str) or isinstance(item['port'], int))
+                        and 'protocol' in item
+                        and (
+                            isinstance(item['protocol'], str) or isinstance(item['protocol'], int)
+                        )
+                    ):
                         protocol = item['protocol']
                         port = item['port']
-                        value = service_port = f'{protocol}/{port}'
+                        value = service_port = f'{port}/{protocol}'
                     else:
                         logging.info(f'\Service name or port definition expected for: {symbol}')
                         continue
@@ -971,7 +984,7 @@ class Naming:
                     unit.items.append(value)
                 else:
                     unit.items.append(f'{value} # {comment}')
-                
+
                 if service_ref not in self.services:
                     if service_ref not in self.unseen_services:
                         self.unseen_services[service_ref] = True

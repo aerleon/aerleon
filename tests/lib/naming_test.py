@@ -256,7 +256,7 @@ networks:
         values:
             - 
                 ip: ::FFFF:FFFF:FFFF:FFFF
-    FOO_V6:
+    BAR_V6:
         values:
             - 
                 ip: ::1/128
@@ -279,7 +279,7 @@ class DefinitionObjectUnitTest(NamingUnitTest):
     """Runs the NamingUnitTest suite against object input.
     
     This is the object representation used by YAML definition files and API calls.
-    
+
     Behavior should be identical."""
 
     def setUp(self):
