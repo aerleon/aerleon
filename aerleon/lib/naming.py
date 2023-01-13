@@ -648,8 +648,6 @@ class Naming:
                 self.networks[self.current_symbol] = self.unit
                 if self.current_symbol in self.unseen_networks:
                     self.unseen_networks.pop(self.current_symbol)
-            else:
-                raise ParseError('Unknown definitions type.')
             values = line_parts[1]
         # No '=', so this is a value only line
         else:
