@@ -631,13 +631,10 @@ class Naming:
                 except IOError as error_info:
                     raise NoDefinitionsError('%s' % error_info)
 
-    # Now _ParseFile or _Parse should accept YAML files
     def _ParseFile(self, file_handle, def_type):
-        # Branch here - if file name is YAML, load through YAML path
         for line in file_handle:
             self._ParseLine(line, def_type)
 
-    # non-YAML only
     def ParseServiceList(self, data):
         """Take an array of service data and import into class.
 
@@ -650,7 +647,6 @@ class Naming:
         for line in data:
             self._ParseLine(line, DEF_TYPE_SERVICES)
 
-    # non-YAML only
     def ParseNetworkList(self, data):
         """Take an array of network data and import into class.
 
