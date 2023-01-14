@@ -3,7 +3,6 @@
 import pathlib
 from typing import Tuple
 import yaml
-from yaml.loader import SafeLoader
 from yaml.error import YAMLError
 
 from absl import logging
@@ -16,6 +15,7 @@ from aerleon.lib.policy_builder import (
     RawPolicy,
     RawTerm,
 )
+from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
 
 class PolicyTypeError(Exception):
@@ -100,7 +100,7 @@ def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False
     """
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
-            file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
+            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
@@ -127,7 +127,7 @@ def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_
         PolicyTypeError: The policy file provided is not valid.
     """
     try:
-        file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
+        file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
@@ -135,29 +135,6 @@ def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_
     raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
     return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
-
-def _SpanSafeYamlLoader(*, filename):
-    """Configure yaml.load to:
-    * Force safe_load mode (disable unpickling).
-    * Augment mappings with debug context: __line__, __filename__.
-
-    Post-load user error messages need to provide a filename and line number back to the user.
-    Including debugging context in the mappings gives post-load code access to this information.
-    Code operating on the native representation must filter out __line__, __filename__ from all
-    mappings (dicts) when iterating over user data. This assumes __line__, __filename__ are not
-    valid keys in any user data.
-    """
-
-    class PluginYamlLoader(SafeLoader):
-        def construct_mapping(self, node, deep=False):
-            mapping = super(PluginYamlLoader, self).construct_mapping(node, deep=deep)
-            # Add 1 so line numbering starts at 1
-            # TODO(jb) look at cases where line number does not match up, e.g. filter['__line__']
-            mapping['__line__'] = node.start_mark.line + 1
-            mapping['__filename__'] = filename
-            return mapping
-
-    return PluginYamlLoader
 
 
 def _RawPolicyFromFile(filename, base_dir, file_data):
@@ -251,7 +228,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
             try:
                 include_file = _LoadIncludeFile(base_dir, inc_filename)
                 include_data = yaml.load(
-                    include_file, Loader=_SpanSafeYamlLoader(filename=inc_filename)
+                    include_file, Loader=SpanSafeYamlLoader(filename=inc_filename)
                 )
             except YAMLError as yaml_error:
                 raise PolicyTypeError(

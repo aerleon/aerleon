@@ -43,10 +43,8 @@ DNS = 53/tcp
       53/udp
 
 """
-# TODO(jb) - IT's awkward to have a file, yaml.py. Either rename yaml.py to yaml front-end or consolidate overlapping code.
 
 
-import os
 from pathlib import Path
 import re
 from typing import Tuple
@@ -57,6 +55,7 @@ from absl import logging
 
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
+from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
 
 DEF_TYPE_SERVICES = 'services'
@@ -105,30 +104,6 @@ class NamingSyntaxError(Error):
 
 class DefinitionFileTypeError(Error):
     """Invalid Definition File"""
-
-
-def _SpanSafeYamlLoader(*, filename):
-    """Configure yaml.load to:
-    * Force safe_load mode (disable unpickling).
-    * Augment mappings with debug context: __line__, __filename__.
-
-    Post-load user error messages need to provide a filename and line number back to the user.
-    Including debugging context in the mappings gives post-load code access to this information.
-    Code operating on the native representation must filter out __line__, __filename__ from all
-    mappings (dicts) when iterating over user data. This assumes __line__, __filename__ are not
-    valid keys in any user data.
-    """
-
-    class PluginYamlLoader(SafeLoader):
-        def construct_mapping(self, node, deep=False):
-            mapping = super(PluginYamlLoader, self).construct_mapping(node, deep=deep)
-            # Add 1 so line numbering starts at 1
-            # TODO(jb) look at cases where line number does not match up, e.g. filter['__line__']
-            mapping['__line__'] = node.start_mark.line + 1
-            mapping['__filename__'] = filename
-            return mapping
-
-    return PluginYamlLoader
 
 
 # Consider making this span-oriented
@@ -189,7 +164,6 @@ class UserMessage:
         return f"UserMessage(\"{str(self)}\")"
 
 
-# TODO(jb) could probably be a dataclass...
 class _ItemUnit:
     """This class is a container for an index key and a list of associated values.
 
@@ -218,9 +192,18 @@ class Naming:
        port_re: Regular Expression matching valid port entries.
     """
 
-    # TODO(jb): for API usage, allow something like naming_file_data or naming_file_object...
     def __init__(self, naming_dir=None, naming_file=None, naming_type=None):
-        """Set the default values for a new Naming object."""
+        """Set the default values for a new Naming object.
+
+        Args:
+          naming_dir: A string containing a file path to the directory where
+            definition files are located.
+          naming_file: Optional. A string containing the file path to a specific
+            defintion file. Only this file will be loaded if naming_file is given.
+          naming_type: Optional. A string containing either 'service' or 'network'.
+            This option is only needed if naming_file is provided and it refers to
+            a non-YAML file.
+        """
         self.current_symbol = None
         self.services = {}
         self.networks = {}
@@ -229,11 +212,22 @@ class Naming:
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
 
-        if naming_file and naming_type:
-            filename = os.path.sep.join([naming_dir, naming_file])
-            with open(filename, 'r') as file_handle:
-                self._ParseFile(file_handle, naming_type)
+        if naming_file:
+            file_path = Path(naming_dir).join(naming_file)
+            if file_path.suffix == '.yaml':
+                if naming_type:
+                    logging.warning('Naming object: ignoring unexpected naming_type.')
+
+                with open(file_path, 'r') as file_handle:
+                    self.ParseYaml(file_handle, file_path.name)
+            elif naming_type:
+                with open(file_path, 'r') as file_handle:
+                    self._ParseFile(file_handle, naming_type)
+
         elif naming_dir:
+            if naming_type:
+                logging.warning('Naming object: ignoring unexpected naming_type.')
+
             self._Parse(naming_dir, DEF_TYPE_SERVICES)
             self._CheckUnseen(DEF_TYPE_SERVICES)
 
@@ -799,7 +793,7 @@ class Naming:
         # Run something like ParseLine but for raw entries... ParseEntry? Maybe there is even a data model that I can load into
 
         try:
-            file_data = yaml.load(file_handle, Loader=_SpanSafeYamlLoader(filename=file_name))
+            file_data = yaml.load(file_handle, Loader=SpanSafeYamlLoader(filename=file_name))
         except YAMLError as yaml_error:
             raise DefinitionFileTypeError(
                 UserMessage("Unable to read file as YAML.", filename=file_name)
