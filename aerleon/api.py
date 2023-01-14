@@ -25,7 +25,7 @@ def Generate(
     optimize=False,
     shade_check=False,
     exp_info=2,
-) -> dict[str, str]:
+) -> "dict[str, str]":
 
     context = multiprocessing.get_context()
     return _Generate(
@@ -48,7 +48,7 @@ def _Generate(
     shade_check=False,
     exp_info=2,
     max_renderers=1,
-) -> dict[str, str]:
+) -> "dict[str, str]":
 
     # thead-safe list for storing files to write
     manager: multiprocessing.managers.SyncManager = context.Manager()

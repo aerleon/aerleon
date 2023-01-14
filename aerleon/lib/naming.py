@@ -898,14 +898,14 @@ class Naming:
 
             if not isinstance(symbol_def, list):
                 logging.info(
-                    f'\Service definition must be a list. Ignoring definition for service: {symbol}.'
+                    f'\nService definition must be a list. Ignoring definition for service: {symbol}.'
                 )
                 continue
 
             # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if not self.token_re.match(symbol):
                 logging.info(
-                    f'\Service name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
+                    f'\nService name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                 )
 
             # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
