@@ -228,10 +228,8 @@ class Naming:
             if naming_type:
                 logging.warning('Naming object: ignoring unexpected naming_type.')
 
-            self._Parse(naming_dir, DEF_TYPE_SERVICES)
+            self._Parse(naming_dir)
             self._CheckUnseen(DEF_TYPE_SERVICES)
-
-            self._Parse(naming_dir, DEF_TYPE_NETWORKS)
             self._CheckUnseen(DEF_TYPE_NETWORKS)
 
     def _CheckUnseen(self, def_type):
@@ -594,11 +592,7 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    # TODO(jb) It's odd that _Parse and _ParseLine validate definition_type despite underscore names
-    # Is there not a more correct boundary? Or are the private methods actually used? If so, add public names.
-    # Note that it appears that _ParseLines might be used by external automation use cases already.
-
-    def _Parse(self, defdirectory, definition_type):
+    def _Parse(self, defdirectory):
         """Parse files of a particular type for tokens and values.
 
         Given a directory name and the type (services|networks) to
@@ -614,35 +608,28 @@ class Naming:
         """
 
         allowed_suffixes = {
-            DEF_TYPE_NETWORKS: ['.net', '.yaml'],
-            DEF_TYPE_SERVICES: ['.svc', '.yaml'],
+            DEF_TYPE_NETWORKS: ['.net'],
+            DEF_TYPE_SERVICES: ['.svc'],
+            'yaml': ['.yaml'],
         }
 
-        if definition_type not in ['services', 'networks']:
-            raise UnexpectedDefinitionTypeError(
-                '%s %s' % ('Received an unexpected definition type:', definition_type)
-            )
+        for definition_type in allowed_suffixes.keys():
+            file_names = [
+                path
+                for path in Path(defdirectory).iterdir()
+                if path.suffix in allowed_suffixes[definition_type]
+            ]
 
-        file_names = [
-            path
-            for path in Path(defdirectory).iterdir()
-            if path.suffix in allowed_suffixes[definition_type]
-        ]
-
-        if not file_names:
-            raise NoDefinitionsError(
-                f'No definition files found in {defdirectory} for type {definition_type}.'
-            )
-
-        for current_file_path in file_names:
-            try:
-                with open(current_file_path, 'r') as file:
-                    if current_file_path.suffix == '.yaml':
-                        self.ParseYaml(file, current_file_path.name, definition_type)
+            for current_file_path in file_names:
+                try:
+                    if definition_type == 'yaml':
+                        with open(current_file_path, 'r') as file:
+                            self.ParseYaml(file, current_file_path.name)
                     else:
-                        self._ParseFile(file, definition_type)
-            except IOError as error_info:
-                raise NoDefinitionsError('%s' % error_info)
+                        with open(current_file_path, 'r') as file:
+                            self._ParseFile(file, definition_type)
+                except IOError as error_info:
+                    raise NoDefinitionsError('%s' % error_info)
 
     # Now _ParseFile or _Parse should accept YAML files
     def _ParseFile(self, file_handle, def_type):
@@ -816,18 +803,23 @@ class Naming:
             )
             return
 
-        # Try networks (FUNC 1) TODO(jb) split up into functions (thunks)
+        if 'networks' in file_data:
+            self._ParseYamlNetworks(file_data, file_name)
+
+        if 'services' in file_data:
+            self._ParseYamlServices(file_data, file_name)
+
+    def _ParseYamlNetworks(self, file_data, file_name):
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
             logging.warning(
                 UserMessage(
                     "Network definition type error: dictionary expected.", filename=file_name
                 )
             )
-            return  # TODO(jb) return from network load only
+            return
 
         # Construct ItemUnit for each data point
         for symbol, symbol_def in file_data['networks'].items():
-
             if symbol in ["__line__", "__filename__"]:
                 continue
 
@@ -864,16 +856,15 @@ class Naming:
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'ip' or 'name' must be present in any dictionary item
-
                 value = None
-                service_ref = None
+                network_ref = None
                 ip = None
                 comment = None
                 if isinstance(item, str):
-                    value = service_ref = item
+                    value = network_ref = item
                 elif isinstance(item, dict):
                     if 'name' in item and isinstance(item['name'], str):
-                        value = service_ref = item['name']
+                        value = network_ref = item['name']
                     elif 'ip' in item and isinstance(item['ip'], str):
                         value = ip = item['ip']
                     else:
@@ -891,22 +882,21 @@ class Naming:
                 else:
                     unit.items.append(f'{value} # {comment}')
 
-                if service_ref not in self.networks:
-                    if service_ref not in self.unseen_networks:
-                        self.unseen_networks[service_ref] = True
+                if network_ref and network_ref not in self.networks:
+                    if network_ref not in self.unseen_networks:
+                        self.unseen_networks[network_ref] = True
 
-        # Try services (FUNC 2)
+    def _ParseYamlServices(self, file_data, file_name):
         if 'services' in file_data and not isinstance(file_data['services'], dict):
             logging.warning(
                 UserMessage(
                     "Service definition type error: dictionary expected.", filename=file_name
                 )
             )
-            return  # TODO(jb) return from services load only
+            return
 
         # Construct ItemUnit for each data point
         for symbol, symbol_def in file_data['services'].items():
-
             if symbol in ["__line__", "__filename__"]:
                 continue
 
@@ -944,7 +934,6 @@ class Naming:
                 #    'name': A service name reference
                 #    'comment': An optional comment
                 # ('protocol' and 'port') or 'name' must be present in any dictionary item
-
                 value = None
                 service_ref = None
                 service_port = None
@@ -979,6 +968,6 @@ class Naming:
                 else:
                     unit.items.append(f'{value} # {comment}')
 
-                if service_ref not in self.services:
+                if service_ref and service_ref not in self.services:
                     if service_ref not in self.unseen_services:
                         self.unseen_services[service_ref] = True
