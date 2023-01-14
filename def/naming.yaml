@@ -1,0 +1,517 @@
+networks:
+    RFC1918:
+        values:
+            -
+                ip: 10.0.0.0/8
+                comment: "non-public"
+            -
+                ip: 172.16.0.0/12
+                comment: "non-public"
+            -
+                ip: 192.168.0.0/16
+                comment: "non-public"
+
+    INTERNAL:
+        values:
+            -
+                name: RFC1918
+
+    LOOPBACK:
+        values:
+            -
+                ip: 127.0.0.0/8
+                comment: "loopback"
+            -
+                ip: ::1/128
+                comment: "ipv6 loopback"
+
+    RFC_3330:
+        values:
+            -
+                ip: 169.254.0.0/16
+                comment: "special use IPv4 addresses - netdeploy"
+
+    RFC_6598:
+        values:
+            -
+                ip: 100.64.0.0/10
+                comment: "Shared Address Space"
+
+    LINKLOCAL:
+        values:
+            -
+                ip: FE80::/10
+                comment: "IPv6 link-local"
+
+    SITELOCAL:
+        values:
+            -
+                ip: FEC0::/10
+                comment: "Ipv6 Site-local"
+
+    MULTICAST:
+        values:
+            -
+                ip: 224.0.0.0/4
+                comment: "IP multicast"
+            -
+                ip: FF00::/8
+                comment: "IPv6 multicast"
+
+    CLASS-E:
+        values:
+            -
+                ip: 240.0.0.0/4
+
+    RESERVED:
+        values:
+            -
+                ip: 0.0.0.0/8
+                comment: "reserved"
+            -
+                name: RFC1918
+            -
+                name: LOOPBACK
+            -
+                name: RFC_3330
+            -
+                name: RFC_6598
+            -
+                name: MULTICAST
+            -
+                name: CLASS-E
+            -
+                ip: 0000::/8
+                comment: "reserved by IETF"
+            -
+                ip: 0100::/8
+                comment: "reserved by IETF"
+            -
+                ip: 0200::/7
+                comment: "reserved by IETF"
+            -
+                ip: 0400::/6
+                comment: "reserved by IETF"
+            -
+                ip: 0800::/5
+                comment: "reserved by IETF"
+            -
+                ip: 1000::/4
+                comment: "reserved by IETF"
+            -
+                ip: 4000::/3
+                comment: "reserved by IETF"
+            -
+                ip: 6000::/3
+                comment: "reserved by IETF"
+            -
+                ip: 8000::/3
+                comment: "reserved by IETF"
+            -
+                ip: A000::/3
+                comment: "reserved by IETF"
+            -
+                ip: C000::/3
+                comment: "reserved by IETF"
+            -
+                ip: E000::/4
+                comment: "reserved by IETF"
+            -
+                ip: F000::/5
+                comment: "reserved by IETF"
+            -
+                ip: F800::/6
+                comment: "reserved by IETF"
+            -
+                ip: FC00::/7
+                comment: "unique local unicast"
+            -
+                ip: FE00::/9
+                comment: "reserved by IETF"
+            -
+                name: LINKLOCAL
+                comment: "link local unicast"
+            -
+                name: SITELOCAL
+                comment: "IPv6 site-local"
+
+    ANY:
+        values:
+            -
+                ip: 0.0.0.0/0
+
+    ANY_V6:
+        values:
+            -
+                ip: ::/0
+
+    ANY_MIXED:
+        values:
+            -
+                name: ANY
+            -
+                name: ANY_V6
+
+# http://www.team-cymru.org/Services/Bogons/bogon-bn-agg.txt
+# 22-Apr-2011
+    BOGON:
+        values:
+            -
+                ip: 0.0.0.0/8
+            -
+                ip: 192.0.0.0/24
+            -
+                ip: 192.0.2.0/24
+            -
+                ip: 198.18.0.0/15
+            -
+                ip: 198.51.100.0/24
+            -
+                ip: 203.0.113.0/24
+            -
+                name: MULTICAST
+            -
+                name: CLASS-E
+            -
+                ip: 3FFE::/16
+                comment: "6bone"
+            -
+                ip: 5F00::/8
+                comment: "6bone"
+            -
+                ip: 2001:DB8::/32
+                comment: "IPv6 documentation prefix"
+
+    GOOGLE_PUBLIC_DNS_ANYCAST:
+        values:
+            -
+                ip: 8.8.4.4/32
+                comment: "IPv4 Anycast"
+            -
+                ip: 8.8.8.8/32
+                comment: "IPv4 Anycast"
+            -
+                ip: 2001:4860:4860::8844/128
+                comment: "IPv6 Anycast"
+            -
+                ip: 2001:4860:4860::8888/128
+                comment: "IPv6 Anycast"
+    GOOGLE_DNS:
+        values:
+            -
+                name: GOOGLE_PUBLIC_DNS_ANYCAST
+
+    CLOUDFLARE_PUBLIC_DNS:
+        values:
+            -
+                ip: 2606:4700:4700::1111/128
+            -
+                ip: 1.1.1.1
+
+# The following are sample entires intended for us in the included
+# sample policy file.  These should be removed.
+
+    WEB_SERVERS:
+        values:
+            -
+                ip: 200.1.1.1/32
+                comment: "Example web server 1"
+            -
+                ip: 200.1.1.2/32
+                comment: "Example web server 2"
+
+    MAIL_SERVERS:
+        values:
+            -
+                ip: 200.1.1.4/32
+                comment: "Example mail server 1"
+            -
+                ip: 200.1.1.5/32
+                comment: "Example mail server 2"
+
+    PUBLIC_NAT:
+        values:
+            -
+                ip: 200.1.1.3/32
+                comment: "Example company NAT address"
+
+    NTP_SERVERS:
+        values:
+            -
+                ip: 10.0.0.1/32
+                comment: "Example NTP server"
+            -
+                ip: 10.0.0.2/32
+                comment: "Example NTP server"
+
+    TACACS_SERVERS:
+        values:
+            -
+                ip: 10.1.0.1/32
+                comment: "Example tacacs server"
+            -
+                ip: 10.1.0.2/32
+                comment: "Example tacacs server"
+
+    PUBLIC_IPV6_SERVERS:
+        values:
+            -
+                ip: 2606:700:e:550:b01a::b00a
+                comment: "Example public web server"
+
+    WEB_IPV6_SERVERS:
+        values:
+            -
+                ip: 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128
+                comment: "Example web server"
+services:
+    WHOIS:
+        -
+            port: 43
+            protocol: udp
+    SSH:
+        -
+            port: 22
+            protocol: tcp
+    TELNET:
+        -
+            port: 23
+            protocol: tcp
+    SMTP:
+        -
+            port: 25
+            protocol: tcp
+    MAIL_SERVICES:
+        -
+            name: SMTP
+        -
+            name: ESMTP
+        -
+            name: SMTP_SSL
+        -
+            name: POP_SSL
+    TIME:
+        -
+            port: 37
+            protocol: tcp
+        -
+            port: 37
+            protocol: udp
+    TACACS:
+        -
+            port: 49
+            protocol: tcp
+    DNS:
+        -
+            port: 53
+            protocol: tcp
+        -
+            port: 53
+            protocol: udp
+    BOOTPS:
+        -
+            port: 67
+            protocol: udp
+            comment: "BOOTP server"
+    BOOTPC:
+        -
+            port: 68
+            protocol: udp
+            comment: "BOOTP client"
+    DHCP:
+        -
+            name: BOOTPS
+        -
+            name: BOOTPC
+    TFTP:
+        -
+            port: 69
+            protocol: tcp
+        -
+            port: 69
+            protocol: udp
+    HTTP:
+        -
+            port: 80
+            protocol: tcp
+    WEB_SERVICES:
+        -
+            name: HTTP
+        -
+            name: HTTPS
+    POP3:
+        -
+            port: 110
+            protocol: tcp
+    RPC:
+        -
+            port: 111
+            protocol: udp
+    IDENT:
+        -
+            port: 113
+            protocol: tcp
+        -
+            port: 113
+            protocol: udp
+    NNTP:
+        -
+            port: 119
+            protocol: tcp
+    NTP:
+        -
+            port: 123
+            protocol: tcp
+        -
+            port: 123
+            protocol: udp
+    MS_RPC_EPMAP:
+        -
+            port: 135
+            protocol: udp
+        -
+            port: 135
+            protocol: tcp
+    MS_137:
+        -
+            port: 137
+            protocol: udp
+    MS_138:
+        -
+            port: 138
+            protocol: udp
+    MS_139:
+        -
+            port: 139
+            protocol: tcp
+    IMAP:
+        -
+            port: 143
+            protocol: tcp
+    SNMP:
+        -
+            port: 161
+            protocol: udp
+    SNMP_TRAP:
+        -
+            port: 162
+            protocol: udp
+    BGP:
+        -
+            port: 179
+            protocol: tcp
+    IMAP3:
+        -
+            port: 220
+            protocol: tcp
+    LDAP:
+        -
+            port: 389
+            protocol: tcp
+    LDAP_SERVICE:
+        -
+            name: LDAP
+        -
+            name: LDAPS
+    HTTPS:
+        -
+            port: 443
+            protocol: tcp
+    MS_445:
+        -
+            port: 445
+            protocol: tcp
+    SMTP_SSL:
+        -
+            port: 465
+            protocol: tcp
+    IKE:
+        -
+            port: 500
+            protocol: udp
+    SYSLOG:
+        -
+            port: 514
+            protocol: udp
+    RTSP:
+        -
+            port: 554
+            protocol: tcp
+    ESMTP:
+        -
+            port: 587
+            protocol: tcp
+    LDAPS:
+        -
+            port: 636
+            protocol: tcp
+    IMAPS:
+        -
+            port: 993
+            protocol: tcp
+    POP_SSL:
+        -
+            port: 995
+            protocol: tcp
+    HIGH_PORTS:
+        -
+            port: 1024-65535
+            protocol: tcp
+        -
+            port: 1024-65535
+            protocol: udp
+    MSSQL:
+        -
+            port: 1433
+            protocol: tcp
+    MSSQL_MONITOR:
+        -
+            port: 1434
+            protocol: tcp
+    RADIUS:
+        -
+            port: 1812
+            protocol: tcp
+        -
+            port: 1812
+            protocol: udp
+    HSRP:
+        -
+            port: 1985
+            protocol: udp
+    NFSD:
+        -
+            port: 2049
+            protocol: tcp
+        -
+            port: 2049
+            protocol: udp
+    NETFLOW:
+        -
+            port: 2056
+            protocol: udp
+    SQUID_PROXY:
+        -
+            port: 3128
+            protocol: tcp
+    MYSQL:
+        -
+            port: 3306
+            protocol: tcp
+    RDP:
+        -
+            port: 3389
+            protocol: tcp
+    IPSEC:
+        -
+            port: 4500
+            protocol: udp
+    POSTGRESQL:
+        -
+            port: 5432
+            protocol: tcp
+    TRACEROUTE:
+        -
+            port: 33434-33534
+            protocol: udp
+
