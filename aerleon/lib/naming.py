@@ -49,7 +49,7 @@ from pathlib import Path
 import re
 from typing import Tuple
 import yaml
-from yaml import SafeLoader, YAMLError
+from yaml import YAMLError
 
 from absl import logging
 
@@ -592,12 +592,11 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    def _Parse(self, defdirectory):
+    def _Parse(self, definitions_directory):
         """Parse files for tokens and values.
 
-        Given a directory name and the type (services|networks) to
-        process, grab all the appropriate files in that directory
-        and parse them for definitions.
+        Given a directory name, grab all the appropriate files in that
+        directory and parse them for definitions.
 
         Args:
           defdirectory: Path to directory containing definition files.
@@ -607,29 +606,28 @@ class Naming:
           NoDefinitionsError: if no definitions are found.
         """
 
-        allowed_suffixes = {
-            DEF_TYPE_NETWORKS: ['.net'],
-            DEF_TYPE_SERVICES: ['.svc'],
-            'yaml': ['.yaml'],
+        file_def_type = {
+            '.net': DEF_TYPE_NETWORKS,
+            '.svc': DEF_TYPE_SERVICES,
+            '.yaml': 'yaml',
         }
 
-        for definition_type in allowed_suffixes.keys():
-            file_paths = [
-                path
-                for path in Path(defdirectory).iterdir()
-                if path.suffix in allowed_suffixes[definition_type]
-            ]
+        for path in Path(definitions_directory).iterdir():
 
-            for current_path in file_paths:
-                try:
-                    if definition_type == 'yaml':
-                        with open(current_path, 'r') as file:
-                            self.ParseYaml(file, current_path.name)
+            def_type = file_def_type.get(path.suffix)
+
+            if not def_type:
+                continue
+
+            try:
+                with open(path, 'r') as file:
+                    if def_type == 'yaml':
+                        self.ParseYaml(file, path.name)
                     else:
-                        with open(current_path, 'r') as file:
-                            self._ParseFile(file, definition_type)
-                except IOError as error_info:
-                    raise NoDefinitionsError('%s' % error_info)
+                        self._ParseFile(file, def_type)
+
+            except IOError as error_info:
+                raise NoDefinitionsError('%s' % error_info)
 
     def _ParseFile(self, file_handle, def_type):
         for line in file_handle:
