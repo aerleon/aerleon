@@ -1,0 +1,267 @@
+networks:
+    RFC1918:
+        values:
+            -
+                ip: 10.0.0.0/8
+                comment: "non-public"
+            -
+                ip: 172.16.0.0/12
+                comment: "non-public"
+            -
+                ip: 192.168.0.0/16
+                comment: "non-public"
+
+    INTERNAL:
+        values:
+            -
+                name: RFC1918
+
+    LOOPBACK:
+        values:
+            -
+                ip: 127.0.0.0/8
+                comment: "loopback"
+            -
+                ip: ::1/128
+                comment: "ipv6 loopback"
+
+    RFC_3330:
+        values:
+            -
+                ip: 169.254.0.0/16
+                comment: "special use IPv4 addresses - netdeploy"
+
+    RFC_6598:
+        values:
+            -
+                ip: 100.64.0.0/10
+                comment: "Shared Address Space"
+
+    LINKLOCAL:
+        values:
+            -
+                ip: FE80::/10
+                comment: "IPv6 link-local"
+
+    SITELOCAL:
+        values:
+            -
+                ip: FEC0::/10
+                comment: "Ipv6 Site-local"
+
+    MULTICAST:
+        values:
+            -
+                ip: 224.0.0.0/4
+                comment: "IP multicast"
+            -
+                ip: FF00::/8
+                comment: "IPv6 multicast"
+
+    CLASS-E:
+        values:
+            -
+                ip: 240.0.0.0/4
+
+    RESERVED:
+        values:
+            -
+                ip: 0.0.0.0/8
+                comment: "reserved"
+            -
+                name: RFC1918
+            -
+                name: LOOPBACK
+            -
+                name: RFC_3330
+            -
+                name: RFC_6598
+            -
+                name: MULTICAST
+            -
+                name: CLASS-E
+            -
+                ip: 0000::/8
+                comment: "reserved by IETF"
+            -
+                ip: 0100::/8
+                comment: "reserved by IETF"
+            -
+                ip: 0200::/7
+                comment: "reserved by IETF"
+            -
+                ip: 0400::/6
+                comment: "reserved by IETF"
+            -
+                ip: 0800::/5
+                comment: "reserved by IETF"
+            -
+                ip: 1000::/4
+                comment: "reserved by IETF"
+            -
+                ip: 4000::/3
+                comment: "reserved by IETF"
+            -
+                ip: 6000::/3
+                comment: "reserved by IETF"
+            -
+                ip: 8000::/3
+                comment: "reserved by IETF"
+            -
+                ip: A000::/3
+                comment: "reserved by IETF"
+            -
+                ip: C000::/3
+                comment: "reserved by IETF"
+            -
+                ip: E000::/4
+                comment: "reserved by IETF"
+            -
+                ip: F000::/5
+                comment: "reserved by IETF"
+            -
+                ip: F800::/6
+                comment: "reserved by IETF"
+            -
+                ip: FC00::/7
+                comment: "unique local unicast"
+            -
+                ip: FE00::/9
+                comment: "reserved by IETF"
+            -
+                name: LINKLOCAL
+                comment: "link local unicast"
+            -
+                name: SITELOCAL
+                comment: "IPv6 site-local"
+
+    ANY:
+        values:
+            -
+                ip: 0.0.0.0/0
+
+    ANY_V6:
+        values:
+            -
+                ip: ::/0
+
+    ANY_MIXED:
+        values:
+            -
+                name: ANY
+            -
+                name: ANY_V6
+
+# http://www.team-cymru.org/Services/Bogons/bogon-bn-agg.txt
+# 22-Apr-2011
+    BOGON:
+        values:
+            -
+                ip: 0.0.0.0/8
+            -
+                ip: 192.0.0.0/24
+            -
+                ip: 192.0.2.0/24
+            -
+                ip: 198.18.0.0/15
+            -
+                ip: 198.51.100.0/24
+            -
+                ip: 203.0.113.0/24
+            -
+                name: MULTICAST
+            -
+                name: CLASS-E
+            -
+                ip: 3FFE::/16
+                comment: "6bone"
+            -
+                ip: 5F00::/8
+                comment: "6bone"
+            -
+                ip: 2001:DB8::/32
+                comment: "IPv6 documentation prefix"
+
+    GOOGLE_PUBLIC_DNS_ANYCAST:
+        values:
+            -
+                ip: 8.8.4.4/32
+                comment: "IPv4 Anycast"
+            -
+                ip: 8.8.8.8/32
+                comment: "IPv4 Anycast"
+            -
+                ip: 2001:4860:4860::8844/128
+                comment: "IPv6 Anycast"
+            -
+                ip: 2001:4860:4860::8888/128
+                comment: "IPv6 Anycast"
+    GOOGLE_DNS:
+        values:
+            -
+                name: GOOGLE_PUBLIC_DNS_ANYCAST
+
+    CLOUDFLARE_PUBLIC_DNS:
+        values:
+            -
+                ip: 2606:4700:4700::1111/128
+            -
+                ip: 1.1.1.1
+
+# The following are sample entires intended for us in the included
+# sample policy file.  These should be removed.
+
+    WEB_SERVERS:
+        values:
+            -
+                ip: 200.1.1.1/32
+                comment: "Example web server 1"
+            -
+                ip: 200.1.1.2/32
+                comment: "Example web server 2"
+
+    MAIL_SERVERS:
+        values:
+            -
+                ip: 200.1.1.4/32
+                comment: "Example mail server 1"
+            -
+                ip: 200.1.1.5/32
+                comment: "Example mail server 2"
+
+    PUBLIC_NAT:
+        values:
+            -
+                ip: 200.1.1.3/32
+                comment: "Example company NAT address"
+
+    NTP_SERVERS:
+        values:
+            -
+                ip: 10.0.0.1/32
+                comment: "Example NTP server"
+            -
+                ip: 10.0.0.2/32
+                comment: "Example NTP server"
+
+    TACACS_SERVERS:
+        values:
+            -
+                ip: 10.1.0.1/32
+                comment: "Example tacacs server"
+            -
+                ip: 10.1.0.2/32
+                comment: "Example tacacs server"
+
+    PUBLIC_IPV6_SERVERS:
+        values:
+            -
+                ip: 2606:700:e:550:b01a::b00a
+                comment: "Example public web server"
+
+    WEB_IPV6_SERVERS:
+        values:
+            -
+                ip: 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128
+                comment: "Example web server"
+
