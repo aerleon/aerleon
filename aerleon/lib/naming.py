@@ -213,7 +213,7 @@ class Naming:
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
 
         if naming_file:
-            file_path = Path(naming_dir).join(naming_file)
+            file_path = Path(naming_dir).joinpath(naming_file)
             if file_path.suffix == '.yaml':
                 if naming_type:
                     logging.warning('Naming object: ignoring unexpected naming_type.')
@@ -593,7 +593,7 @@ class Naming:
         return returnlist
 
     def _Parse(self, defdirectory):
-        """Parse files of a particular type for tokens and values.
+        """Parse files for tokens and values.
 
         Given a directory name and the type (services|networks) to
         process, grab all the appropriate files in that directory
@@ -614,19 +614,19 @@ class Naming:
         }
 
         for definition_type in allowed_suffixes.keys():
-            file_names = [
+            file_paths = [
                 path
                 for path in Path(defdirectory).iterdir()
                 if path.suffix in allowed_suffixes[definition_type]
             ]
 
-            for current_file_path in file_names:
+            for current_path in file_paths:
                 try:
                     if definition_type == 'yaml':
-                        with open(current_file_path, 'r') as file:
-                            self.ParseYaml(file, current_file_path.name)
+                        with open(current_path, 'r') as file:
+                            self.ParseYaml(file, current_path.name)
                     else:
-                        with open(current_file_path, 'r') as file:
+                        with open(current_path, 'r') as file:
                             self._ParseFile(file, definition_type)
                 except IOError as error_info:
                     raise NoDefinitionsError('%s' % error_info)
@@ -684,7 +684,7 @@ class Naming:
 
         #
         # NOTE: The "unseen name" logic defined in this function (_ParseLine) is duplicated in
-        # function _ParseDefinitionYamlFile. Any changes to how "unseen name" checking is done
+        # function ParseDefinitionsObject. Any changes to how "unseen name" checking is done
         # need to be made in both places.
         #
         # TODO(jb): Consider splitting up _ParseLine so that it generates an intermediate
