@@ -74,39 +74,38 @@ Take the yaml above and insert it into a file in the defs directory.
 
   ```bash
   echo "networks:
-    RFC1918:
-      values:
-        - ip: 10.0.0.0/8
-        - ip: 172.16.0.0/12
-        - ip: 192.168.0.0/16
-    WEB_SERVERS:
-      values:
-        - ip: 10.0.0.1/32
-          comment: Web Server 1
-        - ip: 10.0.0.2/32
-          comment: Web Server 2
-    MAIL_SERVERS:
-      values:
-        - ip: 10.0.0.3/32
-          comment: Mail Server 1
-        - ip: 10.0.0.4/32
-          comment: Mail Server 2
-    ALL_SERVERS:
-      values:
-        - WEB_SERVERS
-        - MAIL_SERVERS
-  services:
-    HTTP:
-      - protocol: tcp
-        port: 80
-    HTTPS:
-      - protocol: tcp
-        port: 443
-    WEB:
-      - HTTP
-      - HTTPS
-    HIGH_PORTS:
-      - FIX ME" > defs/definitions.yml
+  RFC1918:
+    values:
+      - ip: 10.0.0.0/8
+      - ip: 172.16.0.0/12
+      - ip: 192.168.0.0/16
+  WEB_SERVERS:
+    values:
+      - ip: 10.0.0.1/32
+        comment: Web Server 1
+      - ip: 10.0.0.2/32
+        comment: Web Server 2
+  MAIL_SERVERS:
+    values:
+      - ip: 10.0.0.3/32
+        comment: Mail Server 1
+      - ip: 10.0.0.4/32
+        comment: Mail Server 2
+  ALL_SERVERS:
+    values:
+      - WEB_SERVERS
+      - MAIL_SERVERS
+services:
+  HTTP:
+    - protocol: tcp
+      port: 80
+  HTTPS:
+    - protocol: tcp
+      port: 443
+  WEB:
+    - HTTP
+    - HTTPS
+" > def/definitions.yaml
 
   ```
 </details>
@@ -116,17 +115,16 @@ Take the yaml above and insert it into a file in the defs directory.
 A policy file describes rules to be used to filter traffic at some point in your network. This may be a single point or multiple points that all share the same rules. With Aerleon you define your rules in YAML and output the correct syntax for different firewalls. In our example we will make a simple firewall that filters both ingress and egress traffic.
 
 ```yaml
-acls:
+filters:
   - header:
       comment: Example inbound
       targets:
-        - target: cisco
-          options: inbound mixed
+        cisco: inbound mixed
     terms:
       - name: accept-web-servers
         comment: Accept connections to our web servers
         destination-address: WEB_SERVERS
-        destination-port: WEB_SERVICES
+        destination-port: WEB
         protocol: tcp
         action: accept
       - name: default-deny
@@ -143,22 +141,21 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
   <summary>Bash command</summary>
 
   ```bash
-  echo "acls:
+  echo "filters:
   - header:
       comment: Example inbound
       targets:
-        - target: cisco
-          options: inbound mixed
+        cisco: inbound mixed
     terms:
       - name: accept-web-servers
         comment: Accept connections to our web servers
         destination-address: WEB_SERVERS
-        destination-port: WEB_SERVICES
+        destination-port: WEB
         protocol: tcp
         action: accept
       - name: default-deny
         comment: Deny anything else.
-        action: deny" > policies/pol/example.yml
+        action: deny" > policies/pol/example.pol.yaml
 
   ```
 </details>
