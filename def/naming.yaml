@@ -139,6 +139,7 @@ networks:
         comment: "IPv6 Anycast"
       - ip: 2001:4860:4860::8888/128
         comment: "IPv6 Anycast"
+
   GOOGLE_DNS:
     values:
       - name: GOOGLE_PUBLIC_DNS_ANYCAST
@@ -193,185 +194,238 @@ networks:
     values:
       - ip: 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128
         comment: "Example web server"
+
 services:
   WHOIS:
     - port: 43
       protocol: udp
+
   SSH:
     - port: 22
       protocol: tcp
+
   TELNET:
     - port: 23
       protocol: tcp
+
   SMTP:
     - port: 25
       protocol: tcp
+
   MAIL_SERVICES:
     - name: SMTP
     - name: ESMTP
     - name: SMTP_SSL
     - name: POP_SSL
+
   TIME:
     - port: 37
       protocol: tcp
     - port: 37
       protocol: udp
+
   TACACS:
     - port: 49
       protocol: tcp
+
   DNS:
     - port: 53
       protocol: tcp
     - port: 53
       protocol: udp
+
   BOOTPS:
     - port: 67
       protocol: udp
       comment: "BOOTP server"
+
   BOOTPC:
     - port: 68
       protocol: udp
       comment: "BOOTP client"
+
   DHCP:
     - name: BOOTPS
     - name: BOOTPC
+
   TFTP:
     - port: 69
       protocol: tcp
     - port: 69
       protocol: udp
+
   HTTP:
     - port: 80
       protocol: tcp
+
   WEB_SERVICES:
     - name: HTTP
     - name: HTTPS
+
   POP3:
     - port: 110
       protocol: tcp
+
   RPC:
     - port: 111
       protocol: udp
+
   IDENT:
     - port: 113
       protocol: tcp
     - port: 113
       protocol: udp
+
   NNTP:
     - port: 119
       protocol: tcp
+
   NTP:
     - port: 123
       protocol: tcp
     - port: 123
       protocol: udp
+
   MS_RPC_EPMAP:
     - port: 135
       protocol: udp
     - port: 135
       protocol: tcp
+
   MS_137:
     - port: 137
       protocol: udp
+
   MS_138:
     - port: 138
       protocol: udp
+
   MS_139:
     - port: 139
       protocol: tcp
+
   IMAP:
     - port: 143
       protocol: tcp
+
   SNMP:
     - port: 161
       protocol: udp
+
   SNMP_TRAP:
     - port: 162
       protocol: udp
+
   BGP:
     - port: 179
       protocol: tcp
+
   IMAP3:
     - port: 220
       protocol: tcp
+
   LDAP:
     - port: 389
       protocol: tcp
+
   LDAP_SERVICE:
     - name: LDAP
     - name: LDAPS
+
   HTTPS:
     - port: 443
       protocol: tcp
+
   MS_445:
     - port: 445
       protocol: tcp
+
   SMTP_SSL:
     - port: 465
       protocol: tcp
+
   IKE:
     - port: 500
       protocol: udp
+
   SYSLOG:
     - port: 514
       protocol: udp
+
   RTSP:
     - port: 554
       protocol: tcp
+
   ESMTP:
     - port: 587
       protocol: tcp
+
   LDAPS:
     - port: 636
       protocol: tcp
+
   IMAPS:
     - port: 993
       protocol: tcp
+
   POP_SSL:
     - port: 995
       protocol: tcp
+
   HIGH_PORTS:
     - port: 1024-65535
       protocol: tcp
     - port: 1024-65535
       protocol: udp
+
   MSSQL:
     - port: 1433
       protocol: tcp
+
   MSSQL_MONITOR:
     - port: 1434
       protocol: tcp
+
   RADIUS:
     - port: 1812
       protocol: tcp
     - port: 1812
       protocol: udp
+
   HSRP:
     - port: 1985
       protocol: udp
+
   NFSD:
     - port: 2049
       protocol: tcp
     - port: 2049
       protocol: udp
+
   NETFLOW:
     - port: 2056
       protocol: udp
+
   SQUID_PROXY:
     - port: 3128
       protocol: tcp
+
   MYSQL:
     - port: 3306
       protocol: tcp
+
   RDP:
     - port: 3389
       protocol: tcp
+
   IPSEC:
     - port: 4500
       protocol: udp
+
   POSTGRESQL:
     - port: 5432
       protocol: tcp
+
   TRACEROUTE:
     - port: 33434-33534
       protocol: udp
