@@ -768,10 +768,6 @@ class Naming:
             file: A string containing the file contents.
             filename: The original filename of the file.
         """
-        # Load using safe loader (w debug possibly)
-        # Validate basic structure
-        # Convert into an intermediate representation
-        # Run something like ParseLine but for raw entries... ParseEntry? Maybe there is even a data model that I can load into
 
         try:
             file_data = yaml.load(file_handle, Loader=SpanSafeYamlLoader(filename=file_name))
