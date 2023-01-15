@@ -1,4 +1,4 @@
-"""YAML front-end. Loads a Policy model from a .pol.yaml file."""
+"""YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
 from typing import Tuple
@@ -59,14 +59,14 @@ class UserMessage:
         """Display user-facing error message with include chain (if present).
 
         e.g.
-        Excessive recursion: include depth limit of 5 reached. File=include_1.pol-include.yaml, Line=3.
+        Excessive recursion: include depth limit of 5 reached. File=include_1.yaml, Line=3.
         Include stack:
-        > File='policy_with_include.pol.yaml', Line=11 (Top Level)
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
+        > File='policy_with_include.yaml', Line=11 (Top Level)
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
         """  # noqa: E501
         error_context = f"{self.message} File={self.filename}"
         if self.line is not None:
@@ -136,7 +136,6 @@ def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_
     return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
 
-
 def _RawPolicyFromFile(filename, base_dir, file_data):
     """Construct and return a RawPolicy from file data."""
 
@@ -147,8 +146,13 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
         logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
         return
 
-    # Malformed policy files should generate a PolicyTypeError
+    # Malformed policy files should generate a PolicyTypeError (unless this is an include file)
     if 'filters' not in file_data or not isinstance(file_data['filters'], list):
+
+        if 'terms' in file_data:
+            # In this case we are looking at an include file and need to quietly ignore it.
+            return
+
         raise PolicyTypeError(
             UserMessage("Policy file must contain one or more filter sections.", filename=filename)
         )
@@ -263,10 +267,13 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                                 include_chain=new_stack,
                             )
                         )
-                    if term_item['include'][-17:] != '.pol-include.yaml' and term_item['include'][-16:] != '.pol-include.yml':
+                    if (
+                        term_item['include'][-5:] != '.yaml'
+                        and term_item['include'][-4:] != '.yml'
+                    ):
                         raise PolicyTypeError(
                             UserMessage(
-                                f"Policy include source {term_item['include']} must end in \".pol-include.yaml\".",  # noqa: E501
+                                f"Policy include source {term_item['include']} must end in \".yaml\".",  # noqa: E501
                                 filename=term_item['__filename__'],
                                 line=term_item['__line__'],
                                 include_chain=new_stack,
