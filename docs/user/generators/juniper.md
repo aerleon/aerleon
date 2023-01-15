@@ -2,26 +2,9 @@
 
 The juniper header designation has the following format:
 
-```
-target:: juniper [filter name] {inet|inet6|bridge}
-filter name: defines the name of the juniper filter.
-inet: specifies the output should be for IPv4 only filters. This is the default format.
-inet6: specifies the output be for IPv6 only filters.
-bridge: specifies the output should render a Juniper bridge filter.
-```
-
-When inet4 or inet6 is specified, naming tokens with both IPv4 and IPv6 filters
-will be rendered using only the specified addresses.
-
-The default format is `inet4`, and is implied if not other argument is given.
-
-
-## Juniper
-
-The juniper header designation has the following format:
-
-```
-target:: juniper [filter name] {inet|inet6|bridge} {dsmo} {not-interface-specific}
+```yaml
+targets:
+    juniper: [filter name] {inet|inet6|bridge} {dsmo} {not-interface-specific}
 ```
 
 * _filter name_: defines the name of the juniper filter.
@@ -51,7 +34,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _dscp_match::_ Match a DSCP number.
 * _dscp_set::_ Match a DSCP set.
 * _ether_type::_ Match EtherType field.
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _filter-term::_ Include another filter
 * _flexible-match-range Filter based on flexible match options.
 * _forwarding-class::_ Specify the forwarding class to match.

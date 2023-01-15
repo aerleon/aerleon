@@ -11,7 +11,7 @@ See Cisco
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
 * _dscp_match::_ Match a DSCP number.
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _icmp-code::_ Specifies the ICMP code to filter on.
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
 * _logging::_ Specify that this packet should be logged via syslog.

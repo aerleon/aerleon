@@ -2,8 +2,9 @@
 
 The aruba header designation has the following format:
 
-```
-target:: aruba [filter name] {ipv6}
+```yaml
+targets:
+    aruba: [filter name] {ipv6}
 ```
 
 * _filter name_: defines the name of the arista filter.
@@ -15,7 +16,7 @@ target:: aruba [filter name] {ipv6}
 * _comment::_ A text comment enclosed in double-quotes.  The comment can extend over multiple lines if desired, until a closing quote is encountered.
 * _destination-address::_ One or more destination address tokens
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _name::_ Name of the term.
 * _option::_ See platforms supported Options section.
 * _protocol::_ the network protocols this term will match, such as tcp, udp, icmp, or a numeric value.

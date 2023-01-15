@@ -2,8 +2,9 @@
 
 The GCE header designation has the following format:
 
-```
-target:: gce [filter name] [direction]
+```yaml
+targets:
+    gce: [filter name] [direction]
 ```
 
 * _filter name_: defines the name of the gce filter.
@@ -17,7 +18,7 @@ target:: gce [filter name] [direction]
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
 * _destination_tag::_ Tag name to be used for destination filtering.
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _name::_ Name of the term.
 * _option::_ See platforms supported Options section.
 * _owner::_ Owner of the term, used for organizational purposes.

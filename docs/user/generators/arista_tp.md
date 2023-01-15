@@ -15,11 +15,11 @@ The following tokens are supported:
 - `icmp-type`
 - `logging`
 - `option`
-    - `established`
-    - `tcp-established`
-    - `initial`
-    - `rst`
-    - `first-fragment` - this  will be rendered as a `fragment` match.`
+  - `established`
+  - `tcp-established`
+  - `initial`
+  - `rst`
+  - `first-fragment` - this  will be rendered as a `fragment` match.
 - `packet-length`
 - `source-address`
 - `source-exclude`
@@ -31,7 +31,7 @@ The following tokens are supported:
 
 The official documentation for traffic-policies can be found at the following URL.
 
- - <https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/>
+- <https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/>
 
 ## filter types
 

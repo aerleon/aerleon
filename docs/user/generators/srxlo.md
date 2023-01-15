@@ -17,7 +17,7 @@ SRX Loopback is a stateless Juniper ACL with minor changes. Please see code for 
 * _dscp_match::_ Match a DSCP number.
 * _dscp_set::_ Match a DSCP set.
 * _ether_type::_ Match EtherType field.
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _forwarding-class::_ Specify the forwarding class to match.
 * _forwarding-class_except::_ Do not match the specified forwarding classes.
 * _fragement-offset::_ specify a fragment offset of a fragmented packet

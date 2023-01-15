@@ -3,8 +3,9 @@
 Ipset is a system inside the Linux kernel, which can very efficiently store and match IPv4 and IPv6 addresses. This can be used to dramatically increase performance of iptables firewall.
 The Ipset header designation follows the Iptables format above, but uses the target platform of 'ipset':
 
-```
-target:: ipset [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
+```yaml
+targets:
+    ipset: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
 ```
 
 ## Term Format
@@ -17,7 +18,7 @@ target:: ipset [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nost
 * _destination-interface::_ Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
 * _destination-port::_ One or more service definition tokens
 * _destination-prefix::_ Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _fragement-offset::_ specify a fragment offset of a fragmented packet
 * _icmp-code::_ Specifies the ICMP code to filter on.
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
@@ -40,6 +41,7 @@ target:: ipset [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nost
 ## Sub Tokens
 
 ### Actions
+
 * _accept_
 * _deny_
 * _next_
@@ -47,6 +49,7 @@ target:: ipset [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nost
 * _reject-with-tcp-rst_
 
 ### Option
+
 * _ack::_ Match on ACK flag being present.
 * _all::_ Matches all protocols.
 * _established::_ Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
@@ -62,4 +65,3 @@ target:: ipset [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nost
 * _tcp-established::_ Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial::_ Only match initial packet for TCP protocol.
 * _urg::_ Match on URG flag being present.
-

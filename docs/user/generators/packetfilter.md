@@ -2,8 +2,9 @@
 
 > Note: The PF generator is currently in alpha testing. The output should be compatible with OpenBSD v4.7 PF and later.
 
-```
-target:: packetfilter filter-name {inet|inet6|mixed} {in|out} {nostate}
+```yaml
+targets:
+    packetfilter: filter-name {inet|inet6|mixed} {in|out} {nostate}
 ```
 
 * _filter-name_: a short, descriptive policy identifier
@@ -20,10 +21,10 @@ target:: packetfilter filter-name {inet|inet6|mixed} {in|out} {nostate}
 * _comment::_ A text comment enclosed in double-quotes.  The comment can extend over multiple lines if desired, until a closing quote is encountered.
 * _destination-address::_ One or more destination address tokens
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
-* _destination-interface::_ Specify the destination interface. Implicitly changes the term direction to *out* for this term. Mutually exclusive with _source-interface::_.
-* _source-interface::_ Specify the source interface. Implicitly changes the term direction to *in* for this term. Mutually exclusive with _destination-interface::_.
+* _destination-interface::_ Specify the destination interface. Implicitly changes the term direction to **out** for this term. Mutually exclusive with _source-interface::_.
+* _source-interface::_ Specify the source interface. Implicitly changes the term direction to **in** for this term. Mutually exclusive with _destination-interface::_.
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
 * _logging::_ Specify that this packet should be logged via syslog.
 * _name::_ Name of the term.

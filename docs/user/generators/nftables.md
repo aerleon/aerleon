@@ -2,8 +2,9 @@
 
 The NFTables header designation has the following format:
 
-```
-target:: newnftables [nf_address_family] [nf_hook] {default_policy_override} {int: base chain priority} {noverbose}
+```yaml
+targets:
+    newnftables: [nf_address_family] [nf_hook] {default_policy_override} {int: base chain priority} {noverbose}
 ```
 
 Unless otherwise stated, all fields are required unless they're marked optional.
@@ -26,9 +27,9 @@ An implementation design for this generator is that terms with options 'establis
 
 When reporting bugs about this generator ensure to include:
 
-1.  Example policy (.pol file)
-1.  Observed output (.nft file)
-1.  Expected (correct) output in Nftables syntax (.nft syntax)
+1. Example policy (.pol file)
+1. Observed output (.nft file)
+1. Expected (correct) output in Nftables syntax (.nft syntax)
 
 ## Term Format
 
@@ -36,7 +37,7 @@ When reporting bugs about this generator ensure to include:
 - _comment::_ A text comment enclosed in double-quotes. The comment can extend over multiple lines if desired, until a closing quote is encountered.
 - _destination-address::_ One or more destination address tokens.
 - _destination-port::_ One or more service definition tokens.
-- _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+- _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 - _icmp-type::_ Specify icmp-type code to match.
 - _source-address::_ One or more source address tokens.
 - _source-port::_ One or more service definition tokens.

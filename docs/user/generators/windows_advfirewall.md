@@ -2,8 +2,9 @@
 
 The Windows Advanced Firewall header designation has the following format:
 
-```
-target:: windows_advfirewall {out|in} {inet|inet6|mixed}
+```yaml
+targets:
+    windows_advfirewall: {out|in} {inet|inet6|mixed}
 ```
 
 * _out_: Specifies that the direction of packet flow is out. (default)
@@ -18,7 +19,7 @@ target:: windows_advfirewall {out|in} {inet|inet6|mixed}
 * _destination-address::_ One or more destination address tokens
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
 * _name::_ Name of the term.
 * _option::_ See platforms supported Options section.
@@ -40,8 +41,9 @@ target:: windows_advfirewall {out|in} {inet|inet6|mixed}
 
 The Windows IPSec header designation has the following format:
 
-```
-target:: windows_advfirewall [filter_name]
+```yaml
+targets:
+    windows_advfirewall: [filter_name]
 ```
 
 * _filter name_: defines the name of the Windows IPSec filter.
@@ -53,7 +55,7 @@ target:: windows_advfirewall [filter_name]
 * _destination-address::_ One or more destination address tokens
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _name::_ Name of the term.
 * _option::_ See platforms supported Options section.
 * _platform::_ one or more target platforms for which this term should ONLY be rendered.

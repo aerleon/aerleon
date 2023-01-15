@@ -1,31 +1,12 @@
 # iptables
 
-> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line. For 'iptables-restore' compatible output, please use the Speedway generator.
-
-The Iptables header designation has the following format:
-
-```
-target:: iptables [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
-INPUT: apply the terms to the input filter.
-OUTPUT: apply the terms to the output filter.
-FORWARD: apply the terms to the forwarding filter.
-custom: create the terms under a custom filter name, which must then be linked/jumped to from one of the default filters (e.g. iptables -A input -j custom)
-ACCEPT: specifies that the default policy on the filter should be 'accept'.
-DROP: specifies that the default policy on the filter should be to 'drop'.
-inet: specifies that the resulting filter should only render IPv4 addresses.
-inet6: specifies that the resulting filter should only render IPv6 addresses.
-truncatenames: specifies to abbreviate term names if necessary (see lib/iptables.py:CheckTerMLength for abbreviation table)
-nostate: specifies to produce 'stateless' filter output (e.g. no connection tracking)
-```
-
-## Iptables
-
 > NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](PolicyFormat#Speedway.md) generator.
 
 The Iptables header designation has the following format:
 
-```
-target:: iptables [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
+```yaml
+targets:
+    iptables: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
 ```
 
 * _INPUT_: apply the terms to the input filter.
@@ -37,7 +18,7 @@ target:: iptables [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {n
 * _inet_: specifies that the resulting filter should only render IPv4 addresses.
 * _inet6_: specifies that the resulting filter should only render IPv6 addresses.
 * _truncatenames_: specifies to abbreviate term names if necessary (see lib/iptables.py:_CheckTerMLength for abbreviation table)
-*_nostate_: specifies to produce 'stateless' filter output (e.g. no connection tracking)_
+* _nostate_: specifies to produce 'stateless' filter output (e.g. no connection tracking)
 
 ## Term Format
 
@@ -49,7 +30,7 @@ target:: iptables [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {n
 * _destination-interface::_ Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
 * _destination-port::_ One or more service definition tokens
 * _destination-prefix::_ Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _fragement-offset::_ specify a fragment offset of a fragmented packet
 * _icmp-code::_ Specifies the ICMP code to filter on.
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments

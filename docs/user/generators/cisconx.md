@@ -2,15 +2,17 @@
 
 The cisconx header designation has the following format:
 
+```yaml
+targets:
+    cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo}
 ```
-target:: cisconx [filter name] {extended|object-group|inet6|mixed} {enable_dsmo}
-```
-  * _filter name_: defines the name or number of the cisconx filter.
-  * _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
-  * _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
-  * _inet6_: specifies the output be for IPv6 only filters.
-  * _mixed_: specifies output will include both IPv6 and IPv4 filters.
-  * _enable_dsmo_: Enable discontinuous subnet mask summarization.
+
+* _filter name_: defines the name or number of the cisconx filter.
+* _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
+* _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
+* _inet6_: specifies the output be for IPv6 only filters.
+* _mixed_: specifies output will include both IPv6 and IPv4 filters.
+* _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
 The default format is _inet4_, and is implied if not other argument is given.
 
@@ -23,7 +25,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
 * _dscp_match::_ Match a DSCP number.
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _icmp-code::_ Specifies the ICMP code to filter on.
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
 * _logging::_ Specify that this packet should be logged via syslog.

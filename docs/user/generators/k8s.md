@@ -2,8 +2,9 @@
 
 The K8s header designation has the following format:
 
-```
-target:: k8s [direction]
+```yaml
+targets:
+    k8s: [direction]
 ```
 
 * _direction_: defines the direction, valid inputs are INGRESS and EGRESS (default:INGRESS)
@@ -15,7 +16,7 @@ target:: k8s [direction]
 * _destination-address::_ One or more destination address tokens
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _name::_ Name of the term.
 * _owner::_ Owner of the term, used for organizational purposes.
 * _protocol::_ the network protocols this term will match, such as tcp, udp, or sctp.

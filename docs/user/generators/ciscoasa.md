@@ -2,8 +2,9 @@
 
 The ciscoasa header designation has the following format:
 
-```
-target:: ciscoasa [filter name]
+```yaml
+targets:
+    ciscoasa: [filter name]
 ```
 
 ## Term Format
@@ -13,7 +14,7 @@ target:: ciscoasa [filter name]
 * _destination-address::_ One or more destination address tokens
 * _destination-exclude::_ Exclude one or more address tokens from the specified destination-address
 * _destination-port::_ One or more service definition tokens
-* _expiration::_ stop rendering this term after specified date. [YYYY](YYYY.md)-[MM](MM.md)-[DD](DD.md)
+* _expiration::_ stop rendering this term after specified date. YYYY-MM-DD
 * _icmp-type::_ Specify icmp-type code to match, see section [ICMP TYPES](PolicyFormat#ICMP_TYPES.md) for list of valid arguments
 * _logging::_ Specify that this packet should be logged via syslog.
 * _name::_ Name of the term.

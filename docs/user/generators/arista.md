@@ -70,4 +70,3 @@ option:: {established|is-fragment|tcp-established}
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
 * _is-fragment_: Matches on if a packet is a fragment.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol. #FIXME: there is no tcp-initial flag implemented in the inherited cisco.py

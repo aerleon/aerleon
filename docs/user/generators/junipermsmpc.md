@@ -2,15 +2,17 @@
 
 The juniper header designation has the following format:
 
+```yaml
+targets:
+    juniper: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress}
 ```
-target:: juniper [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress}
-filter name: defines the name of the juniper msmpc filter.
-inet6: specifies the output be for IPv6 only filters.
-mixed: specifies the output be for IPv4 and IPv6 filters. This is the default format.
-noverbose: omit additional term and address comments.
-ingress: filter will be applied in the input direction.
-egress: filter will be appliced in the output direction.
-```
+
+* _filter name_: defines the name of the juniper msmpc filter.
+* _inet6_: specifies the output be for IPv6 only filters.
+* _mixed_: specifies the output be for IPv4 and IPv6 filters. This is the default format.
+* _noverbose_: omit additional term and address comments.
+* _ingress_: filter will be applied in the input direction.
+* _egress_: filter will be appliced in the output direction.
 
 When inet4 or inet6 is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
 
