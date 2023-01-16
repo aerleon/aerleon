@@ -19,6 +19,7 @@ mkdir -p aerleon_test/policies/pol
 cd aerleon_test
 ```
 
+The rest of this walkthrough will assume you are within the `aerleon_test` directory.
 ## Definition Files
 Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to composit definitions together in certain places.
 
@@ -73,7 +74,7 @@ Take the yaml above and insert it into a file in the defs directory.
   <summary>Bash command</summary>
 
   ```bash
-  echo "networks:
+  $ echo "networks:
   RFC1918:
     values:
       - ip: 10.0.0.0/8
@@ -119,7 +120,7 @@ filters:
   - header:
       comment: Example inbound
       targets:
-        cisco: inbound mixed
+        cisco: inbound extended
     terms:
       - name: accept-web-servers
         comment: Accept connections to our web servers
@@ -141,11 +142,11 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
   <summary>Bash command</summary>
 
   ```bash
-  echo "filters:
+  $ echo "filters:
   - header:
       comment: Example inbound
       targets:
-        cisco: inbound mixed
+        cisco: inbound extended
     terms:
       - name: accept-web-servers
         comment: Accept connections to our web servers
@@ -159,3 +160,157 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
 
   ```
 </details>
+
+### Running ACLGen
+
+At this point we have definitions and a policy. We can run aclgen to get the config we can use on our firewall.
+
+```bash
+$ aclgen
+I0116 04:17:57.260641 139822104141824 aclgen.py:451] finding policies...
+W0116 04:17:57.263273 139822104141824 aclgen.py:369] --> policies/pol (1 pol files found)
+I0116 04:17:57.396398 139822104141824 plugin_supervisor.py:249] 0 plugins active.
+I0116 04:17:57.397953 139822104141824 plugin_supervisor.py:250] 27 generators registered.
+I0116 04:17:57.401166 139822104141824 aclgen.py:297] file changed: example.pol.acl
+I0116 04:17:57.423281 139822104141824 aclgen.py:384] writing 1 files to disk...
+I0116 04:17:57.424398 139822104141824 aclgen.py:403] writing file: example.pol.acl
+I0116 04:17:57.427682 139822104141824 aclgen.py:517] done.
+```
+
+We can see in the output that a file with the extension `.acl` has been written to the directory. Inspecting this file we can see it contains the rules we configured in our YAML file but translated to Cisco format.
+
+### Adding an Outbound ACL
+
+We currently have an inbound ACL but we wish to add an outbound ACL. In this case we append another `header` and `terms` section to our `filters`.
+
+```yaml
+filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound mixed
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept
+```
+
+
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound extended
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept" > policies/pol/example.pol.yaml
+  ```
+</details>
+
+If you run `aclgen` again you will see it notices the difference in the YAML file and writes over the old ACL. This new ACL contains both the inbound and outbound ACLs we wanted.
+
+### Generating a different platform
+In this example we have been generating a Cisco config. What happens though if you want to switch over to Juniper for some reason. Either you bought a new Juniper device and are migrating, or you have a oneoff that requires the same rules. This is simple to do, we just add a header option for Juniper.
+
+```yaml
+filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+        juniper: inbound
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound mixed
+        juniper: outbound
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept
+```
+
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+        juniper: inbound
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound mixed
+        juniper: outbound
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept" > policies/pol/example.pol.yaml
+  ```
+</details>
+
+If you run `aclgen` again you should see that it wrote two files now, the new one being `.jcl`. This is the Juniper file we wanted and will contain all the exact same rules but in the Juniper syntax.
