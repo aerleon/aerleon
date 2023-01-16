@@ -164,6 +164,10 @@ class UserMessage:
         return f"UserMessage(\"{str(self)}\")"
 
 
+def is_yaml_suffix(suffix):
+    return suffix == '.yaml' or suffix == '.yml'
+
+
 class _ItemUnit:
     """This class is a container for an index key and a list of associated values.
 
@@ -214,7 +218,7 @@ class Naming:
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
-            if file_path.suffix == '.yaml':
+            if is_yaml_suffix(file_path.suffix):
                 if naming_type:
                     logging.warning('Naming object: ignoring unexpected naming_type.')
 
@@ -610,6 +614,7 @@ class Naming:
             '.net': DEF_TYPE_NETWORKS,
             '.svc': DEF_TYPE_SERVICES,
             '.yaml': 'yaml',
+            '.yml': 'yaml',
         }
 
         for path in Path(definitions_directory).iterdir():
