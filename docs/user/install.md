@@ -19,7 +19,7 @@ Option 2: Install from a GitHub branch, such as main as shown below.
 $ pip install git+https://github.com/aerleon/aerleon.git@main
 ```
 
-## Verifying installation
+## Verifying Installation
 
 At each release we sign build artifacts with [Sigstore](https://www.sigstore.dev/) to allow for validation [SLSA](https://slsa.dev/) file to help provide integrity from supply chain attacks. The instructions provided here will work on most linux distributions. Windows may require a different but comparable tool listed in the prerequisites and modifications to the instructions. Some of the tools may already be installed, if not they are likely available via your package management system.
 
