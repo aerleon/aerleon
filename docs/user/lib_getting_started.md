@@ -3,7 +3,7 @@
 The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service definitions and putting them together to output firewall configurations.
 
 ## Setup
-> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the installation instructions
+> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/user/install/).
 
 You will want to make a temporary directory with the following structure.
 ```bash
@@ -12,7 +12,7 @@ You will want to make a temporary directory with the following structure.
 └── policies
     └── pol
 ```
-You can do this by executing the following mkdir commands
+You can do this with the following commands.
 ```bash
 mkdir -p aerleon_test/def
 mkdir -p aerleon_test/policies/pol
@@ -21,7 +21,7 @@ cd aerleon_test
 
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
 ## Definition Files
-Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to composite definitions together in certain places.
+Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
 
 ```yaml
 networks:
@@ -61,7 +61,7 @@ services:
 
 ```
 
-Above we have a couple of networks and services defined.
+Above we have defined a couple of networks and services.
 * `RFC1918` is defined as three IP subnets.
 * `WEB_SERVERS` and `MAIL_SERVERS` are both two IP hosts and include a comment about those IPs.
 * `ALL_SERVERS` is a composite of both `WEB_SERVERS` and `MAIL_SERVERS`.
@@ -69,7 +69,7 @@ Above we have a couple of networks and services defined.
 * `WEB` is a composit of both `HTTP` and `HTTPS`.
 * `HIGH_PORTS` is a port range of of 1024 to 65535 over both TCP and UDP.
 
-Take the yaml above and insert it into a file in the `defs` directory.
+Take the YAML above and insert it into a file in the `defs` directory.
 <details>
   <summary>Bash command</summary>
 
@@ -123,7 +123,7 @@ filters:
         cisco: inbound extended
     terms:
       - name: accept-web-servers
-        comment: Accept connections to our web servers
+        comment: Accept connections to our web servers.
         destination-address: WEB_SERVERS
         destination-port: WEB
         protocol: tcp
@@ -132,7 +132,7 @@ filters:
         comment: Deny anything else.
         action: deny
 ```
-The above YAML is an basic example with almost the minimum necessary to output an ACL. We have `acl` as the top keyword and a single `header` `terms` pair.
+The above YAML is a basic example with almost the minimum necessary to output an ACL. We have `filters` as the top keyword and a single `header` `terms` pair.
 
 Inside of the `header` we have a comment to explain what this ACL is for, a `target` of cisco meaning we wish to output that syntax, and options for the cisco generator.
 
