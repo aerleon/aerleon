@@ -55,15 +55,5 @@ class PluginSupervisorTest(absltest.TestCase):
         self.assertEqual(self.PluginSupervisor.generators.get("cisco", None), None)
         self.assertEqual(self.PluginSupervisor.generators["juniper"], Juniper)
 
-    def testPluginSupervisorConfigDisableBuiltin(self):
-        self.PluginSupervisor = _PluginSupervisor()
-        self.PluginSupervisor.Start(
-            PluginSupervisorConfiguration(disable_discovery=True, disable_builtin=['cisco'])
-        )
-
-        self.assertEqual(self.PluginSupervisor.plugins, [])
-        self.assertEqual(self.PluginSupervisor.generators.get("cisco", None), None)
-        self.assertEqual(self.PluginSupervisor.generators["juniper"], Juniper)
-
 if __name__ == '__main__':
     absltest.main()
