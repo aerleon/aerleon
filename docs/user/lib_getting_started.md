@@ -5,7 +5,7 @@ The following sections will take you through a guided tour of Aerleon. We will c
 ## Setup
 > **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the installation instructions
 
-You will want to make a temporary directory with the following folder structure.
+You will want to make a temporary directory with the following structure.
 ```bash
 .
 ├── def
