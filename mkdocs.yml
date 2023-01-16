@@ -51,6 +51,7 @@ nav:
       - Library Overview: user/lib_overview.md
       - Install and Configure: user/install.md
       - Getting Started: user/lib_getting_started.md
+      - CLI Reference: user/cli.md
       - Address Files: user/lib_address.md
       - Service Files: user/lib_service.md
       - Policy Files: user/lib_policy.md
