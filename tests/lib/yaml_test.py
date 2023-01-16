@@ -51,7 +51,7 @@ terms:
 """
 BAD_INCLUDE_YAML_INVALID_FILENAME = """
 terms:
-- include: include_1.pol.yaml
+- include: include_1.pol
 """
 BAD_INCLUDE_YAML_INVALID_YAML = """
 %INVALID YAML% &unknown
@@ -376,7 +376,7 @@ Include stack:
             )
             self.assertEqual(
                 str(user_message),
-                """Policy include source include_1.pol.yaml must end in ".pol-include.yaml". File=include_1.pol-include.yaml, Line=3.
+                """Policy include source include_1.pol must end in ".yaml". File=include_1.pol-include.yaml, Line=3.
 Include stack:
 > File='policy_with_include.pol.yaml', Line=10 (Top Level)
 > File='include_1.pol-include.yaml', Line=3""",  # noqa: E501

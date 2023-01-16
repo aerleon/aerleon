@@ -45,8 +45,8 @@ from __future__ import unicode_literals
 
 import argparse
 import pprint
-from lib import nacaddr
-from lib import naming
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
 
 import logging
 

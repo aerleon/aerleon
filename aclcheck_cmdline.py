@@ -17,9 +17,9 @@
 
 from optparse import OptionParser
 
-from capirca.lib import aclcheck
-from capirca.lib import naming
-from capirca.lib import policy
+from aerleon.lib import aclcheck
+from aerleon.lib import naming
+from aerleon.lib import policy
 
 
 def main():
