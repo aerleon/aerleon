@@ -32,7 +32,7 @@ At each release we sign build artifacts with [Sigstore](https://www.sigstore.dev
 ## Instructions
 1. Download the `whl`, `whl.crt`, `whl.sig`, and `jsonl` files from the latest release
 ```bash
-REPO="ankenyr/PySimilis"
+REPO="aerleon/aerleon"
 VER=$(curl --silent -qI https://github.com/$REPO/releases/latest |
       awk -F '/' '/^location/ {print  substr($NF, 1, length($NF)-1)}');
 wget https://github.com/$REPO/releases/download/$VER/provenance-sigstore-$VER.intoto.jsonl
