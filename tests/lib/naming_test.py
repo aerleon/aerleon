@@ -225,26 +225,26 @@ services:
 networks:
   NET1:
     values:
-      - ip: 10.1.0.0/8
+      - address: 10.1.0.0/8
         comment: "network1"
   NET2:
     values:
-      - ip: 10.2.0.0/16
+      - address: 10.2.0.0/16
         comment: "network2.0"
       - NET1
   9OCLOCK:
     values:
-      - ip: 1.2.3.4/32
+      - address: 1.2.3.4/32
         comment: "9 is the time"
   FOOBAR:
     values:
       - 9OCLOCK
   FOO_V6:
     values:
-      - ip: ::FFFF:FFFF:FFFF:FFFF
+      - address: ::FFFF:FFFF:FFFF:FFFF
   BAR_V6:
     values:
-      - ip: ::1/128
+      - address: ::1/128
   BAZ:
     values:
       - FOO_V6
@@ -271,14 +271,14 @@ class DefinitionObjectUnitTest(NamingUnitTest):
         super().setUp()
         defs_obj = {
             'networks': {
-                '9OCLOCK': {'values': [{'comment': '9 is the time', 'ip': '1.2.3.4/32'}]},
-                'BAR_V6': {'values': [{'ip': '::1/128'}]},
+                '9OCLOCK': {'values': [{'comment': '9 is the time', 'address': '1.2.3.4/32'}]},
+                'BAR_V6': {'values': [{'address': '::1/128'}]},
                 'BAZ': {'values': ['FOO_V6', 'BAR_V6']},
                 'BING': {'values': [{'comment': 'foo', 'name': 'NET1'}, 'FOO_V6']},
                 'FOOBAR': {'values': ['9OCLOCK']},
-                'FOO_V6': {'values': [{'ip': '::FFFF:FFFF:FFFF:FFFF'}]},
-                'NET1': {'values': [{'comment': 'network1', 'ip': '10.1.0.0/8'}]},
-                'NET2': {'values': [{'comment': 'network2.0', 'ip': '10.2.0.0/16'}, 'NET1']},
+                'FOO_V6': {'values': [{'address': '::FFFF:FFFF:FFFF:FFFF'}]},
+                'NET1': {'values': [{'comment': 'network1', 'address': '10.1.0.0/8'}]},
+                'NET2': {'values': [{'comment': 'network2.0', 'address': '10.2.0.0/16'}, 'NET1']},
             },
             'services': {
                 'SVC1': [
