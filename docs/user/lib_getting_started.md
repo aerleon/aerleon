@@ -3,7 +3,7 @@
 The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service defintions and putting them together to output firewall configurations.
 
 ## Setup
-This tutorial assumes you are working on a Linux operating system and have completed the installation instructions
+> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the installation instructions
 
 You will want to make a temporary directory with the following folder structure.
 ```bash
@@ -112,7 +112,7 @@ services:
 </details>
 
 
-# Policy Files
+## Policy Files
 A policy file describes rules to be used to filter traffic at some point in your network. This may be a single point or multiple points that all share the same rules. With Aerleon you define your rules in YAML and output the correct syntax for different firewalls. In our example we will make a simple firewall that filters both ingress and egress traffic.
 
 ```yaml
@@ -161,7 +161,7 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
   ```
 </details>
 
-### Running ACLGen
+## Running ACLGen
 
 At this point we have definitions and a policy. We can run aclgen to get the config we can use on our firewall.
 
@@ -179,7 +179,7 @@ I0116 04:17:57.427682 139822104141824 aclgen.py:517] done.
 
 We can see in the output that a file with the extension `.acl` has been written to the directory. Inspecting this file we can see it contains the rules we configured in our YAML file but translated to Cisco format.
 
-### Adding an Outbound ACL
+## Adding Additional ACLs
 
 We currently have an inbound ACL but we wish to add an outbound ACL. In this case we append another `header` and `terms` section to our `filters`.
 
@@ -246,7 +246,7 @@ filters:
 
 If you run `aclgen` again you will see it notices the difference in the YAML file and writes over the old ACL. This new ACL contains both the inbound and outbound ACLs we wanted.
 
-### Generating a different platform
+## Adding Additional Platforms
 In this example we have been generating a Cisco config. What happens though if you want to switch over to Juniper for some reason. Either you bought a new Juniper device and are migrating, or you have a oneoff that requires the same rules. This is simple to do, we just add a header option for Juniper.
 
 ```yaml
