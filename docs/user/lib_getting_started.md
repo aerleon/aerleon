@@ -1,6 +1,6 @@
 # Getting Started with Aerleon
 
-The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service defintions and putting them together to output firewall configurations.
+The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service definitions and putting them together to output firewall configurations.
 
 ## Setup
 > **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the installation instructions
@@ -21,7 +21,7 @@ cd aerleon_test
 
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
 ## Definition Files
-Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to composit definitions together in certain places.
+Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to composite definitions together in certain places.
 
 ```yaml
 networks:
@@ -64,12 +64,12 @@ services:
 Above we have a couple of networks and services defined.
 * `RFC1918` is defined as three IP subnets.
 * `WEB_SERVERS` and `MAIL_SERVERS` are both two IP hosts and include a comment about those IPs.
-* `ALL_SERVERS` is a composit of both `WEB_SERVERS` and `MAIL_SERVERS`.
+* `ALL_SERVERS` is a composite of both `WEB_SERVERS` and `MAIL_SERVERS`.
 * `HTTP` is defined as port 80 over TCP while `HTTPS` is port 443 over TCP.
 * `WEB` is a composit of both `HTTP` and `HTTPS`.
 * `HIGH_PORTS` is a port range of of 1024 to 65535 over both TCP and UDP.
 
-Take the yaml above and insert it into a file in the defs directory.
+Take the yaml above and insert it into a file in the `defs` directory.
 <details>
   <summary>Bash command</summary>
 
@@ -132,7 +132,7 @@ filters:
         comment: Deny anything else.
         action: deny
 ```
-The above YAML is an basic example with almost the minimum neccesary to output an ACL. We have `acl` as the top keyword and a single `header` `terms` pair.
+The above YAML is an basic example with almost the minimum necessary to output an ACL. We have `acl` as the top keyword and a single `header` `terms` pair.
 
 Inside of the `header` we have a comment to explain what this ACL is for, a `target` of cisco meaning we wish to output that syntax, and options for the cisco generator.
 
@@ -163,7 +163,7 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
 
 ## Running ACLGen
 
-At this point we have definitions and a policy. We can run aclgen to get the config we can use on our firewall.
+At this point we have definitions and a policy. We can run `aclgen` to get the config we can use on our firewall.
 
 ```bash
 $ aclgen
@@ -247,7 +247,7 @@ filters:
 If you run `aclgen` again you will see it notices the difference in the YAML file and writes over the old ACL. This new ACL contains both the inbound and outbound ACLs we wanted.
 
 ## Adding Additional Platforms
-In this example we have been generating a Cisco config. What happens though if you want to switch over to Juniper for some reason. Either you bought a new Juniper device and are migrating, or you have a oneoff that requires the same rules. This is simple to do, we just add a header option for Juniper.
+In this example we have been generating a Cisco config. What happens though if you want to switch over to Juniper for some reason. Either you bought a new Juniper device and are migrating, or you have a one off that requires the same rules. This is simple to do, we just add a header option for Juniper.
 
 ```yaml
 filters:
