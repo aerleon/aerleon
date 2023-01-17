@@ -31,12 +31,24 @@ cisco_example_policy = {
     "filters": [
         {
             "header": {
-                "targets": {"cisco": "test-filter"},
-                "kvs": {"comment": "Sample comment"},
+                "targets": {
+                    "cisco": "test-filter"
+                },
+                "kvs": {
+                    "comment": "Sample comment"
+                },
             },
             "terms": [
-                {"name": "deny-to-reserved", "destination-address": "RESERVED", "action": "deny"},
-                {"name": "deny-to-bogons", "destination-address": "BOGON", "action": "deny"},
+                {
+                    "name": "deny-to-reserved",
+                    "destination-address": "RESERVED",
+                    "action": "deny"
+                },
+                {
+                    "name": "deny-to-bogons",
+                    "destination-address": "BOGON",
+                    "action": "deny"
+                },
                 {
                     "name": "allow-web-to-mail",
                     "destination-address": "MAIL_SERVERS",
@@ -184,6 +196,7 @@ def Generate(
     shade_check=False,
     exp_info=2,
 ) -> "dict[str, str]":
+    """Generate ACLs from policies."""
 
     context = multiprocessing.get_context()
     return _Generate(

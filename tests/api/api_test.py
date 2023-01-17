@@ -4,18 +4,30 @@ from absl.testing import absltest
 from aerleon import api
 from aerleon.lib import naming
 
-
+# fmt: off
 GOOD_POLICY_1 = {
     "filename": "raw_policy_all_builtin",
     "filters": [
         {
             "header": {
-                "targets": {"cisco": "test-filter"},
-                "kvs": {"comment": "Sample comment"},
+                "targets": {
+                    "cisco": "test-filter"
+                },
+                "kvs": {
+                    "comment": "Sample comment"
+                },
             },
             "terms": [
-                {"name": "deny-to-reserved", "destination-address": "NET1", "action": "deny"},
-                {"name": "deny-to-bogons", "destination-address": "NET2", "action": "deny"},
+                {
+                    "name": "deny-to-reserved",
+                    "destination-address": "NET1",
+                    "action": "deny"
+                },
+                {
+                    "name": "deny-to-bogons",
+                    "destination-address": "NET2",
+                    "action": "deny"
+                },
                 {
                     "name": "allow-web-to-mail",
                     "source-address": "9OCLOCK",
@@ -71,7 +83,11 @@ SERVICES_1 = {
             },
         ],
         "SVC4": [
-            {"protocol": "tcp", "port": 80, "comment": "some service"},
+            {
+                "protocol": "tcp",
+                "port": 80,
+                "comment": "some service"
+            },
         ],
         "TCP_90": [
             {
@@ -170,6 +186,7 @@ NETWORKS_1 = {
         },
     }
 }
+# fmt: on
 
 
 class ApiTest(absltest.TestCase):
