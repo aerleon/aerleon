@@ -1,4 +1,5 @@
 # Copyright 2015 The Capirca Project Authors All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@ from tests.regression_utils import capture
 
 
 class TestRegressionDemo(absltest.TestCase):
-    """Ensure Capirca demo runs successfully out-of-the-box."""
+    """Ensure Aerleon demo runs successfully out-of-the-box."""
 
     def setUp(self):
         super().setUp()
