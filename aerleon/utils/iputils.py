@@ -1,3 +1,5 @@
+# Copyright 2020-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """A module of utilities to work with IP addresses in a faster way."""
 
 import ipaddress

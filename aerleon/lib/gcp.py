@@ -1,3 +1,5 @@
+# Copyright 2020-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Generic Google Cloud Platform multi-product generator.
 
 Base class for GCP firewalling products.
