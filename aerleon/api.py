@@ -5,7 +5,7 @@ the aclgen command line tool. It accepts as input plain Python
 dictionaries and lists.
 
 This API provides a single method, "Generate()", that accepts a list of policies
-and an optional IP/ports definition object and will transform each policies
+and an IP/ports definition object and will transform each policies
 into platform-specific configs. Each policy should be given as a Python
 dictionary - no YAML is required here. The IP/ports definitions should be given
 as a Naming object which can also be constructed from a Python dictionary.
