@@ -49,7 +49,6 @@ nav:
       - Install and Configure: user/install.md
       - Getting Started: user/lib_getting_started.md
       - CLI Reference: user/cli.md
-      - Platforms: user/lib_platforms.md
       - Frequently Asked Questions: user/faq.md
   - Reference:
       - arista: user/generators/arista.md
