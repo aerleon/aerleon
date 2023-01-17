@@ -1,7 +1,7 @@
 # Frequently Asked Questions
 
 ## What does Aerleon mean?
-Aerleon is a fork of the Capirca project. This project was intended to be splled Caprica after the planet in Battlestar Galactica. There was a transposition error when first releasing the project to the public. To pay respect to where this fork came from we have chosen a different planet from Battlestar Galatica and made a similar error.
+Aerleon is a fork of the Capirca project, which was originally intended to be named after the planet Caprica from Battlestar Galactica. Unfortunately, there was a typo error in the initial release of the project to the public. In recognition of the project's origins, we have chosen a different planet from Battlestar Galactica and made a slight alteration to its spelling, as a respectful nod to the source of this fork.
 
 ## How do you pronounce these projects names?
-Not everyone is familiar with the origins of the Capirca name so in online talks we have heard it pronounced numerous ways. These words are made up so no single person is correct in the maintainers oppinions. The maintainers however prnounce Capirca as Cap-irr-ca and Aerleon as Air-leon
+The origins of the name Capirca may not be familiar to everyone, and as a result, we have heard various pronunciations. These words are made up, so there is no one correct way to pronounce them. The maintainers of the project, however, pronounce Capirca as "Cap-irr-ca" and Aerleon as "Air-leon.
