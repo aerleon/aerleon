@@ -19,7 +19,7 @@ GOOD_POLICY_1 = {
                 {
                     "name": "allow-web-to-mail",
                     "source-address": "9OCLOCK",
-                    "destination-address": "NET2",
+                    "destination-address": "FOO_V6",
                     "action": "accept",
                 },
             ],
@@ -185,4 +185,76 @@ class ApiTest(absltest.TestCase):
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
 
+    def testDocsExample(self):
+        USE_MAIL_SERVER_SET = 1
+        mail_server_ips_set0 = ["200.1.1.4/32", "200.1.1.5/32"]
+        mail_server_ips_set1 = ["200.1.2.4/32", "200.1.2.5/32"]
+
+        networks = {
+            "networks": {
+                "RESERVED": {
+                    "values": [
+                        {
+                            "address": "0.0.0.0/8",
+                        },
+                        {
+                            "address": "10.0.0.0/8",
+                        },
+                    ]
+                },
+                "BOGON": {
+                    "values": [
+                        {
+                            "address": "192.0.0.0/24",
+                        },
+                        {
+                            "address": "192.0.2.0/24",
+                        },
+                    ]
+                },
+                "MAIL_SERVERS": {"values": []},
+            }
+        }
+
+        if USE_MAIL_SERVER_SET == 0:
+            networks["networks"]["MAIL_SERVERS"]["values"] = mail_server_ips_set0
+        else:
+            networks["networks"]["MAIL_SERVERS"]["values"] = mail_server_ips_set1
+
+        cisco_example_policy = {
+            "filename": "cisco_example_policy",
+            "filters": [
+                {
+                    "header": {
+                        "targets": {"cisco": "test-filter"},
+                        "kvs": {"comment": "Sample comment"},
+                    },
+                    "terms": [
+                        {
+                            "name": "deny-to-reserved",
+                            "destination-address": "RESERVED",
+                            "action": "deny",
+                        },
+                        {
+                            "name": "deny-to-bogons",
+                            "destination-address": "BOGON",
+                            "action": "deny",
+                        },
+                        {
+                            "name": "allow-web-to-mail",
+                            "destination-address": "MAIL_SERVERS",
+                            "action": "accept",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(networks, "")
+        configs = api.Generate([cisco_example_policy], definitions)
+        acl = configs["cisco_example_policy.acl"]
         print(acl)
+
+        self.assertTrue(re.search(' deny-to-reserved', str(acl)))
+        self.assertTrue(re.search(' permit ip any host 200.1.2.4', str(acl)))
