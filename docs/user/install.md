@@ -36,7 +36,6 @@ At each release we sign build artifacts with [Sigstore](https://www.sigstore.dev
 - [openssl](https://github.com/openssl/openssl)
 - [jq](https://stedolan.github.io/jq/manual/)
 - [curl](https://curl.se/)
-- [base64](https://github.com/coreutils/gnulib/blob/master/lib/base64.c)
 
 ## Instructions
 1. Download the `whl`, `whl.crt`, `whl.sig`, and `jsonl` files from the latest release
