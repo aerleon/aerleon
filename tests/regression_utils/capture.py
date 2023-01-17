@@ -1,6 +1,5 @@
 # Copyright 2022 Jason Benterou. All Rights Reserved.
 #
-# Author: jtwb
 """Capture decorators fully capture the test output and compare it to a
 reference file stored in the repo. The test is failed if output does not
 match exactly.

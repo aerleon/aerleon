@@ -1,3 +1,5 @@
+# Copyright 2020-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """A module to handle merging file configurations with CLI configs for Aerleon."""
 
 import yaml

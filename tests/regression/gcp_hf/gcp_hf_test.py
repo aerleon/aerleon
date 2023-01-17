@@ -1,3 +1,5 @@
+# Copyright 2020-2022 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Tests for google3.third_party.py.aerleon.lib.gcp_hf.py."""
 
 import json

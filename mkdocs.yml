@@ -43,17 +43,11 @@ plugins:
             show_root_heading: true
             heading_level: 2
             show_category_heading: true
-watch:
-  - README.md
 nav:
   - Overview: index.md
   - User Guide:
-      - Library Overview: user/lib_overview.md
       - Install and Configure: user/install.md
       - Getting Started: user/lib_getting_started.md
-      - Address Files: user/lib_address.md
-      - Service Files: user/lib_service.md
-      - Policy Files: user/lib_policy.md
       - Platforms: user/lib_platforms.md
   - Generators:
       - arista: user/generators/arista.md
@@ -89,12 +83,8 @@ nav:
       - Contributing to the Library: dev/contributing.md
       - Development Environment: dev/dev_environment.md
       - Generator Development: dev/generator_patterns.md
-      - Aerleon Design: dev/design/aerleon-design.md
   - Library Class Overview:
       - Naming: dev/design/naming.md
-      - Policy: dev/design/policy.md
-      - Policy Reader: dev/design/policy-reader.md
-      - AclCheck: dev/design/aclcheck.md
   - Code Reference:
       - Core: dev/code_reference/core.md
       - Generators: dev/code_reference/generators.md

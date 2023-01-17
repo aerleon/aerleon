@@ -1,4 +1,5 @@
 # Copyright 2007 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -190,86 +191,71 @@ class DefinitionYAMLUnitTest(NamingUnitTest):
         super().setUp()
         defs_yaml = """
 services:
-    SVC1:
-        -
-            protocol: tcp
-            port: 80
-        -
-            protocol: udp
-            port: 81
-        -
-            protocol: tcp
-            port: 82
-    SVC2:
-        -
-            protocol: tcp
-            port: 80
-        -
-            protocol: udp
-            port: 81
-        -
-            protocol: tcp
-            port: 82
-        - SVC2
-    SVC3:
-        -
-            protocol: tcp
-            port: 80
-        -
-            protocol: udp
-            port: 81
-    SVC4:
-        -
-            protocol: tcp
-            port: 80
-            comment: "some service"
-    TCP_90:
-        -
-            protocol: tcp
-            port: 90
-    SVC5:
-        - TCP_90
-    SVC6:
-        - SVC1
-        - SVC5
+  SVC1:
+    - protocol: tcp
+      port: 80
+    - protocol: udp
+      port: 81
+    - protocol: tcp
+      port: 82
+  SVC2:
+    - protocol: tcp
+      port: 80
+    - protocol: udp
+      port: 81
+    - protocol: tcp
+      port: 82
+    - SVC2
+  SVC3:
+    - protocol: tcp
+      port: 80
+    - protocol: udp
+      port: 81
+  SVC4:
+    - protocol: tcp
+      port: 80
+      comment: "some service"
+  TCP_90:
+    - protocol: tcp
+      port: 90
+  SVC5:
+    - TCP_90
+  SVC6:
+    - SVC1
+    - SVC5
 networks:
-    NET1:
-        values:
-            -
-                ip: 10.1.0.0/8
-                comment: "network1"
-    NET2:
-        values:
-            -
-                ip: 10.2.0.0/16
-                comment: "network2.0"
-            - NET1
-    9OCLOCK:
-        values:
-            -
-                ip: 1.2.3.4/32
-                comment: "9 is the time"
-    FOOBAR:
-        values:
-            - 9OCLOCK
-    FOO_V6:
-        values:
-            - 
-                ip: ::FFFF:FFFF:FFFF:FFFF
-    BAR_V6:
-        values:
-            - 
-                ip: ::1/128
-    BAZ:
-        values:
-            - FOO_V6
-            - BAR_V6
-    BING:
-        values:
-            -
-                name: NET1
-                comment: "foo"
-            - FOO_V6
+  NET1:
+    values:
+      - address: 10.1.0.0/8
+        comment: "network1"
+  NET2:
+    values:
+      - address: 10.2.0.0/16
+        comment: "network2.0"
+      - NET1
+  9OCLOCK:
+    values:
+      - address: 1.2.3.4/32
+        comment: "9 is the time"
+  FOOBAR:
+    values:
+      - 9OCLOCK
+  FOO_V6:
+    values:
+      - address: ::FFFF:FFFF:FFFF:FFFF
+  BAR_V6:
+    values:
+      - address: ::1/128
+  BAZ:
+    values:
+      - FOO_V6
+      - BAR_V6
+  BING:
+    values:
+      - name: NET1
+        comment: "foo"
+      - FOO_V6
+
 """
         self.defs = naming.Naming(None)
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
@@ -286,14 +272,14 @@ class DefinitionObjectUnitTest(NamingUnitTest):
         super().setUp()
         defs_obj = {
             'networks': {
-                '9OCLOCK': {'values': [{'comment': '9 is the time', 'ip': '1.2.3.4/32'}]},
-                'BAR_V6': {'values': [{'ip': '::1/128'}]},
+                '9OCLOCK': {'values': [{'comment': '9 is the time', 'address': '1.2.3.4/32'}]},
+                'BAR_V6': {'values': [{'address': '::1/128'}]},
                 'BAZ': {'values': ['FOO_V6', 'BAR_V6']},
                 'BING': {'values': [{'comment': 'foo', 'name': 'NET1'}, 'FOO_V6']},
                 'FOOBAR': {'values': ['9OCLOCK']},
-                'FOO_V6': {'values': [{'ip': '::FFFF:FFFF:FFFF:FFFF'}]},
-                'NET1': {'values': [{'comment': 'network1', 'ip': '10.1.0.0/8'}]},
-                'NET2': {'values': [{'comment': 'network2.0', 'ip': '10.2.0.0/16'}, 'NET1']},
+                'FOO_V6': {'values': [{'address': '::FFFF:FFFF:FFFF:FFFF'}]},
+                'NET1': {'values': [{'comment': 'network1', 'address': '10.1.0.0/8'}]},
+                'NET2': {'values': [{'comment': 'network2.0', 'address': '10.2.0.0/16'}, 'NET1']},
             },
             'services': {
                 'SVC1': [
