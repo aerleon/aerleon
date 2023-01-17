@@ -11,7 +11,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
   common platforms are built-in. Users with experimental or non-public platforms
   can add support without forking this repo.
 - Policy files can be given as YAML (.pol.yaml).
-- Address Book data can be loaded from standard data formats like JSON, CSV.
+- Address Book data can be loaded from standard data formats like JSON, YAML and CSV.
 - Existing .net, .svc and .pol files are still supported.
 - Remote Address Book sources are supported. Users can link directly to IPAM.
 - Performance is generally faster.
@@ -194,8 +194,7 @@ RESERVED = 0.0.0.0/8      # reserved
 ...skipped...
 ```
 
-Users may wish to auto-generate address book files to keep them up to date. JSON
-and CSV are accepted for this reason. See [Address Book](wiki/address-book.md)
+Users may wish to auto-generate address book files to keep them up to date. JSON, YAML and CSV are accepted for this reason. See [Address Book](wiki/address-book.md)
 on the wiki for full details.
 
 ## Advanced Usage
