@@ -194,9 +194,40 @@ def Generate(
     output_directory: pathlib.Path = None,
     optimize=False,
     shade_check=False,
-    exp_info=2,
+    expiration_weeks=2,
 ) -> "dict[str, str]":
-    """Generate ACLs from policies."""
+    """Generate ACLs from policies.
+
+    Args:
+      policies: A list of dicts where each dict describes a policy. Each dict
+        must have keys "filename" with a string value and "filters" with a list
+        of filters. Each filter is a dictionary with "header" and "terms" keys.
+        The structure of the filters and terms should exactly mirror the YAML
+        policy file structure.
+
+      definitions: A naming.Naming object containing definitions for all network
+        and service names used in the given policies.
+
+      output_directory: Optional, a pathlib.Path specifying a directory to write
+        all generated files. If output_directory is None the generated files will
+        be returned to the caller as a dictionary. If output_directory is used,
+        no data will be returned to the caller and the genereated files will be
+        written to the filesystem. Default None.
+
+      optimize: Optional, a boolean. Enables additional optimizations. Default false.
+
+      shade_check: Optional, a boolean. Enables shade checking. Default false.
+
+      exp_info: Optional, a number. Warnings will be generated for any policy terms
+        with an expiration date less than this number of weeks in the future.
+        Default value is 2.
+
+    Returns:
+      A dictionary mapping generated file names to their contents. Users should take
+      care to use different file names for each given policy to avoid file name collisions.
+      If option output_directory is used the generated files will be written to that output
+      directory and no data will be returned to the caller.
+    """
 
     context = multiprocessing.get_context()
     return _Generate(
@@ -206,7 +237,7 @@ def Generate(
         output_directory,
         optimize,
         shade_check,
-        exp_info,
+        exp_info=expiration_weeks,
     )
 
 
