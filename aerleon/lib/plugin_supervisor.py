@@ -175,11 +175,11 @@ class _PluginSetup:
     disable_builtin: list[str] = None
     include_path: list[list[str]] = None
     
-    generators = {}
-    plugins = []
-
     def __init__(self, config: PluginSupervisorConfiguration = None):
         """Initialize self.generators, self.plugins."""
+
+        self.generators = {}
+        self.plugins = []
 
         # Apply configuration if provided
         if config is not None:
