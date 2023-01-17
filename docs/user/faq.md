@@ -1,6 +1,6 @@
 # Frequently Asked Questions
 
-## What does Aerleon mean?
+## What Does Aerleon Mean?
 Aerleon is a fork of the Capirca project, which was originally intended to be named after the planet Caprica from Battlestar Galactica. Unfortunately, there was a typo error in the initial release of the project to the public. In recognition of the project's origins, we have chosen a different planet from Battlestar Galactica and made a slight alteration to its spelling, as a respectful nod to the source of this fork.
 
 ## Pronunciation?
