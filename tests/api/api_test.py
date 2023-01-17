@@ -101,7 +101,7 @@ NETWORKS_1 = {
         "NET1": {
             "values": [
                 {
-                    "ip": "10.1.0.0/8",
+                    "address": "10.1.0.0/8",
                     "comment": "network1",
                 },
             ]
@@ -109,7 +109,7 @@ NETWORKS_1 = {
         "NET2": {
             "values": [
                 {
-                    "ip": "10.2.0.0/16",
+                    "address": "10.2.0.0/16",
                     "comment": "network2.0",
                 },
                 {
@@ -121,7 +121,7 @@ NETWORKS_1 = {
         "9OCLOCK": {
             "values": [
                 {
-                    "ip": "1.2.3.4/32",
+                    "address": "1.2.3.4/32",
                     "comment": "9 is the time",
                 },
             ]
@@ -136,14 +136,14 @@ NETWORKS_1 = {
         "FOO_V6": {
             "values": [
                 {
-                    "ip": "::FFFF:FFFF:FFFF:FFFF",
+                    "address": "::FFFF:FFFF:FFFF:FFFF",
                 },
             ]
         },
         "BAR_V6": {
             "values": [
                 {
-                    "ip": "::1/128",
+                    "address": "::1/128",
                 },
             ]
         },
@@ -181,5 +181,8 @@ class ApiTest(absltest.TestCase):
 
         configs = api.Generate([GOOD_POLICY_1], definitions)
         acl = configs["raw_policy_all_builtin.acl"]
+
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
+        self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
+
         print(acl)
