@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -847,10 +848,10 @@ class Naming:
                 # 'item' can be:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
-                #    'ip': A specific IP address or CIDR range
+                #    'address': A specific IP address or CIDR range
                 #    'name': A network name reference
                 #    'comment': An optional comment
-                # 'ip' or 'name' must be present in any dictionary item
+                # 'address' or 'name' must be present in any dictionary item
                 value = None
                 network_ref = None
                 ip = None
@@ -860,8 +861,8 @@ class Naming:
                 elif isinstance(item, dict):
                     if 'name' in item and isinstance(item['name'], str):
                         value = network_ref = item['name']
-                    elif 'ip' in item and isinstance(item['ip'], str):
-                        value = ip = item['ip']
+                    elif 'address' in item and isinstance(item['address'], str):
+                        value = ip = item['address']
                     else:
                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
                         continue

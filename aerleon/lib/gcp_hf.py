@@ -1,3 +1,5 @@
+# Copyright 2020-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Google Cloud Hierarchical Firewall Generator.
 
 Hierarchical Firewalls (HF) are represented in a SecurityPolicy GCP resouce.
