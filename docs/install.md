@@ -81,4 +81,4 @@ The SLSA file contains information on what went into building the whl. This info
 cat provenance-sigstore-1.0.3.intoto.jsonl | jq -r '.payload' | base64 -d | jq
 ```
 
-Since we use Sigstore for signing our code you can verify that our signing process is valid by looking at their transparency logs. You can find documentation on verifying binaries [here](https://docs.sigstore.dev/rekor/verify-release/)
+Since we use Sigstore for signing our code you can verify that our signing process is valid by looking at their transparency logs. You can find documentation on verifying binaries [here](https://docs.sigstore.dev/rekor/verify-release/).
