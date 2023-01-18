@@ -96,18 +96,17 @@ Take the YAML above and insert it into a file in the `defs` directory.
     values:
       - WEB_SERVERS
       - MAIL_SERVERS
-services:
-  HTTP:
-    - protocol: tcp
-      port: 80
-  HTTPS:
-    - protocol: tcp
-      port: 443
-  WEB:
-    - HTTP
-    - HTTPS
-" > def/definitions.yaml
-
+  services:
+    HTTP:
+      - protocol: tcp
+        port: 80
+    HTTPS:
+      - protocol: tcp
+        port: 443
+    WEB:
+      - HTTP
+      - HTTPS
+  " > def/definitions.yaml
   ```
 </details>
 
