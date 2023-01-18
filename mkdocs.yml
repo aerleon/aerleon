@@ -48,11 +48,15 @@ plugins:
             show_category_heading: true
 nav:
   - Introduction: index.md
-  - Install and Configure: user/install.md
-  - Getting Started: user/lib_getting_started.md
-  - Frequently Asked Questions: user/faq.md
+  - Install and Configure: install.md
+  - Getting Started: getting_started.md
+  - Frequently Asked Questions: faq.md
+  - Contributing: contributing.md
+  - Links: links.md
   - Reference:
-      - CLI Reference: user/cli.md
+      - CLI Reference: reference/cli.md
+      - Generator Development: reference/generator_patterns.md
+      - Naming: reference/naming.md
       - arista: user/generators/arista.md
       - arista_tp: user/generators/arista_tp.md
       - aruba: user/generators/aruba.md
@@ -77,10 +81,4 @@ nav:
       - speedway: user/generators/speedway.md
       - srxlo: user/generators/srxlo.md
       - windows_advfirewall.md: user/generators/windows_advfirewall.md
-      - Extending the Library: dev/extending.md
-      - Contributing to the Library: dev/contributing.md
-      - Development Environment: dev/dev_environment.md
-      - Generator Development: dev/generator_patterns.md
-      - Naming: dev/design/naming.md
-      - Core: dev/code_reference/core.md
-      - Generators: dev/code_reference/generators.md
+
