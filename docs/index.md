@@ -22,20 +22,20 @@ The data primarily consists of:
 * Aruba
 * Brocade
 * Cisco
-  * Cisco ASA
-  * Cisco NX
-  * Cisco XR
+    * Cisco ASA
+    * Cisco NX
+    * Cisco XR
 * Cloud Armor
 * Google
-  * Cloud Armor
-  * GCE
-  * GCP
+    * Cloud Armor
+    * GCE
+    * GCP
 * IPSet
 * IPTables
 * Juniper
-  * JuniperSRX
-  * Juniper EVO
-  * Juniper MPC
+    * JuniperSRX
+    * Juniper EVO
+    * Juniper MPC
 * Kubernetes
 * NFTables
 * VMWare NSXV
@@ -43,8 +43,8 @@ The data primarily consists of:
 * Palo Alto
 * PCAP Filters
 * Windows
-  * Advanced Firewall
-  * IPSec
+    * Advanced Firewall
+    * IPSec
 
 ## Audience (User Personas)
 

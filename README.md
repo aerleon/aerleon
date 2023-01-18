@@ -15,84 +15,22 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - Unit and regression tests run automatically on all pull requests.
 - New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, SigStore.
 
-See the [1.0.0 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.0) for a complete list of features in the Aerleon 1.0.0 release.
+See the [1.0.0 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.0) for a complete list of changes.
 
 
-## Using Aerleon
+## Install
 
-Aerleon provides a command-line script `aclgen` which will generate firewall
-ACLs from high-level policy files.
+Aerleon requires Python 3.7 or higher.
 
-Each [policy file](#policy-files) in the input directory is visited and ACLs are
-generated from the _term_ and _header_ blocks within. ACLs are then rendered to
-one or more platform-specific configs according to the 'target' keyword(s) used.
-
-Symbolic names can be used for IP networks, hosts, and services defined in the
-[Address Book](#address-book).
-
-A [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/) guide can be found on [aerleon.readthedocs.io](https://aerleon.readthedocs.io/en/latest).
-
-### Examples
-
-The `aclgen` script will visit each policy file in the policies directory
-`./policies` and place generated firewall configs in the current directory. To
-get started, create a policy file and run:
-
-```
-aclgen
+```bash
+pip install aerleon
 ```
 
-You can configure the input and output directories through the command line:
-
-```
-aclgen --input-dir ./acl-policies \
-  --input-dir ./address-book-generated \
-  --input-dir ./address-book-static \
-  --output-dir ./acl-generated
-```
-
-See [Usage](#usage) for more details.
-
-### Supported Platforms
-
-The following list contains links to the documentation of the individual policy
-generators:
-
-<!-- begin-generator-term-links -->
-
-- [`arista`](./doc/generators/arista.md): Arista
-- [`aruba`](./doc/generators/aruba.md): Aruba
-- [`brocade`](./doc/generators/brocade.md): Brocade
-- [`cisco`](./doc/generators/cisco.md): Cisco
-- [`ciscoasa`](./doc/generators/ciscoasa.md): Cisco ASA
-- [`cisconx`](./doc/generators/cisconx.md): Cisco NX
-- [`ciscoxr`](./doc/generators/ciscoxr.md): Cisco XR
-- [`cloudarmor`](./doc/generators/cloudarmor.md): cloudarmor
-- [`gce`](./doc/generators/gce.md): GCE
-- `gcp_hf`
-- [`ipset`](./doc/generators/ipset.md): ipset
-- [`iptables`](./doc/generators/iptables.md): iptables
-- [`juniper`](./doc/generators/juniper.md): Juniper
-- [`juniperevo`](./doc/generators/juniperevo.md): Juniper EVO
-- [`junipermsmpc`](./doc/generators/junipermsmpc.md): Juniper
-- [`junipersrx`](./doc/generators/junipersrx.md): Juniper SRX
-- [`k8s`](./doc/generators/k8s.md): Kubernetes NetworkPolicy
-- [`nftables`](./doc/generators/nftables.md): nftables
-- [`nsxv`](./doc/generators/nsxv.md): NSX
-- [`packetfilter`](./doc/generators/packetfilter.md): PacketFilter
-- [`paloaltofw`](./doc/generators/paloaltofw.md): Palo Alto PANOS
-- [`pcap`](./doc/generators/pcap.md): PcapFilter
-- [`speedway`](./doc/generators/speedway.md): Speedway
-- [`srxlo`](./doc/generators/srxlo.md): Stateless Juniper ACL
-- [`windows_advfirewall`](./doc/generators/windows_advfirewall.md): Windows
-  Advanced Firewall <!-- begin-generator-term-links -->
-
-See also [Adding A Platform Generator](wiki/adding-a-platform-generator.md) on
-the wiki.
+More detailed instructions can be found on the [Installation](https://aerleon.readthedocs.io/en/latest/install/) page.
 
 ### Usage
 
-See [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/)
+See [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/).
 
 ## Policy Files
 
