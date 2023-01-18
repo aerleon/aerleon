@@ -42,14 +42,14 @@ Contributions are welcome. Please review the [contributing guidelines](https://a
 
 ## Contact
 
-Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues)
+Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues).
 
-General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://aerleon.slack.com/)
+General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://aerleon.slack.com/).
 
 ### Contact Maintainers
 
-You can always reach out to us on  [Slack](https://aerleon.slack.com/)
-You many also reach out to us via e-mail
+You can always reach out to us on  [Slack](https://aerleon.slack.com/).
+You many also reach out to us via e-mail.
 
 Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
 
@@ -107,5 +107,5 @@ by the terms of the Apache License, Version 2.0 to include at the top of the
 file a prominent notice stating as much. Copyright notices must not be removed
 from files in this repository.
 
-This README file may contain phrases and sections that are copyright Google.
-This file is modified from the original.
+This README file and other documentation files may contain phrases and sections that are copyright Google.
+This file and other documentation files are modified from the original by the Aerleon Project Team.
