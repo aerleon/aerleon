@@ -1,5 +1,5 @@
 ![GitHub](https://img.shields.io/github/license/aerleon/aerleon) [![PyPI version](https://badge.fury.io/py/aerleon.svg)](https://badge.fury.io/py/aerleon) ![PyPI - Status](https://img.shields.io/pypi/status/aerleon) ![PyPI - Downloads](https://img.shields.io/pypi/dm/aerleon)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/main.yml?branch=main) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/main.yml?branch=main) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon)[![codecov](https://codecov.io/gh/aerleon/aerleon/branch/main/graph/badge.svg?token=C13SR6GMTD)](https://codecov.io/gh/aerleon/aerleon)
 
 # Aerleon
 
@@ -41,11 +41,11 @@ information on how to approach code changes to this project.
 
 Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues)
 
-General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server]((https://aerleon.slack.com/)
+General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://aerleon.slack.com/)
 
 ### Contact Maintainers
 
-You can always reach out to us on  [Slack]((https://aerleon.slack.com/)
+You can always reach out to us on  [Slack](https://aerleon.slack.com/)
 You many also reach out to us via e-mail
 
 Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
@@ -97,7 +97,7 @@ Files and code included in this project from Capirca are copyright Google and
 are included under the terms of the Apache License, Version 2.0. You may obtain
 a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+  <http://www.apache.org/licenses/LICENSE-2.0>
 
 Contributors who wish to modify files bearing a copyright notice are obligated
 by the terms of the Apache License, Version 2.0 to include at the top of the

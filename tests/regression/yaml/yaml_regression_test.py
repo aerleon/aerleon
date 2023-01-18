@@ -62,7 +62,7 @@ class YAMLPolAATest(absltest.TestCase):
                 self.context,
             )
 
-            yaml_filename = f"{file_name}_yaml.pol.yaml"
+            yaml_filename = f"{file_name}_yaml.yaml"
             policy_file = (
                 pathlib.Path(self.test_subdirectory)
                 .joinpath('policies/pol/')

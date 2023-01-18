@@ -1,9 +1,8 @@
-"""YAML front-end. Loads a Policy model from a .pol.yaml file."""
+"""YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
 from typing import Tuple
 import yaml
-from yaml.loader import SafeLoader
 from yaml.error import YAMLError
 
 from absl import logging
@@ -16,6 +15,7 @@ from aerleon.lib.policy_builder import (
     RawPolicy,
     RawTerm,
 )
+from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
 
 class PolicyTypeError(Exception):
@@ -59,14 +59,14 @@ class UserMessage:
         """Display user-facing error message with include chain (if present).
 
         e.g.
-        Excessive recursion: include depth limit of 5 reached. File=include_1.pol-include.yaml, Line=3.
+        Excessive recursion: include depth limit of 5 reached. File=include_1.yaml, Line=3.
         Include stack:
-        > File='policy_with_include.pol.yaml', Line=11 (Top Level)
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
-        > File='include_1.pol-include.yaml', Line=3
+        > File='policy_with_include.yaml', Line=11 (Top Level)
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
+        > File='include_1.yaml', Line=3
         """  # noqa: E501
         error_context = f"{self.message} File={self.filename}"
         if self.line is not None:
@@ -100,7 +100,7 @@ def ParseFile(filename, base_dir, definitions, optimize=False, shade_check=False
     """
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
-            file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
+            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
@@ -127,37 +127,13 @@ def ParsePolicy(file, *, filename, base_dir, definitions, optimize=False, shade_
         PolicyTypeError: The policy file provided is not valid.
     """
     try:
-        file_data = yaml.load(file, Loader=_SpanSafeYamlLoader(filename=filename))
+        file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
         ) from yaml_error
     raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
     return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
-
-
-def _SpanSafeYamlLoader(*, filename):
-    """Configure yaml.load to:
-    * Force safe_load mode (disable unpickling).
-    * Augment mappings with debug context: __line__, __filename__.
-
-    Post-load user error messages need to provide a filename and line number back to the user.
-    Including debugging context in the mappings gives post-load code access to this information.
-    Code operating on the native representation must filter out __line__, __filename__ from all
-    mappings (dicts) when iterating over user data. This assumes __line__, __filename__ are not
-    valid keys in any user data.
-    """
-
-    class PluginYamlLoader(SafeLoader):
-        def construct_mapping(self, node, deep=False):
-            mapping = super(PluginYamlLoader, self).construct_mapping(node, deep=deep)
-            # Add 1 so line numbering starts at 1
-            # TODO(jb) look at cases where line number does not match up, e.g. filter['__line__']
-            mapping['__line__'] = node.start_mark.line + 1
-            mapping['__filename__'] = filename
-            return mapping
-
-    return PluginYamlLoader
 
 
 def _RawPolicyFromFile(filename, base_dir, file_data):
@@ -170,8 +146,13 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
         logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
         return
 
-    # Malformed policy files should generate a PolicyTypeError
+    # Malformed policy files should generate a PolicyTypeError (unless this is an include file)
     if 'filters' not in file_data or not isinstance(file_data['filters'], list):
+
+        if 'terms' in file_data:
+            # In this case we are looking at an include file and need to quietly ignore it.
+            return
+
         raise PolicyTypeError(
             UserMessage("Policy file must contain one or more filter sections.", filename=filename)
         )
@@ -251,7 +232,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
             try:
                 include_file = _LoadIncludeFile(base_dir, inc_filename)
                 include_data = yaml.load(
-                    include_file, Loader=_SpanSafeYamlLoader(filename=inc_filename)
+                    include_file, Loader=SpanSafeYamlLoader(filename=inc_filename)
                 )
             except YAMLError as yaml_error:
                 raise PolicyTypeError(
@@ -286,10 +267,13 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                                 include_chain=new_stack,
                             )
                         )
-                    if term_item['include'][-17:] != '.pol-include.yaml' and term_item['include'][-16:] != '.pol-include.yml':
+                    if (
+                        term_item['include'][-5:] != '.yaml'
+                        and term_item['include'][-4:] != '.yml'
+                    ):
                         raise PolicyTypeError(
                             UserMessage(
-                                f"Policy include source {term_item['include']} must end in \".pol-include.yaml\".",  # noqa: E501
+                                f"Policy include source {term_item['include']} must end in \".yaml\".",  # noqa: E501
                                 filename=term_item['__filename__'],
                                 line=term_item['__line__'],
                                 include_chain=new_stack,
