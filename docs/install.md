@@ -2,7 +2,7 @@
 
 ## Prerequisites
 * [Python 3.7+](https://www.python.org/downloads/)
-  * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
+    * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
 * [pip](https://pip.pypa.io/en/stable/getting-started/)
 
 **_NOTE:_** It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package. 
@@ -45,70 +45,40 @@ VER=$(curl --silent -qI https://github.com/$REPO/releases/latest |
       awk -F '/' '/^location/ {print  substr($NF, 1, length($NF)-1)}');
 wget https://github.com/$REPO/releases/download/$VER/provenance-sigstore-$VER.intoto.jsonl
 wget https://github.com/$REPO/releases/download/$VER/aerleon-$VER-py3-none-any.whl
-wget https://github.com/$REPO/releases/download/$VER/aerleon-$VER-py3-none-any.whl.crt
-wget https://github.com/$REPO/releases/download/$VER/aerleon-$VER-py3-none-any.whl.sig
-wget https://github.com/$REPO/releases/download/$VER/aerleon-$VER-py3-none-any.whl.rekor
 ```
 
 
 2. Inspect the certificate
 ```bash
-openssl x509 -in aerleon-0.0.0-py3-none-any.whl.crt -text -noout
+cat provenance-sigstore-1.0.0.intoto.jsonl | jq -r '.signatures[0].cert' | openssl x509 -text -noout
 ```
 We use OpenID to sign our code, the keys should be ephemeral and thus short lived.
 ```bash
         Validity
-            Not Before: Jan  4 06:52:20 2023 GMT
-            Not After : Jan  4 07:02:20 2023 GMT
+            Not Before: Jan 18 08:44:59 2023 GMT
+            Not After : Jan 18 08:54:59 2023 GMT
 ```
-This section tells you information about the origin of the certificate. It should match our repo. More information about each OID can be found at [sigstore](https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md)
+This section tells you information about the origin of the certificate. It should match our repo. More information about each OID can be found at [Sigstore](https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md).
 ```bash
-URI: fill me in
-            1.3.6.1.4.1.57264.1.1: 
+                URI:https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v1.2.1
+            1.3.6.1.4.1.57264.1.1:
                 https://token.actions.githubusercontent.com
-            1.3.6.1.4.1.57264.1.2: 
+            1.3.6.1.4.1.57264.1.2:
                 release
-            1.3.6.1.4.1.57264.1.3: 
-                fill me in
-            1.3.6.1.4.1.57264.1.4: 
+            1.3.6.1.4.1.57264.1.3:
+                44fbb9672b72b33c8e29ea06a5540d0cc87f2bb6
+            1.3.6.1.4.1.57264.1.4:
                 Release
-            1.3.6.1.4.1.57264.1.5: 
-                fill me in
-            1.3.6.1.4.1.57264.1.6: 
-                fill me in
+            1.3.6.1.4.1.57264.1.5:
+                aerleon/aerleon
+            1.3.6.1.4.1.57264.1.6:
+                refs/tags/1.0.0
 ```
 
-3. Extract the public key from the certificate.
-```bash
-openssl x509 -pubkey -noout -in aerleon-0.0.0-py3-none-any.whl.crt  > public.pem
-cat public.pem 
------BEGIN PUBLIC KEY-----
-fooooooooooo
------END PUBLIC KEY----
-```
-
-4. Get the log index from the rekor file
-```bash
-cat foooo.whl.rekor | jq '.Payload.logIndex'
-```
-
-5. Compare the certificates published in Rekor to the certificate we provide.
-```bash
-curl https://rekor.sigstore.dev/api/v1/log/entries/?logIndex=10441108 | jq -r '.[].body' | base64 -d | jq -r '.[]' | tail -n +3 | jq -r '.signature.publicKey.content' | (base64 -d && echo "") | diff foo-0.1.0-py3-none-any.whl.crt -
-```
-
-6. Compare the hash published in Rekor to the hash of our `whl` file
-```bash
-curl https://rekor.sigstore.dev/api/v1/log/entries/?logIndex=10441108 | jq -r '.[].body' | base64 -d | jq -r '.[]' | tail -n +3 | jq -r '.data.hash.value'
-46e983a84971699b21cad675c0c231f0a1cedbb8cdf3d2eb23331d0e7eddbdc2
-(aerleon-py3.10) rob@rob:~/tmp$ sha2
-sha224sum  sha256sum  
-(aerleon-py3.10) rob@rob:~/tmp$ sha256sum foo-0.1.0-py3-none-any.whl
-46e983a84971699b21cad675c0c231f0a1cedbb8cdf3d2eb23331d0e7eddbdc2  foo-0.1.0-py3-none-any.whl
-```
-
-7. Inspect the SLSA file
+3. Inspect the SLSA file
 The SLSA file contains information on what went into building the whl. This information includes things such as who initiated the build and hashes of every artifact.
 ```bash
 cat provenance-sigstore-1.0.3.intoto.jsonl | jq -r '.payload' | base64 -d | jq
 ```
+
+Since we use Sigstore for signing our code you can verify that our signing process is valid by looking at their transparency logs. You can find documentation on verifying binaries [here](https://docs.sigstore.dev/rekor/verify-release/).
