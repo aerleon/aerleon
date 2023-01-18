@@ -1,5 +1,5 @@
 dev_addr: '127.0.0.1:8001'
-edit_uri: edit/develop/docs
+edit_uri: edit/main/docs
 site_dir: site/docs
 site_name: Aerleon Documentation
 site_url: 'https://aerleon.readthedocs.io/en/latest/'
@@ -9,6 +9,9 @@ theme: readthedocs
 extra:
   generator: false
   social:
+    - icon: fontawesome/brands/slack
+      link: 'https://aerleon.slack.com/'
+      name: Network to Code Community
     - icon: fontawesome/brands/slack
       link: 'https://slack.networktocode.com/'
       name: Network to Code Community
