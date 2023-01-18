@@ -6,12 +6,12 @@ This lists contains all the common keys that are used across all generators (wit
 
 ### Term Format
 
-* _action_: The action to take when matched. See Actions section for valid options.
+* _action_: The action to take when matched. See the Actions section for each generator.
 * _comment_: A text comment enclosed in double-quotes.  The comment can extend over multiple lines if desired, until a closing quote is encountered.
-* _destination-address_: One or more destination address tokens
-* _destination-port_: One or more service definition tokens
-* _expiration_: Stop rendering this term after specified date in YYYY-MM-DD format. E.g. 2000-12-31
-* _icmp-type_: Specify icmp-type code to match, see [ICMP types](../icmp_types.md) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**)
+* _destination-address_: One or more destination address tokens.
+* _destination-port_: One or more service definition tokens.
+* _expiration_: Stop rendering this term after specified date in YYYY-MM-DD format. E.g. 2000-12-31.
+* _icmp-type_: Specify icmp-type code to match, see [ICMP types](#icmp-types_1) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**)
 * _name_: Name of the term.
 * _option_: See platforms supported Options section. (**Not** supported on: **k8s**, **gce**, **windows_advfirewall**, **windows_ipsec**)
 * _platform_: one or more target platforms for which this term should ONLY be rendered. (**Not** supported on: **aruba**)
@@ -640,14 +640,14 @@ targets:
 
 ### Header Format
 
-The juniper header designation has the following format:
+The Juniper header designation has the following format:
 
 ```yaml
 targets:
     juniper: [filter name] {inet|inet6|bridge} {dsmo} {not-interface-specific}
 ```
 
-* _filter name_: defines the name of the juniper filter.
+* _filter name_: defines the name of the Juniper filter.
 * _inet_: specifies the output should be for IPv4 only filters. This is the default format.
 * _inet6_: specifies the output be for IPv6 only filters.
 * _bridge_: specifies the output should render a Juniper bridge filter.
@@ -816,14 +816,14 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 
 ### Header Format
 
-The juniper MSMPC header designation has the following format:
+The Juniper MSMPC header designation has the following format:
 
 ```yaml
 targets:
     msmpc: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress}
 ```
 
-* _filter name_: defines the name of the juniper msmpc filter.
+* _filter name_: defines the name of the Juniper msmpc filter.
 * _inet6_: specifies the output be for IPv6 only filters.
 * _mixed_: specifies the output be for IPv4 and IPv6 filters. This is the default format.
 * _noverbose_: omit additional term and address comments.
@@ -1337,14 +1337,14 @@ SRX Loopback is a stateless Juniper ACL with minor changes. Please see code for 
 
 ### Header Format
 
-The juniper header designation has the following format:
+The Juniper header designation has the following format:
 
 ```yaml
 targets:
     srxlo: [filter name] {inet|inet6|bridge} {dsmo} {not-interface-specific}
 ```
 
-* _filter name_: defines the name of the juniper filter.
+* _filter name_: defines the name of the Juniper filter.
 * _inet_: specifies the output should be for IPv4 only filters. This is the default format.
 * _inet6_: specifies the output be for IPv6 only filters.
 * _bridge_: specifies the output should render a Juniper bridge filter.
@@ -1470,3 +1470,60 @@ targets:
 
 * _accept_
 * _deny_
+
+***
+
+## ICMP Types
+
+### IPv4
+
+* echo-reply
+* unreachable
+* source-quench
+* redirect
+* alternate-address
+* echo-request
+* router-advertisement
+* router-solicitation
+* time-exceeded
+* parameter-problem
+* timestamp-request
+* timestamp-reply
+* information-request
+* information-reply
+* mask-request
+* mask-reply
+* conversion-error
+* mobile-redirect
+
+### IPv6
+
+* destination-unreachable
+* packet-too-big
+* time-exceeded
+* parameter-problem
+* echo-request
+* echo-reply
+* multicast-listener-query
+* multicast-listener-report
+* multicast-listener-done
+* router-solicit
+* router-advertisement
+* neighbor-solicit
+* neighbor-advertisement
+* redirect-message
+* router-renumbering
+* icmp-node-information-query
+* icmp-node-information-response
+* inverse-neighbor-discovery-solicitation
+* inverse-neighbor-discovery-advertisement
+* version-2-multicast-listener-report
+* home-agent-address-discovery-request
+* home-agent-address-discovery-reply
+* mobile-prefix-solicitation
+* mobile-prefix-advertisement
+* certification-path-solicitation
+* certification-path-advertisement
+* multicast-router-advertisement
+* multicast-router-solicitation
+* multicast-router-termination
