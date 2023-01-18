@@ -1,22 +1,20 @@
-# K8s
+# WindowsIPSec
 
 ## Header Format
 
-The K8s header designation has the following format:
+The Windows IPSec header designation has the following format:
 
 ```yaml
 targets:
-    k8s: [direction]
+    windows_ipsec: [filter_name]
 ```
 
-* _direction_: defines the direction, valid inputs are INGRESS and EGRESS (default:INGRESS)
+* _filter name_: defines the name of the Windows IPSec filter.
 
 ## Term Format
 
 * for common keys see [common.md](common.md)
-
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
 
 ## Sub Tokens
@@ -24,4 +22,4 @@ targets:
 ### Actions
 
 * _accept_
-* _deny_: Only permitted for a default deny
+* _deny_
