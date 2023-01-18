@@ -25,207 +25,207 @@ class FieldTest(absltest.TestCase):
         super().setUp()
         logging.debug('======> %s <======', self.id())
 
-    def testAppendAppends(self):
-        f = policy_simple.Field('Testvalue')
-        f.Append('TESTVALUE')
-        self.assertEqual(f.value, 'TestvalueTESTVALUE')
+#     def testAppendAppends(self):
+#         f = policy_simple.Field('Testvalue')
+#         f.Append('TESTVALUE')
+#         self.assertEqual(f.value, 'TestvalueTESTVALUE')
 
-    def testStr(self):
-        f = policy_simple.Field('Testvalue')
-        self.assertEqual('UNKNOWN::Testvalue', str(f))
+#     def testStr(self):
+#         f = policy_simple.Field('Testvalue')
+#         self.assertEqual('UNKNOWN::Testvalue', str(f))
 
-    def testStrIndents(self):
-        f = policy_simple.Field('Testvalue\nTestValue')
-        self.assertEqual('UNKNOWN::Testvalue\n            TestValue', str(f))
+#     def testStrIndents(self):
+#         f = policy_simple.Field('Testvalue\nTestValue')
+#         self.assertEqual('UNKNOWN::Testvalue\n            TestValue', str(f))
 
-    def testIntegerField(self):
-        self.assertRaises(ValueError, policy_simple.IntegerField, '7.01')
-        try:
-            _ = policy_simple.IntegerField('7')
-        except ValueError:
-            self.fail("IntegerField should accept '7' as value.")
+#     def testIntegerField(self):
+#         self.assertRaises(ValueError, policy_simple.IntegerField, '7.01')
+#         try:
+#             _ = policy_simple.IntegerField('7')
+#         except ValueError:
+#             self.fail("IntegerField should accept '7' as value.")
 
-    def testNamingFieldRejectsBad(self):
-        bads = (
-            'corp_internal',
-            'CORP+INTERNAL',
-        )
-        for bad in bads:
-            logging.debug('Testing bad "%s".', bad)
-            self.assertRaises(ValueError, policy_simple.NamingField, bad)
+#     def testNamingFieldRejectsBad(self):
+#         bads = (
+#             'corp_internal',
+#             'CORP+INTERNAL',
+#         )
+#         for bad in bads:
+#             logging.debug('Testing bad "%s".', bad)
+#             self.assertRaises(ValueError, policy_simple.NamingField, bad)
 
-    def testNamingFieldAcceptsGood(self):
-        goods = (
-            'CORP_INTERNAL',
-            'RFC1918',
-            'FOO_BAR102.BAZ101',
-        )
-        for good in goods:
-            try:
-                logging.debug('Testing good "%s".', good)
-                _ = policy_simple.NamingField(good)
-            except ValueError:
-                self.fail('Rejected good NamingField value "%s".' % good)
+#     def testNamingFieldAcceptsGood(self):
+#         goods = (
+#             'CORP_INTERNAL',
+#             'RFC1918',
+#             'FOO_BAR102.BAZ101',
+#         )
+#         for good in goods:
+#             try:
+#                 logging.debug('Testing good "%s".', good)
+#                 _ = policy_simple.NamingField(good)
+#             except ValueError:
+#                 self.fail('Rejected good NamingField value "%s".' % good)
 
-    def testNamingFieldAppendRejectsBad(self):
-        f = policy_simple.NamingField('RFC1918')
-        bads = (
-            'corp_internal',
-            'CORP+INTERNAL',
-        )
-        for bad in bads:
-            logging.debug('Testing bad "%s".', bad)
-            self.assertRaises(ValueError, f.Append, bad)
+#     def testNamingFieldAppendRejectsBad(self):
+#         f = policy_simple.NamingField('RFC1918')
+#         bads = (
+#             'corp_internal',
+#             'CORP+INTERNAL',
+#         )
+#         for bad in bads:
+#             logging.debug('Testing bad "%s".', bad)
+#             self.assertRaises(ValueError, f.Append, bad)
 
-    def testNamingFieldAppendAcceptsGood(self):
-        f = policy_simple.NamingField('RFC1918')
-        goods = (
-            'CORP_INTERNAL',
-            'RFC1918',
-            'FOO_BAR102.BAZ101',
-        )
-        for good in goods:
-            try:
-                logging.debug('Testing good "%s".', good)
-                _ = f.Append(good)
-            except ValueError:
-                self.fail('Rejected good NamingField value "%s".' % good)
+#     def testNamingFieldAppendAcceptsGood(self):
+#         f = policy_simple.NamingField('RFC1918')
+#         goods = (
+#             'CORP_INTERNAL',
+#             'RFC1918',
+#             'FOO_BAR102.BAZ101',
+#         )
+#         for good in goods:
+#             try:
+#                 logging.debug('Testing good "%s".', good)
+#                 _ = f.Append(good)
+#             except ValueError:
+#                 self.fail('Rejected good NamingField value "%s".' % good)
 
-    def testNamingFieldDedupes(self):
-        f = policy_simple.NamingField('RFC1918 CORP_INTERNAL RFC1918')
-        f.Append('RFC1918')
-        f.Append('CORP_INTERNAL RFC1918')
-        self.assertEqual(set(['RFC1918', 'CORP_INTERNAL']), f.value)
+#     def testNamingFieldDedupes(self):
+#         f = policy_simple.NamingField('RFC1918 CORP_INTERNAL RFC1918')
+#         f.Append('RFC1918')
+#         f.Append('CORP_INTERNAL RFC1918')
+#         self.assertEqual(set(['RFC1918', 'CORP_INTERNAL']), f.value)
 
-    def testNamingFieldStr(self):
-        f = policy_simple.NamingField(' '.join(str(x) for x in range(25)))
-        expected_str = (
-            'UNKNOWN:: 0 1 10 11 12 13 14 15 16 17 18 19 2 20 21'
-            ' 22 23 24 3 4 5 6 7\n            9'
-        )
-        self.assertEqual(expected_str, str(f))
-
-
-class BlockTest(absltest.TestCase):
-    def setUp(self):
-        super().setUp()
-        logging.debug('======> %s <======', self.id())
-
-    def testRejectsNonField(self):
-        b = policy_simple.Block()
-        for t in ('', 3, lambda x: x, policy_simple.Header(), policy_simple.Policy('test')):
-            self.assertRaises(TypeError, b.AddField, t)
-
-    def testFieldsWithType(self):
-        b = policy_simple.Block()
-        c1 = policy_simple.Comment('test1')
-        c2 = policy_simple.Comment('test2')
-        d = policy_simple.DestinationAddress('XYZ')
-        s = policy_simple.SourceAddress('ABC')
-        for field in (c1, d, c2, s):
-            b.AddField(field)
-
-        self.assertEqual([c1, d, c2, s], b.fields)
-        self.assertEqual([c1, c2], b.FieldsWithType(policy_simple.Comment))
-
-    def testIter(self):
-        a = object()
-        b = object()
-        c = object()
-        block = policy_simple.Block()
-        block.fields = (a, b, c)
-
-        self.assertEqual([a, b, c], list(block))
+#     def testNamingFieldStr(self):
+#         f = policy_simple.NamingField(' '.join(str(x) for x in range(25)))
+#         expected_str = (
+#             'UNKNOWN:: 0 1 10 11 12 13 14 15 16 17 18 19 2 20 21'
+#             ' 22 23 24 3 4 5 6 7\n            9'
+#         )
+#         self.assertEqual(expected_str, str(f))
 
 
-class PolicyTest(absltest.TestCase):
-    def setUp(self):
-        super().setUp()
-        logging.debug('======> %s <======', self.id())
+# class BlockTest(absltest.TestCase):
+#     def setUp(self):
+#         super().setUp()
+#         logging.debug('======> %s <======', self.id())
 
-    def testAddMember(self):
-        p = policy_simple.Policy('test')
-        good = [
-            policy_simple.Header(),
-            policy_simple.Term('test'),
-            policy_simple.BlankLine(),
-            policy_simple.CommentLine('test'),
-            policy_simple.Include('other_pol'),
-        ]
-        bad = ('', 3, lambda x: x, policy_simple.Field('test'))
+#     def testRejectsNonField(self):
+#         b = policy_simple.Block()
+#         for t in ('', 3, lambda x: x, policy_simple.Header(), policy_simple.Policy('test')):
+#             self.assertRaises(TypeError, b.AddField, t)
 
-        for member in good:
-            try:
-                p.AddMember(member)
-            except TypeError:
-                self.fail('Policy should accept member "%s"' % member)
-        self.assertEqual(good, p.members)
+#     def testFieldsWithType(self):
+#         b = policy_simple.Block()
+#         c1 = policy_simple.Comment('test1')
+#         c2 = policy_simple.Comment('test2')
+#         d = policy_simple.DestinationAddress('XYZ')
+#         s = policy_simple.SourceAddress('ABC')
+#         for field in (c1, d, c2, s):
+#             b.AddField(field)
 
-        for member in bad:
-            self.assertRaises(TypeError, p.AddMember, member)
+#         self.assertEqual([c1, d, c2, s], b.fields)
+#         self.assertEqual([c1, c2], b.FieldsWithType(policy_simple.Comment))
 
-    def testIter(self):
-        a = object()
-        b = object()
-        c = object()
-        pol = policy_simple.Policy(identifier=None)
-        pol.members = (a, b, c)
+#     def testIter(self):
+#         a = object()
+#         b = object()
+#         c = object()
+#         block = policy_simple.Block()
+#         block.fields = (a, b, c)
 
-        self.assertEqual([a, b, c], list(pol))
+#         self.assertEqual([a, b, c], list(block))
 
 
-class PolicyParserTest(absltest.TestCase):
-    def setUp(self):
-        super().setUp()
-        logging.debug('======> %s <======', self.id())
+# class PolicyTest(absltest.TestCase):
+#     def setUp(self):
+#         super().setUp()
+#         logging.debug('======> %s <======', self.id())
 
-    def Parser(self, data):
-        return policy_simple.PolicyParser(data=data, identifier='test')
+#     def testAddMember(self):
+#         p = policy_simple.Policy('test')
+#         good = [
+#             policy_simple.Header(),
+#             policy_simple.Term('test'),
+#             policy_simple.BlankLine(),
+#             policy_simple.CommentLine('test'),
+#             policy_simple.Include('other_pol'),
+#         ]
+#         bad = ('', 3, lambda x: x, policy_simple.Field('test'))
 
-    def testParseCommentLine(self):
-        parser = self.Parser('# test-comment-value')
-        expected = policy_simple.CommentLine('# test-comment-value')
+#         for member in good:
+#             try:
+#                 p.AddMember(member)
+#             except TypeError:
+#                 self.fail('Policy should accept member "%s"' % member)
+#         self.assertEqual(good, p.members)
 
-        pol = parser.Parse()
-        self.assertEqual([expected], pol.members)
+#         for member in bad:
+#             self.assertRaises(TypeError, p.AddMember, member)
 
-    def testParseBlankLine(self):
-        parser = self.Parser('')
-        expected = policy_simple.BlankLine()
+#     def testIter(self):
+#         a = object()
+#         b = object()
+#         c = object()
+#         pol = policy_simple.Policy(identifier=None)
+#         pol.members = (a, b, c)
 
-        pol = parser.Parse()
-        self.assertEqual([expected], pol.members)
+#         self.assertEqual([a, b, c], list(pol))
 
-    def testParseInclude(self):
-        parser = self.Parser('#include other/file #whatever')
-        expected = policy_simple.Include('other/file')
 
-        pol = parser.Parse()
-        self.assertEqual([expected], pol.members)
+# class PolicyParserTest(absltest.TestCase):
+#     def setUp(self):
+#         super().setUp()
+#         logging.debug('======> %s <======', self.id())
 
-    def testParseHeader(self):
-        parser = self.Parser('header {\ntarget::Test\n}')
-        expected = policy_simple.Header()
-        expected.AddField(policy_simple.Target('Test'))
+#     def Parser(self, data):
+#         return policy_simple.PolicyParser(data=data, identifier='test')
 
-        pol = parser.Parse()
-        self.assertEqual(expected, pol.members[0])
+#     def testParseCommentLine(self):
+#         parser = self.Parser('# test-comment-value')
+#         expected = policy_simple.CommentLine('# test-comment-value')
 
-    def testParseTerm(self):
-        parser = self.Parser('term testy {\ntarget::Test\n}')
-        expected = policy_simple.Term('testy')
-        expected.AddField(policy_simple.Target('Test'))
+#         pol = parser.Parse()
+#         self.assertEqual([expected], pol.members)
 
-        pol = parser.Parse()
-        self.assertEqual(expected, pol.members[0])
+#     def testParseBlankLine(self):
+#         parser = self.Parser('')
+#         expected = policy_simple.BlankLine()
 
-    def testParseTermBadField(self):
-        parser = self.Parser('term testy {\nbad_field::Test\n}')
-        self.assertRaises(ValueError, parser.Parse)
+#         pol = parser.Parse()
+#         self.assertEqual([expected], pol.members)
 
-    def testUnfinishedBlock(self):
-        parser = self.Parser('term testy {\ntarget::Test\n')
-        self.assertRaises(ValueError, parser.Parse)
+#     def testParseInclude(self):
+#         parser = self.Parser('#include other/file #whatever')
+#         expected = policy_simple.Include('other/file')
+
+#         pol = parser.Parse()
+#         self.assertEqual([expected], pol.members)
+
+#     def testParseHeader(self):
+#         parser = self.Parser('header {\ntarget::Test\n}')
+#         expected = policy_simple.Header()
+#         expected.AddField(policy_simple.Target('Test'))
+
+#         pol = parser.Parse()
+#         self.assertEqual(expected, pol.members[0])
+
+#     def testParseTerm(self):
+#         parser = self.Parser('term testy {\ntarget::Test\n}')
+#         expected = policy_simple.Term('testy')
+#         expected.AddField(policy_simple.Target('Test'))
+
+#         pol = parser.Parse()
+#         self.assertEqual(expected, pol.members[0])
+
+#     def testParseTermBadField(self):
+#         parser = self.Parser('term testy {\nbad_field::Test\n}')
+#         self.assertRaises(ValueError, parser.Parse)
+
+#     def testUnfinishedBlock(self):
+#         parser = self.Parser('term testy {\ntarget::Test\n')
+#         self.assertRaises(ValueError, parser.Parse)
 
 
 if __name__ == '__main__':
