@@ -50,6 +50,7 @@ mkdocs-material = "8.3.9"
 mkdocstrings = "0.19"
 mkdocstrings-python = "0.7.1"
 mkdocs-version-annotations = "1.0.0"
+sigstore = "^1.0.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
