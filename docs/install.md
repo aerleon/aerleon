@@ -58,7 +58,7 @@ We use OpenID to sign our code, the keys should be ephemeral and thus short live
             Not Before: Jan 18 08:44:59 2023 GMT
             Not After : Jan 18 08:54:59 2023 GMT
 ```
-This section tells you information about the origin of the certificate. It should match our repo. More information about each OID can be found at [sigstore](https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md)
+This section tells you information about the origin of the certificate. It should match our repo. More information about each OID can be found at [Sigstore](https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md).
 ```bash
                 URI:https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v1.2.1
             1.3.6.1.4.1.57264.1.1:
