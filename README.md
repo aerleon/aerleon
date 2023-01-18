@@ -7,18 +7,16 @@ Generate firewall configs for multiple platforms at once.
 
 Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following enhancements:
 
-- Support for new firewall platforms can be added through plugins. Plugins for
-  common platforms are built-in. Users with experimental or non-public platforms
-  can add support without forking this repo.
-- Policy files can be given as YAML (.pol.yaml).
-- Address Book data can be loaded from standard data formats like JSON, CSV.
-- Existing .net, .svc and .pol files are still supported.
-- Remote Address Book sources are supported. Users can link directly to IPAM.
-- Performance is generally faster.
-- A well-documented Python API is provided which accepts native types.
-- A cleaner test harness is provided for end-to-end tests.
-- "Shade checking" is faster and more correct.
-- --help mode is much cleaner.
+- New platform generators can now be added as plugins. Users no longer need to fork the project to add support for new platforms. Common platform support is still built in.
+- YAML is now supported for policy files, network definitions, and service definitions.
+- A powerful new Generate API is added that accepts policies, network definitions, and service definitions as native Python data.
+- Performance in address book generation for SRX and Palo Alto targets is greatly improved.
+- A detailed regression test suite was added to the project.
+- Unit and regression tests run automatically on all pull requests.
+- New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, SigStore.
+
+See the [1.0.0 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.0) for a complete list of features in the Aerleon 1.0.0 release.
+
 
 ## Using Aerleon
 
@@ -94,43 +92,7 @@ the wiki.
 
 ### Usage
 
-```
-  Usage: aclgen [OPTION]... Generate firewall configs for multiple platforms at
-  once
-
-  Each policy file (.pol, .pol.yaml) in the input directory is visited and ACLs
-  are generated from the term and header blocks within. Symbolic names that
-  reference address book files (.net) in the input directory can be used for IP
-  networks, hosts, and services. ACLs are then rendered to one or more
-  platform-specific configs according to the ‘target’ keyword(s) used.
-
-  Policy files can be given as .pol files or .pol.yaml files. Address books are
-  defined by .net, .net.json, or .net.csv files.
-
-  Where OPTION is:
-
-    --input-dir=DIRECTORY: Search this directory recursively for input files.
-    Defaults to ‘./policies’. If ‘--input-dir’ is given multiple times, all given
-    directories will be searched.
-
-    --output-dir=DIRECTORY: Place all generated files here. Defaults to the current
-    working directory.
-
-    --config=FILE: Read configuration options from FILE (JSON). Defaults to
-    ‘./config.json’. The command line value is used if an option is provided in both
-    the command line and the configuration file. Some options are only available in
-    the configuration file.
-
-    --plugin-dir=DIRECTORY: Search this directory recursively for plugins. Defaults
-    to ‘./plugins. If ‘--plugin-dir’ is given multiple times, all given directories
-    will be searched.
-
-    --dry-run: Do not write out any output files.
-
-    --help: Display this message.
-
-    --version: Display version information.
-```
+See [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/)
 
 ## Policy Files
 
