@@ -15,7 +15,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - Unit and regression tests run automatically on all pull requests.
 - New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, Sigstore.
 
-See the [1.0.0 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.0) for a complete list of changes.
+See the [1.0.1 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.1) for a complete list of changes.
 
 
 ## Install
