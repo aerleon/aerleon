@@ -4,38 +4,37 @@ Aerleon is a lightweight library which generates firewall configurations from a 
 
 ## Description
 
-Aerleon provides a per operating system configuration generator, each of which ingests the data and generates the expected configuration.
+Aerleon provides a per firewall platform configuration generator. It loads data in a single standard format and generates a configuration for each target platform.
 
 The data primarily consists of:
-[comment]: <> (TODO Update these once we have those sections)
-* [Policy Files](../lib_policy/) that represent the actual firewall rules
-* [Address Files](../lib_address/) that represent the addresses, in the form of named objects
-* [Service Files](../lib_service/) that represent the services, in the form of named objects
+* Policy Files that represent the actual firewall rules.
+* Address Files that represent the addresses, in the form of named objects.
+* Service Files that represent the services, in the form of named objects.
 
-### Supported Configuration Formats
+## Supported Configuration Formats
 * Legacy Capirca formats
 * YAML
 * Native Python
 
-### Core Supported Generators
+## Core Supported Generators
 * Arista
 * Aruba
 * Brocade
 * Cisco
-  * Cisco ASA
-  * Cisco NX
-  * Cisco XR
+    * Cisco ASA
+    * Cisco NX
+    * Cisco XR
 * Cloud Armor
 * Google
-  * Cloud Armor
-  * GCE
-  * GCP
+    * Cloud Armor
+    * GCE
+    * GCP
 * IPSet
 * IPTables
 * Juniper
-  * JuniperSRX
-  * Juniper EVO
-  * Juniper MPC
+    * JuniperSRX
+    * Juniper EVO
+    * Juniper MPC
 * Kubernetes
 * NFTables
 * VMWare NSXV
@@ -43,8 +42,8 @@ The data primarily consists of:
 * Palo Alto
 * PCAP Filters
 * Windows
-  * Advanced Firewall
-  * IPSec
+    * Advanced Firewall
+    * IPSec
 
 ## Audience (User Personas)
 

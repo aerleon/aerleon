@@ -54,6 +54,7 @@ nav:
       - CLI Reference: reference/cli.md
       - Generator Development: reference/generator_patterns.md
       - Naming: reference/naming.md
+      - common: user/generators/common.md
       - arista: user/generators/arista.md
       - arista_tp: user/generators/arista_tp.md
       - aruba: user/generators/aruba.md
@@ -77,5 +78,6 @@ nav:
       - pcap: user/generators/pcap.md
       - speedway: user/generators/speedway.md
       - srxlo: user/generators/srxlo.md
-      - windows_advfirewall.md: user/generators/windows_advfirewall.md
+      - windows_advfirewall: user/generators/windows_advfirewall.md
+      - windows_ipsec: user/generators/windows_ipsec.md
 
