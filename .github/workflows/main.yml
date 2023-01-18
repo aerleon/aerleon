@@ -51,7 +51,8 @@ jobs:
       #----------------------------------------------
       - name: Test with pytest
         run: |
-          poetry run pytest
+          poetry run coverage empty
+          poetry run coverage run
           poetry run coverage xml
       #----------------------------------------------
       # upload coverage to codecov
