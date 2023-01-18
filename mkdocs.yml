@@ -10,7 +10,7 @@ extra:
   generator: false
   social:
     - icon: fontawesome/brands/slack
-      link: 'https://aerleon.slack.com/'
+      link: 'https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw'
       name: Network to Code Community
     - icon: fontawesome/brands/slack
       link: 'https://slack.networktocode.com/'
@@ -18,9 +18,6 @@ extra:
     - icon: fontawesome/brands/github
       link: 'https://github.com/aerleon'
       name: GitHub Organization
-    - icon: fontawesome/brands/twitter
-      link: 'https://twitter.com/<tbd>'
-      name: <Aerleon> Twitter
 markdown_extensions:
   - admonition
   - toc:
@@ -57,31 +54,30 @@ nav:
       - CLI Reference: reference/cli.md
       - Generator Development: reference/generator_patterns.md
       - Naming: reference/naming.md
-      - Generators:
-        - common: user/generators/common.md
-        - arista: user/generators/arista.md
-        - arista_tp: user/generators/arista_tp.md
-        - aruba: user/generators/aruba.md
-        - brocade: user/generators/brocade.md
-        - cisco: user/generators/cisco.md
-        - ciscoasa: user/generators/ciscoasa.md
-        - cisconx: user/generators/cisconx.md
-        - ciscoxr: user/generators/ciscoxr.md
-        - gce: user/generators/gce.md
-        - ipset: user/generators/ipset.md
-        - iptables: user/generators/iptables.md
-        - juniper: user/generators/juniper.md
-        - juniperevo: user/generators/juniperevo.md
-        - junipermsmpc: user/generators/junipermsmpc.md
-        - junipersrx: user/generators/junipersrx.md
-        - k8s: user/generators/k8s.md
-        - nftables: user/generators/nftables.md
-        - nsxv: user/generators/nsxv.md
-        - packetfilter: user/generators/packetfilter.md
-        - paloaltofw: user/generators/paloaltofw.md
-        - pcap: user/generators/pcap.md
-        - speedway: user/generators/speedway.md
-        - srxlo: user/generators/srxlo.md
-        - windows_advfirewall: user/generators/windows_advfirewall.md
-        - windows_ipsec: user/generators/windows_ipsec.md
+      - common: user/generators/common.md
+      - arista: user/generators/arista.md
+      - arista_tp: user/generators/arista_tp.md
+      - aruba: user/generators/aruba.md
+      - brocade: user/generators/brocade.md
+      - cisco: user/generators/cisco.md
+      - ciscoasa: user/generators/ciscoasa.md
+      - cisconx: user/generators/cisconx.md
+      - ciscoxr: user/generators/ciscoxr.md
+      - gce: user/generators/gce.md
+      - ipset: user/generators/ipset.md
+      - iptables: user/generators/iptables.md
+      - juniper: user/generators/juniper.md
+      - juniperevo: user/generators/juniperevo.md
+      - junipermsmpc: user/generators/junipermsmpc.md
+      - junipersrx: user/generators/junipersrx.md
+      - k8s: user/generators/k8s.md
+      - nftables: user/generators/nftables.md
+      - nsxv: user/generators/nsxv.md
+      - packetfilter: user/generators/packetfilter.md
+      - paloaltofw: user/generators/paloaltofw.md
+      - pcap: user/generators/pcap.md
+      - speedway: user/generators/speedway.md
+      - srxlo: user/generators/srxlo.md
+      - windows_advfirewall: user/generators/windows_advfirewall.md
+      - windows_ipsec: user/generators/windows_ipsec.md
 
