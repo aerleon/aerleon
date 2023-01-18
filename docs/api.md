@@ -6,16 +6,9 @@ This API provides a single method, `Generate()`, that accepts a list of policies
 
 ### Example: Generating Cisco ACL Using the Generate API
 
-In this example we want to generate a Cisco ACL named `test-filter`. The
-filter should first deny packets addressed to reserved or invalid IP addresses
-("bogons") and then only accept traffic that addresses the mail server ("MAIL_SERVERS").
+In this example we want to generate a Cisco ACL named `test-filter`. The filter should first deny packets addressed to reserved or invalid IP addresses ("bogons") and then only accept traffic that addresses the mail server (`MAIL_SERVERS`).
 
-The policy is defined like so. This structure of nested Python dictionaries and keys mirrors exactly the YAML policy file format. At the top level two keys must be defined:
-"filename", which controls the name of all output files produced from this policy, and
-"filters", which lists all filters in this policy. Within the "filters" list we
-have a single filter, which must have a "header" section and a "terms" list. The
-"header" instructs Aerleon to produce Cisco ACL output. The "terms" list defines
-the access control behavior we want for this filter.
+The policy is defined like so. This structure of nested Python dictionaries and keys mirrors exactly the YAML policy file format. At the top level two keys must be defined: "filename", which controls the name of all output files produced from this policy, and "filters", which lists all filters in this policy. Within the "filters" list we have a single filter, which must have a "header" section and a "terms" list. The "header" instructs Aerleon to produce Cisco ACL output. The "terms" list defines the access control behavior we want for this filter.
 
 ```python
 cisco_example_policy = {
@@ -52,12 +45,9 @@ cisco_example_policy = {
 }
 ```
 
-Because this object is constructed in Python it can incorporate variable data. Users
-might conditionally construct the policy as part of a network automation workflow.
+Because this object is constructed in Python it can incorporate variable data. Users might conditionally construct the policy as part of a network automation workflow.
 
-Now the network names used in this example have to be defined. The naming definitions are
-constructed as follows. In this example we are dynamically selecting between two sets of IP
-addresses for the mail server.
+Now the network names used in this example have to be defined. The naming definitions are constructed as follows. In this example we are dynamically selecting between two sets of IP addresses for the mail server.
 
 ```python
 mail_server_ips_set0 = ["200.1.1.4/32","200.1.1.5/32"]
@@ -97,9 +87,7 @@ else:
     networks["networks"]["MAIL_SERVERS"]["values"] = mail_server_ips_set1
 ```
 
-Now to call the Generate method. We need to first construct a Naming object
-and load the network definitions, then pass that to Generate along with the
-policy object.
+Now to call the Generate method. We need to first construct a Naming object and load the network definitions, then pass that to Generate along with the policy object.
 
 ```python
 definitions = naming.Naming()
