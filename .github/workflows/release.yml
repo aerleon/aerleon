@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Download artifacts diretories # goes to current working directory
+      - name: Download artifacts directories # goes to current working directory
         uses: actions/download-artifact@v3
       - name: publish
         uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
@@ -75,7 +75,7 @@ jobs:
       # Needed to upload release assets.
       contents: write
     steps:
-      - name: Download artifacts diretories # goes to current working directory
+      - name: Download artifacts directories # goes to current working directory
         uses: actions/download-artifact@v3
       - name: Upload artifacts to github
         # Confusingly, this action also supports updating releases, not
