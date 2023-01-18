@@ -10,7 +10,7 @@ extra:
   generator: false
   social:
     - icon: fontawesome/brands/slack
-      link: 'https://aerleon.slack.com/'
+      link: 'https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw'
       name: Network to Code Community
     - icon: fontawesome/brands/slack
       link: 'https://slack.networktocode.com/'
@@ -18,9 +18,6 @@ extra:
     - icon: fontawesome/brands/github
       link: 'https://github.com/aerleon'
       name: GitHub Organization
-    - icon: fontawesome/brands/twitter
-      link: 'https://twitter.com/<tbd>'
-      name: <Aerleon> Twitter
 markdown_extensions:
   - admonition
   - toc:
