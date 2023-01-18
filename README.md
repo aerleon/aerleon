@@ -44,11 +44,11 @@ Contributions are welcome. Please review the [contributing guidelines](https://a
 
 Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues).
 
-General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://aerleon.slack.com/).
+General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw).
 
 ### Contact Maintainers
 
-You can always reach out to us on  [Slack](https://aerleon.slack.com/).
+You can always reach out to us on  [Slack](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw).
 You many also reach out to us via e-mail.
 
 Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
