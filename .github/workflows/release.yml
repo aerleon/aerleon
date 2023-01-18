@@ -1,0 +1,88 @@
+name: Release
+on:
+  release:
+    types:
+      - published
+jobs:
+  build:
+    name: Build and sign artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
+      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
+        with:
+          python-version: "3.x"
+      - name: deps
+        run: |
+          python -m pip install -U build
+      - name: build
+        run: python -m build
+      - name: sign
+        uses: sigstore/gh-action-sigstore-python@v0.2.0
+        with:
+          inputs: dist/*
+      - name: Generate hashes for provenance
+        shell: bash
+        id: hash
+        run: |
+          # sha256sum generates sha256 hash for all artifacts.
+          # base64 -w0 encodes to base64 and outputs on a single line.
+          # sha256sum artifact1 artifact2 ... | base64 -w0
+          echo "hashes=$(sha256sum ./dist/* | base64 -w0)" >> $GITHUB_OUTPUT
+
+      - name: Upload built packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-packages
+          path: ./dist/
+          if-no-files-found: warn
+  generate-provenance:
+    needs: [build]
+    name: Generate build provenance
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    # Currently this action needs to be referred by tag. More details at:
+    # https://github.com/slsa-framework/slsa-github-generator#verification-of-provenance
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.1
+    with:
+      attestation-name: provenance-sigstore-${{ github.event.release.tag_name }}.intoto.jsonl
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      compile-generator: true # Workaround for https://github.com/slsa-framework/slsa-github-generator/issues/1163
+      upload-assets: true
+  release-pypi:
+    needs: [build, generate-provenance]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Download artifacts diretories # goes to current working directory
+        uses: actions/download-artifact@v3
+      - name: publish
+        uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+          packages_dir: built-packages/
+  release-github:
+    needs: [build, generate-provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed to upload release assets.
+      contents: write
+    steps:
+      - name: Download artifacts diretories # goes to current working directory
+        uses: actions/download-artifact@v3
+      - name: Upload artifacts to github
+        # Confusingly, this action also supports updating releases, not
+        # just creating them. This is what we want here, since we've manually
+        # created the release that triggered the action.
+        uses: softprops/action-gh-release@v1
+        with:
+          # smoketest-artifacts/ contains the signatures and certificates.
+          files: |
+            built-packages/*
