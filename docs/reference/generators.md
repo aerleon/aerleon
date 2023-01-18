@@ -42,6 +42,7 @@ build_in tokens:
             #'verbatim', -> too many exceptions
 -->
 
+***
 
 ## Arista Traffic-Policy
 
@@ -145,6 +146,8 @@ The official documentation for traffic-policies can be found at the following UR
 
 * <https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/>
 
+***
+
 ## Arista
 
 ### Header Format
@@ -207,6 +210,8 @@ option:: {established|is-fragment|tcp-established}
 * _is-fragment_: Matches on if a packet is a fragment.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 
+***
+
 ## Aruba
 
 ### Header Format
@@ -240,6 +245,8 @@ targets:
 * _negate_: Used with DSM summarizer, negates the DSM.
 * _source-is-user_: Aruba option to specify that the source should be a user.
 
+***
+
 ## Brocade
 
 ### Header Format
@@ -266,6 +273,8 @@ See [cisco](cisco.md) for details.
 ### Option
 
 See [cisco](cisco.md) for details.
+
+***
 
 ## Cisco
 
@@ -319,6 +328,8 @@ The default format is _inet4_, and is implied if not other argument is given.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
+***
+
 ## CiscoASA
 
 ### Header Format
@@ -354,6 +365,8 @@ targets:
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+
+***
 
 ## CiscoNX
 
@@ -405,6 +418,8 @@ The default format is _inet4_, and is implied if not other argument is given.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
+***
+
 ## CiscoXR
 
 ### Header Format
@@ -450,6 +465,8 @@ targets:
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
+***
+
 ## GCE
 
 ### Header Format
@@ -481,6 +498,8 @@ targets:
 
 * _accept_
 * _deny_
+
+***
 
 ## Ipset
 
@@ -541,6 +560,8 @@ targets:
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
+
+***
 
 ## IpTables
 
@@ -612,6 +633,8 @@ targets:
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
+
+***
 
 ## Juniper
 
@@ -694,6 +717,8 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _sample_: Samples traffic for netflow.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
+
+***
 
 ## Juniper EVO
 
@@ -785,6 +810,8 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 * _Egress (Physical)_: `payload-protocol 0` | `payload-protocol 44` | `payload-protocol 43` | `payload-protocol tcp|udp|ah|esp|icmpv6`
 * _Egress (Loopback)_: `payload-protocol 0` | `payload-protocol 44` | `payload-protocol 43` | `payload-protocol tcp|udp|ah|esp|icmpv6`
 
+***
+
 ## Juniper MSMPC
 
 ### Header Format
@@ -818,6 +845,8 @@ TBD
 * _accept_
 * _deny_
 * _reject_
+
+***
 
 ## JuniperSRX
 
@@ -868,6 +897,8 @@ targets:
 * _log_
 * _reject_
 
+***
+
 ## K8s
 
 ### Header Format
@@ -895,6 +926,8 @@ targets:
 
 * _accept_
 * _deny_: Only permitted for a default deny
+
+***
 
 ## Nftables
 
@@ -1030,6 +1063,8 @@ _source:_ https://www.netfilter.org/projects/nftables/manpage.html
 
 * _tcp-established_ and _established_ will cause the term to not be rendered in the final NFT configuration. See 'Important' section above.
 
+***
+
 ## NSXv
 
 ### Header Format
@@ -1068,6 +1103,8 @@ targets:
 * _deny_
 * _reject_
 * _reject-with-tcp-rst_
+
+***
 
 ## PacketFilter
 
@@ -1118,6 +1155,8 @@ targets:
 * _syn_: Match on SYN flag being present.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _urg_: Match on URG flag being present.
+
+***
 
 ## PaloAltoFW
 
@@ -1177,6 +1216,8 @@ targets:
     * When _protocol_ is tcp or udp, and a _source-port_ or _destination-port_ is specified, the service will be custom service objects for the protocols and ports.
     * _pan-application_ can only be used when no _protocol_ is specified in the term, or the protocols tcp and udp.
 
+***
+
 ## PcapFilter
 
 ### Header Format
@@ -1214,6 +1255,8 @@ FILL ME IN
 * _syn_: Match on SYN flag being present.
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _urg_: Match on URG flag being present.
+
+***
 
 ## Speedway
 
@@ -1285,6 +1328,8 @@ targets:
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
+
+***
 
 ## SRXlo
 
@@ -1366,6 +1411,8 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
+***
+
 ## Windows Advanced Firewall
 
 ### Header Format
@@ -1395,6 +1442,8 @@ targets:
 
 * _accept_
 * _deny_
+
+***
 
 ## WindowsIPSec
 
