@@ -2,7 +2,7 @@
 
 ## Objective
 
-The purpose of this document is to describe common patterns for new Capirca
+The purpose of this document is to describe common patterns for new Aerleon
 Generators.
 
 ## Security based requirements:
@@ -13,33 +13,33 @@ Generators.
 
 ##### Problem
 
-When the inet_version is set to ‘mixed’ it implies that the resultant policy should contain addresses from both families. Some platforms do not support both address families to exist in the same filter therefore leading to Capirca generators needing to handle the output differently for those platforms. Cisco is an example platform that does not support a mixed filter being generated, and therefore it requires two separate *access-list* filters.
+When the inet_version is set to ‘mixed’ it implies that the resultant policy should contain addresses from both families. Some platforms do not support both address families to exist in the same filter therefore leading to Aerleon generators needing to handle the output differently for those platforms. Cisco is an example platform that does not support a mixed filter being generated, and therefore it requires two separate *access-list* filters.
 
 Platforms that support mixed family filters will simply generate filters that contain both address families. Some platforms (such as GCE) support "mixed" in a single access-list, but do not support "mixed" addresses in the same rule.
 
 ##### Desired Approach
 
-**The desired approach will be to have Capirca output two filters, one for each address family, for platforms that do not support ‘mixed’.** This currently occurs already with [cisco.py](https://github.com/google/capirca/blob/master/capirca/lib/cisco.py) which outputs two access-lists one that contains IPv4 and another that contains IPv6 addresses. This solves a problem of having to potentially maintain two different .pol so that in cases where vendor syntax of filter name is derived from .pol a syncing between v4 and v6 .pol do not need to be maintained.
+**The desired approach will be to have Aerleon output two filters, one for each address family, for platforms that do not support ‘mixed’.** This currently occurs already with [cisco.py](https://github.com/aerleon/aerleon/blob/master/aerleon/lib/cisco.py) which outputs two access-lists one that contains IPv4 and another that contains IPv6 addresses. This solves a problem of having to potentially maintain two different .pol so that in cases where vendor syntax of filter name is derived from .pol a syncing between v4 and v6 .pol do not need to be maintained.
 
-This may be misleading at first because when using Capirca the user expects that the output will be a single policy, but it is actually their lack of understanding about the vendor syntax that causes this belief.
+This may be misleading at first because when using Aerleon the user expects that the output will be a single policy, but it is actually their lack of understanding about the vendor syntax that causes this belief.
 
-If the user does not want this output, then the user can simply issue two headers to Capirca one for IPv4 and one for IPv6.
+If the user does not want this output, then the user can simply issue two headers to Aerleon one for IPv4 and one for IPv6.
 
 #### When the platform supports “mixed” in a single access-list
 
-This will require the policy to be generated correctly for the [following permutations](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L236-L322) of address family, and when “mixed” is supported, and with valid tests:
+This will require the policy to be generated correctly for the [following permutations](https://github.com/aerleon/aerleon/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L236-L322) of address family, and when “mixed” is supported, and with valid tests:
 
-1.  [MIXED_TO_V4](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L236)
-1.  [V4_TO_MIXED](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L245)
-1.  [MIXED_TO_V6](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L254)
-1.  [V6_TO_MIXED](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L262)
-1.  [MIXED_TO_MIXED](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L270)
-1.  [MIXED_TO_ANY](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L278)
-1.  [ANY_TO_MIXED](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L285)
-1.  [V4_TO_V4](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L92)
-1.  [V6_TO_V6](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L300)
-1.  [V4_TO_V6](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L308)
-1.  [V6_TO_V4](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/tests/lib/nsxv_test.py#L316)
+1.  MIXED_TO_V4
+1.  V4_TO_MIXED
+1.  MIXED_TO_V6
+1.  V6_TO_MIXED
+1.  MIXED_TO_MIXED
+1.  MIXED_TO_ANY
+1.  ANY_TO_MIXED
+1.  V4_TO_V4
+1.  V6_TO_V6
+1.  V4_TO_V6
+1.  V6_TO_V4
 
 The junipersrx, junipermsmpc, paloalto and cloudarmor generators support this.
 
@@ -53,9 +53,6 @@ following:
 1. Logically similar IPv4 and IPv6 rules should be close to each other to be easy to read and reason about in the generated policy. So if the IPv4 and IPv6 rules originate from a single "mixed" rule, they should be close to each other. It is thus preferable to process each rule, once for "inet" and then "inet6", over processing all rules in the policy for "inet", and then all the rules for "inet6". This also helps adhere to [requirements regarding rule priority](#apply-priority-as-described-in-pol-files).
 1. Special handling of "mixed" such as not re-using the code for "inet" and "inet6" processing may result in inconsistent handling of rules when dealing with "mixed" versus "inet6". As an example, the expected outcome is that a rule containing IPv6 addresses only, when processed under "mixed" or "inet6", should result in the same generated rule.
 1. Rule names for such processing should preserve semantic meaning, but also differentiate between the IPv4 and IPv6 variants of the rule. Suffixes for the IPv6 rules (such as "-ipv6") are preferred to preserve sorting order of rules.
-
-An example for such handling is the
-[GCE generator](https://github.com/google/capirca/blob/72cfb69148e552e22b000098856169b22a4db5ef/capirca/lib/gce.py#L517).
 
 ### Processing rules with no explicit IP addresses
 
@@ -76,19 +73,18 @@ list may not be exhaustive.
 
 ### noverbose option is supported correctly
 
-`noverberse` must be supported if it makes sense for the platform. Noverbose removes all comments from the ACE terms, policies, etc. For example see the logic implemented in [juniper.py](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/juniper.py#L219).
-
+`noverberse` must be supported if it makes sense for the platform. Noverbose removes all comments from the ACE terms, policies, etc.
 ### Sample.pol file is present
 
-A sample pol file should exist for that generator. Some examples are [here](https://github.com/google/capirca/tree/master/policies/pol). The sample.pol file for the new generator should have examples for all the filter option types used, with all supported IP types, along with any custom fields for that generator.
+A sample pol file should exist for that generator. Some examples are [here](https://github.com/aerleon/aerleon/tree/master/policies/pol). The sample.pol file for the new generator should have examples for all the filter option types used, with all supported IP types, along with any custom fields for that generator.
 
 ### Perform truncating of names for term name or comment based on max length
 
-This is to ensure that truncation of terms and comments that exceed a max_width, is supported by the generator. Not all platforms have length limitations, if the generator’s platform has none, then this requirement can be skipped. This applies only when the term name and comments are being incorporated into the policy. If they are actual # comments (which are not applied to the policy), then this requirement does not apply. This could be done using the existing [WrapWords()](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/aclgenerator.py#L549) or it may be done by a truncate function within the generator using a custom function such as in [juniper.py](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/juniper.py#L715). This wrapping should also be present for the term name, and should be using Capirca’s [FixTermLength()](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/aclgenerator.py#L463).
+This is to ensure that truncation of terms and comments that exceed a max_width, is supported by the generator. Not all platforms have length limitations, if the generator’s platform has none, then this requirement can be skipped. This applies only when the term name and comments are being incorporated into the policy. If they are actual # comments (which are not applied to the policy), then this requirement does not apply. This could be done using the existing WrapWords() or it may be done by a truncate function within the generator using a custom function such as in juniper.py. This wrapping should also be present for the term name, and should be using Aerleon's FixTermLength().
 
 ### Logging is supported correctly for different types of logging
 
-There are different values of logging already created in [policy.py](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/policy.py#L49).
+There are different values of logging already created in policy.py.
 
 Not all are supported by every platform.
 
@@ -108,15 +104,15 @@ DSMO is Discontinuous Subnet Masks and is used to save on TCAM space. This is su
 
 ### The usage of good and meta Unified Direction names
 
-Good unified direction names for the ACE terms, that are meta and not specific to that platform, are preferred. This is only for platforms that require direction. The meta directions [supported by Capirca](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/packetfilter.py#L77) are “in”, “out” and “”, but these should not be used as is. Different platforms use “ingress”, “egress” or “both” such as GCE. Do not rely on platform specific names for directions. “ingress” and “egress” are the preferred directions to be used, which can then be converted to the platform’s required specific names for directions.
+Good unified direction names for the ACE terms, that are meta and not specific to that platform, are preferred. This is only for platforms that require direction. The meta directions supported by Aerleon are “in”, “out” and “”, but these should not be used as is. Different platforms use “ingress”, “egress” or “both” such as GCE. Do not rely on platform specific names for directions. “ingress” and “egress” are the preferred directions to be used, which can then be converted to the platform’s required specific names for directions.
 
 ### Term Expirations are handled correctly
 
-Term expirations need to be handled correctly in code. An [example from Juniper](https://github.com/google/capirca/blob/master/capirca/lib/juniper.py#L968-L974) is that when the term is close to [expiration](https://github.com/google/capirca/blob/c0ca9d9a3a34d3dab0b41510571448f5d82c033d/capirca/utils/config.py#L17), an INFO message is logged; and when it is expired, a WARNING message is logged and the term is not generated. This is also done similarly across other platforms such as Cisco/GCE.
+Term expirations need to be handled correctly in code. An example from Juniper is that when the term is close to expiration, an INFO message is logged; and when it is expired, a WARNING message is logged and the term is not generated. This is also done similarly across other platforms such as Cisco/GCE.
 
 ### ICMP and ICMPv6 handling
 
-The generator needs to handle ICMP and ICMPv6 correctly. This is a broad requirement, but ICMP and ICMPv6 requires careful handling to **avoid rendering icmp terms under inet6, and icmpv6 under inet**. One commit that implements this for gcp_hf is [here](https://github.com/google/capirca/commit/b4af15a36b70593b7bbf043559405558e82c81bc). Some generators do not support icmp and icmp6 when the address family is mixed, such as [nftables.py](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/nftables.py#L103-L111). The expected correct behavior is that when “mixed” is specified in the inet_version, the rule for ICMP should only contain IPv4 addresses, and the rule for ICMPv6 should contain only IPv6 addresses. Tests must ensure that types and codes used are valid for the given address family.
+The generator needs to handle ICMP and ICMPv6 correctly. This is a broad requirement, but ICMP and ICMPv6 requires careful handling to **avoid rendering icmp terms under inet6, and icmpv6 under inet**. One commit that implements this for gcp_hf is here. Some generators do not support icmp and icmp6 when the address family is mixed, such as nftables.py. The expected correct behavior is that when “mixed” is specified in the inet_version, the rule for ICMP should only contain IPv4 addresses, and the rule for ICMPv6 should contain only IPv6 addresses. Tests must ensure that types and codes used are valid for the given address family.
 
 In the future, we hope to refactor the code to allow for general ICMP support, but for now this functionality is implemented per-platform in each generator.
 
@@ -124,13 +120,13 @@ Note: In a related requirement, IGMP does not apply to IPv6, and thus rules cont
 
 ### Makes an explicit determination about statefulness
 
-The generator author should check for “Am I stateful?”. It should clearly state in generator the result of this as a comment somewhere If it is, it should make sure that it is doing the right thing for terms. For example, for Juniper SRX, it is [possible to skip TCP-established](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/junipersrx.py#L450-L453) because it is stateful. You would also want to do the stateful check probably early in the code rather than later, since this may impact efficiency by being able to skip further code/ checks. A pro of checking early would be being able to skip any processing of terms not necessary for a stateful firewall such as skipping TCP-established. In contrast, in iptables.py, the check is made later, while formatting the terms to modify the term to [allow established and related terms](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/iptables.py#L474-L485).
+The generator author should check for “Am I stateful?”. It should clearly state in generator the result of this as a comment somewhere If it is, it should make sure that it is doing the right thing for terms. For example, for Juniper SRX, it is possible to skip TCP-established because it is stateful. You would also want to do the stateful check probably early in the code rather than later, since this may impact efficiency by being able to skip further code/ checks. A pro of checking early would be being able to skip any processing of terms not necessary for a stateful firewall such as skipping TCP-established. In contrast, in iptables.py, the check is made later, while formatting the terms to modify the term to allow established and related terms.
 
 ### Syntax of the config from the generator and on-device should match when cryptographically verified
 
 The ACL that is generated from the generator, and the ACL that is obtained from the device when a show configuration command is used, should match bit-by-bit, such that it should be possible to run a hashing function (such as SHA-1) and obtain the same hash for both the ACL configurations. Another variant of this requirement is that the `diff` between these two policies should be empty.
 
-There can be certain exceptions, such as if there is a policy header comment that cannot be handled by Cisco devices and is thus not present in the Cisco ACL. This can be handled by checking the diff between them and skipping over the known mismatches that are acceptable because of the device’s incapability. Another example of an exception is the Juniper [control sequence such as ‘replace’,](https://github.com/google/capirca/blob/b3e605a54f12efa1e6b0b1cfd179ee6078313c9d/capirca/lib/juniper.py#L993) which indicates the device to replace, rather than merge the contents of the ACL, which does not show up on the device ACL.
+There can be certain exceptions, such as if there is a policy header comment that cannot be handled by Cisco devices and is thus not present in the Cisco ACL. This can be handled by checking the diff between them and skipping over the known mismatches that are acceptable because of the device’s incapability. Another example of an exception is the Juniper control sequence such as ‘replace’, which indicates the device to replace, rather than merge the contents of the ACL, which does not show up on the device ACL.
 
 If there is a mismatch in the syntax of the 2 ACLs that cannot be fixed, then these mismatches and the technical reasoning behind the lack of a workaround or a fix should be listed in the associated Github issue for this generator.
 
@@ -216,7 +212,7 @@ should always include but are not limited to:
 
 * Maximum value of addresses and ports allowed in single rule. Generator must support automatically splitting into new rule when exceeded.
 * Maximum values allowed across entire policy for rule count, address, ports
-* Maximum length for comments, and support splitting across lines the correct way when over. Also check for max per-rule limit if one exists and truncate using the common Capirca functions if needed.
+* Maximum length for comments, and support splitting across lines the correct way when over. Also check for max per-rule limit if one exists and truncate using the common Aerleon functions if needed.
 * Max term length supported must be 24 or greater, in order to allow for meaningful term names.
 
 ### Test coverage
@@ -228,16 +224,3 @@ Aim for as close to 100% test coverage as you can. Tests should cover a wide spa
 #### Custom exceptions
 
 All custom exceptions types added must be unit tested.
-
-### Test Methods
-
-#### Running end-to-end Capirca tests
-
-Create a test .pol file.
-
-Build and run the ACL generator binary with the desired base and output directory. The following command simply outputs to the current directory.
-
-```shell
-$ ./capirca/aclgen --base_directory ./
---output_directory ./ --recursive --optimize --definitions_directory capirca/def --logtostderr --policy_file path/to/test.pol
-```
