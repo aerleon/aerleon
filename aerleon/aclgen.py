@@ -352,7 +352,6 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         lambda path: path.is_dir(), input_dir.glob('**/pol')
     )
     for ignored_directory in ignore_directories:
-
         def Filtering(path, ignored=ignored_directory):
             return not path.match('%s/**/pol' % ignored) and not path.match('%s/pol' % ignored)
 
@@ -363,8 +362,8 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         # Or just match by extension
         directory_policies = (
             list(directory.glob('*.pol'))
-            + list(directory.glob('*.pol.yaml'))
-            + list(directory.glob('*.pol.yml'))
+            + list(directory.glob('*.yaml'))
+            + list(directory.glob('*.yml'))
         )
         depth = len(directory.parents) - 1
         logging.warning(
