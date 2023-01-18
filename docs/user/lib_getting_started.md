@@ -27,20 +27,20 @@ Definition files allow you to define Networks and Services used in your policies
 networks:
   RFC1918:
     values:
-      - ip: 10.0.0.0/8
-      - ip: 172.16.0.0/12
-      - ip: 192.168.0.0/16
+      - address: 10.0.0.0/8
+      - address: 172.16.0.0/12
+      - address: 192.168.0.0/16
   WEB_SERVERS:
     values:
-      - ip: 10.0.0.1/32
+      - address: 10.0.0.1/32
         comment: Web Server 1
-      - ip: 10.0.0.2/32
+      - address: 10.0.0.2/32
         comment: Web Server 2
   MAIL_SERVERS:
     values:
-      - ip: 10.0.0.3/32
+      - address: 10.0.0.3/32
         comment: Mail Server 1
-      - ip: 10.0.0.4/32
+      - address: 10.0.0.4/32
         comment: Mail Server 2
   ALL_SERVERS:
     values:
@@ -77,20 +77,20 @@ Take the YAML above and insert it into a file in the `defs` directory.
   $ echo "networks:
   RFC1918:
     values:
-      - ip: 10.0.0.0/8
-      - ip: 172.16.0.0/12
-      - ip: 192.168.0.0/16
+      - address: 10.0.0.0/8
+      - address: 172.16.0.0/12
+      - address: 192.168.0.0/16
   WEB_SERVERS:
     values:
-      - ip: 10.0.0.1/32
+      - address: 10.0.0.1/32
         comment: Web Server 1
-      - ip: 10.0.0.2/32
+      - address: 10.0.0.2/32
         comment: Web Server 2
   MAIL_SERVERS:
     values:
-      - ip: 10.0.0.3/32
+      - address: 10.0.0.3/32
         comment: Mail Server 1
-      - ip: 10.0.0.4/32
+      - address: 10.0.0.4/32
         comment: Mail Server 2
   ALL_SERVERS:
     values:
