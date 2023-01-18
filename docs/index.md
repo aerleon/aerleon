@@ -11,12 +11,12 @@ The data primarily consists of:
 * Address Files that represent the addresses, in the form of named objects.
 * Service Files that represent the services, in the form of named objects.
 
-### Supported Configuration Formats
+## Supported Configuration Formats
 * Legacy Capirca formats
 * YAML
 * Native Python
 
-### Core Supported Generators
+## Core Supported Generators
 * Arista
 * Aruba
 * Brocade

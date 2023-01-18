@@ -3,7 +3,7 @@
 
 # Aerleon
 
-Generate firewall configs for multiple platforms at once.
+Generate firewall configs for multiple firewall platforms from a single platform-agnostic configuration language through a command line tool and Python API.
 
 Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following enhancements:
 
@@ -26,17 +26,19 @@ Aerleon requires Python 3.7 or higher.
 pip install aerleon
 ```
 
+## Overview
+
+Aerleon provides a command line tool and a Python API that will generate configs for multiple firewall platforms from a single platform-agnostic configuration language. It can generate configs for Cisco, Juniper, Palo Alto Networks and [many other firewall vendors](https://aerleon.readthedocs.io/en/latest/#core-supported-generators).
+
+A [getting started guide](https://aerleon.readthedocs.io/en/latest/getting_started/) walking through the basics of using Aerleon is avaiable on the docs website.
+
 ## Documentation
 
 Documentation can be found at [https://aerleon.readthedocs.io/en/latest/](https://aerleon.readthedocs.io/en/latest/).
 
 ## Contributing
 
-Contributions are welcome. Please review the contributing guidelines and code of
-conduct for this project.
-
-The [Getting Started With Source](wiki/getting-started-source.md) guide has
-information on how to approach code changes to this project.
+Contributions are welcome. Please review the [contributing guidelines](https://aerleon.readthedocs.io/en/latest/contributing/) and [code of conduct](https://github.com/aerleon/aerleon/blob/main/CODE_OF_CONDUCT.md) for this project.
 
 ## Contact
 
