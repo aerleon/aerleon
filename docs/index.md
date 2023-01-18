@@ -4,10 +4,9 @@ Aerleon is a lightweight library which generates firewall configurations from a 
 
 ## Description
 
-Aerleon provides a per operating system configuration generator, each of which ingests the data and generates the expected configuration.
+Aerleon provides a per firewall platform configuration generator. It loads data in a single standard format and generates a configuration for each target platform.
 
 The data primarily consists of:
-[comment]: <> (TODO Update these once we have those sections)
 * Policy Files that represent the actual firewall rules.
 * Address Files that represent the addresses, in the form of named objects.
 * Service Files that represent the services, in the form of named objects.
