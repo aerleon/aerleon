@@ -1,6 +1,6 @@
 # Introduction
 
-The naming library is used by the capirca system to parse definitions of network
+The naming library is used by the Aerleon system to parse definitions of network
 and service data. These definitions are based on 'tokens' that are used in the
 high-level [policy language](Policy-format.md).
 
@@ -42,7 +42,7 @@ DNS = 53/tcp
 **Create a naming object**
 
 ```
-from capirca import naming
+from aerleon.lib import naming
 defs = naming.Naming('/path/to/definitions/directory')
 ```
 

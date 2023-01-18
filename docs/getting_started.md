@@ -57,8 +57,10 @@ services:
     - HTTP
     - HTTPS
   HIGH_PORTS:
-    - FIX ME
-
+    - port: 1024-65535
+      protocol: tcp
+    - port: 1024-65535
+      protocol: udp
 ```
 
 Above we have defined a couple of networks and services.
@@ -74,28 +76,28 @@ Take the YAML above and insert it into a file in the `defs` directory.
   <summary>Bash command</summary>
 
   ```bash
-  $ echo "networks:
-  RFC1918:
-    values:
-      - address: 10.0.0.0/8
-      - address: 172.16.0.0/12
-      - address: 192.168.0.0/16
-  WEB_SERVERS:
-    values:
-      - address: 10.0.0.1/32
-        comment: Web Server 1
-      - address: 10.0.0.2/32
-        comment: Web Server 2
-  MAIL_SERVERS:
-    values:
-      - address: 10.0.0.3/32
-        comment: Mail Server 1
-      - address: 10.0.0.4/32
-        comment: Mail Server 2
-  ALL_SERVERS:
-    values:
-      - WEB_SERVERS
-      - MAIL_SERVERS
+  echo "networks:
+    RFC1918:
+      values:
+        - address: 10.0.0.0/8
+        - address: 172.16.0.0/12
+        - address: 192.168.0.0/16
+    WEB_SERVERS:
+      values:
+        - address: 10.0.0.1/32
+          comment: Web Server 1
+        - address: 10.0.0.2/32
+          comment: Web Server 2
+    MAIL_SERVERS:
+      values:
+        - address: 10.0.0.3/32
+          comment: Mail Server 1
+        - address: 10.0.0.4/32
+          comment: Mail Server 2
+    ALL_SERVERS:
+      values:
+        - WEB_SERVERS
+        - MAIL_SERVERS
   services:
     HTTP:
       - protocol: tcp
@@ -106,6 +108,11 @@ Take the YAML above and insert it into a file in the `defs` directory.
     WEB:
       - HTTP
       - HTTPS
+    HIGH_PORTS:
+      - port: 1024-65535
+        protocol: tcp
+      - port: 1024-65535
+        protocol: udp
   " > def/definitions.yaml
   ```
 </details>
@@ -141,7 +148,7 @@ Inside of the `header` we have a comment to explain what this ACL is for, a `tar
   <summary>Bash command</summary>
 
   ```bash
-  $ echo "filters:
+  echo "filters:
   - header:
       comment: Example inbound
       targets:
@@ -166,14 +173,14 @@ At this point we have definitions and a policy. We can run `aclgen` to get the c
 
 ```bash
 $ aclgen
-I0116 04:17:57.260641 139822104141824 aclgen.py:451] finding policies...
-W0116 04:17:57.263273 139822104141824 aclgen.py:369] --> policies/pol (1 pol files found)
-I0116 04:17:57.396398 139822104141824 plugin_supervisor.py:249] 0 plugins active.
-I0116 04:17:57.397953 139822104141824 plugin_supervisor.py:250] 27 generators registered.
-I0116 04:17:57.401166 139822104141824 aclgen.py:297] file changed: example.pol.acl
-I0116 04:17:57.423281 139822104141824 aclgen.py:384] writing 1 files to disk...
-I0116 04:17:57.424398 139822104141824 aclgen.py:403] writing file: example.pol.acl
-I0116 04:17:57.427682 139822104141824 aclgen.py:517] done.
+I0118 23:00:46.160622 139810786332672 aclgen.py:451] finding policies...
+W0118 23:00:46.162525 139810786332672 aclgen.py:369] --> policies/pol (1 pol files found)
+I0118 23:00:46.228089 139810786332672 plugin_supervisor.py:249] 0 plugins active.
+I0118 23:00:46.228377 139810786332672 plugin_supervisor.py:250] 27 generators registered.
+I0118 23:00:46.230094 139810786332672 aclgen.py:298] file changed: example.pol.acl
+I0118 23:00:46.256818 139810786332672 aclgen.py:384] writing 1 files to disk...
+I0118 23:00:46.257578 139810786332672 aclgen.py:403] writing file: example.pol.acl
+I0118 23:00:46.258050 139810786332672 aclgen.py:517] done.
 ```
 
 We can see in the output that a file with the extension `.acl` has been written to the directory. Inspecting this file we can see it contains the rules we configured in our YAML file but translated to Cisco format.

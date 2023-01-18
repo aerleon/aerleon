@@ -10,13 +10,13 @@
 Option 1: Install from PyPI.
 
 ```bash
-$ pip install aerleon
+pip install aerleon
 ```
 
 Option 2: Install from a GitHub branch, such as main as shown below.
 
 ```bash
-$ pip install git+https://github.com/aerleon/aerleon.git@main
+pip install git+https://github.com/aerleon/aerleon.git@main
 ```
 
 At this point you should be able to verify `aclgen` was installed. The path may be different for you depending on your environment.
@@ -50,13 +50,13 @@ wget https://github.com/$REPO/releases/download/$VER/aerleon-$VER-py3-none-any.w
 
 2. Inspect the certificate
 ```bash
-cat provenance-sigstore-1.0.0.intoto.jsonl | jq -r '.signatures[0].cert' | openssl x509 -text -noout
+cat provenance-sigstore-1.0.1.intoto.jsonl | jq -r '.signatures[0].cert' | openssl x509 -text -noout
 ```
 We use OpenID to sign our code, the keys should be ephemeral and thus short lived.
 ```bash
         Validity
-            Not Before: Jan 18 08:44:59 2023 GMT
-            Not After : Jan 18 08:54:59 2023 GMT
+            Not Before: Jan 18 20:34:14 2023 GMT
+            Not After : Jan 18 20:44:14 2023 GMT
 ```
 This section tells you information about the origin of the certificate. It should match our repo. More information about each OID can be found at [Sigstore](https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md).
 ```bash
@@ -66,19 +66,19 @@ This section tells you information about the origin of the certificate. It shoul
             1.3.6.1.4.1.57264.1.2:
                 release
             1.3.6.1.4.1.57264.1.3:
-                44fbb9672b72b33c8e29ea06a5540d0cc87f2bb6
+                2efc48f2f0a83eb0eb279f18b612584cfa4963b2
             1.3.6.1.4.1.57264.1.4:
                 Release
             1.3.6.1.4.1.57264.1.5:
                 aerleon/aerleon
             1.3.6.1.4.1.57264.1.6:
-                refs/tags/1.0.0
+                refs/tags/1.0.1
 ```
 
 3. Inspect the SLSA file
 The SLSA file contains information on what went into building the whl. This information includes things such as who initiated the build and hashes of every artifact.
 ```bash
-cat provenance-sigstore-1.0.3.intoto.jsonl | jq -r '.payload' | base64 -d | jq
+cat provenance-sigstore-1.0.1.intoto.jsonl | jq -r '.payload' | base64 -d | jq
 ```
 
 Since we use Sigstore for signing our code you can verify that our signing process is valid by looking at their transparency logs. You can find documentation on verifying binaries [here](https://docs.sigstore.dev/rekor/verify-release/).
