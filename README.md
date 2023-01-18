@@ -26,94 +26,9 @@ Aerleon requires Python 3.7 or higher.
 pip install aerleon
 ```
 
-More detailed instructions can be found on the [Installation](https://aerleon.readthedocs.io/en/latest/install/) page.
+## Documentation
 
-### Usage
-
-See [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/).
-
-## Policy Files
-
-A policy file describes a security policy using _header_ and _term_ blocks.
-Header blocks describe how to generate the output configuration of the security
-policy. Term blocks define the access control rules within an ACL.
-
-In .pol.yaml files, each ACL has exactly one header and one or more term
-sections. In .pol file format, each ACL is defined by a top-level header block
-followed by one or more top-level term blocks.
-
-```yaml
-acls:
-  - header:
-      comment:
-        this is a sample policy for a zone based filter that generates multiple
-        output formats. It checks logging options, tcp, udp and icmp type
-        options.
-      targets:
-        paloalto: from-zone internal to-zone external
-        srx: from-zone internal to-zone external
-    terms:
-      - name: test-tcp-log-both
-        comment: Testing log-both for tcp.
-        protocol: tcp
-        logging: log-both
-        action: accept
-      - name: test-udp-log
-        comment: Testing logging for udp.
-        protocol: udp
-        logging: true
-        action: accept
-```
-
-See [Policy Files](https://aerleon.readthedocs.io/en/latest/getting_started/#policy-files) for full details.
-
-## Address Book
-
-Address book files define symbolic names for IP networks, hosts, and services.
-Policy files may reference these names.
-
-```yaml
-terms:
-  - name: deny-to-bad-destinations
-    destination-address: RFC1918 BOGON RESERVED
-    action: deny
-```
-
-```yaml
-networks:
-  RFC1918:
-    values:
-      - address: 10.0.0.0/8
-        comment: "non-public"
-      - address: 172.16.0.0/12
-        comment: "non-public"
-      - address: 192.168.0.0/16
-        comment: "non-public"
-  RESERVED:
-    values:
-      - address: 0.0.0.0/8
-        comment: "reserved"
-      - name: RFC1918
-      - name: LOOPBACK
-      # ...snipped...
-  BOGON:
-    values:
-      - address: 0.0.0.0/8
-      - address: 192.0.0.0/24
-      - address: 192.0.2.0/24
-      # ...snipped...
-```
-
-Users may wish to auto-generate address book files to keep them up to date. JSON
-and CSV are accepted for this reason. See [Definition Files](https://aerleon.readthedocs.io/en/latest/getting_started/#definition-files) for full details.
-
-## Advanced Usage
-
-The `aerleon` Python package also provides a Python API. See
-[Python Package](wiki/python-package.md) on the wiki.
-
-To build from source, see
-[Getting Started With Source](wiki/getting-started-source.md) on the wiki.
+Documentation can be found at [https://aerleon.readthedocs.io/en/latest/](https://aerleon.readthedocs.io/en/latest/).
 
 ## Contributing
 
@@ -139,15 +54,6 @@ Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
 Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 
 ## Resources
-
-Aerleon is a fork of [Capirca](https://github.com/google/capirca).
-
-Additional documentation:
-
-- [aerleon.readthedocs.io](https://aerleon.readthedocs.io/en/latest/)
-
-External links, resources and references:
-
 - [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
 - [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
