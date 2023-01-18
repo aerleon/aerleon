@@ -69,7 +69,7 @@ If the operator wishes to create an ipv4 or ipv6 only filter, the inet and inet6
 
 The following tokens are supported:
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _counter_:
 * _destination-exclude_:
@@ -174,7 +174,7 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -228,7 +228,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
 
@@ -299,7 +299,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
@@ -343,7 +343,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _logging_: Specify that this packet should be logged via syslog.
@@ -390,7 +390,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -436,7 +436,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -483,7 +483,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination_tag_: Tag name to be used for destination filtering.
@@ -516,7 +516,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -589,7 +589,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -660,7 +660,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
@@ -743,7 +743,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
@@ -863,7 +863,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-zone_: one or more destination zones tokens. Only supported by global policy
@@ -914,7 +914,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _owner_: Owner of the term, used for organizational purposes.
@@ -966,7 +966,7 @@ When reporting bugs about this generator ensure to include:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _logging_: NFTables system logging (host-based).
 * _counter_: NFTables counter for specific term.
@@ -1088,7 +1088,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _logging_: Specify that this packet should be logged via syslog.
@@ -1125,7 +1125,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-interface_: Specify the destination interface. Implicitly changes the term direction to **out** for this term. Mutually exclusive with _source-interface_:.
@@ -1184,7 +1184,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -1226,7 +1226,7 @@ FILL ME IN
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _icmp-code_: Specifies the ICMP code to filter on.
@@ -1284,7 +1284,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
@@ -1357,7 +1357,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _counter_: Update a counter for matching packets
@@ -1431,7 +1431,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
@@ -1460,7 +1460,7 @@ targets:
 
 ### Term Format
 
-* for common keys see [common.md](common.md)
+* for common keys see the [common](#common) section above.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
 
