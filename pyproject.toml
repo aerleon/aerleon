@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aerleon"
-version = "0.0.1"
+version = "1.0.0"
 description = "A firewall generation tool"
 authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
 license = "Apache-2.0"
@@ -50,6 +50,7 @@ mkdocs-material = "8.3.9"
 mkdocstrings = "0.19"
 mkdocstrings-python = "0.7.1"
 mkdocs-version-annotations = "1.0.0"
+sigstore = "^1.0.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
