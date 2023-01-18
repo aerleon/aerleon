@@ -50,4 +50,18 @@ jobs:
       #    run test suite and output coverage file
       #----------------------------------------------
       - name: Test with pytest
-        run: poetry run pytest
+        run: |
+          poetry run pytest
+          poetry run coverage xml
+      #----------------------------------------------
+      # upload coverage to codecov
+      #----------------------------------------------
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./
+          env_vars: OS,PYTHON
+          files: ./coverage.xml
+          flags: tests
+          name: codecov-umbrella
+          verbose: true
