@@ -13,7 +13,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - Performance in address book generation for SRX and Palo Alto targets is greatly improved.
 - A detailed regression test suite was added to the project.
 - Unit and regression tests run automatically on all pull requests.
-- New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, SigStore.
+- New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, Sigstore.
 
 See the [1.0.0 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.0) for a complete list of changes.
 

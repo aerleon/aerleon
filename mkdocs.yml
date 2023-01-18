@@ -47,6 +47,7 @@ nav:
   - Introduction: index.md
   - Install and Configure: install.md
   - Getting Started: getting_started.md
+  - Using the API: api.md
   - Frequently Asked Questions: faq.md
   - Contributing: contributing.md
   - Links: links.md
