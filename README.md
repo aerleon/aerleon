@@ -32,7 +32,7 @@ one or more platform-specific configs according to the 'target' keyword(s) used.
 Symbolic names can be used for IP networks, hosts, and services defined in the
 [Address Book](#address-book).
 
-A [Getting Started](wiki/getting-started.md) guide can be found on the wiki.
+A [Getting Started](https://aerleon.readthedocs.io/en/latest/getting_started/) guide can be found on [aerleon.readthedocs.io](https://aerleon.readthedocs.io/en/latest).
 
 ### Examples
 
@@ -165,7 +165,7 @@ acls:
         action: accept
 ```
 
-See [Policy Files](wiki/policy-files.md) on the wiki for full details.
+See [Policy Files](https://aerleon.readthedocs.io/en/latest/getting_started/#policy-files) for full details.
 
 ## Address Book
 
@@ -179,24 +179,33 @@ terms:
     action: deny
 ```
 
-```
-RFC1918 = 10.0.0.0/8      # non-public
-          172.16.0.0/12   # non-public
-          192.168.0.0/16  # non-public
-
-BOGON = 0.0.0.0/8
-        192.0.0.0/24
-...skipped...
-
-RESERVED = 0.0.0.0/8      # reserved
-           RFC1918
-           LOOPBACK
-...skipped...
+```yaml
+networks:
+  RFC1918:
+    values:
+      - address: 10.0.0.0/8
+        comment: "non-public"
+      - address: 172.16.0.0/12
+        comment: "non-public"
+      - address: 192.168.0.0/16
+        comment: "non-public"
+  RESERVED:
+    values:
+      - address: 0.0.0.0/8
+        comment: "reserved"
+      - name: RFC1918
+      - name: LOOPBACK
+      # ...snipped...
+  BOGON:
+    values:
+      - address: 0.0.0.0/8
+      - address: 192.0.0.0/24
+      - address: 192.0.2.0/24
+      # ...snipped...
 ```
 
 Users may wish to auto-generate address book files to keep them up to date. JSON
-and CSV are accepted for this reason. See [Address Book](wiki/address-book.md)
-on the wiki for full details.
+and CSV are accepted for this reason. See [Definition Files](https://aerleon.readthedocs.io/en/latest/getting_started/#definition-files) for full details.
 
 ## Advanced Usage
 
@@ -218,11 +227,11 @@ information on how to approach code changes to this project.
 
 Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues)
 
-General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server]((https://aerleon.slack.com/)
+General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://aerleon.slack.com/)
 
 ### Contact Maintainers
 
-You can always reach out to us on  [Slack]((https://aerleon.slack.com/)
+You can always reach out to us on  [Slack](https://aerleon.slack.com/)
 You many also reach out to us via e-mail
 
 Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
@@ -235,11 +244,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca).
 
 Additional documentation:
 
-- [aclcheck library](./doc/wiki/AclCheck-library.md)
-- [policy reader library](./doc/wiki/PolicyReader-library.md)
-- [policy library](./doc/wiki/Policy-library.md)
-- [naming library](./doc/wiki/Naming-library.md)
-- [capirca design doc](./doc/wiki/Capirca-design.md)
+- [aerleon.readthedocs.io](https://aerleon.readthedocs.io/en/latest/)
 
 External links, resources and references:
 
@@ -287,7 +292,7 @@ Files and code included in this project from Capirca are copyright Google and
 are included under the terms of the Apache License, Version 2.0. You may obtain
 a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+  <http://www.apache.org/licenses/LICENSE-2.0>
 
 Contributors who wish to modify files bearing a copyright notice are obligated
 by the terms of the Apache License, Version 2.0 to include at the top of the
