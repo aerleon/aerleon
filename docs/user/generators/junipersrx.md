@@ -1,8 +1,6 @@
 
 # JuniperSRX
 
-> Note: The Juniper SRX generator is currently in beta testing.
-
 ## Header Format
 
 ```yaml

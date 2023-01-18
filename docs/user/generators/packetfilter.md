@@ -1,7 +1,5 @@
 # PacketFilter
 
-> Note: The PF generator is currently in alpha testing. The output should be compatible with OpenBSD v4.7 PF and later.
-
 ## Header Format
 
 ```yaml
