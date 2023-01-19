@@ -10,7 +10,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - Support for new firewall platforms can be added through plugins. Plugins for
   common platforms are built-in. Users with experimental or non-public platforms
   can add support without forking this repo.
-- Policy files can be given as (.pol.yaml).
+- Policy files can be given as YAML.
 - Address Book can be given as YAML.
 - Existing .net, .svc and .pol files are still supported.
 - Remote Address Book sources are supported. Users can link directly to IPAM.
