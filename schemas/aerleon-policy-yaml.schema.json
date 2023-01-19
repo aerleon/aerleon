@@ -1,0 +1,60 @@
+{
+  "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PolicyFile",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/policyIncludeFile" },
+    { "$ref": "#/$defs/policyFile" }
+  ],
+  "$defs": {
+    "policyFile": {
+      "type": "object",
+      "title": "PolicyFile",
+      "required": ["filters"],
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/filter" },
+          "description": "A policy file contains one or more filters, where each filter has a unique list of target platforms and a unique list of terms."
+        }
+      }
+    },
+    "policyIncludeFile": {
+      "type": "object",
+      "title": "PolicyIncludeFile",
+      "required": ["terms"],
+      "properties": {
+        "terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/term" }
+        }
+      }
+    },
+    "filter": {
+      "type": "object",
+      "required": ["header", "terms"],
+      "header": {
+        "type": { "$ref": "#/$defs/filterHeader" }
+      },
+      "terms": {
+        "type": "list",
+        "items": { "$ref": "#/$defs/term" }
+      },
+      "additionalProperties": true
+    },
+    "filterHeader": {
+      "type": "object",
+      "title": "FilterHeader",
+      "required": ["targets"],
+      "targets": {
+        "type": "object"
+      }
+    },
+    "term": {
+      "type": "object",
+      "title": "Term",
+      "additionalProperties": true
+    }
+  }
+}
