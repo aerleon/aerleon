@@ -30,7 +30,7 @@ pip install aerleon
 
 Aerleon provides a command line tool and a Python API that will generate configs for multiple firewall platforms from a single platform-agnostic configuration language. It can generate configs for Cisco, Juniper, Palo Alto Networks and [many other firewall vendors](https://aerleon.readthedocs.io/en/latest/#core-supported-generators).
 
-A [getting started guide](https://aerleon.readthedocs.io/en/latest/getting_started/) walking through the basics of using Aerleon is avaiable on the docs website.
+A [getting started guide](https://aerleon.readthedocs.io/en/latest/getting_started/) walking through the basics of using Aerleon is available on the docs website.
 
 ## Documentation
 
