@@ -1,9 +1,23 @@
 name: test
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.yaml'
+      - '*.yml'
+      - '*.md'
+      - 'AUTHORS'
+      - 'LICENSE'
   push:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.yaml'
+      - '*.yml'
+      - '*.md'
+      - 'AUTHORS'
+      - 'LICENSE'
 jobs:
   test:
     runs-on: ubuntu-latest
