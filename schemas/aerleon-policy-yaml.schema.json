@@ -53,9 +53,29 @@
       }
     },
     "term": {
-      "type": "object",
       "title": "Term",
-      "additionalProperties": true
+      "oneOf": [
+        {
+          "type": "object",
+          "required": "name",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": "include",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     }
   }
 }
