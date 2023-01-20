@@ -26,10 +26,8 @@ import ipaddress
 import itertools
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import addressbook
 
+from aerleon.lib import aclgenerator, addressbook, nacaddr
 
 ICMP_TERM_LIMIT = 8
 

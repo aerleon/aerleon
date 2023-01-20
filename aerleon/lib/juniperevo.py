@@ -20,8 +20,7 @@ uses the same syntax as regular Juniper (Junos) ACLs, with minor differences.
 This subclass effects those differences.
 """
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import juniper
+from aerleon.lib import aclgenerator, juniper
 
 
 class Term(juniper.Term):

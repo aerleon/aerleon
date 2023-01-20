@@ -4,13 +4,13 @@ import os
 import pathlib
 import shutil
 import tempfile
-
 from unittest import mock
 
 from absl.testing import absltest
 
 from aerleon import aclgen
-from aerleon.lib import nacaddr, naming, policy, yaml as yaml_frontend
+from aerleon.lib import nacaddr, naming, policy
+from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
 EXP_INFO = 2

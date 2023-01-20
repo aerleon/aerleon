@@ -15,13 +15,11 @@
 
 """Unittest for ACL rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, naming, policy
 
 GOOD_HEADER_1 = """
 header {

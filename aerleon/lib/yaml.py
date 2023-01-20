@@ -2,10 +2,10 @@
 
 import pathlib
 from typing import Tuple
-import yaml
-from yaml.error import YAMLError
 
+import yaml
 from absl import logging
+from yaml.error import YAMLError
 
 from aerleon.lib import policy
 from aerleon.lib.policy_builder import (

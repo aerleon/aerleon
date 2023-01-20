@@ -14,15 +14,11 @@
 # limitations under the License.
 """Unit test for Palo Alto Firewalls acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import paloaltofw
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, nacaddr, naming, paloaltofw, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """

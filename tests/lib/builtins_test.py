@@ -2,12 +2,7 @@ import datetime
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib.recognizers import (
-    TValue,
-    TList,
-    TUnion,
-    TSection,
-)
+from aerleon.lib.recognizers import TList, TSection, TUnion, TValue
 
 
 class PrebuiltRecognizerTest(parameterized.TestCase):

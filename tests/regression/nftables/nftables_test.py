@@ -16,15 +16,11 @@
 
 import datetime
 from unittest import mock
-from absl import logging
-from absl.testing import absltest
-from absl.testing import parameterized
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import nftables
-from aerleon.lib import policy
 
+from absl import logging
+from absl.testing import absltest, parameterized
+
+from aerleon.lib import aclgenerator, nacaddr, naming, nftables, policy
 from tests.regression_utils import capture
 
 

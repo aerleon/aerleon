@@ -26,11 +26,10 @@ import ipaddress
 import json
 import logging
 import re
-
-from typing import Dict, Any
+from collections import defaultdict
+from typing import Any, Dict
 
 from aerleon.lib import aclgenerator
-from collections import defaultdict
 
 
 class Error(aclgenerator.Error):

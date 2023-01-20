@@ -14,9 +14,9 @@
 # limitations under the License.
 
 
+from absl import logging
 from absl.testing import absltest
 
-from absl import logging
 from aerleon.lib import policy_simple
 
 

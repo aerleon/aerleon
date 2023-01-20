@@ -25,10 +25,10 @@ Users may wish to place each test file in its own folder to avoid having an
 excessive number of reference files in the same folder.
 """
 
-from collections import defaultdict
-from io import StringIO
 import os
+from collections import defaultdict
 from functools import wraps
+from io import StringIO
 from unittest import mock
 
 __all__ = ("files", "stdout", "stderr")

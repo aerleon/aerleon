@@ -27,11 +27,9 @@ import ipaddress
 import json
 import logging
 import re
+from typing import Any, Dict
 
-from typing import Dict, Any
-
-from aerleon.lib import gcp
-from aerleon.lib import nacaddr
+from aerleon.lib import gcp, nacaddr
 
 
 class Error(gcp.Error):

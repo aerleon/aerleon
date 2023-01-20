@@ -17,8 +17,7 @@
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
+from aerleon.lib import nacaddr, naming
 
 
 class NamingUnitTest(absltest.TestCase):

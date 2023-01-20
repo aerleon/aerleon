@@ -15,17 +15,12 @@
 """Unittest for pcap rendering module."""
 
 import datetime
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import pcap
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, nacaddr, naming, pcap, policy
 from tests.regression_utils import capture
-
 
 GOOD_HEADER = """
 header {

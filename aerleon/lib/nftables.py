@@ -20,8 +20,7 @@ import copy
 import datetime
 import logging
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
+from aerleon.lib import aclgenerator, nacaddr
 
 # NFTables and Aerleon have conflicting definitions of 'address family'
 # In Aerleon:

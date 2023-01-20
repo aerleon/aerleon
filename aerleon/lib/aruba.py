@@ -18,7 +18,6 @@
 
 import datetime
 import logging
-
 from typing import List, Tuple
 
 from aerleon.lib import aclgenerator
@@ -197,7 +196,7 @@ class Term(aclgenerator.Term):
 
         return '%s %s %s' % (self._NETWORK_STRING, address.network_address, address.netmask)
 
-    def _GeneratePortTokens(self, protocols:List[str], ports:List[Tuple[int, int]]):
+    def _GeneratePortTokens(self, protocols: List[str], ports: List[Tuple[int, int]]):
         """Generates string tokens for ports.
 
         Args:
@@ -212,7 +211,9 @@ class Term(aclgenerator.Term):
             if protocol in self._PROTOCOL_MAP:
                 return [str(self._PROTOCOL_MAP[protocol])]
             for start_port, end_port in sorted(ports):
-                ret_ports.append(f'{protocol.lower()} {start_port}{" " + str(end_port) if start_port != end_port else ""}')
+                ret_ports.append(
+                    f'{protocol.lower()} {start_port}{" " + str(end_port) if start_port != end_port else ""}'
+                )
         return ret_ports
 
 

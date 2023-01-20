@@ -18,11 +18,11 @@ This class uses recognizers to parse, validate and normalize all built-in fields
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 import datetime
 import enum
 import re
 import typing
+from dataclasses import dataclass
 
 if typing.TYPE_CHECKING:
     from aerleon.lib.policy_builder import (

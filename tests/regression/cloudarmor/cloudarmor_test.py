@@ -4,14 +4,11 @@
 
 import json
 import random
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import cloudarmor
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import cloudarmor, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 SUPPORTED_TOKENS = {'action', 'comment', 'priority', 'source_address'}
