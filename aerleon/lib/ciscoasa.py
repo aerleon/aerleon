@@ -343,6 +343,8 @@ class CiscoASA(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for header, terms in self.policy.filters:
+            if self._PLATFORM not in header.platforms:
+                continue
             filter_name = header.FilterName(self._PLATFORM)
             filter_options = header.FilterOptions(self._PLATFORM)
             enable_dsmo = len(filter_options) > 1 and 'enable_dsmo' in filter_options[1:]
