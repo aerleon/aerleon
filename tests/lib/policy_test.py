@@ -15,14 +15,12 @@
 
 """Unit tests for policy.py library."""
 
-from absl.testing import absltest, parameterized
 from unittest import mock
 
 from absl import logging
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import nacaddr, naming, policy
 
 HEADER = """
 header {

@@ -46,18 +46,17 @@ DNS = 53/tcp
 """
 
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Tuple
-import yaml
-from yaml import YAMLError
 
+import yaml
 from absl import logging
+from yaml import YAMLError
 
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
-
 
 DEF_TYPE_SERVICES = 'services'
 DEF_TYPE_NETWORKS = 'networks'

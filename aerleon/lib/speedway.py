@@ -18,6 +18,7 @@
 """Speedway iptables generator.  This is a subclass of Iptables lib."""
 
 from string import Template
+
 from aerleon.lib import iptables
 
 

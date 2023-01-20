@@ -15,14 +15,11 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-from absl.testing import absltest, parameterized
 from unittest import mock
 
-from aerleon.lib import ciscoasa
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import ciscoasa, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

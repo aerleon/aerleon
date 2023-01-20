@@ -22,11 +22,7 @@ import logging
 import re
 from typing import cast
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import cisco
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
-
+from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 
 _ACTION_TABLE = {
     'accept': 'permit',

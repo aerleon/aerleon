@@ -11,7 +11,6 @@ from aerleon.lib.policy_builder import (
     RawTerm,
 )
 
-
 RAW_POLICY_ALL_BUILTIN = RawPolicy(
     filename="raw_policy_all_builtin",
     filters=[

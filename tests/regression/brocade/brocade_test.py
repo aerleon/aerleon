@@ -15,13 +15,11 @@
 """Tests for brocade acl rendering module."""
 
 import re
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import brocade
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import brocade, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

@@ -18,9 +18,7 @@
 import datetime
 import logging
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import juniper
-from aerleon.lib import nacaddr
+from aerleon.lib import aclgenerator, juniper, nacaddr
 
 MAX_IDENTIFIER_LEN = 55  # It is really 63, but leaving room for added chars
 

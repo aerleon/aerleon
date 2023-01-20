@@ -15,8 +15,7 @@
 #
 """CiscoNX generator."""
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import cisco
+from aerleon.lib import aclgenerator, cisco
 
 
 class Error(aclgenerator.Error):

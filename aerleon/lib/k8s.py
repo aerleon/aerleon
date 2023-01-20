@@ -25,8 +25,9 @@ import datetime
 import logging
 import re
 
-from aerleon.lib import aclgenerator
 import yaml
+
+from aerleon.lib import aclgenerator
 
 
 class Error(aclgenerator.Error):

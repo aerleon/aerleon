@@ -22,8 +22,8 @@ import datetime
 from typing import cast
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
+
+from aerleon.lib import aclgenerator, nacaddr
 
 
 class Error(aclgenerator.Error):

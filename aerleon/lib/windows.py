@@ -20,9 +20,8 @@ import datetime
 import string
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
 
+from aerleon.lib import aclgenerator, nacaddr
 
 CMD_PREFIX = 'netsh ipsec static add '
 

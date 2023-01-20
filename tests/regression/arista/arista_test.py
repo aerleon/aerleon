@@ -14,14 +14,11 @@
 # limitations under the License.
 """Tests for arista acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import arista
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import arista, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

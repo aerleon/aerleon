@@ -18,14 +18,11 @@
 
 import datetime
 import ipaddress
-from typing import cast, Union
+from typing import Union, cast
 
 from absl import logging
-from aerleon.lib import addressbook
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
 
+from aerleon.lib import aclgenerator, addressbook, nacaddr, summarizer
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -254,16 +251,16 @@ class ObjectGroup:
         netgroups = set()
         ports = {}
 
-            # I don't have an easy way get the token name used in the pol file
-            # w/o reading the pol file twice (with some other library) or doing
-            # some other ugly hackery. Instead, the entire block of source and dest
-            # addresses for a given term is given a unique, computable name which
-            # is not related to the NETWORK.net token name.  that's what you get
-            # for using cisco, which has decided to implement its own meta language.
+        # I don't have an easy way get the token name used in the pol file
+        # w/o reading the pol file twice (with some other library) or doing
+        # some other ugly hackery. Instead, the entire block of source and dest
+        # addresses for a given term is given a unique, computable name which
+        # is not related to the NETWORK.net token name.  that's what you get
+        # for using cisco, which has decided to implement its own meta language.
 
-            # Create network object-groups
+        # Create network object-groups
         for name, ips in self.addressbook.addressbook[''].items():
-            for version in (4,6):
+            for version in (4, 6):
                 vips = [i for i in ips if i.version == version]
                 if vips:
 
@@ -322,7 +319,7 @@ class PortMap:
         110: 'pop3',
         1723: 'pptp',
         554: 'rtsp',
-        5060:'sip',
+        5060: 'sip',
         25: 'smtp',
         22: 'ssh',
         111: 'sunrpc',
@@ -350,7 +347,7 @@ class PortMap:
         123: 'ntp',
         496: 'pim-auto-rp',
         520: 'rip',
-        5060:'sip',
+        5060: 'sip',
         161: 'snmp',
         162: 'snmptrap',
         111: 'sunrpc',

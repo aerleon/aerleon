@@ -5,8 +5,8 @@ from absl.testing import absltest
 from aerleon.lib.cisco import Cisco
 from aerleon.lib.juniper import Juniper
 from aerleon.lib.plugin_supervisor import (
-    _PluginSupervisor,
     PluginSupervisorConfiguration,
+    _PluginSupervisor,
 )
 
 
@@ -56,6 +56,7 @@ class PluginSupervisorTest(absltest.TestCase):
         self.assertEqual(pluginSupervisor.plugins, [])
         self.assertEqual(pluginSupervisor.generators.get("cisco", None), None)
         self.assertEqual(pluginSupervisor.generators["juniper"], Juniper)
+
 
 if __name__ == '__main__':
     absltest.main()

@@ -1,32 +1,32 @@
 """Builds Policy objects from a plain Python object representation."""
 
-from dataclasses import dataclass, field
 import enum
-import typing
 import sys
+import typing
+from dataclasses import dataclass, field
 
 from absl import logging
 
 from aerleon.lib.policy import (
-    Policy,
+    FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
+    FLEXIBLE_MATCH_START_OPTIONS,
     Header,
+    Policy,
     Target,
     Term,
     VarType,
-    FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
-    FLEXIBLE_MATCH_START_OPTIONS,
 )
 from aerleon.lib.recognizers import (
     RecognizerContext,
     RecognizerKeywordResult,
     RecognizerValueResult,
-    TValue,
     TComposition,
     TList,
-    TSection,
-    TUnion,
     TListStr,
     TListStrCollapsible,
+    TSection,
+    TUnion,
+    TValue,
 )
 
 if sys.version_info < (3, 9):

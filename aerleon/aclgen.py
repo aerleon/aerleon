@@ -21,14 +21,9 @@ import pathlib
 import sys
 from typing import Iterator, List, Tuple
 
-from absl import app
-from absl import flags
-from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import naming
-from aerleon.lib import plugin_supervisor
-from aerleon.lib import policy
-from aerleon.lib import yaml
+from absl import app, flags, logging
+
+from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
@@ -352,6 +347,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         lambda path: path.is_dir(), input_dir.glob('**/pol')
     )
     for ignored_directory in ignore_directories:
+
         def Filtering(path, ignored=ignored_directory):
             return not path.match('%s/**/pol' % ignored) and not path.match('%s/pol' % ignored)
 

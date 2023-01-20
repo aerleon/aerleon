@@ -17,12 +17,12 @@
 """ACL Generator base class."""
 
 import copy
+import hashlib
 import logging
 import re
 import string
 
 from aerleon.lib import policy
-import hashlib
 
 
 # generic error class

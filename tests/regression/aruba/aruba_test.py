@@ -18,14 +18,11 @@
 import datetime
 import logging
 import textwrap
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aruba
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aruba, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_V4 = """
