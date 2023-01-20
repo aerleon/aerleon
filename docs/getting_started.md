@@ -20,6 +20,7 @@ cd aerleon_test
 ```
 
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
+
 ## Definition Files
 Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
 
