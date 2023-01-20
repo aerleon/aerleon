@@ -28,7 +28,7 @@ Writing code can include adding new features or fixing issues that have been rep
 ## Code Style and Formatting
 We have adopted [Black](https://github.com/ambv/black) as our code formatter. This takes a lot of guesswork out of formatting our code. The code we forked from adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) which we still adopt where it does not conflict with Black. Generally this means following the [Language Rules](https://google.github.io/styleguide/pyguide.html#s2-python-language-rules) while ignoring the [Style Rules](https://google.github.io/styleguide/pyguide.html#s3-python-style-rules)
 
-In additiona to Black [isort](https://pycqa.github.io/isort/) as been added to sort and format import lines.
+In addition to Black [isort](https://pycqa.github.io/isort/) has been added to sort and format import lines.
 
 It is a good idea to configure auto formatting on save in your editor:
 
