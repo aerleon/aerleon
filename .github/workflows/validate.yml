@@ -115,10 +115,10 @@ jobs:
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
-      - uses: psf/black
+      - uses: psf/black@v1.3.0
       #----------------------------------------------
       # run isort
       #----------------------------------------------
-      - uses: isort/isort-action
+      - uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
