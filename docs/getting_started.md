@@ -3,7 +3,7 @@
 The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service definitions and putting them together to output firewall configurations.
 
 ## Setup
-> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/user/install/).
+> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/install/).
 
 You will want to make a temporary directory with the following structure.
 ```bash
@@ -20,6 +20,7 @@ cd aerleon_test
 ```
 
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
+
 ## Definition Files
 Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
 
@@ -142,7 +143,7 @@ The above YAML is a basic example with almost the minimum necessary to output an
 
 Inside of the `header` we have a comment to explain what this ACL is for, a `target` of cisco meaning we wish to output that syntax, and options for the cisco generator.
 
-`terms` contains a list of terms which are translated into rules within the ACL. In this case there are two rules. `accept-web-servers` and `default-deny`. We see that in `accept-web-servers` there are a few fields such as `comment`, `destination-address`, `action` and more. You can find more information on every field available in our [generators section](foobar). `destination-address` and `destination-port` each refer to names we configured in our definitions. When this rule gets translated the definitions will be referenced and used to define the IPs and ports for this rule.
+`terms` contains a list of terms which are translated into rules within the ACL. In this case there are two rules. `accept-web-servers` and `default-deny`. We see that in `accept-web-servers` there are a few fields such as `comment`, `destination-address`, `action` and more. You can find more information on every field available in our [generators section](en/latest/reference/generators/). `destination-address` and `destination-port` each refer to names we configured in our definitions. When this rule gets translated the definitions will be referenced and used to define the IPs and ports for this rule.
 
 <details>
   <summary>Bash command</summary>
