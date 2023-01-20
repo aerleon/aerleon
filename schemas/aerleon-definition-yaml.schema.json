@@ -1,7 +1,8 @@
 {
   "$id": "urn:aerleon:schemas:aerleon-definition-yaml:1.0.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "AerleonDefinitionFile2",
+  "title": "AerleonDefinitionFile",
+  "description": "An Aerleon definition file defines named networks, services, or both.",
   "type": "object",
   "additionalProperties": false,
   "properties": {

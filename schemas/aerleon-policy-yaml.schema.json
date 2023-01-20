@@ -2,6 +2,7 @@
   "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AerleonPolicyFile",
+  "description": "An Aerleon policy file represents a platform-agnostic network policy. It must define one or more filter objects.",
   "oneOf": [
     { "$ref": "#/$defs/policyIncludeFile" },
     { "$ref": "#/$defs/policyFile" }
@@ -10,18 +11,19 @@
     "policyFile": {
       "type": "object",
       "title": "PolicyFile",
+      "description": "A policy file contains one or more filters, where each filter has a unique list of target platforms and a unique list of terms.",
       "required": ["filters"],
       "properties": {
         "filters": {
           "type": "array",
-          "items": { "$ref": "#/$defs/filter" },
-          "description": "A policy file contains one or more filters, where each filter has a unique list of target platforms and a unique list of terms."
+          "items": { "$ref": "#/$defs/filter" }
         }
       }
     },
     "policyIncludeFile": {
       "type": "object",
       "title": "PolicyIncludeFile",
+      "description": "A policy include file only defines a list of terms. This file can be inserted into any list of terms.",
       "required": ["terms"],
       "properties": {
         "terms": {
