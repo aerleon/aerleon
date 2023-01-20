@@ -1,8 +1,7 @@
 {
   "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PolicyFile",
-  "type": "object",
+  "title": "AerleonPolicyFile",
   "oneOf": [
     { "$ref": "#/$defs/policyIncludeFile" },
     { "$ref": "#/$defs/policyFile" }

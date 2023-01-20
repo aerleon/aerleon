@@ -1,0 +1,95 @@
+{
+  "$id": "urn:aerleon:schemas:aerleon-definition-yaml:1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AerleonDefinitionFile2",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "networks": { "$ref": "#/$defs/networkDefinitionMapping" },
+    "services": { "$ref": "#/$defs/serviceDefinitionMapping" }
+  },
+  "$defs": {
+    "networkDefinitionMapping": {
+      "type": "object",
+      "title": "NetworkDefinitionMapping",
+      "additionalProperties": { "$ref": "#/$defs/networkDefinition" }
+    },
+    "networkDefinition": {
+      "type": "object",
+      "title": "NetworkDefinition",
+      "additionalProperties": false,
+      "required": ["values"],
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "title": "NetworkCompactEntry"
+              },
+              {
+                "type": "object",
+                "title": "NetworkValueEntry",
+                "required": ["address"],
+                "properties": {
+                  "address": { "type": "string" },
+                  "comment": { "type": "string" }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "title": "NetworkReferenceEntry",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "comment": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "serviceDefinitionMapping": {
+      "type": "object",
+      "title": "ServiceDefinitionMapping",
+      "additionalProperties": { "$ref": "#/$defs/serviceDefinition" }
+    },
+    "serviceDefinition": {
+      "type": "array",
+      "title": "ServiceDefinition",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "ServiceValueEntry",
+            "required": ["port", "protocol"],
+            "properties": {
+              "port": {
+                "oneOf": [{ "type": "integer" }, { "type": "string" }]
+              },
+              "protocol": {
+                "oneOf": [{ "type": "integer" }, { "type": "string" }]
+              },
+              "comment": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "ServiceReferenceEntry",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "comment": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  }
+}
