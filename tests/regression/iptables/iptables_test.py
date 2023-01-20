@@ -17,18 +17,13 @@
 
 import datetime
 import re
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import iptables
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
+
+from aerleon.lib import aclgenerator, iptables, nacaddr, naming, policy
 from aerleon.lib import yaml as yaml_frontend
-
 from tests.regression_utils import capture
-
 
 GOOD_HEADER_1 = """
 header {
@@ -1830,11 +1825,12 @@ YAML_GOOD_WARNING_TERM = """
     policer: batman
     action: accept
 """
-YAML_BAD_ICMP_TERM= """
+YAML_BAD_ICMP_TERM = """
   - name: permit-icmp
     protocol: icmp icmpv6
     action: accept
 """
+
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''

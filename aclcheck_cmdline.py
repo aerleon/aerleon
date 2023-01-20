@@ -18,37 +18,53 @@
 
 from optparse import OptionParser
 
-from aerleon.lib import aclcheck
-from aerleon.lib import naming
-from aerleon.lib import policy
+from aerleon.lib import aclcheck, naming, policy
 
 
 def main():
-  # TODO(robankeny): Lets move this to gflags
-  usage = 'usage: %prog [options] arg'
-  _parser = OptionParser(usage)
-  _parser.add_option('--definitions-directory', dest='definitions',
-                     help='definitions directory', default='./def')
-  _parser.add_option('-p', '--policy-file', dest='pol',
-                     help='policy file', default='./policies/sample.pol')
-  _parser.add_option('-d', '--destination', dest='dst',
-                     help='destination IP', default='200.1.1.1')
-  _parser.add_option('-s', '--source', dest='src',
-                     help='source IP', default='any')
-  _parser.add_option('--proto', '--protocol', dest='proto',
-                     help='Protocol (tcp, udp, icmp, etc.)', default='tcp')
-  _parser.add_option('--dport', '--destination-port', dest='dport',
-                     help='destination port', default='80')
-  _parser.add_option('--sport', '--source-port', dest='sport',
-                     help='source port', default='1025')
-  (FLAGS, unused_args) = _parser.parse_args()
+    # TODO(robankeny): Lets move this to gflags
+    usage = 'usage: %prog [options] arg'
+    _parser = OptionParser(usage)
+    _parser.add_option(
+        '--definitions-directory',
+        dest='definitions',
+        help='definitions directory',
+        default='./def',
+    )
+    _parser.add_option(
+        '-p', '--policy-file', dest='pol', help='policy file', default='./policies/sample.pol'
+    )
+    _parser.add_option(
+        '-d', '--destination', dest='dst', help='destination IP', default='200.1.1.1'
+    )
+    _parser.add_option('-s', '--source', dest='src', help='source IP', default='any')
+    _parser.add_option(
+        '--proto',
+        '--protocol',
+        dest='proto',
+        help='Protocol (tcp, udp, icmp, etc.)',
+        default='tcp',
+    )
+    _parser.add_option(
+        '--dport', '--destination-port', dest='dport', help='destination port', default='80'
+    )
+    _parser.add_option(
+        '--sport', '--source-port', dest='sport', help='source port', default='1025'
+    )
+    (FLAGS, unused_args) = _parser.parse_args()
 
-  defs = naming.Naming(FLAGS.definitions)
-  policy_obj = policy.ParsePolicy(open(FLAGS.pol).read(), defs)
-  check = aclcheck.AclCheck(policy_obj, src=FLAGS.src, dst=FLAGS.dst,
-                            sport=FLAGS.sport, dport=FLAGS.dport,
-                            proto=FLAGS.proto)
-  print(str(check))
+    defs = naming.Naming(FLAGS.definitions)
+    policy_obj = policy.ParsePolicy(open(FLAGS.pol).read(), defs)
+    check = aclcheck.AclCheck(
+        policy_obj,
+        src=FLAGS.src,
+        dst=FLAGS.dst,
+        sport=FLAGS.sport,
+        dport=FLAGS.dport,
+        proto=FLAGS.proto,
+    )
+    print(str(check))
+
 
 if __name__ == '__main__':
-  main()
+    main()

@@ -17,10 +17,10 @@
 """Juniper JCL generator."""
 
 import datetime
+
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
+
+from aerleon.lib import aclgenerator, nacaddr, summarizer
 
 
 # generic error class

@@ -5,10 +5,10 @@ import itertools
 
 
 class Addressbook:
-  def __init__(self):
-    self.addressbook = collections.OrderedDict()
+    def __init__(self):
+        self.addressbook = collections.OrderedDict()
 
-  def AddAddresses(self, zone, address_list):
+    def AddAddresses(self, zone, address_list):
         """Create the address book configuration entries.
 
         Args:

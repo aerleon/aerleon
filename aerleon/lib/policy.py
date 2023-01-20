@@ -24,11 +24,9 @@ import sys
 from typing import TYPE_CHECKING
 
 from absl import logging
-from ply import lex
-from ply import yacc
+from ply import lex, yacc
 
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
+from aerleon.lib import nacaddr, naming
 
 if TYPE_CHECKING:
     from aerleon.lib.policy_builder import PolicyBuilder

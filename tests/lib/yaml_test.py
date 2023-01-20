@@ -1,8 +1,11 @@
 """Unittest for YAML front-end."""
 
-from absl.testing import absltest
 from unittest import mock
-from aerleon.lib import nacaddr, naming, yaml as yaml_frontend
+
+from absl.testing import absltest
+
+from aerleon.lib import nacaddr, naming
+from aerleon.lib import yaml as yaml_frontend
 
 GOOD_YAML_POLICY_BASIC = """
 filters:

@@ -15,16 +15,12 @@
 """Unittest for windows_ipsec rendering module."""
 
 import datetime
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
-from aerleon.lib import windows_ipsec
+from absl.testing import absltest
 
+from aerleon.lib import nacaddr, naming, policy, windows_ipsec
 from tests.regression_utils import capture
-
 
 GOOD_HEADER = """
 header {

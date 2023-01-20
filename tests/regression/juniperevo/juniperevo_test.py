@@ -17,14 +17,10 @@
 
 from unittest import mock
 
-from absl.testing import absltest
-from absl.testing import parameterized
-from aerleon.lib import juniperevo
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import juniperevo, naming, policy
 from tests.regression_utils import capture
-
 
 GOOD_HEADER_1 = """
 header {

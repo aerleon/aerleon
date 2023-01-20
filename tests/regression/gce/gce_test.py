@@ -16,18 +16,12 @@
 """Unittest for GCE firewall rendering module."""
 
 import json
-from absl.testing import absltest
 from unittest import mock
 
-from absl.testing import parameterized
-from aerleon.lib import aclgenerator
-from aerleon.lib import gce
-from aerleon.lib import gcp
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
-from aerleon.lib import yaml as yaml_frontend
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import aclgenerator, gce, gcp, nacaddr, naming, policy
+from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

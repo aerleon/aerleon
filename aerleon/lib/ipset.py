@@ -23,8 +23,7 @@ performace of iptables firewall.
 
 import string
 
-from aerleon.lib import iptables
-from aerleon.lib import nacaddr
+from aerleon.lib import iptables, nacaddr
 
 
 class Error(iptables.Error):

@@ -18,18 +18,13 @@
 import copy
 import datetime
 import re
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import junipersrx
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
+
+from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy
 from aerleon.lib import yaml as yaml_frontend
-
 from tests.regression_utils import capture
-
 
 GOOD_HEADER = """
 header {
@@ -2627,7 +2622,7 @@ def _YamlParsePolicy(
     # Erase any subsequent copies of "filters:". Multi-filter tests must not
     # contain copies of the "filters:" key
     data = "filters:" + ''.join(data.split("filters:\n"))
-    
+
     return yaml_frontend.ParsePolicy(
         data,
         filename=filename,

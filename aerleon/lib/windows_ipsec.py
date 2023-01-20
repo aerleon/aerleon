@@ -20,8 +20,8 @@
 from string import Template
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import windows
+
+from aerleon.lib import aclgenerator, windows
 
 
 class Term(windows.Term):

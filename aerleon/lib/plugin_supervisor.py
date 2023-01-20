@@ -41,11 +41,11 @@ undocumented and subject to change.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from importlib import import_module
 import importlib.util
 import pathlib
 import sys
+from dataclasses import dataclass
+from importlib import import_module
 from typing import Tuple
 
 if sys.version_info < (3, 10):
@@ -174,7 +174,7 @@ class _PluginSetup:
     disable_plugin: list[str] = None
     disable_builtin: list[str] = None
     include_path: list[list[str]] = None
-    
+
     def __init__(self, config: PluginSupervisorConfiguration = None):
         """Initialize self.generators, self.plugins."""
 
@@ -284,7 +284,9 @@ class _PluginSetup:
         """Import built-in modules by name."""
         loaded_generators = []
         for target, module_name, class_or_func in builtin_generators:
-            if self.disable_builtin and (module_name in self.disable_builtin or target in self.disable_builtin):
+            if self.disable_builtin and (
+                module_name in self.disable_builtin or target in self.disable_builtin
+            ):
                 continue
             try:
                 module = import_module(module_name)

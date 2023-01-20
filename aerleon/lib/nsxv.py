@@ -21,9 +21,8 @@ import re
 import xml
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
 
+from aerleon.lib import aclgenerator, nacaddr
 
 _ACTION_TABLE = {
     'accept': 'allow',

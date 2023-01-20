@@ -179,13 +179,14 @@ import typing
 
 from absl import logging
 
-from aerleon.aclgen import ACLParserError, ACLGeneratorError, RenderACL, WriteFiles, WriteList
-
-from aerleon.lib import aclgenerator
-from aerleon.lib import naming
-from aerleon.lib import plugin_supervisor
-from aerleon.lib import policy
-from aerleon.lib import policy_builder
+from aerleon.aclgen import (
+    ACLGeneratorError,
+    ACLParserError,
+    RenderACL,
+    WriteFiles,
+    WriteList,
+)
+from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, policy_builder
 
 
 def Generate(

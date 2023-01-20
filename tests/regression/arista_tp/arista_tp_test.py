@@ -17,15 +17,11 @@
 
 import datetime
 import re
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import arista_tp
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, arista_tp, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

@@ -19,12 +19,10 @@ import copy
 import datetime
 import logging
 import re
-from xml.dom import minidom
 import xml.etree.ElementTree as etree
-from aerleon.lib import aclgenerator
-from aerleon.lib import addressbook
-from aerleon.lib import nacaddr
-from aerleon.lib import policy
+from xml.dom import minidom
+
+from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 
 
 class Error(aclgenerator.Error):
@@ -889,7 +887,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         address_book_names_dict = {}
         address_book_groups_dict = {}
         try:
-          groups = sorted(self.addressbook.addressbook[''].keys())
+            groups = sorted(self.addressbook.addressbook[''].keys())
         except:
             groups = []
         for group in groups:
@@ -906,7 +904,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             # building individual address-group dictionary
             for nested_group in groups:
                 group_names = [i for i in address_book_names_dict.keys() if nested_group in i]
-                
+
                 address_book_groups_dict[nested_group] = group_names
 
         # sort address books and address sets
@@ -916,7 +914,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         address_book_keys = sorted(
             list(address_book_names_dict.keys()), key=self._SortAddressBookNumCheck
         )
-        
+
         # INITAL CONFIG
         config = etree.Element("config", {"urldb": "paloaltonetworks", "version": "8.1.0"})
         devices = etree.SubElement(config, "devices")
@@ -1173,7 +1171,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
         vsys_entry.append(etree.Comment(" Addresses "))
         addr = etree.SubElement(vsys_entry, "address")
-        
+
         for name in address_book_keys:
             entry = etree.SubElement(addr, "entry", {"name": name})
             desc = etree.SubElement(entry, "description")
