@@ -1,20 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$comment": "https://aerleon.readthedocs.io/en/latest/reference/naming/",
-  "title": "AerleonDefinitionFile",
-  "description": "An Aerleon definition file defines named networks, services, or both.",
+  "title": "Aerleon Definition File",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "networks": {
+      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80).\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
       "type": "object",
-      "title": "NetworkDefinitionMapping",
       "additionalProperties": { "$ref": "#/$defs/networkDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
     },
     "services": {
+      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80).\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
       "type": "object",
-      "title": "ServiceDefinitionMapping",
       "additionalProperties": { "$ref": "#/$defs/serviceDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
     }
@@ -24,42 +23,46 @@
       "type": "string",
       "pattern": "^[-_A-Z0-9]+$"
     },
+    "comment": {
+      "description": "When inserting a network or service value you can attach a comment directly to that value. The comment will be loaded and potentially included in generated output on platforms that support it.",
+      "type": "string"
+    },
+    "address": {
+      "description": "When defining a network you can insert data as a specific IP address or a CIDR IP address range expression.",
+      "type": "string"
+    },
     "networkDefinition": {
       "type": "object",
-      "title": "NetworkDefinition",
-      "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.",
+      "title": "Network Definition",
+      "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
       "additionalProperties": false,
       "required": ["values"],
       "properties": {
         "values": {
+          "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
           "type": "array",
           "items": {
+            "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
             "oneOf": [
               {
                 "type": "string",
-                "title": "CompactNetworkReference",
-                "description": "References another network.",
                 "$ref": "#/$defs/token"
               },
               {
                 "type": "object",
-                "title": "NetworkValueEntry",
-                "description": "Specifies an IP address or CIDR IP address range.",
                 "required": ["address"],
                 "properties": {
-                  "address": { "type": "string" },
-                  "comment": { "type": "string" }
+                  "address": { "$ref": "#/$defs/address" },
+                  "comment": { "$ref": "#/$defs/comment" }
                 },
                 "additionalProperties": false
               },
               {
                 "type": "object",
-                "title": "NetworkReference",
-                "description": "References another network.",
                 "required": ["name"],
                 "properties": {
                   "name": { "$ref": "#/$defs/token" },
-                  "comment": { "type": "string" }
+                  "comment": { "$ref": "#/$defs/comment" }
                 },
                 "additionalProperties": false
               }
