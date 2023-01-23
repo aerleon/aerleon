@@ -258,21 +258,21 @@ targets:
     brocade: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo}
 ```
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Term Format
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Sub Tokens
 
 ### Actions
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Option
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ***
 
@@ -565,7 +565,7 @@ targets:
 
 ## IpTables
 
-> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](PolicyFormat#Speedway.md) generator.
+> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](#speedway) generator.
 
 ### Header Format
 
