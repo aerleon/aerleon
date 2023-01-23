@@ -1,4 +1,6 @@
 # Copyright 2016 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,8 +20,8 @@
 from string import Template
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import windows
+
+from aerleon.lib import aclgenerator, windows
 
 
 class Term(windows.Term):

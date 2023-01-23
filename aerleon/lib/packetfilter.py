@@ -1,4 +1,5 @@
 # Copyright 2012 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +22,8 @@ import datetime
 from typing import cast
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
+
+from aerleon.lib import aclgenerator, nacaddr
 
 
 class Error(aclgenerator.Error):
@@ -155,7 +156,7 @@ class Term(aclgenerator.Term):
         # source address
         term_saddrs = self._CheckAddressAf(self.term.source_address)
         if not term_saddrs:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
             )
             return ''
@@ -164,7 +165,7 @@ class Term(aclgenerator.Term):
         # destination address
         term_daddrs = self._CheckAddressAf(self.term.destination_address)
         if not term_daddrs:
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_ADDR.substitute(
                     term=self.term.name, direction='destination', af=self.af
                 )

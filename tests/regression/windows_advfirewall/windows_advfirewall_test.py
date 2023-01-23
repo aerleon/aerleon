@@ -1,4 +1,5 @@
 # Copyright 2016 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +15,19 @@
 """Unittest for windows_advfirewall rendering module."""
 
 import datetime
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
-from aerleon.lib import windows
-from aerleon.lib import windows_advfirewall
+from absl.testing import absltest
 
+from aerleon.lib import (
+    aclgenerator,
+    nacaddr,
+    naming,
+    policy,
+    windows,
+    windows_advfirewall,
+)
 from tests.regression_utils import capture
-
 
 GOOD_HEADER_OUT = """
 header {

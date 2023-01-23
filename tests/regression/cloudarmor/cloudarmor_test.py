@@ -1,15 +1,14 @@
+# Copyright 2018-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Tests for google3.third_party.py.aerleon.lib.cloudarmor."""
 
 import json
 import random
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import cloudarmor
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import cloudarmor, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 SUPPORTED_TOKENS = {'action', 'comment', 'priority', 'source_address'}
@@ -854,6 +853,7 @@ class CloudArmorTest(absltest.TestCase):
     def testMaxRuleLimitEnforcement(self):
         test_1001_ips_list = []
 
+        random.seed(72345879)
         for _ in range(1001):
             random_ip_octets = []
             for _ in range(4):

@@ -17,8 +17,6 @@ access-list 99 permit 10.0.0.0 0.0.0.255
 
 exit
 
-
-
 ! $Id:$
 ! $Date:$
 ! $Revision:$

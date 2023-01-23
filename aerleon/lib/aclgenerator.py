@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +17,12 @@
 """ACL Generator base class."""
 
 import copy
+import hashlib
 import logging
 import re
 import string
 
 from aerleon.lib import policy
-import hashlib
 
 
 # generic error class

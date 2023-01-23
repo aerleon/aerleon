@@ -1,4 +1,5 @@
 # Copyright 2015 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +23,7 @@ performace of iptables firewall.
 
 import string
 
-from aerleon.lib import iptables
-from aerleon.lib import nacaddr
+from aerleon.lib import iptables, nacaddr
 
 
 class Error(iptables.Error):

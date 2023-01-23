@@ -1,4 +1,5 @@
 # Copyright 2015 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +27,9 @@ import ipaddress
 import json
 import logging
 import re
+from typing import Any, Dict
 
-from typing import Dict, Any
-
-from aerleon.lib import gcp
-from aerleon.lib import nacaddr
+from aerleon.lib import gcp, nacaddr
 
 
 class Error(gcp.Error):

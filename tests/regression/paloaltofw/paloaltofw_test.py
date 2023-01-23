@@ -1,4 +1,5 @@
 # Copyright 2012 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +14,11 @@
 # limitations under the License.
 """Unit test for Palo Alto Firewalls acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import paloaltofw
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, nacaddr, naming, paloaltofw, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -1276,7 +1273,7 @@ term %s {
             aclgenerator.TermNameTooLongError, regex, paloaltofw.PaloAltoFW, pol, EXP_INFO
         )
 
-    # @capture.stdout
+    @capture.stdout
     def testPanApplication(self):
         POL1 = """
 header {
@@ -1528,7 +1525,7 @@ term rule-1 {
         services = {elem.text for elem in x}
         self.assertEqual({"any-tcp", "any-udp"}, services, output)
 
-    # @capture.stdout
+    @capture.stdout
     def testPortLessNonPort(self):
         POL = """
 header {

@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,14 +21,9 @@ import pathlib
 import sys
 from typing import Iterator, List, Tuple
 
-from absl import app
-from absl import flags
-from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import naming
-from aerleon.lib import plugin_supervisor
-from aerleon.lib import policy
-from aerleon.lib import yaml
+from absl import app, flags, logging
+
+from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
@@ -362,8 +358,8 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         # Or just match by extension
         directory_policies = (
             list(directory.glob('*.pol'))
-            + list(directory.glob('*.pol.yaml'))
-            + list(directory.glob('*.pol.yml'))
+            + list(directory.glob('*.yaml'))
+            + list(directory.glob('*.yml'))
         )
         depth = len(directory.parents) - 1
         logging.warning(

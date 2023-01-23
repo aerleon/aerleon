@@ -1,4 +1,5 @@
 # Copyright 2015 The Capirca Project Authors All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +21,8 @@ import re
 import xml
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
 
+from aerleon.lib import aclgenerator, nacaddr
 
 _ACTION_TABLE = {
     'accept': 'allow',
@@ -143,7 +143,7 @@ class Term(aclgenerator.Term):
         if (self.af == 6 and 'icmp' in self.term.protocol) or (
             self.af == 4 and 'icmpv6' in self.term.protocol
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=self.term.protocol, af=self.filter_type
                 )

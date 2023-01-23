@@ -1,10 +1,11 @@
-import pytest
-
+# Copyright 2018-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 import pathlib
 
-from aerleon.utils import iputils
-from aerleon.lib import nacaddr
+import pytest
 
+from aerleon.lib import nacaddr
+from aerleon.utils import iputils
 
 file_directory = pathlib.Path(__file__).parent.absolute()
 exclude_address_testcases = []

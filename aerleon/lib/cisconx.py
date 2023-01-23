@@ -1,4 +1,5 @@
 # Copyright 2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +15,7 @@
 #
 """CiscoNX generator."""
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import cisco
+from aerleon.lib import aclgenerator, cisco
 
 
 class Error(aclgenerator.Error):

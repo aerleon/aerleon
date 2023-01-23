@@ -1,4 +1,5 @@
 # Copyright 2022 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +16,11 @@
 
 import datetime
 from unittest import mock
-from absl import logging
-from absl.testing import absltest
-from absl.testing import parameterized
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import nftables
-from aerleon.lib import policy
 
+from absl import logging
+from absl.testing import absltest, parameterized
+
+from aerleon.lib import aclgenerator, nacaddr, naming, nftables, policy
 from tests.regression_utils import capture
 
 

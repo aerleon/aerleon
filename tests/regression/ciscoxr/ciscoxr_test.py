@@ -1,4 +1,5 @@
 # Copyright 2016 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +14,12 @@
 # limitations under the License.
 """Unittest for Cisco XR acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import ciscoxr
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import ciscoxr, nacaddr, naming, policy
 from tests.regression_utils import capture
-
 
 GOOD_HEADER_1 = """
 header {

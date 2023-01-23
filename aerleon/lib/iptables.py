@@ -1,4 +1,5 @@
 # Copyright 2010 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +21,8 @@ import re
 from string import Template  # pylint: disable=g-importing-member
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
+
+from aerleon.lib import aclgenerator, nacaddr
 
 
 class Term(aclgenerator.Term):
@@ -230,7 +231,7 @@ class Term(aclgenerator.Term):
         # icmp-types
         icmp_types = ['']
         if self.term.icmp_type:
-            
+
             icmp_types = self.NormalizeIcmpTypes(self.term.icmp_type, protocol, self.af)
 
         source_interface = ''

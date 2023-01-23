@@ -1,3 +1,5 @@
+# Copyright 2018-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Google Cloud Armor Firewall Generator.
 
 Refer to the links below for more information
@@ -221,7 +223,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
 
             if filter_options is None or not filter_options:
                 filter_type = 'inet'
-                logging.debug('No filter_type specified. Defaulting to inet (IPv4)')
+                logging.warning('No filter_type specified. Defaulting to inet (IPv4)')
 
             else:
                 filter_type = filter_options[self._FILTER_OPTIONS_MAP['filter_type']]

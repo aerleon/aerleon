@@ -1,4 +1,5 @@
 # Copyright 2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,6 +20,7 @@ import datetime
 import re
 
 from absl import logging
+
 from aerleon.lib import aclgenerator
 
 #          1         2         3
@@ -174,7 +176,7 @@ class Term(aclgenerator.Term):
         if (self.term_type == "inet6" and "icmp" in self.term.protocol) or (
             self.term_type == "inet" and "icmpv6" in self.term.protocol
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name,
                     proto=", ".join(self.term.protocol),
@@ -263,7 +265,7 @@ class Term(aclgenerator.Term):
 
                 term_block.append([MATCH_INDENT, src_str, False])
             elif self.term.source_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction="source", af=self.term_type
                     )
@@ -286,7 +288,7 @@ class Term(aclgenerator.Term):
                 term_block.append([MATCH_INDENT, dst_str, False])
 
             elif self.term.destination_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction="destination", af=self.term_type
                     )
@@ -922,7 +924,14 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                     new_terms.append(self._TERM(term, ft, noverbose))
 
             self.arista_traffic_policies.append(
-                (header, filter_name, filter_type, new_terms, sorted(policy_counters), policy_field_sets)
+                (
+                    header,
+                    filter_name,
+                    filter_type,
+                    new_terms,
+                    sorted(policy_counters),
+                    policy_field_sets,
+                )
             )
 
     def __str__(self):

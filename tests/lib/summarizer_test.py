@@ -1,4 +1,5 @@
 # Copyright 2014 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +16,13 @@
 """Tests for discontinuous subnet mask summarizer."""
 
 import os
-
 import random
 import time
-from absl.testing import absltest
 
 from absl import logging
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
+from absl.testing import absltest
+
+from aerleon.lib import nacaddr, summarizer
 
 
 class SummarizerTest(absltest.TestCase):

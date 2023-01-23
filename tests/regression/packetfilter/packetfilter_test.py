@@ -1,4 +1,5 @@
 # Copyright 2013 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +16,12 @@
 """Unittest for packetfilter rendering module."""
 
 import datetime
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import packetfilter
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, nacaddr, naming, packetfilter, policy
 from tests.regression_utils import capture
-
 
 GOOD_HEADER = """
 header {

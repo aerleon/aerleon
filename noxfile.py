@@ -1,11 +1,10 @@
 """ Define nox sessions for Aerleon """
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 import nox
-from nox_poetry import session, Session
-
+from nox_poetry import Session, session
 
 nox.options.error_on_missing_interpreters = False
 nox.options.reuse_existing_virtualenvs = True
@@ -67,7 +66,7 @@ def benchmark(session):
         session.run(
             "python",
             "-c",
-            f"with open('{os.path.join(benchmark_result_path, result_meta_filename)}', 'x') as file: print('file={result_filename} suite_name={suite_name} tune_system={tune_system} start_time={start_time} end_time={end_time} posargs={session.posargs}', file=file)", # noqa E501
+            f"with open('{os.path.join(benchmark_result_path, result_meta_filename)}', 'x') as file: print('file={result_filename} suite_name={suite_name} tune_system={tune_system} start_time={start_time} end_time={end_time} posargs={session.posargs}', file=file)",  # noqa E501
         )
 
     if tune_system:

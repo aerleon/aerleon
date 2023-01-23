@@ -1,16 +1,13 @@
+# Copyright 2020-2022 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 """Tests for google3.third_party.py.aerleon.lib.gcp_hf.py."""
 
 import json
-from absl.testing import absltest
 from unittest import mock
 
-from absl.testing import parameterized
-from aerleon.lib import gcp
-from aerleon.lib import gcp_hf
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import gcp, gcp_hf, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 HEADER_NO_OPTIONS = """

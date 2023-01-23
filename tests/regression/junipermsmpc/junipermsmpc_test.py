@@ -1,4 +1,5 @@
 # Copyright 2020 Google LLC
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +17,11 @@
 
 import datetime
 import re
-from absl.testing import absltest
 from unittest import mock
 
-from absl.testing import parameterized
-from aerleon.lib import junipermsmpc
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import junipermsmpc, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -855,29 +852,29 @@ class JuniperMSMPCTest(parameterized.TestCase):
         # ensure an _INET entry for each _TERM_TYPE entry
         self.assertCountEqual(junipermsmpc.Term._TERM_TYPE.keys(), junipermsmpc.Term.AF_MAP.keys())
 
-    @mock.patch.object(junipermsmpc.logging, 'debug')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    @mock.patch.object(junipermsmpc.logging, 'warning')
+    def testIcmpv6InetMismatch(self, mock_warning):
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(msmpc)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term icmptype-mismatch will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(junipermsmpc.logging, 'debug')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    @mock.patch.object(junipermsmpc.logging, 'warning')
+    def testIcmpInet6Mismatch(self, mock_warning):
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER_V6 + BAD_ICMPTYPE_TERM_2, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(msmpc)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term icmptype-mismatch will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'

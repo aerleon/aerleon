@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,13 +18,11 @@
 
 import datetime
 import ipaddress
-from typing import cast, Union
+from typing import Union, cast
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
 
+from aerleon.lib import aclgenerator, addressbook, nacaddr, summarizer
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -233,13 +232,14 @@ class ObjectGroup:
 
     def __init__(self):
         self.filter_name = ''
+        self.addressbook = addressbook.Addressbook()
         self.terms = []
 
-    @property
-    def valid(self):
-        return bool(self.terms)
-
     def AddTerm(self, term):
+        if term.source_address:
+            self.addressbook.AddAddresses('', term.source_address)
+        if term.destination_address:
+            self.addressbook.AddAddresses('', term.destination_address)
         self.terms.append(term)
 
     def AddName(self, filter_name):
@@ -251,34 +251,26 @@ class ObjectGroup:
         netgroups = set()
         ports = {}
 
-        for term in self.terms:
-            # I don't have an easy way get the token name used in the pol file
-            # w/o reading the pol file twice (with some other library) or doing
-            # some other ugly hackery. Instead, the entire block of source and dest
-            # addresses for a given term is given a unique, computable name which
-            # is not related to the NETWORK.net token name.  that's what you get
-            # for using cisco, which has decided to implement its own meta language.
+        # I don't have an easy way get the token name used in the pol file
+        # w/o reading the pol file twice (with some other library) or doing
+        # some other ugly hackery. Instead, the entire block of source and dest
+        # addresses for a given term is given a unique, computable name which
+        # is not related to the NETWORK.net token name.  that's what you get
+        # for using cisco, which has decided to implement its own meta language.
 
-            # Create network object-groups
-            addr_type = ('source_address', 'destination_address')
-            addr_family = (4, 6)
+        # Create network object-groups
+        for name, ips in self.addressbook.addressbook[''].items():
+            for version in (4, 6):
+                vips = [i for i in ips if i.version == version]
+                if vips:
 
-            for source_or_dest in addr_type:
-                for family in addr_family:
-                    addrs = term.GetAddressOfVersion(source_or_dest, family)
-                    if addrs:
-                        net_def_name = addrs[0].parent_token
-                        # We have addresses for this family and have not already seen it.
-                        if (net_def_name, family) not in netgroups:
-                            netgroups.add((net_def_name, family))
-                            ret_str.append(
-                                'object-group network ipv%d %s' % (family, net_def_name)
-                            )
-                            for addr in addrs:
-                                ret_str.append(' %s/%s' % (addr.network_address, addr.prefixlen))
-                            ret_str.append('exit\n')
+                    ret_str.append(f'object-group network ipv{version} {name}')
+                    for ip in vips:
+                        ret_str.append(f' {ip.network_address}/{ip.prefixlen}')
+                    ret_str.append('exit\n')
 
             # Create port object-groups
+        for term in self.terms:
             for port in term.source_port + term.destination_port:
                 if not port:
                     continue
@@ -291,7 +283,6 @@ class ObjectGroup:
                     else:
                         ret_str.append(' eq %d' % port[0])
                     ret_str.append('exit\n')
-
         return '\n'.join(ret_str)
 
 
@@ -327,6 +318,8 @@ class PortMap:
         109: 'pop2',
         110: 'pop3',
         1723: 'pptp',
+        554: 'rtsp',
+        5060: 'sip',
         25: 'smtp',
         22: 'ssh',
         111: 'sunrpc',
@@ -354,6 +347,7 @@ class PortMap:
         123: 'ntp',
         496: 'pim-auto-rp',
         520: 'rip',
+        5060: 'sip',
         161: 'snmp',
         162: 'snmptrap',
         111: 'sunrpc',
@@ -516,7 +510,7 @@ class Term(aclgenerator.Term):
             or (self.af == 4 and 'icmpv6' in self.term.protocol)
             or (self.af == 4 and self.PROTO_MAP['icmpv6'] in self.term.protocol)
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=', '.join(self.term.protocol), af=self.text_af
                 )
@@ -575,7 +569,7 @@ class Term(aclgenerator.Term):
             if source_address_exclude:
                 source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
             if not source_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='source', af=self.text_af
                     )
@@ -598,7 +592,7 @@ class Term(aclgenerator.Term):
                     destination_address, destination_address_exclude
                 )
             if not destination_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='destination', af=self.text_af
                     )
@@ -1217,7 +1211,7 @@ class Cisco(aclgenerator.ACLGenerator):
                     if term_str:
                         target.append(term_str)
 
-            if obj_target.valid:
+            if obj_target.addressbook.addressbook.keys():
                 target = [str(obj_target)] + target
             # ensure that the header is always first
             target = target_header + target

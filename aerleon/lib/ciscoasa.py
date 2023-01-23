@@ -1,4 +1,5 @@
 # Copyright 2011 Capirca Project Authors All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,10 +22,7 @@ import logging
 import re
 from typing import cast
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import cisco
-from aerleon.lib import nacaddr
-
+from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -55,12 +53,13 @@ class NoCiscoPolicyError(Error):
 class Term(cisco.Term):
     """A single ACL Term."""
 
-    def __init__(self, term, filter_name, af=4):
+    def __init__(self, term, filter_name, af=4, enable_dsmo=False):
         self.term = term
         self.filter_name = filter_name
         self.options = []
         assert af in (4, 6)
         self.af = af
+        self.enable_dsmo = enable_dsmo
 
     def __str__(self):
         # Verify platform specific terms. Skip whole term if platform does not
@@ -112,6 +111,8 @@ class Term(cisco.Term):
             )
             if source_address_exclude:
                 source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
+            if self.enable_dsmo and len(source_address) > 1:
+                source_address = summarizer.Summarize(source_address)
         else:
             # source address not set
             source_address = ['any']
@@ -126,6 +127,8 @@ class Term(cisco.Term):
                 destination_address = nacaddr.ExcludeAddrs(
                     destination_address, destination_address_exclude
                 )
+            if self.enable_dsmo and len(destination_address) > 1:
+                destination_address = summarizer.Summarize(destination_address)
         else:
             # destination address not set
             destination_address = ['any']
@@ -171,6 +174,10 @@ class Term(cisco.Term):
                                     if (
                                         (isinstance(saddr, nacaddr.IPv4)) or (saddr == 'any')
                                     ) and ((isinstance(daddr, nacaddr.IPv4)) or (daddr == 'any')):
+                                        do_output = True
+                                    elif isinstance(saddr, summarizer.DSMNet) or isinstance(
+                                        daddr, summarizer.DSMNet
+                                    ):
                                         do_output = True
                                 if self.af == 6:
                                     if (
@@ -220,20 +227,25 @@ class Term(cisco.Term):
                 saddr = '%s %s' % (saddr.network_address, saddr.netmask)
             else:
                 saddr = 'host %s' % (saddr.network_address)
-        if isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
+        elif isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
             daddr = cast(self.IPV4_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = '%s %s' % (daddr.network_address, daddr.netmask)
             else:
                 daddr = 'host %s' % (daddr.network_address)
+        elif isinstance(saddr, summarizer.DSMNet):
+            saddr = '%s %s' % summarizer.ToDottedQuad(saddr, negate=False)
+
+        if isinstance(daddr, summarizer.DSMNet):
+            daddr = '%s %s' % summarizer.ToDottedQuad(daddr, negate=False)
         # inet6
-        if isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
+        elif isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
             saddr = cast(self.IPV6_ADDRESS, saddr)
             if saddr.num_addresses > 1:
                 saddr = '%s/%s' % (saddr.network_address, saddr.prefixlen)
             else:
                 saddr = 'host %s' % (saddr.network_address)
-        if isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
+        elif isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
             daddr = cast(self.IPV6_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = '%s/%s' % (daddr.network_address, daddr.prefixlen)
@@ -327,7 +339,11 @@ class CiscoASA(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for header, terms in self.policy.filters:
-            filter_name = header.FilterName('ciscoasa')
+            if self._PLATFORM not in header.platforms:
+                continue
+            filter_name = header.FilterName(self._PLATFORM)
+            filter_options = header.FilterOptions(self._PLATFORM)
+            enable_dsmo = len(filter_options) > 1 and 'enable_dsmo' in filter_options[1:]
 
             new_terms = []
             # now add the terms
@@ -348,7 +364,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
                         )
                         continue
 
-                new_terms.append(str(Term(term, filter_name)))
+                new_terms.append(str(Term(term, filter_name, enable_dsmo=enable_dsmo)))
 
             self.ciscoasa_policies.append((header, filter_name, new_terms))
 

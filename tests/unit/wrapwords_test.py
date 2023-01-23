@@ -1,5 +1,8 @@
-from aerleon.lib.aclgenerator import WrapWords
+# Copyright 2018-2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 import pytest
+
+from aerleon.lib.aclgenerator import WrapWords
 
 SINGLE_LINE_OVERFLOW_TEXT_LONG = (
     "http://github.com/google/aerleon/commit/c5"

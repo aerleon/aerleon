@@ -226,8 +226,8 @@
                   <action>allow</action>
                   <rule-type>interzone</rule-type>
                   <application>
-                    <member>icmp-echo-request</member>
                     <member>icmp-echo-reply</member>
+                    <member>icmp-echo-request</member>
                   </application>
                   <tag>
                     <member>internal_external_policy-comment-1</member>
@@ -388,8 +388,8 @@
                   <action>allow</action>
                   <rule-type>interzone</rule-type>
                   <application>
-                    <member>icmp6-echo-request</member>
                     <member>icmp6-echo-reply</member>
+                    <member>icmp6-echo-request</member>
                   </application>
                   <tag>
                     <member>internal_external_policy-comment-3</member>
@@ -623,7 +623,6 @@
                 <member>RESERVED_25</member>
                 <member>RESERVED_26</member>
                 <member>RESERVED_27</member>
-                <member>RESERVED_28</member>
               </static>
             </entry>
             <entry name="RFC1918">
@@ -765,78 +764,74 @@
             </entry>
             <entry name="RESERVED_10">
               <description>RESERVED_10</description>
-              <ip-netmask>::1/128</ip-netmask>
+              <ip-netmask>100::/8</ip-netmask>
             </entry>
             <entry name="RESERVED_11">
               <description>RESERVED_11</description>
-              <ip-netmask>100::/8</ip-netmask>
+              <ip-netmask>200::/7</ip-netmask>
             </entry>
             <entry name="RESERVED_12">
               <description>RESERVED_12</description>
-              <ip-netmask>200::/7</ip-netmask>
+              <ip-netmask>400::/6</ip-netmask>
             </entry>
             <entry name="RESERVED_13">
               <description>RESERVED_13</description>
-              <ip-netmask>400::/6</ip-netmask>
+              <ip-netmask>800::/5</ip-netmask>
             </entry>
             <entry name="RESERVED_14">
               <description>RESERVED_14</description>
-              <ip-netmask>800::/5</ip-netmask>
+              <ip-netmask>1000::/4</ip-netmask>
             </entry>
             <entry name="RESERVED_15">
               <description>RESERVED_15</description>
-              <ip-netmask>1000::/4</ip-netmask>
+              <ip-netmask>4000::/3</ip-netmask>
             </entry>
             <entry name="RESERVED_16">
               <description>RESERVED_16</description>
-              <ip-netmask>4000::/3</ip-netmask>
+              <ip-netmask>6000::/3</ip-netmask>
             </entry>
             <entry name="RESERVED_17">
               <description>RESERVED_17</description>
-              <ip-netmask>6000::/3</ip-netmask>
+              <ip-netmask>8000::/3</ip-netmask>
             </entry>
             <entry name="RESERVED_18">
               <description>RESERVED_18</description>
-              <ip-netmask>8000::/3</ip-netmask>
+              <ip-netmask>a000::/3</ip-netmask>
             </entry>
             <entry name="RESERVED_19">
               <description>RESERVED_19</description>
-              <ip-netmask>a000::/3</ip-netmask>
+              <ip-netmask>c000::/3</ip-netmask>
             </entry>
             <entry name="RESERVED_20">
               <description>RESERVED_20</description>
-              <ip-netmask>c000::/3</ip-netmask>
+              <ip-netmask>e000::/4</ip-netmask>
             </entry>
             <entry name="RESERVED_21">
               <description>RESERVED_21</description>
-              <ip-netmask>e000::/4</ip-netmask>
+              <ip-netmask>f000::/5</ip-netmask>
             </entry>
             <entry name="RESERVED_22">
               <description>RESERVED_22</description>
-              <ip-netmask>f000::/5</ip-netmask>
+              <ip-netmask>f800::/6</ip-netmask>
             </entry>
             <entry name="RESERVED_23">
               <description>RESERVED_23</description>
-              <ip-netmask>f800::/6</ip-netmask>
+              <ip-netmask>fc00::/7</ip-netmask>
             </entry>
             <entry name="RESERVED_24">
               <description>RESERVED_24</description>
-              <ip-netmask>fc00::/7</ip-netmask>
+              <ip-netmask>fe00::/9</ip-netmask>
             </entry>
             <entry name="RESERVED_25">
               <description>RESERVED_25</description>
-              <ip-netmask>fe00::/9</ip-netmask>
+              <ip-netmask>fe80::/10</ip-netmask>
             </entry>
             <entry name="RESERVED_26">
               <description>RESERVED_26</description>
-              <ip-netmask>fe80::/10</ip-netmask>
+              <ip-netmask>fec0::/10</ip-netmask>
             </entry>
             <entry name="RESERVED_27">
               <description>RESERVED_27</description>
-              <ip-netmask>fec0::/10</ip-netmask>
-            </entry>
-            <entry name="RESERVED_28">
-              <description>RESERVED_28</description>
               <ip-netmask>ff00::/8</ip-netmask>
             </entry>
             <entry name="RFC1918_0">

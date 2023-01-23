@@ -1,4 +1,5 @@
 # Copyright 2016 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,15 +15,12 @@
 """UnitTest class for nsxv.py."""
 
 import copy
-from absl.testing import absltest
 from unittest import mock
 from xml.etree import ElementTree as ET
 
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import nsxv
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import nacaddr, naming, nsxv, policy
 from tests.regression_utils import capture
 
 INET_TERM = """\

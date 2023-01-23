@@ -1,4 +1,5 @@
 # Copyright 2020 Google LLC
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +18,7 @@
 import datetime
 import logging
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import juniper
-from aerleon.lib import nacaddr
+from aerleon.lib import aclgenerator, juniper, nacaddr
 
 MAX_IDENTIFIER_LEN = 55  # It is really 63, but leaving room for added chars
 
@@ -210,7 +209,7 @@ class Term(juniper.Term):
                 (has_icmpv6 and not has_icmp and suffix == 'inet')
                 or (has_icmp and not has_icmpv6 and suffix == 'inet6')
             ) and self.term_type != 'mixed':
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
                         term=self.term.name, proto=', '.join(self.term.protocol), af=suffix
                     )
@@ -579,7 +578,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     )
                     continue
                 if set(['established', 'tcp-established']).intersection(term.option):
-                    logging.debug(
+                    logging.warning(
                         'Skipping established term %s because MSMPC is stateful.', term.name
                     )
                     continue

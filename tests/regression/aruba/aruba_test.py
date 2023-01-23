@@ -1,4 +1,5 @@
 # Copyright 2017 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +18,11 @@
 import datetime
 import logging
 import textwrap
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import aruba
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aruba, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_V4 = """
@@ -893,6 +891,24 @@ class ArubaTest(absltest.TestCase):
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_PROTOCOL_MAP, self.naming), EXP_INFO
         )
         self.assertEqual(textwrap.dedent(expected_result), str(aru))
+        print(aru)
+
+    @capture.stdout
+    def testMultiplePorts(self):
+        definitions = naming.Naming()
+        definitions._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        definitions._ParseLine(
+            'DNS = 53/tcp 54/tcp 55/tcp 60/tcp 61/tcp 62/tcp 63/tcp 65/tcp', 'services'
+        )
+        aru = aruba.Aruba(
+            policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, definitions),
+            EXP_INFO,
+        )
+        expect = """  alias good-term-destination-is-user_src user tcp 53 55 permit
+  alias good-term-destination-is-user_src user tcp 60 63 permit
+  alias good-term-destination-is-user_src user tcp 65 permit"""
+
+        self.assertIn(expect, str(aru))
         print(aru)
 
 

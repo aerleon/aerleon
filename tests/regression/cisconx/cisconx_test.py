@@ -1,4 +1,5 @@
 # Copyright 2021 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +14,11 @@
 # limitations under the License.
 """Tests for cisconx acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import cisconx
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import cisconx, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

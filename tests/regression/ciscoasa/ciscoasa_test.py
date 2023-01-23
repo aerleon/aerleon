@@ -1,4 +1,5 @@
 # Copyright 2008 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,19 +15,23 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-from absl.testing import absltest
 from unittest import mock
 
-from aerleon.lib import ciscoasa
-from aerleon.lib import naming
-from aerleon.lib import policy
+from absl.testing import absltest, parameterized
 
+from aerleon.lib import ciscoasa, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
   comment:: "this is a test acl"
   target:: ciscoasa test-filter
+}
+"""
+
+DSMO_HEADER = """
+header {
+  target:: ciscoasa foo enable_dsmo
 }
 """
 
@@ -45,12 +50,25 @@ term good-term-2 {
 }
 """
 
+GOOD_TERM_3 = """
+term good-src-term-3 {
+    source-address:: CORP
+    action:: accept
+}
+"""
+GOOD_TERM_4 = """
+term good-dst-term-3 {
+    destination-address:: CORP
+    action:: accept
+}
+"""
 VERBATIM_TERM = """
 term verbatim-term {
     verbatim:: ciscoasa "foo bar"
     verbatim:: ciscoasa "biz baz"
 }
 """
+
 SUPPORTED_TOKENS = {
     'action',
     'comment',
@@ -128,7 +146,7 @@ SUPPORTED_SUB_TOKENS = {
 EXP_INFO = 2
 
 
-class CiscoASATest(absltest.TestCase):
+class CiscoASATest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
@@ -153,10 +171,23 @@ class CiscoASATest(absltest.TestCase):
     def testVerbatim(self):
         pol = ciscoasa.CiscoASA(
             policy.ParsePolicy(GOOD_HEADER + VERBATIM_TERM, self.naming), EXP_INFO
-            )
+        )
         print(pol)
         expect = 'access-list test-filter remark verbatim-term\nfoo bar\nbiz baz'
         self.assertIn(expect, str(pol))
+
+    @parameterized.named_parameters(
+        ('source', GOOD_TERM_3, 'permit ip 10.0.0.0 255.255.254.0 any'),
+        ('destination', GOOD_TERM_4, 'permit ip any 10.0.0.0 255.255.254.0'),
+    )
+    def testDSMO(self, term, expected):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('10.0.0.0/24'),
+            nacaddr.IPv4('10.0.1.0/24'),
+        ]
+        pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
+        self.assertIn(expected, str(pol))
+
 
 if __name__ == '__main__':
     absltest.main()

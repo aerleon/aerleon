@@ -1,9 +1,23 @@
 name: test
-
 on:
-  - "push"
-  - "pull_request"
-
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.yaml'
+      - '*.yml'
+      - '*.md'
+      - 'AUTHORS'
+      - 'LICENSE'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.yaml'
+      - '*.yml'
+      - '*.md'
+      - 'AUTHORS'
+      - 'LICENSE'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -53,4 +67,19 @@ jobs:
       #    run test suite and output coverage file
       #----------------------------------------------
       - name: Test with pytest
-        run: poetry run pytest
+        run: |
+          poetry run coverage erase
+          poetry run coverage run
+          poetry run coverage xml
+      #----------------------------------------------
+      # upload coverage to codecov
+      #----------------------------------------------
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./
+          env_vars: OS,PYTHON
+          files: ./coverage.xml
+          flags: tests
+          name: codecov-umbrella
+          verbose: true

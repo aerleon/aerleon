@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +17,10 @@
 """Juniper JCL generator."""
 
 import datetime
+
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
-from aerleon.lib import summarizer
+
+from aerleon.lib import aclgenerator, nacaddr, summarizer
 
 
 # generic error class
@@ -226,7 +227,7 @@ class Term(aclgenerator.Term):
             self.term_type == 'inet'
             and ('icmpv6' in self.term.protocol or 'icmp6' in self.term.protocol)
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=', '.join(self.term.protocol), af=self.term_type
                 )
@@ -363,7 +364,7 @@ class Term(aclgenerator.Term):
                         config.Append('%s;' % addr)
                 config.Append('}')
             elif self.term.address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(term=self.term.name, af=self.term_type)
                 )
                 return ''
@@ -396,7 +397,7 @@ class Term(aclgenerator.Term):
                         config.Append('%s except;' % addr)
                 config.Append('}')
             elif self.term.source_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='source', af=self.term_type
                     )
@@ -430,7 +431,7 @@ class Term(aclgenerator.Term):
                         config.Append('%s except;' % addr)
                 config.Append('}')
             elif self.term.destination_address:
-                logging.debug(
+                logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
                         term=self.term.name, direction='destination', af=self.term_type
                     )
@@ -827,7 +828,7 @@ class Term(aclgenerator.Term):
                 # There should never be a /* or */, but be safe and ignore those
                 # comments
                 if addr.text.find('/*') >= 0 or addr.text.find('*/') >= 0:
-                    logging.debug('Malformed comment [%s] ignoring', addr.text)
+                    logging.warning('Malformed comment [%s] ignoring', addr.text)
                 else:
 
                     text = addr.text[:line_length]
@@ -854,7 +855,7 @@ class Term(aclgenerator.Term):
                     rval[-1] += ' */'
         else:
             # should we be paying attention to any other addr type?
-            logging.debug('Ignoring non IPv4 or IPv6 address: %s', addr)
+            logging.warning('Ignoring non IPv4 or IPv6 address: %s', addr)
         return rval
 
     def _Group(self, group, lc=True):

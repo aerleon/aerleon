@@ -1,4 +1,5 @@
 # Copyright 2022 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +20,7 @@ uses the same syntax as regular Juniper (Junos) ACLs, with minor differences.
 This subclass effects those differences.
 """
 
-from aerleon.lib import aclgenerator
-from aerleon.lib import juniper
+from aerleon.lib import aclgenerator, juniper
 
 
 class Term(juniper.Term):

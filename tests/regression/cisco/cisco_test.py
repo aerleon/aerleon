@@ -1,4 +1,5 @@
 # Copyright 2008 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +17,6 @@
 
 import datetime
 import re
-from absl.testing import absltest
 from unittest import mock
 
 from aerleon.lib import aclgenerator
@@ -25,9 +25,10 @@ from aerleon.lib import cisco
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
 from aerleon.lib import policy
+from absl.testing import absltest
 
+from aerleon.lib import aclgenerator, cisco, nacaddr, naming, policy
 from tests.regression_utils import capture
-
 
 GOOD_HEADER = """
 header {
@@ -772,27 +773,27 @@ class CiscoTest(absltest.TestCase):
         self.assertTrue(re.search('permit 58 any any 3', str(acl)), str(acl))
         print(acl)
 
-    @mock.patch.object(cisco.logging, 'debug')
-    def testIcmpv6InetMismatch(self, mock_debug):
+    @mock.patch.object(cisco.logging, 'warning')
+    def testIcmpv6InetMismatch(self, mock_warning):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_11, self.naming), EXP_INFO)
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-11 will not be rendered,'
             ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
-    @mock.patch.object(cisco.logging, 'debug')
-    def testIcmpInet6Mismatch(self, mock_debug):
+    @mock.patch.object(cisco.logging, 'warning')
+    def testIcmpInet6Mismatch(self, mock_warning):
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
         )
         # output happens in __str_
         str(acl)
 
-        mock_debug.assert_called_once_with(
+        mock_warning.assert_called_once_with(
             'Term good-term-1 will not be rendered,'
             ' as it has icmp match specified but '
             'the ACL is of inet6 address family.'

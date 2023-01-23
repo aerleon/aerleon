@@ -1,0 +1,13 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination good-term-destination-is-user_src
+  network 100.0.0.0 255.0.0.0
+!
+
+ip access-list session test-filter
+  alias good-term-destination-is-user_src user tcp 53 55 permit
+  alias good-term-destination-is-user_src user tcp 60 63 permit
+  alias good-term-destination-is-user_src user tcp 65 permit
+!
+

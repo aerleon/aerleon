@@ -1,4 +1,6 @@
 # Copyright 2016 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,9 +20,8 @@ import datetime
 import string
 
 from absl import logging
-from aerleon.lib import aclgenerator
-from aerleon.lib import nacaddr
 
+from aerleon.lib import aclgenerator, nacaddr
 
 CMD_PREFIX = 'netsh ipsec static add '
 
@@ -77,7 +78,7 @@ class Term(aclgenerator.Term):
         if (self.af == 'inet6' and 'icmp' in self.term.protocol) or (
             self.af == 'inet' and 'icmpv6' in self.term.protocol
         ):
-            logging.debug(
+            logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
                     term=self.term.name, proto=self.term.protocol, af=self.af
                 )
