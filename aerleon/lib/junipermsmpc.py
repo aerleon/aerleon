@@ -34,6 +34,7 @@ class Term(juniper.Term):
 
     _PLATFORM = 'msmpc'
     _DEFAULT_INDENT = 20
+    _NO_APPLY_GROUPS_INDENT = 12
     _ACTIONS = {'accept': 'accept', 'deny': 'discard', 'reject': 'reject'}
     # msmpc supports a limited number of protocol names
     # https://www.juniper.net/documentation/us/en/software/junos/security-policies/topics/ref/statement/applications-edit-protocol.html
@@ -55,12 +56,13 @@ class Term(juniper.Term):
         'udp',
     )
 
-    def __init__(self, term, term_type, noverbose, filter_name):
+    def __init__(self, term, term_type, noverbose, filter_name, apply_groups):
         enable_dsmo = False
         super().__init__(term, term_type, enable_dsmo, noverbose)
         self.term = term
         self.term_type = term_type
         self.noverbose = noverbose
+        self.apply_groups = apply_groups
         self.filter_name = filter_name
 
         for prot in self.term.protocol:
@@ -81,7 +83,11 @@ class Term(juniper.Term):
         if self.enable_dsmo:
             raise NotImplementedError('enable_dsmo not implemented for msmpc')
 
-        ret_str = juniper.Config(indent=self._DEFAULT_INDENT)
+        if self.apply_groups:
+            indent = self._DEFAULT_INDENT
+        else:
+            indent = self._NO_APPLY_GROUPS_INDENT
+        ret_str = juniper.Config(indent=indent)
 
         # COMMENTS
         # this deals just fine with multi line comments, but we could probably
@@ -516,10 +522,14 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
             filter_options.remove(filter_name)
+            apply_groups = 'no-apply-groups' not in filter_options
             filter_direction = None
             filter_type = None
             noverbose = 'noverbose' in filter_options
             self.applications[filter_name] = []
+
+            if not apply_groups:
+                filter_options.remove('no-apply-groups')
 
             if noverbose:
                 # noverbose is a strict boolean, remove it
@@ -604,7 +614,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                             filter_name,
                         )
                         continue
-                new_term = Term(term, filter_type, noverbose, filter_name)
+                new_term = Term(term, filter_type, noverbose, filter_name, apply_groups)
                 new_terms.append(new_term)
 
                 # Because MSMPC terms can contain inet and inet6 addresses. We have to
@@ -660,7 +670,9 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     new_application_set['name'] = modified_term_name
                     self.applications[filter_name].append(new_application_set)
 
-            self.junipermsmpc_policies.append((header, filter_name, filter_direction, new_terms))
+            self.junipermsmpc_policies.append(
+                (header, filter_name, filter_direction, new_terms, apply_groups)
+            )
 
     def _Group(self, group, lc=True):
         """If 1 item return it, else return [ item1 item2 ].
@@ -707,9 +719,16 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
 
     def __str__(self):
         target = juniper.Config()
-        for (header, filter_name, filter_direction, terms) in self.junipermsmpc_policies:
-            target.Append('groups {')
-            target.Append('replace:')
+        for (
+            header,
+            filter_name,
+            filter_direction,
+            terms,
+            apply_groups,
+        ) in self.junipermsmpc_policies:
+            if apply_groups:
+                target.Append('groups {')
+                target.Append('replace:')
             target.Append('/*')
 
             # we want the acl to contain id and date tags, but p4 will expand
@@ -725,7 +744,8 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     target.Append('** ' + line)
             target.Append('*/')
 
-            target.Append('%s {' % filter_name)
+            if apply_groups:
+                target.Append('%s {' % filter_name)
             target.Append('services {')
             target.Append('stateful-firewall {')
             target.Append('rule %s {' % filter_name)
@@ -739,9 +759,10 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             target.Append('}')  # services { ... }
             for line in self._GenerateApplications(filter_name):
                 target.Append(line)
-            target.Append('}')  # filter_name { ... }
-            target.Append('}')  # groups { ... }
-            target.Append('apply-groups %s;' % filter_name)
+            if apply_groups:
+                target.Append('}')  # filter_name { ... }
+                target.Append('}')  # groups { ... }
+                target.Append('apply-groups %s;' % filter_name)
         return str(target) + '\n'
 
 

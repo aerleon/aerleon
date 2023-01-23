@@ -1,0 +1,37 @@
+/*
+ ** $Id:$
+ ** $Date:$
+ ** $Revision:$
+ **
+ ** this is a test acl
+ */
+services {
+    stateful-firewall {
+        rule test-filter {
+            match-direction input-output;
+            term ranged-ports-1 {
+                from {
+                    application-sets test-filterranged-ports-1-app;
+                }
+                then {
+                    accept;
+                }
+            }
+        }
+    }
+}
+applications {
+    application test-filterranged-ports-1-app1 {
+        protocol udp;
+        destination-port 67;
+    }
+    application test-filterranged-ports-1-app2 {
+        protocol udp;
+        destination-port 69;
+    }
+    application-set test-filterranged-ports-1-app {
+        application test-filterranged-ports-1-app1;
+        application test-filterranged-ports-1-app2;
+    }
+}
+
