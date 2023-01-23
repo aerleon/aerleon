@@ -605,7 +605,6 @@ class Term(aclgenerator.Term):
             destination_address = ['any']
 
         # options
-        import ipdb;ipdb.set_trace()
         opts = [str(x) for x in self.term.option]
         if (self.PROTO_MAP['tcp'] in protocol or 'tcp' in protocol) and (
             'tcp-established' in opts or 'established' in opts
