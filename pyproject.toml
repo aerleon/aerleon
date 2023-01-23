@@ -25,7 +25,7 @@ include = [
     "README.md",
     "tools",
 ]
-packages = [{include = "aerleon"}, {include = "aerleon/lib"}]
+packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -55,7 +55,7 @@ sigstore = "^1.0.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
-cgrep = "aerleon.cgrep:EntryPoint"
+cgrep = "tools.cgrep:EntryPoint"
 aclcheck = "aerleon.aclcheck_cmdline:main"
 
 [build-system]
