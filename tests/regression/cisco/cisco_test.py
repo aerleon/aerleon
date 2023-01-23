@@ -20,6 +20,7 @@ from absl.testing import absltest
 from unittest import mock
 
 from aerleon.lib import aclgenerator
+from aerleon.lib import api
 from aerleon.lib import cisco
 from aerleon.lib import nacaddr
 from aerleon.lib import naming
@@ -962,6 +963,7 @@ term default {
         print(acl)
         self.assertIn('permit 50 any any', str(acl))
 
-
+    def testOptionsWithObjectGroups(self):
+      config = api.Generate({}, self.naming)
 if __name__ == '__main__':
     absltest.main()
