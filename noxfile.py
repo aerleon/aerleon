@@ -46,7 +46,7 @@ def benchmark(session):
     )
 
     def inner():
-        setup = f'from tools.benchmarks.demo_benchmark import {suite_name}; suite = {suite_name}({session.posargs})'  # noqa E501
+        setup = f'from benchmarks.demo_benchmark import {suite_name}; suite = {suite_name}({session.posargs})'  # noqa E501
         statement = 'suite.run()'
 
         session.run(

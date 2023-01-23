@@ -23,6 +23,7 @@ classifiers = [
 include = [
     "LICENSE",
     "README.md",
+    "tools",
 ]
 packages = [{include = "aerleon"}, {include = "aerleon/lib"}]
 
@@ -54,6 +55,8 @@ sigstore = "^1.0.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
+cgrep = "aerleon.cgrep:EntryPoint"
+aclcheck = "aerleon.aclcheck_cmdline:main"
 
 [build-system]
 requires = ["poetry-core"]
