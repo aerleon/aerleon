@@ -167,6 +167,7 @@ def main(parser):
     Args:
       parser: the argument parser, but not parsed yet.
     """
+    logging.basicConfig(level=logging.INFO)
     options = parser.parse_args()
     db = naming.Naming(options.defs)
     p = pprint.PrettyPrinter(indent=1, depth=4, width=1).pprint
