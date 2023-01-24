@@ -196,8 +196,6 @@ class Demo(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         self.demo_policies = []
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
             filter_options = header.FilterOptions('demo')
             filter_name = filter_options[0]
             if len(filter_options) > 1:

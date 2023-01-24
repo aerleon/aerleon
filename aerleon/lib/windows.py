@@ -276,9 +276,6 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
         for header, terms in pol.filters:
             filter_type = None
-            if self._PLATFORM not in header.platforms:
-                continue
-
             filter_options = header.FilterOptions(self._PLATFORM)[1:]
             filter_name = header.FilterName(self._PLATFORM)
 

@@ -396,9 +396,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         address_book_dup_check = set()
 
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
-
             # The filter_options is a list of options from header, e.g.
             # ['from-zone', 'internal', 'to-zone', 'external']
             filter_options = header.FilterOptions(self._PLATFORM)

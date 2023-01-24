@@ -213,8 +213,6 @@ class CloudArmor(aclgenerator.ACLGenerator):
         self.cloudarmor_policies = []
 
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
             filter_options = header.FilterOptions(self._PLATFORM)
             verbose = True
             if 'noverbose' in filter_options:

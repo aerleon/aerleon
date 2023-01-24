@@ -22,7 +22,6 @@ from typing import List, Tuple
 
 from aerleon.lib import aclgenerator
 
-_PLATFORM = 'aruba'
 _COMMENT_MARKER = '#'
 _TERMINATOR_MARKER = '!'
 
@@ -38,6 +37,8 @@ class Term(aclgenerator.Term):
       term: policy.Term object.
       filter_type: IP address version number.
     """
+
+    _PLATFORM = 'aruba'
 
     _ANY_STR = 'any'
     _ALIAS_STR = 'alias'
@@ -81,7 +82,7 @@ class Term(aclgenerator.Term):
 
         if self.term.verbatim:
             for next_verbatim in self.term.verbatim:
-                if next_verbatim[0] == _PLATFORM and next_verbatim[1]:
+                if next_verbatim[0] == self._PLATFORM and next_verbatim[1]:
                     ret_str.append('%s%s' % (self._IDENT, next_verbatim[1]))
 
             return '\n'.join(t for t in ret_str if t)
@@ -228,6 +229,7 @@ class Aruba(aclgenerator.ACLGenerator):
     """
 
     SUFFIX = '.aacl'
+    _PLATFORM = 'aruba'
 
     _ACL_LINE_HEADER = 'ip access-list session'
 
@@ -273,8 +275,8 @@ class Aruba(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for header, terms in pol.filters:
-            filter_name = header.FilterName(_PLATFORM)
-            filter_options = header.FilterOptions(_PLATFORM)
+            filter_name = header.FilterName(self._PLATFORM)
+            filter_options = header.FilterOptions(self._PLATFORM)
             verbose = True
             if 'noverbose' in filter_options:
                 filter_options.remove('noverbose')
