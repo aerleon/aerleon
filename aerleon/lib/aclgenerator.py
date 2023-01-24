@@ -297,7 +297,7 @@ class ACLGenerator:
         pol.filters[:] = [
             (header, terms)
             for (header, terms) in pol.filters
-            if (self._PLATFORM in (header, terms)[0].platforms)
+            if (self._PLATFORM in header.platforms)
         ]
         self.policy = pol
         all_err = []
