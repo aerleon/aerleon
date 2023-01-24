@@ -16,8 +16,8 @@
 
 """Command line interface to aclcheck library."""
 
-from optparse import OptionParser
 import pathlib
+from optparse import OptionParser
 
 from aerleon.lib import aclcheck, naming, policy, yaml
 
