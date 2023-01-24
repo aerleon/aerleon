@@ -17,7 +17,35 @@ jobs:
       #       check-out repo and set-up python
       #----------------------------------------------
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            run_tests:
+              - .github/actions/**/*.yml
+              - .github/workflows/**/*.yml
+              - aerleon/**/*.py
+              - benchmarks/**/*.py
+              - policies/**/*.yaml
+              - policies/**/*.yml
+              - policies/**/*.pol
+              - policies/**/*.inc
+              - def/**/*.yaml
+              - def/**/*.yml
+              - def/**/*.net
+              - def/**/*.svc
+              - tests/**/*.py
+              - tests/**/*.ref
+              - tools/**/*.py
+              - codecov.yml
+              - poetry.toml
+              - pyproject.toml
+      #----------------------------------------------
+      #    Install Python, Poetry, and CI deps
+      #----------------------------------------------
+      - name: Set up dependencies
+        if: steps.filter.outputs.run_tests == 'true'
+        uses: ./.github/actions/setup
         id: project-setup
         with:
           python-version: ${{ matrix.python-version }}
@@ -25,6 +53,7 @@ jobs:
       #    run test suite and output coverage file
       #----------------------------------------------
       - name: Test with pytest
+        if: steps.filter.outputs.run_tests == 'true'
         run: |
           poetry run coverage erase
           poetry run coverage run
@@ -33,6 +62,7 @@ jobs:
       # upload coverage to codecov
       #----------------------------------------------
       - name: Upload coverage to Codecov
+        if: steps.filter.outputs.run_tests == 'true'
         uses: codecov/codecov-action@v3
         with:
           directory: ./
