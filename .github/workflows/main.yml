@@ -18,7 +18,7 @@ jobs:
       #----------------------------------------------
       - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
-        id: changes
+        id: paths-filter
         with:
           filters: |
             run_tests:
@@ -43,8 +43,8 @@ jobs:
       #----------------------------------------------
       #    Install Python, Poetry, and CI deps
       #----------------------------------------------
-      - name: Set up dependencies
-        if: steps.filter.outputs.run_tests == 'true'
+      - name: Set up CI dependencies
+        if: steps.paths-filter.outputs.run_tests == 'true'
         uses: ./.github/actions/setup
         id: project-setup
         with:
@@ -53,7 +53,7 @@ jobs:
       #    run test suite and output coverage file
       #----------------------------------------------
       - name: Test with pytest
-        if: steps.filter.outputs.run_tests == 'true'
+        if: steps.paths-filter.outputs.run_tests == 'true'
         run: |
           poetry run coverage erase
           poetry run coverage run
@@ -62,7 +62,7 @@ jobs:
       # upload coverage to codecov
       #----------------------------------------------
       - name: Upload coverage to Codecov
-        if: steps.filter.outputs.run_tests == 'true'
+        if: steps.paths-filter.outputs.run_tests == 'true'
         uses: codecov/codecov-action@v3
         with:
           directory: ./
