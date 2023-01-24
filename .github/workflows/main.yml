@@ -1,23 +1,9 @@
 name: test
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.yaml'
-      - '*.yml'
-      - '*.md'
-      - 'AUTHORS'
-      - 'LICENSE'
   push:
     branches:
       - main
-    paths-ignore:
-      - 'docs/**'
-      - '*.yaml'
-      - '*.yml'
-      - '*.md'
-      - 'AUTHORS'
-      - 'LICENSE'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,48 +11,49 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        id: setup-python
+      - uses: dorny/paths-filter@v2
+        id: paths-filter
+        with:
+          filters: |
+            run_tests:
+              - .github/actions/**/*.yml
+              - .github/workflows/**/*.yml
+              - aerleon/**/*.py
+              - benchmarks/**/*.py
+              - policies/**/*.yaml
+              - policies/**/*.yml
+              - policies/**/*.pol
+              - policies/**/*.inc
+              - def/**/*.yaml
+              - def/**/*.yml
+              - def/**/*.net
+              - def/**/*.svc
+              - tests/**/*.py
+              - tests/**/*.ref
+              - tools/**/*.py
+              - codecov.yml
+              - poetry.toml
+              - pyproject.toml
+      #----------------------------------------------
+      #    Install Python, Poetry, and CI deps
+      #----------------------------------------------
+      - name: Set up CI dependencies
+        if: steps.paths-filter.outputs.run_tests == 'true'
+        uses: ./.github/actions/setup
+        id: project-setup
         with:
           python-version: ${{ matrix.python-version }}
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install library
-        run: poetry install --no-interaction
       #----------------------------------------------
       #    run test suite and output coverage file
       #----------------------------------------------
       - name: Test with pytest
+        if: steps.paths-filter.outputs.run_tests == 'true'
         run: |
           poetry run coverage erase
           poetry run coverage run
@@ -75,6 +62,7 @@ jobs:
       # upload coverage to codecov
       #----------------------------------------------
       - name: Upload coverage to Codecov
+        if: steps.paths-filter.outputs.run_tests == 'true'
         uses: codecov/codecov-action@v3
         with:
           directory: ./
