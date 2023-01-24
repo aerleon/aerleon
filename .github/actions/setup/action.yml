@@ -11,10 +11,9 @@ runs:
     #       check-out repo and set-up python
     #----------------------------------------------
     - uses: actions/setup-python@v4
-      shell: bash
       id: setup-python
       with:
-        python-version: ${{ python-version }}
+        python-version: ${{ inputs.python-version }}
     #----------------------------------------------
     #  -----  install & configure poetry  -----
     #----------------------------------------------
@@ -29,7 +28,6 @@ runs:
     - name: Load cached venv
       id: cached-poetry-dependencies
       uses: actions/cache@v3
-      shell: bash
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
