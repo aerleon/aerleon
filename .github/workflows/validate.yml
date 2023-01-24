@@ -24,8 +24,6 @@ jobs:
             run_tests:
               - .github/actions/**/*.yml
               - .github/workflows/**/*.yml
-              - aerleon/**/*.py
-              - benchmarks/**/*.py
               - policies/**/*.yaml
               - policies/**/*.yml
               - policies/**/*.pol
@@ -34,12 +32,11 @@ jobs:
               - def/**/*.yml
               - def/**/*.net
               - def/**/*.svc
-              - tests/**/*.py
               - tests/**/*.ref
-              - tools/**/*.py
               - codecov.yml
               - poetry.toml
               - pyproject.toml
+              - **.py
       #----------------------------------------------
       #    Install Python, Poetry, and CI deps
       #----------------------------------------------
@@ -81,7 +78,7 @@ jobs:
         with:
           filters: |
             run_format:
-              - **/*.py
+              - **.py
       #----------------------------------------------
       #    Install Python, Poetry, and CI deps
       #----------------------------------------------
