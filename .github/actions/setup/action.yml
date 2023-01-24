@@ -11,6 +11,7 @@ runs:
     #       check-out repo and set-up python
     #----------------------------------------------
     - uses: actions/setup-python@v4
+      shell: bash
       id: setup-python
       with:
         python-version: ${{ python-version }}
@@ -28,6 +29,7 @@ runs:
     - name: Load cached venv
       id: cached-poetry-dependencies
       uses: actions/cache@v3
+      shell: bash
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -35,10 +37,12 @@ runs:
     # install dependencies if cache does not exist
     #----------------------------------------------
     - name: Install dependencies
+      shell: bash
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
     #----------------------------------------------
     # install your root project, if required
     #----------------------------------------------
     - name: Install library
+      shell: bash
       run: poetry install --no-interaction
