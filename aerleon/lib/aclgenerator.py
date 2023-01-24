@@ -333,15 +333,12 @@ class ACLGenerator:
                             err.append(' '.join(ns))
                 if err:
                     all_err.append(
-                        ('%s contains unsupported keywords (%s) for target ' '%s in policy %s')
+                        ('%s contains unsupported keywords (%s) for target %s in policy %s')
                         % (term.name, ' '.join(err), self._PLATFORM, pol.filename)
                     )
                 if warn:
                     all_warn.append(
-                        (
-                            '%s contains unimplemented keywords (%s) for '
-                            'target %s in policy %s'
-                        )
+                        ('%s contains unimplemented keywords (%s) for target %s in policy %s')
                         % (term.name, ' '.join(warn), self._PLATFORM, pol.filename)
                     )
             continue
