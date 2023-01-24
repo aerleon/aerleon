@@ -501,6 +501,8 @@ class Term(aclgenerator.Term):
                 )
             )
             return ''
+
+        # verbose
         if self.verbose:
             if self.term_remark:
                 ret_str.append(' remark ' + self.term.name)
@@ -544,6 +546,9 @@ class Term(aclgenerator.Term):
                 protocol = [x if x != 'esp' else '50' for x in protocol]
             if 'ah' in protocol:
                 protocol = [x if x != 'ah' else '51' for x in protocol]
+
+        # addresses
+
 
         # source address
         if self.term.source_address:
@@ -589,6 +594,18 @@ class Term(aclgenerator.Term):
             # destination address not set
             destination_address = ['any']
 
+        # ports
+        source_port = [()]
+        destination_port = [()]
+
+        # source port
+        if self.term.source_port:
+            source_port = self._FixConsecutivePorts(self.term.source_port)
+
+        # destination port
+        if self.term.destination_port:
+            destination_port = self._FixConsecutivePorts(self.term.destination_port)
+
         # options
         opts = [str(x) for x in self.term.option]
         if (self.PROTO_MAP['tcp'] in protocol or 'tcp' in protocol) and (
@@ -626,17 +643,11 @@ class Term(aclgenerator.Term):
             self.options.append('nexthop1 %s %s' % (nexthop_protocol, nexthop))
             action = _ACTION_TABLE.get('accept')
 
+        # action
         if self.term.action:
             action = _ACTION_TABLE.get(str(self.term.action[0]))
 
-        # ports
-        source_port = [()]
-        destination_port = [()]
-        if self.term.source_port:
-            source_port = self._FixConsecutivePorts(self.term.source_port)
-
-        if self.term.destination_port:
-            destination_port = self._FixConsecutivePorts(self.term.destination_port)
+        
 
         # logging
         if self.term.logging:
@@ -663,6 +674,8 @@ class Term(aclgenerator.Term):
         fixed_opts = {}
         for p in protocol:
             fixed_opts[p] = self._FixOptions(p, self.options)
+
+        # temlet constructor
         for saddr in fixed_src_addresses:
             for daddr in fixed_dst_addresses:
                 for sport in source_port:
@@ -843,15 +856,18 @@ class ObjectGroupTerm(Term):
         self.verbose = verbose
 
     def __str__(self):
+        ret_str = ['\n']
         source_address_set = set()
         destination_address_set = set()
-        ret_str = ['\n']
+
         if self.verbose:
             ret_str.append(' remark %s' % self.term.name)
             comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
             if comments and comments[0]:
                 for comment in comments:
                     ret_str.append(' remark %s' % str(comment))
+
+        # verbose
 
         # Term verbatim output - this will skip over normal term creation
         # code by returning early.  Warnings provided in policy.py.
@@ -874,22 +890,45 @@ class ObjectGroupTerm(Term):
             ]
 
         # addresses
+
+
+        # source address
         source_address = self.term.source_address
         if not self.term.source_address:
             source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
         source_address_set.add(source_address[0].parent_token)
 
+        # destination address
         destination_address = self.term.destination_address
         if not self.term.destination_address:
             destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
         destination_address_set.add(destination_address[0].parent_token)
+
         # ports
         source_port = [()]
         destination_port = [()]
+
+        # source port
         if self.term.source_port:
             source_port = self.term.source_port
+
+        # destination port
         if self.term.destination_port:
             destination_port = self.term.destination_port
+
+        # options
+
+        # ACL-based Forwarding
+
+        # action
+
+        # logging
+
+        # dscp; unlike srx, cisco only supports single, non-except values
+
+        # icmp-types
+
+        # temlet constructor
         for saddr in source_address_set:
             for daddr in destination_address_set:
                 for sport in source_port:
@@ -905,7 +944,6 @@ class ObjectGroupTerm(Term):
                                     dport,
                                 )
                             )
-
         return '\n'.join(ret_str)
 
     def _TermletToStr(self, action, proto, saddr, sport, daddr, dport):
