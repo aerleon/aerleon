@@ -87,9 +87,10 @@ def benchmark_tuned(session):
 
 @session
 def format(session):
-    """Runs black"""
+    """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
     session.run("black", "aerleon", "tests")
+    session.run("isort", ".")
 
 
 @session

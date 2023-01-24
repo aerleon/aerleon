@@ -258,21 +258,21 @@ targets:
     brocade: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo}
 ```
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Term Format
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Sub Tokens
 
 ### Actions
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ### Option
 
-See [cisco](cisco.md) for details.
+See [cisco](#cisco) for details.
 
 ***
 
@@ -565,7 +565,7 @@ targets:
 
 ## IpTables
 
-> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](PolicyFormat#Speedway.md) generator.
+> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](#speedway) generator.
 
 ### Header Format
 
@@ -820,7 +820,7 @@ The Juniper MSMPC header designation has the following format:
 
 ```yaml
 targets:
-    msmpc: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress}
+    msmpc: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress} [no-apply-groups]
 ```
 
 * _filter name_: defines the name of the Juniper msmpc filter.
@@ -829,6 +829,7 @@ targets:
 * _noverbose_: omit additional term and address comments.
 * _ingress_: filter will be applied in the input direction.
 * _egress_: filter will be appliced in the output direction.
+* _no-apply-groups_: generate configuration without `apply-groups` (optional)
 
 When inet4 or inet6 is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
 

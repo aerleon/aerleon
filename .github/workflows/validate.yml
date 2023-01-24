@@ -1,0 +1,104 @@
+name: validate
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: paths-filter
+        with:
+          filters: |
+            run_tests:
+              - .github/actions/**/*.yml
+              - .github/workflows/**/*.yml
+              - policies/**/*.yaml
+              - policies/**/*.yml
+              - policies/**/*.pol
+              - policies/**/*.inc
+              - def/**/*.yaml
+              - def/**/*.yml
+              - def/**/*.net
+              - def/**/*.svc
+              - tests/**/*.ref
+              - codecov.yml
+              - poetry.toml
+              - pyproject.toml
+              - '**.py'
+      #----------------------------------------------
+      #    Install Python, Poetry, and CI deps
+      #----------------------------------------------
+      - name: Set up CI dependencies
+        if: steps.paths-filter.outputs.run_tests == 'true'
+        uses: ./.github/actions/setup
+        id: project-setup
+        with:
+          python-version: ${{ matrix.python-version }}
+      #----------------------------------------------
+      #    run test suite and output coverage file
+      #----------------------------------------------
+      - name: Test with pytest
+        if: steps.paths-filter.outputs.run_tests == 'true'
+        run: |
+          poetry run coverage erase
+          poetry run coverage run
+          poetry run coverage xml
+      #----------------------------------------------
+      # upload coverage to codecov
+      #----------------------------------------------
+      - name: Upload coverage to Codecov
+        if: steps.paths-filter.outputs.run_tests == 'true'
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./
+          env_vars: OS,PYTHON
+          files: ./coverage.xml
+          flags: tests
+          name: codecov-umbrella
+          verbose: true
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: paths-filter
+        with:
+          filters: |
+            run_format:
+              - '**.py'
+      #----------------------------------------------
+      #    Install Python, Poetry, and CI deps
+      #----------------------------------------------
+      - name: Set up CI dependencies
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: ./.github/actions/setup
+        id: project-setup
+        with:
+          python-version: "3.10"
+      #----------------------------------------------
+      # run 'black', will use installed version
+      #----------------------------------------------
+      - name: Format project using Black
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: psf/black@22.12.0
+      #----------------------------------------------
+      # run isort
+      #----------------------------------------------
+      - name: Format project using isort
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: isort/isort-action@v1.1.0
+        with:
+          isort-version: ""
