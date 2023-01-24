@@ -176,7 +176,8 @@ def stdout(func):
     def inner(self, *args, **kwargs):
         with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             retval = func(self, *args, **kwargs)
-            file_base = ".".join([func.__qualname__, "stdout"])
+            base_name = ".".join(func.__qualname__.split(".")[0:-1] + [self._testMethodName])
+            file_base = ".".join([base_name, "stdout"])
             file_ref = ".".join([file_base, "ref"])
             try:
                 with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
@@ -195,7 +196,7 @@ def stdout(func):
                 finally:
                     raise AssertionError(
                         "Assertion failed: reference file {file} is not available for test {testname}".format(
-                            file=file_ref, testname=func.__qualname__
+                            file=file_ref, testname=base_name
                         )
                     )
             except AssertionError as e:
