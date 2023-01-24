@@ -76,45 +76,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        id: setup-python
+      - uses: dorny/paths-filter@v2
+        id: paths-filter
+        with:
+          filters: |
+            run_format:
+              - **/*.py
+      #----------------------------------------------
+      #    Install Python, Poetry, and CI deps
+      #----------------------------------------------
+      - name: Set up CI dependencies
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: ./.github/actions/setup
+        id: project-setup
         with:
           python-version: "3.10"
       #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@d45b6d76012debf457ab49dffc7fb7b2efe8071d
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install library
-        run: poetry install --no-interaction
-      #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
-      - uses: psf/black@22.12.0
+      - name: Format project using Black
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: psf/black@22.12.0
       #----------------------------------------------
       # run isort
       #----------------------------------------------
-      - uses: isort/isort-action@v1.1.0
+      - name: Format project using isort
+        if: steps.paths-filter.outputs.run_format == 'true'
+        uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
