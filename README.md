@@ -1,5 +1,6 @@
-![GitHub](https://img.shields.io/github/license/aerleon/aerleon) [![PyPI version](https://badge.fury.io/py/aerleon.svg)](https://badge.fury.io/py/aerleon) ![PyPI - Status](https://img.shields.io/pypi/status/aerleon) ![PyPI - Downloads](https://img.shields.io/pypi/dm/aerleon)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/main.yml?branch=main) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon)[![codecov](https://codecov.io/gh/aerleon/aerleon/branch/main/graph/badge.svg?token=C13SR6GMTD)](https://codecov.io/gh/aerleon/aerleon)
+![GitHub](https://img.shields.io/github/license/aerleon/aerleon) [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![PyPI version](https://badge.fury.io/py/aerleon.svg)](https://badge.fury.io/py/aerleon) ![PyPI - Status](https://img.shields.io/pypi/status/aerleon) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aerleon) ![PyPI - Downloads](https://img.shields.io/pypi/dm/aerleon)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/aerleon/aerleon/release.yml) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/aerleon/aerleon) [![aerleon](https://snyk.io/advisor/python/aerleon/badge.svg)](https://snyk.io/advisor/python/aerleon) [![codecov](https://codecov.io/gh/aerleon/aerleon/branch/main/graph/badge.svg?token=C13SR6GMTD)](https://codecov.io/gh/aerleon/aerleon)
 
 # Aerleon
 
@@ -16,7 +17,6 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, Sigstore.
 
 See the [1.0.1 Release Notes](https://github.com/aerleon/aerleon/releases/tag/1.0.1) for a complete list of changes.
-
 
 ## Install
 
@@ -56,11 +56,11 @@ Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
 Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 
 ## Resources
+
 - [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
 - [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
 - [Aerleon Slack](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw)
-- [#aerleon at NetworkToCode Slack](https://networktocode.slack.com/)
 
 ## Contributors ✨
 
