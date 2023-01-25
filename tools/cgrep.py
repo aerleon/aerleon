@@ -1,4 +1,5 @@
 # Copyright 2011 Google Inc. All Rights Reserved.
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -166,6 +167,7 @@ def main(parser):
     Args:
       parser: the argument parser, but not parsed yet.
     """
+    logging.basicConfig(level=logging.INFO)
     options = parser.parse_args()
     db = naming.Naming(options.defs)
     p = pprint.PrettyPrinter(indent=1, depth=4, width=1).pprint
@@ -516,5 +518,9 @@ def get_services(options, db):
     return port, protocol, results
 
 
-if __name__ == '__main__':
+def EntryPoint():
     main(cli_options())
+
+
+if __name__ == '__main__':
+    EntryPoint()

@@ -16,9 +16,10 @@
 
 """Command line interface to aclcheck library."""
 
+import pathlib
 from optparse import OptionParser
 
-from aerleon.lib import aclcheck, naming, policy
+from aerleon.lib import aclcheck, naming, policy, yaml
 
 
 def main():
@@ -32,7 +33,11 @@ def main():
         default='./def',
     )
     _parser.add_option(
-        '-p', '--policy-file', dest='pol', help='policy file', default='./policies/sample.pol'
+        '-p',
+        '--policy-file',
+        dest='pol',
+        help='policy file',
+        default='./policies/pol/sample_paloalto_yaml.yaml',
     )
     _parser.add_option(
         '-d', '--destination', dest='dst', help='destination IP', default='200.1.1.1'
@@ -54,7 +59,19 @@ def main():
     (FLAGS, unused_args) = _parser.parse_args()
 
     defs = naming.Naming(FLAGS.definitions)
-    policy_obj = policy.ParsePolicy(open(FLAGS.pol).read(), defs)
+    with open(FLAGS.pol) as f:
+        conf = f.read()
+    if pathlib.Path(FLAGS.pol).suffix in ['.yaml', '.yml']:
+        policy_obj = yaml.ParsePolicy(
+            conf,
+            filename=FLAGS.pol,
+            definitions=defs,
+        )
+    else:
+        policy_obj = policy.ParsePolicy(
+            conf,
+            defs,
+        )
     check = aclcheck.AclCheck(
         policy_obj,
         src=FLAGS.src,

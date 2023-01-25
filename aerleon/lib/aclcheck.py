@@ -187,7 +187,7 @@ class AclCheck(object):
         for next in self.matches:
             if next.action:
                 if not next.possibles:
-                    if action is 'any' or action in next.action:
+                    if action == 'any' or action in next.action:
                         match_list.append(next)
         return match_list
 
@@ -252,7 +252,7 @@ class AclCheck(object):
         Returns:
           bool: True of false
         """
-        if addr is 'any':
+        if addr == 'any':
             return True  # always true if we match for any addr
         if not addresses:
             return True  # always true if term has nothing to match
