@@ -6,8 +6,6 @@ site_url: 'https://aerleon.readthedocs.io/en/latest/'
 repo_url: 'https://github.com/aerleon/aerleon'
 copyright: Copyright &copy; The Authors
 theme: readthedocs
-extra_css:
-  - css/extra.css
 extra:
   generator: false
   social:
@@ -22,17 +20,16 @@ extra:
       name: GitHub Organization
 markdown_extensions:
   - admonition
+  - toc:
+      permalink: true
   - attr_list
-  - footnotes
   - md_in_html
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.details # https://squidfunk.github.io/mkdocs-material/reference/admonitions/#details
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
-  - toc:
-      permalink: true
+  - footnotes
 plugins:
   - search
   - mkdocs-version-annotations
@@ -60,3 +57,6 @@ nav:
       - Naming: reference/naming.md
       - Generator Development: reference/generator_patterns.md
       - YAML Reference: reference/yaml_reference.md
+      
+      
+

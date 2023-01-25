@@ -20,6 +20,7 @@ cd aerleon_test
 ```
 
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
+
 ## Definition Files
 Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
 
@@ -72,47 +73,50 @@ Above we have defined a couple of networks and services.
 * `HIGH_PORTS` is a port range of of 1024 to 65535 over both TCP and UDP.
 
 Take the YAML above and insert it into a file in the `defs` directory.
-??? "Bash command"
-    ```bash
-    echo "networks:
-      RFC1918:
-        values:
-          - address: 10.0.0.0/8
-          - address: 172.16.0.0/12
-          - address: 192.168.0.0/16
-      WEB_SERVERS:
-        values:
-          - address: 10.0.0.1/32
-            comment: Web Server 1
-          - address: 10.0.0.2/32
-            comment: Web Server 2
-      MAIL_SERVERS:
-        values:
-          - address: 10.0.0.3/32
-            comment: Mail Server 1
-          - address: 10.0.0.4/32
-            comment: Mail Server 2
-      ALL_SERVERS:
-        values:
-          - WEB_SERVERS
-          - MAIL_SERVERS
-    services:
-      HTTP:
-        - protocol: tcp
-          port: 80
-      HTTPS:
-        - protocol: tcp
-          port: 443
-      WEB:
-        - HTTP
-        - HTTPS
-      HIGH_PORTS:
-        - port: 1024-65535
-          protocol: tcp
-        - port: 1024-65535
-          protocol: udp
-    " > def/definitions.yaml
-    ```
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "networks:
+    RFC1918:
+      values:
+        - address: 10.0.0.0/8
+        - address: 172.16.0.0/12
+        - address: 192.168.0.0/16
+    WEB_SERVERS:
+      values:
+        - address: 10.0.0.1/32
+          comment: Web Server 1
+        - address: 10.0.0.2/32
+          comment: Web Server 2
+    MAIL_SERVERS:
+      values:
+        - address: 10.0.0.3/32
+          comment: Mail Server 1
+        - address: 10.0.0.4/32
+          comment: Mail Server 2
+    ALL_SERVERS:
+      values:
+        - WEB_SERVERS
+        - MAIL_SERVERS
+  services:
+    HTTP:
+      - protocol: tcp
+        port: 80
+    HTTPS:
+      - protocol: tcp
+        port: 443
+    WEB:
+      - HTTP
+      - HTTPS
+    HIGH_PORTS:
+      - port: 1024-65535
+        protocol: tcp
+      - port: 1024-65535
+        protocol: udp
+  " > def/definitions.yaml
+  ```
+</details>
 
 
 ## Policy Files
@@ -139,26 +143,30 @@ The above YAML is a basic example with almost the minimum necessary to output an
 
 Inside of the `header` we have a comment to explain what this ACL is for, a `target` of cisco meaning we wish to output that syntax, and options for the cisco generator.
 
-`terms` contains a list of terms which are translated into rules within the ACL. In this case there are two rules. `accept-web-servers` and `default-deny`. We see that in `accept-web-servers` there are a few fields such as `comment`, `destination-address`, `action` and more. You can find more information on every field available in our [generators section](foobar). `destination-address` and `destination-port` each refer to names we configured in our definitions. When this rule gets translated the definitions will be referenced and used to define the IPs and ports for this rule.
+`terms` contains a list of terms which are translated into rules within the ACL. In this case there are two rules. `accept-web-servers` and `default-deny`. We see that in `accept-web-servers` there are a few fields such as `comment`, `destination-address`, `action` and more. You can find more information on every field available in our [generators section](en/latest/reference/generators/). `destination-address` and `destination-port` each refer to names we configured in our definitions. When this rule gets translated the definitions will be referenced and used to define the IPs and ports for this rule.
 
-??? "Bash command"
-    ```bash
-    echo "filters:
-    - header:
-        comment: Example inbound
-        targets:
-          cisco: inbound extended
-      terms:
-        - name: accept-web-servers
-          comment: Accept connections to our web servers
-          destination-address: WEB_SERVERS
-          destination-port: WEB
-          protocol: tcp
-          action: accept
-        - name: default-deny
-          comment: Deny anything else.
-          action: deny" > policies/pol/example.pol.yaml
-    ```
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny" > policies/pol/example.pol.yaml
+
+  ```
+</details>
 
 ## Running ACLGen
 
@@ -211,34 +219,37 @@ filters:
 ```
 
 
-??? "Bash command"
-    ```bash
-    echo "filters:
-    - header:
-        comment: Example inbound
-        targets:
-          cisco: inbound extended
-      terms:
-        - name: accept-web-servers
-          comment: Accept connections to our web servers
-          destination-address: WEB_SERVERS
-          destination-port: WEB
-          protocol: tcp
-          action: accept
-        - name: default-deny
-          comment: Deny anything else.
-          action: deny
-    - header:
-        comment: Example outbound
-        targets:
-          cisco: outbound extended
-      terms:
-        - name: deny-bad-destinations
-          destination-address: RFC1918
-          action: deny
-        - name: default-accept
-          action: accept" > policies/pol/example.pol.yaml
-    ```
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound extended
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept" > policies/pol/example.pol.yaml
+  ```
+</details>
 
 If you run `aclgen` again you will see it notices the difference in the YAML file and writes over the old ACL. This new ACL contains both the inbound and outbound ACLs we wanted.
 
@@ -275,35 +286,38 @@ filters:
         action: accept
 ```
 
-??? "Bash command"
-    ```bash
-    echo "filters:
-    - header:
-        comment: Example inbound
-        targets:
-          cisco: inbound extended
-          juniper: inbound
-      terms:
-        - name: accept-web-servers
-          comment: Accept connections to our web servers
-          destination-address: WEB_SERVERS
-          destination-port: WEB
-          protocol: tcp
-          action: accept
-        - name: default-deny
-          comment: Deny anything else.
-          action: deny
-    - header:
-        comment: Example outbound
-        targets:
-          cisco: outbound mixed
-          juniper: outbound
-      terms:
-        - name: deny-bad-destinations
-          destination-address: RFC1918
-          action: deny
-        - name: default-accept
-          action: accept" > policies/pol/example.pol.yaml
-    ```
+<details>
+  <summary>Bash command</summary>
+
+  ```bash
+  echo "filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+        juniper: inbound
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny
+  - header:
+      comment: Example outbound
+      targets:
+        cisco: outbound mixed
+        juniper: outbound
+    terms:
+      - name: deny-bad-destinations
+        destination-address: RFC1918
+        action: deny
+      - name: default-accept
+        action: accept" > policies/pol/example.pol.yaml
+  ```
+</details>
 
 If you run `aclgen` again you should see that it wrote two files now, the new one being `.jcl`. This is the Juniper file we wanted and will contain all the exact same rules but in the Juniper syntax.
