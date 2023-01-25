@@ -12,34 +12,62 @@ high-level [policy language](Policy-format.md).
 mkdir /path/to/definitions/directory
 ```
 
-**Create network definitions files**
-_(network defintions files must end in '.net')_
+**Create a definition YAML file**
 
 ```
-cat > /path/to/definitions/directory/NETWORKS.net
-INTERNAL = 10.0.0.0/8     # RFC1918
-           172.16.0.0/12  # RFC1918
-           192.168.0.0/16 # RFC1918
-WEBSERVERS = 200.3.2.1/32 # webserver-1
-             200.3.2.4/32 # webserver-2
-MAILSERVER = 200.3.2.5/32 # mailserver-1
+cat > /path/to/definitions/directory/definitions.yaml
+networks:
+  INTERNAL:
+    values:
+      - address: 10.0.0.0/8
+        comment: "RFC1918"
+      - address: 172.16.0.0/12
+        comment: "RFC1918"
+      - address: 192.168.0.0/16
+        comment: "RFC1918"
+  WEB_SERVERS:
+    values:
+      - address: 200.3.2.1/32
+        comment: "webserver-1"
+      - address: 200.3.2.4/32
+        comment: "webserver-2"
+  MAIL_SERVERS:
+    values:
+      - address: 200.3.2.5/32
+        comment: "mailserver-1"
+      - address: 200.3.2.6/32
+        comment: "mailserver-2"
+services:
+  MAIL_SERVICES:
+    - name: SMTP
+    - name: ESMTP
+    - name: SMTP_SSL
+    - name: POP_SSL
+  SMTP:
+    - port: 25
+      protocol: tcp
+  DNS:
+    - port: 53
+      protocol: tcp
+    - port: 53
+      protocol: udp
+  HTTP:
+    - port: 80
+      protocol: tcp
+      comment: "web traffic"
+  SMTP_SSL:
+    - port: 465
+      protocol: tcp
+  ESMTP:
+    - port: 587
+      protocol: tcp
+  POP_SSL:
+    - port: 995
+      protocol: tcp
 ^D
 ```
 
-**Create service definitions files**
-_(service defintions files must end in '.svc')_
-
-```
-cat > /path/to/definitions/directory/SERVICES.svc
-HTTP = 80/tcp  # web traffic
-MAIL = 25/tcp  # smtp port
-       465/tcp # smtp over ssl
-DNS = 53/tcp
-      53/udp
-^D
-```
-
-**Create a naming object**
+**Create a Naming object**
 
 ```
 from aerleon.lib import naming
