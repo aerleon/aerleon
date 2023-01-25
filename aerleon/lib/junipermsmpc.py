@@ -517,8 +517,6 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         self.junipermsmpc_policies = []
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
             filter_options.remove(filter_name)

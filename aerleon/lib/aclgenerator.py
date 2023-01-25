@@ -294,53 +294,54 @@ class ACLGenerator:
         """Initialise an ACLGenerator.  Store policy structure for processing."""
         supported_tokens, supported_sub_tokens = self._GetSupportedTokens()
 
+        pol.filters[:] = [
+            (header, terms)
+            for (header, terms) in pol.filters
+            if (self._PLATFORM in header.platforms)
+        ]
         self.policy = pol
         all_err = []
         all_warn = []
         for header, terms in pol.filters:
-            if self._PLATFORM in header.platforms:
-                # Verify valid keywords
-                # error on unsupported optional keywords that could result
-                # in dangerous or unexpected results
-                for term in terms:
-                    if term.platform:
-                        if self._PLATFORM not in term.platform:
-                            continue
-                    if term.platform_exclude:
-                        if self._PLATFORM in term.platform_exclude:
-                            continue
-                    # Only verify optional keywords if the term is active on the platform.
-                    err = []
-                    warn = []
-                    for el, val in term.__dict__.items():
-                        # Private attributes do not need to be valid keywords.
-                        if val and el not in supported_tokens and not el.startswith('flatten'):
-                            if val and el not in self.WARN_IF_UNSUPPORTED:
-                                err.append(el)
-                            else:
-                                warn.append(el)
-                        # ignore Liskov's rule.
-                        if val and isinstance(val, list) and el in supported_sub_tokens:
-                            ns = set(val) - supported_sub_tokens[el]
-                            # hack support for ArbitraryOptions in junos. todo, add the
-                            # junos options into the lexer, then we can nuke .*
-                            # shenanigans.
-                            if ns and '.*' not in supported_sub_tokens[el]:
-                                err.append(' '.join(ns))
-                    if err:
-                        all_err.append(
-                            ('%s contains unsupported keywords (%s) for target ' '%s in policy %s')
-                            % (term.name, ' '.join(err), self._PLATFORM, pol.filename)
-                        )
-                    if warn:
-                        all_warn.append(
-                            (
-                                '%s contains unimplemented keywords (%s) for '
-                                'target %s in policy %s'
-                            )
-                            % (term.name, ' '.join(warn), self._PLATFORM, pol.filename)
-                        )
-                continue
+            # Verify valid keywords
+            # error on unsupported optional keywords that could result
+            # in dangerous or unexpected results
+            for term in terms:
+                if term.platform:
+                    if self._PLATFORM not in term.platform:
+                        continue
+                if term.platform_exclude:
+                    if self._PLATFORM in term.platform_exclude:
+                        continue
+                # Only verify optional keywords if the term is active on the platform.
+                err = []
+                warn = []
+                for el, val in term.__dict__.items():
+                    # Private attributes do not need to be valid keywords.
+                    if val and el not in supported_tokens and not el.startswith('flatten'):
+                        if val and el not in self.WARN_IF_UNSUPPORTED:
+                            err.append(el)
+                        else:
+                            warn.append(el)
+                    # ignore Liskov's rule.
+                    if val and isinstance(val, list) and el in supported_sub_tokens:
+                        ns = set(val) - supported_sub_tokens[el]
+                        # hack support for ArbitraryOptions in junos. todo, add the
+                        # junos options into the lexer, then we can nuke .*
+                        # shenanigans.
+                        if ns and '.*' not in supported_sub_tokens[el]:
+                            err.append(' '.join(ns))
+                if err:
+                    all_err.append(
+                        ('%s contains unsupported keywords (%s) for target %s in policy %s')
+                        % (term.name, ' '.join(err), self._PLATFORM, pol.filename)
+                    )
+                if warn:
+                    all_warn.append(
+                        ('%s contains unimplemented keywords (%s) for target %s in policy %s')
+                        % (term.name, ' '.join(warn), self._PLATFORM, pol.filename)
+                    )
+            continue
         if all_err:
             raise UnsupportedFilterError('\n %s' % '\n'.join(all_err))
         if all_warn:

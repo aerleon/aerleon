@@ -644,8 +644,6 @@ class Nftables(aclgenerator.ACLGenerator):
         current_date = datetime.date.today()
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
             filter_options = header.FilterOptions('nftables')
             (
                 nf_af,

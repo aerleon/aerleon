@@ -396,9 +396,6 @@ class HierarchicalFirewall(gcp.GCP):
         previous_max_cost = -1
         for header, terms in pol.filters:
 
-            if self._PLATFORM not in header.platforms:
-                continue
-
             filter_options = header.FilterOptions(self._PLATFORM)
 
             is_policy_modified = True

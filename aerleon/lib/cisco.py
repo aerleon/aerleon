@@ -998,8 +998,6 @@ class Cisco(aclgenerator.ACLGenerator):
         good_filters = ['extended', 'standard', 'object-group', 'inet6', 'mixed', 'enable_dsmo']
 
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
             obj_target = ObjectGroup()
 
             filter_options = header.FilterOptions(self._PLATFORM)

@@ -526,9 +526,6 @@ class Nsxv(aclgenerator.ACLGenerator):
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for header, terms in pol.filters:
-            if self._PLATFORM not in header.platforms:
-                continue
-
             filter_options = header.FilterOptions(self._PLATFORM)
             if len(filter_options) >= 2:
                 filter_name = filter_options[1]
