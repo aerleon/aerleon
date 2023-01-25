@@ -438,7 +438,7 @@ class PortMap:
 
 
 class Term(aclgenerator.Term):
-    """A single ACL Term."""
+    """This is an general Term object that all other Cisco Terms should inherite from."""
 
     ALLOWED_PROTO_STRINGS = [
         'eigrp',
@@ -455,7 +455,6 @@ class Term(aclgenerator.Term):
         'sctp',
         'ahp',
     ]
-
     IPV4_ADDRESS = Union[nacaddr.IPv4, ipaddress.IPv4Network]
     IPV6_ADDRESS = Union[nacaddr.IPv6, ipaddress.IPv6Network]
 
@@ -469,7 +468,6 @@ class Term(aclgenerator.Term):
         platform='cisco',
         verbose=True,
     ):
-        super().__init__(term)
         self.term = term
         self.proto_int = proto_int
         self.options = []
@@ -506,9 +504,9 @@ class Term(aclgenerator.Term):
         if self.verbose:
             comments = []
             if self.term_remark:
-                    comments.append(self.term.name)
+                comments.append(self.term.name)
             if self.term.owner:
-                     comments.append(f'Owner: {self.term.owner}')
+                comments.append(f'Owner: {self.term.owner}')
             comments.extend(self.term.comment)
 
             comments = aclgenerator.WrapWords(comments, _COMMENT_MAX_WIDTH)
@@ -552,7 +550,6 @@ class Term(aclgenerator.Term):
                 protocol = [x if x != 'ah' else '51' for x in protocol]
 
         # addresses
-
 
         # source address
         if self.term.source_address:
@@ -650,8 +647,6 @@ class Term(aclgenerator.Term):
         # action
         if self.term.action:
             action = _ACTION_TABLE.get(str(self.term.action[0]))
-
-        
 
         # logging
         if self.term.logging:
@@ -834,7 +829,14 @@ class Term(aclgenerator.Term):
         return temporary_port_list
 
 
-class ObjectGroupTerm(Term):
+class ExtendedTerm(Term):
+    """A single ACL Term."""
+
+
+pass
+
+
+class ObjectGroupTerm(ExtendedTerm):
     """An individual term of an object-group'd acl.
 
     Object Group acls are very similar to extended acls in their
@@ -882,9 +884,9 @@ class ObjectGroupTerm(Term):
         if self.verbose:
             comments = []
             if self.term_remark:
-                    comments.append(self.term.name)
+                comments.append(self.term.name)
             if self.term.owner:
-                     comments.append(f'Owner: {self.term.owner}')
+                comments.append(f'Owner: {self.term.owner}')
             comments.extend(self.term.comment)
 
             comments = aclgenerator.WrapWords(comments, _COMMENT_MAX_WIDTH)
@@ -928,7 +930,6 @@ class ObjectGroupTerm(Term):
                 protocol = [x if x != 'ah' else '51' for x in protocol]
 
         # addresses
-
 
         # source address
         if self.term.source_address:
@@ -1028,8 +1029,6 @@ class ObjectGroupTerm(Term):
         if self.term.action:
             action = _ACTION_TABLE.get(str(self.term.action[0]))
 
-        
-
         # logging
         if self.term.logging:
             self.options.append('log')
@@ -1110,13 +1109,12 @@ class ObjectGroupTerm(Term):
         # str(icmp_type) is needed to ensure 0 maps to '0' instead of FALSE
         icmp_type = str(icmp_type)
         icmp_code = str(icmp_code)
-        import ipdb;ipdb.set_trace()
         all_elements = [
             action,
             str(proto),
-            saddr,
+            str(saddr),
             sport,
-            daddr,
+            str(daddr),
             dport,
             icmp_type,
             icmp_code,
@@ -1242,7 +1240,7 @@ class Cisco(aclgenerator.ACLGenerator):
                             len(filter_options) > 2 and filter_options[2] == 'enable_dsmo'
                         )
                         new_terms.append(
-                            Term(
+                            ExtendedTerm(
                                 term,
                                 proto_int=self._PROTO_INT,
                                 enable_dsmo=enable_dsmo,
@@ -1258,7 +1256,7 @@ class Cisco(aclgenerator.ACLGenerator):
                         )
                     elif next_filter == 'inet6':
                         new_terms.append(
-                            Term(
+                            ExtendedTerm(
                                 term,
                                 6,
                                 proto_int=self._PROTO_INT,

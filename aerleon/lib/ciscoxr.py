@@ -64,4 +64,4 @@ class CiscoXR(cisco.Cisco):
 
 
 class CiscoXRObjectGroupTerm(cisco.ObjectGroupTerm):
-    ALLOWED_PROTO_STRINGS = cisco.Term.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']
+    ALLOWED_PROTO_STRINGS = cisco.ExtendedTerm.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']
