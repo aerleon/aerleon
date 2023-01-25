@@ -61,6 +61,7 @@ Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 - [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
 - [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
 - [Aerleon Slack](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw)
+- [#aerleon at NetworkToCode Slack](https://app.slack.com/client/T09LQ7E9E/C04L56TMMFZ)
 
 ## Contributors ✨
 
