@@ -106,6 +106,8 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
                 UserMessage("Unable to read file as YAML.", filename=filename)
             ) from yaml_error
     raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
+    if not raw_policy:
+        return
     return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
 
@@ -135,6 +137,8 @@ def ParsePolicy(
             UserMessage("Unable to read file as YAML.", filename=filename)
         ) from yaml_error
     raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
+    if not raw_policy:
+        return
     return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
 
 
@@ -330,7 +334,7 @@ def _LoadIncludeFile(base_dir, inc_filename):
     """Open an include file."""
 
     with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
-        return include_file
+        return include_file.read()
 
 
 def _PolicyFromRawPolicy(raw_policy, definitions, optimize=False, shade_check=False):
