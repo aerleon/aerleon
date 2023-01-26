@@ -23,10 +23,11 @@ http://ops.openconfig.net/branches/models/master/openconfig-acl.html
 import copy
 import ipaddress
 import json
-from absl import logging
 import re
 from collections import defaultdict
 from typing import Any, Dict
+
+from absl import logging
 
 from aerleon.lib import aclgenerator
 

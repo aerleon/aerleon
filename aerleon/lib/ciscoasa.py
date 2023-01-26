@@ -17,9 +17,10 @@
 """Cisco ASA renderer."""
 
 import ipaddress
-from absl import logging
 import re
 from typing import cast
+
+from absl import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 

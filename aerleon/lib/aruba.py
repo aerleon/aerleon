@@ -16,8 +16,9 @@
 
 """Aruba generator."""
 
-from absl import logging
 from typing import List, Tuple
+
+from absl import logging
 
 from aerleon.lib import aclgenerator
 

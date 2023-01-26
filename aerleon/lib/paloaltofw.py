@@ -16,10 +16,11 @@
 
 import collections
 import copy
-from absl import logging
 import re
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
+
+from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 

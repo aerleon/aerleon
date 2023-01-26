@@ -24,9 +24,10 @@ https://cloud.google.com/compute/docs/reference/latest/firewalls
 import copy
 import ipaddress
 import json
-from absl import logging
 import re
 from typing import Any, Dict
+
+from absl import logging
 
 from aerleon.lib import gcp, nacaddr
 

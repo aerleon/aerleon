@@ -16,12 +16,13 @@
 
 """ACL Generator base class."""
 
-import datetime
 import copy
+import datetime
 import hashlib
-from absl import logging
 import re
 import string
+
+from absl import logging
 
 from aerleon.lib import policy
 
