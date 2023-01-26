@@ -21,8 +21,7 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 """
 
 import copy
-import datetime
-import logging
+from absl import logging
 import re
 
 import yaml
@@ -307,9 +306,6 @@ class K8s(aclgenerator.ACLGenerator):
         self.network_policies = []
         total_rule_count = 0
 
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
@@ -341,21 +337,6 @@ class K8s(aclgenerator.ACLGenerator):
                 term_names.add(term.name)
 
                 term.direction = direction
-                if term.expiration:
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
                 if term.option:
                     raise K8sNetworkPolicyError(
                         'Kubernetes NetworkPolicy does not support term options.'

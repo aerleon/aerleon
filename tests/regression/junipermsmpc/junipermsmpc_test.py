@@ -896,7 +896,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         )
 
         mock_warn.assert_called_once_with(
-            'WARNING: Term %s in policy %s is expired and will ' 'not be rendered.',
+            'WARNING: Term %s in policy %s is expired and will not be rendered.',
             'is_expired',
             'test-filter',
         )

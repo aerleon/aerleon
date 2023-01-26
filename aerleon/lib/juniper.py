@@ -16,7 +16,6 @@
 
 """Juniper JCL generator."""
 
-import datetime
 
 from absl import logging
 
@@ -981,9 +980,6 @@ class Juniper(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         self.juniper_policies = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
@@ -1061,21 +1057,6 @@ class Juniper(aclgenerator.ACLGenerator):
                     if not term:
                         continue
 
-                    if term.expiration:
-                        if term.expiration <= exp_info_date:
-                            logging.info(
-                                'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                                term.name,
-                                filter_name,
-                            )
-                        if term.expiration <= current_date:
-                            logging.warning(
-                                'WARNING: Term %s in policy %s is expired and '
-                                'will not be rendered.',
-                                term.name,
-                                filter_name,
-                            )
-                            continue
                     if 'is-fragment' in term.option and filter_type == 'inet6':
                         raise JuniperFragmentInV6Error(
                             'The term %s uses "is-fragment" but ' 'is a v6 policy.' % term.name

@@ -16,9 +16,10 @@
 
 """ACL Generator base class."""
 
+import datetime
 import copy
 import hashlib
-import logging
+from absl import logging
 import re
 import string
 
@@ -302,7 +303,34 @@ class ACLGenerator:
         self.policy = pol
         all_err = []
         all_warn = []
+        current_date = datetime.datetime.utcnow().date()
+        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         for header, terms in pol.filters:
+            filter_name = header.FilterName(self._PLATFORM)
+            terms[:] = [
+                term
+                for term in terms
+                if (
+                    term.expiration
+                    and term.expiration <= current_date
+                    and logging.warning(
+                        'WARNING: Term %s in policy %s is expired and will not be rendered.',
+                        term.name,
+                        filter_name,
+                    )
+                    or False,
+                    (
+                        term.expiration
+                        and term.expiration <= exp_info_date
+                        and logging.info(
+                            "INFO: Term %s in policy %s expires in less than two weeks.",
+                            term.name,
+                            filter_name,
+                        )
+                    )
+                    or True,
+                )[not (term.expiration and term.expiration <= current_date)]
+            ]
             # Verify valid keywords
             # error on unsupported optional keywords that could result
             # in dangerous or unexpected results

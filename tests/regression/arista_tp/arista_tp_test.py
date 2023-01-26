@@ -967,19 +967,38 @@ class AristaTpTest(absltest.TestCase):
         print(atp)
 
     @mock.patch.object(arista_tp.logging, "warning")
+    def testExpiredTermV4(self, mock_warn):
+        _ = arista_tp.AristaTrafficPolicy(
+            policy.ParsePolicy(GOOD_HEADER_INET + EXPIRED_TERM, self.naming), EXP_INFO
+        )
+
+        mock_warn.assert_called_once_with(
+            "WARNING: Term %s in policy %s is expired and will not be rendered.",
+            "is_expired",
+            "test-filter",
+        )
+
+    @mock.patch.object(arista_tp.logging, "warning")
+    def testExpiredTermV6(self, mock_warn):
+        _ = arista_tp.AristaTrafficPolicy(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + EXPIRED_TERM, self.naming), EXP_INFO
+        )
+
+        mock_warn.assert_called_once_with(
+            "WARNING: Term %s in policy %s is expired and will not be rendered.",
+            "is_expired",
+            "test-filter",
+        )
+
+    @mock.patch.object(arista_tp.logging, "warning")
     def testExpiredTerm(self, mock_warn):
         _ = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + EXPIRED_TERM, self.naming), EXP_INFO
         )
 
-        mock_warn.assert_any_call(
-            "WARNING: term %s in policy %s is expired and will " "not be rendered.",
+        mock_warn.assert_called_once_with(
+            "WARNING: Term %s in policy %s is expired and will not be rendered.",
             "is_expired",
-            "test-filter",
-        )
-        mock_warn.assert_any_call(
-            "WARNING: term %s in policy %s is expired and will " "not be rendered.",
-            "ipv6-is_expired",
             "test-filter",
         )
 
@@ -993,7 +1012,7 @@ class AristaTpTest(absltest.TestCase):
             EXP_INFO,
         )
         mock_info.assert_any_call(
-            "INFO: term %s in policy %s expires in " "less than two weeks.",
+            "INFO: Term %s in policy %s expires in less than two weeks.",
             "is_expiring",
             "test-filter",
         )

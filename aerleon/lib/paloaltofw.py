@@ -16,8 +16,7 @@
 
 import collections
 import copy
-import datetime
-import logging
+from absl import logging
 import re
 import xml.etree.ElementTree as etree
 from xml.dom import minidom
@@ -390,8 +389,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
           PaloAltoFWUnsupportedProtocolError: The term contains unsupporter protocol
           name.
         """
-        current_date = datetime.date.today()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         first_addr_obj = None
         address_book_dup_check = set()
 
@@ -513,24 +510,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         "\npan-application can only be used with protocols tcp, udp"
                         % (term.name, ', '.join(term.pan_application), ', '.join(term.protocol))
                     )
-
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            "INFO: Term %s in policy %s>%s expires " "in less than two weeks.",
-                            term.name,
-                            self.from_zone,
-                            self.to_zone,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            "WARNING: Term %s in policy %s>%s is expired and "
-                            "will not be rendered.",
-                            term.name,
-                            self.from_zone,
-                            self.to_zone,
-                        )
-                        continue
 
                 for i in term.source_address_exclude:
                     term.source_address = nacaddr.RemoveAddressFromList(term.source_address, i)

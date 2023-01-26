@@ -16,7 +16,6 @@
 
 """Cisco generator."""
 
-import datetime
 import ipaddress
 from typing import Union, cast
 
@@ -991,9 +990,6 @@ class Cisco(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         self.cisco_policies = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         # a mixed filter outputs both ipv4 and ipv6 acls in the same output file
         good_filters = ['extended', 'standard', 'object-group', 'inet6', 'mixed', 'enable_dsmo']
 
@@ -1059,22 +1055,6 @@ class Cisco(aclgenerator.ACLGenerator):
                     # Ignore if the term is for a different AF
                     if term.restrict_address_family and term.restrict_address_family != af:
                         continue
-
-                    if term.expiration:
-                        if term.expiration <= exp_info_date:
-                            logging.info(
-                                'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                                term.name,
-                                filter_name,
-                            )
-                        if term.expiration <= current_date:
-                            logging.warning(
-                                'WARNING: Term %s in policy %s is expired and '
-                                'will not be rendered.',
-                                term.name,
-                                filter_name,
-                            )
-                            continue
 
                     # render terms based on filter type
                     if next_filter == 'standard':

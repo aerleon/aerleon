@@ -21,10 +21,9 @@ http://ops.openconfig.net/branches/models/master/openconfig-acl.html
 """
 
 import copy
-import datetime
 import ipaddress
 import json
-import logging
+from absl import logging
 import re
 from collections import defaultdict
 from typing import Any, Dict
@@ -208,9 +207,6 @@ class OpenConfig(aclgenerator.ACLGenerator):
         self.oc_policies = []
         total_rule_count = 0
 
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
@@ -227,21 +223,6 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
             for term in terms:
 
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
                 # TODO(b/196430344): Add support for options such as
                 # established/rst/first-fragment
                 if term.option:
