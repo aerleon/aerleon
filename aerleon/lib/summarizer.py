@@ -39,6 +39,8 @@ class DSMNet:
         self.address = address
         self.netmask = netmask
         self.text = text
+    def __hash__(self):
+        return hash(str(self.address)+str(self.netmask))
 
     def __eq__(self, other):
         try:
