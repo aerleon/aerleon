@@ -3,11 +3,11 @@
 ## Usage
 
 Aerleon supports policy files written in YAML as well as the traditional .pol
-format. It will search for files named \*.pol.yaml in the same places it would
+format. It will search for files named \*.yaml in the same places it would
 search for \*.pol files.
 
 Include files can also be written in YAML. Cross-format includes are not
-allowed. A YAML file can include files named \*.pol-include.yaml while a .pol
+allowed. A YAML file can include files named \*.yaml while a .pol
 file can include files named \*.inc .
 
 YAML files are loaded in PyYAML's "safe" mode.
@@ -212,10 +212,10 @@ Place an item in the list of terms with a key "include" containing a file path
 to include that file. All terms found in the include file will be inserted into
 the terms list, replacing the "include" item. The include file will be resolved
 relative to the base directory. The include file name must match
-\*.pol-include.yaml.
+\*.yaml.
 
 ```
-# example.pol.yaml
+# example_policy.yaml
 filters:
 - header:
 # ...
@@ -223,7 +223,7 @@ filters:
   - name: deny-to-reserved
     destination-address: RESERVED
     action: deny
-  - include: include_1.pol-include.yaml
+  - include: include_1.yaml
   - name: allow-web-to-mail
     source-address: WEB_SERVERS
     destination-address: MAIL_SERVERS
@@ -231,7 +231,7 @@ filters:
 ```
 
 ```
-# include_1.pol-include.yaml
+# include_1.yaml
 terms:
 - name: deny-to-bogons
   destination-address: RESERVED
