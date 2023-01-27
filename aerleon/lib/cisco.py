@@ -550,7 +550,6 @@ class Term(aclgenerator.Term):
                 protocol = [x if x != 'ah' else '51' for x in protocol]
 
         # addresses
-
         # source address
         if self.term.source_address:
             source_address = self.term.GetAddressOfVersion('source_address', self.af)
@@ -570,8 +569,9 @@ class Term(aclgenerator.Term):
                 source_address = summarizer.Summarize(source_address)
         else:
             # source address not set
-            source_address = ['any']
-        source_address_set = set(source_address)
+            source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
+        fixed_src_addresses = set([self._GetIpString(x) for x in source_address])
+        
         # destination address
         if self.term.destination_address:
             destination_address = self.term.GetAddressOfVersion('destination_address', self.af)
@@ -593,8 +593,10 @@ class Term(aclgenerator.Term):
                 destination_address = summarizer.Summarize(destination_address)
         else:
             # destination address not set
-            destination_address = ['any']
-        destination_address_set = set(destination_address)
+            destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
+        
+        fixed_dst_addresses = set([self._GetIpString(x) for x in destination_address])
+        
 
         # ports
         source_port = [()]
@@ -669,25 +671,24 @@ class Term(aclgenerator.Term):
         icmp_codes = ['']
         if self.term.icmp_code:
             icmp_codes = self.term.icmp_code
-        fixed_src_addresses = [self._GetIpString(x) for x in source_address_set]
-        fixed_dst_addresses = [self._GetIpString(x) for x in destination_address_set]
+
         fixed_opts = {}
         for p in protocol:
             fixed_opts[p] = self._FixOptions(p, self.options)
 
         # temlet constructor
-        for saddr in fixed_src_addresses:
-            for daddr in fixed_dst_addresses:
-                for sport in source_port:
-                    for dport in destination_port:
-                        for proto in protocol:
+        for saddr in sorted(fixed_src_addresses):
+            for daddr in sorted(fixed_dst_addresses):
+                for sport in sorted(source_port):
+                    for dport in sorted(destination_port):
+                        for proto in sorted(protocol):
                             opts = fixed_opts[proto]
                             # cisconx uses icmp for both ipv4 and ipv6
                             if self.platform == 'cisconx':
                                 if self.af == 6:
                                     proto = 'icmp' if proto == 'icmpv6' else proto
-                            for icmp_type in icmp_types:
-                                for icmp_code in icmp_codes:
+                            for icmp_type in sorted(icmp_types):
+                                for icmp_code in sorted(icmp_codes):
                                     ret_str.extend(
                                         self._TermletToStr(
                                             action,
@@ -712,6 +713,11 @@ class Term(aclgenerator.Term):
         Returns:
           An address string suitable for the ACL.
         """
+        # DSMO enabled
+        if isinstance(addr, summarizer.DSMNet):
+            return '%s %s' % summarizer.ToDottedQuad(addr, negate=True)
+        if addr.prefixlen == 0:
+            return 'any'
         if isinstance(addr, nacaddr.IPv4) or isinstance(addr, ipaddress.IPv4Network):
             addr = cast(self.IPV4_ADDRESS, addr)
             if addr.num_addresses > 1:
@@ -724,9 +730,7 @@ class Term(aclgenerator.Term):
             if addr.num_addresses > 1:
                 return addr.with_prefixlen
             return 'host %s' % (addr.network_address)
-        # DSMO enabled
-        if isinstance(addr, summarizer.DSMNet):
-            return '%s %s' % summarizer.ToDottedQuad(addr, negate=True)
+       
         return addr
 
     def _FormatPort(self, port, proto):
@@ -848,6 +852,16 @@ class ObjectGroupTerm(Term):
     where first-term-source-address, ANY and 179-179 are defined elsewhere
     in the acl.
     """
+
+    def _GetIpString(self, addr):
+        """Formats the address object for printing in the ACL.
+
+        Args:
+          addr: str or ipaddr, address
+        Returns:
+          An address string suitable for the ACL.
+        """
+        return addr.parent_token
 
 
 class Cisco(aclgenerator.ACLGenerator):

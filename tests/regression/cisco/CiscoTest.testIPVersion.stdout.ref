@@ -8,7 +8,7 @@ ip access-list extended test-filter
 
 
  remark good-term-6
- permit ip any 0.0.0.0 255.255.255.255
+ permit ip any any
 
 exit
 

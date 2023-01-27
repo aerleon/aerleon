@@ -841,7 +841,7 @@ class CiscoTest(absltest.TestCase):
         self.assertIn('permit hbh any any', str(acl), str(acl))
         print(acl)
 
-    @capture.stdout
+    # @capture.stdout
     def testOwnerTerm(self):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_13, self.naming), EXP_INFO)
         self.assertTrue(re.search(' remark Owner: foo@google.com', str(acl)), str(acl))

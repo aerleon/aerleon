@@ -97,16 +97,15 @@ ipv6 access-list ipv6-edge-inbound
 
 
  remark deny-from-reserved
- deny ipv6 ::/8 any
- deny ipv6 host ::1 any
+ deny ipv6 1000::/4 any
  deny ipv6 100::/8 any
  deny ipv6 200::/7 any
- deny ipv6 400::/6 any
- deny ipv6 800::/5 any
- deny ipv6 1000::/4 any
  deny ipv6 4000::/3 any
+ deny ipv6 400::/6 any
  deny ipv6 6000::/3 any
  deny ipv6 8000::/3 any
+ deny ipv6 800::/5 any
+ deny ipv6 ::/8 any
  deny ipv6 a000::/3 any
  deny ipv6 c000::/3 any
  deny ipv6 e000::/4 any
@@ -117,6 +116,7 @@ ipv6 access-list ipv6-edge-inbound
  deny ipv6 fe80::/10 any
  deny ipv6 fec0::/10 any
  deny ipv6 ff00::/8 any
+ deny ipv6 host ::1 any
 
 
  remark default-deny
@@ -132,24 +132,18 @@ ip access-list extended edge-outbound
 
  remark deny-to-bad-destinations
  deny ip any 0.0.0.0 0.255.255.255
- deny ip any 0.0.0.0 0.255.255.255
- deny ip any 10.0.0.0 0.255.255.255
  deny ip any 10.0.0.0 0.255.255.255
  deny ip any 100.64.0.0 0.63.255.255
  deny ip any 127.0.0.0 0.255.255.255
  deny ip any 169.254.0.0 0.0.255.255
  deny ip any 172.16.0.0 0.15.255.255
- deny ip any 172.16.0.0 0.15.255.255
  deny ip any 192.0.0.0 0.0.0.255
  deny ip any 192.0.2.0 0.0.0.255
- deny ip any 192.168.0.0 0.0.255.255
  deny ip any 192.168.0.0 0.0.255.255
  deny ip any 198.18.0.0 0.1.255.255
  deny ip any 198.51.100.0 0.0.0.255
  deny ip any 203.0.113.0 0.0.0.255
  deny ip any 224.0.0.0 15.255.255.255
- deny ip any 224.0.0.0 15.255.255.255
- deny ip any 240.0.0.0 15.255.255.255
  deny ip any 240.0.0.0 15.255.255.255
 
 
@@ -165,19 +159,18 @@ ipv6 access-list ipv6-edge-outbound
 
 
  remark deny-to-bad-destinations
- deny ipv6 any ::/8
- deny ipv6 any host ::1
- deny ipv6 any 100::/8
- deny ipv6 any 200::/7
- deny ipv6 any 400::/6
- deny ipv6 any 800::/5
  deny ipv6 any 1000::/4
+ deny ipv6 any 100::/8
  deny ipv6 any 2001:db8::/32
+ deny ipv6 any 200::/7
  deny ipv6 any 3ffe::/16
  deny ipv6 any 4000::/3
+ deny ipv6 any 400::/6
  deny ipv6 any 5f00::/8
  deny ipv6 any 6000::/3
  deny ipv6 any 8000::/3
+ deny ipv6 any 800::/5
+ deny ipv6 any ::/8
  deny ipv6 any a000::/3
  deny ipv6 any c000::/3
  deny ipv6 any e000::/4
@@ -188,7 +181,7 @@ ipv6 access-list ipv6-edge-outbound
  deny ipv6 any fe80::/10
  deny ipv6 any fec0::/10
  deny ipv6 any ff00::/8
- deny ipv6 any ff00::/8
+ deny ipv6 any host ::1
 
 
  remark default-accept
