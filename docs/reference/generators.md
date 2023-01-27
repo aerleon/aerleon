@@ -178,7 +178,7 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp_match_: Match a DSCP number.
+* _dscp-match_: Match a DSCP number.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -304,7 +304,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 * _address_: One or more network address tokens, matches source or destination.
 * _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp_match_: Match a DSCP number.
+* _dscp-match_: Match a DSCP number.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -394,7 +394,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp_match_: Match a DSCP number.
+* _dscp-match_: Match a DSCP number.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -440,7 +440,7 @@ targets:
 
 * _address_: One or more network address tokens, matches source or destination.
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp_match_: Match a DSCP number.
+* _dscp-match_: Match a DSCP number.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _next_ip_: next hop (address token -> single IP) for ACL based forwarding
@@ -486,7 +486,7 @@ targets:
 * for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination_tag_: Tag name to be used for destination filtering.
+* _destination-tag_: Tag name to be used for destination filtering.
 * _owner_: Owner of the term, used for organizational purposes.
 * _priority_ Relative priority of rules when evaluated on the platform.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
@@ -667,15 +667,15 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _destination-prefix_except_: Specify destination-prefix exception(TODO:cmas Fill in more).
-* _dscp_except_: Do not match the DSCP number.
-* _dscp_match_: Match a DSCP number.
-* _dscp_set_: Match a DSCP set.
-* _ether_type_: Match EtherType field.
+* _destination-prefix-except_: Specify destination-prefix exception(TODO:cmas Fill in more).
+* _dscp-except_: Do not match the DSCP number.
+* _dscp-match_: Match a DSCP number.
+* _dscp-set_: Match a DSCP set.
+* _ether-type_: Match EtherType field.
 * _filter-term_: Include another filter
-* _flexible-match-range Filter based on flexible match options.
+* _flexible-match-range_: Filter based on flexible match options.
 * _forwarding-class_: Specify the forwarding class to match.
-* _forwarding-class_except_: Do not match the specified forwarding classes.
+* _forwarding-class-except_: Do not match the specified forwarding classes.
 * _fragement-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
@@ -688,7 +688,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _port_: Matches on source or destination ports. Takes a service token.
 * _port-mirror_: Sends copies of the packets to a remote port, boolean value is used to render this config.
 * _precedence_: specify precedence of range 0-7.  May be a single integer, or a space separated list.
-* _protocol\_except_: allow all protocol "except" specified.
+* _protocol-except_: allow all protocol "except" specified.
 * _qos_: apply quality of service classification to matching packets (e.g. qos:: af4)
 * _routing-instance_: specify routing instance for matching packets.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
@@ -750,15 +750,15 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _destination-prefix_except_: Specify destination-prefix exception(TODO:cmas Fill in more).
-* _dscp_except_: Do not match the DSCP number.
-* _dscp_match_: Match a DSCP number.
-* _dscp_set_: Match a DSCP set.
-* _ether_type_: Match EtherType field.
+* _destination-prefix-except_: Specify destination-prefix exception(TODO:cmas Fill in more).
+* _dscp-except_: Do not match the DSCP number.
+* _dscp-match_: Match a DSCP number.
+* _dscp-set_: Match a DSCP set.
+* _ether-type_: Match EtherType field.
 * _filter-term_: Include another filter
-* _flexible-match-range Filter based on flexible match options.
+* _flexible-match-range_: Filter based on flexible match options.
 * _forwarding-class_: Specify the forwarding class to match.
-* _forwarding-class_except_: Do not match the specified forwarding classes.
+* _forwarding-class-except_: Do not match the specified forwarding classes.
 * _fragement-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
@@ -771,7 +771,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _port_: Matches on source or destination ports. Takes a service token.
 * _port-mirror_: Sends copies of the packets to a remote port, boolean value is used to render this config.
 * _precedence_: specify precedence of range 0-7.  May be a single integer, or a space separated list.
-* _protocol\_except_: allow all protocol "except" specified.
+* _protocol-except_: allow all protocol "except" specified.
 * _qos_: apply quality of service classification to matching packets (e.g. qos:: af4)
 * _routing-instance_: specify routing instance for matching packets.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
@@ -868,9 +868,9 @@ targets:
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-zone_: one or more destination zones tokens. Only supported by global policy
-* _dscp_except_: Do not match the DSCP number.
-* _dscp_match_: Match a DSCP number.
-* _dscp_set_: Match a DSCP set.
+* _dscp-except_: Do not match the DSCP number.
+* _dscp-match_: Match a DSCP number.
+* _dscp-set_: Match a DSCP set.
 * _logging_: Specify that these packets should be logged.
     * Based on the input value the resulting logging actions will follow this logic:
 
@@ -1083,7 +1083,7 @@ targets:
 * _inet_: specifies that the resulting filter should only render IPv4 addresses.
 * _inet6_: specifies that the resulting filter should only render IPv6 addresses.
 * _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
-* _sectionId_: specifies the Id for the section (optional)
+* _section-id_: specifies the id for the section (optional)
 * _securitygroup_: specifies that the appliedTo should be security group (optional)
 * _securitygroupId_: specifies the Id of the security group (mandatory if securitygroup is given)
 
@@ -1366,13 +1366,13 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _counter_: Update a counter for matching packets
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _destination-prefix_except_: Specify destination-prefix exception(TODO:cmas Fill in more).
-* _dscp_except_: Do not match the DSCP number.
-* _dscp_match_: Match a DSCP number.
-* _dscp_set_: Match a DSCP set.
-* _ether_type_: Match EtherType field.
+* _destination-prefix-except_: Specify destination-prefix exception(TODO:cmas Fill in more).
+* _dscp-except_: Do not match the DSCP number.
+* _dscp-match_: Match a DSCP number.
+* _dscp-set_: Match a DSCP set.
+* _ether-type_: Match EtherType field.
 * _forwarding-class_: Specify the forwarding class to match.
-* _forwarding-class_except_: Do not match the specified forwarding classes.
+* _forwarding-class-except_: Do not match the specified forwarding classes.
 * _fragement-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
@@ -1384,7 +1384,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _policer_: specify which policer to apply to matching packets.
 * _port_: Matches on source or destination ports. Takes a service token.
 * _precedence_: specify precedence of range 0-7.  May be a single integer, or a space separated list.
-* _protocol\_except_: allow all protocol "except" specified.
+* _protocol-except_: allow all protocol "except" specified.
 * _qos_: apply quality of service classification to matching packets (e.g. qos:: af4)
 * _routing-instance_: specify routing instance for matching packets.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
