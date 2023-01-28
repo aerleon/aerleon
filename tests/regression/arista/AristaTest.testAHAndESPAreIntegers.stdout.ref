@@ -9,8 +9,8 @@ ip access-list test-filter
 
  remark good-term-6
  remark Accept AH from internal sources.
- permit 51 any any
  permit 50 any any
+ permit 51 any any
  permit tcp any any
 
 exit
