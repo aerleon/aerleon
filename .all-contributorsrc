@@ -17,7 +17,8 @@
       "profile": "https://github.com/itdependsnetworks",
       "contributions": [
         "doc"
-      ]},
+      ]
+    },
     {
       "login": "fischa",
       "name": "Axel F",
@@ -25,6 +26,15 @@
       "profile": "https://github.com/fischa",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "nemith",
+      "name": "Brandon Bennett",
+      "avatar_url": "https://avatars.githubusercontent.com/u/349360?v=4",
+      "profile": "https://hachyderm.io/@nemith",
+      "contributions": [
+        "code"
       ]
     }
   ],
