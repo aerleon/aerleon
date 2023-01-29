@@ -16,10 +16,10 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
-import multiprocessing
 import pathlib
 import sys
-from typing import Iterator, List, Tuple
+from concurrent.futures import Future, ProcessPoolExecutor
+from typing import Any, Callable, Iterator, List, Optional, Tuple
 
 from absl import app, flags, logging
 
@@ -27,7 +27,8 @@ from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
-WriteList = List[Tuple[pathlib.Path, str]]
+
+OutputFile = Tuple[pathlib.Path, str]
 
 
 def SetupFlags():
@@ -140,8 +141,7 @@ def RenderFile(
     exp_info: int,
     optimize: bool,
     shade_check: bool,
-    write_files: WriteList,
-):
+) -> List[OutputFile]:
     """Render a single file.
 
     Args:
@@ -159,36 +159,6 @@ def RenderFile(
     output_directory = output_directory / output_relative
 
     logging.debug('rendering file: %s into %s', input_file, output_directory)
-
-    pol = None
-    jcl = False
-    evojcl = False
-    acl = False
-    atp = False
-    asacl = False
-    aacl = False
-    bacl = False
-    eacl = False
-    gca = False
-    gcefw = False
-    gcphf = False
-    ips = False
-    ipt = False
-    msmpc = False
-    spd = False
-    nsx = False
-    oc = False
-    pcap_accept = False
-    pcap_deny = False
-    pf = False
-    srx = False
-    jsl = False
-    nft = False
-    win_afw = False
-    nxacl = False
-    xacl = False
-    paloalto = False
-    k8s_pol = False
 
     try:
         with open(input_file) as f:
@@ -233,6 +203,8 @@ def RenderFile(
     acl_obj: aclgenerator.ACLGenerator
     plugin_supervisor.PluginSupervisor.Start()
 
+    output_files: List[OutputFile] = []
+
     for target in platforms:
         generator = plugin_supervisor.PluginSupervisor.generators.get(target)
         if not generator:
@@ -243,29 +215,36 @@ def RenderFile(
             # special handling for pcap
             if target == 'pcap':
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
-                RenderACL(
+                output_file = RenderACL(
                     str(acl_obj),
                     '-accept' + acl_obj.SUFFIX,
                     output_directory,
                     input_file,
-                    write_files,
                 )
+                if output_file:
+                    output_files.append(output_file)
+
                 acl_obj = generator(copy.deepcopy(pol), exp_info, invert=True)
-                RenderACL(
+                output_file = RenderACL(
                     str(acl_obj),
                     '-deny' + acl_obj.SUFFIX,
                     output_directory,
                     input_file,
-                    write_files,
                 )
+                if output_file:
+                    output_files.append(output_file)
             else:
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
-                RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
+                output_file = RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file)
+                if output_file:
+                    output_files.append(output_file)
 
         except aclgenerator.Error as e:
             raise ACLGeneratorError(
                 'Error generating target ACL for %s:\n%s' % (input_file, e)
             ) from e
+
+    return output_files
 
 
 def RenderACL(
@@ -273,9 +252,8 @@ def RenderACL(
     acl_suffix: str,
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
-    write_files: List[Tuple[pathlib.Path, str]],
     binary: bool = False,
-):
+) -> Optional[OutputFile]:
     """Write the ACL string out to file if appropriate.
 
     Args:
@@ -291,9 +269,10 @@ def RenderACL(
 
     if FilesUpdated(output_file, acl_text, binary):
         logging.info('file changed: %s', output_file)
-        write_files.append((output_file, acl_text))
+        return (output_file, acl_text)
     else:
         logging.debug('file not changed: %s', output_file)
+        return None
 
 
 def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
@@ -317,9 +296,9 @@ def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
     except IOError:
         return True
     if not binary:
-        p4_id = '$I d:'.replace(' ', '')
-        p4_date = '$Da te:'.replace(' ', '')
-        p4_revision = '$Rev ision:'.replace(' ', '')
+        p4_id = '$' + 'Id:'
+        p4_date = '$' + 'Date:'
+        p4_revision = '$' + 'Revision:'
 
         def P4Tags(text: str) -> bool:
             return not (p4_id in text or p4_date in text or p4_revision in text)
@@ -370,7 +349,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
     return policy_files
 
 
-def WriteFiles(write_files: WriteList):
+def WriteFiles(write_files: List[OutputFile]):
     """Writes files to disk.
 
     Args:
@@ -403,6 +382,16 @@ def _WriteFile(output_file: pathlib.Path, file_contents: str):
         raise
 
 
+def _run_with_logging(logging_level, /, *args: Any, **kwargs: Any) -> List[OutputFile]:
+    """
+    runs RenderFile but sets up logging first.  This is needed for
+    multiprocessing where the logging in main isn't applied
+    """
+    setup_logging(logging_level)
+
+    return RenderFile(*args, **kwargs)
+
+
 def Run(
     base_directory: str,
     definitions_directory: str,
@@ -413,7 +402,6 @@ def Run(
     ignore_directories: List[str],
     optimize: bool,
     shade_check: bool,
-    context: multiprocessing.context.BaseContext,
 ):
     """Generate ACLs.
 
@@ -429,7 +417,6 @@ def Run(
       ignore_directories: directories to ignore when searching for policy files.
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded.
-      context: multiprocessing context
     """
     definitions = None
     try:
@@ -439,16 +426,12 @@ def Run(
         logging.fatal(err_msg)
         return  # static type analyzer can't detect that logging.fatal exits program
 
-    # thead-safe list for storing files to write
-    manager: multiprocessing.managers.SyncManager = context.Manager()
-    write_files: WriteList = manager.list()
-
     with_errors = False
     logging.info('finding policies...')
     if policy_file:
         # render just one file
         logging.info('rendering one file')
-        RenderFile(
+        write_files = RenderFile(
             base_directory,
             pathlib.Path(policy_file),
             pathlib.Path(output_directory),
@@ -456,49 +439,48 @@ def Run(
             exp_info,
             optimize,
             shade_check,
-            write_files,
         )
     elif max_renderers == 1:
         # If only one process, run it sequentially
         policies = DescendDirectory(base_directory, ignore_directories)
+        write_files: List[OutputFile] = []
         for pol in policies:
-            RenderFile(
-                base_directory,
-                pol,
-                pathlib.Path(output_directory),
-                definitions,
-                exp_info,
-                optimize,
-                shade_check,
-                write_files,
+            write_files.extend(
+                RenderFile(
+                    base_directory,
+                    pol,
+                    pathlib.Path(output_directory),
+                    definitions,
+                    exp_info,
+                    optimize,
+                    shade_check,
+                )
             )
     else:
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
-        pool = context.Pool(processes=max_renderers)
-        results: List[multiprocessing.pool.AsyncResult] = []
-        for pol in policies:
-            results.append(
-                pool.apply_async(
-                    RenderFile,
-                    args=(
-                        base_directory,
-                        pol,
-                        output_directory,
-                        definitions,
-                        exp_info,
-                        optimize,
-                        shade_check,
-                        write_files,
-                    ),
-                )
-            )
-        pool.close()
-        pool.join()
 
-        for result in results:
+        logging_level = logging.get_verbosity()
+        with ProcessPoolExecutor(max_workers=max_renderers) as e:
+            futures = [
+                e.submit(
+                    _run_with_logging,
+                    logging_level,
+                    base_directory,
+                    policy,
+                    output_directory,
+                    definitions,
+                    exp_info,
+                    optimize,
+                    shade_check,
+                )
+                for policy in policies
+            ]
+
+        write_files: List[OutputFile] = []
+        for fut in futures:
             try:
-                result.get()
+                write_files.extend(fut.result())
             except (ACLParserError, ACLGeneratorError) as e:
                 with_errors = True
                 logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
@@ -513,15 +495,24 @@ def Run(
         logging.info('done.')
 
 
+def setup_logging(level: Any) -> None:
+    logging.use_absl_handler()
+    if level:
+        logging.set_verbosity(level)
+
+
 def main(argv):
     del argv  # Unused.
 
     configs = config.generate_configs(FLAGS)
 
+    logging_level = None
     if configs['verbose']:
-        logging.set_verbosity(logging.INFO)
-    if configs['debug']:
-        logging.set_verbosity(logging.DEBUG)
+        logging_level = logging.INFO
+    elif configs['debug']:
+        logging_level = logging.DEBUG
+    setup_logging(logging_level)
+
     logging.debug(
         'binary: %s\noptimize: %d\nbase_directory: %s\n'
         'policy_file: %s\nrendered_acl_directory: %s',
@@ -533,8 +524,6 @@ def main(argv):
     )
     logging.debug('aerleon configurations: %s', configs)
 
-    context = multiprocessing.get_context()
-
     Run(
         configs['base_directory'],
         configs['definitions_directory'],
@@ -545,7 +534,6 @@ def main(argv):
         configs['ignore_directories'],
         configs['optimize'],
         configs['shade_check'],
-        context,
     )
 
 
