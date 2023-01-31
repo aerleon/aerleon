@@ -8,7 +8,7 @@ from absl import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy
-from aerleon.lib.policy import _SubpathOf, BadIncludePath
+from aerleon.lib.policy import BadIncludePath, _SubpathOf
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
     RawFilter,
