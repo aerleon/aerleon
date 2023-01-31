@@ -117,84 +117,38 @@ class TermStandard:
             return '\n'.join(ret_str)
 
         v4_addresses = [x for x in self.term.address if not isinstance(x, nacaddr.IPv6)]
+        prefix = ''
         if self.filter_name.isdigit():
-            if self.verbose:
-                ret_str.append('access-list %s remark %s' % (self.filter_name, self.term.name))
-                comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
-                for comment in comments:
-                    ret_str.append('access-list %s remark %s' % (self.filter_name, comment))
+            prefix = f'access-list {self.filter_name}'
+      
+        if self.verbose:
+            ret_str.append(f'{prefix} remark {self.term.name}')
+            comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
+            for comment in comments:
+                ret_str.append(f'{prefix} remark {comment}')
 
-            action = _ACTION_TABLE.get(str(self.term.action[0]))
-            if v4_addresses:
-                for addr in v4_addresses:
+        action = _ACTION_TABLE.get(str(self.term.action[0]))
+        if v4_addresses:
+            for addr in v4_addresses:
+                if self.platform == 'arista':
                     if addr.prefixlen == 32:
                         ret_str.append(
-                            'access-list %s %s %s%s%s'
-                            % (
-                                self.filter_name,
-                                action,
-                                addr.network_address,
-                                self.logstring,
-                                self.dscpstring,
-                            )
+                        f'{prefix} {action} host {addr.network_address}{self.logstring}{self.dscpstring}'
                         )
                     else:
                         ret_str.append(
-                            'access-list %s %s %s %s%s%s'
-                            % (
-                                self.filter_name,
-                                action,
-                                addr.network_address,
-                                addr.hostmask,
-                                self.logstring,
-                                self.dscpstring,
-                            )
-                        )
-            else:
-                ret_str.append(
-                    'access-list %s %s %s%s%s'
-                    % (self.filter_name, action, 'any', self.logstring, self.dscpstring)
-                )
+                        f'{prefix} {action} {addr.network_address}/{addr.prefixlen}{self.logstring}{self.dscpstring}'
+                    )
+                elif addr.prefixlen == 32:
+                    ret_str.append(
+                        f'{prefix} {action} {addr.network_address}{self.logstring}{self.dscpstring}'
+                    )
+                else:
+                    ret_str.append(
+                        f'{prefix} {action} {addr.network_address} {addr.hostmask}{self.logstring}{self.dscpstring}'
+                    )
         else:
-            if self.verbose:
-                ret_str.append(' remark ' + self.term.name)
-                comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
-                if comments and comments[0]:
-                    for comment in comments:
-                        ret_str.append(' remark ' + str(comment))
-
-            action = _ACTION_TABLE.get(str(self.term.action[0]))
-            if v4_addresses:
-                for addr in v4_addresses:
-                    if addr.prefixlen == 32:
-                        ret_str.append(
-                            ' %s host %s%s%s'
-                            % (action, addr.network_address, self.logstring, self.dscpstring)
-                        )
-                    elif self.platform == 'arista':
-                        ret_str.append(
-                            ' %s %s/%s%s%s'
-                            % (
-                                action,
-                                addr.network_address,
-                                addr.prefixlen,
-                                self.logstring,
-                                self.dscpstring,
-                            )
-                        )
-                    else:
-                        ret_str.append(
-                            ' %s %s %s%s%s'
-                            % (
-                                action,
-                                addr.network_address,
-                                addr.hostmask,
-                                self.logstring,
-                                self.dscpstring,
-                            )
-                        )
-            else:
-                ret_str.append(' %s %s%s%s' % (action, 'any', self.logstring, self.dscpstring))
+            ret_str.append(f'{prefix} {action} any{self.logstring}{self.dscpstring}')
 
         return '\n'.join(ret_str)
 
@@ -571,7 +525,7 @@ class Term(aclgenerator.Term):
             # source address not set
             source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
         fixed_src_addresses = set([self._GetIpString(x) for x in source_address])
-        
+
         # destination address
         if self.term.destination_address:
             destination_address = self.term.GetAddressOfVersion('destination_address', self.af)
@@ -594,9 +548,8 @@ class Term(aclgenerator.Term):
         else:
             # destination address not set
             destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
-        
+
         fixed_dst_addresses = set([self._GetIpString(x) for x in destination_address])
-        
 
         # ports
         source_port = [()]
@@ -730,7 +683,7 @@ class Term(aclgenerator.Term):
             if addr.num_addresses > 1:
                 return addr.with_prefixlen
             return 'host %s' % (addr.network_address)
-       
+
         return addr
 
     def _FormatPort(self, port, proto):
@@ -971,6 +924,7 @@ class Cisco(aclgenerator.ACLGenerator):
 
                     # render terms based on filter type
                     if next_filter == 'standard':
+
                         # keep track of sequence numbers across terms
                         new_terms.append(
                             TermStandard(term, filter_name, self._PLATFORM, self.verbose)
@@ -991,9 +945,7 @@ class Cisco(aclgenerator.ACLGenerator):
                         )
                     elif next_filter == 'object-group':
                         obj_target.AddTerm(term)
-                        new_terms.append(
-                            self._GetObjectGroupTerm(term, verbose=self.verbose)
-                        )
+                        new_terms.append(self._GetObjectGroupTerm(term, verbose=self.verbose))
                     elif next_filter == 'inet6':
                         new_terms.append(
                             ExtendedTerm(
