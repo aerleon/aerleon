@@ -99,6 +99,9 @@ term included-term-1 {
 }
 #include "/tmp/z.inc"
 """
+BAD_INCLUDE_STATEMENT = """
+#include "/tmp/y"
+"""
 GOOD_TERM_0 = """
 term good-term-0 {
   protocol:: icmp
@@ -599,7 +602,7 @@ class PolicyTest(parameterized.TestCase):
 
         # contents of our base policy (which has an included file)
         pol = HEADER + INCLUDE_STATEMENT + GOOD_TERM_1
-        p = policy.ParsePolicy(pol, self.naming)
+        p = policy.ParsePolicy(pol, self.naming, base_dir='/tmp')
         _, terms = p.filters[0]
         # ensure include worked and we now have 3 terms in this policy
         self.assertEqual(len(terms), 3)
@@ -611,6 +614,17 @@ class PolicyTest(parameterized.TestCase):
         self.assertEqual(terms[2].name, 'good-term-1')
 
         mock_file.assert_has_calls([mock.call('/tmp/y.inc'), mock.call('/tmp/z.inc')])
+
+    def testBadIncludePaths(self):
+        """Watch for includes outside of the base_dir or with the incorrect suffix."""
+        pol = HEADER + INCLUDE_STATEMENT + GOOD_TERM_1
+        self.assertRaises(
+            policy.BadIncludePath, policy.ParsePolicy, pol, self.naming, base_dir='./policies'
+        )
+        pol = HEADER + BAD_INCLUDE_STATEMENT + GOOD_TERM_1
+        self.assertRaises(
+            policy.BadIncludePath, policy.ParsePolicy, pol, self.naming, base_dir='/tmp'
+        )
 
     def testGoodPol(self):
         pol = HEADER + GOOD_TERM_1 + GOOD_TERM_2
