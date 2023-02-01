@@ -106,15 +106,6 @@ class TermStandard:
             self.dscpstring = ' dscp' + self.term.dscp_match
 
     def __str__(self):
-        # Verify platform specific terms. Skip whole term if platform does not
-        # match.
-        if self.term.platform:
-            if self.platform not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if self.platform in self.term.platform_exclude:
-                return ''
-
         ret_str = []
 
         # Term verbatim output - this will skip over normal term creation
@@ -329,6 +320,7 @@ class PortMap:
         43: 'whois',
         80: 'www',
     }
+
     _PORTS_UDP = {
         512: 'biff',
         68: 'bootpc',
@@ -358,6 +350,7 @@ class PortMap:
         513: 'who',
         177: 'xdmcp',
     }
+
     _TYPES_ICMP = {
         6: 'alternate-address',
         31: 'conversion-error',
@@ -395,6 +388,7 @@ class PortMap:
         1521: 'sqlnet',
     }
     _CISCO_PORTS_TCP.update(_PORTS_TCP)
+
     _CISCO_PORTS_UDP = {
         750: 'kerberos',
         5632: 'pcanywhere-status',
@@ -410,6 +404,7 @@ class PortMap:
         88: 'kerberos',
     }
     _ARISTA_PORTS_TCP.update(_PORTS_TCP)
+
     _ARISTA_PORTS_UDP = {
         88: 'kerberos',
         1812: 'radius',
@@ -491,15 +486,6 @@ class Term(aclgenerator.Term):
             self.text_af = 'inet6'
 
     def __str__(self):
-        # Verify platform specific terms. Skip whole term if platform does not
-        # match.
-        if self.term.platform:
-            if self.platform not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if self.platform in self.term.platform_exclude:
-                return ''
-
         ret_str = ['\n']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -857,15 +843,6 @@ class ObjectGroupTerm(Term):
         self.verbose = verbose
 
     def __str__(self):
-        # Verify platform specific terms. Skip whole term if platform does not
-        # match.
-        if self.term.platform:
-            if self.platform not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if self.platform in self.term.platform_exclude:
-                return ''
-
         source_address_set = set()
         destination_address_set = set()
         ret_str = ['\n']

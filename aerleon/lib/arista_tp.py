@@ -157,13 +157,6 @@ class Term(aclgenerator.Term):
             raise ValueError("unknown filter type: %s" % term_type)
 
     def __str__(self):
-        # verify platform specific terms. skip the whole term if the platform
-        # does not match.
-        if self.term.platform and self._PLATFORM not in self.term.platform:
-            return ""
-        if self.term.platform_exclude and self._PLATFORM in self.term.platform_exclude:
-            return ""
-
         config = Config()
 
         # a LoL which will be appended to the config at the end of this method

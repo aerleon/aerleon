@@ -62,15 +62,6 @@ class Term(aclgenerator.Term):
         self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
 
     def __str__(self):
-        # Verify platform specific terms. Skip whole term if platform does not
-        # match.
-        if self.term.platform:
-            if self._PLATFORM not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if self._PLATFORM in self.term.platform_exclude:
-                return ''
-
         ret_str = []
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6

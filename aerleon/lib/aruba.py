@@ -246,8 +246,6 @@ class Aruba(aclgenerator.ACLGenerator):
             'icmp_type',
             'source_port',
             'source_address_exclude',
-            'platform',
-            'platform_exclude',
         }
 
         supported_sub_tokens.update(
