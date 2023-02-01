@@ -1695,7 +1695,13 @@ class Header:
         for target in self.target:
             if target.platform == platform:
                 if target.options:
-                    return target.options[0]
+                    if platform in ['srx', 'paloalto']:
+                        if len(target.options) >= 3:
+                            return '%s>%s' % (target.options[1], target.options[3])
+                        else:
+                            return None
+                    else:
+                        return target.options[0]
         return None
 
     def __str__(self):

@@ -16,11 +16,11 @@
 
 """Cisco ASA renderer."""
 
-import datetime
 import ipaddress
-import logging
 import re
 from typing import cast
+
+from absl import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 
@@ -335,9 +335,6 @@ class CiscoASA(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         self.ciscoasa_policies = []
-        current_date = datetime.date.today()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in self.policy.filters:
             filter_name = header.FilterName(self._PLATFORM)
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -346,22 +343,6 @@ class CiscoASA(aclgenerator.ACLGenerator):
             new_terms = []
             # now add the terms
             for term in terms:
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
-
                 new_terms.append(str(Term(term, filter_name, enable_dsmo=enable_dsmo)))
 
             self.ciscoasa_policies.append((header, filter_name, new_terms))

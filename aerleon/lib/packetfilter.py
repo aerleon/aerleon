@@ -18,7 +18,6 @@
 
 import collections
 import copy
-import datetime
 from typing import cast
 
 from absl import logging
@@ -458,9 +457,6 @@ class PacketFilter(aclgenerator.ACLGenerator):
         self.pf_policies = []
         self.address_book = {}
         self.def_short_to_long = {}
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         good_afs = ['inet', 'inet6', 'mixed']
         good_options = ['in', 'out', 'nostate']
         all_protocols_stateful = True
@@ -572,22 +568,6 @@ class PacketFilter(aclgenerator.ACLGenerator):
 
                 if not term:
                     continue
-
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
 
                 if term.destination_interface and term.source_interface:
                     raise Error(

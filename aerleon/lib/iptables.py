@@ -16,7 +16,6 @@
 
 """Iptables generator."""
 
-import datetime
 import re
 from string import Template  # pylint: disable=g-importing-member
 
@@ -769,9 +768,6 @@ class Iptables(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         """Translate a policy from objects into strings."""
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         default_action = None
         good_default_actions = ['ACCEPT', 'DROP']
         good_afs = ['inet', 'inet6']
@@ -868,22 +864,6 @@ class Iptables(aclgenerator.ACLGenerator):
                 )
                 if not term:
                     continue
-
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
 
                 new_terms.append(
                     self._TERM(

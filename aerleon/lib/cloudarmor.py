@@ -9,7 +9,8 @@ https://cloud.google.com/armor/docs/
 
 import copy
 import json
-import logging
+
+from absl import logging
 
 from aerleon.lib import aclgenerator
 

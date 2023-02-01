@@ -22,12 +22,12 @@ https://cloud.google.com/compute/docs/reference/latest/firewalls
 """
 
 import copy
-import datetime
 import ipaddress
 import json
-import logging
 import re
 from typing import Any, Dict
+
+from absl import logging
 
 from aerleon.lib import gcp, nacaddr
 
@@ -444,9 +444,6 @@ class GCE(gcp.GCP):
         total_attribute_count = 0
         total_rule_count = 0
 
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
@@ -478,6 +475,9 @@ class GCE(gcp.GCP):
                 network = filter_options[0]
             else:
                 logging.warning('GCE filter does not specify a network.')
+
+            if not terms:
+                continue
 
             term_names = set()
             if IsDefaultDeny(terms[-1]):
@@ -519,21 +519,6 @@ class GCE(gcp.GCP):
                 term_names.add(term.name)
 
                 term.direction = direction
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
                 if term.option:
                     raise GceFirewallError('GCE firewall does not support term options.')
 

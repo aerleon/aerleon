@@ -16,7 +16,6 @@
 
 """Nsxv generator."""
 
-import datetime
 import re
 import xml
 
@@ -522,9 +521,6 @@ class Nsxv(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         self.nsxv_policies = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             if len(filter_options) >= 2:
@@ -544,21 +540,6 @@ class Nsxv(aclgenerator.ACLGenerator):
                     raise NsxvDuplicateTermError('There are multiple terms named: %s' % term.name)
                 term_names.add(term.name)
 
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
                 # Get the mapped action value
                 # If there is no mapped action value term is not rendered
                 mapped_action = _ACTION_TABLE.get(str(term.action[0]))

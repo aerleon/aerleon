@@ -16,7 +16,6 @@
 """arista traffic-policy generator."""
 
 import copy
-import datetime
 import re
 
 from absl import logging
@@ -244,7 +243,7 @@ class Term(aclgenerator.Term):
         if not has_match_criteria and not is_default_term:
             # this term doesn't match on anything and isn't a default-term
             logging.warning(
-                "WARNING: term %s has no valid match criteria and " "will not be rendered.",
+                "WARNING: term %s has no valid match criteria and will not be rendered.",
                 self.term.name,
             )
             return ""
@@ -718,9 +717,6 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         self.arista_traffic_policies = []
         af_map_txt = {"inet": "ipv4", "inet6": "ipv6"}
 
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
@@ -777,22 +773,6 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                     term = self.FixHighPorts(term, af=ft)
                     if not term:
                         continue
-
-                    if term.expiration:
-                        if term.expiration <= exp_info_date:
-                            logging.info(
-                                "INFO: term %s in policy %s expires " "in less than two weeks.",
-                                term.name,
-                                filter_name,
-                            )
-                        if term.expiration <= current_date:
-                            logging.warning(
-                                "WARNING: term %s in policy %s is expired and "
-                                "will not be rendered.",
-                                term.name,
-                                filter_name,
-                            )
-                            continue
 
                     # emit warnings for unsupported options / terms
                     if term.option:

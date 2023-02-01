@@ -16,7 +16,6 @@
 
 """Generic Windows security policy generator; requires subclassing."""
 
-import datetime
 import string
 
 from absl import logging
@@ -267,9 +266,6 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
     def _TranslatePolicy(self, pol, exp_info):
         """Translate a policy from objects into strings."""
         self.windows_policies = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         default_action = None
         good_default_actions = ['permit', 'block']
         good_options = []
@@ -339,21 +335,6 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
                     )
                 term_names.add(term.name)
 
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
                 if 'established' in term.option or 'tcp-established' in term.option:
                     continue
                 new_terms.append(self._TERM(term, filter_name, default_action, filter_type))

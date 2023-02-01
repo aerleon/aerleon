@@ -20,7 +20,6 @@
 
 import collections
 import copy
-import datetime
 import heapq
 import ipaddress
 import itertools
@@ -361,9 +360,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
           ConflictingApplicationSetsError: When two duplicate named terms have
                                            conflicting application entries
         """
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
 
@@ -498,23 +494,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 if term.name in term_dup_check:
                     raise SRXDuplicateTermError('You have a duplicate term: %s' % term.name)
                 term_dup_check.add(term.name)
-
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s>%s expires ' 'in less than two weeks.',
-                            term.name,
-                            self.from_zone,
-                            self.to_zone,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s>%s is expired.',
-                            term.name,
-                            self.from_zone,
-                            self.to_zone,
-                        )
-                        continue
 
                 # SRX address books leverage network token names for IPs.
                 # When excluding addresses, we lose those distinct names so we need

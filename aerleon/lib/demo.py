@@ -15,8 +15,7 @@
 #
 """Demo generator for Aerleon."""
 
-import datetime
-import logging
+from absl import logging
 
 from aerleon.lib import aclgenerator
 
@@ -192,8 +191,6 @@ class Demo(aclgenerator.ACLGenerator):
     )
 
     def _TranslatePolicy(self, pol, exp_info):
-        current_date = datetime.date.today()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         self.demo_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions('demo')
@@ -209,21 +206,6 @@ class Demo(aclgenerator.ACLGenerator):
                 if term.name in term_names:
                     raise DemoFilterError('Duplicate term name')
                 term_names.add(term.name)
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
                 new_terms.append(Term(term, filter_type))
             self.demo_policies.append(
                 (header, filter_name, filter_type, interface_specific, new_terms)

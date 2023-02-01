@@ -249,16 +249,16 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(SUPPORTED_TOKENS, st)
         self.assertEqual(SUPPORTED_SUB_TOKENS, sst)
 
-    @mock.patch.object(logging, 'warning')
+    @mock.patch.object(aruba.logging, 'warning')
     def testExpiredTerm(self, mock_warn):
         aruba.Aruba(policy.ParsePolicy(GOOD_HEADER_V4 + EXPIRED_TERM, self.naming), EXP_INFO)
         mock_warn.assert_called_once_with(
-            'WARNING: Term %s in policy %s is expired and will not ' 'be rendered.',
+            'WARNING: Term %s in policy %s is expired and will not be rendered.',
             'is-expired',
             'test-filter',
         )
 
-    @mock.patch.object(logging, 'info')
+    @mock.patch.object(aruba.logging, 'info')
     def testExpiringTerm(self, mock_info):
         exp_date = datetime.date.today() + datetime.timedelta(weeks=EXP_INFO)
         aruba.Aruba(

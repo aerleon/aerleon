@@ -17,8 +17,8 @@
 
 import collections
 import copy
-import datetime
-import logging
+
+from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 
@@ -641,8 +641,6 @@ class Nftables(aclgenerator.ACLGenerator):
 
         pol_counter = 0
 
-        current_date = datetime.date.today()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         for header, terms in pol.filters:
             filter_options = header.FilterOptions('nftables')
             (
@@ -683,21 +681,6 @@ class Nftables(aclgenerator.ACLGenerator):
                         term.name,
                     )
                     continue
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            nf_af,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            nf_af,
-                        )
-                        continue
                 # Handle address excludes before building nft address book dict.
                 for i in term.source_address_exclude:
                     term.source_address = nacaddr.RemoveAddressFromList(term.source_address, i)

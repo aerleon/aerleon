@@ -28,7 +28,6 @@ having more confidence in it.
 Stolen liberally from packetfilter.py.
 """
 
-import datetime
 
 from absl import logging
 
@@ -375,9 +374,6 @@ class PcapFilter(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol, exp_info):
         self.pcap_policies = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
-
         good_afs = ['inet', 'inet6', 'mixed']
         good_options = ['in', 'out']
         direction = ''
@@ -432,22 +428,6 @@ class PcapFilter(aclgenerator.ACLGenerator):
                     raise aclgenerator.DuplicateTermError(
                         'You have a duplicate term: %s' % term.name
                     )
-
-                if term.expiration:
-                    if term.expiration <= exp_info_date:
-                        logging.info(
-                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
-                            term.name,
-                            filter_name,
-                        )
-                    if term.expiration <= current_date:
-                        logging.warning(
-                            'WARNING: Term %s in policy %s is expired and '
-                            'will not be rendered.',
-                            term.name,
-                            filter_name,
-                        )
-                        continue
 
                 if not term:
                     continue

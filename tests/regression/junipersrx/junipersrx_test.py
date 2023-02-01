@@ -940,7 +940,9 @@ class JuniperSRXTest(absltest.TestCase):
         )
 
         mock_warn.assert_called_once_with(
-            'WARNING: Term %s in policy %s>%s is expired.', 'expired_test', 'trust', 'untrust'
+            'WARNING: Term %s in policy %s is expired and will not be rendered.',
+            'expired_test',
+            'trust>untrust',
         )
 
     @mock.patch.object(junipersrx.logging, 'info')
@@ -954,10 +956,9 @@ class JuniperSRXTest(absltest.TestCase):
         )
 
         mock_info.assert_called_once_with(
-            'INFO: Term %s in policy %s>%s expires in ' 'less than two weeks.',
+            'INFO: Term %s in policy %s expires in ' 'less than two weeks.',
             'is_expiring',
-            'trust',
-            'untrust',
+            'trust>untrust',
         )
 
     @capture.stdout
