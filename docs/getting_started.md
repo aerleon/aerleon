@@ -65,6 +65,7 @@ services:
 ```
 
 Above we have defined a couple of networks and services.
+
 * `RFC1918` is defined as three IP subnets.
 * `WEB_SERVERS` and `MAIL_SERVERS` are both two IP hosts and include a comment about those IPs.
 * `ALL_SERVERS` is a composite of both `WEB_SERVERS` and `MAIL_SERVERS`.
