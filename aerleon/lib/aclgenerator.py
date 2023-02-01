@@ -304,34 +304,9 @@ class ACLGenerator:
         self.policy = pol
         all_err = []
         all_warn = []
-        current_date = datetime.datetime.utcnow().date()
-        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
         for header, terms in pol.filters:
-            filter_name = header.FilterName(self._PLATFORM)
-            terms[:] = [
-                term
-                for term in terms
-                if (
-                    term.expiration
-                    and term.expiration <= current_date
-                    and logging.warning(
-                        'WARNING: Term %s in policy %s is expired and will not be rendered.',
-                        term.name,
-                        filter_name,
-                    )
-                    or False,
-                    (
-                        term.expiration
-                        and term.expiration <= exp_info_date
-                        and logging.info(
-                            "INFO: Term %s in policy %s expires in less than two weeks.",
-                            term.name,
-                            filter_name,
-                        )
-                    )
-                    or True,
-                )[not (term.expiration and term.expiration <= current_date)]
-            ]
+            terms[:] = self._FilteredTerms(header, terms, exp_info)
+
             # Verify valid keywords
             # error on unsupported optional keywords that could result
             # in dangerous or unexpected results
@@ -570,6 +545,31 @@ class ACLGenerator:
         name_bytes = name.encode('UTF-8')
         return hashlib.sha256(name_bytes).hexdigest()[:truncation_length]
 
+    def _FilteredTerms(self, header, terms, exp_info):
+        new_terms = []
+        filter_name = header.FilterName(self._PLATFORM)
+        current_date = datetime.datetime.utcnow().date()
+        exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
+
+        for term in terms:
+            if term.expiration:
+                if term.expiration <= current_date:
+                    logging.warning(
+                        'WARNING: Term %s in policy %s is expired and will not be rendered.',
+                        term.name,
+                        filter_name,
+                    )
+                    continue
+                elif term.expiration <= exp_info_date:
+                    logging.info(
+                        "INFO: Term %s in policy %s expires in less than two weeks.",
+                        term.name,
+                        filter_name,
+                    )
+
+            new_terms.append(term)
+
+        return new_terms
 
 def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
     """Convert a protocol name to a numeric value.
