@@ -651,7 +651,6 @@ class CiscoTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST')])
         self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
-        
 
     @capture.stdout
     def testInet6(self):

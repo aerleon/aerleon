@@ -120,7 +120,7 @@ class TermStandard:
         prefix = ''
         if self.filter_name.isdigit():
             prefix = f'access-list {self.filter_name}'
-      
+
         if self.verbose:
             ret_str.append(f'{prefix} remark {self.term.name}')
             comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
@@ -133,12 +133,12 @@ class TermStandard:
                 if self.platform == 'arista':
                     if addr.prefixlen == 32:
                         ret_str.append(
-                        f'{prefix} {action} host {addr.network_address}{self.logstring}{self.dscpstring}'
+                            f'{prefix} {action} host {addr.network_address}{self.logstring}{self.dscpstring}'
                         )
                     else:
                         ret_str.append(
-                        f'{prefix} {action} {addr.network_address}/{addr.prefixlen}{self.logstring}{self.dscpstring}'
-                    )
+                            f'{prefix} {action} {addr.network_address}/{addr.prefixlen}{self.logstring}{self.dscpstring}'
+                        )
                 elif addr.prefixlen == 32:
                     ret_str.append(
                         f'{prefix} {action} {addr.network_address}{self.logstring}{self.dscpstring}'
@@ -805,6 +805,7 @@ class ObjectGroupTerm(Term):
     where first-term-source-address, ANY and 179-179 are defined elsewhere
     in the acl.
     """
+
     def _FormatPort(self, port, proto):
         """Returns a formatted port string for the range.
 
@@ -818,7 +819,7 @@ class ObjectGroupTerm(Term):
         if not port:
             return ''
         return f'port-group {port[0]}-{port[1]}'
-        
+
     def _GetIpString(self, addr):
         """Formats the address object for printing in the ACL.
 
