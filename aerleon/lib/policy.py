@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import os
+import pathlib
 import sys
 from typing import TYPE_CHECKING
 
@@ -66,6 +67,10 @@ class FileReadError(Error):
 
 class RecursionTooDeepError(Error):
     """Included files exceed maximum recursion depth."""
+
+
+class BadIncludePath(Error):
+    """Included file unable to load due to path restrictions."""
 
 
 class ParseError(Error):
@@ -2659,13 +2664,29 @@ def _Preprocess(data, max_depth=5, base_dir=''):
         if len(words) > 1 and words[0] == '#include':
             # remove any quotes around included filename
             include_file = words[1].strip('\'"')
-            data = _ReadFile(os.path.join(base_dir, include_file))
+            include_path = os.path.join(base_dir, include_file)
+
+            if pathlib.Path(include_path).suffix != '.inc':
+                raise BadIncludePath(
+                    f"Include file name must end in \".inc\". File={include_path} base_directory={base_dir}"
+                )
+
+            if not _SubpathOf(base_dir, include_path):
+                raise BadIncludePath(
+                    f"Include file cannot be loaded from outside the base directory. File={include_path} base_directory={base_dir}"
+                )
+
+            data = _ReadFile(include_path)
             # recursively handle includes in included data
             inc_data = _Preprocess(data, max_depth - 1, base_dir=base_dir)
             rval.extend(inc_data)
         else:
             rval.append(line)
     return rval
+
+
+def _SubpathOf(parent, subpath):
+    return str(pathlib.Path(subpath).resolve()).startswith(str(pathlib.Path(parent).resolve()))
 
 
 def ParseFile(filename, definitions=None, optimize=True, base_dir='', shade_check=False):

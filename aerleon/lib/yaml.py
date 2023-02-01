@@ -8,6 +8,7 @@ from absl import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy
+from aerleon.lib.policy import BadIncludePath, _SubpathOf
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
     RawFilter,
@@ -234,17 +235,23 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
         found_terms = []
         max_include_depth = 5
 
-        def process_include(depth, stack, inc_filename):
+        def process_include(depth, stack, include_filename):
+            include_path = pathlib.Path(base_dir).joinpath(include_filename)
+            if not _SubpathOf(base_dir, include_path):
+                raise BadIncludePath(
+                    f"Include file cannot be loaded from outside the base directory. File={include_path} base_directory={base_dir}"
+                )
+
             try:
-                include_file = _LoadIncludeFile(base_dir, inc_filename)
+                include_file = _LoadIncludeFile(include_path)
                 include_data = yaml.load(
-                    include_file, Loader=SpanSafeYamlLoader(filename=inc_filename)
+                    include_file, Loader=SpanSafeYamlLoader(filename=str(include_path))
                 )
             except YAMLError as yaml_error:
                 raise PolicyTypeError(
                     UserMessage(
                         "Unable to read file as YAML.",
-                        filename=inc_filename,
+                        filename=str(include_path),
                         include_chain=stack,
                     )
                 ) from yaml_error
@@ -252,7 +259,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                 logging.warning(
                     UserMessage(
                         "Ignoring empty policy include source.",
-                        filename=inc_filename,
+                        filename=str(include_path),
                         include_chain=stack,
                     )
                 )
@@ -330,10 +337,10 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
     return RawPolicy(filename=filename, filters=filters_model)
 
 
-def _LoadIncludeFile(base_dir, inc_filename):
+def _LoadIncludeFile(include_path):
     """Open an include file."""
 
-    with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
+    with open(include_path, 'r') as include_file:
         return include_file.read()
 
 

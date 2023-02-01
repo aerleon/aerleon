@@ -56,6 +56,10 @@ BAD_INCLUDE_YAML_INVALID_FILENAME = """
 terms:
 - include: include_1.pol
 """
+BAD_INCLUDE_YAML_INVALID_PATH = """
+terms:
+- include: /tmp/include_2.yaml
+"""
 BAD_INCLUDE_YAML_INVALID_YAML = """
 %INVALID YAML% &unknown
 """
@@ -384,6 +388,16 @@ Include stack:
 > File='policy_with_include.pol.yaml', Line=10 (Top Level)
 > File='include_1.pol-include.yaml', Line=3""",  # noqa: E501
             )
+
+    def testIncludeInvalidPath(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_PATH)):
+            with self.assertRaises(yaml_frontend.BadIncludePath):
+                yaml_frontend.ParsePolicy(
+                    GOOD_YAML_POLICY_INCLUDE,
+                    filename="policy_with_include.pol.yaml",
+                    base_dir=self.base_dir,
+                    definitions=self.naming,
+                )
 
     def testIncludeInvalidYAML(self):
         with mock.patch("builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_YAML)):
