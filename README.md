@@ -76,6 +76,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/itdependsnetworks"><img src="https://avatars.githubusercontent.com/u/9260483?v=4?s=100" width="100px;" alt="Ken Celenza"/><br /><sub><b>Ken Celenza</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=itdependsnetworks" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fischa"><img src="https://avatars.githubusercontent.com/u/11302991?v=4?s=100" width="100px;" alt="Axel F"/><br /><sub><b>Axel F</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=fischa" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://hachyderm.io/@nemith"><img src="https://avatars.githubusercontent.com/u/349360?v=4?s=100" width="100px;" alt="Brandon Bennett"/><br /><sub><b>Brandon Bennett</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=nemith" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/btriller"><img src="https://avatars.githubusercontent.com/u/851727?v=4?s=100" width="100px;" alt="Bastian Triller"/><br /><sub><b>Bastian Triller</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=btriller" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

@@ -36,6 +36,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "btriller",
+      "name": "Bastian Triller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/851727?v=4",
+      "profile": "https://github.com/btriller",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
