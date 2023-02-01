@@ -683,7 +683,6 @@ class Term(aclgenerator.Term):
             if addr.num_addresses > 1:
                 return addr.with_prefixlen
             return 'host %s' % (addr.network_address)
-
         return addr
 
     def _FormatPort(self, port, proto):
@@ -940,7 +939,6 @@ class Cisco(aclgenerator.ACLGenerator):
 
                     # render terms based on filter type
                     if next_filter == 'standard':
-
                         # keep track of sequence numbers across terms
                         new_terms.append(
                             TermStandard(term, filter_name, self._PLATFORM, self.verbose)

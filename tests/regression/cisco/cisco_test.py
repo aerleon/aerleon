@@ -614,7 +614,7 @@ class CiscoTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
 
-    # @capture.stdout
+    @capture.stdout
     def testObjectGroup(self):
         ip_grp = ['object-group network ipv4 SOME_HOST']
         ip_grp.append(' 10.0.0.0/8')
@@ -631,7 +631,6 @@ class CiscoTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_OBJGRP_HEADER + GOOD_TERM_2 + GOOD_TERM_18, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
-        print(acl)
 
         self.assertIn('\n'.join(ip_grp), str(acl), '%s %s' % ('\n'.join(ip_grp), str(acl)))
         self.assertIn('\n'.join(port_grp1), str(acl), '%s %s' % ('\n'.join(port_grp1), str(acl)))
@@ -841,7 +840,7 @@ class CiscoTest(absltest.TestCase):
         self.assertIn('permit hbh any any', str(acl), str(acl))
         print(acl)
 
-    # @capture.stdout
+    @capture.stdout
     def testOwnerTerm(self):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_13, self.naming), EXP_INFO)
         self.assertTrue(re.search(' remark Owner: foo@google.com', str(acl)), str(acl))
