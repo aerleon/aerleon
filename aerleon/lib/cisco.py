@@ -805,7 +805,20 @@ class ObjectGroupTerm(Term):
     where first-term-source-address, ANY and 179-179 are defined elsewhere
     in the acl.
     """
+    def _FormatPort(self, port, proto):
+        """Returns a formatted port string for the range.
 
+        Args:
+          port: str list or none, the port range.
+          proto: str representing proto (tcp, udp, etc).
+
+        Returns:
+          A string suitable for the ACL.
+        """
+        if not port:
+            return ''
+        return f'port-group {port[0]}-{port[1]}'
+        
     def _GetIpString(self, addr):
         """Formats the address object for printing in the ACL.
 
@@ -814,7 +827,9 @@ class ObjectGroupTerm(Term):
         Returns:
           An address string suitable for the ACL.
         """
-        return addr.parent_token
+        if addr.prefixlen == 0:
+            return f'{addr.parent_token}'
+        return f'net-group {addr.parent_token}'
 
 
 class Cisco(aclgenerator.ACLGenerator):
