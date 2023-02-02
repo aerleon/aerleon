@@ -19,9 +19,7 @@ cisco_example_policy = {
                 "targets": {
                     "cisco": "test-filter"
                 },
-                "kvs": {
-                    "comment": "Sample comment"
-                },
+                "comment": "Sample comment"
             },
             "terms": [
                 {
@@ -90,10 +88,15 @@ else:
 Now to call the Generate method. We need to first construct a Naming object and load the network definitions, then pass that to Generate along with the policy object.
 
 ```python
-definitions = naming.Naming()
-definitions.ParseDefinitionsObject(networks, "")
-configs = api.Generate([cisco_example_policy], definitions)
-acl = configs["cisco_example_policy.acl"]
+def main():
+    definitions = naming.Naming()
+    definitions.ParseDefinitionsObject(networks, "")
+    configs = api.Generate([cisco_example_policy], definitions)
+    acl = configs["cisco_example_policy.acl"]
+    print(acl)
+
+if __name__ == '__main__':
+    main()
 ```
 
 At this point the variable `acl` contains the Cisco ACL we want:
