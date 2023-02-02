@@ -7,6 +7,7 @@ Aerleon is a lightweight library which generates firewall configurations from a 
 Aerleon provides a per firewall platform configuration generator. It loads data in a single standard format and generates a configuration for each target platform.
 
 The data primarily consists of:
+
 * Policy Files that represent the actual firewall rules.
 * Address Files that represent the addresses, in the form of named objects.
 * Service Files that represent the services, in the form of named objects.
@@ -24,7 +25,6 @@ The data primarily consists of:
     * Cisco ASA
     * Cisco NX
     * Cisco XR
-* Cloud Armor
 * Google
     * Cloud Armor
     * GCE
