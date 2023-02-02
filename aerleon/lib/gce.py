@@ -522,14 +522,6 @@ class GCE(gcp.GCP):
                 if term.option:
                     raise GceFirewallError('GCE firewall does not support term options.')
 
-                # Only generate the term if it's for the appropriate platform
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
-
                 # Handle mixed for each indvidual term as inet and inet6.
                 # inet/inet6 are treated the same.
                 term_address_families = []

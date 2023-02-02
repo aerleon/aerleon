@@ -508,14 +508,6 @@ class HierarchicalFirewall(gcp.GCP):
                 term.name = self.FixTermLength(term.name)
                 term.direction = direction
 
-                # Only generate the term if it's for the appropriate platform
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
-
                 for term_af in term_address_families:
                     rules = Term(
                         term,

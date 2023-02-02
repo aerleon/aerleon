@@ -468,14 +468,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             new_terms = []
             self._FixLargePolices(terms, filter_type)
             for term in terms:
-                # Only generate the term if it's for the appropriate platform.
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
-
                 if term.stateless_reply:
                     logging.warning(
                         "WARNING: Term %s in policy %s>%s is a stateless reply "

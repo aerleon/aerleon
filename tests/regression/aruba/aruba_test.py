@@ -204,20 +204,40 @@ term allow-esp {
 }
 """
 
-SUPPORTED_TOKENS = {
-    'action',
-    'comment',
-    'destination_address',
-    'destination_port',
-    'expiration',
-    'stateless_reply',
-    'name',
-    'option',
-    'protocol',
-    'source_address',
-    'translated',
-    'verbatim',
+PLATFORM_EXCLUDE_TERM = """
+term platform-exclude-term {
+  protocol:: tcp udp
+  platform-exclude:: aruba
+  action:: accept
 }
+"""
+
+PLATFORM_TERM = """
+term platform-term {
+  protocol:: tcp udp
+  platform:: aruba juniper
+  action:: accept
+}
+"""
+
+SUPPORTED_TOKENS = frozenset(
+    {
+        'action',
+        'comment',
+        'destination_address',
+        'destination_port',
+        'expiration',
+        'stateless_reply',
+        'name',
+        'option',
+        'platform',
+        'platform_exclude',
+        'protocol',
+        'source_address',
+        'translated',
+        'verbatim',
+    }
+)
 
 SUPPORTED_SUB_TOKENS = {
     'action': {
@@ -874,6 +894,39 @@ class ArubaTest(absltest.TestCase):
         )
         self.assertEqual(textwrap.dedent(expected_result), str(aru))
         print(aru)
+
+    def testPlatformTerm(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('100.0.0.0/8'),
+            nacaddr.IP('10.0.0.1/32'),
+        ]
+        self.naming.GetServiceByProto.return_value = ['69']
+        aru = aruba.Aruba(
+            policy.ParsePolicy(
+                GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE + PLATFORM_TERM, self.naming
+            ),
+            EXP_INFO,
+        )
+        output = str(aru)
+        self.assertNotIn('platform-term', output, output)
+        print(output)
+
+    def testPlatformExclude(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('100.0.0.0/8'),
+            nacaddr.IP('10.0.0.1/32'),
+        ]
+        self.naming.GetServiceByProto.return_value = ['69']
+        aru = aruba.Aruba(
+            policy.ParsePolicy(
+                GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE + PLATFORM_EXCLUDE_TERM,
+                self.naming,
+            ),
+            EXP_INFO,
+        )
+        output = str(aru)
+        self.assertNotIn('platform-exclude-term', output)
+        print(output)
 
     @capture.stdout
     def testProtocolMap(self):

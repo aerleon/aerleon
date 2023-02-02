@@ -479,15 +479,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     )
                     continue
 
-                # Verify platform specific terms. Skip whole term if platform does not
-                # match.
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
-
                 if unique_term_prefixes:
                     # Prefix hash of from_zone and to_zone to the term name to get mostly
                     # unique names across different policies.

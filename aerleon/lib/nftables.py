@@ -548,12 +548,6 @@ class Term(aclgenerator.Term):
         Each term is expressed as its own chain. Later referenced to a parent chain
         with filter directionality (input/output).
         """
-        if self.term.platform:
-            if 'nftables' not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if 'nftables' in self.term.platform_exclude:
-                return ''
         return ChainFormat('chain', self.term.name, self.RulesetGenerator(self.term))
 
 

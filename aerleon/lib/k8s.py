@@ -342,14 +342,6 @@ class K8s(aclgenerator.ACLGenerator):
                         'Kubernetes NetworkPolicy does not support term options.'
                     )
 
-                # Only generate the term if it's for the appropriate platform
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
-
                 term_dict = Term(term).ConvertToDict()
                 if term_dict:
                     total_rule_count += 1

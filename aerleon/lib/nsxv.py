@@ -127,15 +127,6 @@ class Term(aclgenerator.Term):
           NsxvAclTermError: When unknown icmp-types are specified
 
         """
-        # Verify platform specific terms. Skip whole term if platform does not
-        # match.
-        if self.term.platform:
-            if 'nsxv' not in self.term.platform:
-                return ''
-        if self.term.platform_exclude:
-            if 'nsxv' in self.term.platform_exclude:
-                return ''
-
         ret_str = ['']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6

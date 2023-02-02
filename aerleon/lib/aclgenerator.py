@@ -311,12 +311,6 @@ class ACLGenerator:
             # error on unsupported optional keywords that could result
             # in dangerous or unexpected results
             for term in terms:
-                if term.platform:
-                    if self._PLATFORM not in term.platform:
-                        continue
-                if term.platform_exclude:
-                    if self._PLATFORM in term.platform_exclude:
-                        continue
                 # Only verify optional keywords if the term is active on the platform.
                 err = []
                 warn = []
@@ -567,9 +561,15 @@ class ACLGenerator:
                         filter_name,
                     )
 
+            if (term.platform and self._PLATFORM not in term.platform) or (
+                term.platform_exclude and self._PLATFORM in term.platform_exclude
+            ):
+                continue
+
             new_terms.append(term)
 
         return new_terms
+
 
 def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
     """Convert a protocol name to a numeric value.
