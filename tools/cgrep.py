@@ -238,8 +238,8 @@ def main(parser):
             else:
                 logging.info(token + ':')
                 # convert list of ip objects to strings and sort them
-                ips.sort(key=lambda x: int(x.ip))
-                p([str(x) for x in ips])
+                sorted_ips = nacaddr.SortAddrList(ips)
+                p([str(x) for x in sorted_ips])
 
     # if -s
     elif options.svc:
