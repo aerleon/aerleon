@@ -22,7 +22,7 @@ ip access-list extended objgroupheader
 
 
  remark good-term-2
- permit tcp any port-group 80-80 net-group SOME_HOST port-group 1024-65535
+ permit tcp any port-group 80-80 net-group SOME_HOST port-group 1024-65535 established
 
 
  remark good-term-18
