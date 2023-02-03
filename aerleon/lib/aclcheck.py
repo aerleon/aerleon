@@ -1,6 +1,4 @@
-#!/usr/bin/python2.4
-#
-# Copyright 2009 Google Inc.
+# Copyright 2011 Google Inc. All Rights Reserved.
 # Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +14,9 @@
 # limitations under the License.
 #
 
+"""Check where hosts, ports and protocols are matched in an Aerleon policy."""
 
-"""Check where hosts, ports and protocols are matched in a NAC policy.
-
-   Design document:
-     https://docs.google.com/a/google.com/Doc?docid=cc9mgcsg_85db9cmhfr&hl=en
-"""
-
-__author__ = 'watson@google.com (Tony Watson)'
-
-import sys
-
+import logging
 from aerleon.lib import nacaddr, policy, port
 
 
@@ -38,7 +28,7 @@ class AddressError(Error):
     """Incorrect IP address or format."""
 
 
-class BadPolicy(Error):
+class BadPolicyError(Error):
     """Item is not a valid policy object."""
 
 
@@ -46,22 +36,19 @@ class NoTargetError(Error):
     """Specified target platform not available in specified policy."""
 
 
-class AclCheck(object):
+class AclCheck:
     """Check where hosts, ports and protocols match in a NAC policy.
 
-    Args:
-      pol:
-        policy.Policy object
-      src:
-        string, the source address
-      dst:
-        string: the destination address.
-      dport:
-        string, the destination port.
-      sport:
-        string, the source port.
-      proto:
-        string, the protocol.
+    Attributes:
+      pol_obj: policy.Policy object.
+      pol: policy.Policy object.
+      src: A string for the source address.
+      dst: A string for the destination address.
+      sport: A string for the source port.
+      dport: A string for the destination port.
+      proto: A string for the protocol.
+      matches: A list of term-related matches.
+      exact_matches: A list of exact matches.
 
     Returns:
       An AclCheck Object
@@ -82,7 +69,6 @@ class AclCheck(object):
         dport='any',
         proto='any',
     ):
-
         self.pol_obj = pol
         self.proto = proto
 
@@ -94,7 +80,7 @@ class AclCheck(object):
 
         # validate destination port
         if dport == 'any':
-            self.dport = sport
+            self.dport = dport
         else:
             self.dport = port.Port(dport)
 
@@ -116,8 +102,8 @@ class AclCheck(object):
             except ValueError:
                 raise AddressError('bad destination address: %s\n' % dst)
 
-        if type(self.pol_obj) is not policy.Policy:
-            raise BadPolicy('Policy object is not valid.')
+        if not isinstance(self.pol_obj, (policy.Policy)):
+            raise BadPolicyError('Policy object is not valid.')
 
         self.matches = []
         self.exact_matches = []
@@ -125,53 +111,58 @@ class AclCheck(object):
             filtername = header.target[0].options[0]
             for term in terms:
                 possible = []
+                logging.debug('checking term: %s', term.name)
+                if not self._AddrInside(self.src, term.source_address):
+                    logging.debug('srcaddr does not match')
+                    continue
+                logging.debug('srcaddr matches: %s', self.src)
+                if not self._AddrInside(self.dst, term.destination_address):
+                    logging.debug('dstaddr does not match')
+                    continue
+                logging.debug('dstaddr matches: %s', self.dst)
+                if (
+                    self.sport != 'any'
+                    and term.source_port
+                    and not self._PortInside(self.sport, term.source_port)
+                ):
+                    logging.debug('sport does not match')
+                    continue
+                logging.debug('sport matches: %s', self.sport)
+                if (
+                    self.dport != 'any'
+                    and term.destination_port
+                    and not self._PortInside(self.dport, term.destination_port)
+                ):
+                    logging.debug('dport does not match')
+                    continue
+                logging.debug('dport matches: %s', self.dport)
+                if self.proto != 'any' and term.protocol and self.proto not in term.protocol:
+                    logging.debug('proto does not match')
+                    continue
+                logging.debug('proto matches: %s', self.proto)
+                if term.protocol_except and self.proto in term.protocol_except:
+                    logging.debug('protocol excepted by term, no match.')
+                    continue
+                logging.debug('proto not excepted: %s', self.proto)
+                if not term.action:  # avoid any verbatim
+                    logging.debug('term had no action (verbatim?), no match.')
+                    continue
+                logging.debug('term has an action')
+                possible = self._PossibleMatch(term)
+                self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
+                if possible:
+                    logging.debug('term has options: %s, not treating as exact match', possible)
+                    continue
 
-                if self._AddrInside(self.src, term.source_address):
-                    if self._AddrInside(self.dst, term.destination_address):
-                        if (
-                            self.sport == 'any'
-                            or not term.source_port
-                            or self._PortInside(self.sport, term.source_port)
-                        ):
-                            if (
-                                self.dport == 'any'
-                                or not term.destination_port
-                                or self._PortInside(self.dport, term.destination_port)
-                            ):
-                                if (
-                                    self.proto == 'any'
-                                    or not term.protocol
-                                    or self.proto in term.protocol
-                                ):
-
-                                    possible = self._PossibleMatch(term)
-                                    if term.action:  # avoid any verbatim
-                                        self.matches.append(
-                                            Match(
-                                                filtername,
-                                                term.name,
-                                                possible,
-                                                term.action,
-                                                term.qos,
-                                            )
-                                        )
-
-                                        # so if we get here then we have a match, and if the action
-                                        # isn't next and there are no possibles, then this is a
-                                        # "definite" match and we needn't look for any further
-                                        # matches (i.e. later terms may match, but since we'll never
-                                        # get there we shouldn't report them)
-                                        if 'next' not in term.action and not possible:
-                                            self.exact_matches.append(
-                                                Match(
-                                                    filtername,
-                                                    term.name,
-                                                    [],
-                                                    term.action,
-                                                    term.qos,
-                                                )
-                                            )
-                                            break
+                # if we get here then we have a match, and if the action isn't next and
+                # there are no possibles, then this is a "definite" match and we needn't
+                # look for any further matches (i.e. later terms may match, but since
+                # we'll never get there we shouldn't report them)
+                if 'next' not in term.action:
+                    self.exact_matches.append(
+                        Match(filtername, term.name, [], term.action, term.qos)
+                    )
+                    break
 
     def Matches(self):
         """Return list of matched terms."""
@@ -184,11 +175,11 @@ class AclCheck(object):
     def ActionMatch(self, action='any'):
         """Return list of matched terms with specified actions."""
         match_list = []
-        for next in self.matches:
-            if next.action:
-                if not next.possibles:
-                    if action == 'any' or action in next.action:
-                        match_list.append(next)
+        for match in self.matches:
+            if match.action:
+                if not match.possibles:
+                    if action == 'any' or action in match.action:
+                        match_list.append(match)
         return match_list
 
     def DescribeMatches(self):
@@ -198,26 +189,26 @@ class AclCheck(object):
           ret_str: text sentences describing matches
         """
         ret_str = []
-        for next in self.matches:
-            text = str(next)
+        for match in self.matches:
+            text = str(match)
             ret_str.append(text)
         return '\n'.join(ret_str)
 
     def __str__(self):
         text = []
         last_filter = ''
-        for next in self.matches:
-            if next.filter != last_filter:
-                last_filter = next.filter
-                text.append('  filter: ' + next.filter)
-            if next.possibles:
-                text.append(' ' * 10 + 'term: ' + next.term + ' (possible match)')
+        for match in self.matches:
+            if match.filter != last_filter:
+                last_filter = match.filter
+                text.append('  filter: ' + match.filter)
+            if match.possibles:
+                text.append(' ' * 10 + 'term: ' + str(match.term) + ' (possible match)')
             else:
-                text.append(' ' * 10 + 'term: ' + next.term)
-            if next.possibles:
-                text.append(' ' * 16 + next.action + ' if ' + str(next.possibles))
+                text.append(' ' * 10 + 'term: ' + str(match.term))
+            if match.possibles:
+                text.append(' ' * 16 + match.action + ' if ' + str(match.possibles))
             else:
-                text.append(' ' * 16 + next.action)
+                text.append(' ' * 16 + match.action)
         return '\n'.join(text)
 
     def _PossibleMatch(self, term):
@@ -256,8 +247,9 @@ class AclCheck(object):
             return True  # always true if we match for any addr
         if not addresses:
             return True  # always true if term has nothing to match
-        for next in addresses:
-            if addr.subnet_of(next):
+        for ip in addresses:
+            # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
+            if addr.subnet_of(ip):
                 return True
         return False
 
@@ -278,7 +270,7 @@ class AclCheck(object):
         return False
 
 
-class Match(object):
+class Match:
     """A matching term and its associate values."""
 
     def __init__(self, filtername, term, possibles, action, qos=None):
@@ -300,9 +292,9 @@ class Match(object):
         return text
 
 
-def main(_):
+def main():
     pass
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
