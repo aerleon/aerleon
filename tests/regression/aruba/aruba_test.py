@@ -912,7 +912,8 @@ class ArubaTest(absltest.TestCase):
         self.naming.GetServiceByProto.return_value = ['69']
         aru = aruba.Aruba(
             policy.ParsePolicy(
-                GOOD_HEADER_V4 + MISSING_PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming
+                GOOD_HEADER_V4 + MISSING_PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,
+                self.naming,
             ),
             EXP_INFO,
         )
