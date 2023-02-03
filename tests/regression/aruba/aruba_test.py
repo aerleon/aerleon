@@ -206,15 +206,23 @@ term allow-esp {
 
 PLATFORM_EXCLUDE_TERM = """
 term platform-exclude-term {
-  protocol:: tcp udp
+  protocol:: icmp
   platform-exclude:: aruba
+  action:: accept
+}
+"""
+
+MISSING_PLATFORM_TERM = """
+term platform-term {
+  protocol:: icmp
+  platform:: juniper
   action:: accept
 }
 """
 
 PLATFORM_TERM = """
 term platform-term {
-  protocol:: tcp udp
+  protocol:: icmp
   platform:: aruba juniper
   action:: accept
 }
@@ -895,6 +903,24 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(textwrap.dedent(expected_result), str(aru))
         print(aru)
 
+    @capture.stdout
+    def testMissingPlatformTerm(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('100.0.0.0/8'),
+            nacaddr.IP('10.0.0.1/32'),
+        ]
+        self.naming.GetServiceByProto.return_value = ['69']
+        aru = aruba.Aruba(
+            policy.ParsePolicy(
+                GOOD_HEADER_V4 + MISSING_PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming
+            ),
+            EXP_INFO,
+        )
+        output = str(aru)
+        self.assertNotIn('any any 1 permit', output, output)
+        print(output)
+
+    @capture.stdout
     def testPlatformTerm(self):
         self.naming.GetNetAddr.return_value = [
             nacaddr.IP('100.0.0.0/8'),
@@ -903,14 +929,15 @@ class ArubaTest(absltest.TestCase):
         self.naming.GetServiceByProto.return_value = ['69']
         aru = aruba.Aruba(
             policy.ParsePolicy(
-                GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE + PLATFORM_TERM, self.naming
+                GOOD_HEADER_V4 + PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming
             ),
             EXP_INFO,
         )
         output = str(aru)
-        self.assertNotIn('platform-term', output, output)
+        self.assertIn('any any 1 permit', output, output)
         print(output)
 
+    @capture.stdout
     def testPlatformExclude(self):
         self.naming.GetNetAddr.return_value = [
             nacaddr.IP('100.0.0.0/8'),
@@ -919,13 +946,13 @@ class ArubaTest(absltest.TestCase):
         self.naming.GetServiceByProto.return_value = ['69']
         aru = aruba.Aruba(
             policy.ParsePolicy(
-                GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE + PLATFORM_EXCLUDE_TERM,
+                GOOD_HEADER_V4 + PLATFORM_EXCLUDE_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,
                 self.naming,
             ),
             EXP_INFO,
         )
         output = str(aru)
-        self.assertNotIn('platform-exclude-term', output)
+        self.assertNotIn('any any 1 permit', output)
         print(output)
 
     @capture.stdout
