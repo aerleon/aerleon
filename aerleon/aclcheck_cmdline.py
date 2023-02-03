@@ -33,7 +33,7 @@ def main():
         default='./def',
     )
     _parser.add_option(
-        '--base_directory',
+        '--base-directory',
         dest='basedir',
         help='The base directory to look for include files.',
         default='',
