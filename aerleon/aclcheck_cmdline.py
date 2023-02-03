@@ -33,9 +33,9 @@ def main():
         default='./def',
     )
     _parser.add_option(
-        '--base-directory',
+        '--base_directory',
         dest='basedir',
-        help='directory policies files are located in, sometimes necessary for resolving referenced includes',
+        help='The base directory to look for include files.',
         default='',
     )
     _parser.add_option(
