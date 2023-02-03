@@ -257,10 +257,8 @@ class AclCheck(object):
         if not addresses:
             return True  # always true if term has nothing to match
         for next in addresses:
-            # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
-            if type(addr) is type(next):
-                if addr in next:
-                    return True
+            if addr.subnet_of(next):
+                return True
         return False
 
     def _PortInside(self, myport, port_list):
