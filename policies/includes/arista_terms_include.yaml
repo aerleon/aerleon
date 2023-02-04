@@ -10,6 +10,14 @@ terms:
     counter: wonky-prots-loopback
     action: accept
 
+  - name: accept-traceroute-exc
+    comment: "allow inbound traceroute from any source."
+    destination-port: TRACEROUTE
+    protocol: udp
+    counter: inbound-traceroute
+    action: accept
+    platform-exclude: arista_tp
+
   - name: accept-traceroute
     comment: "allow inbound traceroute from any source."
     destination-port: TRACEROUTE

@@ -29,7 +29,6 @@ term accept-traceroute-exc {
   protocol:: udp
   counter:: inbound-traceroute
   action:: accept
-  expiration:: 2001-12-31
   platform-exclude:: arista_tp
 }
 
