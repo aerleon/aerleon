@@ -1,11 +1,17 @@
 import argparse
+from collections import defaultdict
 import enum
 import logging
 import pathlib
+import sys
 from typing import Any
 
 from tabulate import tabulate  # TODO(jb) just write a func as needed
 import yaml
+from aerleon.aclgen import ACLParserError
+
+from aerleon.lib import aclgenerator, naming, policy
+
 
 VERSION = '1.0'
 
@@ -69,6 +75,8 @@ def pol2yaml(options, style_options):
     * Write each file to the target location.
 
     """
+    base_directory = options['base_directory']
+    definitions_directory = options['definitions_directory']
 
     # Determine operation and input mode
     if options['reformat_yaml']:
@@ -99,7 +107,7 @@ def pol2yaml(options, style_options):
     else:
         file_targets.update(
             _get_file_plan(
-                pathlib.Path(options['base_directory']),
+                pathlib.Path(base_directory),
                 input_mode,
                 operation,
                 output_mode,
@@ -108,7 +116,7 @@ def pol2yaml(options, style_options):
         )
         file_targets.update(
             _get_file_plan(
-                pathlib.Path(options['definitions_directory']),
+                pathlib.Path(definitions_directory),
                 input_mode,
                 operation,
                 output_mode,
@@ -116,8 +124,147 @@ def pol2yaml(options, style_options):
             )
         )
 
+    # Construct a reverse table also
+    targets = defaultdict(list)
+    for input_file, file_plan in file_targets.items():
+        targets[file_plan].append(input_file)
+
+    # Print table
     if options['dry_run'] or options['verbose']:
         print(tabulate(file_targets.items(), headers=['File', 'Action']))
+
+    # If we know there will be conflicts we will bail out early.
+    # If --force or --yaml are set we don't need to check.
+    if output_mode != _ConverterOutputMode.FORCE and operation != _Operation.REFORMAT:
+
+        if targets[_FilePlan.OUTPUT_CONFLICT]:
+            conflicts = [f'    {file}' for file in targets[_FilePlan.OUTPUT_CONFLICT]]
+            message = (
+                'Command would overwrite the following files. Use option --force to override.\n\n'
+            )
+            message += "\n".join(conflicts)
+
+            if options['dry_run']:
+                logging.warning(message)
+            else:
+                logging.error(f'COMMAND FAILED\n\n{message}')
+                return
+
+    # Now we have our plan, time to EXECUTE.
+    # The idea is to produce a Policy object, then run it through the policy_to_yaml() function
+    #
+
+    # Create output directories now (if not --dry_run)
+    if not options['dry_run'] and options['output_directory']:
+        # Get list of unique parents
+        mkdir_targets = list(set([file.parent for file in targets[_FilePlan.OUTPUT_MKDIR]]))
+        for directory in mkdir_targets:
+            pathlib.Path(directory).mkdir(parents=True, exists_ok=True)
+
+    # Start visiting input files
+
+    # TODO(jb) The next step might need to be broken up into sub classes by case
+    # or at least functions
+    #
+    # TODO(jb) The following content is pretty good docstring material
+
+    # POLICY / INCLUDE
+    # Our goal in this step is to directly translate (or reformat) policy and include files.
+    # This is a challenge because parsing is a _destructive_ process:
+    # 1. Preprocessing eliminates include statements
+    # 2. Error checking may reject or clean up parts of terms/policies
+    # Includes are a special chanllenge because there is no parser for .inc files - they can only be parsed in the context
+    # of the policy file they were injected into.
+    #
+    # The strategies for various pol / include cases are as follows:
+    #
+    # .pol :
+    # 1. pre-preprocess #include, replacing the include with a placeholder term, e.g.
+    # term ZZZZZ_INCLUDE_PLACEHOLDER_PATH_TO_FILE_INC {
+    #   comment:: /path/to/file.inc
+    # }
+    # 2. Watch for any other destructive processing step and see if we can preserve it with placeholders.
+    # 3. Take the Policy / Term models and replace ZZZZZ_INCLUDE_PLACEHOLDER terms with YAML include during the generation step.
+    #
+    # .inc :
+    # 1. Wrap the whole include file in a dummy filter
+    # 2. pre-preprocess #include as above
+    # 3. Parse it as if it were a .pol file
+    # 4. Discard the dummy filter and only render the terms during the generation step. (Different generator subclass).
+    #
+    # .yaml :
+    # Note: the "Y2Y" flow could be done very directly without any parsing at all.
+    # In a direct reformat we are not creating a Policy model at all.
+    # The downside here is we are now on a different rendering code path as the generator, unless
+    # we get the generator to sit on top of the "export" code. Still might require lots of new code.
+    # The advantage is it is much faster and stands alone from the .pol conversion after that becomes less relevant.
+    #
+    # If we try to go the Policy model route we do have to determine what kind of file it is
+    # and then process it using similar tricks for includes.
+    #
+    # DEFINITIONS
+    #
+    # Definition files get loaded into a pretty low level IR that looks very similar to the original files.
+    # So the strategy would be to parse into Naming and then export from Naming.
+    # Probably no tricks needed at all.
+    #
+    #
+    # INCLUDE SPECIAL NOTES
+    #
+    # Includes in .pol/.inc cannot be translated with the original file path since it will reference a .inc file.
+    # YAML policy/include files cannot include from .inc.
+    # So the translated policy must rename the suffix to .yaml, but we don't know for certain whether that file exists.
+    # Ideally the user is in RECURSIVE | CONVERT mode and the include target in question is getting translated at this time.
+    # But the corner cases are so vast that we have to accept that we don't know about the target at all, or else we have
+    # to consider:
+    # * Dead/dead - neither .inc target nor .yaml target exist
+    # * Live/dead - the .inc target exists but it is not going to be translated at this time
+    # * Dead/live - the .inc target does not exist but the .yaml target does exist, it was already translated and the original was removed.
+    # So the simplest answer is we do not examine the target at all.
+    # We COULD message the user if the .yaml target (1) does not exist, and (2) is not planned as an output as part of this run.
+    # This might help users catch dead links.
+    # We COULD do link checking on any emitted .yaml includes (including reformatting) following the rules above.
+    #
+    #
+    # DETERMINING FILE TYPE
+    #
+    # For DSL inputs the extension tells us how to treat the file, so in the CONVERT branch
+    # we can branch by extension (suffix).
+    #
+    # For YAML inputs we have to inspect the file. Arguably in RECURSIVE | REFORMAT mode we can assume that
+    # files in definitions_directory are not policy / include files. But for policy / include files we have
+    # to inspect the file, and when in FILE | REFORMAT mode we have to inspect every file anyway.
+    #
+    # This will entail opening the file and performing an initial YAML load to classify it.
+    # The current code structure forces us to discard the initial YAML load after classification.
+    # Arguably interface changes could allow us to re-use the YAML load (possibly tying in with the API use case).
+    # For now we can keep it simple.
+    mod_count = 0
+    input_files = targets[_FilePlan.INPUT]
+    if operation == _Operation.REFORMAT:
+        for input_file in input_files:
+            pol = get_policy_for_file(
+                input_file, base_directory=base_directory, definitions=definitions_directory
+            )
+            pol_yaml = YAMLExportGenerator(pol)
+            print(str(pol_yaml))
+    else:
+        for input_file in input_files:
+            pol = get_policy_for_file(
+                input_file, base_directory=base_directory, definitions=definitions_directory
+            )
+            pol_yaml = YAMLExportGenerator(pol)
+            print(str(pol_yaml))
+
+    if operation == _Operation.REFORMAT:
+        report = f'{len(input_files)} files checked, {mod_count} files reformatted'
+    else:
+        report = f'{len(input_files)} files converted'
+
+    if options['dry_run']:
+        print(f'{report} (dry run)')
+    else:
+        print(report)
 
 
 def _get_file_plan(
@@ -223,6 +370,68 @@ def _get_file_plan(
 
     files.update(output_files)
     return files
+
+
+def get_policy_for_file(input_file: pathlib.Path, base_directory, definitions):
+    """Construct a policy object from input file path.
+
+    Args:
+        input_file: A pathlib.Path pointing to the file.
+    """
+
+    try:
+        with open(input_file) as f:
+            conf = f.read()
+            logging.debug('opened and read %s', input_file)
+    except IOError as e:
+        logging.warning('bad file: \n%s', e)
+        raise
+
+    try:
+        if pathlib.Path(input_file).suffix == '.yaml' or pathlib.Path(input_file).suffix == '.yml':
+            pol = yaml.ParsePolicy(
+                conf,
+                filename=input_file,
+                base_dir=base_directory,
+                definitions=definitions,
+                optimize=False,
+                shade_check=False,
+            )
+        else:
+            pol = policy.ParsePolicy(
+                conf,
+                definitions,
+                optimize=False,
+                base_dir=base_directory,
+                shade_check=False,
+            )
+    except policy.ShadingError as e:
+        logging.warning('shading errors for %s:\n%s', input_file, e)
+        return
+    except (policy.Error, naming.Error) as e:
+        raise ACLParserError(
+            'Error parsing policy file %s:\n%s%s'
+            % (input_file, sys.exc_info()[0], sys.exc_info()[1])
+        ) from e
+    return pol
+
+
+class YAMLExportGenerator(aclgenerator.ACLGenerator):
+    """A fake generator that exists purely for pol2yaml. This generator just spits the policy object back out as YAML."""
+
+    def __str__(self):
+        import pprint
+
+        return pprint.pformat(self)
+
+
+class YAMLExportTerm(aclgenerator.Term):
+    """A fake generator term that exists purely for pol2yaml. See YAMLExportGenerator."""
+
+    def __str__(self):
+        import pprint
+
+        return pprint.pformat(self)
 
 
 def cli_options():
