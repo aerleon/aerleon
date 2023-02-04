@@ -27,7 +27,6 @@ The data primarily consists of:
     * Cisco ASA
     * Cisco NX
     * Cisco XR
-* Cloud Armor
 * Google
     * Cloud Armor
     * GCE
