@@ -33,6 +33,12 @@ def main():
         default='./def',
     )
     _parser.add_option(
+        '--base-directory',
+        dest='basedir',
+        help='The base directory to look for include files.',
+        default='',
+    )
+    _parser.add_option(
         '-p',
         '--policy-file',
         dest='pol',
@@ -64,14 +70,12 @@ def main():
     if pathlib.Path(FLAGS.pol).suffix in ['.yaml', '.yml']:
         policy_obj = yaml.ParsePolicy(
             conf,
+            base_dir=FLAGS.basedir,
             filename=FLAGS.pol,
             definitions=defs,
         )
     else:
-        policy_obj = policy.ParsePolicy(
-            conf,
-            defs,
-        )
+        policy_obj = policy.ParsePolicy(conf, defs, base_dir=FLAGS.basedir)
     check = aclcheck.AclCheck(
         policy_obj,
         src=FLAGS.src,
