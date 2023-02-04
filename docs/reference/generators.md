@@ -862,6 +862,8 @@ targets:
 * _to-zone_: static keyword, followed by user specified zone
 * _inet_: Address family (only IPv4 tested at this time)
 
+NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
+
 ### Term Format
 
 * for common keys see the [common](#common) section above.
