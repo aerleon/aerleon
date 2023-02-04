@@ -247,7 +247,7 @@ YAML supports in-file code reuse through aliases and anchors. This is not an
 Aerleon-specific feature; YAML automatically resolves aliases as part of the
 loading process.
 
-# YAML Policy File Spec
+## YAML Policy File Spec
 
 | File Structure          |                                                           |
 | ----------------------- | --------------------------------------------------------- |
@@ -258,7 +258,7 @@ loading process.
 | filter[].terms[].name   | Required, see [Configuring Terms](#configuring-terms)     |
 | filter[].terms[].\*     | See [Field Reference](#full-field-syntax-reference)       |
 
-## Configuring Targets
+### Configuring Targets
 
 `filter[].header.targets` must be present in every filter. It must contain a
 mapping from a target name to a list of words configuring the target generator.
@@ -269,7 +269,7 @@ this mapping. If multiple filters are present in this policy file, each
 platform's generated configuration file will contain only the filters that
 included that platform as a target.
 
-## Configuring Terms
+### Configuring Terms
 
 `filter[].terms` must be present in every filter. It must contain a non-empty
 list of mappings (Terms).
@@ -279,7 +279,7 @@ in the named file. See section [Includes](#includes) above.
 
 A Term must contain a `name` field naming the term.
 
-## Full Field Syntax Reference
+### Full Field Syntax Reference
 
 | Path                              | Platform   | Value Type                   | Allowed Syntax                                                                                             |
 | --------------------------------- | ---------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -400,7 +400,7 @@ A Term must contain a `name` field naming the term.
 | terms[].target-resources          | GCP        | list of tuples               | `target-resources: ["([PROJECT_NAME], [NETWORK_NAME])", ...]`                                              |
 | terms[].timeout                   |            | number                       | `timeout: "[NUMBER]"`                                                                                      |
 
-## Value Types
+### Value Types
 
 - "word": A "word" is a space-free string consisting of unicode word characters
   plus `-` `_` `+` `.` `@` `/`. A word may only start with a unicode word
@@ -426,11 +426,11 @@ A Term must contain a `name` field naming the term.
   separated by spaces. A YAML list containing one word per entry may be used.
 - "any string": Any string value.
 
-## ICMP_TYPE
+### ICMP_TYPE
 
 The following options are allowed for field icmp-type:
 
-### IPv4
+#### IPv4
 
 - echo-reply
 - unreachable
@@ -451,7 +451,7 @@ The following options are allowed for field icmp-type:
 - conversion-error
 - mobile-redirect
 
-### IPv6
+#### IPv6
 
 - destination-unreachable
 - packet-too-big
@@ -483,7 +483,7 @@ The following options are allowed for field icmp-type:
 - multicast-router-solicitation
 - multicast-router-termination
 
-## DSCP
+### DSCP
 
 The following options are allowed for DSCP traffic classes:
 
@@ -494,4 +494,4 @@ The following options are allowed for DSCP traffic classes:
 - The class “be”.
 - An integer value.
 
-## Flexible Match Values
+### Flexible Match Values
