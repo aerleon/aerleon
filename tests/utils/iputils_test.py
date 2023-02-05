@@ -4,11 +4,19 @@ import pathlib
 
 import pytest
 
+from absl.testing import parameterized
 from aerleon.lib import nacaddr
 from aerleon.utils import iputils
 
 file_directory = pathlib.Path(__file__).parent.absolute()
-exclude_address_testcases = []
+exclude_address_testcases = [
+    ('invalid', 'invalid', TypeError),
+    (nacaddr.IP('10.0.0.1'), 'invalid', TypeError),
+    (nacaddr.IP('10.0.0.1'), nacaddr.IP('0000::/8'), TypeError),
+    (nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.1'), []),
+    (nacaddr.IP('10.0.0.1'), nacaddr.IP('192.168.1.1'), ValueError)
+    
+]
 with open(str(file_directory) + "/address_exclude_test_cases.txt", 'r') as f:
     for line in f:
         ipstr, exstrs, restrs = line.strip().split(' ')
@@ -24,10 +32,12 @@ with open(str(file_directory) + "/address_exclude_test_cases.txt", 'r') as f:
             exclude_address_testcases.append((ip, ex, res))
 
 
-class TestIPUtils:
-    @pytest.mark.unit
-    @pytest.mark.parametrize("ip,exclude,expected", exclude_address_testcases)
+class TestIPUtils(parameterized.TestCase):
+    @parameterized.parameters(exclude_address_testcases)
     def test_exclude_address(self, ip, exclude, expected):
-        result = iputils.exclude_address(ip, exclude)
-
-        assert list(result) == expected
+        if type(expected) == type and issubclass(expected, Exception):
+            with pytest.raises(expected):
+                _ = list(iputils.exclude_address(ip, exclude))
+        else:
+            result = iputils.exclude_address(ip, exclude)
+            self.assertEqual(list(result), expected)
