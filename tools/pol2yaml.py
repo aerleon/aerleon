@@ -1,9 +1,38 @@
+"""pol2yaml
+
+Pol2yaml is a command line tool to convert legacy formats (pol / inc / svc / net) into equivalent YAML representations.
+
+It can also reformat YAML files.
+
+The usage text for pol2yaml contains instructions on its various modes and capabilities.
+
+Some notes on how this functions:
+
+1. The normal process of loading pol / inc files is destructive. Includes, network, and service names are resolved at
+parse time. Through a variety of tricks we can keep this information intact so that a representation of the original
+file data can be produced (and converted).
+
+2. To work around includes, we pre-process pol / inc files, replacing #include directives with placeholder terms.
+This assumes that users are using #include to include lists of terms (per the docs). The placeholder terms are then
+rendered as include statements in the exported file.
+
+3. To work around network name resolution, we can provide the parser a fake Naming dictionary that pretends to resolve all
+network and service names, but focuses on preserving the original data instead.
+
+4. To work around address cleanup, we can take advantage of "preserve tokens" mode available to the SRX platform. The true
+platform target information will need to be stored in a placeholder comment so we can ensure that SRX is always present.
+
+5. Include files (inc files) do not have a parser. They can only be parsed indirectly by placing their contents insde a .pol file.
+To work around this, inc files are placed in a dummy .pol file and parsed, and the dummy .pol config is then discarded upon export.
+"""
+
 import argparse
 from collections import defaultdict
 import enum
 import logging
 import pathlib
 import sys
+import re
 from typing import Any
 
 from tabulate import tabulate  # TODO(jb) just write a func as needed
@@ -241,6 +270,33 @@ def pol2yaml(options, style_options):
     # For now we can keep it simple.
     mod_count = 0
     input_files = targets[_FilePlan.INPUT]
+    for file in input_files:
+        ftype = classify_file(file)
+        # TODO there are exception cases on IOError and ParsePolicy errors
+        # NOTE - some ParsePolicy errors could come from malformed include preprocessing, so message that or distinguish
+        with open(file, 'r') as f:
+            f = f.read()  # TODO(jb) share a single read with classify_file
+
+        if ftype == FileType.POL:
+            preprocess_pol_term_includes(f)
+            pass
+        elif ftype == FileType.INC:
+            # Preprocess into pol wrapper
+            # Preprocess includes
+            # ParsePolicy
+            pass
+        elif ftype == FileType.YAML_POL:
+            # Preprocess includes
+            # ParsePolicy
+            pass
+        elif ftype == FileType.YAML_INC:
+            # Preprocess into yaml_pol wrapper
+            # Preprocess includes
+            # ParsePolicy
+            pass
+        elif ftype == FileType.NET or ftype == FileType.SVC or ftype == FileType.YAML_DEF:
+            # Load into Naming
+            pass
     if operation == _Operation.REFORMAT:
         for input_file in input_files:
             pol = get_policy_for_file(
@@ -285,13 +341,26 @@ def _get_file_plan(
     """
 
     files = {}
-    import pdb
 
-    # pdb.set_trace()
+    # Set a file extension filter for the current mode
+    if operation == _Operation.CONVERT:
+        target_suffixes = ['.pol', '.inc', '.svc', '.net']
+    else:
+        target_suffixes = ['.yaml', '.yml']
+
     # Identify all input files. If --file is used confirm file exists.
     if input_mode == _InputMode.FILES:
         for file in options['file']:
             file = pathlib.Path(file)
+
+            if file.suffix not in target_suffixes:
+                if operation == _Operation.CONVERT:
+                    logging.warning(f'Skipping file {file}: use --yaml to reformat YAML files.')
+                else:
+                    logging.warning(
+                        f'Skipping file {file}: only YAML files will be processed in --yaml mode.'
+                    )
+                continue
 
             if not file.exists():
                 logging.warning(f"File not found: {file}.")
@@ -302,10 +371,6 @@ def _get_file_plan(
             files[file] = _FilePlan.INPUT
 
     else:
-        if operation == _Operation.CONVERT:
-            target_suffixes = ['.pol', '.inc', '.svc', '.net']
-        else:
-            target_suffixes = ['.yaml', '.yml']
 
         for file in pathlib.Path(directory).rglob('*'):
             if file.suffix not in target_suffixes:
@@ -316,7 +381,7 @@ def _get_file_plan(
     # Determine outputs depending on scenario
     output_files = {}
 
-    # Case: separate output directory
+    # Case: seperate output directory
     if options['output_directory']:
         for file in files.keys():
             # Possible conflict scenario
@@ -372,6 +437,152 @@ def _get_file_plan(
     return files
 
 
+def _get_output_target(
+    directory,
+    input_file,
+    input_mode: _InputMode,
+    operation: _Operation,
+    output_mode: _ConverterOutputMode,
+    options: 'dict[str, Any]',
+):
+
+    # Case: seperate output directory
+    if options['output_directory']:
+        # Possible conflict scenario
+        if operation == _Operation.CONVERT:
+            input_file = input_file.with_suffix('.yaml')
+
+        # Find path relative to 'directory'
+        # In 'FILES' mode we look relative to the directory, in 'RECURSIVE' mode we look relative to the parent of the directory
+        if input_mode == _InputMode.FILES:
+            input_file = input_file.relative_to(directory)
+        else:
+            input_file = input_file.relative_to(directory.parent)
+
+        # Join that to 'output'
+        return pathlib.Path(options['output_directory']).joinpath(input_file).resolve()
+
+    # Case: reformat in place
+    elif operation == _Operation.REFORMAT:
+        return input_file
+
+    # Case: convert in place
+    else:
+        # Replace suffix
+        return input_file.with_suffix('.yaml')
+
+
+class FileType(enum.Enum):
+    POL = enum.auto()
+    INC = enum.auto()
+    SVC = enum.auto()
+    NET = enum.auto()
+    YAML_POL = enum.auto()
+    YAML_INC = enum.auto()
+    YAML_DEF = enum.auto()
+
+
+def classify_file(file):
+    file = pathlib.Path(file)
+    if file.suffix == '.pol':
+        return FileType.POL
+    elif file.suffix == '.inc':
+        return FileType.INC
+    elif file.suffix == '.svc':
+        return FileType.SVC
+    elif file.suffix == '.net':
+        return FileType.NET
+    elif file.suffix == '.yaml' or file.suffix == '.yml':
+        try:
+            with open(file, 'r') as f:
+                yaml_data = yaml.safe_load(f)
+            return classify_yaml_content(yaml_data)
+        except IOError as e:
+            logging.warning(f'Unable to open input file {file}, skipped: {e}')
+            return
+
+
+def classify_yaml_content(data):
+    """Look at the data within a YAML file to decide what sort of file it is.
+
+    The behavior in this function is:
+    * If the file has only one key, "filters", it is a Policy file.
+    * If the file has only one key, "terms", it is an Include file.
+    * If the file has either 'networks' or 'services' (or both) as top-level keys, it is a Definitions file.
+
+    Args:
+        data: A dictionary containing the contents of a YAML file.
+    """
+    if not isinstance(data, dict):
+        return
+    if data.keys() == ['filters']:
+        return FileType.YAML_POL
+    if data.keys() == ['terms']:
+        return FileType.YAML_INC
+    if 'networks' in data or 'services' in data:
+        return FileType.YAML_DEF
+
+
+# TODO(jb) - this code mirrors policy._Preprocess, some DRY is needed
+def preprocess_pol_term_includes(file_stream):
+    """Scan file and replace '#include' lines with placeholder terms.
+    NOTE: this is not completely safe! #include lines can appear anywhere in the file, so
+    it's possible some users are overly clever with them. Program should message user
+    if that sort of scenario is detected."""
+    rval = []
+    for line in [x.rstrip() for x in file_stream.splitlines()]:
+        words = line.split()
+        if len(words) > 1 and words[0] == '#include':
+            include_file = words[1].strip('\'"')
+            # TODO(jb) BEGIN INNER
+            include_file_slug = re.sub(include_file, "-", '[^A-Z]')
+            placeholder_lines = f"""
+            term ZZZZZZ-INCLUDE-PLACEHOLDER-{include_file_slug} {{
+                comment:: "ZZZZZZ-INCLUDE-PLACEHOLDER"
+                comment:: "{include_file}"
+            }}"""
+            # TODO(jb) END INNER
+            rval.extend(placeholder_lines)
+        else:
+            rval.append(line)
+    return rval
+
+
+def preprocess_pol_includes_file(file_stream):
+    """Encapsulate an include file in a dummy policy so we can load it as a Policy model.
+
+    NOTE: this is not entirely safe! It assumes that an include file is a sequence of terms.
+    However because .pol includes are inserted verbatim without attentino to structure, it's
+    possible some users are overly clever with them. Program should try to message user
+    if that sort of scenario is detected."""
+    return f"""
+    header {{
+        comment:: "ZZZZZZ-DUMMY-POLICY"
+    }}
+    {file_stream}
+    """
+
+
+def preprocess_yaml_term_includes(data):
+    """Modify the dictionary representation of a YAML policy file to replace
+    include statements with placeholders."""
+    for policy_filter in data["filters"]:
+        if 'terms' in policy_filter:
+            for i, term in enumerate(policy_filter['terms']):
+                if 'include' in term:
+                    include_file = term['include']
+                    include_file_slug = re.sub(include_file, "-", '[^A-Z]')
+                    policy_filter['terms'][i] = {
+                        "name": f"ZZZZZZ-INCLUDE-PLACEHOLDER-{include_file_slug}",
+                        "comment": include_file,
+                    }
+
+
+def preprocess_yaml_includes_file(data):
+    """Place the dictionary representation of a YAML term list in a dummy policy."""
+    return {"filters": [{"header": {}, "terms": data}]}
+
+
 def get_policy_for_file(input_file: pathlib.Path, base_directory, definitions):
     """Construct a policy object from input file path.
 
@@ -405,9 +616,6 @@ def get_policy_for_file(input_file: pathlib.Path, base_directory, definitions):
                 base_dir=base_directory,
                 shade_check=False,
             )
-    except policy.ShadingError as e:
-        logging.warning('shading errors for %s:\n%s', input_file, e)
-        return
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
             'Error parsing policy file %s:\n%s%s'

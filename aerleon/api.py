@@ -306,7 +306,7 @@ def _Generate(
 
 
 def _GenerateACL(
-    input_policy: policy.Policy,
+    input_policy: dict,
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: dict,
