@@ -1087,8 +1087,6 @@ class Term:
             understand.
           InvalidTermLoggingError: when a option is set for logging not known.
         """
-        if _PRESERVE_ORIGINAL:
-            self.AddObject
 
         if type(obj) is list:
             for x in obj:
