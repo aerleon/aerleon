@@ -48,6 +48,7 @@ FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
 _LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
 _OPTIMIZE = True
 _SHADE_CHECK = False
+_PRESERVE_ORIGINAL = False
 _MAX_TTL = 255
 _MIN_TTL = 0
 
@@ -198,7 +199,8 @@ class Policy:
     def AddFilter(self, header, terms):
         """Add another header & filter."""
         self.filters.append((header, terms))
-        self._TranslateTerms(terms)
+        if not _PRESERVE_ORIGINAL:
+            self._TranslateTerms(terms)
         if _SHADE_CHECK:
             self._DetectShading(terms)
 
@@ -1085,6 +1087,9 @@ class Term:
             understand.
           InvalidTermLoggingError: when a option is set for logging not known.
         """
+        if _PRESERVE_ORIGINAL:
+            self.AddObject
+
         if type(obj) is list:
             for x in obj:
                 # do we have a list of addresses?
@@ -2715,6 +2720,7 @@ def ParsePolicy(
             globals()['DEFINITIONS'] = naming.Naming(DEFAULT_DEFINITIONS)
         globals()['_OPTIMIZE'] = optimize
         globals()['_SHADE_CHECK'] = shade_check
+        globals()['_PRESERVE_ORIGINAL'] = False
 
         lexer = lex.lex()
 
@@ -2736,8 +2742,114 @@ def FromBuilder(builder: PolicyBuilder):
         globals()['DEFINITIONS'] = naming.Naming(DEFAULT_DEFINITIONS)
     globals()['_OPTIMIZE'] = builder.optimize
     globals()['_SHADE_CHECK'] = builder.shade_check
+    globals()['_PRESERVE_ORIGINAL'] = False
 
     return builder.BuildPolicy()
+
+
+def ParseOriginal(data, definitions=None, filename='', is_include=False):
+    """Partially parse 'data' into an PolicyCopy model, preserving the original
+    content of 'data'. The PolicyCopy model produced can be passed to export.ExportPolicy().
+
+    Compared to ParsePolicy, this function will ensure that includes are preserved,
+    tokens are preserved and addresses and ports are not collapsed so a faithful copy can be taken.
+    This also loosens some of the normal parse requirements: undefined tokens are allowed and include
+    statements will not be loaded at all.
+
+    ParseOriginal can also load include files.
+
+    Args:
+      data: a string blob of policy data to parse.
+      filename: string - filename used by the policy.
+      is_include: string - whether the file is an include file, a standalone term list that has no headers.
+
+    Returns:
+      A PolicyCopy object or False (if parse error).
+    """
+    if not definitions:
+        definitions = naming.Naming(DEFAULT_DEFINITIONS)
+
+    globals()['DEFINITIONS'] = definitions
+    globals()['_OPTIMIZE'] = False
+    globals()['_SHADE_CHECK'] = False
+    globals()['_PRESERVE_ORIGINAL'] = True
+
+    pol_copy = PolicyCopy(is_include=is_include)
+    data = pol_copy.Preprocess(data)
+
+    try:
+        lexer = lex.lex()
+
+        global parser
+        policy = parser.parse(data, lexer=lexer)
+        policy.filename = filename
+
+        pol_copy.policy = policy
+
+        return pol_copy
+
+    except IndexError:
+        return False
+
+
+class PolicyCopy:
+    _include_counter = 1000
+
+    def __init__(self, is_include=False):
+        self.is_include = is_include
+        self.policy = None
+        self.include_placeholders = []
+
+    def Preprocess(self, data):
+        if self.is_include:
+            data = self._PreprocessWrapTermList(data)
+
+        data = self._PreprocessIncludePlaceholders(data)
+
+        return data
+
+    def _PreprocessIncludePlaceholders(self, data):
+        """Scan file and replace '#include' lines with placeholder terms.
+
+        NOTE: this is not completely safe! #include lines can appear anywhere in the file, so
+        it's possible some users are overly clever with them. Program should message user
+        if that sort of scenario is detected."""
+
+        rval = []
+        for line in [x.rstrip() for x in data.splitlines()]:
+            words = line.split()
+            if len(words) > 1 and words[0] == '#include':
+                include_file = words[1].strip('\'"')
+
+                placeholder_term_name = f"PLACEHOLDER-INCLUDE-d5e4-f1c0-{self._include_counter}"
+                self._include_counter = self._include_counter + 1
+
+                placeholder_lines = f"""
+term {placeholder_term_name} {{
+  comment:: "{placeholder_term_name}"
+  comment:: "{include_file}"
+}}"""
+                self.include_placeholders.append(placeholder_term_name)
+                rval.append(placeholder_lines)
+            else:
+                rval.append(line)
+        return '\n'.join(rval)
+
+    @staticmethod
+    def _PreprocessWrapTermList(data):
+        """Encapsulate an include file in a dummy policy so we can load it as a Policy model.
+
+        NOTE: this is not entirely safe! It assumes that an include file is a sequence of terms.
+        However because .pol includes are inserted verbatim without attentino to structure, it's
+        possible some users are overly clever with them. Program should try to message user
+        if that sort of scenario is detected."""
+
+        return f"""
+header {{
+  comment:: "PLACEHOLDER-TERMLIST-WRAPPER"
+}}
+{data}
+"""
 
 
 # if you call this from the command line, you can specify a pol file for it to

@@ -32,14 +32,13 @@ import enum
 import logging
 import pathlib
 import sys
-import re
 from typing import Any
 
 from tabulate import tabulate  # TODO(jb) just write a func as needed
 import yaml
 from aerleon.aclgen import ACLParserError
 
-from aerleon.lib import aclgenerator, naming, policy
+from aerleon.lib import aclgenerator, export, naming, policy
 
 
 VERSION = '1.0'
@@ -278,7 +277,7 @@ def pol2yaml(options, style_options):
             f = f.read()  # TODO(jb) share a single read with classify_file
 
         if ftype == FileType.POL:
-            preprocess_pol_term_includes(f)
+            export.preprocess_pol_term_includes(f)
             pass
         elif ftype == FileType.INC:
             # Preprocess into pol wrapper
@@ -521,66 +520,6 @@ def classify_yaml_content(data):
         return FileType.YAML_INC
     if 'networks' in data or 'services' in data:
         return FileType.YAML_DEF
-
-
-# TODO(jb) - this code mirrors policy._Preprocess, some DRY is needed
-def preprocess_pol_term_includes(file_stream):
-    """Scan file and replace '#include' lines with placeholder terms.
-    NOTE: this is not completely safe! #include lines can appear anywhere in the file, so
-    it's possible some users are overly clever with them. Program should message user
-    if that sort of scenario is detected."""
-    rval = []
-    for line in [x.rstrip() for x in file_stream.splitlines()]:
-        words = line.split()
-        if len(words) > 1 and words[0] == '#include':
-            include_file = words[1].strip('\'"')
-            # TODO(jb) BEGIN INNER
-            include_file_slug = re.sub(include_file, "-", '[^A-Z]')
-            placeholder_lines = f"""
-            term ZZZZZZ-INCLUDE-PLACEHOLDER-{include_file_slug} {{
-                comment:: "ZZZZZZ-INCLUDE-PLACEHOLDER"
-                comment:: "{include_file}"
-            }}"""
-            # TODO(jb) END INNER
-            rval.extend(placeholder_lines)
-        else:
-            rval.append(line)
-    return rval
-
-
-def preprocess_pol_includes_file(file_stream):
-    """Encapsulate an include file in a dummy policy so we can load it as a Policy model.
-
-    NOTE: this is not entirely safe! It assumes that an include file is a sequence of terms.
-    However because .pol includes are inserted verbatim without attentino to structure, it's
-    possible some users are overly clever with them. Program should try to message user
-    if that sort of scenario is detected."""
-    return f"""
-    header {{
-        comment:: "ZZZZZZ-DUMMY-POLICY"
-    }}
-    {file_stream}
-    """
-
-
-def preprocess_yaml_term_includes(data):
-    """Modify the dictionary representation of a YAML policy file to replace
-    include statements with placeholders."""
-    for policy_filter in data["filters"]:
-        if 'terms' in policy_filter:
-            for i, term in enumerate(policy_filter['terms']):
-                if 'include' in term:
-                    include_file = term['include']
-                    include_file_slug = re.sub(include_file, "-", '[^A-Z]')
-                    policy_filter['terms'][i] = {
-                        "name": f"ZZZZZZ-INCLUDE-PLACEHOLDER-{include_file_slug}",
-                        "comment": include_file,
-                    }
-
-
-def preprocess_yaml_includes_file(data):
-    """Place the dictionary representation of a YAML term list in a dummy policy."""
-    return {"filters": [{"header": {}, "terms": data}]}
 
 
 def get_policy_for_file(input_file: pathlib.Path, base_directory, definitions):
