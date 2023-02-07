@@ -50,7 +50,7 @@ class NoCiscoPolicyError(Error):
     """Raised when a policy is errantly passed to this module for rendering."""
 
 
-class Term(cisco.Term):
+class Term(cisco.ExtendedTerm):
     """A single ACL Term."""
 
     def __init__(self, term, filter_name, af=4, enable_dsmo=False):

@@ -9,8 +9,6 @@ ip access-list extended test-filter
 
  remark good-term-13
  remark Owner: foo@google.com
- remark Owner: foo@google.com
- remark Owner: foo@google.com
  permit ip any any
 
 exit

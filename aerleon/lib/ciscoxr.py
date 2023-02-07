@@ -58,10 +58,10 @@ class CiscoXR(cisco.Cisco):
 
         return supported_tokens, supported_sub_tokens
 
-    def _GetObjectGroupTerm(self, term, filter_name, verbose=True):
+    def _GetObjectGroupTerm(self, term, verbose=True):
         """Returns an ObjectGroupTerm object."""
-        return CiscoXRObjectGroupTerm(term, filter_name, platform=self._PLATFORM, verbose=verbose)
+        return CiscoXRObjectGroupTerm(term, platform=self._PLATFORM, verbose=verbose)
 
 
 class CiscoXRObjectGroupTerm(cisco.ObjectGroupTerm):
-    ALLOWED_PROTO_STRINGS = cisco.Term.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']
+    ALLOWED_PROTO_STRINGS = cisco.ExtendedTerm.ALLOWED_PROTO_STRINGS + ['pcp', 'esp']

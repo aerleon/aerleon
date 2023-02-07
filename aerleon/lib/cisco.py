@@ -117,84 +117,38 @@ class TermStandard:
             return '\n'.join(ret_str)
 
         v4_addresses = [x for x in self.term.address if not isinstance(x, nacaddr.IPv6)]
+        prefix = ''
         if self.filter_name.isdigit():
-            if self.verbose:
-                ret_str.append('access-list %s remark %s' % (self.filter_name, self.term.name))
-                comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
-                for comment in comments:
-                    ret_str.append('access-list %s remark %s' % (self.filter_name, comment))
+            prefix = f'access-list {self.filter_name}'
 
-            action = _ACTION_TABLE.get(str(self.term.action[0]))
-            if v4_addresses:
-                for addr in v4_addresses:
+        if self.verbose:
+            ret_str.append(f'{prefix} remark {self.term.name}')
+            comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
+            for comment in comments:
+                ret_str.append(f'{prefix} remark {comment}')
+
+        action = _ACTION_TABLE.get(str(self.term.action[0]))
+        if v4_addresses:
+            for addr in v4_addresses:
+                if self.platform == 'arista':
                     if addr.prefixlen == 32:
                         ret_str.append(
-                            'access-list %s %s %s%s%s'
-                            % (
-                                self.filter_name,
-                                action,
-                                addr.network_address,
-                                self.logstring,
-                                self.dscpstring,
-                            )
+                            f'{prefix} {action} host {addr.network_address}{self.logstring}{self.dscpstring}'
                         )
                     else:
                         ret_str.append(
-                            'access-list %s %s %s %s%s%s'
-                            % (
-                                self.filter_name,
-                                action,
-                                addr.network_address,
-                                addr.hostmask,
-                                self.logstring,
-                                self.dscpstring,
-                            )
+                            f'{prefix} {action} {addr.network_address}/{addr.prefixlen}{self.logstring}{self.dscpstring}'
                         )
-            else:
-                ret_str.append(
-                    'access-list %s %s %s%s%s'
-                    % (self.filter_name, action, 'any', self.logstring, self.dscpstring)
-                )
+                elif addr.prefixlen == 32:
+                    ret_str.append(
+                        f'{prefix} {action} {addr.network_address}{self.logstring}{self.dscpstring}'
+                    )
+                else:
+                    ret_str.append(
+                        f'{prefix} {action} {addr.network_address} {addr.hostmask}{self.logstring}{self.dscpstring}'
+                    )
         else:
-            if self.verbose:
-                ret_str.append(' remark ' + self.term.name)
-                comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
-                if comments and comments[0]:
-                    for comment in comments:
-                        ret_str.append(' remark ' + str(comment))
-
-            action = _ACTION_TABLE.get(str(self.term.action[0]))
-            if v4_addresses:
-                for addr in v4_addresses:
-                    if addr.prefixlen == 32:
-                        ret_str.append(
-                            ' %s host %s%s%s'
-                            % (action, addr.network_address, self.logstring, self.dscpstring)
-                        )
-                    elif self.platform == 'arista':
-                        ret_str.append(
-                            ' %s %s/%s%s%s'
-                            % (
-                                action,
-                                addr.network_address,
-                                addr.prefixlen,
-                                self.logstring,
-                                self.dscpstring,
-                            )
-                        )
-                    else:
-                        ret_str.append(
-                            ' %s %s %s%s%s'
-                            % (
-                                action,
-                                addr.network_address,
-                                addr.hostmask,
-                                self.logstring,
-                                self.dscpstring,
-                            )
-                        )
-            else:
-                ret_str.append(' %s %s%s%s' % (action, 'any', self.logstring, self.dscpstring))
+            ret_str.append(f'{prefix} {action} any{self.logstring}{self.dscpstring}')
 
         return '\n'.join(ret_str)
 
@@ -438,7 +392,7 @@ class PortMap:
 
 
 class Term(aclgenerator.Term):
-    """A single ACL Term."""
+    """This is an general Term object that all other Cisco Terms should inherite from."""
 
     ALLOWED_PROTO_STRINGS = [
         'eigrp',
@@ -455,7 +409,6 @@ class Term(aclgenerator.Term):
         'sctp',
         'ahp',
     ]
-
     IPV4_ADDRESS = Union[nacaddr.IPv4, ipaddress.IPv4Network]
     IPV6_ADDRESS = Union[nacaddr.IPv6, ipaddress.IPv6Network]
 
@@ -469,7 +422,6 @@ class Term(aclgenerator.Term):
         platform='cisco',
         verbose=True,
     ):
-        super().__init__(term)
         self.term = term
         self.proto_int = proto_int
         self.options = []
@@ -501,14 +453,20 @@ class Term(aclgenerator.Term):
                 )
             )
             return ''
+
+        # verbose
         if self.verbose:
+            comments = []
             if self.term_remark:
-                ret_str.append(' remark ' + self.term.name)
+                comments.append(self.term.name)
             if self.term.owner:
-                self.term.comment.append('Owner: %s' % self.term.owner)
-            for comment in self.term.comment:
-                for line in comment.split('\n'):
-                    ret_str.append(' remark ' + str(line)[:100].rstrip())
+                comments.append(f'Owner: {self.term.owner}')
+            comments.extend(self.term.comment)
+
+            comments = aclgenerator.WrapWords(comments, _COMMENT_MAX_WIDTH)
+            if comments and comments[0]:
+                for comment in comments:
+                    ret_str.append(' remark %s' % str(comment))
 
         # Term verbatim output - this will skip over normal term creation
         # code by returning early.  Warnings provided in policy.py.
@@ -545,6 +503,7 @@ class Term(aclgenerator.Term):
             if 'ah' in protocol:
                 protocol = [x if x != 'ah' else '51' for x in protocol]
 
+        # addresses
         # source address
         if self.term.source_address:
             source_address = self.term.GetAddressOfVersion('source_address', self.af)
@@ -564,7 +523,8 @@ class Term(aclgenerator.Term):
                 source_address = summarizer.Summarize(source_address)
         else:
             # source address not set
-            source_address = ['any']
+            source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
+        fixed_src_addresses = set([self._GetIpString(x) for x in source_address])
 
         # destination address
         if self.term.destination_address:
@@ -587,7 +547,21 @@ class Term(aclgenerator.Term):
                 destination_address = summarizer.Summarize(destination_address)
         else:
             # destination address not set
-            destination_address = ['any']
+            destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
+
+        fixed_dst_addresses = set([self._GetIpString(x) for x in destination_address])
+
+        # ports
+        source_port = [()]
+        destination_port = [()]
+
+        # source port
+        if self.term.source_port:
+            source_port = self._FixConsecutivePorts(self.term.source_port)
+
+        # destination port
+        if self.term.destination_port:
+            destination_port = self._FixConsecutivePorts(self.term.destination_port)
 
         # options
         opts = [str(x) for x in self.term.option]
@@ -626,17 +600,9 @@ class Term(aclgenerator.Term):
             self.options.append('nexthop1 %s %s' % (nexthop_protocol, nexthop))
             action = _ACTION_TABLE.get('accept')
 
+        # action
         if self.term.action:
             action = _ACTION_TABLE.get(str(self.term.action[0]))
-
-        # ports
-        source_port = [()]
-        destination_port = [()]
-        if self.term.source_port:
-            source_port = self._FixConsecutivePorts(self.term.source_port)
-
-        if self.term.destination_port:
-            destination_port = self._FixConsecutivePorts(self.term.destination_port)
 
         # logging
         if self.term.logging:
@@ -658,23 +624,24 @@ class Term(aclgenerator.Term):
         icmp_codes = ['']
         if self.term.icmp_code:
             icmp_codes = self.term.icmp_code
-        fixed_src_addresses = [self._GetIpString(x) for x in source_address]
-        fixed_dst_addresses = [self._GetIpString(x) for x in destination_address]
+
         fixed_opts = {}
         for p in protocol:
             fixed_opts[p] = self._FixOptions(p, self.options)
-        for saddr in fixed_src_addresses:
-            for daddr in fixed_dst_addresses:
-                for sport in source_port:
-                    for dport in destination_port:
-                        for proto in protocol:
+
+        # temlet constructor
+        for saddr in sorted(fixed_src_addresses):
+            for daddr in sorted(fixed_dst_addresses):
+                for sport in sorted(source_port):
+                    for dport in sorted(destination_port):
+                        for proto in sorted(protocol):
                             opts = fixed_opts[proto]
                             # cisconx uses icmp for both ipv4 and ipv6
                             if self.platform == 'cisconx':
                                 if self.af == 6:
                                     proto = 'icmp' if proto == 'icmpv6' else proto
-                            for icmp_type in icmp_types:
-                                for icmp_code in icmp_codes:
+                            for icmp_type in sorted(icmp_types):
+                                for icmp_code in sorted(icmp_codes):
                                     ret_str.extend(
                                         self._TermletToStr(
                                             action,
@@ -699,6 +666,11 @@ class Term(aclgenerator.Term):
         Returns:
           An address string suitable for the ACL.
         """
+        # DSMO enabled
+        if isinstance(addr, summarizer.DSMNet):
+            return '%s %s' % summarizer.ToDottedQuad(addr, negate=True)
+        if addr.prefixlen == 0:
+            return 'any'
         if isinstance(addr, nacaddr.IPv4) or isinstance(addr, ipaddress.IPv4Network):
             addr = cast(self.IPV4_ADDRESS, addr)
             if addr.num_addresses > 1:
@@ -711,9 +683,6 @@ class Term(aclgenerator.Term):
             if addr.num_addresses > 1:
                 return addr.with_prefixlen
             return 'host %s' % (addr.network_address)
-        # DSMO enabled
-        if isinstance(addr, summarizer.DSMNet):
-            return '%s %s' % summarizer.ToDottedQuad(addr, negate=True)
         return addr
 
     def _FormatPort(self, port, proto):
@@ -817,6 +786,10 @@ class Term(aclgenerator.Term):
         return temporary_port_list
 
 
+class ExtendedTerm(Term):
+    """A single ExtendedACL Term."""
+
+
 class ObjectGroupTerm(Term):
     """An individual term of an object-group'd acl.
 
@@ -832,100 +805,31 @@ class ObjectGroupTerm(Term):
     in the acl.
     """
 
-    # Protocols should be emitted as integers rather than strings.
-    _PROTO_INT = True
+    def _FormatPort(self, port, proto):
+        """Returns a formatted port string for the range.
 
-    def __init__(self, term, filter_name, platform='cisco', verbose=True):
-        super().__init__(term)
-        self.term = term
-        self.filter_name = filter_name
-        self.platform = platform
-        self.verbose = verbose
+        Args:
+          port: str list or none, the port range.
+          proto: str representing proto (tcp, udp, etc).
 
-    def __str__(self):
-        source_address_set = set()
-        destination_address_set = set()
-        ret_str = ['\n']
-        if self.verbose:
-            ret_str.append(' remark %s' % self.term.name)
-            comments = aclgenerator.WrapWords(self.term.comment, _COMMENT_MAX_WIDTH)
-            if comments and comments[0]:
-                for comment in comments:
-                    ret_str.append(' remark %s' % str(comment))
+        Returns:
+          A string suitable for the ACL.
+        """
+        if not port:
+            return ''
+        return f'port-group {port[0]}-{port[1]}'
 
-        # Term verbatim output - this will skip over normal term creation
-        # code by returning early.  Warnings provided in policy.py.
-        if self.term.verbatim:
-            for next_verbatim in self.term.verbatim:
-                if next_verbatim[0] == self.platform:
-                    ret_str.append(str(next_verbatim[1]))
-            return '\n'.join(ret_str)
+    def _GetIpString(self, addr):
+        """Formats the address object for printing in the ACL.
 
-        # protocol
-        if not self.term.protocol:
-            protocol = ['ip']
-
-        else:
-            protocol = [
-                proto
-                if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
-                else self.PROTO_MAP.get(proto)
-                for proto in self.term.protocol
-            ]
-
-        # addresses
-        source_address = self.term.source_address
-        if not self.term.source_address:
-            source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
-        source_address_set.add(source_address[0].parent_token)
-
-        destination_address = self.term.destination_address
-        if not self.term.destination_address:
-            destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
-        destination_address_set.add(destination_address[0].parent_token)
-        # ports
-        source_port = [()]
-        destination_port = [()]
-        if self.term.source_port:
-            source_port = self.term.source_port
-        if self.term.destination_port:
-            destination_port = self.term.destination_port
-        for saddr in source_address_set:
-            for daddr in destination_address_set:
-                for sport in source_port:
-                    for dport in destination_port:
-                        for proto in protocol:
-                            ret_str.append(
-                                self._TermletToStr(
-                                    _ACTION_TABLE.get(str(self.term.action[0])),
-                                    proto,
-                                    saddr,
-                                    sport,
-                                    daddr,
-                                    dport,
-                                )
-                            )
-
-        return '\n'.join(ret_str)
-
-    def _TermletToStr(self, action, proto, saddr, sport, daddr, dport):
-        """Output a portion of a cisco term/filter only, based on the 5-tuple."""
-        # Empty addr/port destinations should emit 'any'
-        if saddr and saddr != 'any':
-            saddr = 'net-group %s' % saddr
-        if daddr and daddr != 'any':
-            daddr = 'net-group %s' % daddr
-        # fix ports
-        if sport:
-            sport = ' port-group %d-%d' % (sport[0], sport[1])
-        else:
-            sport = ''
-        if dport:
-            dport = ' port-group %d-%d' % (dport[0], dport[1])
-        else:
-            dport = ''
-
-        return (' %s %s %s%s %s%s' % (action, proto, saddr, sport, daddr, dport)).rstrip()
+        Args:
+          addr: str or ipaddr, address
+        Returns:
+          An address string suitable for the ACL.
+        """
+        if addr.prefixlen == 0:
+            return f'{addr.parent_token}'
+        return f'net-group {addr.parent_token}'
 
 
 class Cisco(aclgenerator.ACLGenerator):
@@ -1044,7 +948,7 @@ class Cisco(aclgenerator.ACLGenerator):
                             len(filter_options) > 2 and filter_options[2] == 'enable_dsmo'
                         )
                         new_terms.append(
-                            Term(
+                            ExtendedTerm(
                                 term,
                                 proto_int=self._PROTO_INT,
                                 enable_dsmo=enable_dsmo,
@@ -1055,12 +959,10 @@ class Cisco(aclgenerator.ACLGenerator):
                         )
                     elif next_filter == 'object-group':
                         obj_target.AddTerm(term)
-                        new_terms.append(
-                            self._GetObjectGroupTerm(term, filter_name, verbose=self.verbose)
-                        )
+                        new_terms.append(self._GetObjectGroupTerm(term, verbose=self.verbose))
                     elif next_filter == 'inet6':
                         new_terms.append(
-                            Term(
+                            ExtendedTerm(
                                 term,
                                 6,
                                 proto_int=self._PROTO_INT,
@@ -1076,9 +978,9 @@ class Cisco(aclgenerator.ACLGenerator):
                     (header, filter_name, [next_filter], new_terms, obj_target)
                 )
 
-    def _GetObjectGroupTerm(self, term, filter_name, verbose=True):
+    def _GetObjectGroupTerm(self, term, verbose=True):
         """Returns an ObjectGroupTerm object."""
-        return ObjectGroupTerm(term, filter_name, verbose=verbose)
+        return ObjectGroupTerm(term, verbose=verbose)
 
     def _AppendTargetByFilterType(self, filter_name, filter_type):
         """Takes in the filter name and type and appends headers.

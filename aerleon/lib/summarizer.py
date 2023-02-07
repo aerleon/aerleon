@@ -40,6 +40,9 @@ class DSMNet:
         self.netmask = netmask
         self.text = text
 
+    def __hash__(self):
+        return hash(str(self.address) + str(self.netmask))
+
     def __eq__(self, other):
         try:
             return self.address == other.address and self.netmask == other.netmask
