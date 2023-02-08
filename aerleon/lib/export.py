@@ -1,9 +1,11 @@
-from collections import defaultdict
 import ipaddress
 import pathlib
 import re
-from aerleon.lib import naming, policy
+from collections import defaultdict
+
 import yaml
+
+from aerleon.lib import naming, policy
 
 
 class ExportStyleRules:

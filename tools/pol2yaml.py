@@ -1,45 +1,44 @@
 """pol2yaml
 
-Pol2yaml is a command line tool to convert legacy formats (pol / inc / svc / net) into equivalent YAML representations.
+Pol2yaml is a command line tool to convert legacy formats (pol / inc / svc / net)
+into equivalent YAML representations. It can also reformat YAML files.
 
-It can also reformat YAML files.
-
-The usage text for pol2yaml contains instructions on its various modes and capabilities.
-
-Some notes on how this functions:
-
-1. The normal process of loading pol / inc files is destructive. Includes, network, and service names are resolved at
-parse time. Through a variety of tricks we can keep this information intact so that a representation of the original
-file data can be produced (and converted).
-
-2. To work around includes, we pre-process pol / inc files, replacing #include directives with placeholder terms.
-This assumes that users are using #include to include lists of terms (per the docs). The placeholder terms are then
-rendered as include statements in the exported file.
-
-3. To work around network name resolution, we can provide the parser a fake Naming dictionary that pretends to resolve all
-network and service names, but focuses on preserving the original data instead.
-
-4. To work around address cleanup, we can take advantage of "preserve tokens" mode available to the SRX platform. The true
-platform target information will need to be stored in a placeholder comment so we can ensure that SRX is always present.
-
-5. Include files (inc files) do not have a parser. They can only be parsed indirectly by placing their contents insde a .pol file.
-To work around this, inc files are placed in a dummy .pol file and parsed, and the dummy .pol config is then discarded upon export.
+The usage text for pol2yaml contains detailed instructions.
 """
 
+# Some notes on how this functions:
+#
+# 1. Loading a .pol file into a Policy model is destructive. Include files are merged, network, and service names are
+# resolved, and networks may be joined together. Instead of loading into a Policy this script will get a PolicyCopy,
+# which contains a close representation of the policy file contents. PolicyCopy uses some tricks like embedding includes
+# as fake terms and skipping network and service name resolution.
+#
+# 2. To work around includes, we pre-process pol / inc files, replacing #include directives with placeholder terms.
+# This assumes that users are using #include to include lists of terms (per the docs). The placeholder terms are then
+# rendered as include statements in the exported file.
+#
+# 3. To work around network name resolution, we can provide the parser a fake Naming dictionary that pretends to resolve all
+# network and service names, but focuses on preserving the original data instead.
+#
+# 4. To work around address cleanup, we can take advantage of "preserve tokens" mode available to the SRX platform. The true
+# platform target information will need to be stored in a placeholder comment so we can ensure that SRX is always present.
+#
+# 5. Include files (inc files) do not have a parser. They can only be parsed indirectly by placing their contents insde a .pol file.
+# To work around this, inc files are placed in a dummy .pol file and parsed, and the dummy .pol config is then discarded upon export.
+
 import argparse
-from collections import defaultdict
 import enum
 import logging
 import pathlib
 import sys
+from collections import defaultdict
 from typing import Any
 
-from tabulate import tabulate  # TODO(jb) just write a func as needed
 import yaml
+from tabulate import tabulate  # TODO(jb) just write a func as needed
+
 from aerleon.aclgen import ACLParserError
-
 from aerleon.lib import aclgenerator, export, naming, policy
-
 
 VERSION = '1.0'
 
