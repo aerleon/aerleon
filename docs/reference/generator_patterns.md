@@ -19,7 +19,7 @@ Platforms that support mixed family filters will simply generate filters that co
 
 ##### Desired Approach
 
-**The desired approach will be to have Aerleon output two filters, one for each address family, for platforms that do not support ‘mixed’.** This currently occurs already with [cisco.py](https://github.com/aerleon/aerleon/blob/master/aerleon/lib/cisco.py) which outputs two access-lists one that contains IPv4 and another that contains IPv6 addresses. This solves a problem of having to potentially maintain two different .pol so that in cases where vendor syntax of filter name is derived from .pol a syncing between v4 and v6 .pol do not need to be maintained.
+**The desired approach will be to have Aerleon output two filters, one for each address family, for platforms that do not support ‘mixed’.** This currently occurs already with [cisco.py](https://github.com/aerleon/aerleon/blob/main/aerleon/lib/cisco.py) which outputs two access-lists one that contains IPv4 and another that contains IPv6 addresses. This solves a problem of having to potentially maintain two different .pol so that in cases where vendor syntax of filter name is derived from .pol a syncing between v4 and v6 .pol do not need to be maintained.
 
 This may be misleading at first because when using Aerleon the user expects that the output will be a single policy, but it is actually their lack of understanding about the vendor syntax that causes this belief.
 
@@ -76,7 +76,7 @@ list may not be exhaustive.
 `noverberse` must be supported if it makes sense for the platform. Noverbose removes all comments from the ACE terms, policies, etc.
 ### Sample.pol file is present
 
-A sample pol file should exist for that generator. Some examples are [here](https://github.com/aerleon/aerleon/tree/master/policies/pol). The sample.pol file for the new generator should have examples for all the filter option types used, with all supported IP types, along with any custom fields for that generator.
+A sample pol file should exist for that generator. Some examples are [here](https://github.com/aerleon/aerleon/tree/main/policies/pol). The sample.pol file for the new generator should have examples for all the filter option types used, with all supported IP types, along with any custom fields for that generator.
 
 ### Perform truncating of names for term name or comment based on max length
 
