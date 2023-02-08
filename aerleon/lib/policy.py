@@ -1929,6 +1929,22 @@ reserved = {
 
 
 def t_IGNORE_COMMENT(t):
+    # TODO start squeezing comments into the grammar
+    # They can be discarded at the model level when not using _PRESERVE_ORIGINALS
+    # 
+    # Three placements:
+    # (1) Top-level
+    #     Sibling to header / term
+    #     If above a header, treat it as a "Filter Block Comment"
+    #     If above a term, treat it as a "Term Block Comment"
+    # (2) Header-level, Term-level
+    #     Appears inside a header {} block or term {} block on its own line(s)
+    #     Treat it as "Term-level Block Comment"
+    # (3) Inline
+    #     Appears at the end of a line that contains a key/value pair
+    #     We might not actually be able to distinguish from Term-level block
+    #
+    # Note: we must not re-sort term keys if we want to fully preserve comment meanings
     r'\#.*'
     pass
 

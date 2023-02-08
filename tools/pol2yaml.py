@@ -187,7 +187,7 @@ def pol2yaml(options, style_options):
         # Get list of unique parents
         mkdir_targets = list(set([file.parent for file in targets[_FilePlan.OUTPUT_MKDIR]]))
         for directory in mkdir_targets:
-            pathlib.Path(directory).mkdir(parents=True, exists_ok=True)
+            pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
     # Start visiting input files
 
@@ -277,39 +277,70 @@ def pol2yaml(options, style_options):
             f = f.read()  # TODO(jb) share a single read with classify_file
 
         if ftype == FileType.POL:
-            export.preprocess_pol_term_includes(f)
-            pass
+            try:
+                with open(file) as f:
+                    conf = f.read()
+                    logging.debug('opened and read %s', file)
+            except IOError as e:
+                logging.warning('bad file: \n%s', e)
+                raise
+            fakedefs = export.ExportHelperNamingImpl()
+            pol_copy = policy.ParseOriginal(
+                conf, definitions=fakedefs, filename=file, is_include=False
+            )
+            yaml_copy = export.ExportPolicy(pol_copy)
+            output_target = _get_output_target(
+                pathlib.Path(base_directory), file, input_mode, operation, output_mode, options
+            )
+
         elif ftype == FileType.INC:
-            # Preprocess into pol wrapper
-            # Preprocess includes
-            # ParsePolicy
-            pass
+            try:
+                with open(file) as f:
+                    conf = f.read()
+                    logging.debug('opened and read %s', file)
+            except IOError as e:
+                logging.warning('bad file: \n%s', e)
+                raise
+            fakedefs = export.ExportHelperNamingImpl()
+            pol_copy = policy.ParseOriginal(
+                conf, definitions=fakedefs, filename=file, is_include=True
+            )
+            yaml_copy = export.ExportPolicy(pol_copy)
+            output_target = _get_output_target(
+                pathlib.Path(base_directory), file, input_mode, operation, output_mode, options
+            )
+
         elif ftype == FileType.YAML_POL:
             # Preprocess includes
             # ParsePolicy
-            pass
+            continue
         elif ftype == FileType.YAML_INC:
             # Preprocess into yaml_pol wrapper
             # Preprocess includes
             # ParsePolicy
-            pass
+            continue
         elif ftype == FileType.NET or ftype == FileType.SVC or ftype == FileType.YAML_DEF:
             # Load into Naming
-            pass
-    if operation == _Operation.REFORMAT:
-        for input_file in input_files:
-            pol = get_policy_for_file(
-                input_file, base_directory=base_directory, definitions=definitions_directory
-            )
-            pol_yaml = YAMLExportGenerator(pol)
-            print(str(pol_yaml))
-    else:
-        for input_file in input_files:
-            pol = get_policy_for_file(
-                input_file, base_directory=base_directory, definitions=definitions_directory
-            )
-            pol_yaml = YAMLExportGenerator(pol)
-            print(str(pol_yaml))
+            continue
+
+        if not options['dry_run']:
+            print(f'Writing {output_target}')
+            with open(output_target, 'w') as f:
+                f.write(yaml_copy)
+    # if operation == _Operation.REFORMAT:
+    #     for input_file in input_files:
+    #         pol = get_policy_for_file(
+    #             input_file, base_directory=base_directory, definitions=definitions_directory
+    #         )
+    #         pol_yaml = YAMLExportGenerator(pol)
+    #         print(str(pol_yaml))
+    # else:
+    #     for input_file in input_files:
+    #         pol = get_policy_for_file(
+    #             input_file, base_directory=base_directory, definitions=definitions_directory
+    #         )
+    #         pol_yaml = YAMLExportGenerator(pol)
+    #         print(str(pol_yaml))
 
     if operation == _Operation.REFORMAT:
         report = f'{len(input_files)} files checked, {mod_count} files reformatted'
@@ -437,14 +468,13 @@ def _get_file_plan(
 
 
 def _get_output_target(
-    directory,
-    input_file,
+    directory: pathlib.Path,
+    input_file: pathlib.Path,
     input_mode: _InputMode,
     operation: _Operation,
     output_mode: _ConverterOutputMode,
     options: 'dict[str, Any]',
 ):
-
     # Case: seperate output directory
     if options['output_directory']:
         # Possible conflict scenario

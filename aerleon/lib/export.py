@@ -6,37 +6,15 @@ from aerleon.lib import naming, policy
 import yaml
 
 
-# def preprocess_yaml_term_includes(data):
-#     """Modify the dictionary representation of a YAML policy file to replace
-#     include statements with placeholders."""
-#     for policy_filter in data["filters"]:
-#         if 'terms' in policy_filter:
-#             for i, term in enumerate(policy_filter['terms']):
-#                 if 'include' in term:
-#                     include_file = term['include']
-#                     include_file_slug = re.sub(include_file, "-", '[^A-Z]')
-#                     policy_filter['terms'][i] = {
-#                         "name": f"ZZZZZZ-INCLUDE-PLACEHOLDER-{include_file_slug}",
-#                         "comment": include_file,
-#                     }
-
-
-# def preprocess_yaml_includes_file(data):
-#     """Place the dictionary representation of a YAML term list in a dummy policy."""
-#     return {"filters": [{"header": {}, "terms": data}]}
-
-
 class ExportStyleRules:
-    """These rules enable stylistic variants available in the exporter."""
+    """These rules enable stylistic variants available in the exporter.
+
+    At this moment there are none. Best if we can keep it this way!"""
 
 
 def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
     if not style:
         style = ExportStyleRules()
-
-    pol = pol_copy.policy
-    is_include = pol_copy.is_include
-    include_placeholders = pol_copy.include_placeholders
 
     INTERNAL_FIELDS = frozenset(
         [
@@ -50,6 +28,10 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
         ]
     )
 
+    pol = pol_copy.policy
+    is_include = pol_copy.is_include
+    include_placeholders = pol_copy.include_placeholders
+
     def _ExportHeader(header):
         """Export a filter header to a dict."""
         header = vars(header)
@@ -57,7 +39,8 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
         targets = {}
         for target in header['target']:
             targets[target.platform] = " ".join(target.options)
-        header['target'] = targets
+        header['targets'] = targets
+        del header['target']
 
         objects = {}
         if header['comment']:
@@ -163,10 +146,6 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
         terms = [_ExportTerm(term) for term in filter[1]]
         data['filters'].append({'header': header, 'terms': terms})
 
-    import pprint
-
-    pprint.pprint(data)
-
     # In the 'include' scenario we can strip the temporary policy wrapper that allowed us to parse the file
     if is_include:
         data = data['filters'][0]['terms']
@@ -179,13 +158,20 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
         return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
     yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
-    print(yaml.safe_dump(data, sort_keys=False))  # We want term.name at the top of each term
-
-    return yaml.safe_dump(data, sort_keys=False)
+    return yaml.safe_dump(data, sort_keys=False)  # We want term.name at the top of each term
 
 
 def ExportNaming(defs, style: ExportStyleRules = None):
     """Exporter for naming.Naming"""
+
+    line = line.strip()
+    # TODO - break out the comment case and preserve block comment lines
+    if not line or line.startswith('#'):  # Skip comments and blanks.
+        return
+    # Let's dump some items
+    for unit in defs.networks:
+        if line.find('#') > -1:  # if there is a comment, save it
+            (line, comment) = line.split('#', 1)
 
 
 class ExportHelperNamingImpl(naming.Naming):
