@@ -28,6 +28,8 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
         ]
     )
 
+    UNCOLLAPSIBLE_FIELDS = frozenset(['target_resources'])
+
     pol = pol_copy.policy
     is_include = pol_copy.is_include
     include_placeholders = pol_copy.include_placeholders
@@ -110,6 +112,12 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
                         platform_values.append(item)
                 value = platform_values
 
+            if keyword == 'source_address_exclude':
+                keyword = 'source-exclude'
+
+            if keyword == 'destination_address_exclude':
+                keyword = 'destination-exclude'
+
             if keyword == 'target_resources':
                 value = [f'({item[0]},{item[1]})' for item in value]
 
@@ -130,7 +138,7 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
                     new_value['policy'] = value[1]
 
             # Assuming all lists can be safely collapsed at this point
-            if isinstance(value, list) and len(value) == 1:
+            if isinstance(value, list) and len(value) == 1 and keyword not in UNCOLLAPSIBLE_FIELDS:
                 value = value[0]
 
             # Assuming every data model property name matches the YAML name
@@ -148,7 +156,7 @@ def ExportPolicy(pol_copy: policy.PolicyCopy, style: ExportStyleRules = None):
 
     # In the 'include' scenario we can strip the temporary policy wrapper that allowed us to parse the file
     if is_include:
-        data = data['filters'][0]['terms']
+        data = {'terms': data['filters'][0]['terms']}
 
     def str_presenter(dumper, data):
         """configures yaml for dumping multiline strings

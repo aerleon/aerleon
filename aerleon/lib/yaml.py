@@ -328,7 +328,7 @@ def _LoadIncludeFile(base_dir, inc_filename):
     """Open an include file."""
 
     with open(pathlib.Path(base_dir).joinpath(inc_filename), 'r') as include_file:
-        return include_file
+        return include_file.read()
 
 
 def _PolicyFromRawPolicy(raw_policy, definitions, optimize=False, shade_check=False):
