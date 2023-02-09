@@ -24,7 +24,7 @@ from aerleon.utils import config
 
 
 def main():
-    # usage = 'usage: %prog [options] arg'
+    usage = 'usage: %prog [options] arg'
     _parser = ArgumentParser(
         prog='aclcheck',
         formatter_class=RawTextHelpFormatter,
