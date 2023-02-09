@@ -516,7 +516,11 @@ def Run(
 def main(argv):
     del argv  # Unused.
 
-    configs = config.generate_configs(FLAGS)
+    absl_flags = {
+        flag: getattr(FLAGS, flag) for flag in config.defaults.keys() if getattr(FLAGS, flag, None)
+    }
+    configs = config.load_config(config_file=FLAGS.config_file)
+    configs.update(absl_flags)
 
     if configs['verbose']:
         logging.set_verbosity(logging.INFO)
