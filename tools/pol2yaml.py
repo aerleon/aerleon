@@ -10,21 +10,12 @@ The usage text for pol2yaml contains detailed instructions.
 #
 # 1. Loading a .pol file into a Policy model is destructive. Include files are merged, network, and service names are
 # resolved, and networks may be joined together. Instead of loading into a Policy this script will get a PolicyCopy,
-# which contains a close representation of the policy file contents. PolicyCopy uses some tricks like embedding includes
-# as fake terms and skipping network and service name resolution.
+# which contains a close representation of the policy file contents. PolicyCopy uses some tricks like not opening
+# include files and skipping network and service name resolution.
 #
-# 2. To work around includes, we pre-process pol / inc files, replacing #include directives with placeholder terms.
-# This assumes that users are using #include to include lists of terms (per the docs). The placeholder terms are then
-# rendered as include statements in the exported file.
-#
-# 3. To work around network name resolution, we can provide the parser a fake Naming dictionary that pretends to resolve all
-# network and service names, but focuses on preserving the original data instead.
-#
-# 4. To work around address cleanup, we can take advantage of "preserve tokens" mode available to the SRX platform. The true
-# platform target information will need to be stored in a placeholder comment so we can ensure that SRX is always present.
-#
-# 5. Include files (inc files) do not have a parser. They can only be parsed indirectly by placing their contents insde a .pol file.
-# To work around this, inc files are placed in a dummy .pol file and parsed, and the dummy .pol config is then discarded upon export.
+# 2. Loading a .inc file is not normally supported. They can only be parsed indirectly by placing their contents inside
+# a .pol file. To work around this, PolicyCopy places the contents of .inc files inside a dummy .pol file. The dummy
+# policy file is then discarded upon by ExportPolicy.
 
 import argparse
 import enum
@@ -39,6 +30,7 @@ from tabulate import tabulate  # TODO(jb) just write a func as needed
 
 from aerleon.aclgen import ACLParserError
 from aerleon.lib import aclgenerator, export, naming, policy
+
 
 VERSION = '1.0'
 
