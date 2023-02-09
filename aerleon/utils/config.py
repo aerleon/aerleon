@@ -3,6 +3,7 @@
 """A module to handle merging file configurations with CLI configs for Aerleon."""
 
 import pathlib
+
 import yaml
 
 defaults = {

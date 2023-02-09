@@ -17,6 +17,7 @@
 """Check where hosts, ports and protocols are matched in an Aerleon policy."""
 
 import logging
+
 from aerleon.lib import nacaddr, policy, port
 
 

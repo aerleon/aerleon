@@ -18,7 +18,6 @@ from absl.testing import absltest
 
 from aerleon.lib import aclcheck, naming, policy, port
 
-
 POLICYTEXT = """
 header {
   comment:: "this is a test acl"
