@@ -17,72 +17,105 @@
 """Command line interface to aclcheck library."""
 
 import pathlib
-from optparse import OptionParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from aerleon.lib import aclcheck, naming, policy, yaml
+from aerleon.utils import config
 
 
 def main():
     # TODO(robankeny): Lets move this to gflags
-    usage = 'usage: %prog [options] arg'
-    _parser = OptionParser(usage)
-    _parser.add_option(
+    # usage = 'usage: %prog [options] arg'
+    _parser = ArgumentParser(
+        prog='aclcheck',
+        formatter_class=RawTextHelpFormatter,
+    )
+    _parser.add_argument(
         '--definitions-directory',
-        dest='definitions',
+        dest='definitions_directory',
         help='definitions directory',
-        default='./def',
     )
-    _parser.add_option(
+    _parser.add_argument(
         '--base-directory',
-        dest='basedir',
+        dest='base_directory',
         help='The base directory to look for include files.',
-        default='',
     )
-    _parser.add_option(
+    _parser.add_argument(
         '-p',
         '--policy-file',
         dest='pol',
         help='policy file',
-        default='./policies/pol/sample_paloalto_yaml.yaml',
+        required=True,
     )
-    _parser.add_option(
-        '-d', '--destination', dest='dst', help='destination IP', default='200.1.1.1'
+    _parser.add_argument(
+        '--config-file',
+        dest='config_file',
+        help='config file',
     )
-    _parser.add_option('-s', '--source', dest='src', help='source IP', default='any')
-    _parser.add_option(
+    _parser.add_argument('-d', '--destination', dest='dst', help='destination IP')
+    _parser.add_argument(
+        '-s',
+        '--source',
+        dest='src',
+        help='source IP',
+    )
+    _parser.add_argument(
         '--proto',
         '--protocol',
         dest='proto',
         help='Protocol (tcp, udp, icmp, etc.)',
-        default='tcp',
     )
-    _parser.add_option(
-        '--dport', '--destination-port', dest='dport', help='destination port', default='80'
-    )
-    _parser.add_option(
-        '--sport', '--source-port', dest='sport', help='source port', default='1025'
-    )
-    (FLAGS, unused_args) = _parser.parse_args()
+    _parser.add_argument('--dport', '--destination-port', dest='dport', help='destination port')
+    _parser.add_argument('--sport', '--source-port', dest='sport', help='source port')
+    FLAGS = _parser.parse_args()
 
-    defs = naming.Naming(FLAGS.definitions)
-    with open(FLAGS.pol) as f:
+    default_flags = {
+        'base_directory': './policies',
+        'definitions_directory': './def',
+        'pol': None,
+        'config_file': None,
+        'dst': '200.1.1.1',
+        'src': 'any',
+        'proto': 'any',
+        'dport': '80',
+        'sport': '1025',
+    }
+
+    configs = {}
+    configs.update(default_flags)
+
+    if not (FLAGS.base_directory and FLAGS.definitions_directory):
+        common_flags = frozenset(['base_directory', 'definitions_directory'])
+        common_configs = config.load_config(config_file=FLAGS.config_file)
+        common_configs = {
+            key: value for key, value in common_configs.items() if key in common_flags
+        }
+        configs.update(common_configs)
+
+    # Grab common configs from aerleon.yml
+    configs.update({flag: value for flag, value in vars(FLAGS).items() if value})
+
+    defs = naming.Naming(configs['definitions_directory'])
+
+    with open(configs['pol']) as f:
         conf = f.read()
-    if pathlib.Path(FLAGS.pol).suffix in ['.yaml', '.yml']:
+
+    if pathlib.Path(configs['pol']).suffix in ['.yaml', '.yml']:
         policy_obj = yaml.ParsePolicy(
             conf,
-            base_dir=FLAGS.basedir,
-            filename=FLAGS.pol,
+            base_dir=configs['base_directory'],
+            filename=configs['pol'],
             definitions=defs,
         )
     else:
-        policy_obj = policy.ParsePolicy(conf, defs, base_dir=FLAGS.basedir)
+        policy_obj = policy.ParsePolicy(conf, defs, base_dir=configs['base_directory'])
     check = aclcheck.AclCheck(
         policy_obj,
-        src=FLAGS.src,
-        dst=FLAGS.dst,
-        sport=FLAGS.sport,
-        dport=FLAGS.dport,
-        proto=FLAGS.proto,
+        src=configs['src'],
+        dst=configs['dst'],
+        sport=configs['sport'],
+        dport=configs['dport'],
+        proto=configs['proto'],
     )
     print(str(check))
 
