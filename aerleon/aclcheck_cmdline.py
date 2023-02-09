@@ -24,7 +24,6 @@ from aerleon.utils import config
 
 
 def main():
-    # TODO(robankeny): Lets move this to gflags
     # usage = 'usage: %prog [options] arg'
     _parser = ArgumentParser(
         prog='aclcheck',
