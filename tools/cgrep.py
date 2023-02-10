@@ -406,7 +406,7 @@ def get_nets_and_highest_prefix(ip, net_group, db):
     # loop through all the networks in the net_group
     for net in get_nets([net_group], db)[0][1]:
         # find the highest prefix length for the networks that contain the IP
-        if ip in net:
+        if ip.subnet_of(net):
             networks.append(str(net))
             if net.prefixlen > highest_prefix_length:
                 highest_prefix_length = net.prefixlen
@@ -450,11 +450,11 @@ def compare_tokens(options, db):
     results = []
     for el in set(d1 + d2):
         el = nacaddr.IP(el)
-        if el in d1 and el in d2:
+        if el.subnet_of(d1) and el.subnet_of(d2):
             results.append(str(el))
-        elif el in d1:
+        elif el.subnet_of(d1):
             results.append(str(el))
-        elif el in d2:
+        elif el.subnet_of(d2):
             results.append(str(el))
     return meta, results
 
