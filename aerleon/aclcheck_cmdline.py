@@ -26,6 +26,7 @@ from aerleon.utils import config
 def main():
     _parser = ArgumentParser(
         prog='aclcheck',
+        description=aclcheck.AclCheck.__doc__.splitlines()[0],
         formatter_class=RawTextHelpFormatter,
     )
     _parser.add_argument(
@@ -50,7 +51,7 @@ def main():
         dest='config_file',
         help='Change the location searched for the configuration YAML file.',
     )
-    _parser.add_argument('-d', '--destination', dest='destination_ip', help='destination IP')
+    _parser.add_argument('-d', '--destination', dest='destination_ip', help='Destination IP.')
     _parser.add_argument(
         '-s',
         '--source',
@@ -63,7 +64,9 @@ def main():
         dest='protocol',
         help='Protocol (tcp, udp, icmp, etc.)',
     )
-    _parser.add_argument('--dport', '--destination-port', dest='destination_port', help='Destination port.')
+    _parser.add_argument(
+        '--dport', '--destination-port', dest='destination_port', help='Destination port.'
+    )
     _parser.add_argument('--sport', '--source-port', dest='source_port', help='Source port.')
     FLAGS = _parser.parse_args()
 

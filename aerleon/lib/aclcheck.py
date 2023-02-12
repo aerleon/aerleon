@@ -55,7 +55,7 @@ class AclCheck:
       An AclCheck Object
 
     Raises:
-      port.BarPortValue: An invalid source port is used
+      port.BadPortValue: An invalid source port is used
       port.BadPortRange: A port is outside of the acceptable range 0-65535
       AddressError: Incorrect ip address or format
 
