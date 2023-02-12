@@ -1,4 +1,17 @@
-"""Aerleon "Generate" API
+""" Aerleon API
+
+This module accepts plain Python dictionaries and lists as input.
+It allows users to use Aerleon's functionality without having to
+deal with YAML files, command line scripts, or config files.
+
+This module exposes two APIs:
+
+* Generate API: Provides the policy-to-ACL capabilities of the aclgen
+  command line tool.
+* Check API: Provides the policy query capabilities of the aclcheck
+  command line tool.
+
+## Aerleon "Generate" API
 
 The Generate API provides the full policy-to-ACL capabilities of
 the aclgen command line tool. It accepts as input plain Python
@@ -170,6 +183,14 @@ ip access-list extended test-filter
 
 exit
 ```
+
+
+## Aerleon "AclCheck" API
+
+The AclCheck API provides the policy query capabilities of the aclcheck
+command line tool. It accepts as input plain Python dictionaries and lists.
+
+
 """
 import copy
 import multiprocessing
@@ -186,7 +207,7 @@ from aerleon.aclgen import (
     WriteFiles,
     WriteList,
 )
-from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, policy_builder
+from aerleon.lib import aclcheck, aclgenerator, naming, plugin_supervisor, policy, policy_builder
 
 
 def Generate(
@@ -243,7 +264,7 @@ def Generate(
 
 
 def _Generate(
-    policies,
+    policies: "list[dict]",  # PolicyDict
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
     output_directory=None,
@@ -306,7 +327,7 @@ def _Generate(
 
 
 def _GenerateACL(
-    input_policy: policy.Policy,
+    input_policy: dict,
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: dict,
@@ -315,30 +336,9 @@ def _GenerateACL(
     shade_check=False,
     exp_info=2,
 ):
-    raw_filters = []
-    input_filters = input_policy["filters"]
     filename = input_policy.get("filename")
-    for filter in input_filters:
-
-        filter_header = filter["header"]
-        header_targets = filter_header["targets"]
-        raw_filter_header = policy_builder.RawFilterHeader(
-            targets=header_targets, kvs=filter_header
-        )
-
-        raw_terms = []
-        filter_terms = filter["terms"]
-        for term in filter_terms:
-            raw_term = policy_builder.RawTerm(name=term["name"], kvs=term)
-            raw_terms.append(raw_term)
-
-        raw_filters.append(policy_builder.RawFilter(header=raw_filter_header, terms=raw_terms))
-
-    raw_policy = policy_builder.RawPolicy(filename=filename, filters=raw_filters)
     try:
-        policy_obj = policy.FromBuilder(
-            policy_builder.PolicyBuilder(raw_policy, definitions, optimize, shade_check)
-        )
+        policy_obj = PolicyFromDict(input_policy, definitions, optimize, shade_check)
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', filename, e)
         return
@@ -395,3 +395,51 @@ def _GenerateACL(
             raise ACLGeneratorError(
                 'Error generating target ACL for %s:\n%s' % (filename, e)
             ) from e
+
+
+# TODO(jb) - let's move PolicyBuilder to accept a PolicyDict. Move RawPolicy inside PolicyBuilder. Define PolicyDict type.
+def PolicyFromDict(input_policy, definitions, optimize=False, shade_check=False):
+    raw_filters = []
+    input_filters = input_policy["filters"]
+    filename = input_policy.get("filename")
+    for filter in input_filters:
+        filter_header = filter["header"]
+        header_targets = filter_header["targets"]
+        raw_filter_header = policy_builder.RawFilterHeader(
+            targets=header_targets, kvs=filter_header
+        )
+
+        raw_terms = []
+        filter_terms = filter["terms"]
+        for term in filter_terms:
+            raw_term = policy_builder.RawTerm(name=term["name"], kvs=term)
+            raw_terms.append(raw_term)
+
+        raw_filters.append(policy_builder.RawFilter(header=raw_filter_header, terms=raw_terms))
+
+    raw_policy = policy_builder.RawPolicy(filename=filename, filters=raw_filters)
+    policy_obj = policy.FromBuilder(
+        policy_builder.PolicyBuilder(raw_policy, definitions, optimize, shade_check)
+    )
+
+    return filename, policy_obj
+
+
+def AclCheck(
+    input_policy: dict,
+    definitions: naming.Naming,
+    src=None,
+    dst=None,
+    sport=None,
+    dport=None,
+    proto=None,
+):
+    filename = input_policy.get("filename")
+    try:
+        filename, policy_obj = PolicyFromDict(input_policy, definitions)
+    except (policy.Error, naming.Error) as e:
+        raise ACLParserError(
+            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+        ) from e
+
+    return AclCheck(policy_obj, src, dst, sport, dport, proto)
