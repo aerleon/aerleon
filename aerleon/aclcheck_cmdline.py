@@ -82,15 +82,19 @@ def main():
     configs = {}
     configs.update(default_flags)
 
-    if not (FLAGS.base_directory and FLAGS.definitions_directory):
-        common_flags = frozenset(['base_directory', 'definitions_directory'])
-        common_configs = config.load_config(config_file=FLAGS.config_file)
-        common_configs = {
-            key: value for key, value in common_configs.items() if key in common_flags
-        }
-        configs.update(common_configs)
+    # Pull common fields from aerleon.yml / --config_file
+    # If all common fields are set on the command line, skip this step
+    common_flags = frozenset(['base_directory', 'definitions_directory'])
+    if not all(getattr(FLAGS, flag, None) for flag in common_flags):
+        try:
+            common_configs = config.load_config(config_file=FLAGS.config_file)
+            common_configs = {
+                key: value for key, value in common_configs.items() if key in common_flags
+            }
+            configs.update(common_configs)
+        except config.ConfigFileError as e:
+            exit(f"Error: {e}")
 
-    # Grab common configs from aerleon.yml
     configs.update({flag: value for flag, value in vars(FLAGS).items() if value})
 
     defs = naming.Naming(configs['definitions_directory'])

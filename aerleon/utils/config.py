@@ -21,7 +21,11 @@ defaults = {
     'exp_info': 2,
 }
 
-default_file = './aerleon.yml'
+DEFAULT_FILE = './aerleon.yml'
+
+
+class ConfigFileError(Exception):
+    """Raised if there is some problem reading a config file."""
 
 
 def load_config(
@@ -37,16 +41,17 @@ def load_config(
             is True.
 
     Raises:
-        IOError: If open(config_file) raises an IOError. Note that it is not an error for the
-            config file to not exist.
-        yaml.YAMLError: If the config file is not valid YAML.
+        ConfigFileError: If the config file could not be opened and loaded. It is not an error
+            if config_file is not given and the default config file is not found.
 
-    Returns: a dictionary containing the contents of the config file. If no config file is found
+    Returns: A dictionary containing the contents of the config file. If no config file is found
         all default values will be returned (unless apply_defaults is False). If a list of config
         files is given their contents will be merged by their order in the list."""
 
+    using_default = False
     if not config_file:
-        config_file = [pathlib.Path(default_file)]
+        config_file = [pathlib.Path(DEFAULT_FILE)]
+        using_default = True
     elif not isinstance(config_file, list):
         config_file = [config_file]
 
@@ -61,9 +66,28 @@ def load_config(
         try:
             with open(config, 'r') as f:
                 data = yaml.safe_load(f)
+
+                if not data or not isinstance(data, dict):
+                    raise ConfigFileError(f"Config file contents not valid: {config}")
+
                 local_defaults.update(data)  # NOTE: Safe as long as the config file is flat
 
-        except FileNotFoundError:
-            pass
+        # If a user-specified config file is not found, re-raise
+        # It is not an error if there is no default config file
+        except FileNotFoundError as e:
+            if not using_default:
+                raise ConfigFileError(f"Config file not found: {config}") from e
+
+        except PermissionError as e:
+            raise ConfigFileError(f"Insufficient permissions to open config file: {config}") from e
+
+        except IsADirectoryError as e:
+            raise ConfigFileError(f"Expected a config file, found a directory: {config}") from e
+
+        except OSError as e:
+            raise ConfigFileError(f"Unable to open config file: {config}") from e
+
+        except yaml.YAMLError as e:
+            raise ConfigFileError(f"Config file is not a valid YAML file: {config}") from e
 
     return local_defaults

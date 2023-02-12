@@ -519,8 +519,11 @@ def main(argv):
     absl_flags = {
         flag: getattr(FLAGS, flag) for flag in config.defaults.keys() if getattr(FLAGS, flag, None)
     }
-    configs = config.load_config(config_file=FLAGS.config_file)
-    configs.update(absl_flags)
+    try:
+        configs = config.load_config(config_file=FLAGS.config_file)
+        configs.update(absl_flags)
+    except config.ConfigFileError as e:
+        exit(f"Error: {e}")
 
     if configs['verbose']:
         logging.set_verbosity(logging.INFO)
