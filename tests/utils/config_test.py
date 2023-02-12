@@ -1,6 +1,7 @@
 """Unit tests for config.py"""
 
 from unittest import mock
+
 from absl.testing import absltest
 
 from aerleon.utils import config
