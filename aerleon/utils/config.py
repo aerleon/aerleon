@@ -2,6 +2,8 @@
 # Modifications Copyright 2022-2023 Aerleon Project Authors.
 """A module to handle merging file configurations with CLI configs for Aerleon."""
 
+import pathlib
+
 import yaml
 
 defaults = {
@@ -19,55 +21,73 @@ defaults = {
     'exp_info': 2,
 }
 
+DEFAULT_FILE = './aerleon.yml'
 
-def yaml_loader(filename):
-    with open(filename, 'r') as f:
+
+class ConfigFileError(Exception):
+    """Raised if there is some problem reading a config file."""
+
+
+def load_config(
+    config_file: "str | pathlib.Path | list[str | pathlib.Path]" = None,
+    apply_defaults: bool = True,
+) -> dict:
+    """Load Aerleon configuration file(s).
+
+    Args:
+        config_file: An optional string or pathlib.Path with the location of the config file
+            to open. A list of config files can be given. Default is './aerleon.yml'.
+        apply_defaults: Whether to set missing config fields to their default values. Default
+            is True.
+
+    Raises:
+        ConfigFileError: If the config file could not be opened and loaded. It is not an error
+            if config_file is not given and the default config file is not found.
+
+    Returns: A dictionary containing the contents of the config file. If no config file is found
+        all default values will be returned (unless apply_defaults is False). If a list of config
+        files is given their contents will be merged by their order in the list."""
+
+    using_default = False
+    if not config_file:
+        config_file = [pathlib.Path(DEFAULT_FILE)]
+        using_default = True
+    elif not isinstance(config_file, list):
+        config_file = [config_file]
+
+    local_defaults = {}
+    if apply_defaults:
+        local_defaults.update(defaults)
+
+    for config in config_file:
+        if isinstance(config, str):
+            config = pathlib.Path(config)
+
         try:
-            data = yaml.safe_load(f)
-        except AttributeError:
-            data = yaml.safe_load(f)
+            with open(config, 'r') as f:
+                data = yaml.safe_load(f)
 
-    return data
+                if not data or not isinstance(data, dict):
+                    raise ConfigFileError(f"Config file contents not valid: {config}")
 
+                local_defaults.update(data)  # NOTE: Safe as long as the config file is flat
 
-def flags_to_dict(absl_flags):
-    base = {
-        'base_directory': absl_flags.base_directory,
-        'definitions_directory': absl_flags.definitions_directory,
-        'policy_file': absl_flags.policy_file,
-        'output_directory': absl_flags.output_directory,
-        'optimize': absl_flags.optimize,
-        'recursive': absl_flags.recursive,
-        'debug': absl_flags.debug,
-        'verbose': absl_flags.verbose,
-        'ignore_directories': absl_flags.ignore_directories,
-        'max_renderers': absl_flags.max_renderers,
-        'shade_check': absl_flags.shade_check,
-        'exp_info': absl_flags.exp_info,
-    }
+        # If a user-specified config file is not found, re-raise
+        # It is not an error if there is no default config file
+        except FileNotFoundError as e:
+            if not using_default:
+                raise ConfigFileError(f"Config file not found: {config}") from e
 
-    return {flag: base[flag] for flag in filter(lambda f: base[f] is not None, base)}
+        except PermissionError as e:
+            raise ConfigFileError(f"Insufficient permissions to open config file: {config}") from e
 
+        except IsADirectoryError as e:
+            raise ConfigFileError(f"Expected a config file, found a directory: {config}") from e
 
-def merge_files(*files):
-    result = {}
+        except OSError as e:
+            raise ConfigFileError(f"Unable to open config file: {config}") from e
 
-    for item in files:
-        data = yaml_loader(item)
-        result.update(data)
+        except yaml.YAMLError as e:
+            raise ConfigFileError(f"Config file is not a valid YAML file: {config}") from e
 
-    return {flag: result[flag] for flag in filter(lambda f: result[f] is not None, result)}
-
-
-def generate_configs(absl_flags):
-    cli_configs = flags_to_dict(absl_flags)
-    if absl_flags.config_file:
-        file_configs = merge_files(*absl_flags.config_file)
-    else:
-        file_configs = {}
-
-    result = defaults.copy()
-    result.update(cli_configs)
-    result.update(file_configs)
-
-    return result
+    return local_defaults
