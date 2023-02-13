@@ -185,7 +185,6 @@ def PreprocessYAMLPolicy(filename, base_dir, policy_dict: PolicyDict):
                 )
             )
 
-
         header = filter['header']
         if 'targets' not in header or (
             header['targets'] is not None and not isinstance(header['targets'], dict)
