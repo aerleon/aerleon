@@ -75,7 +75,7 @@ class AclCheck:
     ):
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
-        cls(policy_obj, src, dst, sport, dport, proto)
+        return cls(policy_obj, src, dst, sport, dport, proto)
 
     def __init__(
         self,
@@ -90,20 +90,20 @@ class AclCheck:
         self.proto = proto
 
         # validate source port
-        if sport == 'any':
-            self.sport = sport
+        if not sport or sport == 'any':
+            self.sport = 'any'
         else:
             self.sport = port.Port(sport)
 
         # validate destination port
-        if dport == 'any':
-            self.dport = dport
+        if not dport or dport == 'any':
+            self.dport = 'any'
         else:
             self.dport = port.Port(dport)
 
         # validate source address
-        if src == 'any':
-            self.src = src
+        if not src or src == 'any':
+            self.src = 'any'
         else:
             try:
                 self.src = nacaddr.IP(src)
@@ -111,8 +111,8 @@ class AclCheck:
                 raise AddressError('bad source address: %s\n' % src)
 
         # validate destination address
-        if dst == 'any':
-            self.dst = dst
+        if not dst or dst == 'any':
+            self.dst = 'any'
         else:
             try:
                 self.dst = nacaddr.IP(dst)

@@ -429,11 +429,11 @@ def AclCheck(
 ):
     filename = input_policy.get("filename")
     try:
-        _, policy_obj = PolicyFromDict(input_policy, definitions)
+        check = aclcheck.AclCheck.FromPolicyDict(
+            input_policy, definitions, src, dst, sport, dport, proto
+        )
+        return check.Summarize()
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
             'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
-
-    check = aclcheck.AclCheck(policy_obj, src, dst, sport, dport, proto)
-    return check.Summarize()
