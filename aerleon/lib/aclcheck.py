@@ -18,7 +18,7 @@
 
 import logging
 
-from aerleon.lib import nacaddr, policy, port
+from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 
 
 class Error(Exception):
@@ -61,9 +61,24 @@ class AclCheck:
 
     """
 
+    @classmethod
+    def FromPolicyDict(
+        cls,
+        policy_dict: policy_builder.PolicyDict,
+        definitions: naming.Naming,
+        src,
+        dst,
+        sport,
+        dport,
+        proto,
+    ):
+        """Construct an AclCheck object from a PolicyDict + Naming object."""
+        policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
+        cls(policy_obj, src, dst, sport, dport, proto)
+
     def __init__(
         self,
-        pol,
+        pol: policy.Policy,
         src='any',
         dst='any',
         sport='any',
