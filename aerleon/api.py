@@ -419,7 +419,7 @@ def PolicyFromDict(
 
 
 def AclCheck(
-    input_policy: dict,
+    input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
     src: str = None,
     dst: str = None,
@@ -435,6 +435,5 @@ def AclCheck(
             'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
 
-    # TODO: return a dict or list with data organized in the same fashion as str(check)
     check = aclcheck.AclCheck(policy_obj, src, dst, sport, dport, proto)
-    return check
+    return check.Summarize()

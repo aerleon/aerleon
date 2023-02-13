@@ -17,6 +17,7 @@
 """Check where hosts, ports and protocols are matched in an Aerleon policy."""
 
 import logging
+from collections import defaultdict
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 
@@ -212,20 +213,26 @@ class AclCheck:
 
     def __str__(self):
         text = []
-        last_filter = ''
-        for match in self.matches:
-            if match.filter != last_filter:
-                last_filter = match.filter
-                text.append('  filter: ' + match.filter)
-            if match.possibles:
-                text.append(' ' * 10 + 'term: ' + str(match.term) + ' (possible match)')
-            else:
-                text.append(' ' * 10 + 'term: ' + str(match.term))
-            if match.possibles:
-                text.append(' ' * 16 + match.action + ' if ' + str(match.possibles))
-            else:
-                text.append(' ' * 16 + match.action)
+        summary = self.Summarize()
+        for filter, terms in summary.items():
+            text.append('  filter: ' + filter)
+            for matches in terms.values():
+                text.append(matches['message'])
         return '\n'.join(text)
+
+    def Summarize(self):
+        summary = defaultdict(lambda: defaultdict(dict))
+        for match in self.matches:
+            summary[match.filter][match.term]["possibles"] = match.possibles
+            text = []
+            if match.possibles:
+                text.append(f"{' ' * 10}term: {match.term} (possible match)")
+                text.append(f"{' ' * 16}{match.action} if {match.possibles}")
+            else:
+                text.append(f"{' ' * 10}term: {match.term}")
+                text.append(f"{' ' * 16}{match.action}")
+            summary[match.filter][match.term]["message"] = '\n'.join(text)
+        return summary
 
     def _PossibleMatch(self, term):
         """Ignore some options and keywords that are edge cases.
