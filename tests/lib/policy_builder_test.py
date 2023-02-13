@@ -5,74 +5,75 @@ from absl.testing import absltest
 from aerleon.lib import nacaddr, naming, policy
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
+    PolicyDict,
     RawFilter,
     RawFilterHeader,
     RawPolicy,
     RawTerm,
 )
 
-RAW_POLICY_ALL_BUILTIN = RawPolicy(
-    filename="raw_policy_all_builtin",
-    filters=[
-        RawFilter(
-            header=RawFilterHeader(
-                targets={"cisco": "test-filter"},
-                kvs={"comment": "Sample comment"},
-            ),
-            terms=[
-                RawTerm(
-                    name="deny-to-reserved",
-                    kvs={"destination-address": "RESERVED", "action": "deny"},
-                ),
-                RawTerm(
-                    name="deny-to-bogons",
-                    kvs={"destination-address": "RESERVED", "action": "deny"},
-                ),
-                RawTerm(
-                    name="allow-web-to-mail",
-                    kvs={
-                        "source-address": "WEB_SERVERS",
-                        "destination-address": "MAIL_SERVERS",
-                        "action": "accept",
-                    },
-                ),
-            ],
-        )
-    ],
-)
-
-RAW_POLICY_UNRECOGNIZED_MIX = RawPolicy(
-    filename="raw_policy_all_builtin",
-    filters=[
-        RawFilter(
-            header=RawFilterHeader(
-                targets={"cisco": "test-filter"},
-                kvs={
-                    "comment": "Sample comment",
-                    "extension-kw": "",
+# fmt: off
+POLICY_DICT_ALL_BUILTIN: PolicyDict = {
+    "filename": "policy_all_builtin",
+    "filters": [
+        {
+            "header": {
+                "targets": {"cisco": "test-filter"},
+                "comment": "Sample comment",
+            },
+            "terms": [
+                {
+                    "name": "deny-to-reserved",
+                    "destination-address": "RESERVED",
+                    "action": "deny"
                 },
-            ),
-            terms=[
-                RawTerm(
-                    name="deny-to-reserved",
-                    kvs={"destination-address": "RESERVED", "action": "deny"},
-                ),
-                RawTerm(
-                    name="deny-to-bogons",
-                    kvs={"destination-address": "RESERVED", "action": "deny"},
-                ),
-                RawTerm(
-                    name="allow-web-to-mail",
-                    kvs={
-                        "source-address": "WEB_SERVERS",
-                        "destination-address": "MAIL_SERVERS",
-                        "action": "accept",
-                    },
-                ),
+                {
+                    "name": "deny-to-bogons",
+                    "destination-address": "RESERVED",
+                    "action": "deny"
+                },
+                {
+                    "name": "allow-web-to-mail",
+                    "source-address": "WEB_SERVERS",
+                    "destination-address": "MAIL_SERVERS",
+                    "action": "accept",
+                },
             ],
-        )
+        }
     ],
-)
+}
+
+POLICY_DICT_UNRECOGNIZED_MIX: PolicyDict = {
+    "filename": "raw_policy_all_builtin",
+    "filters": [
+        {
+            "header": {
+                "targets": {"cisco": "test-filter"},
+                "comment": "Sample comment",
+                "extension-kw": "",
+            },
+            "terms": [
+                {
+                    "name": "deny-to-reserved",
+                    "destination-address": "RESERVED",
+                    "action": "deny"
+                },
+                {
+                    "name": "deny-to-bogons",
+                    "destination-address": "RESERVED",
+                    "action": "deny",
+                },
+                {
+                    "name": "allow-web-to-mail",
+                    "source-address": "WEB_SERVERS",
+                    "destination-address": "MAIL_SERVERS",
+                    "action": "accept",
+                },
+            ],
+        }
+    ],
+}
+# fmt: on
 
 GOOD_POLICY = """
 header {
@@ -107,7 +108,7 @@ class PolicyBuilderTest(absltest.TestCase):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
 
     def testPolicyBuilderBuiltins(self):
-        builder = PolicyBuilder(RAW_POLICY_ALL_BUILTIN, self.naming)
+        builder = PolicyBuilder(POLICY_DICT_ALL_BUILTIN, self.naming)
         pol = policy.FromBuilder(builder)
 
         pol2 = policy.ParsePolicy(GOOD_POLICY, self.naming)
@@ -116,7 +117,7 @@ class PolicyBuilderTest(absltest.TestCase):
         self.assertEqual(pol, pol2)
 
     def testPolicyBuilderUnexpected(self):
-        builder = PolicyBuilder(RAW_POLICY_UNRECOGNIZED_MIX, self.naming)
+        builder = PolicyBuilder(POLICY_DICT_UNRECOGNIZED_MIX, self.naming)
         pol = policy.FromBuilder(builder)
 
         pol2 = policy.ParsePolicy(GOOD_POLICY, self.naming)

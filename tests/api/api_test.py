@@ -4,9 +4,10 @@ from absl.testing import absltest
 
 from aerleon import api
 from aerleon.lib import naming
+from aerleon.lib.policy_builder import PolicyDict
 
 # fmt: off
-GOOD_POLICY_1 = {
+GOOD_POLICY_1: PolicyDict = {
     "filename": "raw_policy_all_builtin",
     "filters": [
         {
@@ -239,7 +240,7 @@ class ApiTest(absltest.TestCase):
         else:
             networks["networks"]["MAIL_SERVERS"]["values"] = mail_server_ips_set1
 
-        cisco_example_policy = {
+        cisco_example_policy: PolicyDict = {
             "filename": "cisco_example_policy",
             "filters": [
                 {

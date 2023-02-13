@@ -34,8 +34,124 @@ if sys.version_info < (3, 9):
 else:
     from typing import Annotated
 
+if sys.version_info < (3, 10):
+    from typing_extensions import TypeAlias
+else:
+    from typing import TypeAlias
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired, Required
+else:
+    from typing import NotRequired, Required
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
+
 if typing.TYPE_CHECKING:
+    from datetime import datetime
+
     from aerleon.lib import naming
+
+
+# NOTE: TypedDict is just a normal dictionary, it is not a class. This syntax tells the type checker
+# what keys need to be present in the given dictionary.
+
+WordList: TypeAlias = "str | list[str]"
+
+VPNValue = TypedDict('VPNValue', {"name": str, "policy": "NotRequired[str]"})
+
+PolicyTerm = TypedDict(
+    'PolicyTerm',
+    {
+        "comment": str,
+        "name": "Required[str]",
+        "action": WordList,
+        "address": WordList,
+        "address-exclude": WordList,
+        "restrict-address-family": str,
+        "counter": str,
+        "expiration": "datetime.date | str",
+        "destination-address": WordList,
+        "destination-exclude": WordList,
+        "destination-port": WordList,
+        "destination-prefix": WordList,
+        "filter-term": str,
+        "forwarding-class": "list[str]",
+        "forwarding-class-except": "list[str]",
+        "logging": WordList,
+        "log-limit": str,
+        "log-name": str,
+        "loss-priority": str,
+        "option": "list[str]",
+        "owner": str,
+        "policer": str,
+        "port": WordList,
+        "precedence": "str | list[int | str]",
+        "protocol": "str | list[int | str]",
+        "protocol-except": "str | list[int | str]",
+        "qos": str,
+        "pan-application": WordList,
+        "routing-instance": str,
+        "source-address": WordList,
+        "source-exclude": WordList,
+        "source-port": WordList,
+        "source-prefix": WordList,
+        "ttl": "int | str",
+        "verbatim": "dict[str, str]",
+        "packet-length": "int | str",
+        "fragment-offset": "int | str",
+        "hop-limit": "int | str",
+        "icmp-type": WordList,
+        "icmp-code": "str | list[int | str]",
+        "ether-type": WordList,
+        "traffic-class-count": str,
+        "traffic-type": WordList,
+        "dscp-set": "int | str",
+        "dscp-match": "int | str | list[int | str]",
+        "dscp-except": "int | str | list[int | str]",
+        "next-ip": str,
+        "flexible-match-range": "dict[str, int | str]",
+        "source-prefix-except": WordList,
+        "destination-prefix-except": WordList,
+        "encapsulate": str,
+        "port-mirror": str,
+        "destination-zone": WordList,
+        "source-zone": WordList,
+        "vpn": VPNValue,
+        "source-tag": WordList,
+        "destination-tag": WordList,
+        "priority": "int | str",
+        "source-interface": str,
+        "destination-interface": str,
+        "platform": WordList,
+        "platform-exclude": WordList,
+        "target-resources": "list[str | list[str]]",
+        "target-service-accounts": WordList,
+        "timeout": "int | str",
+    },
+    total=False,
+)
+
+PolicyInclude = TypedDict('PolicyInclude', {"include": str})
+
+PolicyFilterHeader = TypedDict(
+    'PolicyFilterHeader',
+    {
+        "targets": "Required[dict[str, str]]",
+        "comment": str,
+        "apply-groups": WordList,
+        "apply-groups-except": WordList,
+    },
+    total=False,
+)
+
+PolicyFilter = TypedDict(
+    'PolicyFilter', {"header": PolicyFilterHeader, "terms": "list[PolicyTerm | PolicyInclude]"}
+)
+
+PolicyDict = TypedDict('PolicyDict', {"filters": "list[PolicyFilter]"})
 
 
 RawTarget = Annotated[
@@ -145,12 +261,31 @@ class PolicyBuilder:
 
     def __init__(
         self,
-        raw_policy: RawPolicy,
+        policy_dict: PolicyDict,
         definitions: "naming.Naming",
         optimize=False,
         shade_check=False,
     ):
-        self.raw_policy = raw_policy
+        def PolicyDictToRawPolicy(input_policy):
+            raw_filters = []
+            input_filters = input_policy["filters"]
+            filename = input_policy.get("filename")
+            for filter in input_filters:
+                filter_header = filter["header"]
+                header_targets = filter_header["targets"]
+                raw_filter_header = RawFilterHeader(targets=header_targets, kvs=filter_header)
+
+                raw_terms = []
+                filter_terms = filter["terms"]
+                for term in filter_terms:
+                    raw_term = RawTerm(name=term["name"], kvs=term)
+                    raw_terms.append(raw_term)
+
+                raw_filters.append(RawFilter(header=raw_filter_header, terms=raw_terms))
+
+            return RawPolicy(filename=filename, filters=raw_filters)
+
+        self.raw_policy = PolicyDictToRawPolicy(policy_dict)
         self.definitions = definitions
         self.optimize = optimize
         self.shade_check = shade_check

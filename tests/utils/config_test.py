@@ -44,19 +44,19 @@ class ConfigTestSute(absltest.TestCase):
         """Zero args, aerleon.yml present but invalid."""
         # YAML case
         with mock.patch("builtins.open", mock.mock_open(read_data="\"")):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'not a valid YAML file'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'not a valid YAML file'):
                 config.load_config()
 
         # Invalid case
         with mock.patch("builtins.open", mock.mock_open(read_data="")):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'contents not valid'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'contents not valid'):
                 config.load_config()
 
         # Permissions case
         mock_error = mock.MagicMock()
         mock_error.return_value.__enter__.side_effect = PermissionError()
         with mock.patch("builtins.open", mock_error):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'Insufficient permissions'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'Insufficient permissions'):
                 config.load_config()
 
     def testGivenFile(self):
@@ -75,26 +75,26 @@ class ConfigTestSute(absltest.TestCase):
         mock_error = mock.MagicMock()
         mock_error.return_value.__enter__.side_effect = FileNotFoundError()
         with mock.patch("builtins.open", mock_error):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'Config file not found'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'Config file not found'):
                 config.load_config(config_file='config.yaml')
 
     def testInvalidGivenFile(self):
         """Config file given but invalid."""
         # YAML case
         with mock.patch("builtins.open", mock.mock_open(read_data="\"")):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'not a valid YAML file'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'not a valid YAML file'):
                 config.load_config(config_file='config.yaml')
 
         # Invalid case
         with mock.patch("builtins.open", mock.mock_open(read_data="")):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'contents not valid'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'contents not valid'):
                 config.load_config(config_file='config.yaml')
 
         # Permissions case
         mock_error = mock.MagicMock()
         mock_error.return_value.__enter__.side_effect = PermissionError()
         with mock.patch("builtins.open", mock_error):
-            with self.assertRaisesRegexp(config.ConfigFileError, r'Insufficient permissions'):
+            with self.assertRaisesRegex(config.ConfigFileError, r'Insufficient permissions'):
                 config.load_config(config_file='config.yaml')
 
     def testGivenFileList(self):
