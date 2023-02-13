@@ -345,7 +345,9 @@ def _GenerateACL(
 ):
     filename = input_policy.get("filename")
     try:
-        _, policy_obj = PolicyFromDict(input_policy, definitions, optimize, shade_check)
+        policy_obj = policy.FromBuilder(
+            policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
+        )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', filename, e)
         return
@@ -402,20 +404,6 @@ def _GenerateACL(
             raise ACLGeneratorError(
                 'Error generating target ACL for %s:\n%s' % (filename, e)
             ) from e
-
-
-def PolicyFromDict(
-    input_policy: policy_builder.PolicyDict,
-    definitions: naming.Naming,
-    optimize: bool = False,
-    shade_check: bool = False,
-):
-    filename = input_policy.get("filename")
-    policy_obj = policy.FromBuilder(
-        policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
-    )
-
-    return filename, policy_obj
 
 
 def AclCheck(
