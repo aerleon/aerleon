@@ -215,7 +215,7 @@ class AclCheck:
         text = []
         summary = self.Summarize()
         for filter, terms in summary.items():
-            text.append('  filter: ' + filter)
+            text.append(f"{' ' * 2}filter: {filter}")
             for matches in terms.values():
                 text.append(matches['message'])
         return '\n'.join(text)
