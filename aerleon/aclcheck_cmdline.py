@@ -75,11 +75,11 @@ def main():
         'definitions_directory': './def',
         'pol': None,
         'config_file': None,
-        'destination_ip': '200.1.1.1',
+        'destination_ip': 'any',
         'source_ip': 'any',
         'protocol': 'any',
-        'destination_port': '80',
-        'source_port': '1025',
+        'destination_port': 'any',
+        'source_port': 'any',
     }
 
     configs = {}
