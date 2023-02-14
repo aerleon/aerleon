@@ -1,6 +1,6 @@
 {
   "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "AerleonPolicyFile",
   "description": "An Aerleon policy file represents a platform-agnostic network policy. It must define one or more filter objects.",
   "oneOf": [
