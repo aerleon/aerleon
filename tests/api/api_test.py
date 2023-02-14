@@ -213,8 +213,8 @@ class ApiTest(absltest.TestCase):
         configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
         self.assertIn('deny-to-reserved', configs['test-filter'].keys())
 
-        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4")
-        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='::FFFF:FFFF:FFFF:FFFF')
+        self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
 
     @capture.stdout
     def testDocsExample(self):
