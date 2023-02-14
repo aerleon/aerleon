@@ -26,45 +26,48 @@ from aerleon.utils import config
 def main():
     _parser = ArgumentParser(
         prog='aclcheck',
+        description=aclcheck.AclCheck.__doc__.splitlines()[0],
         formatter_class=RawTextHelpFormatter,
-    )
-    _parser.add_argument(
-        '--definitions-directory',
-        dest='definitions_directory',
-        help='definitions directory',
-    )
-    _parser.add_argument(
-        '--base-directory',
-        dest='base_directory',
-        help='The base directory to look for include files.',
     )
     _parser.add_argument(
         '-p',
         '--policy-file',
         dest='pol',
-        help='policy file',
+        help='The policy file to examine.',
         required=True,
+    )
+    _parser.add_argument(
+        '--definitions-directory',
+        dest='definitions_directory',
+        help='The directory where network and service definition files can be found.',
+    )
+    _parser.add_argument(
+        '--base-directory',
+        dest='base_directory',
+        help='The base directory to use when resolving policy include paths.',
     )
     _parser.add_argument(
         '--config-file',
         dest='config_file',
-        help='config file',
+        help='Change the location searched for the configuration YAML file.',
     )
-    _parser.add_argument('-d', '--destination', dest='dst', help='destination IP')
+    _parser.add_argument('-d', '--destination', dest='destination_ip', help='Destination IP.')
     _parser.add_argument(
         '-s',
         '--source',
-        dest='src',
-        help='source IP',
+        dest='source_ip',
+        help='Source IP.',
     )
     _parser.add_argument(
         '--proto',
         '--protocol',
-        dest='proto',
+        dest='protocol',
         help='Protocol (tcp, udp, icmp, etc.)',
     )
-    _parser.add_argument('--dport', '--destination-port', dest='dport', help='destination port')
-    _parser.add_argument('--sport', '--source-port', dest='sport', help='source port')
+    _parser.add_argument(
+        '--dport', '--destination-port', dest='destination_port', help='Destination port.'
+    )
+    _parser.add_argument('--sport', '--source-port', dest='source_port', help='Source port.')
     FLAGS = _parser.parse_args()
 
     default_flags = {
@@ -72,11 +75,11 @@ def main():
         'definitions_directory': './def',
         'pol': None,
         'config_file': None,
-        'dst': '200.1.1.1',
-        'src': 'any',
-        'proto': 'any',
-        'dport': '80',
-        'sport': '1025',
+        'destination_ip': '200.1.1.1',
+        'source_ip': 'any',
+        'protocol': 'any',
+        'destination_port': '80',
+        'source_port': '1025',
     }
 
     configs = {}
@@ -113,11 +116,11 @@ def main():
         policy_obj = policy.ParsePolicy(conf, defs, base_dir=configs['base_directory'])
     check = aclcheck.AclCheck(
         policy_obj,
-        src=configs['src'],
-        dst=configs['dst'],
-        sport=configs['sport'],
-        dport=configs['dport'],
-        proto=configs['proto'],
+        src=configs['source_ip'],
+        dst=configs['destination_ip'],
+        sport=configs['source_port'],
+        dport=configs['destination_port'],
+        proto=configs['protocol'],
     )
     print(str(check))
 
