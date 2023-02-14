@@ -17,8 +17,9 @@
 """Check where hosts, ports and protocols are matched in an Aerleon policy."""
 
 import logging
+from collections import defaultdict
 
-from aerleon.lib import nacaddr, policy, port
+from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 
 
 class Error(Exception):
@@ -61,9 +62,24 @@ class AclCheck:
 
     """
 
+    @classmethod
+    def FromPolicyDict(
+        cls,
+        policy_dict: policy_builder.PolicyDict,
+        definitions: naming.Naming,
+        src,
+        dst,
+        sport,
+        dport,
+        proto,
+    ):
+        """Construct an AclCheck object from a PolicyDict + Naming object."""
+        policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
+        return cls(policy_obj, src, dst, sport, dport, proto)
+
     def __init__(
         self,
-        pol,
+        pol: policy.Policy,
         src='any',
         dst='any',
         sport='any',
@@ -74,20 +90,20 @@ class AclCheck:
         self.proto = proto
 
         # validate source port
-        if sport == 'any':
-            self.sport = sport
+        if not sport or sport == 'any':
+            self.sport = 'any'
         else:
             self.sport = port.Port(sport)
 
         # validate destination port
-        if dport == 'any':
-            self.dport = dport
+        if not dport or dport == 'any':
+            self.dport = 'any'
         else:
             self.dport = port.Port(dport)
 
         # validate source address
-        if src == 'any':
-            self.src = src
+        if not src or src == 'any':
+            self.src = 'any'
         else:
             try:
                 self.src = nacaddr.IP(src)
@@ -95,8 +111,8 @@ class AclCheck:
                 raise AddressError('bad source address: %s\n' % src)
 
         # validate destination address
-        if dst == 'any':
-            self.dst = dst
+        if not dst or dst == 'any':
+            self.dst = 'any'
         else:
             try:
                 self.dst = nacaddr.IP(dst)
@@ -197,20 +213,26 @@ class AclCheck:
 
     def __str__(self):
         text = []
-        last_filter = ''
-        for match in self.matches:
-            if match.filter != last_filter:
-                last_filter = match.filter
-                text.append('  filter: ' + match.filter)
-            if match.possibles:
-                text.append(' ' * 10 + 'term: ' + str(match.term) + ' (possible match)')
-            else:
-                text.append(' ' * 10 + 'term: ' + str(match.term))
-            if match.possibles:
-                text.append(' ' * 16 + match.action + ' if ' + str(match.possibles))
-            else:
-                text.append(' ' * 16 + match.action)
+        summary = self.Summarize()
+        for filter, terms in summary.items():
+            text.append(f"{' ' * 2}filter: {filter}")
+            for matches in terms.values():
+                text.append(matches['message'])
         return '\n'.join(text)
+
+    def Summarize(self):
+        summary = defaultdict(lambda: defaultdict(dict))
+        for match in self.matches:
+            summary[match.filter][match.term]["possibles"] = match.possibles
+            text = []
+            if match.possibles:
+                text.append(f"{' ' * 10}term: {match.term} (possible match)")
+                text.append(f"{' ' * 16}{match.action} if {match.possibles}")
+            else:
+                text.append(f"{' ' * 10}term: {match.term}")
+                text.append(f"{' ' * 16}{match.action}")
+            summary[match.filter][match.term]["message"] = '\n'.join(text)
+        return summary
 
     def _PossibleMatch(self, term):
         """Ignore some options and keywords that are edge cases.

@@ -11,6 +11,7 @@ from aerleon.lib import policy
 from aerleon.lib.policy import BadIncludePath, _SubpathOf
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
+    PolicyDict,
     RawFilter,
     RawFilterHeader,
     RawPolicy,
@@ -101,15 +102,15 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     """
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
-            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
+            policy_dict = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
             ) from yaml_error
-    raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
-    if not raw_policy:
+    policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
+    if not policy_dict:
         return
-    return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
+    return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
 def ParsePolicy(
@@ -132,31 +133,30 @@ def ParsePolicy(
         PolicyTypeError: The policy file provided is not valid.
     """
     try:
-        file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
+        policy_dict = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
         ) from yaml_error
-    raw_policy = _RawPolicyFromFile(filename, base_dir, file_data)
-    if not raw_policy:
+
+    policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
+    if not policy_dict:
         return
-    return _PolicyFromRawPolicy(raw_policy, definitions, optimize, shade_check)
+    return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
-def _RawPolicyFromFile(filename, base_dir, file_data):
-    """Construct and return a RawPolicy from file data."""
-
-    filters_model = []
+def PreprocessYAMLPolicy(filename, base_dir, policy_dict: PolicyDict):
+    """Process includes and validate the file data as a PolicyDict."""
 
     # Empty files are ignored with a warning
-    if file_data is None or not file_data:
+    if policy_dict is None or not policy_dict:
         logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
         return
 
     # Malformed policy files should generate a PolicyTypeError (unless this is an include file)
-    if 'filters' not in file_data or not isinstance(file_data['filters'], list):
+    if 'filters' not in policy_dict or not isinstance(policy_dict['filters'], list):
 
-        if 'terms' in file_data:
+        if 'terms' in policy_dict:
             # In this case we are looking at an include file and need to quietly ignore it.
             return
 
@@ -164,7 +164,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
             UserMessage("Policy file must contain one or more filter sections.", filename=filename)
         )
 
-    for filter in file_data['filters']:
+    for filter in policy_dict['filters']:
         # Malformed filters should generate a PolicyTypeError
         if not isinstance(filter, dict):
             raise PolicyTypeError(UserMessage("Filter must be a mapping.", filename=filename))
@@ -176,9 +176,7 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                     line=filter['__line__'],
                 )
             )
-        if 'terms' not in filter or (
-            filter['terms'] is not None and not isinstance(filter['terms'], list)
-        ):
+        if 'terms' not in filter or not filter['terms'] or not isinstance(filter['terms'], list):
             raise PolicyTypeError(
                 UserMessage(
                     "Filter must contain a terms section.",
@@ -186,16 +184,6 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                     line=filter['__line__'],
                 )
             )
-        # Filters with an empty term list can be ignored with a warning
-        elif filter['terms'] is None:
-            logging.warning(
-                UserMessage(
-                    "Ignoring filter with zero terms.",
-                    filename=filename,
-                    line=filter['__line__'],
-                )
-            )
-            continue
 
         header = filter['header']
         if 'targets' not in header or (
@@ -217,20 +205,6 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                     line=filter['__line__'],
                 )
             )
-            continue
-
-        targets_model = {
-            target: options
-            for target, options in header['targets'].items()
-            if target not in ('__line__', '__filename__')
-        }
-
-        header_kvs_model = {
-            key: value
-            for key, value in header.items()
-            if key not in ('targets', '__line__', '__filename__')
-        }
-        header_model = RawFilterHeader(targets=targets_model, kvs=header_kvs_model)
 
         found_terms = []
         max_include_depth = 5
@@ -308,7 +282,6 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
             )
             continue
 
-        terms_model = []
         for term_item in found_terms:
             if 'name' not in term_item or len(term_item['name'].strip()) == 0:
                 raise PolicyTypeError(
@@ -318,23 +291,24 @@ def _RawPolicyFromFile(filename, base_dir, file_data):
                         line=term_item['__line__'],
                     )
                 )
-            name = term_item['name']
-            term_kvs_model = {
-                key: value
-                for key, value in term_item.items()
-                if key not in ('name', '__filename__', '__line__')
-            }
 
-            # strip any nested debugging data
-            for value in term_kvs_model.values():
-                if isinstance(value, dict):
-                    value.pop('__line__')
-                    value.pop('__filename__')
+        filter['terms'] = found_terms
 
-            terms_model.append(RawTerm(name=name, kvs=term_kvs_model))
-        filters_model.append(RawFilter(header=header_model, terms=terms_model))
+    def StripDebuggingData(data):
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, list) or isinstance(item, dict):
+                    StripDebuggingData(item)
+        elif isinstance(data, dict):
+            data.pop('__line__', None)
+            data.pop('__filename__', None)
+            for item in data.values():
+                if isinstance(item, list) or isinstance(item, dict):
+                    StripDebuggingData(item)
 
-    return RawPolicy(filename=filename, filters=filters_model)
+    StripDebuggingData(policy_dict)
+
+    return policy_dict
 
 
 def _LoadIncludeFile(include_path):
@@ -342,10 +316,3 @@ def _LoadIncludeFile(include_path):
 
     with open(include_path, 'r') as include_file:
         return include_file.read()
-
-
-def _PolicyFromRawPolicy(raw_policy, definitions, optimize=False, shade_check=False):
-    """Construct and return a policy.Policy model from a RawPolicy."""
-
-    policy_builder = PolicyBuilder(raw_policy, definitions, optimize, shade_check)
-    return policy.FromBuilder(policy_builder)

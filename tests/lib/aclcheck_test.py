@@ -17,6 +17,7 @@
 from absl.testing import absltest
 
 from aerleon.lib import aclcheck, naming, policy, port
+from tests.regression_utils import capture
 
 POLICYTEXT = """
 header {
@@ -105,6 +106,27 @@ class AclCheckTest(absltest.TestCase):
         # term-4 should never match
         self.assertNotIn('term-4', str(matches))
         self.assertNotIn('term-5', str(matches))
+
+    @capture.stdout
+    def testSummarize(self):
+        srcip = '172.16.1.1'
+        dstip = '10.2.2.10'
+        sport = '10000'
+        dport = '22'
+        proto = 'tcp'
+        check = aclcheck.AclCheck(
+            self.pol, src=srcip, dst=dstip, sport=sport, dport=dport, proto=proto
+        )
+
+        summary = check.Summarize()
+
+        self.assertIn('term-1', summary['test-filter'].keys())
+        self.assertIn('term-2', summary['test-filter'].keys())
+        self.assertIn('term-3', summary['test-filter'].keys())
+        self.assertNotIn('term-4', summary['test-filter'].keys())
+        self.assertNotIn('term-5', summary['test-filter'].keys())
+
+        print(str(check))
 
     def testExceptions(self):
         srcip = '172.16.1.1'

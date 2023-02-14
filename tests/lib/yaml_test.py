@@ -254,6 +254,18 @@ class YAMLFrontEndTest(absltest.TestCase):
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
+                IGNORED_YAML_POLICY_NO_TERMS,
+                filename="policy_no_targets.pol.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        self.assertEqual(
+            str(user_message),
+            "Filter must contain a terms section. File=policy_no_terms.pol.yaml, Line=3.",
+        )
+
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_SCALAR_TERMS,
                 filename="policy_scalar_terms.pol.yaml",
                 base_dir=self.base_dir,
@@ -290,7 +302,7 @@ class YAMLFrontEndTest(absltest.TestCase):
             "Filter header cannot be empty. File=policy_no_targets.pol.yaml, Line=3.",
         )
 
-    @mock.patch.object(yaml_frontend, "_PolicyFromRawPolicy")
+    @mock.patch.object(yaml_frontend.policy, "FromBuilder")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testWarnings(self, mock_warning, _mock_raw_to_policy):
         yaml_frontend.ParsePolicy(
@@ -302,16 +314,7 @@ class YAMLFrontEndTest(absltest.TestCase):
         self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring empty policy file.")
         mock_warning.reset_mock()
 
-        yaml_frontend.ParsePolicy(
-            IGNORED_YAML_POLICY_NO_TERMS,
-            filename="policy_no_targets.pol.yaml",
-            base_dir=self.base_dir,
-            definitions=self.naming,
-        )
-        self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring filter with zero terms.")
-        mock_warning.reset_mock()
-
-    @mock.patch.object(yaml_frontend, "_PolicyFromRawPolicy")
+    @mock.patch.object(yaml_frontend.policy, "FromBuilder")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testIncludeEmptySource(self, mock_warning, _mock_raw_to_policy):
         with mock.patch("builtins.open", mock.mock_open(read_data="")):

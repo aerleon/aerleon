@@ -4,9 +4,11 @@ from absl.testing import absltest
 
 from aerleon import api
 from aerleon.lib import naming
+from aerleon.lib.policy_builder import PolicyDict
+from tests.regression_utils import capture
 
 # fmt: off
-GOOD_POLICY_1 = {
+GOOD_POLICY_1: PolicyDict = {
     "filename": "raw_policy_all_builtin",
     "filters": [
         {
@@ -203,6 +205,18 @@ class ApiTest(absltest.TestCase):
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
 
+    def testAclCheck(self):
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(SERVICES_1, "blah")
+        definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
+
+        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
+        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+
+        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4")
+        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+
+    @capture.stdout
     def testDocsExample(self):
         USE_MAIL_SERVER_SET = 1
         mail_server_ips_set0 = ["200.1.1.4/32", "200.1.1.5/32"]
@@ -239,7 +253,7 @@ class ApiTest(absltest.TestCase):
         else:
             networks["networks"]["MAIL_SERVERS"]["values"] = mail_server_ips_set1
 
-        cisco_example_policy = {
+        cisco_example_policy: PolicyDict = {
             "filename": "cisco_example_policy",
             "filters": [
                 {
