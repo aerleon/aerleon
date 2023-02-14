@@ -16,15 +16,22 @@
 
 """A subclass of the ipaddress library that includes comments for ipaddress."""
 
+from __future__ import annotations
+
 import collections
 import ipaddress
 import itertools
-from typing import Union
+from typing import Any, DefaultDict, List, Optional, Tuple, Union
 
 import aerleon.utils.iputils as iputils
 
 
-def IP(ip, comment='', token='', strict=True):
+def IP(
+    ip: Union[ipaddress.IPv4Network, ipaddress.IPv6Network, str],
+    comment: str = '',
+    token: str = '',
+    strict: bool = True,
+) -> Union[IPv4, IPv6]:
     """Take an ip string and return an object of the correct type.
 
     Args:
@@ -52,7 +59,9 @@ def IP(ip, comment='', token='', strict=True):
 
 # TODO(robankeny) remove once at 3.7
 @staticmethod
-def _is_subnet_of(a, b):  # pylint: disable=invalid-name
+def _is_subnet_of(
+    a: Union[IPv4, IPv6], b: Union[IPv4, IPv6]
+) -> bool:  # pylint: disable=invalid-name
     try:
         # Always false if one is v4 and the other is v6.
         if a.version != b.version:
@@ -67,7 +76,13 @@ def _is_subnet_of(a, b):  # pylint: disable=invalid-name
 class IPv4(ipaddress.IPv4Network):
     """This subclass allows us to keep text comments related to each object."""
 
-    def __init__(self, ip_string, comment='', token='', strict=True):
+    def __init__(
+        self,
+        ip_string: Union[ipaddress.IPv4Network, Tuple[int, int], str, IPv4],
+        comment: Union[str, IPv4] = '',
+        token: str = '',
+        strict: bool = True,
+    ) -> None:
         self.text = comment
         self.token = token
         self.parent_token = token
@@ -83,13 +98,13 @@ class IPv4(ipaddress.IPv4Network):
             ip = ip_string
         super().__init__(ip, strict)
 
-    def subnet_of(self, other):
+    def subnet_of(self, other: "IPv4") -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
         return self._is_subnet_of(self, other)
 
-    def supernet_of(self, other):
+    def supernet_of(self, other: Union[IPv4, IPv6]) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
@@ -102,7 +117,7 @@ class IPv4(ipaddress.IPv4Network):
         result.parent_token = self.parent_token
         return result
 
-    def AddComment(self, comment=''):
+    def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
 
         Don't add the comment if it's the same as self.text.
@@ -116,7 +131,7 @@ class IPv4(ipaddress.IPv4Network):
         else:
             self.text = comment
 
-    def supernet(self, prefixlen_diff=1):
+    def supernet(self, prefixlen_diff: int = 1) -> "IPv4":
         """Override ipaddress.IPv4 supernet so we can maintain comments.
 
         See ipaddress.IPv4.Supernet for complete documentation.
@@ -153,7 +168,13 @@ class IPv4(ipaddress.IPv4Network):
 class IPv6(ipaddress.IPv6Network):
     """This subclass allows us to keep text comments related to each object."""
 
-    def __init__(self, ip_string, comment='', token='', strict=True):
+    def __init__(
+        self,
+        ip_string: Union[str, ipaddress.IPv6Network, Tuple[int, int], IPv6],
+        comment: str = '',
+        token: str = '',
+        strict: bool = True,
+    ) -> None:
         self.text = comment
         self.token = token
         self.parent_token = token
@@ -169,13 +190,13 @@ class IPv6(ipaddress.IPv6Network):
             ip = ip_string
         super().__init__(ip, strict)
 
-    def subnet_of(self, other):
+    def subnet_of(self, other: "IPv6") -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
         return self._is_subnet_of(self, other)
 
-    def supernet_of(self, other):
+    def supernet_of(self, other: "IPv6") -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
@@ -188,7 +209,7 @@ class IPv6(ipaddress.IPv6Network):
         result.parent_token = self.parent_token
         return result
 
-    def supernet(self, prefixlen_diff=1):
+    def supernet(self, prefixlen_diff: int = 1) -> "IPv6":
         """Override ipaddress.IPv6Network supernet so we can maintain comments.
 
         See ipaddress.IPv6Network.Supernet for complete documentation.
@@ -220,7 +241,7 @@ class IPv6(ipaddress.IPv6Network):
     Supernet = supernet
     _is_subnet_of = _is_subnet_of
 
-    def AddComment(self, comment=''):
+    def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
 
         Don't add the comment if it's the same as self.text.
@@ -238,7 +259,7 @@ class IPv6(ipaddress.IPv6Network):
 IPType = Union[IPv4, IPv6]
 
 
-def _InNetList(adders, ip):
+def _InNetList(adders: List[IPv4], ip: IPv4) -> bool:
     """Returns True if ip is contained in adders."""
     for addr in adders:
         if ip.subnet_of(addr):
@@ -246,7 +267,7 @@ def _InNetList(adders, ip):
     return False
 
 
-def IsSuperNet(supernets, subnets):
+def IsSuperNet(supernets: List[IPv4], subnets: List[IPv4]) -> bool:
     """Returns True if subnets are fully consumed by supernets."""
     for net in subnets:
         if not _InNetList(supernets, net):
@@ -254,7 +275,7 @@ def IsSuperNet(supernets, subnets):
     return True
 
 
-def CollapseAddrListPreserveTokens(addresses):
+def CollapseAddrListPreserveTokens(addresses: List[IPv4]) -> List[IPv4]:
     """Collapse an array of IPs only when their tokens are the same.
 
     Args:
@@ -286,7 +307,14 @@ def CollapseAddrListPreserveTokens(addresses):
     return [i for sublist in dedup_array for i in sublist]
 
 
-def _SafeToMerge(address, merge_target, check_addresses):
+def _SafeToMerge(
+    address: Union[IPv4, IPv6],
+    merge_target: Union[IPv4, IPv6],
+    check_addresses: Union[
+        DefaultDict[ipaddress.IPv4Address, List[IPv4]],
+        DefaultDict[ipaddress.IPv6Address, List[IPv6]],
+    ],
+) -> bool:
     """Determine if it's safe to merge address into merge target.
 
     Checks given address against merge target and a list of check_addresses
@@ -308,7 +336,13 @@ def _SafeToMerge(address, merge_target, check_addresses):
     return True
 
 
-def _CollapseAddrListInternal(addresses, complements_by_network):
+def _CollapseAddrListInternal(
+    addresses: List[Union[IPv4, IPv6]],
+    complements_by_network: Union[
+        DefaultDict[ipaddress.IPv4Address, List[IPv4]],
+        DefaultDict[ipaddress.IPv6Address, List[IPv6]],
+    ],
+) -> List[Union[IPv4, IPv6]]:
     """Collapses consecutive netblocks until reaching a fixed point.
 
      Example:
@@ -372,7 +406,10 @@ def _CollapseAddrListInternal(addresses, complements_by_network):
     return ret_array
 
 
-def CollapseAddrList(addresses, complement_addresses=None):
+def CollapseAddrList(
+    addresses: List[Union[IPv4, IPv6]],
+    complement_addresses: Optional[Union[List[IPv4], List[IPv6]]] = None,
+) -> List[Union[IPv4, IPv6]]:
     """Collapse an array of IP objects.
 
     Example:  CollapseAddrList(
@@ -408,12 +445,14 @@ def CollapseAddrList(addresses, complement_addresses=None):
     )
 
 
-def SortAddrList(addresses):
+def SortAddrList(addresses: List[Union[Any, IPv6, IPv4]]) -> List[Union[Any, IPv6, IPv4]]:
     """Return a sorted list of nacaddr objects."""
     return sorted(addresses, key=ipaddress.get_mixed_type_key)
 
 
-def RemoveAddressFromList(superset, exclude):
+def RemoveAddressFromList(
+    superset: List[Union[IPv4, IPv6]], exclude: Union[IPv4, IPv6]
+) -> List[Union[Any, IPv6, IPv4]]:
     """Remove a single address from a list of addresses.
 
     Args:
@@ -436,7 +475,11 @@ def RemoveAddressFromList(superset, exclude):
     return SortAddrList(ret_array)
 
 
-def AddressListExclude(superset, excludes, collapse_addrs=True):
+def AddressListExclude(
+    superset: List[Union[IPv4, IPv6]],
+    excludes: List[Union[IPv4, IPv6]],
+    collapse_addrs: bool = True,
+) -> List[Union[IPv4, IPv6]]:
     """Remove a list of addresses from another list of addresses.
 
     Args:

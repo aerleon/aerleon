@@ -3,12 +3,13 @@
 """A module of utilities to work with IP addresses in a faster way."""
 
 import ipaddress
+from typing import Iterator, Union
 
 
 def exclude_address(
     base_net: ipaddress._BaseNetwork,  # pylint disable=protected-access
     exclude_net: ipaddress._BaseNetwork,  # pylint disable=protected-access
-):
+) -> Iterator[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]]:
     """
     Function to exclude a subnetwork from another, returning a generator that
     yields all values that correspond to the base network without the exclude
