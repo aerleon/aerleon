@@ -33,7 +33,7 @@ filters:
   - name: deny-to-reserved
     destination-address: RESERVED
     action: deny
-  - include: include_1.pol-include.yaml
+  - include: include_1.yaml
   - name: allow-web-to-mail
     source-address: WEB_SERVERS
     destination-address: MAIL_SERVERS
@@ -50,7 +50,7 @@ terms:
 """
 BAD_INCLUDE_YAML_INFINITE_RECURSION = """
 terms:
-- include: include_1.pol-include.yaml
+- include: include_1.yaml
 """
 BAD_INCLUDE_YAML_INVALID_FILENAME = """
 terms:
@@ -177,129 +177,129 @@ class YAMLFrontEndTest(absltest.TestCase):
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 "other_key:",
-                filename="policy_empty.pol.yaml",
+                filename="policy_empty.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Policy file must contain one or more filter sections. File=policy_empty.pol.yaml.",
+            "Policy file must contain one or more filter sections. File=policy_empty.yaml.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 "filters: scalar-value",
-                filename="policy_scalar_filter.pol.yaml",
+                filename="policy_scalar_filter.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Policy file must contain one or more filter sections. File=policy_scalar_filter.pol.yaml.",  # noqa: E501
+            "Policy file must contain one or more filter sections. File=policy_scalar_filter.yaml.",  # noqa: E501
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_HEADER,
-                filename="policy_no_header.pol.yaml",
+                filename="policy_no_header.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter must contain a header section. File=policy_no_header.pol.yaml, Line=3.",
+            "Filter must contain a header section. File=policy_no_header.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_SCALAR_HEADER,
-                filename="policy_scalar_header.pol.yaml",
+                filename="policy_scalar_header.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter must contain a header section. File=policy_scalar_header.pol.yaml, Line=3.",
+            "Filter must contain a header section. File=policy_scalar_header.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_TARGET,
-                filename="policy_no_target.pol.yaml",
+                filename="policy_no_target.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter must contain a terms section. File=policy_no_target.pol.yaml, Line=3.",
+            "Filter must contain a terms section. File=policy_no_target.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_NO_TERMS,
-                filename="policy_no_terms.pol.yaml",
+                filename="policy_no_terms.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter must contain a terms section. File=policy_no_terms.pol.yaml, Line=3.",
+            "Filter must contain a terms section. File=policy_no_terms.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 IGNORED_YAML_POLICY_NO_TERMS,
-                filename="policy_no_targets.pol.yaml",
+                filename="policy_no_targets.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         self.assertEqual(
             str(user_message),
-            "Filter must contain a terms section. File=policy_no_terms.pol.yaml, Line=3.",
+            "Filter must contain a terms section. File=policy_no_terms.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_SCALAR_TERMS,
-                filename="policy_scalar_terms.pol.yaml",
+                filename="policy_scalar_terms.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter must contain a header section. File=policy_scalar_terms.pol.yaml, Line=3.",
+            "Filter must contain a header section. File=policy_scalar_terms.yaml, Line=3.",
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 BAD_YAML_POLICY_TERM_NO_NAME,
-                filename="policy_term_no_name.pol.yaml",
+                filename="policy_term_no_name.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
-            str(user_message), "Term must have a name. File=policy_term_no_name.pol.yaml, Line=7."
+            str(user_message), "Term must have a name. File=policy_term_no_name.yaml, Line=7."
         )
 
         with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
             yaml_frontend.ParsePolicy(
                 IGNORED_YAML_POLICY_NO_TARGET,
-                filename="policy_no_targets.pol.yaml",
+                filename="policy_no_targets.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         user_message = arcm.exception.args[0]
         self.assertEqual(
             str(user_message),
-            "Filter header cannot be empty. File=policy_no_targets.pol.yaml, Line=3.",
+            "Filter header cannot be empty. File=policy_no_targets.yaml, Line=3.",
         )
 
     @mock.patch.object(yaml_frontend.policy, "FromBuilder")
@@ -307,7 +307,7 @@ class YAMLFrontEndTest(absltest.TestCase):
     def testWarnings(self, mock_warning, _mock_raw_to_policy):
         yaml_frontend.ParsePolicy(
             "",
-            filename="policy_empty.pol.yaml",
+            filename="policy_empty.yaml",
             base_dir=self.base_dir,
             definitions=self.naming,
         )
@@ -320,14 +320,14 @@ class YAMLFrontEndTest(absltest.TestCase):
         with mock.patch("builtins.open", mock.mock_open(read_data="")):
             yaml_frontend.ParsePolicy(
                 GOOD_YAML_POLICY_INCLUDE,
-                filename="policy_with_empty_include.pol.yaml",
+                filename="policy_with_empty_include.yaml",
                 base_dir=self.base_dir,
                 definitions=self.naming,
             )
         self.assertEqual(
             mock_warning.call_args[0][0].message, "Ignoring empty policy include source."
         )
-        self.assertEqual(mock_warning.call_args[0][0].filename, "include_1.pol-include.yaml")
+        self.assertEqual(mock_warning.call_args[0][0].filename, "include_1.yaml")
 
     def testIncludeInfiniteRecursion(self):
         with mock.patch(
@@ -336,34 +336,34 @@ class YAMLFrontEndTest(absltest.TestCase):
             with self.assertRaises(yaml_frontend.ExcessiveRecursionError) as arcm:
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
-                    filename="policy_with_include.pol.yaml",
+                    filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
             user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.pol-include.yaml")
+            self.assertEqual(user_message.filename, "include_1.yaml")
             self.assertEqual(user_message.line, 3)
             self.assertEqual(
                 user_message.include_chain,
                 [
-                    ('policy_with_include.pol.yaml', 10),
-                    ('include_1.pol-include.yaml', 3),
-                    ('include_1.pol-include.yaml', 3),
-                    ('include_1.pol-include.yaml', 3),
-                    ('include_1.pol-include.yaml', 3),
-                    ('include_1.pol-include.yaml', 3),
+                    ('policy_with_include.yaml', 10),
+                    ('include_1.yaml', 3),
+                    ('include_1.yaml', 3),
+                    ('include_1.yaml', 3),
+                    ('include_1.yaml', 3),
+                    ('include_1.yaml', 3),
                 ],
             )
             self.assertEqual(
                 str(user_message),
-                """Excessive recursion: include depth limit of 5 reached. File=include_1.pol-include.yaml, Line=3.
+                """Excessive recursion: include depth limit of 5 reached. File=include_1.yaml, Line=3.
 Include stack:
-> File='policy_with_include.pol.yaml', Line=10 (Top Level)
-> File='include_1.pol-include.yaml', Line=3
-> File='include_1.pol-include.yaml', Line=3
-> File='include_1.pol-include.yaml', Line=3
-> File='include_1.pol-include.yaml', Line=3
-> File='include_1.pol-include.yaml', Line=3""",  # noqa: E501
+> File='policy_with_include.yaml', Line=10 (Top Level)
+> File='include_1.yaml', Line=3
+> File='include_1.yaml', Line=3
+> File='include_1.yaml', Line=3
+> File='include_1.yaml', Line=3
+> File='include_1.yaml', Line=3""",  # noqa: E501
             )
 
     def testIncludeInvalidFilename(self):
@@ -373,23 +373,23 @@ Include stack:
             with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
-                    filename="policy_with_include.pol.yaml",
+                    filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
             user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.pol-include.yaml")
+            self.assertEqual(user_message.filename, "include_1.yaml")
             self.assertEqual(user_message.line, 3)
             self.assertEqual(
                 user_message.include_chain,
-                [('policy_with_include.pol.yaml', 10), ('include_1.pol-include.yaml', 3)],
+                [('policy_with_include.yaml', 10), ('include_1.yaml', 3)],
             )
             self.assertEqual(
                 str(user_message),
-                """Policy include source include_1.pol must end in ".yaml". File=include_1.pol-include.yaml, Line=3.
+                """Policy include source include_1.pol must end in ".yaml". File=include_1.yaml, Line=3.
 Include stack:
-> File='policy_with_include.pol.yaml', Line=10 (Top Level)
-> File='include_1.pol-include.yaml', Line=3""",  # noqa: E501
+> File='policy_with_include.yaml', Line=10 (Top Level)
+> File='include_1.yaml', Line=3""",  # noqa: E501
             )
 
     def testIncludeInvalidPath(self):
@@ -397,7 +397,7 @@ Include stack:
             with self.assertRaises(yaml_frontend.BadIncludePath):
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
-                    filename="policy_with_include.pol.yaml",
+                    filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
@@ -407,25 +407,25 @@ Include stack:
             with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
-                    filename="policy_with_include.pol.yaml",
+                    filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
             user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.pol-include.yaml")
+            self.assertEqual(user_message.filename, "include_1.yaml")
             self.assertEqual(
                 user_message.include_chain,
-                [('policy_with_include.pol.yaml', 10)],
+                [('policy_with_include.yaml', 10)],
             )
             self.assertEqual(
                 str(user_message),
-                """Unable to read file as YAML. File=include_1.pol-include.yaml.""",
+                """Unable to read file as YAML. File=include_1.yaml.""",
             )
 
     def testBasicPolicyModel(self):
         pol = yaml_frontend.ParsePolicy(
             GOOD_YAML_POLICY_BASIC,
-            filename="policy_basic.pol.yaml",
+            filename="policy_basic.yaml",
             base_dir=self.base_dir,
             definitions=self.naming,
         )
