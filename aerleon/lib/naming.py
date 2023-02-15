@@ -360,7 +360,7 @@ class Naming:
                 recursive_parents.append(bp)
         return recursive_parents
 
-    def GetNetChildren(self, query: str) -> List[Union[str, Any]]:
+    def GetNetChildren(self, query: str) -> List[str]:
         """Given a query token, return list of network definitions tokens within provided token.
 
         This will only return children, not descendants of provided token.
@@ -373,7 +373,7 @@ class Naming:
         """
         return self._GetChildren(query, self.networks)
 
-    def _GetChildren(self, query: str, query_group: Dict[str, _ItemUnit]) -> List[Union[str, Any]]:
+    def _GetChildren(self, query: str, query_group: Dict[str, _ItemUnit]) -> List[str]:
         """Given a naming item dict, return tokens (not IPs) contained within this value.
 
         Args:
@@ -392,7 +392,7 @@ class Naming:
                 # Determine if item a token, then it's a child
                 if not self._IsIpFormat(child):
                     children.append(child)
-
+    
         return children
 
     def _IsIpFormat(self, item: str) -> bool:
@@ -507,7 +507,7 @@ class Naming:
             raise UndefinedPortError('%s/%s is not found in any service tokens' % (query, proto))
         return sorted(matches)
 
-    def GetServiceByProto(self, query: str, proto: str) -> List[Union[str, Any]]:
+    def GetServiceByProto(self, query: str, proto: str) -> List[str]:
         """Given a service name, return list of ports in the service by protocol.
 
         Args:
@@ -786,7 +786,7 @@ class Naming:
 
         self.ParseDefinitionsObject(file_data, file_name)
 
-    def ParseDefinitionsObject(self, file_data: Dict[str, Any], file_name: str) -> None:
+    def ParseDefinitionsObject(self, file_data: Dict[str, str], file_name: str) -> None:
         # Empty files are ignored with a warning
         if not file_data:
             logging.warning(UserMessage("Ignoring empty address book file.", filename=file_name))

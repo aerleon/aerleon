@@ -21,7 +21,7 @@ from __future__ import annotations
 import collections
 import ipaddress
 import itertools
-from typing import Any, DefaultDict, List, Optional, Tuple, Union
+from typing import Any, DefaultDict, List, Optional, Tuple, TypedDict, Union
 
 import aerleon.utils.iputils as iputils
 
@@ -256,10 +256,7 @@ class IPv6(ipaddress.IPv6Network):
             self.text = comment
 
 
-IPType = Union[IPv4, IPv6]
-
-
-def _InNetList(adders: List[IPv4], ip: IPv4) -> bool:
+def _InNetList(adders: List[ipaddress._BaseNetwork], ip: ipaddress._BaseNetwork) -> bool:
     """Returns True if ip is contained in adders."""
     for addr in adders:
         if ip.subnet_of(addr):
@@ -267,7 +264,9 @@ def _InNetList(adders: List[IPv4], ip: IPv4) -> bool:
     return False
 
 
-def IsSuperNet(supernets: List[IPv4], subnets: List[IPv4]) -> bool:
+def IsSuperNet(
+    supernets: List[ipaddress._BaseNetwork], subnets: List[ipaddress._BaseNetwork]
+) -> bool:
     """Returns True if subnets are fully consumed by supernets."""
     for net in subnets:
         if not _InNetList(supernets, net):
@@ -311,8 +310,8 @@ def _SafeToMerge(
     address: Union[IPv4, IPv6],
     merge_target: Union[IPv4, IPv6],
     check_addresses: Union[
-        DefaultDict[ipaddress.IPv4Address, List[IPv4]],
-        DefaultDict[ipaddress.IPv6Address, List[IPv6]],
+        TypedDict[ipaddress.IPv4Address, List[IPv4]],
+        TypedDict[ipaddress.IPv6Address, List[IPv6]],
     ],
 ) -> bool:
     """Determine if it's safe to merge address into merge target.
