@@ -21,7 +21,7 @@ from __future__ import annotations
 import collections
 import ipaddress
 import itertools
-from typing import Any, DefaultDict, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aerleon.utils.iputils as iputils
 
@@ -310,8 +310,8 @@ def _SafeToMerge(
     address: Union[IPv4, IPv6],
     merge_target: Union[IPv4, IPv6],
     check_addresses: Union[
-        TypedDict[ipaddress.IPv4Address, List[IPv4]],
-        TypedDict[ipaddress.IPv6Address, List[IPv6]],
+        Dict[ipaddress.IPv4Address, List[IPv4]],
+        Dict[ipaddress.IPv6Address, List[IPv6]],
     ],
 ) -> bool:
     """Determine if it's safe to merge address into merge target.
@@ -338,8 +338,8 @@ def _SafeToMerge(
 def _CollapseAddrListInternal(
     addresses: List[Union[IPv4, IPv6]],
     complements_by_network: Union[
-        DefaultDict[ipaddress.IPv4Address, List[IPv4]],
-        DefaultDict[ipaddress.IPv6Address, List[IPv6]],
+        Dict[ipaddress.IPv4Address, List[IPv4]],
+        Dict[ipaddress.IPv6Address, List[IPv6]],
     ],
 ) -> List[Union[IPv4, IPv6]]:
     """Collapses consecutive netblocks until reaching a fixed point.
