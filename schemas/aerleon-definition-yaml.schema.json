@@ -6,13 +6,13 @@
   "additionalProperties": false,
   "properties": {
     "networks": {
-      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80).\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
+      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80) and can include port ranges.\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/networkDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
     },
     "services": {
-      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80).\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
+      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80) and can include port ranges.\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/serviceDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
