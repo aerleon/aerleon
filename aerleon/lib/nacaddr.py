@@ -256,6 +256,9 @@ class IPv6(ipaddress.IPv6Network):
             self.text = comment
 
 
+IPType = Union[IPv4, IPv6]
+
+
 def _InNetList(adders: List[ipaddress._BaseNetwork], ip: ipaddress._BaseNetwork) -> bool:
     """Returns True if ip is contained in adders."""
     for addr in adders:
