@@ -392,7 +392,7 @@ class Naming:
                 # Determine if item a token, then it's a child
                 if not self._IsIpFormat(child):
                     children.append(child)
-    
+
         return children
 
     def _IsIpFormat(self, item: str) -> bool:
