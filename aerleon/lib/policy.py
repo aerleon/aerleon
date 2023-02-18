@@ -22,7 +22,7 @@ import datetime
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from absl import logging
 from ply import lex, yacc
@@ -50,6 +50,7 @@ _LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
 _OPTIMIZE = True
 _SHADE_CHECK = False
 _PRESERVE_ORIGINAL = False
+_CURRENT_PARSE_FILENAME = ''
 _MAX_TTL = 255
 _MIN_TTL = 0
 
@@ -1607,6 +1608,7 @@ class VarType:
     PORT_MIRROR = 64
     SZONE = 65
     DZONE = 66
+    BLOCK_COMMENT = 67
 
     def __init__(self, var_type, value):
         self.var_type = var_type
@@ -1766,11 +1768,175 @@ class Target:
         return not self.__eq__(other)
 
 
+class TermParseData:
+    """TermParseData stores all parsed data verbatim without any processing."""
+
+    def __init__(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
+        self.name = None
+        self.data = []
+        self.AddObject(obj)
+
+    def AddObject(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
+        self.data.append(obj)
+
+    def __str__(self):
+        result = []
+        result.append(f'TermParseData name={self.name}')
+        result.extend([f"data   : {data}" for data in self.data])
+        return '\n'.join(result)
+
+
+# Reconstructing comments:
+#
+# In a .pol file, comments can appear in several places. Pol2yaml should attempt
+# to produce an export file with comments positioned to maintain association
+# to the extent possible - due to key duplication within terms and headers, this
+# cannot be totally exact, unfortunately.
+#
+# First, an overview of possible comment association scenarios:
+#
+#
+# # BEGINNING OF FILE OR ABOVE HEADER
+# header { # BEGIN HEADER (inline)
+#   # BEGIN HEADER OR ABOVE KV
+#   target:: cisco option # KV Inline
+#   # ABOVE KV
+#   target:: srx option # KV Inline
+#   comment:: comment line1 # KV Inline (comment)
+#   comment:: comment line2 # KV Inline (comment)
+#   # BOTTOM OF HEADER
+# } # BOTTOM OF HEADER (inline)
+#
+# # ABOVE TERM
+# term term-name { # BEGIN TERM (inline)
+#   # BEGIN TERM OR ABOVE KV
+#   source-address:: NETWORK_NAME # KV Inline
+#   # ABOVE KV
+#   protocol:: tcp # KV Inline
+#   protocol:: udp # KV Inline
+#   verbatim:: cisco verbatim_code_for_cisco # KV Inline (verbatim)
+#   # BOTTOM OF TERM
+# } # BOTTOM OF TERM (inline)
+#
+# # END OF FILE
+#
+#
+# Now let's look at how that example might be converted to YAML (without comments):
+#
+#
+# filters:
+# - header:
+#     target:
+#       cisco: option
+#       srx: option
+#     comment: |
+#       comment line1
+#       comment line2
+#   terms:
+#   - name: term-name
+#     source-address: NETWORK_NAME
+#     protocol:
+#     - tcp
+#     - udp
+#     verbatim:
+#       cisco: |
+#         verbatim_code_for_cisco
+#
+# A couple of problems should jump out:
+# (1) Duplicate key expressions are collapsed
+# (2) Comments and verbatim values are expressed as multiline strings
+# (3) Some attachments are ambiguous in the first place
+#
+# In problem (1), .pol allows a key to be repeated within a header or term
+# as a way of breaking up values across multiple lines. Contiguity is normal
+# but not required.
+# Let's look again at the 'target' field and its attachments:
+#
+#   # BEGIN HEADER OR ABOVE KV (1)
+#   target:: cisco option # KV Inline (2)
+#   # ABOVE KV (3)
+#   target:: srx option # KV Inline (4)
+#
+# # (1A)
+# - header: # (1B)
+#     # (1C)
+#     target:
+#       # (1D)
+#       cisco: option # (2)
+#       # (3)
+#       srx: option # (4)
+#
+# Comments 2-4 have reasonable attachments that can carry over to YAML. But
+# comment 1 is a problem: does it describe the header? The whole list of targets?
+# Or just the configuration for cisco? The attachment is unclear. Some possible
+# placements are marked in the illustration.
+#
+# We can start by ruling out slots that are better used for other things. Positions
+# 1A and 1B would be used for ABOVE HEADER and BEGIN HEADER (inline). Position 1C
+# is physically similar and has the advantage that it _maintains ambiguity_:
+# position 1C is still ambiguous as to whether it is describing the header or the list of targets.
+# And if we maintain the order of targets in the list, we can still have some proximity to
+# the first config (cisco).
+#
+#
+# RULES FOR CONVERTING FILES WITH COMMENTS
+#
+# 1. A comment appearing on the same line as data should stick to that data.
+# 1a. If there are multiple data on the line, stick to the first data point.
+# 1b. Multiline strings can't have comments so they have to be collected above the line.
+# 2. A comment appearing above a data line should stick to that data.
+# 3. A comment appearing at the head of a block should remain at the head
+#    of the block.
+# 3a. We can look at blank lines (possibly) to distinguish head of block attachments.
+# 3b. Blocks with an ambiguous head comment should not have keys re-ordered.
+# 4. Comments associated with overwritten data should be left in place.
+#
+
+
+# Problem: We are aggregating AddObject calls in a very raw format
+# Problem: that must be processed on a case-by-case basis
+# Problem: to correctly export.
+#
+# Context:
+# Each VarType has:
+# - A unique calling convention
+#   - Single Call
+#   - Single Call (list)
+#   - Multi Call
+#   - Multi Call (list)
+#
+# PolicyBuilder has some data, but it only describes the mapping from YAML into PolicyModel,
+# so it lumps the Multi Call (list) case in with Single Call (list). However we need to
+# recieve the call pattern from the parser.
+
+
+class HeaderParseData:
+    """HeaderParseData stores all parsed data verbatim without any processing."""
+
+    def __init__(self):
+        self.data = []
+        self.block_comment = []
+
+    def AddObject(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
+        self.data.append(obj)
+
+    def AddBlockComment(self, comment: "tuple[VarType, str]"):
+        self.block_comment.append(comment)
+
+    def __str__(self):
+        result = []
+        result.append('HeaderParseData')
+        result.extend([f"comment: {comment}" for comment in self.block_comment])
+        result.extend([f"data   : {data}" for data in self.data])
+        return '\n'.join(result)
+
+
 # Lexing/Parsing starts here
 tokens = (
     'ACTION',
     'ADDR',
     'ADDREXCLUDE',
+    'BLOCK_COMMENT',
     'RESTRICT_ADDRESS_FAMILY',
     'COMMENT',
     'COUNTER',
@@ -1812,6 +1978,7 @@ tokens = (
     'LPAREN',
     'LSQUARE',
     'NEXT_IP',
+    'NEWLINE',
     'OPTION',
     'OWNER',
     'PACKET_LEN',
@@ -1938,25 +2105,10 @@ reserved = {
 # pylint: disable=g-docstring-missing-newline
 
 
-def t_IGNORE_COMMENT(t):
-    # TODO start squeezing comments into the grammar
-    # They can be discarded at the model level when not using _PRESERVE_ORIGINALS
-    #
-    # Three placements:
-    # (1) Top-level
-    #     Sibling to header / term
-    #     If above a header, treat it as a "Filter Block Comment"
-    #     If above a term, treat it as a "Term Block Comment"
-    # (2) Header-level, Term-level
-    #     Appears inside a header {} block or term {} block on its own line(s)
-    #     Treat it as "Term-level Block Comment"
-    # (3) Inline
-    #     Appears at the end of a line that contains a key/value pair
-    #     We might not actually be able to distinguish from Term-level block
-    #
-    # Note: we must not re-sort term keys if we want to fully preserve comment meanings
+def t_BLOCK_COMMENT(t):
     r'\#.*'
-    pass
+    t.lexer.lineno += str(t.value).count('\n')
+    return t
 
 
 def t_ESCAPEDSTRING(t):
@@ -1971,9 +2123,10 @@ def t_DQUOTEDSTRING(t):
     return t
 
 
-def t_newline(t):
+def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+    return t
 
 
 def t_error(t):
@@ -2016,146 +2169,195 @@ def t_STRING(t):
 ## parser starts here
 ###
 def p_target(p):
-    """target : target header terms
+    """target : target onl header onl terms onl
     |"""
+    breakpoint()
     if len(p) > 1:
-        if type(p[1]) is Policy:
-            p[1].AddFilter(p[2], p[3])
-            p[0] = p[1]
+        if _PRESERVE_ORIGINAL:
+            policy_cls = PolicyParseData
         else:
-            p[0] = Policy(p[2], p[3])
+            policy_cls = Policy
+
+        pol = p[1]
+        if not isinstance(pol, policy_cls):
+            pol = policy_cls(p[3], p[5])
+        else:
+            pol.AddFilter(p[3], p[5])
+        p[0] = pol
 
 
 def p_header(p):
-    """header : HEADER '{' header_spec '}'"""
-    p[0] = p[3]
+    """header : HEADER onl '{' onl header_spec onl '}'
+    | block_comment onl header"""
+    breakpoint()
+    if len(p) > 4:
+        p[0] = p[5]
+    elif _PRESERVE_ORIGINAL:
+        p[3].AddBlockComment(p[1])
+        p[0] = p[3]
+
+    # TODO comments at the end of the line with "header {" should be
+    # distinguished from comments preceding the first field if possible.
+    # Might be necessary to start looking at newlines.
+    # Also need to check if there is ambiguity between line and block comments.
 
 
 def p_header_spec(p):
-    """header_spec : header_spec target_spec
-    | header_spec comment_spec
-    | header_spec apply_groups_spec
-    | header_spec apply_groups_except_spec
+    """header_spec : header_spec onl target_spec
+    | header_spec onl comment_spec
+    | header_spec onl apply_groups_spec
+    | header_spec onl apply_groups_except_spec
+    | header_spec onl block_comment
     |"""
+    breakpoint()
     if len(p) > 1:
-        if type(p[1]) == Header:
-            p[1].AddObject(p[2])
+        if _PRESERVE_ORIGINAL:
+            header_cls = HeaderParseData
+            obj = p[3]
+        else:
+            header_cls = Header
+            obj = p[3][0]  # Ignore comments
+
+        if isinstance(p[1], header_cls):
+            p[1].AddObject(obj)
             p[0] = p[1]
         else:
-            p[0] = Header()
-            p[0].AddObject(p[2])
+            p[0] = header_cls()
+            p[0].AddObject(obj)
 
 
 # we may want to change this at some point if we want to be clever with things
 # like being able to set a default input/output policy for iptables policies.
 def p_target_spec(p):
-    """target_spec : TARGET ':' ':' strings_or_ints"""
-    p[0] = Target(p[4])
+    """target_spec : TARGET ':' ':' onl strings_or_ints line_comment"""
+    breakpoint()
+    p[0] = Target(p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_terms(p):
-    """terms : terms TERM STRING '{' term_spec '}'
+    """terms : terms onl TERM onl STRING onl '{' onl term_spec onl '}'
+    | terms onl block_comment
     |"""
+    breakpoint()
     if len(p) > 1:
-        p[5].name = p[3]
-        if type(p[1]) == list:
-            p[1].append(p[5])
-            p[0] = p[1]
-        else:
-            p[0] = [p[5]]
+        terms = p[1]
+        if not isinstance(terms, list):
+            terms = []
+
+        if len(p) > 4:
+            p[9].name = p[5]
+            terms.append(p[9])
+        elif _PRESERVE_ORIGINAL:
+            terms.append(p[3])
+
+        p[0] = terms
 
 
 def p_term_spec(p):
-    """term_spec : term_spec action_spec
-    | term_spec addr_spec
-    | term_spec restrict_address_family_spec
-    | term_spec comment_spec
-    | term_spec counter_spec
-    | term_spec traffic_class_count_spec
-    | term_spec dscp_set_spec
-    | term_spec dscp_match_spec
-    | term_spec dscp_except_spec
-    | term_spec encapsulate_spec
-    | term_spec ether_type_spec
-    | term_spec exclude_spec
-    | term_spec expiration_spec
-    | term_spec filter_term_spec
-    | term_spec flexible_match_range_spec
-    | term_spec forwarding_class_spec
-    | term_spec forwarding_class_except_spec
-    | term_spec fragment_offset_spec
-    | term_spec hop_limit_spec
-    | term_spec icmp_type_spec
-    | term_spec icmp_code_spec
-    | term_spec interface_spec
-    | term_spec logging_spec
-    | term_spec log_limit_spec
-    | term_spec log_name_spec
-    | term_spec losspriority_spec
-    | term_spec next_ip_spec
-    | term_spec option_spec
-    | term_spec owner_spec
-    | term_spec packet_length_spec
-    | term_spec platform_spec
-    | term_spec policer_spec
-    | term_spec port_spec
-    | term_spec port_mirror_spec
-    | term_spec precedence_spec
-    | term_spec priority_spec
-    | term_spec prefix_list_spec
-    | term_spec protocol_spec
-    | term_spec qos_spec
-    | term_spec pan_application_spec
-    | term_spec routinginstance_spec
-    | term_spec term_zone_spec
-    | term_spec tag_list_spec
-    | term_spec target_resources_spec
-    | term_spec target_service_accounts_spec
-    | term_spec timeout_spec
-    | term_spec ttl_spec
-    | term_spec traffic_type_spec
-    | term_spec verbatim_spec
-    | term_spec vpn_spec
+    """term_spec : term_spec onl action_spec
+    | term_spec onl addr_spec
+    | term_spec onl block_comment
+    | term_spec onl restrict_address_family_spec
+    | term_spec onl comment_spec
+    | term_spec onl counter_spec
+    | term_spec onl traffic_class_count_spec
+    | term_spec onl dscp_set_spec
+    | term_spec onl dscp_match_spec
+    | term_spec onl dscp_except_spec
+    | term_spec onl encapsulate_spec
+    | term_spec onl ether_type_spec
+    | term_spec onl exclude_spec
+    | term_spec onl expiration_spec
+    | term_spec onl filter_term_spec
+    | term_spec onl flexible_match_range_spec
+    | term_spec onl forwarding_class_spec
+    | term_spec onl forwarding_class_except_spec
+    | term_spec onl fragment_offset_spec
+    | term_spec onl hop_limit_spec
+    | term_spec onl icmp_type_spec
+    | term_spec onl icmp_code_spec
+    | term_spec onl interface_spec
+    | term_spec onl logging_spec
+    | term_spec onl log_limit_spec
+    | term_spec onl log_name_spec
+    | term_spec onl losspriority_spec
+    | term_spec onl next_ip_spec
+    | term_spec onl option_spec
+    | term_spec onl owner_spec
+    | term_spec onl packet_length_spec
+    | term_spec onl platform_spec
+    | term_spec onl policer_spec
+    | term_spec onl port_spec
+    | term_spec onl port_mirror_spec
+    | term_spec onl precedence_spec
+    | term_spec onl priority_spec
+    | term_spec onl prefix_list_spec
+    | term_spec onl protocol_spec
+    | term_spec onl qos_spec
+    | term_spec onl pan_application_spec
+    | term_spec onl routinginstance_spec
+    | term_spec onl term_zone_spec
+    | term_spec onl tag_list_spec
+    | term_spec onl target_resources_spec
+    | term_spec onl target_service_accounts_spec
+    | term_spec onl timeout_spec
+    | term_spec onl ttl_spec
+    | term_spec onl traffic_type_spec
+    | term_spec onl verbatim_spec
+    | term_spec onl vpn_spec
     |"""
     if len(p) > 1:
-        if type(p[1]) == Term:
-            p[1].AddObject(p[2])
+        if _PRESERVE_ORIGINAL:
+            term_cls = TermParseData
+            obj = p[3]
+        else:
+            term_cls = Term
+            obj = p[3][0]  # Ignore comments
+
+        if isinstance(p[1], term_cls):
+            p[1].AddObject(obj)
             p[0] = p[1]
         else:
-            p[0] = Term(p[2])
+            p[0] = term_cls(obj)
 
 
 def p_restrict_address_family_spec(p):
-    """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' STRING"""
-    p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[4])
+    """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_routinginstance_spec(p):
-    """routinginstance_spec : ROUTING_INSTANCE ':' ':' STRING"""
-    p[0] = VarType(VarType.ROUTING_INSTANCE, p[4])
+    """routinginstance_spec : ROUTING_INSTANCE ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.ROUTING_INSTANCE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_losspriority_spec(p):
-    """losspriority_spec :  LOSS_PRIORITY ':' ':' STRING"""
-    p[0] = VarType(VarType.LOSS_PRIORITY, p[4])
+    """losspriority_spec :  LOSS_PRIORITY ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.LOSS_PRIORITY, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_precedence_spec(p):
-    """precedence_spec : PRECEDENCE ':' ':' one_or_more_ints"""
-    p[0] = VarType(VarType.PRECEDENCE, p[4])
+    """precedence_spec : PRECEDENCE ':' ':' onl one_or_more_ints line_comment"""
+    p[0] = VarType(VarType.PRECEDENCE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_flexible_match_range_spec(p):
-    """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE ':' ':' flex_match_key_values"""
+    """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE ':' ':' onl flex_match_key_values line_comment"""
     p[0] = []
-    for kv in p[4]:
+    for kv in p[5]:
         p[0].append(VarType(VarType.FLEXIBLE_MATCH_RANGE, kv))
+    p[0] = [p[0], p[6]]
 
 
 def p_flex_match_key_values(p):
-    """flex_match_key_values : flex_match_key_values STRING HEX
-    | flex_match_key_values STRING INTEGER
-    | flex_match_key_values STRING STRING
+    """flex_match_key_values : flex_match_key_values onl STRING HEX
+    | flex_match_key_values onl STRING INTEGER
+    | flex_match_key_values onl STRING STRING
     | STRING HEX
     | STRING INTEGER
     | STRING STRING
@@ -2188,119 +2390,136 @@ def p_flex_match_key_values(p):
 
 
 def p_forwarding_class_spec(p):
-    """forwarding_class_spec : FORWARDING_CLASS ':' ':' one_or_more_strings"""
+    """forwarding_class_spec : FORWARDING_CLASS ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for fclass in p[4]:
+    for fclass in p[5]:
         p[0].append(VarType(VarType.FORWARDING_CLASS, fclass))
+    p[0] = [p[0], p[6]]
 
 
 def p_forwarding_class_except_spec(p):
-    """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT ':' ':' one_or_more_strings"""
+    """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for fclass in p[4]:
+    for fclass in p[5]:
         p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
+    p[0] = [p[0], p[6]]
 
 
 def p_next_ip_spec(p):
-    """next_ip_spec : NEXT_IP ':' ':' STRING"""
-    p[0] = VarType(VarType.NEXT_IP, p[4])
+    """next_ip_spec : NEXT_IP ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.NEXT_IP, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_encapsulate_spec(p):
-    """encapsulate_spec : ENCAPSULATE ':' ':' STRING"""
-    p[0] = VarType(VarType.ENCAPSULATE, p[4])
+    """encapsulate_spec : ENCAPSULATE ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.ENCAPSULATE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_port_mirror_spec(p):
-    """port_mirror_spec : PORT_MIRROR ':' ':' STRING"""
-    p[0] = VarType(VarType.PORT_MIRROR, p[4])
+    """port_mirror_spec : PORT_MIRROR ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.PORT_MIRROR, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_icmp_type_spec(p):
-    """icmp_type_spec : ICMP_TYPE ':' ':' one_or_more_strings"""
-    p[0] = VarType(VarType.ICMP_TYPE, p[4])
+    """icmp_type_spec : ICMP_TYPE ':' ':' onl one_or_more_strings line_comment"""
+    p[0] = VarType(VarType.ICMP_TYPE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_icmp_code_spec(p):
-    """icmp_code_spec : ICMP_CODE ':' ':' one_or_more_ints"""
-    p[0] = VarType(VarType.ICMP_CODE, p[4])
+    """icmp_code_spec : ICMP_CODE ':' ':' onl one_or_more_ints line_comment"""
+    p[0] = VarType(VarType.ICMP_CODE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_priority_spec(p):
-    """priority_spec : PRIORITY ':' ':' INTEGER"""
-    p[0] = VarType(VarType.PRIORITY, p[4])
+    """priority_spec : PRIORITY ':' ':' onl INTEGER line_comment"""
+    p[0] = VarType(VarType.PRIORITY, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_packet_length_spec(p):
-    """packet_length_spec : PACKET_LEN ':' ':' INTEGER
-    | PACKET_LEN ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]))
+    """packet_length_spec : PACKET_LEN ':' ':' onl INTEGER line_comment
+    | PACKET_LEN ':' ':' onl INTEGER '-' INTEGER line_comment"""
+    if len(p) == 7:
+        p[0] = VarType(VarType.PACKET_LEN, str(p[5]))
+        p[0] = [p[0], p[6]]
     else:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.PACKET_LEN, str(p[5]) + '-' + str(p[7]))
+        p[0] = [p[0], p[8]]
 
 
 def p_fragment_offset_spec(p):
-    """fragment_offset_spec : FRAGMENT_OFFSET ':' ':' INTEGER
-    | FRAGMENT_OFFSET ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]))
+    """fragment_offset_spec : FRAGMENT_OFFSET ':' ':' onl INTEGER line_comment
+    | FRAGMENT_OFFSET ':' ':' onl INTEGER '-' INTEGER line_comment"""
+    if len(p) == 7:
+        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[5]))
+        p[0] = [p[0], p[6]]
     else:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[5]) + '-' + str(p[7]))
+        p[0] = [p[0], p[8]]
 
 
 def p_hop_limit_spec(p):
-    """hop_limit_spec : HOP_LIMIT ':' ':' INTEGER
-    | HOP_LIMIT ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]))
+    """hop_limit_spec : HOP_LIMIT ':' ':' onl INTEGER line_comment
+    | HOP_LIMIT ':' ':' onl INTEGER '-' INTEGER line_comment"""
+    if len(p) == 7:
+        p[0] = VarType(VarType.HOP_LIMIT, str(p[5]))
+        p[0] = [p[0], p[6]]
     else:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.HOP_LIMIT, str(p[5]) + '-' + str(p[7]))
+        p[0] = [p[0], p[8]]
 
 
 def p_one_or_more_dscps(p):
-    """one_or_more_dscps : one_or_more_dscps DSCP_RANGE
-    | one_or_more_dscps DSCP
-    | one_or_more_dscps INTEGER
+    """one_or_more_dscps : one_or_more_dscps onl DSCP_RANGE
+    | one_or_more_dscps onl DSCP
+    | one_or_more_dscps onl INTEGER
     | DSCP_RANGE
     | DSCP
     | INTEGER"""
     if len(p) > 1:
         if type(p[1]) is list:
-            p[1].append(p[2])
+            p[1].append(p[3])
             p[0] = p[1]
         else:
             p[0] = [p[1]]
 
 
 def p_dscp_set_spec(p):
-    """dscp_set_spec : DSCP_SET ':' ':' DSCP
-    | DSCP_SET ':' ':' INTEGER"""
-    p[0] = VarType(VarType.DSCP_SET, p[4])
+    """dscp_set_spec : DSCP_SET ':' ':' onl DSCP line_comment
+    | DSCP_SET ':' ':' onl INTEGER line_comment"""
+    p[0] = VarType(VarType.DSCP_SET, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_dscp_match_spec(p):
-    """dscp_match_spec : DSCP_MATCH ':' ':' one_or_more_dscps"""
+    """dscp_match_spec : DSCP_MATCH ':' ':' onl one_or_more_dscps line_comment"""
     p[0] = []
-    for dscp in p[4]:
+    for dscp in p[5]:
         p[0].append(VarType(VarType.DSCP_MATCH, dscp))
+    p[0] = [p[0], p[6]]
 
 
 def p_dscp_except_spec(p):
-    """dscp_except_spec : DSCP_EXCEPT ':' ':' one_or_more_dscps"""
+    """dscp_except_spec : DSCP_EXCEPT ':' ':' onl one_or_more_dscps line_comment"""
     p[0] = []
-    for dscp in p[4]:
+    for dscp in p[5]:
         p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
+    p[0] = [p[0], p[6]]
 
 
 def p_exclude_spec(p):
-    """exclude_spec : SADDREXCLUDE ':' ':' one_or_more_strings
-    | DADDREXCLUDE ':' ':' one_or_more_strings
-    | ADDREXCLUDE ':' ':' one_or_more_strings
-    | PROTOCOL_EXCEPT ':' ':' one_or_more_strings"""
+    """exclude_spec : SADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
+    | DADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
+    | ADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
+    | PROTOCOL_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
 
     p[0] = []
-    for ex in p[4]:
+    for ex in p[5]:
         if p[1].find('source-exclude') >= 0:
             p[0].append(VarType(VarType.SADDREXCLUDE, ex))
         elif p[1].find('destination-exclude') >= 0:
@@ -2309,15 +2528,16 @@ def p_exclude_spec(p):
             p[0].append(VarType(VarType.ADDREXCLUDE, ex))
         elif p[1].find('protocol-except') >= 0:
             p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
+    p[0] = [p[0], p[6]]
 
 
 def p_prefix_list_spec(p):
-    """prefix_list_spec : DPFX ':' ':' one_or_more_strings
-    | EDPFX ':' ':' one_or_more_strings
-    | SPFX ':' ':' one_or_more_strings
-    | ESPFX ':' ':' one_or_more_strings"""
+    """prefix_list_spec : DPFX ':' ':' one_or_more_strings line_comment
+    | EDPFX ':' ':' onl one_or_more_strings line_comment
+    | SPFX ':' ':' onl one_or_more_strings line_comment
+    | ESPFX ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for pfx in p[4]:
+    for pfx in p[5]:
         if p[1].find('source-prefix-except') >= 0:
             p[0].append(VarType(VarType.ESPFX, pfx))
         elif p[1].find('source-prefix') >= 0:
@@ -2326,288 +2546,353 @@ def p_prefix_list_spec(p):
             p[0].append(VarType(VarType.EDPFX, pfx))
         elif p[1].find('destination-prefix') >= 0:
             p[0].append(VarType(VarType.DPFX, pfx))
+    p[0] = [p[0], p[6]]
 
 
 def p_addr_spec(p):
-    """addr_spec : SADDR ':' ':' one_or_more_strings
-    | DADDR ':' ':' one_or_more_strings
-    | ADDR  ':' ':' one_or_more_strings"""
+    """addr_spec : SADDR ':' ':' onl one_or_more_strings line_comment
+    | DADDR ':' ':' onl one_or_more_strings line_comment
+    | ADDR  ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for addr in p[4]:
+    for addr in p[5]:
         if p[1].find('source-address') >= 0:
             p[0].append(VarType(VarType.SADDRESS, addr))
         elif p[1].find('destination-address') >= 0:
             p[0].append(VarType(VarType.DADDRESS, addr))
         else:
             p[0].append(VarType(VarType.ADDRESS, addr))
+    p[0] = [p[0], p[6]]
 
 
 def p_port_spec(p):
-    """port_spec : SPORT ':' ':' one_or_more_strings
-    | DPORT ':' ':' one_or_more_strings
-    | PORT ':' ':' one_or_more_strings"""
+    """port_spec : SPORT ':' ':' onl one_or_more_strings line_comment
+    | DPORT ':' ':' onl one_or_more_strings line_comment
+    | PORT ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for port in p[4]:
+    for port in p[5]:
         if p[1].find('source-port') >= 0:
             p[0].append(VarType(VarType.SPORT, port))
         elif p[1].find('destination-port') >= 0:
             p[0].append(VarType(VarType.DPORT, port))
         else:
             p[0].append(VarType(VarType.PORT, port))
+    p[0] = [p[0], p[6]]
 
 
 def p_protocol_spec(p):
-    """protocol_spec : PROTOCOL ':' ':' strings_or_ints"""
+    """protocol_spec : PROTOCOL ':' ':' onl strings_or_ints line_comment"""
     p[0] = []
-    for proto in p[4]:
+    for proto in p[5]:
         p[0].append(VarType(VarType.PROTOCOL, proto))
+    p[0] = [p[0], p[6]]
 
 
 def p_tag_list_spec(p):
-    """tag_list_spec : DTAG ':' ':' one_or_more_strings
-    | STAG ':' ':' one_or_more_strings"""
+    """tag_list_spec : DTAG ':' ':' onl one_or_more_strings line_comment
+    | STAG ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for tag in p[4]:
+    for tag in p[5]:
         if p[1].find('source-tag') >= 0:
             p[0].append(VarType(VarType.STAG, tag))
         elif p[1].find('destination-tag') >= 0:
             p[0].append(VarType(VarType.DTAG, tag))
+    p[0] = [p[0], p[6]]
 
 
 def p_target_resources_spec(p):
-    """target_resources_spec : TARGET_RESOURCES ':' ':' one_or_more_tuples"""
+    """target_resources_spec : TARGET_RESOURCES ':' ':' onl one_or_more_tuples line_comment"""
     p[0] = []
-    for target_resource in p[4]:
+    for target_resource in p[5]:
         p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
+    p[0] = [p[0], p[6]]
 
 
 def p_target_service_accounts_spec(p):
-    """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' one_or_more_strings"""
+    """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for service_account in p[4]:
+    for service_account in p[5]:
         p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
+    p[0] = [p[0], p[6]]
 
 
 def p_ether_type_spec(p):
-    """ether_type_spec : ETHER_TYPE ':' ':' one_or_more_strings"""
+    """ether_type_spec : ETHER_TYPE ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for proto in p[4]:
+    for proto in p[5]:
         p[0].append(VarType(VarType.ETHER_TYPE, proto))
+    p[0] = [p[0], p[6]]
 
 
 def p_traffic_type_spec(p):
-    """traffic_type_spec : TRAFFIC_TYPE ':' ':' one_or_more_strings"""
+    """traffic_type_spec : TRAFFIC_TYPE ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for proto in p[4]:
+    for proto in p[5]:
         p[0].append(VarType(VarType.TRAFFIC_TYPE, proto))
+    p[0] = [p[0], p[6]]
 
 
 def p_policer_spec(p):
-    """policer_spec : POLICER ':' ':' STRING"""
-    p[0] = VarType(VarType.POLICER, p[4])
+    """policer_spec : POLICER ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.POLICER, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_logging_spec(p):
-    """logging_spec : LOGGING ':' ':' STRING"""
-    p[0] = VarType(VarType.LOGGING, p[4])
+    """logging_spec : LOGGING ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.LOGGING, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_log_limit_spec(p):
-    """log_limit_spec : LOG_LIMIT ':' ':' INTEGER '/' STRING"""
-    p[0] = VarType(VarType.LOG_LIMIT, (p[4], p[6]))
+    """log_limit_spec : LOG_LIMIT ':' ':' onl INTEGER '/' STRING line_comment"""
+    p[0] = VarType(VarType.LOG_LIMIT, (p[5], p[7]))
+    p[0] = [p[0], p[8]]
 
 
 def p_log_name_spec(p):
-    """log_name_spec : LOG_NAME ':' ':' DQUOTEDSTRING"""
-    p[0] = VarType(VarType.LOG_NAME, p[4])
+    """log_name_spec : LOG_NAME ':' ':' onl DQUOTEDSTRING line_comment"""
+    p[0] = VarType(VarType.LOG_NAME, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_option_spec(p):
-    """option_spec : OPTION ':' ':' one_or_more_strings"""
+    """option_spec : OPTION ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for opt in p[4]:
+    for opt in p[5]:
         p[0].append(VarType(VarType.OPTION, opt))
+    p[0] = [p[0], p[6]]
 
 
 def p_action_spec(p):
-    """action_spec : ACTION ':' ':' STRING"""
-    p[0] = VarType(VarType.ACTION, p[4])
+    """action_spec : ACTION ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.ACTION, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_counter_spec(p):
-    """counter_spec : COUNTER ':' ':' STRING"""
-    p[0] = VarType(VarType.COUNTER, p[4])
+    """counter_spec : COUNTER ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.COUNTER, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_traffic_class_count_spec(p):
-    """traffic_class_count_spec : TRAFFIC_CLASS_COUNT ':' ':' STRING"""
-    p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[4])
+    """traffic_class_count_spec : TRAFFIC_CLASS_COUNT ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_expiration_spec(p):
-    """expiration_spec : EXPIRATION ':' ':' INTEGER '-' INTEGER '-' INTEGER"""
-    p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[4]), int(p[6]), int(p[8])))
+    """expiration_spec : EXPIRATION ':' ':' onl INTEGER '-' INTEGER '-' INTEGER line_comment"""
+    p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[5]), int(p[7]), int(p[9])))
+    p[0] = [p[0], p[10]]
 
 
 def p_comment_spec(p):
-    """comment_spec : COMMENT ':' ':' DQUOTEDSTRING"""
-    p[0] = VarType(VarType.COMMENT, p[4])
+    """comment_spec : COMMENT ':' ':' onl DQUOTEDSTRING line_comment"""
+    p[0] = VarType(VarType.COMMENT, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_owner_spec(p):
-    """owner_spec : OWNER ':' ':' STRING"""
-    p[0] = VarType(VarType.OWNER, p[4])
+    """owner_spec : OWNER ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.OWNER, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_verbatim_spec(p):
-    """verbatim_spec : VERBATIM ':' ':' STRING DQUOTEDSTRING
-    | VERBATIM ':' ':' STRING ESCAPEDSTRING"""
-    p[0] = VarType(VarType.VERBATIM, [p[4], p[5].strip('"').replace('\\"', '"')])
+    """verbatim_spec : VERBATIM ':' ':' onl STRING onl DQUOTEDSTRING line_comment
+    | VERBATIM ':' ':' onl STRING onl ESCAPEDSTRING line_comment"""
+    p[0] = VarType(VarType.VERBATIM, [p[5], p[7].strip('"').replace('\\"', '"')])
+    p[0] = [p[0], p[8]]
 
 
 def p_term_zone_spec(p):
-    """term_zone_spec : SZONE ':' ':' one_or_more_strings
-    | DZONE ':' ':' one_or_more_strings"""
+    """term_zone_spec : SZONE ':' ':' onl one_or_more_strings line_comment
+    | DZONE ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for zone in p[4]:
+    for zone in p[5]:
         if p[1].find('source-zone') >= 0:
             p[0].append(VarType(VarType.SZONE, zone))
         elif p[1].find('destination-zone') >= 0:
             p[0].append(VarType(VarType.DZONE, zone))
+    p[0] = [p[0], p[6]]
 
 
 def p_vpn_spec(p):
-    """vpn_spec : VPN ':' ':' STRING STRING
-    | VPN ':' ':' STRING"""
-    if len(p) == 6:
-        p[0] = VarType(VarType.VPN, [p[4], p[5]])
+    """vpn_spec : VPN ':' ':' onl STRING onl STRING line_comment
+    | VPN ':' ':' onl STRING line_comment"""
+    if len(p) == 8:
+        p[0] = VarType(VarType.VPN, [p[5], p[7]])
+        p[0] = [p[0], p[8]]
     else:
-        p[0] = VarType(VarType.VPN, [p[4], ''])
+        p[0] = VarType(VarType.VPN, [p[5], ''])
+        p[0] = [p[0], p[6]]
 
 
 def p_qos_spec(p):
-    """qos_spec : QOS ':' ':' STRING"""
-    p[0] = VarType(VarType.QOS, p[4])
+    """qos_spec : QOS ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.QOS, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_pan_application_spec(p):
-    """pan_application_spec : PAN_APPLICATION ':' ':' one_or_more_strings"""
+    """pan_application_spec : PAN_APPLICATION ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for apps in p[4]:
+    for apps in p[5]:
         p[0].append(VarType(VarType.PAN_APPLICATION, apps))
+    p[0] = [p[0], p[6]]
 
 
 def p_interface_spec(p):
-    """interface_spec : SINTERFACE ':' ':' STRING
-    | DINTERFACE ':' ':' STRING"""
+    """interface_spec : SINTERFACE ':' ':' onl STRING line_comment
+    | DINTERFACE ':' ':' onl STRING line_comment"""
     if p[1].find('source-interface') >= 0:
-        p[0] = VarType(VarType.SINTERFACE, p[4])
+        p[0] = VarType(VarType.SINTERFACE, p[5])
     elif p[1].find('destination-interface') >= 0:
-        p[0] = VarType(VarType.DINTERFACE, p[4])
+        p[0] = VarType(VarType.DINTERFACE, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_platform_spec(p):
-    """platform_spec : PLATFORM ':' ':' one_or_more_strings
-    | PLATFORMEXCLUDE ':' ':' one_or_more_strings"""
+    """platform_spec : PLATFORM ':' ':' onl one_or_more_strings line_comment
+    | PLATFORMEXCLUDE ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for platform in p[4]:
+    for platform in p[5]:
         if p[1].find('platform-exclude') >= 0:
             p[0].append(VarType(VarType.PLATFORMEXCLUDE, platform))
         elif p[1].find('platform') >= 0:
             p[0].append(VarType(VarType.PLATFORM, platform))
+    p[0] = [p[0], p[6]]
 
 
 def p_apply_groups_spec(p):
-    """apply_groups_spec : APPLY_GROUPS ':' ':' one_or_more_strings"""
+    """apply_groups_spec : APPLY_GROUPS ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for group in p[4]:
+    for group in p[5]:
         p[0].append(VarType(VarType.APPLY_GROUPS, group))
+    p[0] = [p[0], p[6]]
 
 
 def p_apply_groups_except_spec(p):
-    """apply_groups_except_spec : APPLY_GROUPS_EXCEPT ':' ':' one_or_more_strings"""
+    """apply_groups_except_spec : APPLY_GROUPS_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
     p[0] = []
-    for group_except in p[4]:
+    for group_except in p[5]:
         p[0].append(VarType(VarType.APPLY_GROUPS_EXCEPT, group_except))
+    p[0] = [p[0], p[6]]
 
 
 def p_timeout_spec(p):
-    """timeout_spec : TIMEOUT ':' ':' INTEGER"""
-    p[0] = VarType(VarType.TIMEOUT, p[4])
+    """timeout_spec : TIMEOUT ':' ':' onl INTEGER line_comment"""
+    p[0] = VarType(VarType.TIMEOUT, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_ttl_spec(p):
-    """ttl_spec : TTL ':' ':' INTEGER"""
-    p[0] = VarType(VarType.TTL, p[4])
+    """ttl_spec : TTL ':' ':' onl INTEGER line_comment"""
+    p[0] = VarType(VarType.TTL, p[4]), p[5]
+    p[0] = [p[0], p[6]]
 
 
 def p_filter_term_spec(p):
-    """filter_term_spec : FILTER_TERM ':' ':' STRING"""
-    p[0] = VarType(VarType.FILTER_TERM, p[4])
+    """filter_term_spec : FILTER_TERM ':' ':' onl STRING line_comment"""
+    p[0] = VarType(VarType.FILTER_TERM, p[5])
+    p[0] = [p[0], p[6]]
 
 
 def p_one_or_more_strings(p):
-    """one_or_more_strings : one_or_more_strings STRING
+    """one_or_more_strings : one_or_more_strings onl STRING
     | STRING
     |"""
     if len(p) > 1:
-        if type(p[1]) == type([]):
-            p[1].append(p[2])
+        if isinstance(p[1], list):
+            p[1].append(p[3])
             p[0] = p[1]
         else:
             p[0] = [p[1]]
 
 
 def p_one_or_more_tuples(p):
-    """one_or_more_tuples : LSQUARE one_or_more_tuples RSQUARE
-    | one_or_more_tuples ',' one_tuple
-    | one_or_more_tuples one_tuple
+    """one_or_more_tuples : LSQUARE onl one_or_more_tuples onl RSQUARE
+    | one_or_more_tuples onl ',' onl one_tuple
+    | one_or_more_tuples onl one_tuple
     | one_tuple
     |"""
 
     if len(p) > 1:
         if p[1] == '[':
-            p[0] = p[2]
-        elif type(p[1]) == type([]):
-            if p[2] == ',':
-                p[1].append(p[3])
+            p[0] = p[3]
+        elif isinstance(p[1], list):
+            if p[3] == ',':
+                p[1].append(p[5])
             else:
-                p[1].append(p[2])
+                p[1].append(p[3])
             p[0] = p[1]
         else:
             p[0] = [p[1]]
 
 
 def p_one_tuple(p):
-    """one_tuple : LPAREN STRING ',' STRING RPAREN
-    |"""
-    p[0] = (p[2], p[4])
+    """one_tuple : LPAREN onl STRING onl ',' onl STRING onl RPAREN"""
+    # NOTE - cleaned up a grammar bug here where one_tuple -> <empty> caused r/r conflicts
+    p[0] = (p[3], p[7])
 
 
 def p_one_or_more_ints(p):
-    """one_or_more_ints : one_or_more_ints INTEGER
+    """one_or_more_ints : one_or_more_ints onl INTEGER
     | INTEGER
     |"""
     if len(p) > 1:
-        if type(p[1]) == type([]):
-            p[1].append(int(p[2]))
+        if isinstance(p[1], list):
+            p[1].append(int(p[3]))
             p[0] = p[1]
         else:
             p[0] = [int(p[1])]
 
 
 def p_strings_or_ints(p):
-    """strings_or_ints : strings_or_ints STRING
-    | strings_or_ints INTEGER
+    """strings_or_ints : strings_or_ints onl STRING
+    | strings_or_ints onl INTEGER
     | STRING
     | INTEGER
     |"""
     if len(p) > 1:
-        if type(p[1]) is list:
-            p[1].append(p[2])
+        if isinstance(p[1], list):
+            p[1].append(p[3])
             p[0] = p[1]
         else:
             p[0] = [p[1]]
+
+
+def p_block_comment(p):
+    """block_comment : BLOCK_COMMENT"""
+    breakpoint()
+    if _PRESERVE_ORIGINAL:
+        if len(p) == 2:
+            p[0] = [
+                [VarType(VarType.BLOCK_COMMENT, p[1])],
+                None,
+            ]
+        else:
+            p[1][0].append(VarType(VarType.BLOCK_COMMENT, p[3]))
+            p[0] = p[1]
+        # TODO do away with VarType since only passed to TermParseData HeaderParseData
+
+
+def p_line_comment(p):
+    """line_comment : BLOCK_COMMENT NEWLINE
+    | NEWLINE"""
+    breakpoint()
+    if len(p) > 2:
+        p[0] = p[1]
+
+
+def p_onl(p):
+    """onl : NEWLINE
+    |"""
+    breakpoint()
+    # print(f'onl {len(p)}')
+    if len(p) > 1:
+        p[0] = p[1]
 
 
 def p_error(p):
@@ -2621,13 +2906,15 @@ def p_error(p):
 
     if p:
         raise ParseError(
-            ' ERROR on "%s" (type %s, line %d, Next %s)' % (p.value, p.type, p.lineno, use_token)
+            ' ERROR on "%s" (type %s, file %s, line %d, Next %s)'
+            % (p.value, p.type, _CURRENT_PARSE_FILENAME, p.lineno, use_token)
         )
     else:
         raise ParseError(' ERROR you likely have unablanaced "{"\'s')
 
 
-parser = yacc.yacc(write_tables=False, debug=0, errorlog=yacc.NullLogger())
+breakpoint()
+parser = yacc.yacc(write_tables=False, debug=True, outputdir='.', errorlog=logging)
 
 # pylint: enable=unused-argument,invalid-name,g-short-docstring-punctuation
 # pylint: enable=g-docstring-quotes,g-short-docstring-space
@@ -2761,6 +3048,7 @@ def ParsePolicy(
         globals()['_OPTIMIZE'] = optimize
         globals()['_SHADE_CHECK'] = shade_check
         globals()['_PRESERVE_ORIGINAL'] = False
+        globals()['_CURRENT_PARSE_FILENAME'] = filename
 
         lexer = lex.lex()
 
@@ -2783,13 +3071,14 @@ def FromBuilder(builder: PolicyBuilder):
     globals()['_OPTIMIZE'] = builder.optimize
     globals()['_SHADE_CHECK'] = builder.shade_check
     globals()['_PRESERVE_ORIGINAL'] = False
+    globals()['_CURRENT_PARSE_FILENAME'] = builder.raw_policy.filename
 
     return builder.BuildPolicy()
 
 
 def ParseOriginal(data, definitions=None, filename='', is_include=False):
-    """Partially parse 'data' into an PolicyCopy model, preserving the original
-    content of 'data'. The PolicyCopy model produced can be passed to export.ExportPolicy().
+    """Partially parse 'data' into an PolicyParseData model, preserving the original
+    content of 'data'. The PolicyParseData model produced can be passed to export.ExportPolicy().
 
     Compared to ParsePolicy, this function will ensure that includes are preserved,
     tokens are preserved and addresses and ports are not collapsed so a faithful copy can be taken.
@@ -2804,7 +3093,7 @@ def ParseOriginal(data, definitions=None, filename='', is_include=False):
       is_include: string - whether the file is an include file, a standalone term list that has no headers.
 
     Returns:
-      A PolicyCopy object or False (if parse error).
+      A PolicyParseData object or False (if parse error).
     """
     if not definitions:
         definitions = naming.Naming(DEFAULT_DEFINITIONS)
@@ -2813,32 +3102,46 @@ def ParseOriginal(data, definitions=None, filename='', is_include=False):
     globals()['_OPTIMIZE'] = False
     globals()['_SHADE_CHECK'] = False
     globals()['_PRESERVE_ORIGINAL'] = True
+    globals()['_CURRENT_PARSE_FILENAME'] = filename
 
-    pol_copy = PolicyCopy(is_include=is_include)
+    pol_copy = PolicyParseData(is_include=is_include)
+    pol_copy.filename = filename
     data = pol_copy.Preprocess(data)
 
     try:
         lexer = lex.lex()
 
         global parser
-        policy = parser.parse(data, lexer=lexer)
-        policy.filename = filename
-
-        pol_copy.policy = policy
+        policy: PolicyParseData = parser.parse(data, lexer=lexer)
+        pol_copy.data = policy.data
 
         return pol_copy
 
-    except IndexError:
+    except IndexError as e:
+        raise
         return False
 
 
-class PolicyCopy:
+class PolicyParseData:
     _include_counter = 1000
 
-    def __init__(self, is_include=False):
+    def __init__(
+        self,
+        header: HeaderParseData = None,
+        terms: TermParseData = None,
+        *,
+        is_include: bool = False,
+    ):
+        self.data = []
         self.is_include = is_include
-        self.policy = None
+        self.filename = ''
         self.include_placeholders = []
+
+        if header or terms:
+            self.AddFilter(header, terms)
+
+    def AddFilter(self, header: HeaderParseData, terms: TermParseData):
+        self.data.append((header, terms))
 
     def Preprocess(self, data):
         if self.is_include:

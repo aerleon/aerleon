@@ -279,6 +279,7 @@ def pol2yaml(options, style_options):
             pol_copy = policy.ParseOriginal(
                 conf, definitions=fakedefs, filename=file, is_include=False
             )
+            # import pdb; pdb.set_trace()
             yaml_copy = export.ExportPolicy(pol_copy)
             output_target = _get_output_target(
                 pathlib.Path(base_directory), file, input_mode, operation, output_mode, options

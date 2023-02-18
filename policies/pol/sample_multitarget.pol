@@ -2,13 +2,13 @@
 # This is an example policy for aerleon
 #
 header {
-  comment:: "this is a sample edge input filter that generates"
+  comment:: "this is a sample edge input filter that generates"   # LINE COMMENT 1
   comment:: "multiple output formats."
   # NOTES: iptables produces filter 'lines' that must be used as args to the
   # '$ iptables' cmd, while Speedway produces stateful iptables filters
   # compatible with iptables-restore (most people will prefer speedway)
   target:: juniper edge-inbound inet
-  target:: juniperevo edge-inbound inet6 ingress
+  target:: juniperevo edge-inbound inet6 ingress # LINE COMMENT 2
   target:: msmpc edge-inbound mixed ingress
   target:: cisco edge-inbound mixed
   target:: speedway INPUT
@@ -24,12 +24,15 @@ header {
 #include 'includes/untrusted-networks-blocking.inc'
 
 term permit-mail-services {
+  # FIELD COMMENT START 1
   destination-address:: MAIL_SERVERS
-  protocol:: tcp
+  protocol:: tcp # LINE COMMENT 3 # COMMENT 4
+  # FIELD COMMENT 1
   destination-port:: MAIL_SERVICES
   action:: accept
+  # FIELD COMMENT END 1
 }
-
+# TERM COMMENT 2
 term permit-web-services {
   destination-address:: WEB_SERVERS
   protocol:: tcp
@@ -73,3 +76,7 @@ term deny-to-bad-destinations {
 term default-accept {
   action:: accept
 }
+#
+#
+# QWERTY End Comment
+#
