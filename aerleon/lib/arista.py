@@ -17,6 +17,7 @@
 """Arista generator."""
 
 from aerleon.lib import cisco
+from typing import List
 
 
 class Error(cisco.Error):
@@ -41,7 +42,7 @@ class Arista(cisco.Cisco):
     _PROTO_INT = False
 
     # Arista omits the "extended" access-list argument.
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:

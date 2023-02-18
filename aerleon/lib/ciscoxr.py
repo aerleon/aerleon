@@ -17,6 +17,8 @@
 """Cisco IOS-XR filter renderer."""
 
 from aerleon.lib import cisco
+from aerleon.lib.policy import Term
+from typing import Dict, List, Set, Tuple
 
 
 class CiscoXR(cisco.Cisco):
@@ -27,7 +29,7 @@ class CiscoXR(cisco.Cisco):
     SUFFIX = '.xacl'
     _PROTO_INT = False
 
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -46,7 +48,7 @@ class CiscoXR(cisco.Cisco):
             target.append('ipv4 access-list %s' % filter_name)
         return target
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -58,7 +60,7 @@ class CiscoXR(cisco.Cisco):
 
         return supported_tokens, supported_sub_tokens
 
-    def _GetObjectGroupTerm(self, term, verbose=True):
+    def _GetObjectGroupTerm(self, term: Term, verbose: bool = True) -> "CiscoXRObjectGroupTerm":
         """Returns an ObjectGroupTerm object."""
         return CiscoXRObjectGroupTerm(term, platform=self._PLATFORM, verbose=verbose)
 
