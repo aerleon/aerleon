@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Set, Tuple, Union, cast
 from absl import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
-from aerleon.lib.nacaddr import IPv4
+from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.policy import Policy, Term
 
 _ACTION_TABLE = {
