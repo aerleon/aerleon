@@ -16,9 +16,10 @@
 
 """Cisco IOS-XR filter renderer."""
 
+from typing import Dict, List, Set, Tuple
+
 from aerleon.lib import cisco
 from aerleon.lib.policy import Term
-from typing import Dict, List, Set, Tuple
 
 
 class CiscoXR(cisco.Cisco):

@@ -16,8 +16,9 @@
 
 """Arista generator."""
 
-from aerleon.lib import cisco
 from typing import List
+
+from aerleon.lib import cisco
 
 
 class Error(cisco.Error):
