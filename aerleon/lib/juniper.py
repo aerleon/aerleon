@@ -729,12 +729,7 @@ class Term(aclgenerator.Term):
 
     def _MinimizePrefixes(
         self, include: List[Union[IPv4, Any, IPv6]], exclude: List[Union[IPv4, Any]]
-    ) -> Union[
-        Tuple[List[IPv6], List[Any]],
-        Tuple[List[IPv4], List[IPv4]],
-        Tuple[List[Any], List[Any]],
-        Tuple[List[IPv4], List[Any]],
-    ]:
+    ) -> Tuple[List[Union[IPv4, Any, IPv6]], List[Union[IPv4, Any, IPv6]]]:
         """Calculate a minimal set of prefixes for Juniper match conditions.
 
         Args:
@@ -765,7 +760,6 @@ class Term(aclgenerator.Term):
                 if exclude_prefix.subnet_of(include_prefix):
                     exclude_result.append(exclude_prefix)
                     break
-
         return include_result, exclude_result
 
     def _Comment(

@@ -402,9 +402,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _BuildPort(
-        self, ports: List[Union[Any, List[int], Tuple[int, int]]]
-    ) -> List[str]:
+    def _BuildPort(self, ports: List[Union[Any, List[int], Tuple[int, int]]]) -> List[str]:
         """Transform specified ports into list and ranges.
 
         Args:

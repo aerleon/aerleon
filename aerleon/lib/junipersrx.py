@@ -23,12 +23,12 @@ import copy
 import heapq
 import ipaddress
 import itertools
+from typing import Any, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr
 from aerleon.lib.policy import Policy
-from typing import Any, Dict, List, Set, Tuple, Union
 
 ICMP_TERM_LIMIT = 8
 
