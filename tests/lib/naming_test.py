@@ -144,8 +144,9 @@ class NamingUnitTest(absltest.TestCase):
         baddefs = naming.Naming(None)
         baddefs.ParseServiceList(bad_servicedata)
         baddefs.ParseNetworkList(bad_networkdata)
-        self.assertRaises(naming.UndefinedServiceError, baddefs._CheckUnseen, 'services')
-        self.assertRaises(naming.UndefinedAddressError, baddefs._CheckUnseen, 'networks')
+        self.assertRaises(
+            (naming.UndefinedAddressError, naming.UndefinedServiceError), baddefs._CheckUnseen
+        )
 
     def testParseNetFile(self):
         filedefs = naming.Naming(None)

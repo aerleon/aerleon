@@ -593,10 +593,10 @@ class PaloAltoFWTest(absltest.TestCase):
     @capture.stdout
     def testServiceMap(self):
         definitions = naming.Naming()
-        definitions._ParseLine('SSH = 22/tcp', 'services')
-        definitions._ParseLine('SMTP = 25/tcp', 'services')
-        definitions._ParseLine('FOOBAR = 10.0.0.0/8', 'networks')
-        definitions._ParseLine('         2001:4860:8000::/33', 'networks')
+        definitions._ParseServiceLine('SSH = 22/tcp')
+        definitions._ParseServiceLine('SMTP = 25/tcp')
+        definitions._ParseNetworkLine('FOOBAR = 10.0.0.0/8')
+        definitions._ParseNetworkLine('         2001:4860:8000::/33')
 
         pol1 = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_1, definitions), EXP_INFO
@@ -1389,8 +1389,8 @@ term rule-1 {
         self.assertEqual(x, 'any-tcp', output)
 
         definitions = naming.Naming()
-        definitions._ParseLine('PORT1 = 8080/tcp', 'services')
-        definitions._ParseLine('PORT2 = 8081/tcp', 'services')
+        definitions._ParseServiceLine('PORT1 = 8080/tcp')
+        definitions._ParseServiceLine('PORT2 = 8081/tcp')
         pol = policy.ParsePolicy(POL3 % T2, definitions)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -1439,8 +1439,8 @@ term rule-1 {
 """
 
         definitions = naming.Naming()
-        definitions._ParseLine('NTP = 123/tcp 123/udp', 'services')
-        definitions._ParseLine('DNS = 53/tcp 53/udp', 'services')
+        definitions._ParseServiceLine('NTP = 123/tcp 123/udp')
+        definitions._ParseServiceLine('DNS = 53/tcp 53/udp')
 
         pol = policy.ParsePolicy(POL % T, definitions)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
@@ -1621,15 +1621,15 @@ term rule-1 {
     @capture.stdout
     def testNoAddrObj(self):
         definitions = naming.Naming()
-        definitions._ParseLine('NET1 = 10.1.0.0/24', 'networks')
-        definitions._ParseLine('NET2 = 10.2.0.0/24', 'networks')
-        definitions._ParseLine('NET3 = 10.3.1.0/24', 'networks')
-        definitions._ParseLine('       10.3.2.0/24', 'networks')
-        definitions._ParseLine('NET4 = 2001:db8:0:aa::/64', 'networks')
-        definitions._ParseLine('       2001:db8:0:bb::/64', 'networks')
-        definitions._ParseLine('NET5 = NET3 NET4', 'networks')
-        definitions._ParseLine('NET6 = 4000::/2', 'networks')
-        definitions._ParseLine('NET7 = 8000::/1', 'networks')
+        definitions._ParseNetworkLine('NET1 = 10.1.0.0/24')
+        definitions._ParseNetworkLine('NET2 = 10.2.0.0/24')
+        definitions._ParseNetworkLine('NET3 = 10.3.1.0/24')
+        definitions._ParseNetworkLine('       10.3.2.0/24')
+        definitions._ParseNetworkLine('NET4 = 2001:db8:0:aa::/64')
+        definitions._ParseNetworkLine('       2001:db8:0:bb::/64')
+        definitions._ParseNetworkLine('NET5 = NET3 NET4')
+        definitions._ParseNetworkLine('NET6 = 4000::/2')
+        definitions._ParseNetworkLine('NET7 = 8000::/1')
 
         POL = """
 header {
@@ -1743,12 +1743,12 @@ term rule-1 {
     @capture.stdout
     def testAddrObj(self):
         definitions = naming.Naming()
-        definitions._ParseLine('NET1 = 10.1.0.0/24', 'networks')
-        definitions._ParseLine('NET2 = 10.2.0.0/24', 'networks')
-        definitions._ParseLine('NET3 = 10.3.1.0/24', 'networks')
-        definitions._ParseLine('       10.3.2.0/24', 'networks')
-        definitions._ParseLine('NET4 = 4000::/128', 'networks')
-        definitions._ParseLine('NET5 = 4000::/2', 'networks')
+        definitions._ParseNetworkLine('NET1 = 10.1.0.0/24')
+        definitions._ParseNetworkLine('NET2 = 10.2.0.0/24')
+        definitions._ParseNetworkLine('NET3 = 10.3.1.0/24')
+        definitions._ParseNetworkLine('       10.3.2.0/24')
+        definitions._ParseNetworkLine('NET4 = 4000::/128')
+        definitions._ParseNetworkLine('NET5 = 4000::/2')
 
         POL = """
 header {
