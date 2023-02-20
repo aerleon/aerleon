@@ -156,7 +156,7 @@ The arista header designation has the following format:
 
 ```yaml
 targets:
-    arista: [filter name] {standard|extended|object-group|inet6}
+    arista: [filter name] {standard|extended|object-group|inet6} {noverbose}
 ```
 
 <!--
@@ -169,6 +169,7 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 * _extended_: specifies that the output should be an extended access list
 * _object-group_: specifies this is a arista extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: #TODO: does this exist on all Cisco inherited platforms?
 * _enable_dsmo_: #TODO: does this exist on all Cisco inherited platforms?
 
@@ -184,7 +185,6 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 * _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
-* _verbose_: adds additional remark statements with the term name, owner (if set) and the comment (if set) (default: True)
 
 ### Sub Tokens
 
@@ -284,7 +284,7 @@ The cisco header designation has the following format:
 
 ```yaml
 targets:
-    cisco: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo}
+    cisco: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisco filter.
@@ -292,6 +292,7 @@ targets:
 * _standard_: specifies that the output should be a standard access list, and the filter name should be numeric and in the range of 1-99.
 * _object-group_: specifies this is a cisco extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: specifies output will include both IPv6 and IPv4 filters.
 * _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
@@ -376,13 +377,14 @@ The cisconx header designation has the following format:
 
 ```yaml
 targets:
-    cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo}
+    cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisconx filter.
 * _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
 * _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: specifies output will include both IPv6 and IPv4 filters.
 * _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
@@ -428,11 +430,12 @@ The ciscoxr header designation has the following format:
 
 ```yaml
 targets:
-    ciscoxr: [filter name] {inet6}
+    ciscoxr: [filter name] {inet6} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisco filter.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 
 ### Term Format
 
@@ -826,7 +829,7 @@ targets:
 * _filter name_: defines the name of the Juniper msmpc filter.
 * _inet6_: specifies the output be for IPv6 only filters.
 * _mixed_: specifies the output be for IPv4 and IPv6 filters. This is the default format.
-* _noverbose_: omit additional term and address comments.
+* _noverbose_: omit additional term and address comments. (optional)
 * _ingress_: filter will be applied in the input direction.
 * _egress_: filter will be appliced in the output direction.
 * _no-apply-groups_: generate configuration without `apply-groups` (optional)
