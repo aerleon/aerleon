@@ -7,6 +7,7 @@ import yaml
 
 from aerleon.lib import naming, policy, policy_builder
 
+from ruamel.yaml import YAML
 
 class ExportStyleRules:
     """These rules enable stylistic variants available in the exporter.
@@ -19,7 +20,7 @@ class ExportStyleRules:
 # 1. General Structure
 # 2. Dealing With Comments
 # 3. Reconstructing AddObject Calls
-#
+# 4. Working With Ruamel-YAML
 #
 # ## 1. General Structure
 #
@@ -149,6 +150,34 @@ class ExportStyleRules:
 #    as if they were field comments that appear after all actual field comments.
 #
 #
+# ### Comment Representation in *ParseData
+#
+# The parser expects comments to potentially appear anywhere in the file. This
+# labelled example shows the comment positions distinguished by the parser:
+#
+#
+# #  AAA
+# #  AAA  File Block Comment
+# #  AAA
+# header {  # BBB Header Block Comment
+#   # BBB Header Block Comment
+#   target:: juniper edge-outbound  # CCC EOL Comment
+#   # BBB Header Block Comment
+# }  # DDD Termlist Block Comment
+# # DDD Termlist Block Comment
+# term deny-to-bad-destinations { # EEE Term Block Comment
+#   # EEE Term Block Comment
+#   destination-address:: RFC1918 BOGON RESERVED # CCC EOL Comment
+#   # EEE Term Block Comment
+# } # DDD Termlist Block Comment
+# # DDD Termlist Block Comment
+#
+# Note: the parser does not distinguish comments on the same line as an opening brace from
+# a comment on the next line. Users might prefer maintaining this placement.
+#
+# Issue: comments are not allowed in between "header {" or "term name {". Comments are not
+# allowed betweeen values on a splayed out value line, (TODO test if legacy parser does allow this).
+#
 # ## 3. Reconstructing AddObject Calls
 #
 # Normally each field line will be passed to Term.AddObject or Header.AddObject, where
@@ -200,8 +229,109 @@ class ExportStyleRules:
 #      comments according to comment rules. Collapse / overwrite data.
 #      Tail comment / solo comment may be present but all other comments are value linked.
 #   3. Construct pre-YAML data structure. Comment final placement, normalization, list
-#      collapsing all happen here.
+#      collapsing all happen here. See the next section for details of the pre-YAML structure.
 #
+#
+# ## 4. Working With Ruamel-YAML
+#
+# Ruamel-YAML is a comment and anchor-aware YAML toolkit. It can load a YAML document into
+# a hybrid parse tree that includes comment spans. While its main use case seems to be
+# opening YAML documents, it offers (to some extent) mechanisms for directly constructing
+# a hybrid parse tree which we can dump to a file. Through this process we can generate a
+# YAML file with comments placed in the appropirate locations.
+#
+# NOTE: by default, Ruamel-YAML operates in 1.2 mode, while PyYAML only supports YAML 1.1 .
+# This opens the door for some problems: some string values that must be quoted in YAML 1.1
+# do not need to be quoted in 1.2, so a YAML 1.2 dumper might produce a document that will
+# be misunderstood by a YAML 1.1 loader (e.g. `on: no` would load as {True: False} in YAML 1.1
+# and as {"on": "no"} in YAML 1.2). It looks like we can use this to pin the output version:
+#   yaml_inst = YAML()
+#   yaml_inst.verion = (1, 1)
+#   yaml_inst.dump(data, ...)
+#
+# Loading YAML can useful for yaml-to-yaml operations since we would want to preserve anchors
+# and comments. At the time of writing, yaml-to-yaml is not in scope.
+#
+# The parts of Ruamel-YAML's data model we will use are CommentedMap and CommentedSeq.
+# Ruamel-YAML also has a concept of comment placement that we need to understand in order to
+# correctly place comments and understand its data model.
+#
+# This example YAML document is annotated with paths showing how comments are grouped and stored
+# within CommentedMap / CommentedSeq. In the example, the asterisk (*) indicates that we are looking
+# into the shadow comment document. The annotations are taken from Ruamel-YAML's actual parse tree.
+#
+# # Start Comment Line 1                (document)*.start[1]
+# # Start Comment Line 2                (document)*.start[1]
+#
+# # Start Comment Line 4                (document)*.start[1]
+# filters: # Key Comment Line 1         (document)['filters']*.start[0]
+#   # Key Comment Line 2                (document)['filters']*.start[0]
+#   terms: # Key Comment Line 1         (document)['filters']['terms']*.start[0]
+#     # Key Comment Line 2              (document)['filters']['terms']*.start[0]
+#     - item1  # Value Comment Line 1   (document)['filters']['terms']*.items[0][0]
+#     # Value Comment Line 2            (document)['filters']['terms']*.items[0][0]
+#     - item2  # Value Comment Line 1   (document)['filters']['terms']*.items[1][0]
+#     # Value Comment Line 2            (document)['filters']['terms']*.items[1][0]
+#   header:
+#     target: cisco # Value Comment 1   (document)['filters']['header']*.items['target'][2]
+#     # Value Comment Line 2            (document)['filters']['header']*.items['target'][2]
+# 
+# NOTE: This example does not cover all possible comment representations in the comment
+# model.
+#
+# The key takeaways in this example are:
+# (1) Ruamel-YAML is using three types of comment placement here:
+#     1. Start Comments, which appear mainly at the start of a file.
+#     2. Key Comments, which appear after a key but before its contents.
+#     3. EOL Comments, which appear after a value.
+# (2) Comments can be contain newlines and can be multiple lines long. Although not shown
+#     in this example, comments can even start with newlines, so an EOL comment can appear
+#     to start on the line after.
+# (3) All placement scenarios needed by this project can handled with these three placement types.
+#
+# When attaching comments to CommentedMap / CommentedSeq, it's important to be aware that some of
+# the public comment manipulation methods accept strings, while others accept tokens (CommentToken).
+# These methods accept comments as strings:
+#
+#   CommentedBase.yaml_set_start_comment
+#   CommentedBase.yaml_set_comment_before_after_key
+#   CommentedBase.yaml_add_eol_comment
+#
+# These methods accept comments as CommentTokens:
+#
+#   CommentedBase.yaml_end_comment_extend
+#   CommentedBase.yaml_key_comment_extend
+#   CommentedBase.yaml_value_comment_extend
+#
+# If possible, this exporter will try to use the three "public interface" methods to produce all
+# required placements.
+#
+# Another note on Ruamel-YAML's three "public interface" methods: comments set through these methods
+# can occlude one another. Comments in the shadow comment document can be skipped during the dumping
+# process. Curiously, it appears that during the loading process, sometimes one comment is entered
+# in multiple places in the shadow comment document, so as users of these interfaces we may have to
+# consider that the order in which comments are visited during dumping may not make sense outside of
+# the context of duplication.
+#
+#
+# from ruamel.yaml import YAML, CommentedMap, CommentedSeq
+# h1t = CommentedMap({'cisco': '', 'srx': ''})
+# >>> nl11 = CommentedSeq(['NETWORK_NAME', 'NETWORK_NAME_B'])
+# >>> t11 = CommentedMap({'name': 'term-1', 'source-address': nl11, 'action': 'deny'})
+# >>> tlist1 = CommentedSeq([t11])
+# >>> f1 = CommentedMap({'header': h1, 'terms': tlist1})
+# >>> flist1 = CommentedSeq([f1])
+# >>> doc = CommentedMap({'filters': flist1})
+# >>> yml = YAML()
+# >>> yml.version = (1,1)
+# >>> import sys
+# >>> yml.dump(doc, sys.stdout)
+#
+# doc.yaml_set_start_comment('# (1a) Header Block Comment (top of file)')
+# f1.yaml_set_comment_before_after_key('header', after='(2a) Field Comment (above first field)', after_indent=4)
+# h1t.yaml_add_eol_comment('# (3) Line Comment\n      # (2b) Field Comment', key='cisco')
+# h1t.yaml_set_comment_before_after_key('srx', before='(2b) Field Comment', indent=6)
+
 def ExportPolicy(pol_copy: policy.PolicyParseData, style: ExportStyleRules = None):
     if not style:
         style = ExportStyleRules()
@@ -209,15 +339,16 @@ def ExportPolicy(pol_copy: policy.PolicyParseData, style: ExportStyleRules = Non
     # Phase 1 - scan comments
     from pprint import pprint
 
+    for comment in pol_copy.block_comment:
+        print(f'bc     : {comment}')
     for data in pol_copy.data:
-        print('filter:')
+        print('\nfilter:')
         print(str(data[0]))
-        print('terms:')
         for termish in data[1]:
             if isinstance(termish, policy.TermParseData):
-                print(f"term   : {str(termish)}")
+                print(f"{termish}")
             else:
-                print(f"       : {str(termish)}")
+                print(f"       : {termish}")
 
     return
 

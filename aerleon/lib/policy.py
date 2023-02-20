@@ -2168,6 +2168,26 @@ def t_STRING(t):
 ###
 ## parser starts here
 ###
+def p_file(p):
+    """file : block_comment onl file
+    | NEWLINE file
+    | target"""
+    breakpoint()
+    if len(p) == 2:
+        p[0] = p[1]
+    if len(p) == 3:
+        p[0] = p[2]
+    elif len(p) == 4:
+        if _PRESERVE_ORIGINAL:
+            if isinstance(p[3], PolicyParseData):
+                p[3].AddBlockComment(p[1])
+            elif isinstance(p[3], list):
+                p[3].append(p[1])
+            else:
+                p[3] = [p[1]]
+        p[0] = p[3]
+
+
 def p_target(p):
     """target : target onl header onl terms onl
     |"""
@@ -2187,14 +2207,9 @@ def p_target(p):
 
 
 def p_header(p):
-    """header : HEADER onl '{' onl header_spec onl '}'
-    | block_comment onl header"""
+    """header : HEADER onl '{' onl header_spec onl '}'"""
     breakpoint()
-    if len(p) > 4:
-        p[0] = p[5]
-    elif _PRESERVE_ORIGINAL:
-        p[3].AddBlockComment(p[1])
-        p[0] = p[3]
+    p[0] = p[5]
 
     # TODO comments at the end of the line with "header {" should be
     # distinguished from comments preceding the first field if possible.
@@ -2209,7 +2224,7 @@ def p_header_spec(p):
     | header_spec onl apply_groups_except_spec
     | header_spec onl block_comment
     |"""
-    breakpoint()
+    # breakpoint()
     if len(p) > 1:
         if _PRESERVE_ORIGINAL:
             header_cls = HeaderParseData
@@ -2230,7 +2245,7 @@ def p_header_spec(p):
 # like being able to set a default input/output policy for iptables policies.
 def p_target_spec(p):
     """target_spec : TARGET ':' ':' onl strings_or_ints line_comment"""
-    breakpoint()
+    # breakpoint()
     p[0] = Target(p[5])
     p[0] = [p[0], p[6]]
 
@@ -2239,7 +2254,7 @@ def p_terms(p):
     """terms : terms onl TERM onl STRING onl '{' onl term_spec onl '}'
     | terms onl block_comment
     |"""
-    breakpoint()
+    # breakpoint()
     if len(p) > 1:
         terms = p[1]
         if not isinstance(terms, list):
@@ -2865,7 +2880,7 @@ def p_strings_or_ints(p):
 
 def p_block_comment(p):
     """block_comment : BLOCK_COMMENT"""
-    breakpoint()
+    # breakpoint()
     if _PRESERVE_ORIGINAL:
         if len(p) == 2:
             p[0] = [
@@ -2881,7 +2896,7 @@ def p_block_comment(p):
 def p_line_comment(p):
     """line_comment : BLOCK_COMMENT NEWLINE
     | NEWLINE"""
-    breakpoint()
+    # breakpoint()
     if len(p) > 2:
         p[0] = p[1]
 
@@ -2889,7 +2904,7 @@ def p_line_comment(p):
 def p_onl(p):
     """onl : NEWLINE
     |"""
-    breakpoint()
+    # breakpoint()
     # print(f'onl {len(p)}')
     if len(p) > 1:
         p[0] = p[1]
@@ -3112,8 +3127,12 @@ def ParseOriginal(data, definitions=None, filename='', is_include=False):
         lexer = lex.lex()
 
         global parser
-        policy: PolicyParseData = parser.parse(data, lexer=lexer)
-        pol_copy.data = policy.data
+        policy: PolicyParseData | list[str] | None = parser.parse(data, lexer=lexer)
+        if isinstance(policy, PolicyParseData):
+            pol_copy.data = policy.data
+            pol_copy.block_comment = policy.block_comment
+        elif isinstance(policy, list):
+            pol_copy.block_comment = policy
 
         return pol_copy
 
@@ -3132,16 +3151,20 @@ class PolicyParseData:
         *,
         is_include: bool = False,
     ):
+        self.block_comment = []
         self.data = []
-        self.is_include = is_include
         self.filename = ''
         self.include_placeholders = []
+        self.is_include = is_include
 
         if header or terms:
             self.AddFilter(header, terms)
 
     def AddFilter(self, header: HeaderParseData, terms: TermParseData):
         self.data.append((header, terms))
+
+    def AddBlockComment(self, comment):
+        self.block_comment.append(comment)
 
     def Preprocess(self, data):
         if self.is_include:
