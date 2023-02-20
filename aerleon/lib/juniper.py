@@ -17,9 +17,14 @@
 """Juniper JCL generator."""
 
 
+from typing import Any, Dict, List, Set, Tuple, Union
+
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, summarizer
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy
+from aerleon.lib.summarizer import DSMNet
 
 
 # generic error class
@@ -75,20 +80,20 @@ class Config:
       lines: the text lines of the configuration.
     """
 
-    def __init__(self, indent=0, tabstop=4):
+    def __init__(self, indent: int = 0, tabstop: int = 4) -> None:
         self.indent = indent
         self._initial_indent = indent
         self.tabstop = tabstop
         self.lines = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.indent != self._initial_indent:
             raise JuniperIndentationError(
                 'Expected indent %d but got %d' % (self._initial_indent, self.indent)
             )
         return '\n'.join(self.lines)
 
-    def Append(self, line, verbatim=False):
+    def Append(self, line: str, verbatim: bool = False) -> None:
         """Append one line to the configuration.
 
         Args:
@@ -209,7 +214,7 @@ class Term(aclgenerator.Term):
     # TODO(pmoody): get rid of all of the default string concatenation here.
     #  eg, indent(8) + 'foo;' -> '%s%s;' % (indent(8), 'foo'). pyglint likes this
     #  more.
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config(indent=self._DEFAULT_INDENT)
         from_str = []
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -701,7 +706,7 @@ class Term(aclgenerator.Term):
         return str(config)
 
     @staticmethod
-    def NextIpCheck(next_ip, term_name):
+    def NextIpCheck(next_ip: List[Union[IPv4, IPv6]], term_name: str) -> None:
         if len(next_ip) > 1:
             raise JuniperNextIpError(
                 'The following term has more ' 'than one next IP value: %s' % term_name
@@ -711,7 +716,7 @@ class Term(aclgenerator.Term):
                 'The following term has a subnet ' 'instead of a host: %s' % term_name
             )
 
-    def CheckTerminatingAction(self):
+    def CheckTerminatingAction(self) -> None:
         action = set(self.term.action)
         if self.term.encapsulate:
             action.add(self.term.encapsulate)
@@ -722,7 +727,14 @@ class Term(aclgenerator.Term):
                 'The following term has multiple terminating actions: %s' % self.term.name
             )
 
-    def _MinimizePrefixes(self, include, exclude):
+    def _MinimizePrefixes(
+        self, include: List[Union[IPv4, Any, IPv6]], exclude: List[Union[IPv4, Any]]
+    ) -> Union[
+        Tuple[List[IPv6], List[Any]],
+        Tuple[List[IPv4], List[IPv4]],
+        Tuple[List[Any], List[Any]],
+        Tuple[List[IPv4], List[Any]],
+    ]:
         """Calculate a minimal set of prefixes for Juniper match conditions.
 
         Args:
@@ -756,7 +768,9 @@ class Term(aclgenerator.Term):
 
         return include_result, exclude_result
 
-    def _Comment(self, addr, exclude=False, line_length=132):
+    def _Comment(
+        self, addr: Union[IPv6, IPv4, DSMNet], exclude: bool = False, line_length: int = 132
+    ) -> List[Union[Any, str]]:
         """Returns address comment field if it exists.
 
         Args:
@@ -848,7 +862,7 @@ class Term(aclgenerator.Term):
             logging.warning('Ignoring non IPv4 or IPv6 address: %s', addr)
         return rval
 
-    def _Group(self, group, lc=True):
+    def _Group(self, group: List[Union[int, Tuple[int, int], str]], lc: bool = True) -> str:
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -908,7 +922,7 @@ class Juniper(aclgenerator.ACLGenerator):
     _TERM = Term
     SUFFIX = '.jcl'
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -969,7 +983,7 @@ class Juniper(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.juniper_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -1075,7 +1089,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     )
                 )
 
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config()
 
         for (
