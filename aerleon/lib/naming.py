@@ -675,16 +675,8 @@ class Naming:
                 '%s %s' % ('Received an unexpected definition type:', def_type)
             )
 
-        items.update(
-            dict(
-                [
-                    (unit.name, unit)
-                    for unit in self._ParseLines(
-                        file_handle, def_type, items, unseen_items, value_check
-                    )
-                ]
-            )
-        )
+        generator = self._ParseLines(file_handle, def_type, items, unseen_items, value_check)
+        items.update(dict([(unit.name, unit) for unit in generator]))
 
     def ParseServiceList(self, data: List[str]) -> None:
         """Take an array of service data and import into class.
@@ -695,20 +687,14 @@ class Naming:
         Args:
           data: array of text lines containing service definitions.
         """
-        self.services.update(
-            dict(
-                [
-                    (unit.name, unit)
-                    for unit in self._ParseLines(
-                        data,
-                        DEF_TYPE_SERVICES,
-                        self.services,
-                        self.unseen_services,
-                        self._PortCheck,
-                    )
-                ]
-            )
+        generator = self._ParseLines(
+            data,
+            DEF_TYPE_SERVICES,
+            self.services,
+            self.unseen_services,
+            self._PortCheck,
         )
+        self.services.update(dict([(unit.name, unit) for unit in generator]))
 
     def ParseNetworkList(self, data: List[str]) -> None:
         """Take an array of network data and import into class.
@@ -720,17 +706,8 @@ class Naming:
           data: array of text lines containing net definitions.
 
         """
-        gen = ()
-        self.networks.update(
-            dict(
-                [
-                    (unit.name, unit)
-                    for unit in self._ParseLines(
-                        data, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks
-                    )
-                ]
-            )
-        )
+        generator = self._ParseLines(data, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks)
+        self.networks.update(dict([(unit.name, unit) for unit in generator]))
 
     def _PortCheck(self, line, values):
         for port in values.strip().split():
@@ -781,7 +758,6 @@ class Naming:
                     if value_piece[0].isalpha() and ':' not in value_piece:
                         if value_piece not in items and value_piece not in unseen_items:
                             unseen_items[value_piece] = True
-
 
     def ParseYaml(self, file_handle: str, file_name: str) -> None:
         """Load a definition yaml file as a string.
