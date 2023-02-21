@@ -46,7 +46,7 @@ import pathlib
 import sys
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points, version
@@ -55,6 +55,7 @@ else:
 
 from absl import logging
 
+from aerleon.lib.aclgenerator import ACLGenerator
 from aerleon.lib import plugin
 
 __all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", "SystemMetadata"]
@@ -65,10 +66,10 @@ class _PluginSupervisor:
     plugins: list[Tuple]
     generators: dict
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.is_setup = False
 
-    def Start(self, config: PluginSupervisorConfiguration = None):
+    def Start(self, config: PluginSupervisorConfiguration = None) -> None:
         setup = _PluginSetup(config)
         self.plugins, self.generators = setup.plugins, setup.generators
         self.is_setup = True
@@ -175,7 +176,7 @@ class _PluginSetup:
     disable_builtin: list[str] = None
     include_path: list[list[str]] = None
 
-    def __init__(self, config: PluginSupervisorConfiguration = None):
+    def __init__(self, config: PluginSupervisorConfiguration = None) -> None:
         """Initialize self.generators, self.plugins."""
 
         self.generators = {}
@@ -280,7 +281,9 @@ class _PluginSetup:
                 continue
         return loaded_plugins
 
-    def _CollectBuiltinGenerators(self, builtin_generators):
+    def _CollectBuiltinGenerators(
+        self, builtin_generators: List[Tuple[str, str, str]]
+    ) -> List[Tuple[str, ACLGenerator]]:
         """Import built-in modules by name."""
         loaded_generators = []
         for target, module_name, class_or_func in builtin_generators:

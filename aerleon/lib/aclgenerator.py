@@ -25,6 +25,7 @@ import string
 from absl import logging
 
 from aerleon.lib import policy
+from typing import Dict, List, Union
 
 
 # generic error class
@@ -571,7 +572,9 @@ class ACLGenerator:
         return new_terms
 
 
-def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
+def ProtocolNameToNumber(
+    protocols: List[str], proto_to_num: List[str], name_to_num_map: Dict[str, int]
+) -> List[Union[str, int]]:
     """Convert a protocol name to a numeric value.
 
     Args:
@@ -593,7 +596,13 @@ def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
     return return_proto
 
 
-def AddRepositoryTags(prefix='', rid=True, date=True, revision=True, wrap=False):
+def AddRepositoryTags(
+    prefix: str = '',
+    rid: bool = True,
+    date: bool = True,
+    revision: bool = True,
+    wrap: bool = False,
+) -> List[str]:
     """Add repository tagging into the output.
 
     Args:

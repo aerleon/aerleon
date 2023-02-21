@@ -22,16 +22,18 @@ inline comments but preservers line-level comments. Fields expected to have
 "naming" values are stored as a set without order or line breaks retained.
 """
 
+from __future__ import annotations
 from absl import logging
+from typing import List, Optional, Set, Type, Union
 
 
 class Field:
     """A name-value assignment within a block."""
 
-    def __init__(self, value):
+    def __init__(self, value: str) -> None:
         self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         t = type(self)
         f = 'UNKNOWN'
         for k, v in field_map.items():
@@ -41,23 +43,23 @@ class Field:
         indent = len(f) + 5
         return '%s::%s' % (f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
 
-    def __eq__(self, o):
+    def __eq__(self, o: "Target") -> bool:
         if not isinstance(o, self.__class__):
             return False
         return self.value == o.value
 
-    def __ne__(self, o):
+    def __ne__(self, o: "Target") -> bool:
         return not self == o
 
-    def Append(self, value):
+    def Append(self, value: str) -> None:
         self.value += value
 
-    def ValueStr(self):
+    def ValueStr(self) -> str:
         return self.value
 
 
 class IntegerField(Field):
-    def __init__(self, value):
+    def __init__(self, value: str) -> None:
         super().__init__(value)
         try:
             _ = int(value)
@@ -68,29 +70,29 @@ class IntegerField(Field):
 class NamingField(Field):
     """A naming field is one that refers to names in used in naming.py."""
 
-    def __init__(self, value):
+    def __init__(self, value: str) -> None:
         super().__init__(value)
         self.value = self.ParseString(value)
 
-    def ParseString(self, value):
+    def ParseString(self, value: str) -> Set[str]:
         """Split and validate a string value into individual names."""
         parts = set(value.split())
         for p in parts:
             self.ValidatePart(p)
         return parts
 
-    def ValidatePart(self, part):
+    def ValidatePart(self, part: str) -> None:
         """Validate that a string smells like a naming.py name."""
         for c in part:
             if c not in '-_.' and not c.isdigit() and not c.isupper():
                 raise ValueError('Invalid name reference: "%s"' % part)
 
-    def Append(self, value):
+    def Append(self, value: str) -> None:
         """Split, validate, and add name contained within a string."""
         parts = self.ParseString(value)
         self.value.update(parts)
 
-    def ValueStr(self):
+    def ValueStr(self) -> str:
         """Return the value as a series of lines no longer than 60 chars each."""
         values = sorted(self.value)
         line_wrap = 60
@@ -391,7 +393,7 @@ field_map = {
 class Block:
     """A section containing fields."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fields = []
 
     def __iter__(self):
@@ -400,7 +402,7 @@ class Block:
     def __getitem__(self, i):
         return self.fields[i]
 
-    def __str__(self):
+    def __str__(self) -> str:
         buf = []
         buf.append(type(self).__name__.lower())
         buf.append(' ')
@@ -417,12 +419,12 @@ class Block:
         buf.append('\n')
         return ''.join(buf)
 
-    def AddField(self, field):
+    def AddField(self, field) -> None:
         if not issubclass(type(field), Field):
             raise TypeError('%s not subclass of Field.' % field)
         self.fields.append(field)
 
-    def FieldsWithType(self, f_type):
+    def FieldsWithType(self, f_type: Type[Comment]) -> List[Comment]:
         if not issubclass(f_type, Field):
             raise TypeError('%s not subclass of Field.' % f_type)
         return [x for x in self.fields if isinstance(x, f_type)]
@@ -433,10 +435,10 @@ class Block:
             if match_fn(f):
                 yield i, f
 
-    def Name(self):
+    def Name(self) -> str:
         return ''
 
-    def __eq__(self, o):
+    def __eq__(self, o: Union[Header, Term]) -> bool:
         if not isinstance(o, self.__class__):
             return False
         if len(self.fields) != len(o.fields):
@@ -458,14 +460,14 @@ class Header(Block):
 class Term(Block):
     """A policy term."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__()
         self.name = name
 
-    def Name(self):
+    def Name(self) -> str:
         return self.name
 
-    def __eq__(self, o):
+    def __eq__(self, o: Term) -> bool:
         if not super().__eq__(o):
             return False
         return self.name == o.name
@@ -576,7 +578,7 @@ class BlankLine:
     def __str__(self):
         return '\n'
 
-    def __eq__(self, o):
+    def __eq__(self, o: BlankLine) -> bool:
         return isinstance(o, self.__class__)
 
     def __ne__(self, o):
@@ -586,13 +588,13 @@ class BlankLine:
 class CommentLine:
     """A comment in the file."""
 
-    def __init__(self, data):
+    def __init__(self, data: str) -> None:
         self.data = data
 
     def __str__(self):
         return str(self.data) + '\n'
 
-    def __eq__(self, o):
+    def __eq__(self, o: CommentLine) -> bool:
         if not isinstance(o, self.__class__):
             return False
         return self.data == o.data
@@ -604,13 +606,13 @@ class CommentLine:
 class Include:
     """A reference to another policy definition."""
 
-    def __init__(self, identifier):
+    def __init__(self, identifier: str) -> None:
         self.identifier = identifier
 
     def __str__(self):
         return '#include %s' % self.identifier
 
-    def __eq__(self, o):
+    def __eq__(self, o: "Include") -> bool:
         if not isinstance(o, self.__class__):
             return False
         return self.identifier == o.identifier
@@ -622,17 +624,17 @@ class Include:
 class Policy:
     """An ordered list of headers, terms, comments, blank lines and includes."""
 
-    def __init__(self, identifier):
+    def __init__(self, identifier: Optional[str]) -> None:
         self.identifier = identifier
         self.members = []
 
-    def AddMember(self, member):
+    def AddMember(self, member) -> None:
         m_type = type(member)
         if m_type not in (Include, CommentLine, BlankLine) and not issubclass(m_type, Block):
             raise TypeError('%s must be a Block, CommentLine, BlankLine,' ' or Include' % m_type)
         self.members.append(member)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ''.join(str(x) for x in self.members)
 
     def __iter__(self):
@@ -658,13 +660,13 @@ class Policy:
 class PolicyParser:
     """Parse a policy object from a data buffer."""
 
-    def __init__(self, data, identifier):
+    def __init__(self, data: str, identifier: str) -> None:
         self.data = data
         self.identifier = identifier
         self.block_in_progress = None
         self.policy = None
 
-    def Parse(self):
+    def Parse(self) -> Policy:
         """Do the needful."""
         self.policy = Policy(self.identifier)
         for line in self.data.split('\n'):
@@ -678,7 +680,7 @@ class PolicyParser:
             raise ValueError('Unexpected EOF reading "%s"' % self.block_in_progress)
         return self.policy
 
-    def ParseTopLevel(self, line):
+    def ParseTopLevel(self, line: str) -> None:
         """Parse a line not nested within a block."""
         if line == '':  # pylint: disable=g-explicit-bool-comparison
             self.policy.AddMember(BlankLine())
@@ -697,13 +699,13 @@ class PolicyParser:
             return
         raise ValueError('Unhandled top-level line %s' % line)
 
-    def ParseCommentLine(self, line):
+    def ParseCommentLine(self, line: str) -> None:
         """Parse a line with a line level comment."""
         if self.block_in_progress:
             raise ValueError('Found comment line in block: %s' % line)
         self.policy.AddMember(CommentLine(line))
 
-    def ParseIncludeLine(self, line):
+    def ParseIncludeLine(self, line: str) -> None:
         """Parse an #include line refering to another file."""
         if self.block_in_progress:
             raise ValueError('Found include line in block: %s' % line)
@@ -715,13 +717,13 @@ class PolicyParser:
             inc_ref, _ = inc_ref.split('#', 1)
         self.policy.AddMember(Include(inc_ref))
 
-    def ParseHeaderLine(self, line):
+    def ParseHeaderLine(self, line: str) -> None:
         """Parse a line beginning a header block."""
         if self.block_in_progress:
             raise ValueError('Nested blocks not allowed: %s' % line)
         self.block_in_progress = Header()
 
-    def ParseTermLine(self, line):
+    def ParseTermLine(self, line: str) -> None:
         """Parse a line beginning a term block."""
         if self.block_in_progress:
             raise ValueError('Nested blocks not allowed: %s' % line)
@@ -737,7 +739,7 @@ class PolicyParser:
         term_name = line_parts[1]
         self.block_in_progress = Term(term_name)
 
-    def ParseInBlock(self, line):
+    def ParseInBlock(self, line: str) -> None:
         """Parse a line when inside a block definition."""
         if line == '' or line.startswith('#'):  # pylint: disable=g-explicit-bool-comparison
             return
@@ -751,7 +753,7 @@ class PolicyParser:
         if self.block_in_progress is not None:
             self.block_in_progress.fields[-1].Append('\n' + line)
 
-    def ParseField(self, line):
+    def ParseField(self, line: str) -> None:
         """Parse a line containing a block field."""
         name, value = line.split('::', 1)
         name = name.strip().lower()

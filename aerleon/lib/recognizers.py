@@ -88,7 +88,7 @@ class TValue(enum.Enum):
     LogLimit = enum.auto()  # Integer '/' Str
     TargetResourceTuple = enum.auto()  # '(' Str ',' Str ')'
 
-    def Recognize(self, value: typing.Any):
+    def Recognize(self, value: typing.Any) -> str:
         """Match and parse the input value.
 
         Arguments:
@@ -259,7 +259,7 @@ class TList(TComposition):
     of: "TValue | TComposition"
     collapsible: bool = False
 
-    def Recognize(self, value):
+    def Recognize(self, value: str) -> typing.List[str]:
         """Match and parse the input value using the recognizer given in the 'of' class attribute.
 
         Arguments:
@@ -345,7 +345,7 @@ class TSection(TComposition):
 
     of: "list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]"
 
-    def Recognize(self, value: dict):
+    def Recognize(self, value: dict) -> typing.Dict[str, typing.List[str]]:
         """Match and parse the input value using the list of rules given in the 'of' class attribute.
         See class docstring for more details on how to specify the rules list.
 

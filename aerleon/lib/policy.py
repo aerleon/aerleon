@@ -22,12 +22,16 @@ import datetime
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING
+from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from absl import logging
 from ply import lex, yacc
 
 from aerleon.lib import nacaddr, naming
+from aerleon.lib.nacaddr import IPv4, IPv6
+from ply.lex import LexToken
+from ply.yacc import YaccProduction
+from unittest.mock import MagicMock
 
 if TYPE_CHECKING:
     from aerleon.lib.policy_builder import PolicyBuilder
@@ -141,7 +145,9 @@ class InvalidNumericProtoValue(Error):
     """Error when protocols are numeric and not between -1 and 255."""
 
 
-def TranslatePorts(ports, protocols, term_name):
+def TranslatePorts(
+    ports: List[str], protocols: List[Union[str]], term_name: str
+) -> List[Tuple[int, int]]:
     """Return all ports of all protocols requested.
 
     Args:
@@ -182,7 +188,7 @@ def TranslatePorts(ports, protocols, term_name):
 class Policy:
     """The policy object contains everything found in a given policy file."""
 
-    def __init__(self, header, terms):
+    def __init__(self, header: Header, terms: Optional[List[Term]]) -> None:
         """Initiator for the Policy object.
 
         Args:
@@ -200,14 +206,14 @@ class Policy:
         self.filename = ''
         self.AddFilter(header, terms)
 
-    def AddFilter(self, header, terms):
+    def AddFilter(self, header: Header, terms: Optional[List[Term]]) -> None:
         """Add another header & filter."""
         self.filters.append((header, terms))
         self._TranslateTerms(terms)
         if _SHADE_CHECK:
             self._DetectShading(terms)
 
-    def _TranslateTerms(self, terms):
+    def _TranslateTerms(self, terms: Optional[List[Term]]) -> None:
         """."""
         if not terms:
             raise NoTermsError('no terms found')
@@ -242,7 +248,7 @@ class Policy:
             term.SanityCheck()
             term.translated = True
 
-    def _NeedsAddressBook(self):
+    def _NeedsAddressBook(self) -> bool:
         """Returns True if the policy uses a generator needing an addressbook."""
         for header in self.headers:
             if not header:
@@ -256,7 +262,7 @@ class Policy:
         return False
 
     @property
-    def headers(self):
+    def headers(self) -> List[Header]:
         """Returns the headers from each of the configured filters.
 
         Returns:
@@ -264,7 +270,7 @@ class Policy:
         """
         return [x[0] for x in self.filters]
 
-    def _DetectShading(self, terms):
+    def _DetectShading(self, terms: List[Term]) -> None:
         """Finds terms which are shaded (impossible to reach).
 
         Iterate through each term, looking at each prior term. If a prior term
@@ -281,7 +287,7 @@ class Policy:
                 if term in terms[prior_index] and 'next' not in terms[prior_index].action:
                     logging.warning(f"{term.name} is shaded by {terms[prior_index].name}")
 
-    def __eq__(self, obj):
+    def __eq__(self, obj: Policy) -> bool:
         """Compares for equality against another Policy object.
 
         Note that it is picky and requires the list contents to be in the
@@ -297,7 +303,7 @@ class Policy:
             return False
         return self.filters == obj.filters
 
-    def __str__(self):
+    def __str__(self) -> str:
         def tuple_str(tup):
             return '%s:%s' % (tup[0], tup[1])
 
@@ -416,7 +422,7 @@ class Term:
     _IPV4_BYTE_SIZE = 1
     _IPV6_BYTE_SIZE = 4
 
-    def __init__(self, obj):
+    def __init__(self, obj: Union[VarType, List[VarType]]) -> None:
         self.name = None
 
         self.action = []
@@ -499,7 +505,7 @@ class Term:
         # further up so this has to be at the end.
         self.AddObject(obj)
 
-    def __contains__(self, other):
+    def __contains__(self, other: Term) -> bool:
         """Determine if other term is contained in this term."""
         if self.verbatim or other.verbatim:
             # short circuit these
@@ -696,7 +702,7 @@ class Term:
         # we have containment
         return True
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = []
         ret_str.append(' name: %s' % self.name)
         if self.address:
@@ -812,10 +818,10 @@ class Term:
 
         return '\n'.join(ret_str)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Term) -> bool:
         # action
         if sorted(self.action) != sorted(other.action):
             return False
@@ -972,10 +978,10 @@ class Term:
 
         return True
 
-    def __ne__(self, other):
+    def __ne__(self, other: Term) -> bool:
         return not self.__eq__(other)
 
-    def _SortAddressesByFamily(self, addr_type):
+    def _SortAddressesByFamily(self, addr_type: str) -> List[Union[IPv4, IPv6]]:
         """Provide the term address field to sort.
 
         Method will sort v4 and then concatenate sorted v6 addresses. This will
@@ -996,7 +1002,7 @@ class Term:
         # Concatenate
         return sort_v4 + sort_v6
 
-    def AddressesByteLength(self, address_family=(4, 6)):
+    def AddressesByteLength(self, address_family: Tuple[int, int] = (4, 6)) -> int:
         """Returns the byte length of all IP addresses in the term.
 
         This is used in the srx generator due to a address size limitation.
@@ -1020,7 +1026,7 @@ class Term:
                 counter += self._IPV4_BYTE_SIZE
         return counter
 
-    def FlattenAll(self, mutate=True):
+    def FlattenAll(self, mutate: bool = True) -> None:
         """Reduce source, dest, and address fields to their post-exclude state.
 
         Populates the self.flattened_addr, self.flattened_saddr,
@@ -1059,7 +1065,9 @@ class Term:
             if mutate:
                 self.address = self.flattened_addr
 
-    def GetAddressOfVersion(self, addr_type, af=None):
+    def GetAddressOfVersion(
+        self, addr_type: str, af: Optional[int] = None
+    ) -> List[Union[IPv4, IPv6]]:
         """Returns addresses of the appropriate Address Family.
 
         Args:
@@ -1076,7 +1084,7 @@ class Term:
 
         return [x for x in getattr(self, addr_type) if x.version == af]
 
-    def AddObject(self, obj):
+    def AddObject(self, obj: Union[VarType, List[VarType]]) -> None:
         """Add an object of unknown type to this term.
 
         Args:
@@ -1264,7 +1272,7 @@ class Term:
             else:
                 raise TermObjectTypeError('%s isn\'t a type I know how to deal with' % (type(obj)))
 
-    def SanityCheck(self):
+    def SanityCheck(self) -> None:
         """Sanity check the definition of the term.
 
         Raises:
@@ -1389,7 +1397,7 @@ class Term:
                         f'Term {self.name} has protocol={self.protocol}. Numeric protocol values must be between 0 and 255.'
                     )
 
-    def AddressCleanup(self, optimize=True, addressbook=False):
+    def AddressCleanup(self, optimize: bool = True, addressbook: bool = False) -> None:
         """Do Address and Port collapsing.
 
         Notes:
@@ -1435,7 +1443,7 @@ class Term:
         if self.destination_port:
             self.destination_port = self.CollapsePortList(self.destination_port)
 
-    def CollapsePortList(self, ports):
+    def CollapsePortList(self, ports: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """Given a list of ports, Collapse to the smallest required.
 
         Args:
@@ -1464,7 +1472,7 @@ class Term:
                 ret_ports.append(port)
         return ret_ports
 
-    def CheckProtocolIsContained(self, superset, subset):
+    def CheckProtocolIsContained(self, superset: List[str], subset: List[str]) -> bool:
         """Check if the given list of protocols is wholly contained.
 
         Args:
@@ -1484,7 +1492,11 @@ class Term:
         sub = set(subset)
         return sub.issubset(sup)
 
-    def CheckPortIsContained(self, superset, subset):
+    def CheckPortIsContained(
+        self,
+        superset: List[Tuple[int, int]],
+        subset: List[Tuple[int, int]],
+    ) -> bool:
         """Check if the given list of ports is wholly contained.
 
         Args:
@@ -1509,7 +1521,9 @@ class Term:
                 return False
         return True
 
-    def CheckAddressIsContained(self, superset, subset):
+    def CheckAddressIsContained(
+        self, superset: Optional[List[IPv4.IPv6]], subset: Optional[List[IPv4, IPv6]]
+    ) -> bool:
         """Check if subset is wholey contained by superset.
 
         Args:
@@ -1606,7 +1620,7 @@ class VarType:
     SZONE = 65
     DZONE = 66
 
-    def __init__(self, var_type, value):
+    def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type
         if self.var_type == self.COMMENT or self.var_type == self.LOG_NAME:
             # remove the double quotes
@@ -1616,7 +1630,7 @@ class VarType:
         else:
             self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
     def __repr__(self):
@@ -1632,13 +1646,13 @@ class VarType:
 class Header:
     """The header of the policy file contains the targets and a global comment."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.target = []
         self.comment = []
         self.apply_groups = []
         self.apply_groups_except = []
 
-    def AddObject(self, obj):
+    def AddObject(self, obj: Union[Target, VarType]) -> None:
         """Add and object to the Header.
 
         Args:
@@ -1662,11 +1676,11 @@ class Header:
             raise RuntimeError('Unable to add object from header.')
 
     @property
-    def platforms(self):
+    def platforms(self) -> List[str]:
         """The platform targets of this particular header."""
         return [x.platform for x in self.target]
 
-    def FilterOptions(self, platform):
+    def FilterOptions(self, platform: str) -> List[str]:
         """Given a platform return the options.
 
         Args:
@@ -1680,7 +1694,7 @@ class Header:
                 return target.options
         return []
 
-    def FilterName(self, platform):
+    def FilterName(self, platform: str) -> None:
         """Given a filter_type, return the filter name.
 
         Args:
@@ -1704,7 +1718,7 @@ class Header:
                         return target.options[0]
         return None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Target[%s], Comments [%s], Apply groups: [%s], except: [%s]' % (
             ', '.join(map(str, self.target)),
             ', '.join(self.comment),
@@ -1715,7 +1729,7 @@ class Header:
     def __repr__(self):
         return self.__str__()
 
-    def __eq__(self, obj):
+    def __eq__(self, obj: Header) -> bool:
         """Compares for equality against another Header object.
 
         Note that it is picky and requires the list contents to be in the
@@ -1747,17 +1761,17 @@ class Header:
 class Target:
     """The type of acl to be rendered from this policy file."""
 
-    def __init__(self, target):
+    def __init__(self, target: List[str]) -> None:
         self.platform = target[0]
         self.options = target[1:]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.platform
 
     def __repr__(self):
         return self.__str__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Target) -> bool:
         return self.platform == other.platform and self.options == other.options
 
     def __ne__(self, other):
@@ -1947,13 +1961,13 @@ def t_ESCAPEDSTRING(t):
     return t
 
 
-def t_DQUOTEDSTRING(t):
+def t_DQUOTEDSTRING(t: LexToken) -> LexToken:
     r'"[^"]*?"'
     t.lexer.lineno += str(t.value).count('\n')
     return t
 
 
-def t_newline(t):
+def t_newline(t: LexToken) -> None:
     r'\n+'
     t.lexer.lineno += len(t.value)
 
@@ -1982,12 +1996,12 @@ def t_HEX(t):
     return t
 
 
-def t_INTEGER(t):
+def t_INTEGER(t: LexToken) -> LexToken:
     r'\d+'
     return t
 
 
-def t_STRING(t):
+def t_STRING(t: LexToken) -> LexToken:
     r'\w+([-_+.@/]\w*)*'
     # we have an identifier; let's check if it's a keyword or just a string.
     t.type = reserved.get(t.value, 'STRING')
@@ -1997,7 +2011,7 @@ def t_STRING(t):
 ###
 ## parser starts here
 ###
-def p_target(p):
+def p_target(p: YaccProduction) -> None:
     """target : target header terms
     |"""
     if len(p) > 1:
@@ -2008,12 +2022,12 @@ def p_target(p):
             p[0] = Policy(p[2], p[3])
 
 
-def p_header(p):
+def p_header(p: YaccProduction) -> None:
     """header : HEADER '{' header_spec '}'"""
     p[0] = p[3]
 
 
-def p_header_spec(p):
+def p_header_spec(p: YaccProduction) -> None:
     """header_spec : header_spec target_spec
     | header_spec comment_spec
     | header_spec apply_groups_spec
@@ -2030,12 +2044,12 @@ def p_header_spec(p):
 
 # we may want to change this at some point if we want to be clever with things
 # like being able to set a default input/output policy for iptables policies.
-def p_target_spec(p):
+def p_target_spec(p: YaccProduction) -> None:
     """target_spec : TARGET ':' ':' strings_or_ints"""
     p[0] = Target(p[4])
 
 
-def p_terms(p):
+def p_terms(p: YaccProduction) -> None:
     """terms : terms TERM STRING '{' term_spec '}'
     |"""
     if len(p) > 1:
@@ -2047,7 +2061,7 @@ def p_terms(p):
             p[0] = [p[5]]
 
 
-def p_term_spec(p):
+def p_term_spec(p: YaccProduction) -> None:
     """term_spec : term_spec action_spec
     | term_spec addr_spec
     | term_spec restrict_address_family_spec
@@ -2112,17 +2126,17 @@ def p_restrict_address_family_spec(p):
     p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[4])
 
 
-def p_routinginstance_spec(p):
+def p_routinginstance_spec(p: YaccProduction) -> None:
     """routinginstance_spec : ROUTING_INSTANCE ':' ':' STRING"""
     p[0] = VarType(VarType.ROUTING_INSTANCE, p[4])
 
 
-def p_losspriority_spec(p):
+def p_losspriority_spec(p: YaccProduction) -> None:
     """losspriority_spec :  LOSS_PRIORITY ':' ':' STRING"""
     p[0] = VarType(VarType.LOSS_PRIORITY, p[4])
 
 
-def p_precedence_spec(p):
+def p_precedence_spec(p: YaccProduction) -> None:
     """precedence_spec : PRECEDENCE ':' ':' one_or_more_ints"""
     p[0] = VarType(VarType.PRECEDENCE, p[4])
 
@@ -2169,7 +2183,7 @@ def p_flex_match_key_values(p):
         p[0] = [[i.value for i in p.slice[1:]]]
 
 
-def p_forwarding_class_spec(p):
+def p_forwarding_class_spec(p: YaccProduction) -> None:
     """forwarding_class_spec : FORWARDING_CLASS ':' ':' one_or_more_strings"""
     p[0] = []
     for fclass in p[4]:
@@ -2183,27 +2197,27 @@ def p_forwarding_class_except_spec(p):
         p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
 
 
-def p_next_ip_spec(p):
+def p_next_ip_spec(p: YaccProduction) -> None:
     """next_ip_spec : NEXT_IP ':' ':' STRING"""
     p[0] = VarType(VarType.NEXT_IP, p[4])
 
 
-def p_encapsulate_spec(p):
+def p_encapsulate_spec(p: YaccProduction) -> None:
     """encapsulate_spec : ENCAPSULATE ':' ':' STRING"""
     p[0] = VarType(VarType.ENCAPSULATE, p[4])
 
 
-def p_port_mirror_spec(p):
+def p_port_mirror_spec(p: YaccProduction) -> None:
     """port_mirror_spec : PORT_MIRROR ':' ':' STRING"""
     p[0] = VarType(VarType.PORT_MIRROR, p[4])
 
 
-def p_icmp_type_spec(p):
+def p_icmp_type_spec(p: YaccProduction) -> None:
     """icmp_type_spec : ICMP_TYPE ':' ':' one_or_more_strings"""
     p[0] = VarType(VarType.ICMP_TYPE, p[4])
 
 
-def p_icmp_code_spec(p):
+def p_icmp_code_spec(p: YaccProduction) -> None:
     """icmp_code_spec : ICMP_CODE ':' ':' one_or_more_ints"""
     p[0] = VarType(VarType.ICMP_CODE, p[4])
 
@@ -2231,7 +2245,7 @@ def p_fragment_offset_spec(p):
         p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
 
 
-def p_hop_limit_spec(p):
+def p_hop_limit_spec(p: YaccProduction) -> None:
     """hop_limit_spec : HOP_LIMIT ':' ':' INTEGER
     | HOP_LIMIT ':' ':' INTEGER '-' INTEGER"""
     if len(p) == 5:
@@ -2275,7 +2289,7 @@ def p_dscp_except_spec(p):
         p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
 
 
-def p_exclude_spec(p):
+def p_exclude_spec(p: YaccProduction) -> None:
     """exclude_spec : SADDREXCLUDE ':' ':' one_or_more_strings
     | DADDREXCLUDE ':' ':' one_or_more_strings
     | ADDREXCLUDE ':' ':' one_or_more_strings
@@ -2293,7 +2307,7 @@ def p_exclude_spec(p):
             p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
 
 
-def p_prefix_list_spec(p):
+def p_prefix_list_spec(p: YaccProduction) -> None:
     """prefix_list_spec : DPFX ':' ':' one_or_more_strings
     | EDPFX ':' ':' one_or_more_strings
     | SPFX ':' ':' one_or_more_strings
@@ -2310,7 +2324,7 @@ def p_prefix_list_spec(p):
             p[0].append(VarType(VarType.DPFX, pfx))
 
 
-def p_addr_spec(p):
+def p_addr_spec(p: YaccProduction) -> None:
     """addr_spec : SADDR ':' ':' one_or_more_strings
     | DADDR ':' ':' one_or_more_strings
     | ADDR  ':' ':' one_or_more_strings"""
@@ -2324,7 +2338,7 @@ def p_addr_spec(p):
             p[0].append(VarType(VarType.ADDRESS, addr))
 
 
-def p_port_spec(p):
+def p_port_spec(p: YaccProduction) -> None:
     """port_spec : SPORT ':' ':' one_or_more_strings
     | DPORT ':' ':' one_or_more_strings
     | PORT ':' ':' one_or_more_strings"""
@@ -2338,14 +2352,14 @@ def p_port_spec(p):
             p[0].append(VarType(VarType.PORT, port))
 
 
-def p_protocol_spec(p):
+def p_protocol_spec(p: YaccProduction) -> None:
     """protocol_spec : PROTOCOL ':' ':' strings_or_ints"""
     p[0] = []
     for proto in p[4]:
         p[0].append(VarType(VarType.PROTOCOL, proto))
 
 
-def p_tag_list_spec(p):
+def p_tag_list_spec(p: YaccProduction) -> None:
     """tag_list_spec : DTAG ':' ':' one_or_more_strings
     | STAG ':' ':' one_or_more_strings"""
     p[0] = []
@@ -2356,28 +2370,28 @@ def p_tag_list_spec(p):
             p[0].append(VarType(VarType.DTAG, tag))
 
 
-def p_target_resources_spec(p):
+def p_target_resources_spec(p: YaccProduction) -> None:
     """target_resources_spec : TARGET_RESOURCES ':' ':' one_or_more_tuples"""
     p[0] = []
     for target_resource in p[4]:
         p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
 
 
-def p_target_service_accounts_spec(p):
+def p_target_service_accounts_spec(p: YaccProduction) -> None:
     """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' one_or_more_strings"""
     p[0] = []
     for service_account in p[4]:
         p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
 
 
-def p_ether_type_spec(p):
+def p_ether_type_spec(p: YaccProduction) -> None:
     """ether_type_spec : ETHER_TYPE ':' ':' one_or_more_strings"""
     p[0] = []
     for proto in p[4]:
         p[0].append(VarType(VarType.ETHER_TYPE, proto))
 
 
-def p_traffic_type_spec(p):
+def p_traffic_type_spec(p: YaccProduction) -> None:
     """traffic_type_spec : TRAFFIC_TYPE ':' ':' one_or_more_strings"""
     p[0] = []
     for proto in p[4]:
@@ -2389,34 +2403,34 @@ def p_policer_spec(p):
     p[0] = VarType(VarType.POLICER, p[4])
 
 
-def p_logging_spec(p):
+def p_logging_spec(p: YaccProduction) -> None:
     """logging_spec : LOGGING ':' ':' STRING"""
     p[0] = VarType(VarType.LOGGING, p[4])
 
 
-def p_log_limit_spec(p):
+def p_log_limit_spec(p: YaccProduction) -> None:
     """log_limit_spec : LOG_LIMIT ':' ':' INTEGER '/' STRING"""
     p[0] = VarType(VarType.LOG_LIMIT, (p[4], p[6]))
 
 
-def p_log_name_spec(p):
+def p_log_name_spec(p: YaccProduction) -> None:
     """log_name_spec : LOG_NAME ':' ':' DQUOTEDSTRING"""
     p[0] = VarType(VarType.LOG_NAME, p[4])
 
 
-def p_option_spec(p):
+def p_option_spec(p: YaccProduction) -> None:
     """option_spec : OPTION ':' ':' one_or_more_strings"""
     p[0] = []
     for opt in p[4]:
         p[0].append(VarType(VarType.OPTION, opt))
 
 
-def p_action_spec(p):
+def p_action_spec(p: YaccProduction) -> None:
     """action_spec : ACTION ':' ':' STRING"""
     p[0] = VarType(VarType.ACTION, p[4])
 
 
-def p_counter_spec(p):
+def p_counter_spec(p: YaccProduction) -> None:
     """counter_spec : COUNTER ':' ':' STRING"""
     p[0] = VarType(VarType.COUNTER, p[4])
 
@@ -2431,7 +2445,7 @@ def p_expiration_spec(p):
     p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[4]), int(p[6]), int(p[8])))
 
 
-def p_comment_spec(p):
+def p_comment_spec(p: YaccProduction) -> None:
     """comment_spec : COMMENT ':' ':' DQUOTEDSTRING"""
     p[0] = VarType(VarType.COMMENT, p[4])
 
@@ -2441,13 +2455,13 @@ def p_owner_spec(p):
     p[0] = VarType(VarType.OWNER, p[4])
 
 
-def p_verbatim_spec(p):
+def p_verbatim_spec(p: YaccProduction) -> None:
     """verbatim_spec : VERBATIM ':' ':' STRING DQUOTEDSTRING
     | VERBATIM ':' ':' STRING ESCAPEDSTRING"""
     p[0] = VarType(VarType.VERBATIM, [p[4], p[5].strip('"').replace('\\"', '"')])
 
 
-def p_term_zone_spec(p):
+def p_term_zone_spec(p: YaccProduction) -> None:
     """term_zone_spec : SZONE ':' ':' one_or_more_strings
     | DZONE ':' ':' one_or_more_strings"""
     p[0] = []
@@ -2458,7 +2472,7 @@ def p_term_zone_spec(p):
             p[0].append(VarType(VarType.DZONE, zone))
 
 
-def p_vpn_spec(p):
+def p_vpn_spec(p: YaccProduction) -> None:
     """vpn_spec : VPN ':' ':' STRING STRING
     | VPN ':' ':' STRING"""
     if len(p) == 6:
@@ -2467,7 +2481,7 @@ def p_vpn_spec(p):
         p[0] = VarType(VarType.VPN, [p[4], ''])
 
 
-def p_qos_spec(p):
+def p_qos_spec(p: YaccProduction) -> None:
     """qos_spec : QOS ':' ':' STRING"""
     p[0] = VarType(VarType.QOS, p[4])
 
@@ -2479,7 +2493,7 @@ def p_pan_application_spec(p):
         p[0].append(VarType(VarType.PAN_APPLICATION, apps))
 
 
-def p_interface_spec(p):
+def p_interface_spec(p: YaccProduction) -> None:
     """interface_spec : SINTERFACE ':' ':' STRING
     | DINTERFACE ':' ':' STRING"""
     if p[1].find('source-interface') >= 0:
@@ -2518,7 +2532,7 @@ def p_timeout_spec(p):
     p[0] = VarType(VarType.TIMEOUT, p[4])
 
 
-def p_ttl_spec(p):
+def p_ttl_spec(p: YaccProduction) -> None:
     """ttl_spec : TTL ':' ':' INTEGER"""
     p[0] = VarType(VarType.TTL, p[4])
 
@@ -2528,7 +2542,7 @@ def p_filter_term_spec(p):
     p[0] = VarType(VarType.FILTER_TERM, p[4])
 
 
-def p_one_or_more_strings(p):
+def p_one_or_more_strings(p: YaccProduction) -> None:
     """one_or_more_strings : one_or_more_strings STRING
     | STRING
     |"""
@@ -2540,7 +2554,7 @@ def p_one_or_more_strings(p):
             p[0] = [p[1]]
 
 
-def p_one_or_more_tuples(p):
+def p_one_or_more_tuples(p: YaccProduction) -> None:
     """one_or_more_tuples : LSQUARE one_or_more_tuples RSQUARE
     | one_or_more_tuples ',' one_tuple
     | one_or_more_tuples one_tuple
@@ -2560,13 +2574,13 @@ def p_one_or_more_tuples(p):
             p[0] = [p[1]]
 
 
-def p_one_tuple(p):
+def p_one_tuple(p: YaccProduction) -> None:
     """one_tuple : LPAREN STRING ',' STRING RPAREN
     |"""
     p[0] = (p[2], p[4])
 
 
-def p_one_or_more_ints(p):
+def p_one_or_more_ints(p: YaccProduction) -> None:
     """one_or_more_ints : one_or_more_ints INTEGER
     | INTEGER
     |"""
@@ -2578,7 +2592,7 @@ def p_one_or_more_ints(p):
             p[0] = [int(p[1])]
 
 
-def p_strings_or_ints(p):
+def p_strings_or_ints(p: YaccProduction) -> None:
     """strings_or_ints : strings_or_ints STRING
     | strings_or_ints INTEGER
     | STRING
@@ -2592,7 +2606,7 @@ def p_strings_or_ints(p):
             p[0] = [p[1]]
 
 
-def p_error(p):
+def p_error(p: LexToken):
     """."""
     global parser
     next_token = parser.token()
@@ -2643,7 +2657,7 @@ def _ReadFile(filename):
         raise FileNotFoundError('Unable to open policy file %s' % filename)
 
 
-def _Preprocess(data, max_depth=5, base_dir=''):
+def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> List[str]:
     """Search input for include statements and import specified include file.
 
     Search input for include statements and if found, import specified file
@@ -2691,7 +2705,7 @@ def _Preprocess(data, max_depth=5, base_dir=''):
     return rval
 
 
-def _SubpathOf(parent, subpath):
+def _SubpathOf(parent: str, subpath: Union[str, pathlib.PosixPath]) -> bool:
     return str(pathlib.Path(subpath).resolve()).startswith(str(pathlib.Path(parent).resolve()))
 
 
@@ -2718,8 +2732,13 @@ def ParseFile(filename, definitions=None, optimize=True, base_dir='', shade_chec
 
 
 def ParsePolicy(
-    data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
-):
+    data: str,
+    definitions: Optional[MagicMock] = None,
+    optimize: bool = True,
+    base_dir: str = '',
+    shade_check: bool = False,
+    filename: str = '',
+) -> Policy:
     """Parse the policy in 'data', optionally provide a naming object.
 
     Parse a blob of policy text into a policy object.
@@ -2755,7 +2774,7 @@ def ParsePolicy(
         return False
 
 
-def FromBuilder(builder: PolicyBuilder):
+def FromBuilder(builder: PolicyBuilder) -> Policy:
     """Construct and return a Policy model instance from a PolicyBuilder."""
     if builder.definitions:
         globals()['DEFINITIONS'] = builder.definitions
