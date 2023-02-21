@@ -765,6 +765,8 @@ class Naming:
             # No '=', so this is a value only line
             else:
                 values = line_parts[0]  # values for previous var are continued this line
+                if value_check:
+                    value_check(line, values)
 
             for value_piece in values.split():
                 if not value_piece:
