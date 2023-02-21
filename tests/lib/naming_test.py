@@ -167,6 +167,14 @@ class NamingUnitTest(absltest.TestCase):
         testdefs = naming.Naming(None)
         self.assertRaises(naming.NamingSyntaxError, testdefs.ParseServiceList, badservicedata)
 
+    def testServiceIncorrectSyntaxMultiline(self):
+        badservicedata = []
+        badservicedata.append('SVC1 = 80/udp')
+        badservicedata.append('       80//tcp')
+        badservicedata.append('SVC2 = 81/tcp')
+        testdefs = naming.Naming(None)
+        self.assertRaises(naming.NamingSyntaxError, testdefs.ParseServiceList, badservicedata)
+
     def testGetNetChildrenSingle(self):
         expected = ['NET1']
         self.assertEqual(expected, self.defs.GetNetChildren('NET2'))
