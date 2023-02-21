@@ -47,13 +47,15 @@ DNS = 53/tcp
 
 
 import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
-import sys
+
 if sys.version_info > (3, 11):
     from typing import Self
 else:
     from typing import TypeVar
+
     Self = TypeVar("Self", bound="_ItemUnit")
 
 import yaml
@@ -186,8 +188,13 @@ class _ItemUnit:
       items: a list of strings containing values for the token.
     """
 
-    def __init__(self, symbol: str, definition_type: str, items: Dict[str, Self], unseens: Dict[str, Self]) -> None:
-        self.definition_type = definition_type
+    def __init__(
+        self,
+        symbol: str,
+        definition_type: str,
+        items: Dict[str, Self],
+        unseen_items: Dict[str, Self],
+    ) -> None:
         self.name = symbol
         self.items = []
         if symbol in items:
@@ -196,12 +203,12 @@ class _ItemUnit:
             )
 
         items[symbol] = self
-        if symbol in unseens:
-            unseens.pop(symbol)
+        if symbol in unseen_items:
+            unseen_items.pop(symbol)
 
         if not Naming.TOKEN_RE.match(symbol):
             logging.info(
-                f'\n{definition_type}: name does not match recommended criteria: {symbol}\nOnly A-Z, 0-9, -, and _ allowed'
+                f'\n{definition_type}: name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
             )
 
 
@@ -214,7 +221,6 @@ class Naming:
        networks: A collection of all the current network item tokens.
        unseen_services: Undefined service entries.
        unseen_networks: Undefined network entries.
-       port_re: Regular Expression matching valid port entries.
     """
 
     TOKEN_RE = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
@@ -657,16 +663,28 @@ class Naming:
 
     def _ParseFile(self, file_handle: List[str], def_type: str) -> None:
         if def_type == DEF_TYPE_SERVICES:
-            method = Naming._ParseServiceLine
+            items = self.services
+            unseen_items = self.unseen_services
+            value_check = self._PortCheck
         elif def_type == DEF_TYPE_NETWORKS:
-            method = Naming._ParseNetworkLine
+            items = self.networks
+            unseen_items = self.unseen_networks
+            value_check = None
         else:
             raise UnexpectedDefinitionTypeError(
-                    '%s %s' % ('Received an unexpected definition type:', def_type)
-                    )
+                '%s %s' % ('Received an unexpected definition type:', def_type)
+            )
 
-        for line in file_handle:
-            method(self, line)
+        items.update(
+            dict(
+                [
+                    (unit.name, unit)
+                    for unit in self._ParseLines(
+                        file_handle, def_type, items, unseen_items, value_check
+                    )
+                ]
+            )
+        )
 
     def ParseServiceList(self, data: List[str]) -> None:
         """Take an array of service data and import into class.
@@ -677,8 +695,20 @@ class Naming:
         Args:
           data: array of text lines containing service definitions.
         """
-        for line in data:
-            self._ParseServiceLine(line)
+        self.services.update(
+            dict(
+                [
+                    (unit.name, unit)
+                    for unit in self._ParseLines(
+                        data,
+                        DEF_TYPE_SERVICES,
+                        self.services,
+                        self.unseen_services,
+                        self._PortCheck,
+                    )
+                ]
+            )
+        )
 
     def ParseNetworkList(self, data: List[str]) -> None:
         """Take an array of network data and import into class.
@@ -690,118 +720,66 @@ class Naming:
           data: array of text lines containing net definitions.
 
         """
-        for line in data:
-            self._ParseNetworkLine(line)
-
-    def _ParseServiceLine(self, line: str) -> None:
-        """Parse a single line of a service definition file.
-
-        This routine is used to parse a single line of a service
-        definition file, building a list of 'self.services' objects
-        as each line of the file is iterated through.
-
-        Args:
-          line: A single line from a service definition files.
-
-        Raises:
-          UnexpectedDefinitionTypeError: called with unexpected type of definitions.
-          NamespaceCollisionError: when overlapping tokens are found.
-          ParseError: If errors occur
-          NamingSyntaxError: Syntax error parsing config.
-        """
-
-        line = line.strip()
-        if not line or line.startswith('#'):  # Skip comments and blanks.
-            return
-        comment = ''
-        if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
-        line_parts = line.split('=')  # Split on var = val lines.
-        # the value field still has the comment at this point
-        # If there was '=', then do var and value
-        if len(line_parts) > 1:
-            current_symbol = line_parts[0].strip()  # varname left of '='
-            self.current_symbol = current_symbol
-
-            for port in line_parts[1].strip().split():
-                if not self.PORT_RE.match(port):
-                    raise NamingSyntaxError(
-                        '%s: %s' % ('The following line has a syntax error', line)
+        gen = ()
+        self.networks.update(
+            dict(
+                [
+                    (unit.name, unit)
+                    for unit in self._ParseLines(
+                        data, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks
                     )
-
-            self.unit = _ItemUnit(
-                self.current_symbol, DEF_TYPE_SERVICES, self.services, self.unseen_services
+                ]
             )
-            values = line_parts[1]
-        # No '=', so this is a value only line
-        else:
-            values = line_parts[0]  # values for previous var are continued this line
+        )
 
-        for value_piece in values.split():
-            if not value_piece:
+    def _PortCheck(self, line, values):
+        for port in values.strip().split():
+            if not self.PORT_RE.match(port):
+                raise NamingSyntaxError('%s: %s' % ('The following line has a syntax error', line))
+
+    def _ParseLines(self, data, def_type, items, unseen_items, value_check=None):
+        unit = None
+        current_symbol = None
+
+        for line in data:
+            line = line.strip()
+            if not line or line.startswith('#'):  # Skip comments and blanks.
                 continue
-            if not self.current_symbol:
-                break
-            if comment:
-                self.unit.items.append(value_piece + ' # ' + comment)
+            comment = ''
+            if line.find('#') > -1:  # if there is a comment, save it
+                (line, comment) = line.split('#', 1)
+            line_parts = line.split('=')  # Split on var = val lines.
+            # the value field still has the comment at this point
+            # If there was '=', then do var and value
+            if len(line_parts) > 1:
+                if unit:
+                    yield unit
+
+                current_symbol = line_parts[0].strip()  # varname left of '='
+
+                if value_check:
+                    value_check(line, line_parts[1])
+
+                unit = _ItemUnit(current_symbol, def_type, items, unseen_items)
+                values = line_parts[1]
+            # No '=', so this is a value only line
             else:
-                self.unit.items.append(value_piece)
-                # token?
-                if value_piece[0].isalpha() and ':' not in value_piece:
-                    if value_piece not in self.services and value_piece not in self.unseen_services:
-                        self.unseen_services[value_piece] = True
+                values = line_parts[0]  # values for previous var are continued this line
 
-    def _ParseNetworkLine(self, line: str) -> None:
-        """Parse a single line of a network definition file.
+            for value_piece in values.split():
+                if not value_piece:
+                    continue
+                if not current_symbol:
+                    break
+                if comment:
+                    unit.items.append(value_piece + ' # ' + comment)
+                else:
+                    unit.items.append(value_piece)
+                    # token?
+                    if value_piece[0].isalpha() and ':' not in value_piece:
+                        if value_piece not in items and value_piece not in unseen_items:
+                            unseen_items[value_piece] = True
 
-        This routine is used to parse a single line of a network
-        definition file, building a list of 'self.networks' objects
-        as each line of the file is iterated through.
-
-        Args:
-          line: A single line from a network definition files.
-
-        Raises:
-          UnexpectedDefinitionTypeError: called with unexpected type of definitions.
-          NamespaceCollisionError: when overlapping tokens are found.
-          ParseError: If errors occur
-          NamingSyntaxError: Syntax error parsing config.
-        """
-
-        line = line.strip()
-        if not line or line.startswith('#'):  # Skip comments and blanks.
-            return
-        comment = ''
-        if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
-        line_parts = line.split('=')  # Split on var = val lines.
-        # the value field still has the comment at this point
-        # If there was '=', then do var and value
-        if len(line_parts) > 1:
-            current_symbol = line_parts[0].strip()  # varname left of '='
-            self.current_symbol = current_symbol
-
-            self.unit = _ItemUnit(
-                self.current_symbol, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks
-            )
-            values = line_parts[1]
-        # No '=', so this is a value only line
-        else:
-            values = line_parts[0]  # values for previous var are continued this line
-
-        for value_piece in values.split():
-            if not value_piece:
-                continue
-            if not self.current_symbol:
-                break
-            if comment:
-                self.unit.items.append(value_piece + ' # ' + comment)
-            else:
-                self.unit.items.append(value_piece)
-                # token?
-                if value_piece[0].isalpha() and ':' not in value_piece:
-                    if value_piece not in self.networks and value_piece not in self.unseen_networks:
-                        self.unseen_networks[value_piece] = True
 
     def ParseYaml(self, file_handle: str, file_name: str) -> None:
         """Load a definition yaml file as a string.
