@@ -593,10 +593,9 @@ class PaloAltoFWTest(absltest.TestCase):
     @capture.stdout
     def testServiceMap(self):
         definitions = naming.Naming()
-        definitions._ParseServiceLine('SSH = 22/tcp')
-        definitions._ParseServiceLine('SMTP = 25/tcp')
-        definitions._ParseNetworkLine('FOOBAR = 10.0.0.0/8')
-        definitions._ParseNetworkLine('         2001:4860:8000::/33')
+        definitions.ParseServiceList(['SSH = 22/tcp'])
+        definitions.ParseServiceList(['SMTP = 25/tcp'])
+        definitions.ParseNetworkList(['FOOBAR = 10.0.0.0/8', '         2001:4860:8000::/33'])
 
         pol1 = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_1, definitions), EXP_INFO
