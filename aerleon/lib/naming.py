@@ -720,7 +720,7 @@ class Naming:
         def_type: str,
         items: Dict[str, _ItemUnit],
         unseen_items: Dict[str, Union[_ItemUnit | bool]],
-        value_check: Callable[str, str] = None,
+        value_check: Callable[[str, str], None] = None,
     ) -> None:
         unit = None
         current_symbol = None
