@@ -49,7 +49,7 @@ DNS = 53/tcp
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
 
 if sys.version_info > (3, 11):
     from typing import Self
@@ -265,7 +265,7 @@ class Naming:
             self._Parse(naming_dir)
             self._CheckUnseen()
 
-    def _CheckUnseen(self):
+    def _CheckUnseen(self) -> None:
         if self.unseen_services:
             raise UndefinedServiceError(
                 '%s %s'
@@ -623,7 +623,7 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    def _Parse(self, definitions_directory):
+    def _Parse(self, definitions_directory: str) -> None:
         """Parse files for tokens and values.
 
         Given a directory name, grab all the appropriate files in that
@@ -709,12 +709,19 @@ class Naming:
         generator = self._ParseLines(data, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks)
         self.networks.update(dict([(unit.name, unit) for unit in generator]))
 
-    def _PortCheck(self, line, values):
+    def _PortCheck(self, line: str, values: str) -> None:
         for port in values.strip().split():
             if not self.PORT_RE.match(port):
                 raise NamingSyntaxError('%s: %s' % ('The following line has a syntax error', line))
 
-    def _ParseLines(self, data, def_type, items, unseen_items, value_check=None):
+    def _ParseLines(
+        self,
+        data: Iterable,
+        def_type: str,
+        items: Dict[str, _ItemUnit],
+        unseen_items: Dict[str, Union[_ItemUnit | bool]],
+        value_check: Callable[str, str] = None,
+    ) -> None:
         unit = None
         current_symbol = None
 
@@ -741,9 +748,9 @@ class Naming:
                 values = line_parts[1]
             # No '=', so this is a value only line
             else:
-                values = line_parts[0]  # values for previous var are continued this line
                 if value_check:
-                    value_check(line, values)
+                    value_check(line, line_parts[0])
+                values = line_parts[0]  # values for previous var are continued this line
 
             for value_piece in values.split():
                 if not value_piece:
