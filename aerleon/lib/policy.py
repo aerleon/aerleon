@@ -1623,7 +1623,9 @@ class VarType:
         self.field_comment = field_comment
 
     def __str__(self):
-        return str(self.value)
+        if self.field_comment:
+            return f"comment={self.field_comment} type={self.var_type} {self.value}"
+        return f"type={self.var_type} {self.value}"
 
     def __repr__(self):
         return self.__str__()
@@ -1785,7 +1787,8 @@ class TermParseData:
     def __str__(self):
         result = []
         result.append(f'TermParseData name={self.name}')
-        result.extend([f"data   : {data}" for data in self.data])
+        result.extend([f"     com: {comment}" for comment in self.comment])
+        result.extend([f"    data: {data}" for data in self.data])
         return '\n'.join(result)
 
 
@@ -1926,7 +1929,7 @@ class HeaderParseData:
     def __str__(self):
         result = []
         result.append('HeaderParseData')
-        result.extend([f"comment: {comment}" for comment in self.block_comment])
+        result.extend([f"comment: {comment}" for comment in self.comment])
         result.extend([f"data   : {data}" for data in self.data])
         return '\n'.join(result)
 
@@ -2170,7 +2173,6 @@ def t_STRING(t):
 ###
 def p_file(p):
     """file : o target"""
-    breakpoint()
     if _PRESERVE_ORIGINAL and isinstance(p[2], PolicyParseData) and isinstance(p[1], CommentExpr):
         p[2].AddBlockComment(p[1])
     p[0] = p[2]
@@ -2179,7 +2181,6 @@ def p_file(p):
 def p_target(p):
     """target : target header terms o
     |"""
-    breakpoint()
     if _PRESERVE_ORIGINAL and len(p) > 1:
         if not isinstance(p[1], PolicyParseData):
             p[1] = PolicyParseData(p[2], p[3], p[4])
@@ -2197,7 +2198,6 @@ def p_target(p):
 
 def p_header(p):
     """header : HEADER o '{' lc o header_spec '}'"""
-    breakpoint()
     if _PRESERVE_ORIGINAL:
         if isinstance(p[2], CommentExpr):
             p[6].comment.append(p[2])
@@ -2206,6 +2206,7 @@ def p_header(p):
         # Treat p[5] as an inter-field comment
         if isinstance(p[5], CommentExpr):
             p[6].AddObject(p[5])
+        p[0] = p[6]
     else:
         p[0] = p[6]
 
@@ -2216,7 +2217,6 @@ def p_header_spec(p):
     | header_spec apply_groups_spec
     | header_spec apply_groups_except_spec
     |"""
-    breakpoint()
     if _PRESERVE_ORIGINAL and len(p) > 1:
         if not isinstance(p[1], HeaderParseData):
             p[1] = HeaderParseData()
@@ -2233,7 +2233,6 @@ def p_header_spec(p):
 # like being able to set a default input/output policy for iptables policies.
 def p_target_spec(p):
     """target_spec : TARGET o ':' o ':' lc o strings_or_ints"""
-    # breakpoint()
     if _PRESERVE_ORIGINAL:
         c = []
         if isinstance(p[2], CommentExpr):
@@ -2254,7 +2253,6 @@ def p_target_spec(p):
 def p_terms(p):
     """terms : terms o TERM o STRING o '{' lc o term_spec '}'
     |"""
-    # breakpoint()
     if _PRESERVE_ORIGINAL and len(p) > 1:
         if not isinstance(p[1], list):
             p[1] = []
@@ -3800,15 +3798,14 @@ def p_strings_or_ints(p):
 def p_lc(p):
     """lc : BLOCK_COMMENT NEWLINE
     |"""
-    if len(p) > 2:
-        p[0] = p[1]
+    if len(p) > 2 and _PRESERVE_ORIGINAL:
+        p[0] = CommentExpr([p[1], p[2]])
 
 
 def p_o(p):
     """o : BLOCK_COMMENT o
     | NEWLINE o
     |"""
-    breakpoint()
     if len(p) > 2 and _PRESERVE_ORIGINAL:
         if isinstance(p[2], CommentExpr):
             p[2].insert(0, p[1])
@@ -3835,7 +3832,6 @@ def p_error(p):
         raise ParseError(' ERROR you likely have unablanaced "{"\'s')
 
 
-breakpoint()
 parser = yacc.yacc(write_tables=False, debug=True, outputdir='.', errorlog=logging)
 
 
@@ -3861,6 +3857,9 @@ class ValueExpr:
     def __init__(self, value: "Any", comment: "Optional[str]" = None):
         self.value = value
         self.comment = comment
+
+    def __repr__(self):
+        return f"ValueExpr [{self.value}, {self.comment}]"
 
 
 # pylint: enable=unused-argument,invalid-name,g-short-docstring-punctuation

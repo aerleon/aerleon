@@ -2,13 +2,15 @@
 # This is an example policy for aerleon
 #
 header {
-  comment:: "this is a sample edge input filter that generates"   # LINE COMMENT 1
+  comment:: # Example field-line comment
+    "this is a sample edge input filter that generates"   # End of line comment
   comment:: "multiple output formats."
   # NOTES: iptables produces filter 'lines' that must be used as args to the
   # '$ iptables' cmd, while Speedway produces stateful iptables filters
   # compatible with iptables-restore (most people will prefer speedway)
   target:: juniper edge-inbound inet
-  target:: juniperevo edge-inbound inet6 ingress # LINE COMMENT 2
+  target:: juniperevo # This comment addresses just the value 'juniperevo'
+          edge-inbound inet6 ingress
   target:: msmpc edge-inbound mixed ingress
   target:: cisco edge-inbound mixed
   target:: speedway INPUT
@@ -57,8 +59,8 @@ term permit-udp-established {
 term default-deny {
   action:: deny
 }
-
-header {
+# This is an example pre-header comment
+header { # Example header-line comment
   comment:: "this is a sample output filter"
   target:: juniper edge-outbound
   target:: msmpc edge-outbound mixed egress
@@ -67,16 +69,17 @@ header {
   target:: speedway OUTPUT
   target:: ciscoasa asa_out
 }
-
+# This is an example above-a-term comment
 term deny-to-bad-destinations {
   destination-address:: RFC1918 BOGON RESERVED
   action:: deny
 }
 
-term default-accept {
+term default-accept { # Example term-line comment
+  # Example term list comment
   action:: accept
 }
+
 #
-#
-# QWERTY End Comment
+# This is an example end-of-file comment
 #

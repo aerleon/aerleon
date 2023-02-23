@@ -9,6 +9,7 @@ from aerleon.lib import naming, policy, policy_builder
 
 from ruamel.yaml import YAML
 
+
 class ExportStyleRules:
     """These rules enable stylistic variants available in the exporter.
 
@@ -233,7 +234,7 @@ class ExportStyleRules:
 # } #.G
 # #.G
 #
-# Mapping these back to YAML, we get something like the following example. Note that the 
+# Mapping these back to YAML, we get something like the following example. Note that the
 # presence of comments may distort the formatting a little bit - we don't really want to
 # preserve whitespace, splaying, etc unless it's relevant to comment placement. Also note
 # that the comment indentation may not match the final version - in fact we might even want to
@@ -396,7 +397,7 @@ class ExportStyleRules:
 #   header:
 #     target: cisco # Value Comment 1   (document)['filters']['header']*.items['target'][2]
 #     # Value Comment Line 2            (document)['filters']['header']*.items['target'][2]
-# 
+#
 # NOTE: This example does not cover all possible comment representations in the comment
 # model.
 #
@@ -453,6 +454,7 @@ class ExportStyleRules:
 # h1t.yaml_add_eol_comment('# (3) Line Comment\n      # (2b) Field Comment', key='cisco')
 # h1t.yaml_set_comment_before_after_key('srx', before='(2b) Field Comment', indent=6)
 
+
 def ExportPolicy(pol_copy: policy.PolicyParseData, style: ExportStyleRules = None):
     if not style:
         style = ExportStyleRules()
@@ -461,15 +463,21 @@ def ExportPolicy(pol_copy: policy.PolicyParseData, style: ExportStyleRules = Non
     from pprint import pprint
 
     for comment in pol_copy.block_comment:
-        print(f'bc     : {comment}')
+        print(f'top comA: {comment}')
     for data in pol_copy.data:
         print('\nfilter:')
-        print(str(data[0]))
+        print('  header:')
+        for comment in data[0].comment:
+            print(f'     com: {comment}')
+        for hdata in data[0].data:
+            print(f'    data: {hdata}')
+
         for termish in data[1]:
             if isinstance(termish, policy.TermParseData):
                 print(f"{termish}")
             else:
-                print(f"       : {termish}")
+                print(f"top comB: {termish}")
+        print(f'top comC: {data[2]}')
 
     return
 
