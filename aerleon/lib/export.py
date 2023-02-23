@@ -176,7 +176,128 @@ class ExportStyleRules:
 # a comment on the next line. Users might prefer maintaining this placement.
 #
 # Issue: comments are not allowed in between "header {" or "term name {". Comments are not
-# allowed betweeen values on a splayed out value line, (TODO test if legacy parser does allow this).
+# allowed betweeen values on a splayed out value line. Expanding on this issue:
+# * .pol allows whitespace, newlines and comments essentially everywhere, including
+# * Between term and term name, in the middle of double colons, in the middle of value
+#   expressions...
+# So a more ideal position map would consider those cases. In the following illustration,
+# the ideal position map uses markers .A, .B, etc to show positions.
+#
+# .A: File Comment
+# .B: Header/Term Key Line Comment
+# .C: Block Comment
+# .D: Field Key Line Comment
+# .E: Value Line Comment
+# .F: Value Block Comment
+# .G: Term Block Comment
+#
+#
+# #.A
+# #.A
+# header #.B
+# #.B
+# { #.B
+# #.C
+# target #.D
+# #.D
+# : #.D
+# #.D
+# : #.D
+# #.D
+# juniper #.E
+# #.F
+# edge-inbound #.E
+# #.F
+# inet #.E
+# #.C
+# } #.G
+# #.G
+# term #.B
+# #.B
+# deny-to-bad-destinations #.B
+# #.B
+# { #.B
+# #.C
+# destination-address #.D
+# #.D
+# : #.D
+# #.D
+# : #.D
+# #.D
+# RFC1918 #.E
+# #.F
+# BOGON #.E
+# #.F
+# RESERVED #.E
+# #.C
+# } #.G
+# #.G
+#
+# Mapping these back to YAML, we get something like the following example. Note that the 
+# presence of comments may distort the formatting a little bit - we don't really want to
+# preserve whitespace, splaying, etc unless it's relevant to comment placement. Also note
+# that the comment indentation may not match the final version - in fact we might even want to
+# detect comment alignment in the input file.
+#
+#
+# #.A
+# #.A
+# filters:
+# - header: #.B Fuse all key lines
+#           #.B
+#           #.B
+# #.C
+#     target: #.D Fuse all key lines
+#             #.D
+#             #.D
+#             #.D
+#             #.D
+#             #.D
+#       juniper: #.E This was a value EOL comment we converted to a key line
+# #.F
+#       - edge-inbound #.E This list could have been collapsed if not for comments
+# #.F
+#       - inet         #.E
+# #.C
+#   terms:
+# #.G
+#   - name: deny-to-bad-destinations #.B
+#                                    #.B
+#                                    #.B
+#                                    #.B
+#                                    #.B
+#     destination-address: #.D
+#                          #.D
+#                          #.D
+#                          #.D
+#                          #.D
+#                          #.D
+#     - RFC1918  #.E This list also could have been collapsed if not for comments
+# #.F
+#     - BOGON    #.E
+# #.F
+#     - RESERVED #.E
+# #.C
+# #.G
+# #.G A Term Block Comment at the very end of the file is indented as a file comment
+#
+# Implementation note: list collapsing should not be performed for long lists.
+#
+# Implementation note: because we don't really know the YAML value length (quotes may need
+# to be added for 1.1), it's hard to calculate max value length across a list. But what we
+# can do is render to YAML once, have Ruamel parse it, and look at the CommentToken line/char
+# marks to find the max same-line comment placement in a list. Of course reading comment
+# data out of Ruamel is not always straightforward!
+#
+# For reference, the same example as above without any comments:
+#
+# filters:
+# - header:
+#     target:
+#       juniper: edge-inbound inet
+#   terms:
+#   - name: deny-to-bad-destinations
+#     destination-address: RFC1918 BOGON RESERVED
 #
 # ## 3. Reconstructing AddObject Calls
 #

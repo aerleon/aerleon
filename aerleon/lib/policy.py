@@ -19,10 +19,11 @@
 from __future__ import annotations
 
 import datetime
+import enum
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from absl import logging
 from ply import lex, yacc
@@ -1608,9 +1609,9 @@ class VarType:
     PORT_MIRROR = 64
     SZONE = 65
     DZONE = 66
-    BLOCK_COMMENT = 67
+    TARGET = 67
 
-    def __init__(self, var_type, value):
+    def __init__(self, var_type, value, field_comment=None):
         self.var_type = var_type
         if self.var_type == self.COMMENT or self.var_type == self.LOG_NAME:
             # remove the double quotes
@@ -1619,6 +1620,7 @@ class VarType:
             self.value = '\n'.join([x.lstrip() for x in val.splitlines()])
         else:
             self.value = value
+        self.field_comment = field_comment
 
     def __str__(self):
         return str(self.value)
@@ -1771,12 +1773,13 @@ class Target:
 class TermParseData:
     """TermParseData stores all parsed data verbatim without any processing."""
 
-    def __init__(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
+    def __init__(self, obj: "VarType | CommentExpr"):
         self.name = None
+        self.comment = []
         self.data = []
         self.AddObject(obj)
 
-    def AddObject(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
+    def AddObject(self, obj: "VarType | CommentExpr"):
         self.data.append(obj)
 
     def __str__(self):
@@ -1915,13 +1918,10 @@ class HeaderParseData:
 
     def __init__(self):
         self.data = []
-        self.block_comment = []
+        self.comment = []
 
     def AddObject(self, obj: "tuple[VarType | list[VarType], Optional[str]]"):
         self.data.append(obj)
-
-    def AddBlockComment(self, comment: "tuple[VarType, str]"):
-        self.block_comment.append(comment)
 
     def __str__(self):
         result = []
@@ -2169,745 +2169,1652 @@ def t_STRING(t):
 ## parser starts here
 ###
 def p_file(p):
-    """file : block_comment onl file
-    | NEWLINE file
-    | target"""
+    """file : o target"""
     breakpoint()
-    if len(p) == 2:
-        p[0] = p[1]
-    if len(p) == 3:
-        p[0] = p[2]
-    elif len(p) == 4:
-        if _PRESERVE_ORIGINAL:
-            if isinstance(p[3], PolicyParseData):
-                p[3].AddBlockComment(p[1])
-            elif isinstance(p[3], list):
-                p[3].append(p[1])
-            else:
-                p[3] = [p[1]]
-        p[0] = p[3]
+    if _PRESERVE_ORIGINAL and isinstance(p[2], PolicyParseData) and isinstance(p[1], CommentExpr):
+        p[2].AddBlockComment(p[1])
+    p[0] = p[2]
 
 
 def p_target(p):
-    """target : target onl header onl terms onl
+    """target : target header terms o
     |"""
     breakpoint()
-    if len(p) > 1:
-        if _PRESERVE_ORIGINAL:
-            policy_cls = PolicyParseData
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if not isinstance(p[1], PolicyParseData):
+            p[1] = PolicyParseData(p[2], p[3], p[4])
         else:
-            policy_cls = Policy
+            p[1].AddFilter(p[2], p[3], p[4])
+        p[0] = p[1]
 
-        pol = p[1]
-        if not isinstance(pol, policy_cls):
-            pol = policy_cls(p[3], p[5])
+    elif len(p) > 1:
+        if not isinstance(p[1], Policy):
+            p[1] = Policy(p[2], p[3])
         else:
-            pol.AddFilter(p[3], p[5])
-        p[0] = pol
+            p[1].AddFilter(p[2], p[3])
+        p[0] = p[1]
 
 
 def p_header(p):
-    """header : HEADER onl '{' onl header_spec onl '}'"""
+    """header : HEADER o '{' lc o header_spec '}'"""
     breakpoint()
-    p[0] = p[5]
-
-    # TODO comments at the end of the line with "header {" should be
-    # distinguished from comments preceding the first field if possible.
-    # Might be necessary to start looking at newlines.
-    # Also need to check if there is ambiguity between line and block comments.
+    if _PRESERVE_ORIGINAL:
+        if isinstance(p[2], CommentExpr):
+            p[6].comment.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            p[6].comment.append(p[4])
+        # Treat p[5] as an inter-field comment
+        if isinstance(p[5], CommentExpr):
+            p[6].AddObject(p[5])
+    else:
+        p[0] = p[6]
 
 
 def p_header_spec(p):
-    """header_spec : header_spec onl target_spec
-    | header_spec onl comment_spec
-    | header_spec onl apply_groups_spec
-    | header_spec onl apply_groups_except_spec
-    | header_spec onl block_comment
+    """header_spec : header_spec target_spec
+    | header_spec comment_spec
+    | header_spec apply_groups_spec
+    | header_spec apply_groups_except_spec
     |"""
-    # breakpoint()
-    if len(p) > 1:
-        if _PRESERVE_ORIGINAL:
-            header_cls = HeaderParseData
-            obj = p[3]
-        else:
-            header_cls = Header
-            obj = p[3][0]  # Ignore comments
-
-        if isinstance(p[1], header_cls):
-            p[1].AddObject(obj)
-            p[0] = p[1]
-        else:
-            p[0] = header_cls()
-            p[0].AddObject(obj)
+    breakpoint()
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if not isinstance(p[1], HeaderParseData):
+            p[1] = HeaderParseData()
+        p[1].AddObject(p[2])
+        p[0] = p[1]
+    elif len(p) > 1:
+        if not isinstance(p[1], Header):
+            p[1] = Header()
+        p[1].AddObject(p[2])
+        p[0] = p[1]
 
 
 # we may want to change this at some point if we want to be clever with things
 # like being able to set a default input/output policy for iptables policies.
 def p_target_spec(p):
-    """target_spec : TARGET ':' ':' onl strings_or_ints line_comment"""
+    """target_spec : TARGET o ':' o ':' lc o strings_or_ints"""
     # breakpoint()
-    p[0] = Target(p[5])
-    p[0] = [p[0], p[6]]
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        p[0] = VarType(VarType.TARGET, p[8], field_comment=c)
+    else:
+        p[0] = Target(p[8])
 
 
 def p_terms(p):
-    """terms : terms onl TERM onl STRING onl '{' onl term_spec onl '}'
-    | terms onl block_comment
+    """terms : terms o TERM o STRING o '{' lc o term_spec '}'
     |"""
     # breakpoint()
-    if len(p) > 1:
-        terms = p[1]
-        if not isinstance(terms, list):
-            terms = []
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if not isinstance(p[1], list):
+            p[1] = []
 
-        if len(p) > 4:
-            p[9].name = p[5]
-            terms.append(p[9])
-        elif _PRESERVE_ORIGINAL:
-            terms.append(p[3])
+        # Treat p[2] as an inter-term comment
+        if isinstance(p[2], CommentExpr):
+            p[1].append(p[2])
 
-        p[0] = terms
+        # Name-line comments
+        if isinstance(p[4], CommentExpr):
+            p[10].comment.append(p[4])
+
+        p[10].name = p[5]
+
+        if isinstance(p[6], CommentExpr):
+            p[10].comment.append(p[6])
+        if isinstance(p[8], CommentExpr):
+            p[10].comment.append(p[8])
+
+        # Treat p[9] as an inter-field comment
+        if isinstance(p[9], CommentExpr):
+            p[10].AddObject(p[9])
+
+        p[1].append(p[10])
+        p[0] = p[1]
+
+    elif len(p) > 1:
+        if not isinstance(p[1], list):
+            p[1] = []
+        p[10].name = p[5]
+        p[1].append(p[10])
+        p[0] = p[1]
 
 
 def p_term_spec(p):
-    """term_spec : term_spec onl action_spec
-    | term_spec onl addr_spec
-    | term_spec onl block_comment
-    | term_spec onl restrict_address_family_spec
-    | term_spec onl comment_spec
-    | term_spec onl counter_spec
-    | term_spec onl traffic_class_count_spec
-    | term_spec onl dscp_set_spec
-    | term_spec onl dscp_match_spec
-    | term_spec onl dscp_except_spec
-    | term_spec onl encapsulate_spec
-    | term_spec onl ether_type_spec
-    | term_spec onl exclude_spec
-    | term_spec onl expiration_spec
-    | term_spec onl filter_term_spec
-    | term_spec onl flexible_match_range_spec
-    | term_spec onl forwarding_class_spec
-    | term_spec onl forwarding_class_except_spec
-    | term_spec onl fragment_offset_spec
-    | term_spec onl hop_limit_spec
-    | term_spec onl icmp_type_spec
-    | term_spec onl icmp_code_spec
-    | term_spec onl interface_spec
-    | term_spec onl logging_spec
-    | term_spec onl log_limit_spec
-    | term_spec onl log_name_spec
-    | term_spec onl losspriority_spec
-    | term_spec onl next_ip_spec
-    | term_spec onl option_spec
-    | term_spec onl owner_spec
-    | term_spec onl packet_length_spec
-    | term_spec onl platform_spec
-    | term_spec onl policer_spec
-    | term_spec onl port_spec
-    | term_spec onl port_mirror_spec
-    | term_spec onl precedence_spec
-    | term_spec onl priority_spec
-    | term_spec onl prefix_list_spec
-    | term_spec onl protocol_spec
-    | term_spec onl qos_spec
-    | term_spec onl pan_application_spec
-    | term_spec onl routinginstance_spec
-    | term_spec onl term_zone_spec
-    | term_spec onl tag_list_spec
-    | term_spec onl target_resources_spec
-    | term_spec onl target_service_accounts_spec
-    | term_spec onl timeout_spec
-    | term_spec onl ttl_spec
-    | term_spec onl traffic_type_spec
-    | term_spec onl verbatim_spec
-    | term_spec onl vpn_spec
+    """term_spec : term_spec action_spec
+    | term_spec addr_spec
+    | term_spec restrict_address_family_spec
+    | term_spec comment_spec
+    | term_spec counter_spec
+    | term_spec traffic_class_count_spec
+    | term_spec dscp_set_spec
+    | term_spec dscp_match_spec
+    | term_spec dscp_except_spec
+    | term_spec encapsulate_spec
+    | term_spec ether_type_spec
+    | term_spec exclude_spec
+    | term_spec expiration_spec
+    | term_spec filter_term_spec
+    | term_spec flexible_match_range_spec
+    | term_spec forwarding_class_spec
+    | term_spec forwarding_class_except_spec
+    | term_spec fragment_offset_spec
+    | term_spec hop_limit_spec
+    | term_spec icmp_type_spec
+    | term_spec icmp_code_spec
+    | term_spec interface_spec
+    | term_spec logging_spec
+    | term_spec log_limit_spec
+    | term_spec log_name_spec
+    | term_spec losspriority_spec
+    | term_spec next_ip_spec
+    | term_spec option_spec
+    | term_spec owner_spec
+    | term_spec packet_length_spec
+    | term_spec platform_spec
+    | term_spec policer_spec
+    | term_spec port_spec
+    | term_spec port_mirror_spec
+    | term_spec precedence_spec
+    | term_spec priority_spec
+    | term_spec prefix_list_spec
+    | term_spec protocol_spec
+    | term_spec qos_spec
+    | term_spec pan_application_spec
+    | term_spec routinginstance_spec
+    | term_spec term_zone_spec
+    | term_spec tag_list_spec
+    | term_spec target_resources_spec
+    | term_spec target_service_accounts_spec
+    | term_spec timeout_spec
+    | term_spec ttl_spec
+    | term_spec traffic_type_spec
+    | term_spec verbatim_spec
+    | term_spec vpn_spec
     |"""
-    if len(p) > 1:
-        if _PRESERVE_ORIGINAL:
-            term_cls = TermParseData
-            obj = p[3]
-        else:
-            term_cls = Term
-            obj = p[3][0]  # Ignore comments
+    if _PRESERVE_ORIGINAL and len(p) > 1:
 
-        if isinstance(p[1], term_cls):
-            p[1].AddObject(obj)
+        def AddObject(obj):
+            if isinstance(p[1], TermParseData):
+                p[1].AddObject(obj)
+            else:
+                p[1] = TermParseData(obj)
+
+        AddObject(p[2])
+        p[0] = p[1]
+
+    elif len(p) > 1:
+        if isinstance(p[1], Term):
+            p[1].AddObject(p[2])
             p[0] = p[1]
         else:
-            p[0] = term_cls(obj)
+            p[0] = Term(p[2])
 
 
 def p_restrict_address_family_spec(p):
-    """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[5])
-    p[0] = [p[0], p[6]]
+    """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[8])
 
 
 def p_routinginstance_spec(p):
-    """routinginstance_spec : ROUTING_INSTANCE ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.ROUTING_INSTANCE, p[5])
-    p[0] = [p[0], p[6]]
+    """routinginstance_spec : ROUTING_INSTANCE o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.ROUTING_INSTANCE, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.ROUTING_INSTANCE, p[8])
 
 
 def p_losspriority_spec(p):
-    """losspriority_spec :  LOSS_PRIORITY ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.LOSS_PRIORITY, p[5])
-    p[0] = [p[0], p[6]]
+    """losspriority_spec : LOSS_PRIORITY o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.LOSS_PRIORITY, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.LOSS_PRIORITY, p[8])
 
 
 def p_precedence_spec(p):
-    """precedence_spec : PRECEDENCE ':' ':' onl one_or_more_ints line_comment"""
-    p[0] = VarType(VarType.PRECEDENCE, p[5])
-    p[0] = [p[0], p[6]]
+    """precedence_spec : PRECEDENCE o ':' o ':' lc o one_or_more_ints"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        p[0] = VarType(VarType.PRECEDENCE, p[8], field_comment=c)
+    else:
+        p[0] = VarType(VarType.PRECEDENCE, p[8])
 
 
 def p_flexible_match_range_spec(p):
-    """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE ':' ':' onl flex_match_key_values line_comment"""
-    p[0] = []
-    for kv in p[5]:
-        p[0].append(VarType(VarType.FLEXIBLE_MATCH_RANGE, kv))
-    p[0] = [p[0], p[6]]
+    """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE o ':' o ':' lc o flex_match_key_values"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.FLEXIBLE_MATCH_RANGE, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for kv in p[8]:
+            p[0].append(VarType(VarType.FLEXIBLE_MATCH_RANGE, kv))
 
 
 def p_flex_match_key_values(p):
-    """flex_match_key_values : flex_match_key_values onl STRING HEX
-    | flex_match_key_values onl STRING INTEGER
-    | flex_match_key_values onl STRING STRING
-    | STRING HEX
-    | STRING INTEGER
-    | STRING STRING
+    """flex_match_key_values : flex_match_key_values STRING lc o HEX lc o
+    | flex_match_key_values STRING lc o INTEGER lc o
+    | flex_match_key_values STRING lc o STRING lc o
     |"""
-    if len(p) < 1:
+    if len(p) < 2:
         return
 
-    if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
-        raise FlexibleMatchError('%s is not a valid attribute' % p[1])
-    if p[1] == 'match-start':
-        if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+    if p[2] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
+        raise FlexibleMatchError('%s is not a valid attribute' % p[2])
+    if p[2] == 'match-start':
+        if p[5] not in FLEXIBLE_MATCH_START_OPTIONS:
+            raise FlexibleMatchError('%s value is not valid' % p[2])
     # per Juniper, max bit length is 32
-    elif p[1] == 'bit-length':
-        if int(p[2]) not in list(range(33)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+    elif p[2] == 'bit-length':
+        if int(p[5]) not in list(range(33)):
+            raise FlexibleMatchError('%s value is not valid' % p[2])
     # per Juniper, max bit offset is 7
-    elif p[1] == 'bit-offset':
-        if int(p[2]) not in list(range(8)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+    elif p[2] == 'bit-offset':
+        if int(p[5]) not in list(range(8)):
+            raise FlexibleMatchError('%s value is not valid' % p[2])
     # per Juniper, offset can be up to 256 bytes
-    elif p[1] == 'byte-offset':
-        if int(p[2]) not in list(range(256)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+    elif p[2] == 'byte-offset':
+        if int(p[5]) not in list(range(256)):
+            raise FlexibleMatchError('%s value is not valid' % p[2])
 
-    if type(p[0]) == type([]):
-        p[0].append([p.slice[1:]])
+    if _PRESERVE_ORIGINAL:
+        if type(p[1]) == list:
+            v = p[1]
+        else:
+            v = []
+        v.append(ValueExpr(p[2], p[3]))
+        if isinstance(p[4], CommentExpr):
+            v.append(p[4])
+        v.append(ValueExpr(p[5], p[6]))
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        p[0] = v
     else:
-        p[0] = [[i.value for i in p.slice[1:]]]
+        if type(p[1]) == list:
+            p[1].append([p[2], p[5]])
+            p[0] = p[1]
+        else:
+            p[0] = [[p[2], p[5]]]
 
 
 def p_forwarding_class_spec(p):
-    """forwarding_class_spec : FORWARDING_CLASS ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for fclass in p[5]:
-        p[0].append(VarType(VarType.FORWARDING_CLASS, fclass))
-    p[0] = [p[0], p[6]]
+    """forwarding_class_spec : FORWARDING_CLASS o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.FORWARDING_CLASS, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for fclass in p[8]:
+            p[0].append(VarType(VarType.FORWARDING_CLASS, fclass))
 
 
 def p_forwarding_class_except_spec(p):
-    """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for fclass in p[5]:
-        p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
-    p[0] = [p[0], p[6]]
+    """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.FORWARDING_CLASS_EXCEPT, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for fclass in p[8]:
+            p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
 
 
 def p_next_ip_spec(p):
-    """next_ip_spec : NEXT_IP ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.NEXT_IP, p[5])
-    p[0] = [p[0], p[6]]
+    """next_ip_spec : NEXT_IP o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.NEXT_IP, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.NEXT_IP, p[8])
 
 
 def p_encapsulate_spec(p):
-    """encapsulate_spec : ENCAPSULATE ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.ENCAPSULATE, p[5])
-    p[0] = [p[0], p[6]]
+    """encapsulate_spec : ENCAPSULATE o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.ENCAPSULATE, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.ENCAPSULATE, p[8])
 
 
 def p_port_mirror_spec(p):
-    """port_mirror_spec : PORT_MIRROR ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.PORT_MIRROR, p[5])
-    p[0] = [p[0], p[6]]
+    """port_mirror_spec : PORT_MIRROR o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.PORT_MIRROR, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.PORT_MIRROR, p[8])
 
 
 def p_icmp_type_spec(p):
-    """icmp_type_spec : ICMP_TYPE ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = VarType(VarType.ICMP_TYPE, p[5])
-    p[0] = [p[0], p[6]]
+    """icmp_type_spec : ICMP_TYPE o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        p[0] = VarType(VarType.ICMP_TYPE, p[8], field_comment=c)
+    else:
+        p[0] = VarType(VarType.ICMP_TYPE, p[8])
 
 
 def p_icmp_code_spec(p):
-    """icmp_code_spec : ICMP_CODE ':' ':' onl one_or_more_ints line_comment"""
-    p[0] = VarType(VarType.ICMP_CODE, p[5])
-    p[0] = [p[0], p[6]]
+    """icmp_code_spec : ICMP_CODE o ':' o ':' lc o one_or_more_ints"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        p[0] = VarType(VarType.ICMP_CODE, p[8], field_comment=c)
+    else:
+        p[0] = VarType(VarType.ICMP_CODE, p[8])
 
 
 def p_priority_spec(p):
-    """priority_spec : PRIORITY ':' ':' onl INTEGER line_comment"""
-    p[0] = VarType(VarType.PRIORITY, p[5])
-    p[0] = [p[0], p[6]]
+    """priority_spec : PRIORITY o ':' o ':' lc o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.PRIORITY, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.PRIORITY, p[8])
 
 
 def p_packet_length_spec(p):
-    """packet_length_spec : PACKET_LEN ':' ':' onl INTEGER line_comment
-    | PACKET_LEN ':' ':' onl INTEGER '-' INTEGER line_comment"""
-    if len(p) == 7:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[5]))
-        p[0] = [p[0], p[6]]
+    """packet_length_spec : PACKET_LEN o ':' o ':' lc o INTEGER lc o
+    | PACKET_LEN o ':' o ':' lc o INTEGER lc o '-' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if len(p) > 11:
+            if isinstance(p[12], CommentExpr):
+                v.append(p[12])
+            v.append(ValueExpr(p[13], p[14]))
+            if isinstance(p[15], CommentExpr):
+                v.append(p[15])
+        p[0] = VarType(VarType.PACKET_LEN, v, field_comment=c)
     else:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[5]) + '-' + str(p[7]))
-        p[0] = [p[0], p[8]]
+        if len(p) == 11:
+            p[0] = VarType(VarType.PACKET_LEN, str(p[8]))
+        else:
+            p[0] = VarType(VarType.PACKET_LEN, str(p[8]) + '-' + str(p[15]))
 
 
 def p_fragment_offset_spec(p):
-    """fragment_offset_spec : FRAGMENT_OFFSET ':' ':' onl INTEGER line_comment
-    | FRAGMENT_OFFSET ':' ':' onl INTEGER '-' INTEGER line_comment"""
-    if len(p) == 7:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[5]))
-        p[0] = [p[0], p[6]]
+    """fragment_offset_spec : FRAGMENT_OFFSET o ':' o ':' lc o INTEGER lc o
+    | FRAGMENT_OFFSET o ':' o ':' lc o INTEGER lc o '-' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if len(p) > 11:
+            if isinstance(p[12], CommentExpr):
+                v.append(p[12])
+            v.append(ValueExpr(p[13], p[14]))
+            if isinstance(p[15], CommentExpr):
+                v.append(p[15])
+        p[0] = VarType(VarType.FRAGMENT_OFFSET, v, field_comment=c)
     else:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[5]) + '-' + str(p[7]))
-        p[0] = [p[0], p[8]]
+        if len(p) == 11:
+            p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[8]))
+        else:
+            p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[8]) + '-' + str(p[13]))
 
 
 def p_hop_limit_spec(p):
-    """hop_limit_spec : HOP_LIMIT ':' ':' onl INTEGER line_comment
-    | HOP_LIMIT ':' ':' onl INTEGER '-' INTEGER line_comment"""
-    if len(p) == 7:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[5]))
-        p[0] = [p[0], p[6]]
+    """hop_limit_spec : HOP_LIMIT o ':' o ':' lc o INTEGER lc o
+    | HOP_LIMIT o ':' o ':' lc o INTEGER lc o '-' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if len(p) > 11:
+            if isinstance(p[12], CommentExpr):
+                v.append(p[12])
+            v.append(ValueExpr(p[13], p[14]))
+            if isinstance(p[15], CommentExpr):
+                v.append(p[15])
+        p[0] = VarType(VarType.HOP_LIMIT, v, field_comment=c)
     else:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[5]) + '-' + str(p[7]))
-        p[0] = [p[0], p[8]]
+        if len(p) == 11:
+            p[0] = VarType(VarType.HOP_LIMIT, str(p[8]))
+        else:
+            p[0] = VarType(VarType.HOP_LIMIT, str(p[8]) + '-' + str(p[13]))
 
 
 def p_one_or_more_dscps(p):
-    """one_or_more_dscps : one_or_more_dscps onl DSCP_RANGE
-    | one_or_more_dscps onl DSCP
-    | one_or_more_dscps onl INTEGER
-    | DSCP_RANGE
-    | DSCP
-    | INTEGER"""
+    """one_or_more_dscps : one_or_more_dscps DSCP_RANGE lc o
+    | one_or_more_dscps DSCP lc o
+    | one_or_more_dscps INTEGER lc o
+    | DSCP_RANGE lc o
+    | DSCP lc o
+    | INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        if len(p) > 4:
+            value = ValueExpr(p[2], p[3])
+            if type(p[1]) != list:
+                p[1] = []
+            p[1].append(value)
+            if isinstance(p[4], CommentExpr):
+                p[1].append(p[4])
+            p[0] = p[1]
+        else:
+            p[0] = [ValueExpr(p[1], p[2])]
+            if isinstance(p[3], CommentExpr):
+                p[0].append(p[3])
     if len(p) > 1:
-        if type(p[1]) is list:
-            p[1].append(p[3])
+        if isinstance(p[1], list):
+            p[1].append(p[2])
             p[0] = p[1]
         else:
             p[0] = [p[1]]
 
 
 def p_dscp_set_spec(p):
-    """dscp_set_spec : DSCP_SET ':' ':' onl DSCP line_comment
-    | DSCP_SET ':' ':' onl INTEGER line_comment"""
-    p[0] = VarType(VarType.DSCP_SET, p[5])
-    p[0] = [p[0], p[6]]
+    """dscp_set_spec : DSCP_SET o ':' o ':' lc o DSCP lc o
+    | DSCP_SET o ':' o ':' lc o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.DSCP_SET, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.DSCP_SET, p[8])
 
 
 def p_dscp_match_spec(p):
-    """dscp_match_spec : DSCP_MATCH ':' ':' onl one_or_more_dscps line_comment"""
-    p[0] = []
-    for dscp in p[5]:
-        p[0].append(VarType(VarType.DSCP_MATCH, dscp))
-    p[0] = [p[0], p[6]]
+    """dscp_match_spec : DSCP_MATCH o ':' o ':' lc o one_or_more_dscps"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.DSCP_MATCH, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for dscp in p[8]:
+            p[0].append(VarType(VarType.DSCP_MATCH, dscp))
 
 
 def p_dscp_except_spec(p):
-    """dscp_except_spec : DSCP_EXCEPT ':' ':' onl one_or_more_dscps line_comment"""
-    p[0] = []
-    for dscp in p[5]:
-        p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
-    p[0] = [p[0], p[6]]
+    """dscp_except_spec : DSCP_EXCEPT o ':' o ':' lc o one_or_more_dscps"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.DSCP_EXCEPT, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for dscp in p[8]:
+            p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
 
 
 def p_exclude_spec(p):
-    """exclude_spec : SADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
-    | DADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
-    | ADDREXCLUDE ':' ':' onl one_or_more_strings line_comment
-    | PROTOCOL_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
-
-    p[0] = []
-    for ex in p[5]:
+    """exclude_spec : SADDREXCLUDE o ':' o ':' lc o one_or_more_strings
+    | DADDREXCLUDE o ':' o ':' lc o one_or_more_strings
+    | ADDREXCLUDE o ':' o ':' lc o one_or_more_strings
+    | PROTOCOL_EXCEPT o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
         if p[1].find('source-exclude') >= 0:
-            p[0].append(VarType(VarType.SADDREXCLUDE, ex))
+            p[0] = VarType(VarType.SADDREXCLUDE, p[8], field_comment=c)
         elif p[1].find('destination-exclude') >= 0:
-            p[0].append(VarType(VarType.DADDREXCLUDE, ex))
+            p[0] = VarType(VarType.DADDREXCLUDE, p[8], field_comment=c)
         elif p[1].find('address-exclude') >= 0:
-            p[0].append(VarType(VarType.ADDREXCLUDE, ex))
+            p[0] = VarType(VarType.ADDREXCLUDE, p[8], field_comment=c)
         elif p[1].find('protocol-except') >= 0:
-            p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.PROTOCOL_EXCEPT, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for ex in p[8]:
+            if p[1].find('source-exclude') >= 0:
+                p[0].append(VarType(VarType.SADDREXCLUDE, ex))
+            elif p[1].find('destination-exclude') >= 0:
+                p[0].append(VarType(VarType.DADDREXCLUDE, ex))
+            elif p[1].find('address-exclude') >= 0:
+                p[0].append(VarType(VarType.ADDREXCLUDE, ex))
+            elif p[1].find('protocol-except') >= 0:
+                p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
 
 
 def p_prefix_list_spec(p):
-    """prefix_list_spec : DPFX ':' ':' one_or_more_strings line_comment
-    | EDPFX ':' ':' onl one_or_more_strings line_comment
-    | SPFX ':' ':' onl one_or_more_strings line_comment
-    | ESPFX ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for pfx in p[5]:
+    """prefix_list_spec : DPFX o ':' o ':' lc o one_or_more_strings
+    | EDPFX o ':' o ':' lc o one_or_more_strings
+    | SPFX o ':' o ':' lc o one_or_more_strings
+    | ESPFX o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
         if p[1].find('source-prefix-except') >= 0:
-            p[0].append(VarType(VarType.ESPFX, pfx))
+            p[0] = VarType(VarType.ESPFX, p[8], field_comment=c)
         elif p[1].find('source-prefix') >= 0:
-            p[0].append(VarType(VarType.SPFX, pfx))
+            p[0] = VarType(VarType.SPFX, p[8], field_comment=c)
         elif p[1].find('destination-prefix-except') >= 0:
-            p[0].append(VarType(VarType.EDPFX, pfx))
+            p[0] = VarType(VarType.EDPFX, p[8], field_comment=c)
         elif p[1].find('destination-prefix') >= 0:
-            p[0].append(VarType(VarType.DPFX, pfx))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.DPFX, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for pfx in p[8]:
+            if p[1].find('source-prefix-except') >= 0:
+                p[0].append(VarType(VarType.ESPFX, pfx))
+            elif p[1].find('source-prefix') >= 0:
+                p[0].append(VarType(VarType.SPFX, pfx))
+            elif p[1].find('destination-prefix-except') >= 0:
+                p[0].append(VarType(VarType.EDPFX, pfx))
+            elif p[1].find('destination-prefix') >= 0:
+                p[0].append(VarType(VarType.DPFX, pfx))
 
 
 def p_addr_spec(p):
-    """addr_spec : SADDR ':' ':' onl one_or_more_strings line_comment
-    | DADDR ':' ':' onl one_or_more_strings line_comment
-    | ADDR  ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for addr in p[5]:
+    """addr_spec : SADDR o ':' o ':' lc o one_or_more_strings
+    | DADDR o ':' o ':' lc o one_or_more_strings
+    | ADDR o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
         if p[1].find('source-address') >= 0:
-            p[0].append(VarType(VarType.SADDRESS, addr))
+            p[0] = VarType(VarType.SADDRESS, p[8], field_comment=c)
         elif p[1].find('destination-address') >= 0:
-            p[0].append(VarType(VarType.DADDRESS, addr))
+            p[0] = VarType(VarType.DADDRESS, p[8], field_comment=c)
         else:
-            p[0].append(VarType(VarType.ADDRESS, addr))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.ADDRESS, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for addr in p[8]:
+            if p[1].find('source-address') >= 0:
+                p[0].append(VarType(VarType.SADDRESS, addr))
+            elif p[1].find('destination-address') >= 0:
+                p[0].append(VarType(VarType.DADDRESS, addr))
+            else:
+                p[0].append(VarType(VarType.ADDRESS, addr))
 
 
 def p_port_spec(p):
-    """port_spec : SPORT ':' ':' onl one_or_more_strings line_comment
-    | DPORT ':' ':' onl one_or_more_strings line_comment
-    | PORT ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for port in p[5]:
+    """port_spec : SPORT o ':' o ':' lc o one_or_more_strings
+    | DPORT o ':' o ':' lc o one_or_more_strings
+    | PORT o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
         if p[1].find('source-port') >= 0:
-            p[0].append(VarType(VarType.SPORT, port))
+            p[0] = VarType(VarType.SPORT, p[8], field_comment=c)
         elif p[1].find('destination-port') >= 0:
-            p[0].append(VarType(VarType.DPORT, port))
+            p[0] = VarType(VarType.DPORT, p[8], field_comment=c)
         else:
-            p[0].append(VarType(VarType.PORT, port))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.PORT, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for port in p[8]:
+            if p[1].find('source-port') >= 0:
+                p[0].append(VarType(VarType.SPORT, port))
+            elif p[1].find('destination-port') >= 0:
+                p[0].append(VarType(VarType.DPORT, port))
+            else:
+                p[0].append(VarType(VarType.PORT, port))
 
 
 def p_protocol_spec(p):
-    """protocol_spec : PROTOCOL ':' ':' onl strings_or_ints line_comment"""
-    p[0] = []
-    for proto in p[5]:
-        p[0].append(VarType(VarType.PROTOCOL, proto))
-    p[0] = [p[0], p[6]]
+    """protocol_spec : PROTOCOL o ':' o ':' lc o strings_or_ints"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.PROTOCOL, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for proto in p[8]:
+            p[0].append(VarType(VarType.PROTOCOL, proto))
 
 
 def p_tag_list_spec(p):
-    """tag_list_spec : DTAG ':' ':' onl one_or_more_strings line_comment
-    | STAG ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for tag in p[5]:
+    """tag_list_spec : DTAG o ':' o ':' lc o one_or_more_strings
+    | STAG o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
         if p[1].find('source-tag') >= 0:
-            p[0].append(VarType(VarType.STAG, tag))
+            p[0] = VarType(VarType.STAG, p[8], field_comment=c)
         elif p[1].find('destination-tag') >= 0:
-            p[0].append(VarType(VarType.DTAG, tag))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.DTAG, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for tag in p[8]:
+            if p[1].find('source-tag') >= 0:
+                p[0].append(VarType(VarType.STAG, tag))
+            elif p[1].find('destination-tag') >= 0:
+                p[0].append(VarType(VarType.DTAG, tag))
 
 
 def p_target_resources_spec(p):
-    """target_resources_spec : TARGET_RESOURCES ':' ':' onl one_or_more_tuples line_comment"""
-    p[0] = []
-    for target_resource in p[5]:
-        p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
-    p[0] = [p[0], p[6]]
+    """target_resources_spec : TARGET_RESOURCES o ':' o ':' lc o one_or_more_tuples"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.TARGET_RESOURCES, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for target_resource in p[8]:
+            p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
 
 
 def p_target_service_accounts_spec(p):
-    """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for service_account in p[5]:
-        p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
-    p[0] = [p[0], p[6]]
+    """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.TARGET_SERVICE_ACCOUNTS, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for service_account in p[8]:
+            p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
 
 
 def p_ether_type_spec(p):
-    """ether_type_spec : ETHER_TYPE ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for proto in p[5]:
-        p[0].append(VarType(VarType.ETHER_TYPE, proto))
-    p[0] = [p[0], p[6]]
+    """ether_type_spec : ETHER_TYPE o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.ETHER_TYPE, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for proto in p[8]:
+            p[0].append(VarType(VarType.ETHER_TYPE, proto))
 
 
 def p_traffic_type_spec(p):
-    """traffic_type_spec : TRAFFIC_TYPE ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for proto in p[5]:
-        p[0].append(VarType(VarType.TRAFFIC_TYPE, proto))
-    p[0] = [p[0], p[6]]
+    """traffic_type_spec : TRAFFIC_TYPE o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.TRAFFIC_TYPE, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for proto in p[8]:
+            p[0].append(VarType(VarType.TRAFFIC_TYPE, proto))
 
 
 def p_policer_spec(p):
-    """policer_spec : POLICER ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.POLICER, p[5])
-    p[0] = [p[0], p[6]]
+    """policer_spec : POLICER o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.POLICER, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.POLICER, p[8])
 
 
 def p_logging_spec(p):
-    """logging_spec : LOGGING ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.LOGGING, p[5])
-    p[0] = [p[0], p[6]]
+    """logging_spec : LOGGING o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.LOGGING, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.LOGGING, p[8])
 
 
 def p_log_limit_spec(p):
-    """log_limit_spec : LOG_LIMIT ':' ':' onl INTEGER '/' STRING line_comment"""
-    p[0] = VarType(VarType.LOG_LIMIT, (p[5], p[7]))
-    p[0] = [p[0], p[8]]
+    """log_limit_spec : LOG_LIMIT o ':' o ':' lc o INTEGER lc o '/' o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if isinstance(p[12], CommentExpr):
+            v.append(p[12])
+        v.append(ValueExpr(p[13], p[14]))
+        if isinstance(p[15], CommentExpr):
+            v.append(p[15])
+        p[0] = VarType(VarType.LOG_LIMIT, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.LOG_LIMIT, (p[8], p[13]))
 
 
 def p_log_name_spec(p):
-    """log_name_spec : LOG_NAME ':' ':' onl DQUOTEDSTRING line_comment"""
-    p[0] = VarType(VarType.LOG_NAME, p[5])
-    p[0] = [p[0], p[6]]
+    """log_name_spec : LOG_NAME o ':' o ':' lc o DQUOTEDSTRING lc"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.LOG_NAME, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.LOG_NAME, p[8])
 
 
 def p_option_spec(p):
-    """option_spec : OPTION ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for opt in p[5]:
-        p[0].append(VarType(VarType.OPTION, opt))
-    p[0] = [p[0], p[6]]
+    """option_spec : OPTION o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.OPTION, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for opt in p[8]:
+            p[0].append(VarType(VarType.OPTION, opt))
 
 
 def p_action_spec(p):
-    """action_spec : ACTION ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.ACTION, p[5])
-    p[0] = [p[0], p[6]]
+    """action_spec : ACTION o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.ACTION, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.ACTION, p[8])
 
 
 def p_counter_spec(p):
-    """counter_spec : COUNTER ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.COUNTER, p[5])
-    p[0] = [p[0], p[6]]
+    """counter_spec : COUNTER o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.COUNTER, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.COUNTER, p[8])
 
 
 def p_traffic_class_count_spec(p):
-    """traffic_class_count_spec : TRAFFIC_CLASS_COUNT ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[5])
-    p[0] = [p[0], p[6]]
+    """traffic_class_count_spec : TRAFFIC_CLASS_COUNT o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[8])
 
 
 def p_expiration_spec(p):
-    """expiration_spec : EXPIRATION ':' ':' onl INTEGER '-' INTEGER '-' INTEGER line_comment"""
-    p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[5]), int(p[7]), int(p[9])))
-    p[0] = [p[0], p[10]]
+    """expiration_spec : EXPIRATION o ':' o ':' lc o INTEGER lc o '-' o INTEGER lc o '-' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(int(p[8]), p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if isinstance(p[12], CommentExpr):
+            v.append(p[12])
+        v.append(ValueExpr(int(p[13]), p[14]))
+        if isinstance(p[15], CommentExpr):
+            v.append(p[15])
+        if isinstance(p[17], CommentExpr):
+            v.append(p[17])
+        v.append(ValueExpr(int(p[18]), p[19]))
+        if isinstance(p[20], CommentExpr):
+            v.append(p[20])
+        p[0] = VarType(VarType.EXPIRATION, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[8]), int(p[13]), int(p[18])))
 
 
 def p_comment_spec(p):
-    """comment_spec : COMMENT ':' ':' onl DQUOTEDSTRING line_comment"""
-    p[0] = VarType(VarType.COMMENT, p[5])
-    p[0] = [p[0], p[6]]
+    """comment_spec : COMMENT o ':' o ':' lc o DQUOTEDSTRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.COMMENT, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.COMMENT, p[8])
 
 
 def p_owner_spec(p):
-    """owner_spec : OWNER ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.OWNER, p[5])
-    p[0] = [p[0], p[6]]
+    """owner_spec : OWNER o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.OWNER, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.OWNER, p[8])
 
 
 def p_verbatim_spec(p):
-    """verbatim_spec : VERBATIM ':' ':' onl STRING onl DQUOTEDSTRING line_comment
-    | VERBATIM ':' ':' onl STRING onl ESCAPEDSTRING line_comment"""
-    p[0] = VarType(VarType.VERBATIM, [p[5], p[7].strip('"').replace('\\"', '"')])
-    p[0] = [p[0], p[8]]
+    """verbatim_spec : VERBATIM o ':' o ':' lc o STRING lc o DQUOTEDSTRING lc o
+    | VERBATIM o ':' o ':' lc o STRING lc o ESCAPEDSTRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        v.append(ValueExpr(p[11].strip('"').replace('\\"', '"'), p[12]))
+        if isinstance(p[13], CommentExpr):
+            v.append(p[13])
+        p[0] = VarType(VarType.VERBATIM, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.VERBATIM, [p[8], p[11].strip('"').replace('\\"', '"')])
 
 
 def p_term_zone_spec(p):
-    """term_zone_spec : SZONE ':' ':' onl one_or_more_strings line_comment
-    | DZONE ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for zone in p[5]:
+    """term_zone_spec : SZONE o ':' o ':' lc o one_or_more_strings
+    | DZONE o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
         if p[1].find('source-zone') >= 0:
-            p[0].append(VarType(VarType.SZONE, zone))
+            p[0] = VarType(VarType.SZONE, p[8], field_comment=c)
         elif p[1].find('destination-zone') >= 0:
-            p[0].append(VarType(VarType.DZONE, zone))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.DZONE, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for zone in p[8]:
+            if p[1].find('source-zone') >= 0:
+                p[0].append(VarType(VarType.SZONE, zone))
+            elif p[1].find('destination-zone') >= 0:
+                p[0].append(VarType(VarType.DZONE, zone))
 
 
 def p_vpn_spec(p):
-    """vpn_spec : VPN ':' ':' onl STRING onl STRING line_comment
-    | VPN ':' ':' onl STRING line_comment"""
-    if len(p) == 8:
-        p[0] = VarType(VarType.VPN, [p[5], p[7]])
-        p[0] = [p[0], p[8]]
+    """vpn_spec : VPN o ':' o ':' lc o STRING lc o STRING lc o
+    | VPN o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if len(p) > 11:
+            v.append(ValueExpr(p[11], p[12]))
+            if isinstance(p[13], CommentExpr):
+                v.append(p[13])
+        p[0] = VarType(VarType.VPN, v, field_comment=c)
     else:
-        p[0] = VarType(VarType.VPN, [p[5], ''])
-        p[0] = [p[0], p[6]]
+        if len(p) > 11:
+            p[0] = VarType(VarType.VPN, [p[8], p[11]])
+        else:
+            p[0] = VarType(VarType.VPN, [p[8], ''])
 
 
 def p_qos_spec(p):
-    """qos_spec : QOS ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.QOS, p[5])
-    p[0] = [p[0], p[6]]
+    """qos_spec : QOS o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        p[0] = VarType(VarType.QOS, v, field_comment=c)
+    else:
+        p[0] = VarType(VarType.QOS, p[8])
 
 
 def p_pan_application_spec(p):
-    """pan_application_spec : PAN_APPLICATION ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for apps in p[5]:
-        p[0].append(VarType(VarType.PAN_APPLICATION, apps))
-    p[0] = [p[0], p[6]]
+    """pan_application_spec : PAN_APPLICATION o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.PAN_APPLICATION, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for apps in p[8]:
+            p[0].append(VarType(VarType.PAN_APPLICATION, apps))
 
 
 def p_interface_spec(p):
-    """interface_spec : SINTERFACE ':' ':' onl STRING line_comment
-    | DINTERFACE ':' ':' onl STRING line_comment"""
-    if p[1].find('source-interface') >= 0:
-        p[0] = VarType(VarType.SINTERFACE, p[5])
-    elif p[1].find('destination-interface') >= 0:
-        p[0] = VarType(VarType.DINTERFACE, p[5])
-    p[0] = [p[0], p[6]]
+    """interface_spec : SINTERFACE o ':' o ':' lc o STRING lc o
+    | DINTERFACE o ':' o ':' lc o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        v = []
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        v.append(ValueExpr(p[8], p[9]))
+        if isinstance(p[10], CommentExpr):
+            v.append(p[10])
+        if p[1].find('source-interface') >= 0:
+            p[0] = VarType(VarType.SINTERFACE, v, field_comment=c)
+        elif p[1].find('destination-interface') >= 0:
+            p[0] = VarType(VarType.DINTERFACE, v, field_comment=c)
+    else:
+        if p[1].find('source-interface') >= 0:
+            p[0] = VarType(VarType.SINTERFACE, p[8])
+        elif p[1].find('destination-interface') >= 0:
+            p[0] = VarType(VarType.DINTERFACE, p[8])
 
 
 def p_platform_spec(p):
-    """platform_spec : PLATFORM ':' ':' onl one_or_more_strings line_comment
-    | PLATFORMEXCLUDE ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for platform in p[5]:
+    """platform_spec : PLATFORM o ':' o ':' lc o one_or_more_strings
+    | PLATFORMEXCLUDE o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
         if p[1].find('platform-exclude') >= 0:
-            p[0].append(VarType(VarType.PLATFORMEXCLUDE, platform))
+            p[0] = VarType(VarType.PLATFORMEXCLUDE, p[8], field_comment=c)
         elif p[1].find('platform') >= 0:
-            p[0].append(VarType(VarType.PLATFORM, platform))
-    p[0] = [p[0], p[6]]
+            p[0] = VarType(VarType.PLATFORM, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for platform in p[8]:
+            if p[1].find('platform-exclude') >= 0:
+                p[0].append(VarType(VarType.PLATFORMEXCLUDE, platform))
+            elif p[1].find('platform') >= 0:
+                p[0].append(VarType(VarType.PLATFORM, platform))
 
 
 def p_apply_groups_spec(p):
-    """apply_groups_spec : APPLY_GROUPS ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for group in p[5]:
-        p[0].append(VarType(VarType.APPLY_GROUPS, group))
-    p[0] = [p[0], p[6]]
+    """apply_groups_spec : APPLY_GROUPS o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.APPLY_GROUPS, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for group in p[8]:
+            p[0].append(VarType(VarType.APPLY_GROUPS, group))
 
 
 def p_apply_groups_except_spec(p):
-    """apply_groups_except_spec : APPLY_GROUPS_EXCEPT ':' ':' onl one_or_more_strings line_comment"""
-    p[0] = []
-    for group_except in p[5]:
-        p[0].append(VarType(VarType.APPLY_GROUPS_EXCEPT, group_except))
-    p[0] = [p[0], p[6]]
+    """apply_groups_except_spec : APPLY_GROUPS_EXCEPT o ':' o ':' lc o one_or_more_strings"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        # Distinguish field line from inter-value comment
+        if not p[8]:
+            p[8] = []
+        if isinstance(p[7], CommentExpr):
+            p[8].insert(0, p[7])
+        # NOTE: using one VarType per field line
+        p[0] = VarType(VarType.APPLY_GROUPS_EXCEPT, p[8], field_comment=c)
+    else:
+        p[0] = []
+        for group_except in p[8]:
+            p[0].append(VarType(VarType.APPLY_GROUPS_EXCEPT, group_except))
 
 
 def p_timeout_spec(p):
-    """timeout_spec : TIMEOUT ':' ':' onl INTEGER line_comment"""
-    p[0] = VarType(VarType.TIMEOUT, p[5])
-    p[0] = [p[0], p[6]]
+    """timeout_spec : TIMEOUT o ':' o ':' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        p[0] = VarType(VarType.TIMEOUT, ValueExpr(p[7], p[8]), field_comment=c)
+        if isinstance(p[9], CommentExpr):
+            c.append(p[9])
+    else:
+        p[0] = VarType(VarType.TIMEOUT, p[7])
 
 
 def p_ttl_spec(p):
-    """ttl_spec : TTL ':' ':' onl INTEGER line_comment"""
-    p[0] = VarType(VarType.TTL, p[4]), p[5]
-    p[0] = [p[0], p[6]]
+    """ttl_spec : TTL o ':' o ':' o INTEGER lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        p[0] = VarType(VarType.TTL, ValueExpr(p[7], p[8]), field_comment=c)
+        if isinstance(p[9], CommentExpr):
+            c.append(p[9])
+    else:
+        p[0] = VarType(VarType.TTL, p[7])
 
 
 def p_filter_term_spec(p):
-    """filter_term_spec : FILTER_TERM ':' ':' onl STRING line_comment"""
-    p[0] = VarType(VarType.FILTER_TERM, p[5])
-    p[0] = [p[0], p[6]]
+    """filter_term_spec : FILTER_TERM o ':' o ':' o STRING lc o"""
+    if _PRESERVE_ORIGINAL:
+        c = []
+        if isinstance(p[2], CommentExpr):
+            c.append(p[2])
+        if isinstance(p[4], CommentExpr):
+            c.append(p[4])
+        if isinstance(p[6], CommentExpr):
+            c.append(p[6])
+        p[0] = VarType(VarType.FILTER_TERM, ValueExpr(p[7], p[8]), field_comment=c)
+        if isinstance(p[9], CommentExpr):
+            c.append(p[9])
+    else:
+        p[0] = VarType(VarType.FILTER_TERM, p[7])
 
 
 def p_one_or_more_strings(p):
-    """one_or_more_strings : one_or_more_strings onl STRING
-    | STRING
+    """one_or_more_strings : one_or_more_strings STRING lc o
     |"""
-    if len(p) > 1:
-        if isinstance(p[1], list):
-            p[1].append(p[3])
-            p[0] = p[1]
-        else:
-            p[0] = [p[1]]
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if not isinstance(p[1], list):
+            p[1] = []
+        p[1].append(ValueExpr(p[2], p[3]))
+        if isinstance(p[4], CommentExpr):
+            p[1].append(p[4])
+        p[0] = p[1]
+    elif len(p) > 1:
+        if not isinstance(p[1], list):
+            p[1] = []
+        p[1].append(p[2])
+        p[0] = p[1]
 
 
 def p_one_or_more_tuples(p):
-    """one_or_more_tuples : LSQUARE onl one_or_more_tuples onl RSQUARE
-    | one_or_more_tuples onl ',' onl one_tuple
-    | one_or_more_tuples onl one_tuple
-    | one_tuple
+    """one_or_more_tuples : LSQUARE o one_or_more_tuples RSQUARE o
+    | one_or_more_tuples ',' o one_tuple o
+    | one_or_more_tuples one_tuple o
     |"""
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if p[1] == '[':
+            if type(p[3]) != list:
+                p[3] = []
+            if isinstance(p[2], CommentExpr):
+                p[3].insert(0, p[2])
+            # TODO a line comment following ] can be attached to
+            # the line comment expression of the RHS of the rightmost tuple
+            # e.g. ]  # line comment
+            if isinstance(p[5], CommentExpr):
+                p[3].append(p[5])
+            p[0] = p[3]
+        else:
+            if type(p[1]) != list:
+                p[1] = []
 
-    if len(p) > 1:
+            if p[2] == ',':
+                if isinstance(p[3], CommentExpr):
+                    p[1].append(p[3])
+                p[1].append(p[4])
+                if isinstance(p[5], CommentExpr):
+                    p[1].append(p[5])
+            else:
+                p[1].append(p[2])
+                if isinstance(p[3], CommentExpr):
+                    p[1].append(p[3])
+
+            p[0] = p[1]
+    elif len(p) > 1:
         if p[1] == '[':
             p[0] = p[3]
-        elif isinstance(p[1], list):
-            if p[3] == ',':
-                p[1].append(p[5])
-            else:
-                p[1].append(p[3])
-            p[0] = p[1]
         else:
-            p[0] = [p[1]]
+            if not isinstance(p[1], list):
+                p[1] = []
+            if p[2] == ',':
+                p[1].append(p[4])
+            else:
+                p[1].append(p[2])
+            p[0] = p[1]
 
 
 def p_one_tuple(p):
-    """one_tuple : LPAREN onl STRING onl ',' onl STRING onl RPAREN"""
+    """one_tuple : LPAREN o STRING lc o ',' o STRING lc o RPAREN lc"""
     # NOTE - cleaned up a grammar bug here where one_tuple -> <empty> caused r/r conflicts
-    p[0] = (p[3], p[7])
+    if _PRESERVE_ORIGINAL:
+        v = []
+        if isinstance(p[2], CommentExpr):
+            v.append(p[2])
+        v.append(ValueExpr(p[3], p[4]))
+        if isinstance(p[5], CommentExpr):
+            v.append(p[5])
+        if isinstance(p[7], CommentExpr):
+            v.append(p[7])
+        value_rhs = ValueExpr(p[8], p[9])
+        v.append(value_rhs)
+        # Special case - treat comments before and immediately following RPAREN as
+        # RH value line comments
+        if isinstance(p[10], CommentExpr):
+            value_rhs.comment.extend(p[10])
+        if isinstance(p[12], CommentExpr):
+            value_rhs.comment.extend(p[12])
+        p[0] = v
+    else:
+        p[0] = (p[3], p[8])
 
 
 def p_one_or_more_ints(p):
-    """one_or_more_ints : one_or_more_ints onl INTEGER
-    | INTEGER
+    """one_or_more_ints : one_or_more_ints INTEGER lc o
     |"""
-    if len(p) > 1:
+    if _PRESERVE_ORIGINAL and len(p) > 1:
+        if type(p[1]) != list:
+            p[1] = []
+        p[1].append(ValueExpr(int(p[2]), p[3]))
+        if isinstance(p[4], CommentExpr):
+            p[1].append(p[4])
+        p[0] = p[1]
+    elif len(p) > 1:
         if isinstance(p[1], list):
-            p[1].append(int(p[3]))
+            p[1].append(int(p[2]))
             p[0] = p[1]
         else:
-            p[0] = [int(p[1])]
+            p[0] = [int(p[2])]
 
 
 def p_strings_or_ints(p):
-    """strings_or_ints : strings_or_ints onl STRING
-    | strings_or_ints onl INTEGER
-    | STRING
-    | INTEGER
+    """strings_or_ints : strings_or_ints STRING lc o
+    | strings_or_ints INTEGER lc o
     |"""
-    if len(p) > 1:
+    if _PRESERVE_ORIGINAL and len(p) > 2:
+        if type(p[1]) != list:
+            p[1] = []
+        p[1].append(ValueExpr(p[2], p[3]))
+        if isinstance(p[4], CommentExpr):
+            p[1].append(p[4])
+        p[0] = p[1]
+    elif len(p) > 2:
         if isinstance(p[1], list):
-            p[1].append(p[3])
+            p[1].append(p[2])
             p[0] = p[1]
         else:
-            p[0] = [p[1]]
+            p[0] = [p[2]]
 
 
-def p_block_comment(p):
-    """block_comment : BLOCK_COMMENT"""
-    # breakpoint()
-    if _PRESERVE_ORIGINAL:
-        if len(p) == 2:
-            p[0] = [
-                [VarType(VarType.BLOCK_COMMENT, p[1])],
-                None,
-            ]
-        else:
-            p[1][0].append(VarType(VarType.BLOCK_COMMENT, p[3]))
-            p[0] = p[1]
-        # TODO do away with VarType since only passed to TermParseData HeaderParseData
-
-
-def p_line_comment(p):
-    """line_comment : BLOCK_COMMENT NEWLINE
-    | NEWLINE"""
-    # breakpoint()
+def p_lc(p):
+    """lc : BLOCK_COMMENT NEWLINE
+    |"""
     if len(p) > 2:
         p[0] = p[1]
 
 
-def p_onl(p):
-    """onl : NEWLINE
+def p_o(p):
+    """o : BLOCK_COMMENT o
+    | NEWLINE o
     |"""
-    # breakpoint()
-    # print(f'onl {len(p)}')
-    if len(p) > 1:
-        p[0] = p[1]
+    breakpoint()
+    if len(p) > 2 and _PRESERVE_ORIGINAL:
+        if isinstance(p[2], CommentExpr):
+            p[2].insert(0, p[1])
+            p[0] = p[2]
+        else:
+            p[0] = CommentExpr([p[1]])
 
 
 def p_error(p):
@@ -2930,6 +3837,31 @@ def p_error(p):
 
 breakpoint()
 parser = yacc.yacc(write_tables=False, debug=True, outputdir='.', errorlog=logging)
+
+
+class CommentExprType(enum.Enum):
+    CommentFile = enum.auto()
+    CommentFilterInter = enum.auto()
+    CommentBlockStart = enum.auto()
+    CommentBlockInter = enum.auto()
+    CommentFieldStart = enum.auto()
+    CommentValueEOL = enum.auto()
+    CommentValueInter = enum.auto()
+
+
+class CommentExpr(list):
+    """A sequence of comments and/or newlines."""
+
+    # def __init__(self, value: "str | list[str]"):
+    #     # self.expr_type = expr_type
+    #     self.value = value
+
+
+class ValueExpr:
+    def __init__(self, value: "Any", comment: "Optional[str]" = None):
+        self.value = value
+        self.comment = comment
+
 
 # pylint: enable=unused-argument,invalid-name,g-short-docstring-punctuation
 # pylint: enable=g-docstring-quotes,g-short-docstring-space
@@ -3091,6 +4023,135 @@ def FromBuilder(builder: PolicyBuilder):
     return builder.BuildPolicy()
 
 
+#
+# Idea: two phase extraction
+#
+# Insight: .pol as a file format is relatively flat but has
+# a very high number of unique value expressions. It also
+# accepts newlines and block comments in very unusual places (in between
+# "::", for example). The result is block comments must be present at all
+# levels of the parse tree, which means all levels need to accomodate comments,
+# and the code that processes the parse tree must perform many flattening operations
+# in order to associate comments with objects and positions.
+#
+# Producing a full parse tree might be very complex and time consuming.
+#
+# Simplifying ideas:
+#
+# (1) It might be possible to have the parser print out a new file format
+#     that is much simpler. A second parser could then consume the simplified
+#     file format.
+# (2) Attaching comments directly to VarType objects might help with early value association.
+#     VarType objects are sometimes produced above several layers of grammar so
+#     this simplifies up to a point.
+#
+# Example simplified language.
+# The core idea is that comment classes are knowable fairly low in the parse tree, possibly
+# at the grammar level. But hoisting comments up through several levels of grammar is complicated.
+# Even though we can associate comments with values, VarType is not constructed until high
+# in the parse tree, thus there are sub-values below VarType which can have comments associated. So
+# VarType as it exists is not a great representation for comment-value associations. Sticking to
+# traditional value/comment tuples is OK, and having some lower-level value type is OK (albeit
+# converter-specific in both cases).
+#
+# So the alternative idea here is to "print as we go" during the parse, thus producing a
+# fairly flat representation of the file as we parse. A second scan can then group these parts
+# with clear association rules.
+#
+# It's also possible that "print" or "emit" are both valid options. In either case we are creating
+# a side channel, so this actually might fit nicely into the original parser.
+#
+# Example: target service accounts. This is a basic list of names. Each one could potentially have
+# a comment in between.
+#
+# Simplified:
+#
+# target-resources:: RESOURCE1 RESOURCE2
+#
+# With comments:
+#
+# target-resources #FieldStart
+# #FieldStart
+# : #FieldStart
+# #FieldStart
+# : #FieldStart
+# #FieldStart
+# RESOURCE1 #ValueEOL
+# #ValueInter
+# RESOURCE2 #ValueEOL
+# #ValueInter
+#
+# Flatter:
+# VarType 2  # TARGET_RESOURCES
+# FieldStart
+# comment 1
+# comment 2
+# comment 3
+# comment 4
+# comment 5
+# Value RESOURCE1
+# ValueEOL comment 1
+# ValueInter
+# comment 1
+# Value RESOURCE2
+# ValueEOL comment 1
+#
+# Ultimately we want to construct an object format something like this:
+#
+# VarType [
+#   comment=['fieldstart comments']
+#   value=list[
+#     ValueExpr[
+#       value='RESOURCE1'
+#       eol_comment='line comment'
+#     ],
+#     CommentExpr['inter value comments'],
+#     ValueExpr[
+#       value='RESOURCE2'
+#       eol_comment='line comment'
+#     ]
+#   ]
+# ]
+# CommentExpr['block inter comments (which may associate with the next VarType (field line))']
+# VarType [
+#   comment=['fieldstart comments']
+#   value=list[
+#     ValueExpr[
+#       value='RESOURCE1'
+#       eol_comment='line comment'
+#     ],
+#     CommentExpr['inter value comments'],
+#     ValueExpr[
+#       value='RESOURCE2'
+#       eol_comment='line comment'
+#     ]
+#   ]
+# ]
+#
+#
+# And at the top level, something like this:
+# PolicyParseData [
+#   comment=['File comments']
+#   data=list[
+#     (
+#     Header [
+#        comment=['key line comments']
+#        data=[...]
+#     ],
+#     list[
+#       CommentExpr['inter termlist comments'],
+#       TermParseData [
+#           comment=['name line comments']
+#           name='name'
+#           data=[...]
+#       ]
+#     ],
+#     CommentExpr['inter filter comments']
+#     ),
+#   ]
+# ]
+
+
 def ParseOriginal(data, definitions=None, filename='', is_include=False):
     """Partially parse 'data' into an PolicyParseData model, preserving the original
     content of 'data'. The PolicyParseData model produced can be passed to export.ExportPolicy().
@@ -3148,6 +4209,7 @@ class PolicyParseData:
         self,
         header: HeaderParseData = None,
         terms: TermParseData = None,
+        comment: CommentExpr = None,
         *,
         is_include: bool = False,
     ):
@@ -3158,10 +4220,12 @@ class PolicyParseData:
         self.is_include = is_include
 
         if header or terms:
-            self.AddFilter(header, terms)
+            self.AddFilter(header, terms, comment)
 
-    def AddFilter(self, header: HeaderParseData, terms: TermParseData):
-        self.data.append((header, terms))
+    def AddFilter(
+        self, header: HeaderParseData, terms: TermParseData, comment: CommentExpr = None
+    ):
+        self.data.append((header, terms, comment))
 
     def AddBlockComment(self, comment):
         self.block_comment.append(comment)
@@ -3216,6 +4280,11 @@ header {{
 }}
 {data}
 """
+
+
+class CommentParseData:
+    def __init__(self, data):
+        self.data = data
 
 
 # if you call this from the command line, you can specify a pol file for it to
