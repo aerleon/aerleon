@@ -1,14 +1,15 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Tuple, Union
+from unittest.mock import MagicMock
 
 import yaml
 from absl import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy
-from aerleon.lib.policy import Policy, BadIncludePath, _SubpathOf
+from aerleon.lib.policy import BadIncludePath, Policy, _SubpathOf
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
     PolicyDict,
@@ -18,7 +19,6 @@ from aerleon.lib.policy_builder import (
     RawTerm,
 )
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
-from unittest.mock import MagicMock
 
 
 class PolicyTypeError(Exception):

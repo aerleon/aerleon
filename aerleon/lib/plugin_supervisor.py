@@ -55,8 +55,8 @@ else:
 
 from absl import logging
 
-from aerleon.lib.aclgenerator import ACLGenerator
 from aerleon.lib import plugin
+from aerleon.lib.aclgenerator import ACLGenerator
 
 __all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", "SystemMetadata"]
 

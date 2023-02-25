@@ -22,16 +22,16 @@ import datetime
 import os
 import pathlib
 import sys
-from typing import Any, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from unittest.mock import MagicMock
 
 from absl import logging
 from ply import lex, yacc
+from ply.lex import LexToken
+from ply.yacc import YaccProduction
 
 from aerleon.lib import nacaddr, naming
 from aerleon.lib.nacaddr import IPv4, IPv6
-from ply.lex import LexToken
-from ply.yacc import YaccProduction
-from unittest.mock import MagicMock
 
 if TYPE_CHECKING:
     from aerleon.lib.policy_builder import PolicyBuilder

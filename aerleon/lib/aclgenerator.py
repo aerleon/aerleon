@@ -21,11 +21,11 @@ import datetime
 import hashlib
 import re
 import string
+from typing import Dict, List, Union
 
 from absl import logging
 
 from aerleon.lib import policy
-from typing import Dict, List, Union
 
 
 # generic error class
