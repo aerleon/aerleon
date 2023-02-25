@@ -206,7 +206,7 @@ class Term(cisco.ExtendedTerm):
         daddr: Union[str, IPv4, IPv6],
         dport: Union[Tuple[()], Tuple[int, int]],
         icmp_type: str,
-        option: List[Any],
+        option: List[str],
     ) -> List[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
@@ -219,7 +219,7 @@ class Term(cisco.ExtendedTerm):
           daddr: str or ipaddress, the destination address
           dport: str list or none, the destination port
           icmp_type: icmp-type numeric specification (if any)
-          option: list or none, optional, eg. 'logging' tokens.
+          option: list of options, eg. 'logging' tokens.
 
         Returns:
           string of the cisco acl line, suitable for printing.

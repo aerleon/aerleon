@@ -694,11 +694,11 @@ class Term(aclgenerator.Term):
         """Returns a formatted port string for the range.
 
         Args:
-          port: str list or none, the port range.
-          proto: str representing proto (tcp, udp, etc).
+          port: The port range represented as a tuple..
+          proto: String or int representing a protocol.
 
         Returns:
-          A string suitable for the ACL.
+          A string used to filter a single or range of ports..
         """
         if not port:
             return ''
@@ -743,7 +743,7 @@ class Term(aclgenerator.Term):
         dport: str,
         icmp_type: Union[int, str],
         icmp_code: Union[int, str],
-        option: List[Union[str, Any]],
+        option: List[str],
     ) -> List[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
@@ -756,7 +756,7 @@ class Term(aclgenerator.Term):
           dport: str, the destination port
           icmp_type: icmp-type numeric specification (if any)
           icmp_code: icmp-code numeric specification (if any)
-          option: list or none, optional, eg. 'logging' tokens.
+          option: list of options, eg. 'logging' tokens.
 
         Returns:
           string of the cisco acl line, suitable for printing.

@@ -15,7 +15,7 @@
 #
 
 """Cisco IOS-XR filter renderer."""
-
+from __future__ import annotations
 from typing import Dict, List, Set, Tuple
 
 from aerleon.lib import cisco
@@ -61,7 +61,7 @@ class CiscoXR(cisco.Cisco):
 
         return supported_tokens, supported_sub_tokens
 
-    def _GetObjectGroupTerm(self, term: Term, verbose: bool = True) -> "CiscoXRObjectGroupTerm":
+    def _GetObjectGroupTerm(self, term: Term, verbose: bool = True) -> CiscoXRObjectGroupTerm:
         """Returns an ObjectGroupTerm object."""
         return CiscoXRObjectGroupTerm(term, platform=self._PLATFORM, verbose=verbose)
 
