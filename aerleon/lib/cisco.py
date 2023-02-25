@@ -17,11 +17,14 @@
 """Cisco generator."""
 
 import ipaddress
-from typing import Union, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, summarizer
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
+from aerleon.lib.summarizer import DSMNet
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -62,7 +65,9 @@ class ExtendedACLTermError(Error):
 class TermStandard:
     """A single standard ACL Term."""
 
-    def __init__(self, term, filter_name, platform='cisco', verbose=True):
+    def __init__(
+        self, term: Term, filter_name: str, platform: str = 'cisco', verbose: bool = True
+    ) -> None:
         self.term = term
         self.filter_name = filter_name
         self.platform = platform
@@ -105,7 +110,7 @@ class TermStandard:
             )
             self.dscpstring = ' dscp' + self.term.dscp_match
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = []
 
         # Term verbatim output - this will skip over normal term creation
@@ -174,22 +179,22 @@ class ObjectGroup:
       exit
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.filter_name = ''
         self.addressbook = addressbook.Addressbook()
         self.terms = []
 
-    def AddTerm(self, term):
+    def AddTerm(self, term: Term) -> None:
         if term.source_address:
             self.addressbook.AddAddresses('', term.source_address)
         if term.destination_address:
             self.addressbook.AddAddresses('', term.destination_address)
         self.terms.append(term)
 
-    def AddName(self, filter_name):
+    def AddName(self, filter_name: str) -> None:
         self.filter_name = filter_name
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = ['\n']
         # netgroups will contain two-tuples of group name string and family int.
         netgroups = set()
@@ -414,14 +419,14 @@ class Term(aclgenerator.Term):
 
     def __init__(
         self,
-        term,
-        af=4,
-        proto_int=True,
-        enable_dsmo=False,
-        term_remark=True,
-        platform='cisco',
-        verbose=True,
-    ):
+        term: Term,
+        af: int = 4,
+        proto_int: bool = True,
+        enable_dsmo: bool = False,
+        term_remark: bool = True,
+        platform: str = 'cisco',
+        verbose: bool = True,
+    ) -> None:
         self.term = term
         self.proto_int = proto_int
         self.options = []
@@ -437,7 +442,7 @@ class Term(aclgenerator.Term):
         else:
             self.text_af = 'inet6'
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = ['\n']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -658,7 +663,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(ret_str)
 
-    def _GetIpString(self, addr):
+    def _GetIpString(self, addr: Union[IPv6, IPv4, DSMNet]) -> str:
         """Formats the address object for printing in the ACL.
 
         Args:
@@ -685,15 +690,15 @@ class Term(aclgenerator.Term):
             return 'host %s' % (addr.network_address)
         return addr
 
-    def _FormatPort(self, port, proto):
+    def _FormatPort(self, port: Union[Tuple[()], Tuple[int, int]], proto: Union[int, str]) -> str:
         """Returns a formatted port string for the range.
 
         Args:
-          port: str list or none, the port range.
-          proto: str representing proto (tcp, udp, etc).
+          port: The port range represented as a tuple..
+          proto: String or int representing a protocol.
 
         Returns:
-          A string suitable for the ACL.
+          A string used to filter a single or range of ports..
         """
         if not port:
             return ''
@@ -707,7 +712,9 @@ class Term(aclgenerator.Term):
             return 'range %s %s' % (port0, port1)
         return 'eq %s' % (port0)
 
-    def _FixOptions(self, proto, option):
+    def _FixOptions(
+        self, proto: Union[int, str], option: List[Union[str, Any]]
+    ) -> List[Union[str, Any]]:
         """Returns a set of options suitable for the given protocol.
 
         Fix done:
@@ -727,8 +734,17 @@ class Term(aclgenerator.Term):
         return sane_options
 
     def _TermletToStr(
-        self, action, proto, saddr, sport, daddr, dport, icmp_type, icmp_code, option
-    ):
+        self,
+        action: str,
+        proto: Union[int, str],
+        saddr: str,
+        sport: str,
+        daddr: str,
+        dport: str,
+        icmp_type: Union[int, str],
+        icmp_code: Union[int, str],
+        option: List[str],
+    ) -> List[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
         Args:
@@ -740,7 +756,7 @@ class Term(aclgenerator.Term):
           dport: str, the destination port
           icmp_type: icmp-type numeric specification (if any)
           icmp_code: icmp-code numeric specification (if any)
-          option: list or none, optional, eg. 'logging' tokens.
+          option: list of options, eg. 'logging' tokens.
 
         Returns:
           string of the cisco acl line, suitable for printing.
@@ -765,7 +781,7 @@ class Term(aclgenerator.Term):
         non_empty_elements = [x for x in all_elements if x]
         return [' ' + ' '.join(non_empty_elements)]
 
-    def _FixConsecutivePorts(self, port_list):
+    def _FixConsecutivePorts(self, port_list: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """Takes a list of tuples and expands the tuple if the range is two.
 
             http://www.cisco.com/warp/public/cc/pd/si/casi/ca6000/tech/65acl_wp.pdf
@@ -805,7 +821,7 @@ class ObjectGroupTerm(Term):
     in the acl.
     """
 
-    def _FormatPort(self, port, proto):
+    def _FormatPort(self, port: Union[Tuple[()], Tuple[int, int]], proto: str) -> str:
         """Returns a formatted port string for the range.
 
         Args:
@@ -819,7 +835,7 @@ class ObjectGroupTerm(Term):
             return ''
         return f'port-group {port[0]}-{port[1]}'
 
-    def _GetIpString(self, addr):
+    def _GetIpString(self, addr: Union[IPv4, IPv6]) -> str:
         """Formats the address object for printing in the ACL.
 
         Args:
@@ -842,7 +858,7 @@ class Cisco(aclgenerator.ACLGenerator):
     _PROTO_INT = True
     _TERM_REMARK = True
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -869,7 +885,7 @@ class Cisco(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.cisco_policies = []
         # a mixed filter outputs both ipv4 and ipv6 acls in the same output file
         good_filters = ['extended', 'standard', 'object-group', 'inet6', 'mixed', 'enable_dsmo']
@@ -978,11 +994,11 @@ class Cisco(aclgenerator.ACLGenerator):
                     (header, filter_name, [next_filter], new_terms, obj_target)
                 )
 
-    def _GetObjectGroupTerm(self, term, verbose=True):
+    def _GetObjectGroupTerm(self, term: Term, verbose: bool = True) -> ObjectGroupTerm:
         """Returns an ObjectGroupTerm object."""
         return ObjectGroupTerm(term, verbose=verbose)
 
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -1017,7 +1033,9 @@ class Cisco(aclgenerator.ACLGenerator):
             )
         return target
 
-    def _RepositoryTagsHelper(self, target=None, filter_type='', filter_name=''):
+    def _RepositoryTagsHelper(
+        self, target: Optional[List[str]] = None, filter_type: str = '', filter_name: str = ''
+    ) -> List[str]:
         if target is None:
             target = []
         if filter_type == 'standard' and filter_name.isdigit():
@@ -1030,7 +1048,7 @@ class Cisco(aclgenerator.ACLGenerator):
             target.extend(aclgenerator.AddRepositoryTags(' remark ', date=False, revision=False))
         return target
 
-    def __str__(self):
+    def __str__(self) -> str:
         target_header = []
         target = []
         # add the p4 tags

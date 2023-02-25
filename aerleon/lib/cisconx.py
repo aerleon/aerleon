@@ -15,6 +15,8 @@
 #
 """CiscoNX generator."""
 
+from typing import List, Optional
+
 from aerleon.lib import aclgenerator, cisco
 
 
@@ -38,14 +40,16 @@ class CiscoNX(cisco.Cisco):
     # Protocols should be emitted as they were in the policy (names).
     _PROTO_INT = False
 
-    def _RepositoryTagsHelper(self, target=None, filter_type='', filter_name=''):
+    def _RepositoryTagsHelper(
+        self, target: Optional[List[str]] = None, filter_type: str = '', filter_name: str = ''
+    ) -> List[str]:
         if target is None:
             target = []
         target.extend(aclgenerator.AddRepositoryTags(' remark ', rid=False, wrap=True))
         return target
 
     # CiscoNX omits the "extended" access-list argument.
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:

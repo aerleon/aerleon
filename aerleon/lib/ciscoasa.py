@@ -18,11 +18,13 @@
 
 import ipaddress
 import re
-from typing import cast
+from typing import Any, Dict, List, Set, Tuple, Union, cast
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -53,7 +55,9 @@ class NoCiscoPolicyError(Error):
 class Term(cisco.ExtendedTerm):
     """A single ACL Term."""
 
-    def __init__(self, term, filter_name, af=4, enable_dsmo=False):
+    def __init__(
+        self, term: Term, filter_name: str, af: int = 4, enable_dsmo: bool = False
+    ) -> None:
         self.term = term
         self.filter_name = filter_name
         self.options = []
@@ -61,7 +65,7 @@ class Term(cisco.ExtendedTerm):
         self.af = af
         self.enable_dsmo = enable_dsmo
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = ['\n']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -193,8 +197,17 @@ class Term(cisco.ExtendedTerm):
         return '\n'.join(ret_str)
 
     def _TermletToStr(
-        self, filter_name, action, proto, saddr, sport, daddr, dport, icmp_type, option
-    ):
+        self,
+        filter_name: str,
+        action: str,
+        proto: str,
+        saddr: Union[str, IPv4, IPv6],
+        sport: Union[Tuple[()], Tuple[int, int]],
+        daddr: Union[str, IPv4, IPv6],
+        dport: Union[Tuple[()], Tuple[int, int]],
+        icmp_type: str,
+        option: List[str],
+    ) -> List[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
         Args:
@@ -206,7 +219,7 @@ class Term(cisco.ExtendedTerm):
           daddr: str or ipaddress, the destination address
           dport: str list or none, the destination port
           icmp_type: icmp-type numeric specification (if any)
-          option: list or none, optional, eg. 'logging' tokens.
+          option: list of options, eg. 'logging' tokens.
 
         Returns:
           string of the cisco acl line, suitable for printing.
@@ -304,7 +317,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
     _DEFAULT_PROTOCOL = 'ip'
     SUFFIX = '.asa'
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -324,7 +337,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.ciscoasa_policies = []
         for header, terms in self.policy.filters:
             filter_name = header.FilterName(self._PLATFORM)
@@ -338,7 +351,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
 
             self.ciscoasa_policies.append((header, filter_name, new_terms))
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = []
 
         for (header, filter_name, terms) in self.ciscoasa_policies:
