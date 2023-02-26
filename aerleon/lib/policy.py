@@ -2754,8 +2754,6 @@ def ParsePolicy(
     Returns:
       policy object or False (if parse error).
     """
-    print("definitions")
-    print(type(definitions))
     try:
         if definitions:
             globals()['DEFINITIONS'] = definitions
