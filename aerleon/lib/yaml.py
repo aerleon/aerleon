@@ -1,14 +1,15 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple, Union
+from unittest.mock import MagicMock
 
 import yaml
 from absl import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy
-from aerleon.lib.policy import BadIncludePath, _SubpathOf
+from aerleon.lib.policy import BadIncludePath, Policy, _SubpathOf
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
     PolicyDict,
@@ -51,13 +52,13 @@ class UserMessage:
     line: int
     include_chain: "list[Tuple[str, int]]"
 
-    def __init__(self, message, *, filename, line=None, include_chain=None):
+    def __init__(self, message: str, *, filename, line=None, include_chain=None) -> None:
         self.message = message
         self.filename = filename
         self.line = line
         self.include_chain = include_chain
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Display user-facing error message with include chain (if present).
 
         e.g.
@@ -114,8 +115,8 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
 
 
 def ParsePolicy(
-    file, *, filename, base_dir='', definitions=None, optimize=False, shade_check=False
-):
+    file: str, *, filename, base_dir='', definitions=None, optimize=False, shade_check=False
+) -> Optional[Union[MagicMock, Policy]]:
     """Load a policy yaml file (provided as a string) and return a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
@@ -145,7 +146,9 @@ def ParsePolicy(
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
-def PreprocessYAMLPolicy(filename, base_dir, policy_dict: PolicyDict):
+def PreprocessYAMLPolicy(
+    filename: str, base_dir: str, policy_dict: Optional[PolicyDict]
+) -> Optional[Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]]:
     """Process includes and validate the file data as a PolicyDict."""
 
     # Empty files are ignored with a warning
@@ -311,7 +314,7 @@ def PreprocessYAMLPolicy(filename, base_dir, policy_dict: PolicyDict):
     return policy_dict
 
 
-def _LoadIncludeFile(include_path):
+def _LoadIncludeFile(include_path: pathlib.PosixPath) -> str:
     """Open an include file."""
 
     with open(include_path, 'r') as include_file:

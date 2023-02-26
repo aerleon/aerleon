@@ -15,10 +15,13 @@
 #
 
 """Discontinuous subnet mask summarizer."""
+from __future__ import annotations
 
 import collections
+from typing import List, Tuple, Union
 
 from aerleon.lib import nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class DSMNet:
@@ -28,7 +31,7 @@ class DSMNet:
     support discontinuous subnet masks, hence this is required.
     """
 
-    def __init__(self, address, netmask, text=''):
+    def __init__(self, address: int, netmask: int, text: str = '') -> None:
         """Creates DSMNet.
 
         Args:
@@ -43,7 +46,7 @@ class DSMNet:
     def __hash__(self):
         return hash(str(self.address) + str(self.netmask))
 
-    def __eq__(self, other):
+    def __eq__(self, other: DSMNet) -> bool:
         try:
             return self.address == other.address and self.netmask == other.netmask
         except AttributeError:
@@ -67,7 +70,7 @@ class DSMNet:
             return NotImplemented
         return not lt
 
-    def __lt__(self, other):
+    def __lt__(self, other: DSMNet) -> bool:
         try:
             if self.address != other.address:
                 return self.address < other.address
@@ -86,7 +89,7 @@ class DSMNet:
     def __str__(self):
         return ' '.join([self.address, self.netmask])
 
-    def MergeText(self, text=''):
+    def MergeText(self, text: str = '') -> str:
         """Returns self.text joined with optional text.
 
         Don't join the text if it's already contained in self.text.
@@ -105,7 +108,7 @@ class DSMNet:
             return text
 
 
-def ToDottedQuad(net, negate=False, nondsm=False):
+def ToDottedQuad(net: DSMNet, negate: bool = False, nondsm: bool = False) -> Tuple[str, str]:
     """Turns a DSMNet object into decimal dotted quad tuple.
 
     Args:
@@ -136,7 +139,7 @@ def ToDottedQuad(net, negate=False, nondsm=False):
     )
 
 
-def _PrefixlenForNonDSM(intmask):
+def _PrefixlenForNonDSM(intmask: int) -> str:
     """Turns 32 bit integer into dotted decimal with JunOS friendly.
 
     Args:
@@ -159,7 +162,7 @@ def _PrefixlenForNonDSM(intmask):
     return dotmask if int(bitmask[prefixlen:], 2) else str(prefixlen)
 
 
-def _Int32ToDottedQuad(num):
+def _Int32ToDottedQuad(num: int) -> str:
     """Turns 32 bit integer into dotted decimal notation.
 
     Args:
@@ -177,7 +180,7 @@ def _Int32ToDottedQuad(num):
     return '.'.join(octets)
 
 
-def _NacaddrNetToDSMNet(net):
+def _NacaddrNetToDSMNet(net: Union[IPv4, IPv6]) -> DSMNet:
     """Converts nacaddr.IPv4 or nacaddr.IPv6 object into DSMNet object.
 
     Args:
@@ -194,7 +197,7 @@ def _NacaddrNetToDSMNet(net):
     return DSMNet(address_as_int, netmask_as_int, net.text)
 
 
-def _ToPrettyBinaryFormat(num):
+def _ToPrettyBinaryFormat(num: int) -> str:
     """Prettily formatted string of binary representation of suplied number.
 
     Useful for debugging.
@@ -213,7 +216,7 @@ def _ToPrettyBinaryFormat(num):
     return ' '.join(reversed(byte_strings))
 
 
-def Summarize(nets):
+def Summarize(nets: List[Union[IPv4, IPv6]]) -> List[DSMNet]:
     """Summarizes networks while allowing for discontinuous subnet mask.
 
     Args:
@@ -236,7 +239,7 @@ def Summarize(nets):
     return sorted(result)
 
 
-def _SummarizeSameMask(nets):
+def _SummarizeSameMask(nets: List[DSMNet]) -> List[DSMNet]:
     """Summarizes networks while allowing for discontinuous subnet mask.
 
     Args:
