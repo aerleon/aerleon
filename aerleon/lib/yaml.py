@@ -147,7 +147,7 @@ def ParsePolicy(
 
 
 def PreprocessYAMLPolicy(
-    filename: str, base_dir: str, policy_dict: PolicyDict
+    filename: str, base_dir: str, policy_dict: Optional[PolicyDict]
 ) -> Optional[Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]]:
     """Process includes and validate the file data as a PolicyDict."""
 

@@ -146,7 +146,7 @@ class InvalidNumericProtoValue(Error):
 
 
 def TranslatePorts(
-    ports: List[str], protocols: List[Union[str]], term_name: str
+    ports: List[str], protocols: List[str], term_name: str
 ) -> List[Tuple[int, int]]:
     """Return all ports of all protocols requested.
 
@@ -2733,7 +2733,7 @@ def ParseFile(filename, definitions=None, optimize=True, base_dir='', shade_chec
 
 def ParsePolicy(
     data: str,
-    definitions: Optional[MagicMock] = None,
+    definitions: naming.Naming = None,
     optimize: bool = True,
     base_dir: str = '',
     shade_check: bool = False,
@@ -2754,6 +2754,8 @@ def ParsePolicy(
     Returns:
       policy object or False (if parse error).
     """
+    print("definitions")
+    print(type(definitions))
     try:
         if definitions:
             globals()['DEFINITIONS'] = definitions
