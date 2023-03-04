@@ -615,7 +615,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
             self.srx_policies.append((header, new_terms, filter_options))
 
-    def _FixLargePolices(self, terms: List[Any], address_family: str) -> None:
+    def _FixLargePolices(self, terms: List[policy.Term], address_family: str) -> None:
         """Loops over all terms finding terms exceeding SRXs policy limit.
 
         Args:
@@ -677,7 +677,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildPort(self, ports: List[Union[Any, Tuple[int, int]]]) -> List[Union[Any, str]]:
+    def _BuildPort(self, ports: List[Tuple[int, int]]) -> List[str]:
         """Transform specified ports into list and ranges.
 
         Args:

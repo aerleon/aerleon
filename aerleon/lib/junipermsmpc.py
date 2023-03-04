@@ -402,7 +402,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _BuildPort(self, ports: List[Union[Any, List[int], Tuple[int, int]]]) -> List[str]:
+    def _BuildPort(self, ports: List[Union[Any, Tuple[int, int]]]) -> List[str]:
         """Transform specified ports into list and ranges.
 
         Args:
@@ -419,7 +419,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 port_list.append('%s-%s' % (str(p[0]), str(p[1])))
         return port_list
 
-    def _GenerateApplications(self, filter_name: str) -> List[Union[Any, str]]:
+    def _GenerateApplications(self, filter_name: str) -> List[str]:
         target = []
         apps_set_list = []
         target.append('applications {')
@@ -614,7 +614,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 # ports
                 if 'udp' in term.protocol or 'tcp' in term.protocol:
                     if not term.source_port and not term.destination_port:
-                        term.destination_port = [[1, 65535]]
+                        term.destination_port = [(1, 65535)]
                 new_application_set = {
                     'sport': self._BuildPort(term.source_port),
                     'dport': self._BuildPort(term.destination_port),

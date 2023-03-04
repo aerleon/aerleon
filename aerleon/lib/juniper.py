@@ -764,11 +764,11 @@ class Term(aclgenerator.Term):
 
     def _Comment(
         self, addr: Union[IPv6, IPv4, DSMNet], exclude: bool = False, line_length: int = 132
-    ) -> List[Union[Any, str]]:
+    ) -> List[str]:
         """Returns address comment field if it exists.
 
         Args:
-          addr: nacaddr.IPv4 object (?)
+          addr: nacaddr.IPv4, nacaddr.IPv6, or DSMNet object
           exclude: bool - address excludes have different indentations
           line_length: integer - this is the length to which a comment will be
             truncated, no matter what.  ie, a 1000 character comment will be
@@ -880,7 +880,7 @@ class Term(aclgenerator.Term):
               string: either the lower()'ed string or the ports, hyphenated
                       if they're a range, or by itself if it's not.
             """
-            if isinstance(el, str) or isinstance(el, str):
+            if isinstance(el, str):
                 if lc:
                     return el
                 else:
