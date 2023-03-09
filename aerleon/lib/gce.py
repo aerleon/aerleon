@@ -25,11 +25,18 @@ import copy
 import ipaddress
 import json
 import re
-from typing import Any, Dict
+import sys
+from typing import Dict, List, Set, Tuple
 
 from absl import logging
 
 from aerleon.lib import gcp, nacaddr
+from aerleon.lib.policy import Policy, Term
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class Error(gcp.Error):
@@ -44,7 +51,28 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
-def IsDefaultDeny(term):
+LogConfig = TypedDict("LogConfig", {"enable": bool})
+L4Matcher = TypedDict("L4Matcher", {"IPProtocol": str, "ports": "list[str]"})
+FirewallRule = TypedDict(
+    "FirewallRule",
+    {
+        "name": str,
+        "description": str,
+        "network": str,
+        "priority": int,
+        "sourceRanges": "list[str]",
+        "destinationRanges": "list[str]",
+        "sourceTags": "list[str]",
+        "targetTags": "list[str]",
+        "allowed": "list[L4Matcher]",
+        "denied": "list[L4Matcher]",
+        "direction": str,  # Actually Enum
+        "logConfig": LogConfig,
+    },
+)
+
+
+def IsDefaultDeny(term: Term) -> bool:
     """Returns true if a term is a default deny without IPs, ports, etc."""
     skip_attrs = [
         'flattened',
@@ -77,7 +105,7 @@ def IsDefaultDeny(term):
     return True
 
 
-def GetNextPriority(priority):
+def GetNextPriority(priority: int) -> int:
     """Get the priority for the next rule."""
     return priority
 
@@ -119,7 +147,7 @@ class Term(gcp.Term):
     # Any protocol not in _ALLOW_PROTO_NAME must be passed by number.
     ALWAYS_PROTO_NUM = set(gcp.Term.PROTO_MAP.keys()) - _ALLOW_PROTO_NAME
 
-    def __init__(self, term, inet_version='inet', policy_inet_version='inet'):
+    def __init__(self, term, inet_version='inet', policy_inet_version='inet') -> None:
         super().__init__(term)
         self.term = term
         self.inet_version = inet_version
@@ -171,7 +199,7 @@ class Term(gcp.Term):
         """Convert term to a string."""
         json.dumps(self.ConvertToDict(), indent=2, separators=(',', ': '))
 
-    def _validateDirection(self):
+    def _validateDirection(self) -> None:
         if self.term.direction == 'INGRESS':
             if not self.term.source_address and not self.term.source_tag:
                 raise GceFirewallError(
@@ -191,7 +219,7 @@ class Term(gcp.Term):
             if self.term.destination_tag:
                 raise GceFirewallError('GCE Egress rule cannot have destination tag.')
 
-    def ConvertToDict(self):
+    def ConvertToDict(self) -> List[FirewallRule]:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -420,7 +448,7 @@ class GCE(gcp.GCP):
     _GOOD_DIRECTION = ['INGRESS', 'EGRESS']
     _OPTIONAL_SUPPORTED_KEYWORDS = set(['expiration', 'destination_tag', 'source_tag'])
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -438,7 +466,7 @@ class GCE(gcp.GCP):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.gce_policies = []
         max_attribute_count = 0
         total_attribute_count = 0
@@ -551,7 +579,7 @@ class GCE(gcp.GCP):
             'Total attribute count of policy %s is: %d', filter_name, total_attribute_count
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = '%s\n\n' % (
             json.dumps(self.gce_policies, indent=2, separators=(',', ': '), sort_keys=True)
         )
@@ -559,7 +587,7 @@ class GCE(gcp.GCP):
         return out
 
 
-def GetAttributeCount(dict_term: Dict[str, Any]) -> int:
+def GetAttributeCount(dict_term: Dict[str]) -> int:
     """Calculate the attribute count of a term in its dictionary form.
 
     The attribute count of a rule is the sum of the number of ports, protocols, IP
