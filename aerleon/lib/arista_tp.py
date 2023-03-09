@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""arista traffic-policy generator."""
+"""Arista traffic-policy generator."""
 
 import copy
 import re
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy
 
 #          1         2         3
 # 123456789012345678901234567890123456789
@@ -70,9 +73,9 @@ class AristaTpFragmentInV6Error(Error):
 
 
 class Config:
-    """config allows a configuration to be assembled easily.
+    """Config allows a configuration to be assembled easily.
 
-    when appending to the configuration object, the element should be indented
+    When appending to the configuration object, the element should be indented
     according to the arista traffic-policy style.
 
     a text representation of the config can be extracted with str().
@@ -83,13 +86,13 @@ class Config:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lines = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join(self.lines)
 
-    def Append(self, line_indent, line, verbatim=False):
+    def Append(self, line_indent: str, line: str, verbatim: bool = False) -> None:
         """append one line to the configuration.
 
         Args:
@@ -147,7 +150,7 @@ class Term(aclgenerator.Term):
         },
     }
 
-    def __init__(self, term, term_type, noverbose):
+    def __init__(self, term, term_type, noverbose) -> None:
         super().__init__(term)
         self.term = term
         self.term_type = term_type  # drives the address-family
@@ -156,7 +159,7 @@ class Term(aclgenerator.Term):
         if term_type not in self._TERM_TYPE:
             raise ValueError("unknown filter type: %s" % term_type)
 
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config()
 
         # a LoL which will be appended to the config at the end of this method
@@ -389,7 +392,7 @@ class Term(aclgenerator.Term):
 
         return str(config)
 
-    def _processPorts(self, term):
+    def _processPorts(self, term) -> str:
         port_str = ""
 
         # source port generation
@@ -402,7 +405,7 @@ class Term(aclgenerator.Term):
 
         return port_str
 
-    def _processICMP(self, term):
+    def _processICMP(self, term) -> Tuple[str, str]:
         icmp_types = [""]
         icmp_code_str = ""
         icmp_type_str = " type "
@@ -425,7 +428,7 @@ class Term(aclgenerator.Term):
 
         return icmp_type_str, icmp_code_str
 
-    def _processProtocol(self, term_type, term, flags):
+    def _processProtocol(self, term_type, term, flags) -> str:
         anet_proto_map = {
             "inet": {
                 # <1-255> protocol  values(s) or range(s) of protocol  values
@@ -481,7 +484,7 @@ class Term(aclgenerator.Term):
 
         return protocol_str
 
-    def _processProtocolExcept(self, term_type, term, flags):
+    def _processProtocolExcept(self, term_type, term, flags) -> str:
         # EOS does not have a protocol-except keyword. it does, however, support
         # lists of protocol-ids. given a term this function will generate the
         # appropriate list of protocol-id's which *will* be permited. within the
@@ -517,7 +520,7 @@ class Term(aclgenerator.Term):
 
         return protocol_str
 
-    def _processTermOptions(self, term, options):
+    def _processTermOptions(self, term, options) -> Tuple[List[str], List[str]]:
         flags = []
         misc_options = []
 
@@ -563,7 +566,7 @@ class Term(aclgenerator.Term):
                   just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el, lc=True):
+        def _FormattedGroup(el, lc=True) -> str:
             """Return the actual formatting of an individual element.
 
             Args:
@@ -613,7 +616,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
     SUFFIX = ".atp"
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """returns: tuple of supported tokens and sub tokens."""
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
@@ -661,7 +664,9 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _MinimizePrefixes(self, include, exclude):
+    def _MinimizePrefixes(
+        self, include: List[Union[IPv4, IPv6]], exclude: List[Union[IPv4, IPv6]]
+    ) -> Union[Tuple[List[IPv4], List[IPv4]], Tuple[List[IPv6], List[IPv6]]]:
         """Calculate a minimal set of prefixes for match conditions.
 
         Args:
@@ -694,7 +699,14 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
         return include_result, exclude_result
 
-    def _GenPrefixFieldset(self, direction, name, pfxs, ex_pfxs, af):
+    def _GenPrefixFieldset(
+        self,
+        direction: str,
+        name: str,
+        pfxs: List[Union[IPv4, IPv6]],
+        ex_pfxs: List[Union[IPv4, IPv6]],
+        af: str,
+    ) -> str:
         field_list = ""
 
         for p in pfxs:
@@ -706,7 +718,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         field_set = fieldset_hdr + field_list
         return field_set
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.arista_traffic_policies = []
         af_map_txt = {"inet": "ipv4", "inet6": "ipv6"}
 
@@ -904,7 +916,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                 )
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config()
 
         for (
