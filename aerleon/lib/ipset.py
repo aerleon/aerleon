@@ -24,6 +24,8 @@ performace of iptables firewall.
 import string
 
 from aerleon.lib import iptables, nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
+from typing import Any, List, Tuple, Union
 
 
 class Error(iptables.Error):
@@ -41,7 +43,7 @@ class Term(iptables.Term):
     _COMMENT_FORMAT = string.Template('-A $filter -m comment --comment "$comment"')
     _FILTER_TOP_FORMAT = string.Template('-A $filter')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         # This stores tuples of set name and set contents, keyed by direction.
         # For example:
@@ -50,8 +52,17 @@ class Term(iptables.Term):
         self.addr_sets = {}
 
     def _CalculateAddresses(
-        self, src_addr_list, src_addr_exclude_list, dst_addr_list, dst_addr_exclude_list
-    ):
+        self,
+        src_addr_list: List[Union[IPv4, IPv6]],
+        src_addr_exclude_list: List[Union[IPv4, IPv6]],
+        dst_addr_list: List[Union[IPv4, IPv6]],
+        dst_addr_exclude_list: List[Union[IPv4, IPv6]],
+    ) -> Tuple[
+        List[Union[IPv4, IPv6]],
+        List[Union[IPv4, IPv6]],
+        List[Union[IPv4, IPv6]],
+        List[Union[IPv4, IPv6]],
+    ]:
         """Calculates source and destination address list for a term.
 
         Since ipset is very efficient at matching large number of
@@ -90,7 +101,13 @@ class Term(iptables.Term):
         )
         return (src_addr_list, [], dst_addr_list, [])
 
-    def _CalculateAddrList(self, addr_list, addr_exclude_list, target_af, direction):
+    def _CalculateAddrList(
+        self,
+        addr_list: List[Union[IPv4, Any]],
+        addr_exclude_list: List[Any],
+        target_af: int,
+        direction: str,
+    ) -> List[IPv4]:
         """Calculates and stores address list for target AF and direction.
 
         Args:
@@ -119,7 +136,7 @@ class Term(iptables.Term):
             addr_list = [self._all_ips]
         return addr_list
 
-    def _GenerateAddressStatement(self, src_addr, dst_addr):
+    def _GenerateAddressStatement(self, src_addr: IPv4, dst_addr: IPv4) -> Tuple[str, str]:
         """Returns the address section of an individual iptables rule.
 
         See _CalculateAddresses documentation. Three cases are possible here,
@@ -157,7 +174,7 @@ class Term(iptables.Term):
                 dst_addr_stmt = '-d %s/%d' % (dst_addr.network_address, dst_addr.prefixlen)
         return (src_addr_stmt, dst_addr_stmt)
 
-    def _GenerateSetName(self, term_name, suffix):
+    def _GenerateSetName(self, term_name: str, suffix: str) -> str:
         if self.af == 'inet6':
             suffix += '-v6'
         if len(term_name) + len(suffix) + 1 > self._SET_MAX_LENGTH:
@@ -177,9 +194,7 @@ class Ipset(iptables.Iptables):
     _MARKER_END = '# end:ipset-rules'
     _GOOD_OPTIONS = ['nostate', 'abbreviateterms', 'truncateterms', 'noverbose', 'exists']
 
-    # TODO(vklimovs): some not trivial processing is happening inside this
-    # __str__, replace with explicit method
-    def __str__(self):
+    def __str__(self) -> str:
         # Actual rendering happens in __str__, so it has to be called
         # before we do set specific part.
         iptables_output = super().__str__()
@@ -192,7 +207,7 @@ class Ipset(iptables.Iptables):
         output.append(iptables_output)
         return '\n'.join(output)
 
-    def _GenerateSetConfig(self, term):
+    def _GenerateSetConfig(self, term: Term) -> List[Union[str, Any]]:
         """Generates set configuration for supplied term.
 
         Args:
