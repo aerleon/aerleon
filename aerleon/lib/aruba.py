@@ -16,11 +16,12 @@
 
 """Aruba generator."""
 
-from typing import List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from absl import logging
 
 from aerleon.lib import aclgenerator
+from aerleon.lib.policy import Policy
 
 _COMMENT_MARKER = '#'
 _TERMINATOR_MARKER = '!'
@@ -68,14 +69,14 @@ class Term(aclgenerator.Term):
         'esp': 50,
     }
 
-    def __init__(self, term, filter_type, verbose=True):
+    def __init__(self, term, filter_type, verbose=True) -> None:
         super().__init__(term)
         self.term = term
         self.filter_type = filter_type
         self.netdestinations = []
         self.verbose = verbose
 
-    def __str__(self):
+    def __str__(self) -> str:
         netdestinations = []
         ret_str = []
         term_af = self.AF_MAP.get(self.filter_type)
@@ -156,7 +157,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetdest(self, addr_netdestid, addresses, af):
+    def _GenerateNetdest(self, addr_netdestid, addresses, af) -> str:
         """Generates the netdestinations text block.
 
         Args:
@@ -180,7 +181,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetworkOrHostTokens(self, address):
+    def _GenerateNetworkOrHostTokens(self, address) -> str:
         """Generates the text block host or network identifier for netdestinations.
 
         Args:
@@ -197,7 +198,7 @@ class Term(aclgenerator.Term):
 
         return '%s %s %s' % (self._NETWORK_STRING, address.network_address, address.netmask)
 
-    def _GeneratePortTokens(self, protocols: List[str], ports: List[Tuple[int, int]]):
+    def _GeneratePortTokens(self, protocols: List[str], ports: List[Tuple[int, int]]) -> List[str]:
         """Generates string tokens for ports.
 
         Args:
@@ -233,7 +234,7 @@ class Aruba(aclgenerator.ACLGenerator):
 
     _ACL_LINE_HEADER = 'ip access-list session'
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -266,7 +267,7 @@ class Aruba(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.aruba_policies = []
 
         for header, terms in pol.filters:
@@ -287,7 +288,7 @@ class Aruba(aclgenerator.ACLGenerator):
 
             self.aruba_policies.append((filter_name, new_terms, filter_type))
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = []
 
         target.extend(aclgenerator.AddRepositoryTags('%s ' % _COMMENT_MARKER))
