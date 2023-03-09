@@ -29,9 +29,13 @@ Stolen liberally from packetfilter.py.
 """
 
 
+from typing import Any, List, Union, Dict, Set, Tuple
+
 from absl import logging
 
 from aerleon.lib import aclgenerator
+from aerleon.lib.policy import Term, Policy
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class Error(aclgenerator.Error):
@@ -86,7 +90,7 @@ class Term(aclgenerator.Term):
         'hopopt': 'ip6 protochain 0',
     }
 
-    def __init__(self, term, filter_name, af='inet', direction=''):
+    def __init__(self, term: Term, filter_name: str, af: str='inet', direction: str='') -> None:
         """Setup a new term.
 
         Args:
@@ -106,7 +110,7 @@ class Term(aclgenerator.Term):
         self.af = af
         self.direction = direction
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render config output from this term object."""
         conditions = []
 
@@ -192,7 +196,7 @@ class Term(aclgenerator.Term):
 
         return cond + '\n'
 
-    def _CheckAddressAf(self, addrs):
+    def _CheckAddressAf(self, addrs: List[Union[Any, IPv6, IPv4]]) -> List[Union[str, IPv6, IPv4]]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -206,7 +210,7 @@ class Term(aclgenerator.Term):
         return af_addrs
 
     @staticmethod
-    def JoinConditionals(condition_list, operator):
+    def JoinConditionals(condition_list: List[Union[Any, str]], operator: str) -> str:
         """Join conditionals using the specified operator.
 
         Filters out empty elements and blank strings.
@@ -228,7 +232,7 @@ class Term(aclgenerator.Term):
         res = '(%s)' % (op.join(condition_list))
         return res
 
-    def _GenerateAddrStatement(self, addrs, exclude_addrs):
+    def _GenerateAddrStatement(self, addrs: List[Union[str, IPv6, IPv4]], exclude_addrs: List[Any]) -> str:
         addrlist = []
         for d in addrs:
             if d != 'any' and str(d) != '::/0':
@@ -251,10 +255,10 @@ class Term(aclgenerator.Term):
         else:
             return Term.JoinConditionals(addrlist, 'or')
 
-    def _GenerateProtoStatement(self, protocols):
+    def _GenerateProtoStatement(self, protocols: List[Union[Any, str]]) -> str:
         return Term.JoinConditionals([self._PROTO_TABLE[p] for p in protocols], 'or')
 
-    def _GeneratePortStatement(self, ports, direction):
+    def _GeneratePortStatement(self, ports: List[Union[Any, Tuple[int, int]]], direction: str) -> str:
         conditions = []
         # term.destination_port is a list of tuples containing the start and end
         # ports of the port range.  In the event it is a single port, the start
@@ -266,7 +270,7 @@ class Term(aclgenerator.Term):
                 conditions.append('%s portrange %s-%s' % (direction, port_tuple[0], port_tuple[1]))
         return Term.JoinConditionals(conditions, 'or')
 
-    def _GenerateTcpOptions(self, options):
+    def _GenerateTcpOptions(self, options: List[Union[Any, str]]) -> str:
         opts = [str(x) for x in options]
         tcp_flags_set = []
         tcp_flags_check = []
@@ -289,7 +293,7 @@ class Term(aclgenerator.Term):
             )
         return ''
 
-    def _GenerateIcmpType(self, icmp_types, icmp_code):
+    def _GenerateIcmpType(self, icmp_types: List[int], icmp_code: List[Union[Any, int]]) -> str:
         rtr_str = ''
         if icmp_types:
             code_strings = ['']
@@ -314,7 +318,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
     SUFFIX = '.pcap'
     _TERM = Term
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize a PcapFilter generator.
 
         Takes standard ACLGenerator arguments, as well as an 'invert' kwarg.  If
@@ -332,7 +336,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
             del kwargs['invert']
         super().__init__(*args, **kwargs)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -363,7 +367,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.pcap_policies = []
         good_afs = ['inet', 'inet6', 'mixed']
         good_options = ['in', 'out']
@@ -430,7 +434,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
 
             self.pcap_policies.append((header, filter_name, filter_type, accept_terms, deny_terms))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the PF policy into config."""
         target = []
 
