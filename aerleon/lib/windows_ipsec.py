@@ -22,6 +22,8 @@ from string import Template
 from absl import logging
 
 from aerleon.lib import aclgenerator, windows
+from aerleon.lib.policy import Header
+from typing import Dict, List, Set, Tuple
 
 
 class Term(windows.Term):
@@ -195,7 +197,7 @@ class WindowsIPSec(windows.WindowsGenerator):
 
     _GOOD_AFS = ['inet']
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -207,7 +209,7 @@ class WindowsIPSec(windows.WindowsGenerator):
         del supported_sub_tokens['icmp_type']
         return supported_tokens, supported_sub_tokens
 
-    def _HandlePolicyHeader(self, header, target):
+    def _HandlePolicyHeader(self, header: Header, target: List[str]) -> None:
         policy_name = header.FilterName(self._PLATFORM) + self._POLICY_SUFFIX
         target.append(Term.CMD_PREFIX + self._POLICY_FORMAT.substitute(name=policy_name) + '\n')
 

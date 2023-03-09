@@ -21,6 +21,8 @@ import string
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
+from aerleon.lib.policy import Header, Policy, Term
+from typing import Any, Dict, List, Set, Tuple, Union
 
 CMD_PREFIX = 'netsh ipsec static add '
 
@@ -35,7 +37,7 @@ class Term(aclgenerator.Term):
     # filter rules
     _ACTION_TABLE = {}
 
-    def __init__(self, term, filter_name, filter_action, af='inet'):
+    def __init__(self, term: Term, filter_name: str, filter_action: None, af: str='inet') -> None:
         """Setup a new term.
 
         Args:
@@ -61,7 +63,7 @@ class Term(aclgenerator.Term):
 
         self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = []
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -191,7 +193,7 @@ class Term(aclgenerator.Term):
         """
         return None, None
 
-    def _HandlePreRule(self, ret_str):
+    def _HandlePreRule(self, ret_str: List[Union[str, Any]]) -> None:
         """Perform any pre-cartesian product transforms on the ret_str array.
 
         Args:
@@ -239,7 +241,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
     _GOOD_AFS = ['inet', 'inet6']
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -254,7 +256,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
         del supported_sub_tokens['option']
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Translate a policy from objects into strings."""
         self.windows_policies = []
         default_action = None
@@ -334,7 +336,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_type, default_action, new_terms)
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = []
         pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
 
@@ -372,8 +374,8 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
         target.append('')
         return '\n'.join(target)
 
-    def _HandlePolicyHeader(self, header, target):
+    def _HandlePolicyHeader(self, header: Header, target: List[str]) -> None:
         pass
 
-    def _HandleTermFooter(self, header, term, target):
+    def _HandleTermFooter(self, header: Header, term: Term, target: List[str]) -> None:
         pass
