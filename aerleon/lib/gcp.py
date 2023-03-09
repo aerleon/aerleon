@@ -7,8 +7,9 @@ Base class for GCP firewalling products.
 
 import json
 import re
-
+from typing import List
 from aerleon.lib import aclgenerator
+from aerleon.lib.policy import Term
 
 
 class Error(aclgenerator.Error):
@@ -35,7 +36,7 @@ class Term(aclgenerator.Term):
     # 'all' is needed for the dedault deny, it should not be used in a pol file.
     _ALLOW_PROTO_NAME = frozenset(['tcp', 'udp', 'icmp', 'esp', 'ah', 'ipip', 'sctp', 'all'])
 
-    def _GetPorts(self):
+    def _GetPorts(self) -> List[str]:
         """Return a port or port range in string format."""
         ports = []
         for start, end in self.term.destination_port:
@@ -45,7 +46,7 @@ class Term(aclgenerator.Term):
                 ports.append('%d-%d' % (start, end))
         return ports
 
-    def _GetLoggingSetting(self):
+    def _GetLoggingSetting(self) -> bool:
         """Return true if a term indicates that logging is desired."""
         # Supported values in GCP are '', 'true', and 'True'.
         settings = [str(x) for x in self.term.logging]
@@ -60,7 +61,7 @@ class GCP(aclgenerator.ACLGenerator):
     policies = []
     _GOOD_DIRECTION = ['INGRESS', 'EGRESS']
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the JSON blob for a GCP object."""
         out = '%s\n\n' % (
             json.dumps(self.policies, indent=2, separators=(',', ': '), sort_keys=True)
@@ -68,7 +69,7 @@ class GCP(aclgenerator.ACLGenerator):
         return out
 
 
-def IsDefaultDeny(term):
+def IsDefaultDeny(term: Term) -> bool:
     """Return true if a term is a default deny without IPs, ports, etc."""
     skip_attrs = [
         'flattened',
@@ -101,7 +102,7 @@ def IsDefaultDeny(term):
     return True
 
 
-def IsProjectIDValid(project):
+def IsProjectIDValid(project: str) -> bool:
     """Return true if a project ID is valid.
 
     https://cloud.google.com/resource-manager/reference/rest/v1/projects
@@ -120,7 +121,7 @@ def IsProjectIDValid(project):
     return bool(re.match('^[a-z][a-z0-9\\-]*[a-z0-9]$', project))
 
 
-def IsVPCNameValid(vpc):
+def IsVPCNameValid(vpc: str) -> bool:
     """Return true if a VPC name is valid.
 
     https://cloud.google.com/compute/docs/reference/rest/v1/networks
@@ -140,7 +141,7 @@ def IsVPCNameValid(vpc):
     return bool(re.match('^[a-z]$|^[a-z][a-z0-9-]*[a-z0-9]$', vpc))
 
 
-def TruncateString(raw_string, max_length):
+def TruncateString(raw_string: str, max_length: int) -> str:
     """Returns truncated raw_string based on max length.
 
     Args:
@@ -155,7 +156,7 @@ def TruncateString(raw_string, max_length):
     return raw_string
 
 
-def GetIpv6TermName(term_name):
+def GetIpv6TermName(term_name: str) -> str:
     """Returns the equivalent term name for IPv6 terms.
 
     Args:
