@@ -18,11 +18,13 @@ import collections
 import copy
 import re
 import xml.etree.ElementTree as etree
+from typing import Dict, List, Optional, Set, Tuple, Union
 from xml.dom import minidom
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
+from aerleon.lib.policy import Policy, Term
 
 
 class Error(aclgenerator.Error):
@@ -68,10 +70,17 @@ class PaloAltoFWBadIcmpTypeError(Error):
 class ServiceMap:
     """Manages service names across a single policy instance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.entries = {}
 
-    def get_service_name(self, term_name, src_ports, ports, protocol, prefix=None):
+    def get_service_name(
+        self,
+        term_name: str,
+        src_ports: Tuple[str],
+        ports: Union[Tuple[str, str], Tuple[str]],
+        protocol: str,
+        prefix: Optional[str] = None,
+    ) -> str:
         """Returns service name based on the provided ports and protocol."""
         if (src_ports, ports, protocol) in self.entries:
             return self.entries[(src_ports, ports, protocol)]["name"]
@@ -99,7 +108,7 @@ class ServiceMap:
 class Rule:
     """Extend the Term() class for PaloAlto Firewall Rules."""
 
-    def __init__(self, from_zone, to_zone, term, service_map):
+    def __init__(self, from_zone: str, to_zone: str, term: Term, service_map: ServiceMap) -> None:
         # Palo Alto Firewall rule keys
         MAX_ZONE_LENGTH = 31
 
@@ -119,7 +128,12 @@ class Rule:
             self.options.append(x)
 
     @staticmethod
-    def TermToOptions(from_zone, to_zone, term, service_map):
+    def TermToOptions(
+        from_zone: str, to_zone: str, term: Term, service_map: ServiceMap
+    ) -> Union[
+        Tuple[Dict[str, Union[List[str], str]], None],
+        Tuple[Dict[str, Union[List[str], str]], Term],
+    ]:
         """Convert term to Palo Alto security rule options."""
         options = {}
         options["from_zone"] = [from_zone]
@@ -316,7 +330,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
     INDENT = "  "
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: Policy, exp_info: int) -> None:
         self.pafw_policies = []
         self.addressbook = addressbook.Addressbook()
         self.applications = []
@@ -331,7 +345,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         self.service_map = ServiceMap()
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -371,7 +385,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Transform a policy object into a PaloAltoFW object.
 
         Args:
@@ -804,7 +818,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
             self.pafw_policies.append((header, ruleset, filter_options))
 
-    def _SortAddressBookNumCheck(self, item):
+    def _SortAddressBookNumCheck(self, item: str) -> Tuple[str, int]:
         """Used to give a natural order to the list of acl entries.
 
         Args:
@@ -840,7 +854,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 port_list.append("%s-%s" % (str(i[0]), str(i[1])))
         return port_list
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the PaloAltoFirewall policy into config."""
 
         # IPv4 addresses are normalized into the policy as IPv6 addresses
