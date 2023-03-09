@@ -22,11 +22,19 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 
 import copy
 import re
+from typing import List, Union, Dict, Set, Tuple
+import sys
 
 import yaml
 from absl import logging
 
 from aerleon.lib import aclgenerator
+from aerleon.lib.policy import Policy, Term
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class Error(aclgenerator.Error):
@@ -41,7 +49,29 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
-def IsDefaultDeny(term):
+MatchExpression = TypedDict(
+    "MatchExpression", {"key": str, "operator": str, "values": "list[str]"}
+)
+LabelSelector = TypedDict(
+    "PodSelector", {"matchLabels": Dict[str, str], "matchExpression": MatchExpression}
+)
+IPBlock = TypedDict("IPBlock", {"cidr": str, "exceot": "list[str]"})
+PolicyPeer = TypedDict(
+    "PolicyPeer",
+    {"podSelector": LabelSelector, "namespaceSelector": LabelSelector, "ipBlock": IPBlock},
+)
+PolicyPort = TypedDict("PolicyPort", {"protocol": str, "port": int, "endPort": int})
+Egress = TypedDict("Egress", {"ports": "list[PolicyPort]", "to": "list[PolicyPeer]"})
+Ingress = TypedDict("Ingress", {"ports": "list[PolicyPort]", "from": "list[PolicyPeer]"})
+Spec = TypedDict("Spec", {'podSelector': LabelSelector, 'policyTypes': "list[str]"})
+Annotations = TypedDict("Annotations", {"comment": str, "owner": str})
+Metadata = TypedDict("Metadata", {"name": str, "annotations": Annotations})
+NetworkPolicy = TypedDict(
+    "NetworkPolicy", {"apiVersion": str, "kind": str, "metadata": Metadata, "spec": Spec}
+)
+
+
+def IsDefaultDeny(term: Term) -> bool:
     """Returns true if a term is a default deny without IPs, ports, etc."""
     skip_attrs = [
         'flattened',
@@ -102,7 +132,7 @@ class Term(aclgenerator.Term):
         'all': -1,  # Used for default deny
     }
 
-    def __init__(self, term):
+    def __init__(self, term: Term) -> None:
         super().__init__(term)
         self.term = term
 
@@ -154,7 +184,7 @@ class Term(aclgenerator.Term):
         """Convert term to a string."""
         return yaml.safe_dump(self.ConvertToDict())
 
-    def _validateDirection(self):
+    def _validateDirection(self) -> None:
         if self.term.direction == 'INGRESS':
             if not self.term.source_address:
                 raise K8sNetworkPolicyError('Ingress rule missing required field "source-address"')
@@ -173,7 +203,9 @@ class Term(aclgenerator.Term):
                     'Egress rule missing required field "destination-address".'
                 )
 
-    def ConvertToDict(self):
+    def ConvertToDict(
+        self,
+    ) -> NetworkPolicy:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -284,7 +316,7 @@ class K8s(aclgenerator.ACLGenerator):
     _GOOD_DIRECTION = ['INGRESS', 'EGRESS']
     _OPTIONAL_SUPPORTED_KEYWORDS = frozenset(['expiration'])
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -302,7 +334,7 @@ class K8s(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.network_policies = []
         total_rule_count = 0
 
@@ -349,7 +381,7 @@ class K8s(aclgenerator.ACLGenerator):
 
         logging.info('Total rule count of policy %s is: %d', filter_name, total_rule_count)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.network_policies:
             return ''
         list_resource = {
