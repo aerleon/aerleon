@@ -22,10 +22,10 @@ performace of iptables firewall.
 """
 
 import string
+from typing import Any, List, Tuple, Union
 
 from aerleon.lib import iptables, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6
-from typing import Any, List, Tuple, Union
 
 
 class Error(iptables.Error):
@@ -103,11 +103,11 @@ class Term(iptables.Term):
 
     def _CalculateAddrList(
         self,
-        addr_list: List[Union[IPv4, Any]],
+        addr_list: List[Union[IPv4, IPv6]],
         addr_exclude_list: List[Any],
         target_af: int,
         direction: str,
-    ) -> List[IPv4]:
+    ) -> List[IPv4, IPv6]:
         """Calculates and stores address list for target AF and direction.
 
         Args:
@@ -207,7 +207,7 @@ class Ipset(iptables.Iptables):
         output.append(iptables_output)
         return '\n'.join(output)
 
-    def _GenerateSetConfig(self, term: Term) -> List[Union[str, Any]]:
+    def _GenerateSetConfig(self, term: Term) -> List[str]:
         """Generates set configuration for supplied term.
 
         Args:
