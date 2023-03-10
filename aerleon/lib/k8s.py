@@ -180,7 +180,7 @@ class Term(aclgenerator.Term):
                 self.term = None
                 return
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert term to a string."""
         return yaml.safe_dump(self.ConvertToDict())
 
