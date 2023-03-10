@@ -26,12 +26,12 @@ import json
 import re
 import sys
 from collections import defaultdict
-from typing import List, Union, Any, DefaultDict, Dict, Set, Tuple
+from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Term, Policy
+from aerleon.lib.policy import Policy, Term
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
