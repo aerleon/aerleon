@@ -29,13 +29,13 @@ Stolen liberally from packetfilter.py.
 """
 
 
-from typing import Any, List, Union, Dict, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Term, Policy
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
 
 
 class Error(aclgenerator.Error):
@@ -90,7 +90,9 @@ class Term(aclgenerator.Term):
         'hopopt': 'ip6 protochain 0',
     }
 
-    def __init__(self, term: Term, filter_name: str, af: str='inet', direction: str='') -> None:
+    def __init__(
+        self, term: Term, filter_name: str, af: str = 'inet', direction: str = ''
+    ) -> None:
         """Setup a new term.
 
         Args:
@@ -232,7 +234,9 @@ class Term(aclgenerator.Term):
         res = '(%s)' % (op.join(condition_list))
         return res
 
-    def _GenerateAddrStatement(self, addrs: List[Union[str, IPv6, IPv4]], exclude_addrs: List[Any]) -> str:
+    def _GenerateAddrStatement(
+        self, addrs: List[Union[str, IPv6, IPv4]], exclude_addrs: List[Any]
+    ) -> str:
         addrlist = []
         for d in addrs:
             if d != 'any' and str(d) != '::/0':
@@ -258,7 +262,9 @@ class Term(aclgenerator.Term):
     def _GenerateProtoStatement(self, protocols: List[Union[Any, str]]) -> str:
         return Term.JoinConditionals([self._PROTO_TABLE[p] for p in protocols], 'or')
 
-    def _GeneratePortStatement(self, ports: List[Union[Any, Tuple[int, int]]], direction: str) -> str:
+    def _GeneratePortStatement(
+        self, ports: List[Union[Any, Tuple[int, int]]], direction: str
+    ) -> str:
         conditions = []
         # term.destination_port is a list of tuples containing the start and end
         # ports of the port range.  In the event it is a single port, the start
