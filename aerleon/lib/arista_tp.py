@@ -554,7 +554,7 @@ class Term(aclgenerator.Term):
 
         return flags, misc_options
 
-    def _Group(self, group, lc=True):
+    def _Group(self, group, lc=True) -> str:
         """If 1 item return it, else return [item1 item2].
 
         Args:
