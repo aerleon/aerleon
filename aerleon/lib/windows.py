@@ -17,12 +17,12 @@
 """Generic Windows security policy generator; requires subclassing."""
 
 import string
+from typing import Any, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.policy import Header, Policy, Term
-from typing import Any, Dict, List, Set, Tuple, Union
 
 CMD_PREFIX = 'netsh ipsec static add '
 
@@ -37,7 +37,9 @@ class Term(aclgenerator.Term):
     # filter rules
     _ACTION_TABLE = {}
 
-    def __init__(self, term: Term, filter_name: str, filter_action: None, af: str='inet') -> None:
+    def __init__(
+        self, term: Term, filter_name: str, filter_action: None, af: str = 'inet'
+    ) -> None:
         """Setup a new term.
 
         Args:

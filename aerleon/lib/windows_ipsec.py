@@ -18,12 +18,12 @@
 
 # pylint: disable=g-importing-member
 from string import Template
+from typing import Dict, List, Set, Tuple
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, windows
 from aerleon.lib.policy import Header
-from typing import Dict, List, Set, Tuple
 
 
 class Term(windows.Term):
