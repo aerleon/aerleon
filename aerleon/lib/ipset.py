@@ -107,7 +107,7 @@ class Term(iptables.Term):
         addr_exclude_list: List[Any],
         target_af: int,
         direction: str,
-    ) -> List[IPv4, IPv6]:
+    ) -> List[Union[IPv4, IPv6]]:
         """Calculates and stores address list for target AF and direction.
 
         Args:
