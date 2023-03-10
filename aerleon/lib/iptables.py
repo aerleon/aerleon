@@ -18,13 +18,13 @@
 
 import re
 from string import Template  # pylint: disable=g-importing-member
-from typing import Any, List, Union, Dict, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
-from aerleon.lib.policy import Term, Policy
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
 
 
 class Term(aclgenerator.Term):
