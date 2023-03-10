@@ -25,31 +25,32 @@ from aerleon.lib import aclgenerator
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.policy import Policy
 
-#          1         2         3
-# 123456789012345678901234567890123456789
-# traffic-policies
-#    traffic-policy foo
-#      match dos-attaqrs-source-ip ipv4    << TERM_INDENT
-#                  1         2         3         4         5         6
-#         123456789012345678901234567890123456789012345678901234567890123456789
-#         !! i am a comment, hear me rawr  << MATCH_INDENT
-#         !!
-#         source prefix field-set          << MATCH_INDENT
-#         !
-#         actions
-#            counter edge-dos-attaqrs-source-ip-count  << ACTION_INDENT
-#            drop
-#      !
-#
-#          1         2         3
-# 123456789012345678901234567890123456789
-# traffic-policies
-#    field-set ipv4 prefix dst-hjjqurby6yftqk6fa3xx4fas << TERM_INDENT
-#       0.0.0.0/0                                       << MATCH_INDENT
-#       except 34.64.0.0/26
-#    !
-#    field-set ipv4 prefix dst-hjjqurby6yftqk6fa3xx4fas
+"""
+          1         2         3
+ 123456789012345678901234567890123456789
+ traffic-policies
+    traffic-policy foo
+      match dos-attaqrs-source-ip ipv4    << TERM_INDENT
+                  1         2         3         4         5         6
+         123456789012345678901234567890123456789012345678901234567890123456789
+         !! i am a comment, hear me rawr  << MATCH_INDENT
+         !!
+         source prefix field-set          << MATCH_INDENT
+         !
+         actions
+            counter edge-dos-attaqrs-source-ip-count  << ACTION_INDENT
+            drop
+      !
 
+          1         2         3
+ 123456789012345678901234567890123456789
+ traffic-policies
+    field-set ipv4 prefix dst-hjjqurby6yftqk6fa3xx4fas << TERM_INDENT
+       0.0.0.0/0                                       << MATCH_INDENT
+       except 34.64.0.0/26
+    !
+    field-set ipv4 prefix dst-hjjqurby6yftqk6fa3xx4fas
+"""
 # various indentation constants - see above
 INDENT_STR = " " * 3  # 3 spaces
 TERM_INDENT = 2 * INDENT_STR
