@@ -18,13 +18,13 @@
 
 import collections
 import copy
-from typing import Any, List, Optional, Union, Dict, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
-from aerleon.lib.policy import Term, VarType, Policy
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term, VarType
 
 
 class Error(aclgenerator.Error):
@@ -91,7 +91,14 @@ class Term(aclgenerator.Term):
     }
     _UNSUPPORTED_PROTOS = ['hopopt']
 
-    def __init__(self, term: Term, filter_name: str, stateful: bool=True, af: str='inet', direction: str='') -> None:
+    def __init__(
+        self,
+        term: Term,
+        filter_name: str,
+        stateful: bool = True,
+        af: str = 'inet',
+        direction: str = '',
+    ) -> None:
         """Setup a new term.
 
         Args:
@@ -374,7 +381,9 @@ class Term(aclgenerator.Term):
             proto = 'proto { %s }' % ' '.join(protocols)
         return proto
 
-    def _GenerateAddrStatement(self, addrs: List[Union[IPv4, IPv6]], exclude_addrs: List[Union[IPv4, IPv6]]) -> str:
+    def _GenerateAddrStatement(
+        self, addrs: List[Union[IPv4, IPv6]], exclude_addrs: List[Union[IPv4, IPv6]]
+    ) -> str:
         addresses = set()
         if addrs != ['any']:
             parent_token_set = set()
