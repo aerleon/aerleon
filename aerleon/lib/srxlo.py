@@ -21,8 +21,9 @@ uses the same syntax as regular Juniper stateless ACLs, with minor
 differences. This subclass effects those differences.
 """
 
-from aerleon.lib import juniper
 from typing import Dict, List, Set, Tuple
+
+from aerleon.lib import juniper
 
 
 class Term(juniper.Term):
@@ -37,7 +38,9 @@ class Term(juniper.Term):
             'icmp6' if x == 'icmpv6' else x for x in self.term.protocol_except
         ]
 
-    def NormalizeIcmpTypes(self, icmp_types: List[str], protocols: List[str], af: str) -> List[int]:
+    def NormalizeIcmpTypes(
+        self, icmp_types: List[str], protocols: List[str], af: str
+    ) -> List[int]:
         protocols = ['icmpv6' if x == 'icmp6' else x for x in protocols]
         return super().NormalizeIcmpTypes(icmp_types, protocols, af)
 
