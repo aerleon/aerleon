@@ -298,13 +298,13 @@ class Term(aclgenerator.Term):
         af: str,
         proto: List[str],
         src_addr: str,
-        src_port: Union[List[Any], str],
+        src_port: Union[List[str], str],
         dst_addr: str,
-        dst_port: Union[List[Any], str],
+        dst_port: Union[List[str], str],
         tcp_flags_set: List[str],
         tcp_flags_check: List[str],
         icmp_types: List[Union[str, int]],
-        options: List[Any],
+        options: List[str],
         stateful: bool,
     ) -> List[str]:
         """Format the string which will become a single PF entry."""
