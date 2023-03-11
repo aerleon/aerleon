@@ -24,12 +24,19 @@ import copy
 import ipaddress
 import json
 import re
+import sys
 from collections import defaultdict
-from typing import Any, Dict
+from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator
+from aerleon.lib.policy import Policy, Term
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class Error(aclgenerator.Error):
@@ -45,8 +52,23 @@ class ExceededAttributeCountError(Error):
 
 
 # Graceful handling of dict heierarchy for OpenConfig JSON.
-def RecursiveDict():
+def RecursiveDict() -> DefaultDict[Any, Any]:
     return defaultdict(RecursiveDict)
+
+
+TransportConfig = TypedDict(
+    "TransportConfig", {"source-port": Union[int, str], "destination-port": Union[int, str]}
+)
+Transport = TypedDict("Transport", {"transport": TransportConfig})
+IPConfig = TypedDict(
+    "IPConfig", {"source-address": str, "destination-address": str, "protocol": int}
+)
+IP = TypedDict("IP", {"config": IPConfig})
+ActionConfig = TypedDict("ActionConfig", {"forwarding-action": str})
+Action = TypedDict("Action", {"config": ActionConfig})
+ACLEntry = TypedDict(
+    "ACLEntry", {"actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport}
+)
 
 
 class Term(aclgenerator.Term):
@@ -63,7 +85,7 @@ class Term(aclgenerator.Term):
         6: 'ipv6',
     }
 
-    def __init__(self, term, inet_version='inet'):
+    def __init__(self, term: Term, inet_version: str = 'inet') -> None:
         super().__init__(term)
         self.term = term
         self.inet_version = inet_version
@@ -77,7 +99,9 @@ class Term(aclgenerator.Term):
         rules = self.ConvertToDict()
         json.dumps(rules, indent=2)
 
-    def ConvertToDict(self):
+    def ConvertToDict(
+        self,
+    ) -> List[ACLEntry]:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -188,7 +212,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     SUFFIX = '.oacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -204,7 +228,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.oc_policies = []
         total_rule_count = 0
 
@@ -244,7 +268,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
         logging.info('Total rule count of policy %s is: %d', filter_name, total_rule_count)
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = '%s\n\n' % (
             json.dumps(self.oc_policies, indent=2, separators=(',', ': '), sort_keys=True)
         )
