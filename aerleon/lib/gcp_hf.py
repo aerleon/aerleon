@@ -8,7 +8,7 @@ Hierarchical Firewalls (HF) are represented in a SecurityPolicy GCP resouce.
 import copy
 import re
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
@@ -570,7 +570,7 @@ class HierarchicalFirewall(gcp.GCP):
             logging.info('Policy %s quota cost: %d', policy[display_name], total_cost)
 
 
-def GetRuleTupleCount(dict_term: Dict[str], api_version: str) -> int:
+def GetRuleTupleCount(dict_term: Dict[str, Union[List, str]], api_version: str) -> int:
     """Calculate the tuple count of a rule in its dictionary form.
 
     Quota is charged based on how complex the rules are rather than simply
