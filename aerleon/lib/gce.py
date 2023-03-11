@@ -26,7 +26,7 @@ import ipaddress
 import json
 import re
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
@@ -587,7 +587,7 @@ class GCE(gcp.GCP):
         return out
 
 
-def GetAttributeCount(dict_term: Dict[str]) -> int:
+def GetAttributeCount(dict_term: Dict[str, Union[List, str]]) -> int:
     """Calculate the attribute count of a term in its dictionary form.
 
     The attribute count of a rule is the sum of the number of ports, protocols, IP
