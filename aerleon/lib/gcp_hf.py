@@ -7,11 +7,18 @@ Hierarchical Firewalls (HF) are represented in a SecurityPolicy GCP resouce.
 
 import copy
 import re
-from typing import Any, Dict
+import sys
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import gcp, nacaddr
+from aerleon.lib.policy import Policy
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class ExceededCostError(gcp.Error):
@@ -25,8 +32,8 @@ class DifferentPolicyNameError(gcp.Error):
 class ApiVersionSyntaxMap:
     """Defines the syntax changes between different API versions.
 
-    http://cloud/compute/docs/reference/rest/v1/firewallPolicies/addRule
-    http://cloud/compute/docs/reference/rest/beta/organizationSecurityPolicies/addRule
+    https://cloud.google.com/compute/docs/reference/rest/v1/firewallPolicies/addRule
+    https://cloud.google.com/compute/docs/reference/rest/beta/organizationSecurityPolicies/addRule
     """
 
     SYNTAX_MAP = {
@@ -43,6 +50,30 @@ class ApiVersionSyntaxMap:
             'layer_4_config': 'layer4Configs',
         },
     }
+
+
+L4Matcher = TypedDict("L4Matcher", {"IPProtocol": str, "ports": "list[str]"})
+MatchConfig = TypedDict(
+    "MatchConfig",
+    {"destIpRanges": "list[str]", "srcIpRanges": "list[str]", "layer4Configs": "list[L4Matcher]"},
+)
+RuleMatch = TypedDict("PropertyMap", {"config": MatchConfig, "versionedExpr": str})
+OrganizationalPolicyRule = TypedDict(
+    "OrganizationalPolicyRule",
+    {
+        "action": str,
+        "match": RuleMatch,
+        "priority": int,
+        "description": str,
+        "direction": str,
+        "enableLogging": bool,
+        "targetResources": "list[str]",
+    },
+)
+OrganizationPolicy = TypedDict(
+    "OrganizationPolicy",
+    {"displayName": str, "type": str, "rules": "list[OrganizationalPolicyRule]"},
+)
 
 
 class Term(gcp.Term):
@@ -64,7 +95,7 @@ class Term(gcp.Term):
 
     def __init__(
         self, term, address_family='inet', policy_inet_version='inet', api_version='beta'
-    ):
+    ) -> None:
         super().__init__(term)
         self.address_family = address_family
         self.term = term
@@ -77,7 +108,7 @@ class Term(gcp.Term):
         # This is only useful for term name and priority.
         self.policy_inet_version = policy_inet_version
 
-    def _ValidateTerm(self):
+    def _ValidateTerm(self) -> None:
         if self.term.destination_tag or self.term.source_tag:
             raise gcp.TermError('Hierarchical Firewall does not support tags')
 
@@ -132,7 +163,7 @@ class Term(gcp.Term):
                 % self.term.name
             )
 
-    def ConvertToDict(self, priority_index):
+    def ConvertToDict(self, priority_index) -> List[OrganizationPolicy]:
         """Converts term to dict representation of SecurityPolicy.Rule JSON format.
 
         Takes all of the attributes associated with a term (match, action, etc) and
@@ -322,7 +353,7 @@ class Term(gcp.Term):
 
         return rules
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ''
 
 
@@ -340,7 +371,7 @@ class HierarchicalFirewall(gcp.GCP):
     _SUPPORTED_API_VERSION = frozenset(['beta', 'ga'])
     _DEFAULT_MAXIMUM_COST = 100
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -368,7 +399,7 @@ class HierarchicalFirewall(gcp.GCP):
         supported_sub_tokens = {'action': {'accept', 'deny', 'next'}}
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Translates a Aerleon policy into a HF-specific data structure.
 
         Takes in a POL file, parses each term and populates the policy
@@ -539,7 +570,7 @@ class HierarchicalFirewall(gcp.GCP):
             logging.info('Policy %s quota cost: %d', policy[display_name], total_cost)
 
 
-def GetRuleTupleCount(dict_term: Dict[str, Any], api_version):
+def GetRuleTupleCount(dict_term: Dict[str, Union[List, str]], api_version: str) -> int:
     """Calculate the tuple count of a rule in its dictionary form.
 
     Quota is charged based on how complex the rules are rather than simply
