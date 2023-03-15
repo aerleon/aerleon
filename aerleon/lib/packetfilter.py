@@ -18,7 +18,7 @@
 
 import collections
 import copy
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Dict, List, Optional, Set, Tuple, Union, cast
 
 from absl import logging
 
