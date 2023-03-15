@@ -198,7 +198,7 @@ class Term(aclgenerator.Term):
 
         return cond + '\n'
 
-    def _CheckAddressAf(self, addrs: List[Union[IPv4,IPv6]]) -> List[Union[str, IPv4, IPv6]]:
+    def _CheckAddressAf(self, addrs: List[Union[IPv4, IPv6]]) -> List[Union[str, IPv4, IPv6]]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
