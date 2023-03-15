@@ -198,7 +198,7 @@ class Term(aclgenerator.Term):
 
         return cond + '\n'
 
-    def _CheckAddressAf(self, addrs: List[Union[Any, IPv6, IPv4]]) -> List[Union[str, IPv6, IPv4]]:
+    def _CheckAddressAf(self, addrs: List[Union[IPv4,IPv6]]) -> List[Union[str, IPv4, IPv6]]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -235,7 +235,7 @@ class Term(aclgenerator.Term):
         return res
 
     def _GenerateAddrStatement(
-        self, addrs: List[Union[str, IPv6, IPv4]], exclude_addrs: List[Any]
+        self, addrs: List[Union[str, IPv6, IPv4]], exclude_addrs: List[Union[str, IPv6, IPv4]]
     ) -> str:
         addrlist = []
         for d in addrs:
@@ -276,7 +276,7 @@ class Term(aclgenerator.Term):
                 conditions.append('%s portrange %s-%s' % (direction, port_tuple[0], port_tuple[1]))
         return Term.JoinConditionals(conditions, 'or')
 
-    def _GenerateTcpOptions(self, options: List[Union[Any, str]]) -> str:
+    def _GenerateTcpOptions(self, options: List[str]) -> str:
         opts = [str(x) for x in options]
         tcp_flags_set = []
         tcp_flags_check = []
