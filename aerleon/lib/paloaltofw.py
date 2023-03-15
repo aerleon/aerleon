@@ -130,10 +130,7 @@ class Rule:
     @staticmethod
     def TermToOptions(
         from_zone: str, to_zone: str, term: Term, service_map: ServiceMap
-    ) -> Union[
-        Tuple[Dict[str, Union[List[str], str]], None],
-        Tuple[Dict[str, Union[List[str], str]], Term],
-    ]:
+    ) -> Tuple[Dict[str, Union[List[str], str]], Optional[Term]]:
         """Convert term to Palo Alto security rule options."""
         options = {}
         options["from_zone"] = [from_zone]
