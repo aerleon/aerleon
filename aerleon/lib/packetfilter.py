@@ -18,11 +18,13 @@
 
 import collections
 import copy
-from typing import cast
+from typing import Dict, List, Optional, Set, Tuple, Union, cast
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term, VarType
 
 
 class Error(aclgenerator.Error):
@@ -89,7 +91,14 @@ class Term(aclgenerator.Term):
     }
     _UNSUPPORTED_PROTOS = ['hopopt']
 
-    def __init__(self, term, filter_name, stateful=True, af='inet', direction=''):
+    def __init__(
+        self,
+        term: Term,
+        filter_name: str,
+        stateful: bool = True,
+        af: str = 'inet',
+        direction: str = '',
+    ) -> None:
         """Setup a new term.
 
         Args:
@@ -111,7 +120,7 @@ class Term(aclgenerator.Term):
         self.stateful = stateful
         self.direction = direction
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render config output from this term object."""
 
         ret_str = []
@@ -267,7 +276,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(str(v) for v in ret_str if v)
 
-    def _CheckAddressAf(self, addrs):
+    def _CheckAddressAf(self, addrs: List[Union[IPv4, IPv6]]) -> List[Union[IPv4, IPv6, str]]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -282,22 +291,22 @@ class Term(aclgenerator.Term):
 
     def _FormatPart(
         self,
-        action,
-        direction,
-        log,
-        interface,
-        af,
-        proto,
-        src_addr,
-        src_port,
-        dst_addr,
-        dst_port,
-        tcp_flags_set,
-        tcp_flags_check,
-        icmp_types,
-        options,
-        stateful,
-    ):
+        action: str,
+        direction: str,
+        log: List[VarType],
+        interface: Optional[str],
+        af: str,
+        proto: List[str],
+        src_addr: str,
+        src_port: Union[List[str], str],
+        dst_addr: str,
+        dst_port: Union[List[str], str],
+        tcp_flags_set: List[str],
+        tcp_flags_check: List[str],
+        icmp_types: List[Union[str, int]],
+        options: List[str],
+        stateful: bool,
+    ) -> List[str]:
         """Format the string which will become a single PF entry."""
         line = ['%s' % self._ACTION_TABLE.get(action)]
 
@@ -358,7 +367,7 @@ class Term(aclgenerator.Term):
 
         return [' '.join(line)]
 
-    def _GenerateProtoStatement(self, protocols):
+    def _GenerateProtoStatement(self, protocols: List[str]) -> str:
         proto = ''
         if protocols:
             protocols = copy.deepcopy(protocols)
@@ -372,7 +381,9 @@ class Term(aclgenerator.Term):
             proto = 'proto { %s }' % ' '.join(protocols)
         return proto
 
-    def _GenerateAddrStatement(self, addrs, exclude_addrs):
+    def _GenerateAddrStatement(
+        self, addrs: List[Union[IPv4, IPv6]], exclude_addrs: List[Union[IPv4, IPv6]]
+    ) -> str:
         addresses = set()
         if addrs != ['any']:
             parent_token_set = set()
@@ -392,7 +403,7 @@ class Term(aclgenerator.Term):
                 addresses.add('!<%s>' % token[:31])
         return '{ %s }' % ', '.join(sorted(addresses))
 
-    def _GeneratePortStatement(self, ports):
+    def _GeneratePortStatement(self, ports: List[Tuple[int, int]]) -> str:
         port_list = []
         for port_tuple in ports:
             if port_tuple[0] == port_tuple[1]:
@@ -401,7 +412,7 @@ class Term(aclgenerator.Term):
                 port_list.append('%s:%s' % (port_tuple[0], port_tuple[1]))
         return '{ %s }' % (' '.join(list(collections.OrderedDict.fromkeys(port_list))))
 
-    def _SetDefaultAction(self):
+    def _SetDefaultAction(self) -> None:
         """If term does not specify action, use filter default action."""
         if not self.term.action:
             self.term.action[0].value = self.default_action
@@ -416,7 +427,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
     SUFFIX = '.pf'
     _TERM = Term
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -444,7 +455,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.pf_policies = []
         self.address_book = {}
         self.def_short_to_long = {}
@@ -583,7 +594,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
 
             self.pf_policies.append((header, filter_name, filter_type, new_terms))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the PF policy into config."""
         target = []
         pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
