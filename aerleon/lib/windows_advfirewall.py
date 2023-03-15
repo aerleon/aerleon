@@ -80,7 +80,7 @@ class Term(windows.Term):
         return (types, protocols)
 
     def _HandlePorts(
-        self, src_ports: List[Any], dst_ports: List[Union[Tuple[int, int], Any]]
+        self, src_ports: List[Any], dst_ports: List[Tuple[int, int]]
     ) -> Tuple[List[str], List[str]]:
         return ([self._ComposePortString(src_ports)], [self._ComposePortString(dst_ports)])
 

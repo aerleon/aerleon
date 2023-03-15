@@ -88,7 +88,7 @@ class Term(windows.Term):
         # ports = Map the ports in a straight list since multiports aren't supported
         return (self._CollapsePortTuples(src_ports), self._CollapsePortTuples(dst_ports))
 
-    def _HandlePreRule(self, ret_str):
+    def _HandlePreRule(self, ret_str: List[str]) -> None:
         ret_str.append(self._ComposeFilterList())
         ret_str.append(self._ComposeFilterAction(self._ACTION_TABLE[self.term.action[0]]))
 

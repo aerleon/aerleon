@@ -17,7 +17,7 @@
 """Generic Windows security policy generator; requires subclassing."""
 
 import string
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
@@ -195,7 +195,7 @@ class Term(aclgenerator.Term):
         """
         return None, None
 
-    def _HandlePreRule(self, ret_str: List[Union[str, Any]]) -> None:
+    def _HandlePreRule(self, ret_str: List[str]) -> None:
         """Perform any pre-cartesian product transforms on the ret_str array.
 
         Args:
