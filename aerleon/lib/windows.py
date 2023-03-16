@@ -22,8 +22,8 @@ from typing import Dict, List, Set, Tuple, Union
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
-from aerleon.lib.policy import Header, Policy, Term
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Header, Policy, Term
 
 CMD_PREFIX = 'netsh ipsec static add '
 

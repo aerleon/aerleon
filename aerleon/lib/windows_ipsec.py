@@ -23,8 +23,8 @@ from typing import Dict, List, Set, Tuple, Union
 from absl import logging
 
 from aerleon.lib import aclgenerator, windows
-from aerleon.lib.policy import Header
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Header
 
 
 class Term(windows.Term):
