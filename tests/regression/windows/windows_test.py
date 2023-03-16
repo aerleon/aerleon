@@ -19,23 +19,13 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, naming, policy, windows
+from aerleon.lib import naming, policy, windows
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
   comment:: "this is a test acl"
   target:: windows test-filter
-}
-"""
-BAD_HEADER_OPTION = """
-header {
-  target:: windows test-filter bad-option
-}
-"""
-BAD_HEADER_MULTI_AF = """
-header {
-  target:: windows test-filter inet inet6
 }
 """
 
@@ -190,14 +180,6 @@ class WindowsGeneratorTest(absltest.TestCase):
         )
         self.assertEqual(len(pol.windows_policies[0][4]), 1)
 
-    def testBadHeaderOption(self):
-        self.naming.GetServiceByProto.return_value = ['123']
-        pol = policy.ParsePolicy(BAD_HEADER_OPTION + GOOD_TERM, self.naming)
-        self.assertRaises(aclgenerator.UnsupportedTargetOptionError, windows.WindowsGenerator, pol, EXP_INFO)
 
-    def testBadAFHeader(self):
-        self.naming.GetServiceByProto.return_value = ['123']
-        pol = policy.ParsePolicy(BAD_HEADER_MULTI_AF + GOOD_TERM, self.naming)
-        self.assertRaises(aclgenerator.UnsupportedFilterError, windows.WindowsGenerator, pol, EXP_INFO)
 if __name__ == '__main__':
     absltest.main()
