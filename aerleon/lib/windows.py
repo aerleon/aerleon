@@ -23,6 +23,7 @@ from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.policy import Header, Policy, Term
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 CMD_PREFIX = 'netsh ipsec static add '
 
@@ -163,7 +164,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(str(v) for v in ret_str if v)
 
-    def _HandleIcmpTypes(self, icmp_types, protocols):
+    def _HandleIcmpTypes(self, icmp_types: List[str], protocols: List[str]) -> Tuple[None, None]:
         """Perform implementation-specific icmp_type and protocol transforms.
 
         Note that icmp_types or protocols are passed as parameters in case they
@@ -179,7 +180,9 @@ class Term(aclgenerator.Term):
         """
         return None, None
 
-    def _HandlePorts(self, src_ports, dst_ports):
+    def _HandlePorts(
+        self, src_ports: List[Tuple[int, int]], dst_ports: List[Tuple[int, int]]
+    ) -> Tuple[None, None]:
         """Perform implementation-specific port transforms.
 
         Note that icmp_types or protocols are passed as parameters in case they
@@ -205,8 +208,15 @@ class Term(aclgenerator.Term):
         pass
 
     def _CartesianProduct(
-        self, src_addr, dst_addr, protocol, icmp_types, src_ports, dst_ports, ret_str
-    ):
+        self,
+        src_addr: List[Union[IPv4, IPv6]],
+        dst_addr: List[Union[IPv4, IPv6]],
+        protocol: List[str],
+        unused_icmp_types: List[str],
+        src_port: List[str],
+        dst_port: List[str],
+        ret_str: List[str],
+    ) -> None:
         """Perform any the appropriate cartesian product of the input parameters.
 
         Args:
@@ -221,7 +231,7 @@ class Term(aclgenerator.Term):
         """
         pass
 
-    def _HandlePostRule(self, ret_str):
+    def _HandlePostRule(self, ret_str: str) -> None:
         """Perform any port-cartesian product transforms on the ret_str array.
 
         Args:

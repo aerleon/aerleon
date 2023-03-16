@@ -19,7 +19,7 @@ import string
 from typing import Any, List, Tuple, Union
 
 from aerleon.lib import windows
-from aerleon.lib.nacaddr import IPv4
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class Term(windows.Term):
@@ -54,7 +54,7 @@ class Term(windows.Term):
     }
 
     def _HandleIcmpTypes(
-        self, icmp_types: List[Union[str, Any]], protocols: List[str]
+        self, icmp_types: List[str], protocols: List[str]
     ) -> Tuple[List[str], List[str]]:
         # advfirewall actually puts this in the protocol spec, eg.:
         # icmpv4 | icmpv6 | icmpv4:type,code | icmpv6:type,code
@@ -80,19 +80,19 @@ class Term(windows.Term):
         return (types, protocols)
 
     def _HandlePorts(
-        self, src_ports: List[Any], dst_ports: List[Tuple[int, int]]
+        self, src_ports: List[Tuple[int, int]], dst_ports: List[Tuple[int, int]]
     ) -> Tuple[List[str], List[str]]:
         return ([self._ComposePortString(src_ports)], [self._ComposePortString(dst_ports)])
 
     def _CartesianProduct(
         self,
-        src_addr: List[IPv4],
-        dst_addr: List[IPv4],
+        src_addr: List[Union[IPv4, IPv6]],
+        dst_addr: List[Union[IPv4, IPv6]],
         protocol: List[str],
         unused_icmp_types: List[str],
         src_port: List[str],
         dst_port: List[str],
-        ret_str: List[Any],
+        ret_str: List[str],
     ) -> None:
         # At least advfirewall supports port ranges, unlike windows ipsec,
         # so the src and dst port lists will always be one element long.

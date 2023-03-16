@@ -18,12 +18,13 @@
 
 # pylint: disable=g-importing-member
 from string import Template
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, windows
 from aerleon.lib.policy import Header
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class Term(windows.Term):
@@ -76,7 +77,9 @@ class Term(windows.Term):
         'reject': 'block',
     }
 
-    def _HandleIcmpTypes(self, icmp_types, protocols):
+    def _HandleIcmpTypes(
+        self, icmp_types: List[str], protocols: List[str]
+    ) -> Tuple[List[str], List[str]]:
         if icmp_types:
             raise aclgenerator.UnsupportedFilterError(
                 '\n%s %s %s %s'
@@ -84,7 +87,9 @@ class Term(windows.Term):
             )
         return ([''], protocols)
 
-    def _HandlePorts(self, src_ports, dst_ports):
+    def _HandlePorts(
+        self, src_ports: List[Tuple[int, int]], dst_ports: List[Tuple[int, int]]
+    ) -> Tuple[List[str], List[str]]:
         # ports = Map the ports in a straight list since multiports aren't supported
         return (self._CollapsePortTuples(src_ports), self._CollapsePortTuples(dst_ports))
 
@@ -93,9 +98,15 @@ class Term(windows.Term):
         ret_str.append(self._ComposeFilterAction(self._ACTION_TABLE[self.term.action[0]]))
 
     def _CartesianProduct(
-        self, src_addr, dst_addr, protocol, unused_icmp_types, src_port, dst_port, ret_str
-    ):
-        # yup, the full cartesian product... this makes me cry on the inside.
+        self,
+        src_addr: List[Union[IPv4, IPv6]],
+        dst_addr: List[Union[IPv4, IPv6]],
+        protocol: List[str],
+        unused_icmp_types: List[str],
+        src_port: List[str],
+        dst_port: List[str],
+        ret_str: List[str],
+    ) -> None:
         for saddr in src_addr:
             if saddr.version != 4:
                 logging.warning(
@@ -131,7 +142,7 @@ class Term(windows.Term):
                                 )
                             )
 
-    def _CollapsePortTuples(self, port_tuples):
+    def _CollapsePortTuples(self, port_tuples: Tuple[int, int]) -> List[Union[str, int]]:
         ports = ['']
         for tpl in port_tuples:
             if tpl:
@@ -139,17 +150,26 @@ class Term(windows.Term):
                 ports = list(range(port_start, port_end + 1))
         return ports
 
-    def _ComposeFilterList(self):
+    def _ComposeFilterList(self) -> str:
         return self.CMD_PREFIX + self._FILTERLIST_FORMAT.substitute(
             name=self.term_name + self._LIST_SUFFIX
         )
 
-    def _ComposeFilterAction(self, action):
+    def _ComposeFilterAction(self, action) -> str:
         return self.CMD_PREFIX + self._FILTERACTION_FORMAT.substitute(
             name=self.term_name + self._ACTION_SUFFIX, action=action
         )
 
-    def _ComposeFilter(self, srcaddr, dstaddr, proto, srcmask, dstmask, srcport, dstport):
+    def _ComposeFilter(
+        self,
+        srcaddr: Union[IPv4, IPv6],
+        dstaddr: Union[IPv4, IPv6],
+        proto: str,
+        srcmask: int,
+        dstmask: int,
+        srcport: str,
+        dstport: str,
+    ):
         """Convert the given parameters to a netsh filter rule string."""
         atoms = []
 
@@ -177,7 +197,7 @@ class Term(windows.Term):
             name=self.term_name + self._LIST_SUFFIX, atoms=' '.join(atoms)
         )
 
-    def ComposeRule(self, policy):
+    def ComposeRule(self, policy: str):
         return self.CMD_PREFIX + self._RULE_FORMAT.substitute(
             name=self.term_name + '-rule',
             policy=policy,
@@ -213,5 +233,5 @@ class WindowsIPSec(windows.WindowsGenerator):
         policy_name = header.FilterName(self._PLATFORM) + self._POLICY_SUFFIX
         target.append(Term.CMD_PREFIX + self._POLICY_FORMAT.substitute(name=policy_name) + '\n')
 
-    def _HandleTermFooter(self, header, term, target):
+    def _HandleTermFooter(self, header: Header, term: Term, target: List[str]):
         target.append(term.ComposeRule(header.FilterName(self._PLATFORM)) + '\n')
