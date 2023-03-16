@@ -635,10 +635,10 @@ class Term(aclgenerator.Term):
             fixed_opts[p] = self._FixOptions(p, self.options)
 
         # temlet constructor
-        for saddr in sorted(fixed_src_addresses):
-            for daddr in sorted(fixed_dst_addresses):
-                for sport in sorted(source_port):
-                    for dport in sorted(destination_port):
+        for saddr in fixed_src_addresses:
+            for daddr in fixed_dst_addresses:
+                for sport in source_port:
+                    for dport in destination_port:
                         for proto in sorted(protocol):
                             opts = fixed_opts[proto]
                             # cisconx uses icmp for both ipv4 and ipv6
