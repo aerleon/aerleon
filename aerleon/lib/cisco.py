@@ -529,7 +529,7 @@ class Term(aclgenerator.Term):
         else:
             # source address not set
             source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
-        fixed_src_addresses = set([self._GetIpString(x) for x in source_address])
+        fixed_src_addresses = [self._GetIpString(x) for x in sorted(source_address)]
 
         # destination address
         if self.term.destination_address:
@@ -554,7 +554,7 @@ class Term(aclgenerator.Term):
             # destination address not set
             destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
 
-        fixed_dst_addresses = set([self._GetIpString(x) for x in destination_address])
+        fixed_dst_addresses = [self._GetIpString(x) for x in sorted(destination_address)]
 
         # ports
         source_port = [()]

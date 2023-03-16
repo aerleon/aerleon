@@ -12,8 +12,8 @@ ip access-list extended test-filter
 
 
  remark deny-to-bogons
- deny ip any 192.0.0.0 0.0.0.255
  deny ip any 192.0.2.0 0.0.0.255
+ deny ip any 192.0.0.0 0.0.0.255
 
 
  remark allow-web-to-mail
