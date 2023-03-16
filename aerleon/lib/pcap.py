@@ -262,9 +262,7 @@ class Term(aclgenerator.Term):
     def _GenerateProtoStatement(self, protocols: List[str]) -> str:
         return Term.JoinConditionals([self._PROTO_TABLE[p] for p in protocols], 'or')
 
-    def _GeneratePortStatement(
-        self, ports: List[Tuple[int, int]], direction: str
-    ) -> str:
+    def _GeneratePortStatement(self, ports: List[Tuple[int, int]], direction: str) -> str:
         conditions = []
         # term.destination_port is a list of tuples containing the start and end
         # ports of the port range.  In the event it is a single port, the start
