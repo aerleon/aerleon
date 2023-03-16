@@ -29,7 +29,7 @@ Stolen liberally from packetfilter.py.
 """
 
 
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
@@ -212,7 +212,7 @@ class Term(aclgenerator.Term):
         return af_addrs
 
     @staticmethod
-    def JoinConditionals(condition_list: List[Union[Any, str]], operator: str) -> str:
+    def JoinConditionals(condition_list: List[str], operator: str) -> str:
         """Join conditionals using the specified operator.
 
         Filters out empty elements and blank strings.
@@ -259,11 +259,11 @@ class Term(aclgenerator.Term):
         else:
             return Term.JoinConditionals(addrlist, 'or')
 
-    def _GenerateProtoStatement(self, protocols: List[Union[Any, str]]) -> str:
+    def _GenerateProtoStatement(self, protocols: List[str]) -> str:
         return Term.JoinConditionals([self._PROTO_TABLE[p] for p in protocols], 'or')
 
     def _GeneratePortStatement(
-        self, ports: List[Union[Any, Tuple[int, int]]], direction: str
+        self, ports: List[Tuple[int, int]], direction: str
     ) -> str:
         conditions = []
         # term.destination_port is a list of tuples containing the start and end
@@ -299,7 +299,7 @@ class Term(aclgenerator.Term):
             )
         return ''
 
-    def _GenerateIcmpType(self, icmp_types: List[int], icmp_code: List[Union[Any, int]]) -> str:
+    def _GenerateIcmpType(self, icmp_types: List[int], icmp_code: List[int]) -> str:
         rtr_str = ''
         if icmp_types:
             code_strings = ['']
