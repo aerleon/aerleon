@@ -18,10 +18,11 @@
 
 import re
 import xml
+from typing import Dict, List, Set, Tuple
 
 from absl import logging
 
-from aerleon.lib import aclgenerator, nacaddr
+from aerleon.lib import aclgenerator, nacaddr, policy
 
 _ACTION_TABLE = {
     'accept': 'allow',
@@ -109,7 +110,7 @@ class NsxvDuplicateTermError(Error):
 class Term(aclgenerator.Term):
     """Creates a  single ACL Term for Nsxv."""
 
-    def __init__(self, term, filter_type, applied_to=None, af=4):
+    def __init__(self, term: policy.Term, filter_type: str, applied_to: str = None, af: int = 4):
         self.term = term
         # Our caller should have already verified the address family.
         assert af in (4, 6)
@@ -117,7 +118,7 @@ class Term(aclgenerator.Term):
         self.filter_type = filter_type
         self.applied_to = applied_to
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert term to a rule string.
 
         Returns:
@@ -391,7 +392,9 @@ class Term(aclgenerator.Term):
         ret_str.extend(stripped_ret_lines)
         return ''.join(ret_str)
 
-    def _ServiceToString(self, proto, sports, dports, icmp_types):
+    def _ServiceToString(
+        self, proto: int, sports: Tuple[int, int], dports: Tuple[int, int], icmp_types: List[str]
+    ):
         """Converts service to string.
 
         Args:
@@ -495,7 +498,7 @@ class Nsxv(aclgenerator.ACLGenerator):
     )
     _FILTER_OPTIONS_DICT = {}
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -510,7 +513,7 @@ class Nsxv(aclgenerator.ACLGenerator):
         del supported_sub_tokens['option']
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int):
         self.nsxv_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -572,7 +575,7 @@ class Nsxv(aclgenerator.ACLGenerator):
 
             self.nsxv_policies.append((header, filter_name, [filter_type], new_terms))
 
-    def _ParseFilterOptions(self, filter_options):
+    def _ParseFilterOptions(self, filter_options: List[str]):
         """Parses the target in header for filter type, section_id and applied_to.
 
         Args:
@@ -631,7 +634,7 @@ class Nsxv(aclgenerator.ACLGenerator):
         self._FILTER_OPTIONS_DICT['section_id'] = section_id
         self._FILTER_OPTIONS_DICT['applied_to'] = applied_to
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the Nsxv policy."""
 
         target_header = []

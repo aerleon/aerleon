@@ -43,7 +43,7 @@ class PPP:
     Make port/protocol pairs an object for easy comparisons
     """
 
-    def __init__(self, service):
+    def __init__(self, service) -> None:
         """Init for PPP object.
 
         Args:

@@ -21,7 +21,7 @@ import datetime
 import hashlib
 import re
 import string
-from typing import Dict, List, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
@@ -125,7 +125,7 @@ class Term:
         ' $af address family.'
     )
 
-    def __init__(self, term):
+    def __init__(self, term: policy.Term) -> None:
         if term.protocol:
             for protocol in term.protocol:
                 if protocol not in self.PROTO_MAP and str(protocol) not in [
@@ -140,7 +140,7 @@ class Term:
             )
         self.term = term
 
-    def NormalizeAddressFamily(self, af):
+    def NormalizeAddressFamily(self, af: Union[int, str]) -> int:
         """Convert (if necessary) address family name to numeric value.
 
         Args:
@@ -164,7 +164,9 @@ class Term:
             )
         return af
 
-    def NormalizeIcmpTypes(self, icmp_types, protocols, af):
+    def NormalizeIcmpTypes(
+        self, icmp_types: List[str], protocols: List[str], af: int
+    ) -> List[int]:
         """Return verified list of appropriate icmp-types.
 
         Args:
@@ -293,7 +295,7 @@ class ACLGenerator:
     # platform specific restrictions.
     _TERM_MAX_LENGTH = 62
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: policy.Policy, exp_info: int) -> None:
         """Initialise an ACLGenerator.  Store policy structure for processing."""
         supported_tokens, supported_sub_tokens = self._GetSupportedTokens()
 
@@ -347,12 +349,12 @@ class ACLGenerator:
             logging.debug('\n %s', '\n'.join(all_warn))
         self._TranslatePolicy(pol, exp_info)
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         # pylint: disable=unused-argument
         """Translate policy contents to platform specific data structures."""
         raise Error('%s does not implement _TranslatePolicies()' % self._PLATFORM)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Provide a default for supported tokens and sub tokens.
 
         Returns:
@@ -405,7 +407,7 @@ class ACLGenerator:
         }
         return supported_tokens, supported_sub_tokens
 
-    def _GetSupportedTokens(self):
+    def _GetSupportedTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build our supported tokens and sub tokens.
 
         Returns:
@@ -426,7 +428,9 @@ class ACLGenerator:
         return supported_tokens, supported_sub_tokens
 
     # TODO(robankeny) Fix this function, it no longer does what it says.
-    def FixHighPorts(self, term, af='inet', all_protocols_stateful=False):
+    def FixHighPorts(
+        self, term: policy.Term, af: str = 'inet', all_protocols_stateful: bool = False
+    ):
         """Evaluate protocol and ports of term, return sane version of term.
 
         Args:
@@ -485,7 +489,13 @@ class ACLGenerator:
 
         return mod
 
-    def FixTermLength(self, term_name, abbreviate=False, truncate=False, override_max_length=None):
+    def FixTermLength(
+        self,
+        term_name: str,
+        abbreviate: bool = False,
+        truncate: bool = False,
+        override_max_length: int = None,
+    ):
         """Return a term name which is equal or shorter than _TERM_MAX_LENGTH.
 
            New term is obtained in two steps. First, if allowed, automatic
@@ -523,7 +533,7 @@ class ACLGenerator:
             'disabled.' % (new_term, term_name, override_max_length, len(new_term))
         )
 
-    def HexDigest(self, name, truncation_length=None):
+    def HexDigest(self, name: str, truncation_length: int = None):
         """Return a hexadecimal digest of the name object.
 
         Args:
@@ -540,7 +550,7 @@ class ACLGenerator:
         name_bytes = name.encode('UTF-8')
         return hashlib.sha256(name_bytes).hexdigest()[:truncation_length]
 
-    def _FilteredTerms(self, header, terms, exp_info):
+    def _FilteredTerms(self, header: policy.Header, terms: List[policy.Term], exp_info: int):
         new_terms = []
         filter_name = header.FilterName(self._PLATFORM)
         current_date = datetime.datetime.utcnow().date()
@@ -631,7 +641,7 @@ def AddRepositoryTags(
     return tags
 
 
-def WrapWords(textlist, size, joiner='\n'):
+def WrapWords(textlist: List[str], size: int, joiner: str = '\n'):
     r"""Insert breaks into the listed strings at specified width.
 
     Args:

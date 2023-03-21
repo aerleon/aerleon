@@ -12,8 +12,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
-from aerleon.lib import gcp, nacaddr
-from aerleon.lib.policy import Policy
+from aerleon.lib import gcp, nacaddr, policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
@@ -94,7 +93,11 @@ class Term(gcp.Term):
     _TERM_DESTINATION_PORTS_LIMIT = 256
 
     def __init__(
-        self, term, address_family='inet', policy_inet_version='inet', api_version='beta'
+        self,
+        term: policy.Term,
+        address_family: str = 'inet',
+        policy_inet_version: str = 'inet',
+        api_version: str = 'beta',
     ) -> None:
         super().__init__(term)
         self.address_family = address_family
@@ -163,7 +166,7 @@ class Term(gcp.Term):
                 % self.term.name
             )
 
-    def ConvertToDict(self, priority_index) -> List[OrganizationPolicy]:
+    def ConvertToDict(self, priority_index: int) -> List[OrganizationPolicy]:
         """Converts term to dict representation of SecurityPolicy.Rule JSON format.
 
         Takes all of the attributes associated with a term (match, action, etc) and
@@ -399,7 +402,7 @@ class HierarchicalFirewall(gcp.GCP):
         supported_sub_tokens = {'action': {'accept', 'deny', 'next'}}
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         """Translates a Aerleon policy into a HF-specific data structure.
 
         Takes in a POL file, parses each term and populates the policy

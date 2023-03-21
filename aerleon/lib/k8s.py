@@ -23,7 +23,7 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 import copy
 import re
 import sys
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, Set, Tuple
 
 import yaml
 from absl import logging
