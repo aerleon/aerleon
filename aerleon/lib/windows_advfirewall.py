@@ -16,7 +16,7 @@
 """Windows advfirewall policy generator."""
 
 import string
-from typing import Any, List, Tuple, Union
+from typing import List, Tuple, Union
 
 from aerleon.lib import windows
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -151,7 +151,7 @@ class Term(windows.Term):
             name=self.term_name, atoms=' '.join(atoms)
         )
 
-    def _ComposePortString(self, ports: List[Union[Tuple[int, int], Any]]) -> str:
+    def _ComposePortString(self, ports: List[Tuple[int, int]]) -> str:
         """Convert the list of ports tuples into a multiport range string."""
         if not ports:
             return ''
