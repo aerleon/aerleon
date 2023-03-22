@@ -768,7 +768,7 @@ class Nftables(aclgenerator.ACLGenerator):
         return netfilter_family, netfilter_hook, netfilter_priority, policy_default_action, verbose
 
     def _ConfigurationDictionary(
-        self, nft_pol: List[Union[policy.Header, str, str, str, int, str, bool, DefaultDict]]
+        self, nft_pol: List[Union[policy.Header, str, int, bool, DefaultDict]]
     ) -> DefaultDict[str, Union[str, DefaultDict]]:
         """NFTables configuration object.
 
