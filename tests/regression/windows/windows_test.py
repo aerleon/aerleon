@@ -168,7 +168,6 @@ class WindowsGeneratorTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testSkipEstablished(self):
-        # self.naming.GetNetAddr.return_value = _IPSET
         self.naming.GetServiceByProto.return_value = ['123']
         pol = windows.WindowsGenerator(
             policy.ParsePolicy(GOOD_HEADER + TCP_ESTABLISHED_TERM + GOOD_TERM, self.naming),
