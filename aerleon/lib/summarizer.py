@@ -53,7 +53,6 @@ class DSMNet:
             return NotImplemented
 
     def __ne__(self, other: DSMNet) -> bool:
-        print(type(other))
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
