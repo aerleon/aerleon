@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """Unittest for nacaddr.py module."""
-
+import ipaddress
 from absl.testing import absltest
 
 from aerleon.lib import nacaddr
@@ -85,9 +85,9 @@ class NacaddrUnitTest(absltest.TestCase):
         self.assertEqual(nacaddr.IP('0.0.0.0/0').supernet(), nacaddr.IP('0.0.0.0/0'))
         self.assertEqual(nacaddr.IP('::0/0').supernet(), nacaddr.IP('::0/0'))
 
-        self.assertRaises(nacaddr.PrefixlenDiffInvalidError, nacaddr.IP('1.1.1.0/24').supernet, 25)
+        self.assertRaises(ipaddress.NetmaskValueError, nacaddr.IP('1.1.1.0/24').supernet, 25)
         self.assertRaises(
-            nacaddr.PrefixlenDiffInvalidError, nacaddr.IP('::1/64', strict=False).supernet, 65
+            ipaddress.NetmaskValueError, nacaddr.IP('::1/64', strict=False).supernet, 65
         )
 
     def testAddressListExclusion(self):
