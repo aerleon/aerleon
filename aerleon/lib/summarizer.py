@@ -44,7 +44,6 @@ class DSMNet:
         self.text = text
 
     def __hash__(self) -> int:
-        print(type(hash(str(self.address) + str(self.netmask))))
         return hash(str(self.address) + str(self.netmask))
 
     def __eq__(self, other: DSMNet) -> bool:
@@ -54,7 +53,6 @@ class DSMNet:
             return NotImplemented
 
     def __ne__(self, other: DSMNet) -> bool:
-        print(type(other))
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
