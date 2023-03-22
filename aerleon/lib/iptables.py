@@ -423,14 +423,14 @@ class Term(aclgenerator.Term):
         if not term_saddr:
             term_saddr = [self._all_ips]
         if exclude_saddr:
-            term_saddr_excluded.extend(nacaddr.ExcludeAddrs(term_saddr, exclude_saddr))
+            term_saddr_excluded.extend(nacaddr.AddressListExclude(term_saddr, exclude_saddr))
 
         # destination address
         term_daddr_excluded = []
         if not term_daddr:
             term_daddr = [self._all_ips]
         if exclude_daddr:
-            term_daddr_excluded.extend(nacaddr.ExcludeAddrs(term_daddr, exclude_daddr))
+            term_daddr_excluded.extend(nacaddr.AddressListExclude(term_daddr, exclude_daddr))
 
         # Just to be safe, always have a result of at least 1 to avoid * by zero
         # returning incorrect results (10src*10dst=100, but 10src*0dst=0, not 10)
@@ -461,8 +461,8 @@ class Term(aclgenerator.Term):
         v6_dst_count = len([x for x in term_daddr if x.version == 6])
         num_pairs = v4_src_count * v4_dst_count + v6_src_count * v6_dst_count
         if num_pairs > 100:
-            new_exclude_source = nacaddr.ExcludeAddrs([self._all_ips], term_saddr)
-            new_exclude_dest = nacaddr.ExcludeAddrs([self._all_ips], term_daddr)
+            new_exclude_source = nacaddr.AddressListExclude([self._all_ips], term_saddr)
+            new_exclude_dest = nacaddr.AddressListExclude([self._all_ips], term_daddr)
             # Invert the shortest list that does not already have exclude addresses
             if len(new_exclude_source) < len(new_exclude_dest) and not exclude_saddr:
                 if len(new_exclude_source) + len(term_daddr) < num_pairs:

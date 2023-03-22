@@ -400,7 +400,7 @@ def _CollapseAddrListInternal(
             ):  # pylint disable=protected-access
                 # Preserve addr's comment, then merge with it.
                 prev_addr.AddComment(addr.text)
-                addr = ret_array.pop().Supernet()
+                addr = ret_array.pop().supernet()
                 addr_is_fresh = True
             else:
                 ret_array.append(addr)
