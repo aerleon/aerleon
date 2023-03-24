@@ -23,15 +23,17 @@ import copy
 import heapq
 import ipaddress
 import itertools
+from typing import Any, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr
+from aerleon.lib.policy import Policy
 
 ICMP_TERM_LIMIT = 8
 
 
-def JunipersrxList(name, data):
+def JunipersrxList(name: str, data: List[str]) -> str:
     return '%s [ %s ];' % (name, ' '.join(data))
 
 
@@ -72,11 +74,11 @@ class ConflictingApplicationSetsError(Error):
 
 
 class IndentList(list):
-    def __init__(self, indent, *args, **kwargs):
+    def __init__(self, indent: str, *args, **kwargs) -> None:
         self._indent = indent
         super().__init__(*args, **kwargs)
 
-    def IndentAppend(self, size, data):
+    def IndentAppend(self, size: int, data: str) -> None:
         self.append('%s%s' % (self._indent * size, data))
 
 
@@ -109,7 +111,7 @@ class Term(aclgenerator.Term):
         if expresspath:
             self.term.action = [a.replace('accept', 'expresspath') for a in self.term.action]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render config output from this term object."""
         ret_str = IndentList(JuniperSRX.INDENT)
 
@@ -300,7 +302,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
     # IPv6 are 32 bytes compared to IPv4, this is used as a multiplier.
     _IPV6_SIZE = 4
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: Policy, exp_info: int) -> None:
         self.srx_policies = []
         self.addressbook = addressbook.Addressbook()
         self.applications = []
@@ -310,7 +312,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         self.addr_book_type = set()
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -340,7 +342,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         del supported_sub_tokens['option']
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         # pylint: disable=attribute-defined-outside-init
         """Transform a policy object into a JuniperSRX object.
 
@@ -613,7 +615,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
             self.srx_policies.append((header, new_terms, filter_options))
 
-    def _FixLargePolices(self, terms, address_family):
+    def _FixLargePolices(self, terms: List[policy.Term], address_family: str) -> None:
         """Loops over all terms finding terms exceeding SRXs policy limit.
 
         Args:
@@ -675,7 +677,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildPort(self, ports):
+    def _BuildPort(self, ports: List[Tuple[int, int]]) -> List[str]:
         """Transform specified ports into list and ranges.
 
         Args:
@@ -692,7 +694,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 port_list.append('%s-%s' % (str(i[0]), str(i[1])))
         return port_list
 
-    def _GenerateAddressBook(self):
+    def _GenerateAddressBook(self) -> IndentList:
         """Creates address book."""
         target = IndentList(self.INDENT)
 
@@ -763,7 +765,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
         return target
 
-    def _GenerateApplications(self):
+    def _GenerateApplications(self) -> IndentList:
         target = IndentList(self.INDENT)
         apps_set_list = IndentList(self.INDENT)
         target.append('replace: applications {')
@@ -870,7 +872,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         target.append('}\n')
         return target
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the JuniperSRX policy into config."""
         target = IndentList(self.INDENT)
         target.append('security {')
