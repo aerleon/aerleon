@@ -15,6 +15,7 @@
 
 """Unittest for nacaddr.py module."""
 import ipaddress
+
 from absl.testing import absltest
 
 from aerleon.lib import nacaddr
