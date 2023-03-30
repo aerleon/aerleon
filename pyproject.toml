@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aerleon"
-version = "1.2.1"
+version = "1.2.2"
 description = "A firewall generation tool"
 authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
 license = "Apache-2.0"
