@@ -57,22 +57,6 @@ def IP(
     raise ValueError('Provided IP string "%s" is not a valid v4 or v6 address' % ip)
 
 
-# TODO(robankeny) remove once at 3.7
-@staticmethod
-def _is_subnet_of(
-    a: Union[IPv4, IPv6], b: Union[IPv4, IPv6]
-) -> bool:  # pylint: disable=invalid-name
-    try:
-        # Always false if one is v4 and the other is v6.
-        if a.version != b.version:
-            raise TypeError('%s and %s are not of the same version' % (a, b))
-        return (
-            b.network_address <= a.network_address and b.broadcast_address >= a.broadcast_address
-        )
-    except AttributeError:
-        raise TypeError('Unable to test subnet containment between %s and %s' % (a, b))
-
-
 class IPv4(ipaddress.IPv4Network):
     """This subclass allows us to keep text comments related to each object."""
 
@@ -143,13 +127,13 @@ class IPv4(ipaddress.IPv4Network):
           An IPv4 object
 
         Raises:
-          PrefixlenDiffInvalidError: Raised when prefixlen - prefixlen_diff results
+          ipaddress.NetmaskValueError: Raised when prefixlen - prefixlen_diff results
             in a negative number.
         """
         if self.prefixlen == 0:
             return self
         if self.prefixlen - prefixlen_diff < 0:
-            raise PrefixlenDiffInvalidError(
+            raise ipaddress.NetmaskValueError(
                 'current prefixlen is %d, cannot have a prefixlen_diff of %d'
                 % (self.prefixlen, prefixlen_diff)
             )
@@ -159,10 +143,6 @@ class IPv4(ipaddress.IPv4Network):
             token=self.token,
         )
         return ret_addr
-
-    # Backwards compatibility name from v1.
-    Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
 
 class IPv6(ipaddress.IPv6Network):
@@ -220,13 +200,13 @@ class IPv6(ipaddress.IPv6Network):
           An IPv4 object
 
         Raises:
-          PrefixlenDiffInvalidError: Raised when prefixlen - prefixlen_diff results
+          ipaddress.NetmaskValueError: Raised when prefixlen - prefixlen_diff results
             in a negative number.
         """
         if self.prefixlen == 0:
             return self
         if self.prefixlen - prefixlen_diff < 0:
-            raise PrefixlenDiffInvalidError(
+            raise ipaddress.NetmaskValueError(
                 'current prefixlen is %d, cannot have a prefixlen_diff of %d'
                 % (self.prefixlen, prefixlen_diff)
             )
@@ -236,10 +216,6 @@ class IPv6(ipaddress.IPv6Network):
             token=self.token,
         )
         return ret_addr
-
-    # Backwards compatibility name from v1.
-    Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
     def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
@@ -400,7 +376,7 @@ def _CollapseAddrListInternal(
             ):  # pylint disable=protected-access
                 # Preserve addr's comment, then merge with it.
                 prev_addr.AddComment(addr.text)
-                addr = ret_array.pop().Supernet()
+                addr = ret_array.pop().supernet()
                 addr_is_fresh = True
             else:
                 ret_array.append(addr)
@@ -514,13 +490,6 @@ def AddressListExclude(
         return CollapseAddrList(ret_array + superset)
     else:
         return sorted(set(ret_array + superset))
-
-
-ExcludeAddrs = AddressListExclude
-
-
-class PrefixlenDiffInvalidError(ipaddress.NetmaskValueError):
-    """Holdover from ipaddr v1."""
 
 
 if __name__ == '__main__':

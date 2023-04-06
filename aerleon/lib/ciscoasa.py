@@ -105,7 +105,7 @@ class Term(cisco.ExtendedTerm):
                 'source_address_exclude', self.af
             )
             if source_address_exclude:
-                source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
+                source_address = nacaddr.AddressListExclude(source_address, source_address_exclude)
             if self.enable_dsmo and len(source_address) > 1:
                 source_address = summarizer.Summarize(source_address)
         else:
@@ -119,7 +119,7 @@ class Term(cisco.ExtendedTerm):
                 'destination_address_exclude', self.af
             )
             if destination_address_exclude:
-                destination_address = nacaddr.ExcludeAddrs(
+                destination_address = nacaddr.AddressListExclude(
                     destination_address, destination_address_exclude
                 )
             if self.enable_dsmo and len(destination_address) > 1:

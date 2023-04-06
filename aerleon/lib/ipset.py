@@ -129,7 +129,7 @@ class Term(iptables.Term):
                 for addr_exclude in addr_exclude_list
                 if addr_exclude.version == target_af
             ]
-            addr_list = nacaddr.ExcludeAddrs(addr_list, addr_exclude_list)
+            addr_list = nacaddr.AddressListExclude(addr_list, addr_exclude_list)
         if len(addr_list) > 1:
             set_name = self._GenerateSetName(self.term.name, direction)
             self.addr_sets[direction] = (set_name, addr_list)

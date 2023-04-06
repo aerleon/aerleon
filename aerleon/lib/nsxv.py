@@ -213,7 +213,9 @@ class Term(aclgenerator.Term):
                     'source_address_exclude', af
                 )
                 if source_address_exclude:
-                    source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
+                    source_address = nacaddr.AddressListExclude(
+                        source_address, source_address_exclude
+                    )
 
                 if source_address:
                     if af == 4:
@@ -229,7 +231,7 @@ class Term(aclgenerator.Term):
                     'destination_address_exclude', af
                 )
                 if destination_address_exclude:
-                    destination_address = nacaddr.ExcludeAddrs(
+                    destination_address = nacaddr.AddressListExclude(
                         destination_address, destination_address_exclude
                     )
 

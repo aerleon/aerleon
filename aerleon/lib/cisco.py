@@ -516,7 +516,7 @@ class Term(aclgenerator.Term):
                 'source_address_exclude', self.af
             )
             if source_address_exclude:
-                source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
+                source_address = nacaddr.AddressListExclude(source_address, source_address_exclude)
             if not source_address:
                 logging.warning(
                     self.NO_AF_LOG_ADDR.substitute(
@@ -538,7 +538,7 @@ class Term(aclgenerator.Term):
                 'destination_address_exclude', self.af
             )
             if destination_address_exclude:
-                destination_address = nacaddr.ExcludeAddrs(
+                destination_address = nacaddr.AddressListExclude(
                     destination_address, destination_address_exclude
                 )
             if not destination_address:

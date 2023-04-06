@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Unittest for nacaddr.py module."""
+import ipaddress
 
 from absl.testing import absltest
 
@@ -75,19 +76,19 @@ class NacaddrUnitTest(absltest.TestCase):
         self.assertEqual(self.addr2.text, 'An IPv6 Address')
 
     def testSupernetting(self):
-        self.assertEqual(self.addr1.Supernet().text, 'The 10 block')
-        self.assertEqual(self.addr2.Supernet().text, 'An IPv6 Address')
-        self.assertEqual(self.addr1.Supernet().prefixlen, 7)
-        self.assertEqual(self.addr2.Supernet().prefixlen, 63)
+        self.assertEqual(self.addr1.supernet().text, 'The 10 block')
+        self.assertEqual(self.addr2.supernet().text, 'An IPv6 Address')
+        self.assertEqual(self.addr1.supernet().prefixlen, 7)
+        self.assertEqual(self.addr2.supernet().prefixlen, 63)
 
         token_ip = nacaddr.IP('1.1.1.0/24', token='FOO_TOKEN')
-        self.assertEqual(token_ip.Supernet().token, 'FOO_TOKEN')
-        self.assertEqual(nacaddr.IP('0.0.0.0/0').Supernet(), nacaddr.IP('0.0.0.0/0'))
-        self.assertEqual(nacaddr.IP('::0/0').Supernet(), nacaddr.IP('::0/0'))
+        self.assertEqual(token_ip.supernet().token, 'FOO_TOKEN')
+        self.assertEqual(nacaddr.IP('0.0.0.0/0').supernet(), nacaddr.IP('0.0.0.0/0'))
+        self.assertEqual(nacaddr.IP('::0/0').supernet(), nacaddr.IP('::0/0'))
 
-        self.assertRaises(nacaddr.PrefixlenDiffInvalidError, nacaddr.IP('1.1.1.0/24').Supernet, 25)
+        self.assertRaises(ipaddress.NetmaskValueError, nacaddr.IP('1.1.1.0/24').supernet, 25)
         self.assertRaises(
-            nacaddr.PrefixlenDiffInvalidError, nacaddr.IP('::1/64', strict=False).Supernet, 65
+            ipaddress.NetmaskValueError, nacaddr.IP('::1/64', strict=False).supernet, 65
         )
 
     def testAddressListExclusion(self):
