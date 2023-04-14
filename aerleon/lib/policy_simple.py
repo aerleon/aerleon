@@ -45,12 +45,12 @@ class Field:
         indent = len(f) + 5
         return '%s::%s' % (f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
 
-    def __eq__(self, o: "Target") -> bool:
+    def __eq__(self, o: Target) -> bool:
         if not isinstance(o, self.__class__):
             return False
         return self.value == o.value
 
-    def __ne__(self, o: "Target") -> bool:
+    def __ne__(self, o: Target) -> bool:
         return not self == o
 
     def Append(self, value: str) -> None:

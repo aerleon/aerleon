@@ -21,9 +21,8 @@ from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
-from aerleon.lib import aclgenerator
+from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv4, IPv6
-from aerleon.lib.policy import Policy
 
 """
           1         2         3
@@ -151,7 +150,7 @@ class Term(aclgenerator.Term):
         },
     }
 
-    def __init__(self, term, term_type, noverbose) -> None:
+    def __init__(self, term: policy.Term, term_type: str, noverbose: bool) -> None:
         super().__init__(term)
         self.term = term
         self.term_type = term_type  # drives the address-family
@@ -393,7 +392,7 @@ class Term(aclgenerator.Term):
 
         return str(config)
 
-    def _processPorts(self, term) -> str:
+    def _processPorts(self, term: policy.Term) -> str:
         port_str = ""
 
         # source port generation
@@ -406,7 +405,7 @@ class Term(aclgenerator.Term):
 
         return port_str
 
-    def _processICMP(self, term) -> Tuple[str, str]:
+    def _processICMP(self, term: policy.Term) -> Tuple[str, str]:
         icmp_types = [""]
         icmp_code_str = ""
         icmp_type_str = " type "
@@ -429,7 +428,7 @@ class Term(aclgenerator.Term):
 
         return icmp_type_str, icmp_code_str
 
-    def _processProtocol(self, term_type, term, flags) -> str:
+    def _processProtocol(self, term_type: str, term: policy.Term, flags: List[str]) -> str:
         anet_proto_map = {
             "inet": {
                 # <1-255> protocol  values(s) or range(s) of protocol  values
@@ -485,7 +484,7 @@ class Term(aclgenerator.Term):
 
         return protocol_str
 
-    def _processProtocolExcept(self, term_type, term, flags) -> str:
+    def _processProtocolExcept(self, term_type: str, term: policy.Term, flags: List[str]) -> str:
         # EOS does not have a protocol-except keyword. it does, however, support
         # lists of protocol-ids. given a term this function will generate the
         # appropriate list of protocol-id's which *will* be permited. within the
@@ -521,7 +520,9 @@ class Term(aclgenerator.Term):
 
         return protocol_str
 
-    def _processTermOptions(self, term, options) -> Tuple[List[str], List[str]]:
+    def _processTermOptions(
+        self, term: policy.Term, options: List[str]
+    ) -> Tuple[List[str], List[str]]:
         flags = []
         misc_options = []
 
@@ -554,7 +555,7 @@ class Term(aclgenerator.Term):
 
         return flags, misc_options
 
-    def _Group(self, group, lc=True) -> str:
+    def _Group(self, group: List[Union[str, Tuple[int, int]]], lc: bool = True) -> str:
         """If 1 item return it, else return [item1 item2].
 
         Args:
@@ -719,7 +720,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         field_set = fieldset_hdr + field_list
         return field_set
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.arista_traffic_policies = []
         af_map_txt = {"inet": "ipv4", "inet6": "ipv6"}
 

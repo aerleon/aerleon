@@ -16,12 +16,10 @@
 
 """Aruba generator."""
 
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
-from absl import logging
-
-from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Policy
+from aerleon.lib import aclgenerator, policy
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 _COMMENT_MARKER = '#'
 _TERMINATOR_MARKER = '!'
@@ -69,7 +67,7 @@ class Term(aclgenerator.Term):
         'esp': 50,
     }
 
-    def __init__(self, term, filter_type, verbose=True) -> None:
+    def __init__(self, term: policy.Term, filter_type: str, verbose: bool = True) -> None:
         super().__init__(term)
         self.term = term
         self.filter_type = filter_type
@@ -157,7 +155,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetdest(self, addr_netdestid, addresses, af) -> str:
+    def _GenerateNetdest(self, addr_netdestid: str, addresses: Union[IPv4, IPv6], af: int) -> str:
         """Generates the netdestinations text block.
 
         Args:
@@ -181,7 +179,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetworkOrHostTokens(self, address) -> str:
+    def _GenerateNetworkOrHostTokens(self, address: Union[IPv4, IPv6]) -> str:
         """Generates the text block host or network identifier for netdestinations.
 
         Args:
@@ -267,7 +265,7 @@ class Aruba(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.aruba_policies = []
 
         for header, terms in pol.filters:

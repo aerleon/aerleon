@@ -14,8 +14,7 @@ from typing import Dict, List, Set, Tuple
 
 from absl import logging
 
-from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Policy
+from aerleon.lib import aclgenerator, policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
@@ -53,7 +52,9 @@ class Term(aclgenerator.Term):
 
     _MAX_TERM_COMMENT_LENGTH = 64
 
-    def __init__(self, term, address_family='inet', verbose=True) -> None:
+    def __init__(
+        self, term: policy.Term, address_family: str = 'inet', verbose: bool = True
+    ) -> None:
         super().__init__(term)
         self.term = term
         self.address_family = address_family
@@ -62,7 +63,7 @@ class Term(aclgenerator.Term):
     def __str__(self) -> str:
         return ''
 
-    def ConvertToDict(self, priority_index) -> List[PolicyRule]:
+    def ConvertToDict(self, priority_index: int) -> List[PolicyRule]:
         """Converts term to dictionary representation of CloudArmor's JSON format.
 
         Takes all of the attributes associated with a term (match, action, etc) and
@@ -201,7 +202,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
         supported_sub_tokens = {'action': {'accept', 'deny'}}
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         """Translates a Aerleon policy into a CloudArmor-specific data structure.
 
         Takes in a POL file, parses each term and populates the cloudarmor_policies
