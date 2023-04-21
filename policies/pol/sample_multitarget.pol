@@ -10,6 +10,7 @@ header {
   # compatible with iptables-restore (most people will prefer speedway)
   target:: juniper edge-inbound inet
   target:: juniperevo # This comment addresses just the value 'juniperevo'
+          # This is an inter-value block comment
           edge-inbound inet6 ingress
   target:: msmpc edge-inbound mixed ingress
   target:: cisco edge-inbound mixed

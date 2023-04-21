@@ -1609,7 +1609,7 @@ class VarType:
     PORT_MIRROR = 64
     SZONE = 65
     DZONE = 66
-    TARGET = 67
+    TARGET = 67  # TODO(jb) - subclass VarType into FieldLine and add TARGET type there
 
     def __init__(self, var_type, value, field_comment=None):
         self.var_type = var_type
@@ -1621,6 +1621,7 @@ class VarType:
         else:
             self.value = value
         self.field_comment = field_comment
+        self.above_comment = None
 
     def __str__(self):
         if self.field_comment:
@@ -3857,9 +3858,14 @@ class ValueExpr:
     def __init__(self, value: "Any", comment: "Optional[str]" = None):
         self.value = value
         self.comment = comment
+        self.before_comment = None
 
     def __repr__(self):
-        return f"ValueExpr [{self.value}, {self.comment}]"
+        repr = ["ValueExpr "]
+        if self.before_comment:
+            repr.append(f" before_comment={self.before_comment}\"")
+        repr.append(f" [{self.value}, {self.comment}]")
+        return ''.join(repr)
 
 
 # pylint: enable=unused-argument,invalid-name,g-short-docstring-punctuation
