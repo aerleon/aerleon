@@ -20,7 +20,7 @@ class Addressbook:
 
     def AddHostname(self, zone: str, hostname_list: List[str]):
         """Create an entry in the addressbook for a hostname.
-        
+
         Args:
           zone: zone within the addressbook to insert into.
           hostname_list: A list of hostnames to add to the addressbook.

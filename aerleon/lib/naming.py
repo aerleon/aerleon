@@ -538,6 +538,7 @@ class Naming:
                 if parts[1].upper() == proto:
                     services_set.add(parts[0])
         return sorted(services_set)
+
     def GetHostnames(self, query: str) -> List[str]:
         returnlist = []
         data = query.split('#')
@@ -558,6 +559,7 @@ class Naming:
             else:
                 returnlist.append(hostname.Hostname(name, token, token, comment))
         return returnlist
+
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
         """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
@@ -831,6 +833,7 @@ class Naming:
     def _ParseYamlNetworks(self, file_data: Dict[str, Any], file_name: str) -> None:
         def fstr(value: str, comment: str) -> str:
             return f'{value} { f"# {comment}"  if comment else ""}'
+
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
             logging.warning(
                 UserMessage(
@@ -892,10 +895,10 @@ class Naming:
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
                     elif 'hostname' in item and isinstance(item['hostname'], str):
-                       value = item['hostname']
+                        value = item['hostname']
                     else:
-                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
-                         continue
+                        logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
+                        continue
                     if 'comment' in item and isinstance(item['comment'], str):
                         comment = item['comment']
 
@@ -909,7 +912,9 @@ class Naming:
                     addr_unit.items.append(f'{value} # {comment}')
                     hostname_unit.items.append(f'{value} # {comment}')
 
-                if network_ref and (network_ref not in self.networks or network_ref not in self.hostnames):
+                if network_ref and (
+                    network_ref not in self.networks or network_ref not in self.hostnames
+                ):
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
