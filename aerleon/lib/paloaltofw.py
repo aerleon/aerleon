@@ -871,7 +871,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             groups = []
         for group in groups:
             count = 0
-            for ip in self.addressbook.addressbook[''][group]:
+            for ip in self.addressbook.addressbook[''][group].addresses:
                 name = f'{ip.parent_token}_{count}'
                 count = count + 1
                 address = ip.with_prefixlen

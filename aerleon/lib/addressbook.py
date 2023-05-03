@@ -2,14 +2,42 @@ import collections
 import heapq
 import ipaddress
 import itertools
+from dataclasses import dataclass
 from typing import List, Union
 
 from aerleon.lib.nacaddr import IPv4, IPv6
 
 
+@dataclass
+class AddressEntry:
+    addresses: List[Union[IPv4, IPv6]]
+    hostnames: List[str]
+
+
 class Addressbook:
     def __init__(self) -> None:
         self.addressbook = collections.OrderedDict()
+
+    def AddHostname(self, zone: str, hostname_list: List[str]):
+        """Create an entry in the addressbook for a hostname.
+        
+        Args:
+          zone: zone within the addressbook to insert into.
+          hostname_list: A list of hostnames to add to the addressbook.
+        """
+        if zone not in self.addressbook:
+            self.addressbook[zone] = collections.defaultdict(lambda: AddressEntry([], []))
+        for parent_token, hostname_list in itertools.groupby(
+            sorted(
+                hostname_list,
+                key=lambda host: (
+                    host.parent_token,
+                    ipaddress.get_mixed_type_key(host),
+                ),
+            ),
+            key=lambda host: host.parent_token,
+        ):
+            self.addressbook[zone][parent_token].hostnames = [i.name for i in hostname_list]
 
     def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.
@@ -67,7 +95,7 @@ class Addressbook:
                     yield address
 
         if zone not in self.addressbook:
-            self.addressbook[zone] = collections.defaultdict(list)
+            self.addressbook[zone] = collections.defaultdict(lambda: AddressEntry([], []))
 
         # sort by (parent_token, version, address),
         # then partition by parent_token
@@ -83,15 +111,15 @@ class Addressbook:
             key=lambda address: address.parent_token,
         ):
             # merge sorted lists of IP objects
-            self.addressbook[zone][parent_token] = list(
+            self.addressbook[zone][parent_token].addresses = list(
                 heapq.merge(
-                    self.addressbook[zone][parent_token],
+                    self.addressbook[zone][parent_token].addresses,
                     address_list,
                     key=ipaddress.get_mixed_type_key,
                 )
             )
 
             # drop redundant addresses and networks
-            self.addressbook[zone][parent_token] = list(
-                _drop_subnets(self.addressbook[zone][parent_token])
+            self.addressbook[zone][parent_token].addresses = list(
+                _drop_subnets(self.addressbook[zone][parent_token].addresses)
             )

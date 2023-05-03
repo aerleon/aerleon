@@ -208,9 +208,9 @@ class ObjectGroup:
         # for using cisco, which has decided to implement its own meta language.
 
         # Create network object-groups
-        for name, ips in self.addressbook.addressbook[''].items():
+        for name, addr_entries in self.addressbook.addressbook[''].items():
             for version in (4, 6):
-                vips = [i for i in ips if i.version == version]
+                vips = [i for i in addr_entries.addresses if i.version == version]
                 if vips:
 
                     ret_str.append(f'object-group network ipv{version} {name}')

@@ -530,8 +530,8 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 # policy can be at the same time inet and inet6.
                 if self._GLOBAL_ADDR_BOOK in self.addr_book_type:
                     for zone in self.addressbook.addressbook:
-                        for _, ips in sorted(self.addressbook.addressbook[zone].items()):
-                            ips = [i for i in ips]
+                        for _, addr_entries in sorted(self.addressbook.addressbook[zone].items()):
+                            ips = [i for i in addr_entries.addresses]
                             if term.source_address == ips:
                                 term.source_address = ips
                             if term.destination_address == ips:
@@ -710,7 +710,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(2, 'global {')
             for zone in self.addressbook.addressbook:
                 for group in self.addressbook.addressbook[zone]:
-                    for address in self.addressbook.addressbook[zone][group]:
+                    for address in self.addressbook.addressbook[zone][group].addresses:
                         global_address_book[group].append(address)
             names = sorted(global_address_book.keys())
             for name in names:
@@ -744,7 +744,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 # building individual addresses
                 groups = sorted(self.addressbook.addressbook[zone])
                 for group in groups:
-                    ips = nacaddr.SortAddrList(self.addressbook.addressbook[zone][group])
+                    ips = nacaddr.SortAddrList(self.addressbook.addressbook[zone][group].addresses)
                     ips = nacaddr.CollapseAddrList(ips)
                     self.addressbook.addressbook[zone][group] = ips
                     count = 0
