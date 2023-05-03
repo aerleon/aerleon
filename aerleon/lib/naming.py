@@ -216,6 +216,7 @@ class Naming:
         self.current_symbol = None
         self.services = {}
         self.networks = {}
+        self.hostnames = {}
         self.unseen_services = {}
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
@@ -537,7 +538,26 @@ class Naming:
                 if parts[1].upper() == proto:
                     services_set.add(parts[0])
         return sorted(services_set)
+    def GetHostnames(self, query: str) -> List[str]:
+        returnlist = []
+        data = query.split('#')
+        token = data[0].split()[0]
+        if token not in self.hostnames:
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
+        for i in self.hostnames[token].items:
+            comment = ''
+            if i.find('#') > -1:
+                (name, comment) = i.split('#', 1)
+            else:
+                name = i
 
+            name = name.strip()
+            # Check if hostname is actually a subtoken
+            if self.token_re.match(name):
+                returnlist.extend(self.GetNet(hostname))
+            else:
+                returnlist.append(hostname.Hostname(name, token, token, comment))
+        return returnlist
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
         """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
@@ -809,6 +829,8 @@ class Naming:
             self._ParseYamlServices(file_data, file_name)
 
     def _ParseYamlNetworks(self, file_data: Dict[str, Any], file_name: str) -> None:
+        def fstr(value: str, comment: str) -> str:
+            return f'{value} { f"# {comment}"  if comment else ""}'
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
             logging.warning(
                 UserMessage(
@@ -840,10 +862,12 @@ class Naming:
                     f'\nMultiple definitions found for network: {symbol}'
                 )
 
-            unit = _ItemUnit(symbol)
+            addr_unit = _ItemUnit(symbol)
+            hostname_unit = _ItemUnit(symbol)
 
             # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.networks[symbol] = unit
+            self.networks[symbol] = addr_unit
+            self.hostnames[symbol] = hostname_unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
 
@@ -852,6 +876,7 @@ class Naming:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
                 #    'address': A specific IP address or CIDR range
+                #    'hostname': A hostname, either FQDN or shortened.
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'address' or 'name' must be present in any dictionary item
@@ -866,22 +891,25 @@ class Naming:
                         value = network_ref = item['name']
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
+                    elif 'hostname' in item and isinstance(item['hostname'], str):
+                       value = item['hostname']
                     else:
-                        logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
-                        continue
-
+                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
+                         continue
                     if 'comment' in item and isinstance(item['comment'], str):
                         comment = item['comment']
+
                 else:
                     logging.info(f'\nUnexpected symbol definition: {symbol}')
                     continue
-
                 if comment is None:
-                    unit.items.append(value)
+                    addr_unit.items.append(value)
+                    hostname_unit.items.append(value)
                 else:
-                    unit.items.append(f'{value} # {comment}')
+                    addr_unit.items.append(f'{value} # {comment}')
+                    hostname_unit.items.append(f'{value} # {comment}')
 
-                if network_ref and network_ref not in self.networks:
+                if network_ref and (network_ref not in self.networks or network_ref not in self.hostnames):
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
