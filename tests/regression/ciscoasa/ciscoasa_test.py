@@ -188,7 +188,7 @@ class CiscoASATest(parameterized.TestCase):
         ]
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
         self.assertIn(expected, str(pol))
-    
+
     @capture.stdout
     def testHostAddressFormat(self):
         defs = naming.Naming()
@@ -204,11 +204,11 @@ class CiscoASATest(parameterized.TestCase):
                 destination-address: FOO
                 action: accept
         """
-        pol = ciscoasa.CiscoASA(_YamlParsePolicy(
-            HEADER, definitions=defs), EXP_INFO)
+        pol = ciscoasa.CiscoASA(_YamlParsePolicy(HEADER, definitions=defs), EXP_INFO)
         print(pol)
-        self.assertIn('access-list allowtointernet extended permit ip host 10.0.0.1 host 10.0.0.1',
-                      str(pol))
+        self.assertIn(
+            'access-list allowtointernet extended permit ip host 10.0.0.1 host 10.0.0.1', str(pol)
+        )
 
 
 def _YamlParsePolicy(
@@ -222,5 +222,7 @@ def _YamlParsePolicy(
         optimize=optimize,
         shade_check=shade_check,
     )
+
+
 if __name__ == '__main__':
     absltest.main()
