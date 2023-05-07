@@ -20,8 +20,8 @@ from unittest import mock
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import ciscoasa, nacaddr, naming, policy
-from tests.regression_utils import capture
 from aerleon.lib import yaml as yaml_frontend
+from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
