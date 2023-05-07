@@ -123,7 +123,6 @@ class Term(cisco.ExtendedTerm):
                     destination_address, destination_address_exclude
                 )
             if self.enable_dsmo and len(destination_address) > 1:
-                
                 destination_address = summarizer.Summarize(destination_address)
         else:
             # destination address not set

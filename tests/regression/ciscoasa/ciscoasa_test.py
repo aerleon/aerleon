@@ -188,7 +188,7 @@ class CiscoASATest(parameterized.TestCase):
         ]
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
         print(pol)
-        # self.assertIn(expected, str(pol))
+        self.assertIn(expected, str(pol))
 
 
 if __name__ == '__main__':
