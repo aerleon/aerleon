@@ -43,7 +43,7 @@ class DSMNet:
         self.netmask = netmask
         self.text = text
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self.address) + str(self.netmask))
 
     def __eq__(self, other: DSMNet) -> bool:
@@ -52,19 +52,19 @@ class DSMNet:
         except AttributeError:
             return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: DSMNet) -> bool:
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
         return not eq
 
-    def __le__(self, other):
+    def __le__(self, other: DSMNet) -> bool:
         gt = self.__gt__(other)
         if gt is NotImplemented:
             return NotImplemented
         return not gt
 
-    def __ge__(self, other):
+    def __ge__(self, other: DSMNet) -> bool:
         lt = self.__lt__(other)
         if lt is NotImplemented:
             return NotImplemented
@@ -78,7 +78,7 @@ class DSMNet:
             return NotImplemented
         return False
 
-    def __gt__(self, other):
+    def __gt__(self, other: DSMNet) -> bool:
         try:
             if self.address != other.address:
                 return self.address > other.address
@@ -86,7 +86,7 @@ class DSMNet:
             return NotImplemented
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ' '.join([self.address, self.netmask])
 
     def MergeText(self, text: str = '') -> str:

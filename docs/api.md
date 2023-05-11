@@ -88,6 +88,9 @@ else:
 Now to call the Generate method. We need to first construct a Naming object and load the network definitions, then pass that to Generate along with the policy object.
 
 ```python
+from aerleon.lib import naming  
+from aerleon import api
+
 def main():
     definitions = naming.Naming()
     definitions.ParseDefinitionsObject(networks, "")

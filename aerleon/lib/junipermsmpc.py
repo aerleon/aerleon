@@ -15,9 +15,11 @@
 #
 """Juniper MS-MPC  generator for Aerleon."""
 
+from typing import Dict, List, Set, Tuple
+
 from absl import logging
 
-from aerleon.lib import aclgenerator, juniper, nacaddr
+from aerleon.lib import aclgenerator, juniper, nacaddr, policy
 
 MAX_IDENTIFIER_LEN = 55  # It is really 63, but leaving room for added chars
 
@@ -55,7 +57,14 @@ class Term(juniper.Term):
         'udp',
     )
 
-    def __init__(self, term, term_type, noverbose, filter_name, apply_groups):
+    def __init__(
+        self,
+        term: policy.Term,
+        term_type: str,
+        noverbose: bool,
+        filter_name: str,
+        apply_groups: bool,
+    ) -> None:
         enable_dsmo = False
         super().__init__(term, term_type, enable_dsmo, noverbose)
         self.term = term
@@ -69,7 +78,7 @@ class Term(juniper.Term):
                 loc = self.term.protocol.index(prot)
                 self.term.protocol[loc] = str(self.PROTO_MAP.get(prot, prot))
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.enable_dsmo:
             raise NotImplementedError('enable_dsmo not implemented for msmpc')
 
@@ -365,11 +374,11 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         ]
     )
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: policy.Policy, exp_info: int):
         self.applications = {}
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -399,7 +408,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _BuildPort(self, ports):
+    def _BuildPort(self, ports: List[Tuple[int, int]]):
         """Transform specified ports into list and ranges.
 
         Args:
@@ -416,7 +425,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 port_list.append('%s-%s' % (str(p[0]), str(p[1])))
         return port_list
 
-    def _GenerateApplications(self, filter_name):
+    def _GenerateApplications(self, filter_name: str):
         target = []
         apps_set_list = []
         target.append('applications {')
@@ -502,7 +511,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         else:
             return []
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int):
         self.junipermsmpc_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -645,7 +654,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_direction, new_terms, apply_groups)
             )
 
-    def _Group(self, group, lc=True):
+    def _Group(self, group: List[str], lc: bool = True):
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -658,7 +667,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el, lc=True):
+        def _FormattedGroup(el: List[str], lc: bool = True):
             """Return the actual formatting of an individual element.
 
             Args:
@@ -688,7 +697,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             rval = _FormattedGroup(group[0], lc=lc) + ';'
         return rval
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = juniper.Config()
         for (
             header,

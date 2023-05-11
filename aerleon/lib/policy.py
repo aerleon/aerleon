@@ -23,7 +23,6 @@ import os
 import pathlib
 import sys
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
-from unittest.mock import MagicMock
 
 from absl import logging
 from ply import lex, yacc
@@ -1768,13 +1767,13 @@ class Target:
     def __str__(self) -> str:
         return self.platform
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     def __eq__(self, other: Target) -> bool:
         return self.platform == other.platform and self.options == other.options
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
 

@@ -20,6 +20,7 @@ from unittest import mock
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import ciscoasa, nacaddr, naming, policy
+from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -177,16 +178,52 @@ class CiscoASATest(parameterized.TestCase):
         self.assertIn(expect, str(pol))
 
     @parameterized.named_parameters(
-        ('source', GOOD_TERM_3, 'permit ip 10.0.0.0 255.255.254.0 any'),
-        ('destination', GOOD_TERM_4, 'permit ip any 10.0.0.0 255.255.254.0'),
+        ('source', GOOD_TERM_3, 'permit ip 128.168.0.0 191.255.255.128 any'),
+        ('destination', GOOD_TERM_4, 'permit ip any 128.168.0.0 191.255.255.128'),
     )
+    @capture.stdout
     def testDSMO(self, term, expected):
         self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/24'),
-            nacaddr.IPv4('10.0.1.0/24'),
+            nacaddr.IPv4('192.168.0.0/25'),
+            nacaddr.IPv4('128.168.0.0/25'),
         ]
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
+        print(pol)
         self.assertIn(expected, str(pol))
+
+    @capture.stdout
+    def testHostAddressFormat(self):
+        defs = naming.Naming()
+        defs._ParseLine('FOO = 10.0.0.1/32', 'networks')
+        pol_yaml = """
+        filters:
+          - header:
+              targets:
+                ciscoasa: allowtointernet
+            terms:
+              - name: accept-foo
+                source-address: FOO
+                destination-address: FOO
+                action: accept
+        """
+        pol = ciscoasa.CiscoASA(_YamlParsePolicy(pol_yaml, definitions=defs), EXP_INFO)
+        print(pol)
+        self.assertIn(
+            'access-list allowtointernet extended permit ip host 10.0.0.1 host 10.0.0.1', str(pol)
+        )
+
+
+def _YamlParsePolicy(
+    data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
+):
+    return yaml_frontend.ParsePolicy(
+        data,
+        filename=filename,
+        base_dir=base_dir,
+        definitions=definitions,
+        optimize=optimize,
+        shade_check=shade_check,
+    )
 
 
 if __name__ == '__main__':

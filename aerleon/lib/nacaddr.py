@@ -98,7 +98,7 @@ class IPv4(ipaddress.IPv4Network):
             ip = ip_string
         super().__init__(ip, strict)
 
-    def subnet_of(self, other: "IPv4") -> bool:
+    def subnet_of(self, other: IPv4) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
@@ -110,7 +110,7 @@ class IPv4(ipaddress.IPv4Network):
             return False
         return self._is_subnet_of(other, self)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict):
         result = self.__class__(self)
         result.text = self.text
         result.token = self.token
@@ -162,7 +162,6 @@ class IPv4(ipaddress.IPv4Network):
 
     # Backwards compatibility name from v1.
     Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
 
 class IPv6(ipaddress.IPv6Network):
@@ -190,19 +189,19 @@ class IPv6(ipaddress.IPv6Network):
             ip = ip_string
         super().__init__(ip, strict)
 
-    def subnet_of(self, other: "IPv6") -> bool:
+    def subnet_of(self, other: IPv6) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
         return self._is_subnet_of(self, other)
 
-    def supernet_of(self, other: "IPv6") -> bool:
+    def supernet_of(self, other: IPv6) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
         return self._is_subnet_of(other, self)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict):
         result = self.__class__(self)
         result.text = self.text
         result.token = self.token
@@ -239,7 +238,6 @@ class IPv6(ipaddress.IPv6Network):
 
     # Backwards compatibility name from v1.
     Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
     def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
@@ -277,7 +275,7 @@ def IsSuperNet(
     return True
 
 
-def CollapseAddrListPreserveTokens(addresses: List[IPv4]) -> List[IPv4]:
+def CollapseAddrListPreserveTokens(addresses: List[Union[IPv4, IPv6]]) -> List[Union[IPv4, IPv6]]:
     """Collapse an array of IPs only when their tokens are the same.
 
     Args:
@@ -447,14 +445,14 @@ def CollapseAddrList(
     )
 
 
-def SortAddrList(addresses: List[Union[Any, IPv6, IPv4]]) -> List[Union[Any, IPv6, IPv4]]:
+def SortAddrList(addresses: List[Union[IPv6, IPv4]]) -> List[Union[IPv6, IPv4]]:
     """Return a sorted list of nacaddr objects."""
     return sorted(addresses, key=ipaddress.get_mixed_type_key)
 
 
 def RemoveAddressFromList(
     superset: List[Union[IPv4, IPv6]], exclude: Union[IPv4, IPv6]
-) -> List[Union[Any, IPv6, IPv4]]:
+) -> List[Union[IPv6, IPv4]]:
     """Remove a single address from a list of addresses.
 
     Args:

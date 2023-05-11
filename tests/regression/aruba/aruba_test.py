@@ -16,13 +16,12 @@
 """Unittest for Aruba acl rendering module."""
 
 import datetime
-import logging
 import textwrap
 from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aruba, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, aruba, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_V4 = """
@@ -277,7 +276,7 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(SUPPORTED_TOKENS, st)
         self.assertEqual(SUPPORTED_SUB_TOKENS, sst)
 
-    @mock.patch.object(aruba.logging, 'warning')
+    @mock.patch.object(aclgenerator.logging, 'warning')
     def testExpiredTerm(self, mock_warn):
         aruba.Aruba(policy.ParsePolicy(GOOD_HEADER_V4 + EXPIRED_TERM, self.naming), EXP_INFO)
         mock_warn.assert_called_once_with(
@@ -286,7 +285,7 @@ class ArubaTest(absltest.TestCase):
             'test-filter',
         )
 
-    @mock.patch.object(aruba.logging, 'info')
+    @mock.patch.object(aclgenerator.logging, 'info')
     def testExpiringTerm(self, mock_info):
         exp_date = datetime.date.today() + datetime.timedelta(weeks=EXP_INFO)
         aruba.Aruba(

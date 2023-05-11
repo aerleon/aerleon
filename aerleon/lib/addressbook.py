@@ -2,13 +2,16 @@ import collections
 import heapq
 import ipaddress
 import itertools
+from typing import List, Union
+
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class Addressbook:
-    def __init__(self):
+    def __init__(self) -> None:
         self.addressbook = collections.OrderedDict()
 
-    def AddAddresses(self, zone, address_list):
+    def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.
 
         Args:
@@ -23,7 +26,7 @@ class Addressbook:
         when new networks are added.
         """
 
-        def _drop_subnets(address_list):
+        def _drop_subnets(address_list: List[Union[IPv4, IPv6]]):
             """Remove any network contained by another network in this list.
 
             Args:

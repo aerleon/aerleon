@@ -30,8 +30,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
-from aerleon.lib import gcp, nacaddr
-from aerleon.lib.policy import Policy, Term
+from aerleon.lib import gcp, nacaddr, policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
@@ -72,7 +71,7 @@ FirewallRule = TypedDict(
 )
 
 
-def IsDefaultDeny(term: Term) -> bool:
+def IsDefaultDeny(term: policy.Term) -> bool:
     """Returns true if a term is a default deny without IPs, ports, etc."""
     skip_attrs = [
         'flattened',
@@ -147,7 +146,9 @@ class Term(gcp.Term):
     # Any protocol not in _ALLOW_PROTO_NAME must be passed by number.
     ALWAYS_PROTO_NUM = set(gcp.Term.PROTO_MAP.keys()) - _ALLOW_PROTO_NAME
 
-    def __init__(self, term, inet_version='inet', policy_inet_version='inet') -> None:
+    def __init__(
+        self, term: policy.Term, inet_version: str = 'inet', policy_inet_version: str = 'inet'
+    ) -> None:
         super().__init__(term)
         self.term = term
         self.inet_version = inet_version
@@ -466,7 +467,7 @@ class GCE(gcp.GCP):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.gce_policies = []
         max_attribute_count = 0
         total_attribute_count = 0

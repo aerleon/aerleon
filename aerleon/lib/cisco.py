@@ -378,7 +378,7 @@ class PortMap:
     }
 
     @staticmethod
-    def GetProtocol(port_num, proto, platform='cisco'):
+    def GetProtocol(port_num: int, proto: str, platform: str = 'cisco'):
         """Converts a port number to a name or returns the number.
 
         Args:
@@ -529,7 +529,7 @@ class Term(aclgenerator.Term):
         else:
             # source address not set
             source_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
-        fixed_src_addresses = set([self._GetIpString(x) for x in source_address])
+        fixed_src_addresses = set([x for x in source_address])
 
         # destination address
         if self.term.destination_address:
@@ -554,7 +554,7 @@ class Term(aclgenerator.Term):
             # destination address not set
             destination_address = [nacaddr.IPv4('0.0.0.0/0', token='any')]
 
-        fixed_dst_addresses = set([self._GetIpString(x) for x in destination_address])
+        fixed_dst_addresses = set([x for x in destination_address])
 
         # ports
         source_port = [()]
@@ -651,9 +651,9 @@ class Term(aclgenerator.Term):
                                         self._TermletToStr(
                                             action,
                                             proto,
-                                            saddr,
+                                            self._GetIpString(saddr),
                                             self._FormatPort(sport, proto),
-                                            daddr,
+                                            self._GetIpString(daddr),
                                             self._FormatPort(dport, proto),
                                             icmp_type,
                                             icmp_code,

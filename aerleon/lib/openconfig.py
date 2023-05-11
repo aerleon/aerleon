@@ -21,9 +21,7 @@ http://ops.openconfig.net/branches/models/master/openconfig-acl.html
 """
 
 import copy
-import ipaddress
 import json
-import re
 import sys
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
@@ -94,7 +92,7 @@ class Term(aclgenerator.Term):
         # flattened_saddr, flattened_daddr, flattened_addr.
         self.term.FlattenAll()
 
-    def __str__(self):
+    def __str__(self) -> None:
         """Convert term to a string."""
         rules = self.ConvertToDict()
         json.dumps(rules, indent=2)

@@ -125,18 +125,20 @@ class UserMessage:
             The top-level file should be the first item in the list.
     """
 
-    message: str
-    filename: str
-    line: int
-    include_chain: "list[Tuple[str, int]]"
-
-    def __init__(self, message, *, filename, line=None, include_chain=None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        filename: str,
+        line: int = None,
+        include_chain: List[Tuple[str, int]] = None,
+    ):
         self.message = message
         self.filename = filename
         self.line = line
         self.include_chain = include_chain
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Display user-facing error message with include chain (if present).
 
         e.g.
@@ -161,11 +163,11 @@ class UserMessage:
                     error_context += " (Top Level)"
         return error_context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"UserMessage(\"{str(self)}\")"
 
 
-def is_yaml_suffix(suffix):
+def is_yaml_suffix(suffix: str) -> bool:
     return suffix == '.yaml' or suffix == '.yml'
 
 
@@ -411,7 +413,7 @@ class Naming:
         except ValueError:
             return False
 
-    def GetServiceNames(self):
+    def GetServiceNames(self) -> List[str]:
         """Returns the list of all known service names."""
         return list(self.services.keys())
 
@@ -455,7 +457,7 @@ class Naming:
                 expandset.add(service)
         return sorted(expandset)
 
-    def GetPortParents(self, query, proto):
+    def GetPortParents(self, query: str, proto: str) -> List[str]:
         """Returns a list of all service tokens containing the port/protocol pair.
 
         Args:
@@ -599,7 +601,7 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    def _Parse(self, definitions_directory):
+    def _Parse(self, definitions_directory: str) -> None:
         """Parse files for tokens and values.
 
         Given a directory name, grab all the appropriate files in that
@@ -612,7 +614,6 @@ class Naming:
         Raises:
           NoDefinitionsError: if no definitions are found.
         """
-
         file_def_type = {
             '.net': DEF_TYPE_NETWORKS,
             '.svc': DEF_TYPE_SERVICES,
