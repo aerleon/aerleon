@@ -178,15 +178,17 @@ class CiscoASATest(parameterized.TestCase):
         self.assertIn(expect, str(pol))
 
     @parameterized.named_parameters(
-        ('source', GOOD_TERM_3, 'permit ip 10.0.0.0 255.255.254.0 any'),
-        ('destination', GOOD_TERM_4, 'permit ip any 10.0.0.0 255.255.254.0'),
+        ('source', GOOD_TERM_3, 'permit ip 128.168.0.0 191.255.255.128 any'),
+        ('destination', GOOD_TERM_4, 'permit ip any 128.168.0.0 191.255.255.128'),
     )
+    @capture.stdout
     def testDSMO(self, term, expected):
         self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/24'),
-            nacaddr.IPv4('10.0.1.0/24'),
+            nacaddr.IPv4('192.168.0.0/25'),
+            nacaddr.IPv4('128.168.0.0/25'),
         ]
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
+        print(pol)
         self.assertIn(expected, str(pol))
 
     @capture.stdout
