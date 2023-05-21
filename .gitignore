@@ -113,7 +113,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -140,7 +139,7 @@ dmypy.json
 .pyre/
 
 # Editor
-.vscode/
+.vscode/settings.json
 
 ### macOS ###
 # General
