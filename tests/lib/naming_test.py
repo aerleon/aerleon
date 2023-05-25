@@ -17,7 +17,7 @@
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming
+from aerleon.lib import fqdn, nacaddr, naming
 
 
 class NamingUnitTest(absltest.TestCase):
@@ -239,6 +239,8 @@ networks:
   FOOBAR:
     values:
       - 9OCLOCK
+      - fqdn: foo.bar
+        comment: "foo's fqdn"
   FOO_V6:
     values:
       - address: ::FFFF:FFFF:FFFF:FFFF
@@ -259,6 +261,10 @@ networks:
         self.defs = naming.Naming(None)
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
 
+    def testGetFQDN(self):
+        
+        expected = [fqdn.FQDN('foo.bar', 'FOOBAR', ' foo\'s fqdn')]
+        self.assertListEqual(expected, self.defs.GetFQDN('FOOBAR'))
 
 class DefinitionObjectUnitTest(NamingUnitTest):
     """Runs the NamingUnitTest suite against object input.

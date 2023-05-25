@@ -54,6 +54,7 @@ import yaml
 from absl import logging
 from yaml import YAMLError
 
+from aerleon.lib.fqdn import FQDN
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -216,10 +217,13 @@ class Naming:
         self.current_symbol = None
         self.services = {}
         self.networks = {}
+        self.fqdn = {}
         self.unseen_services = {}
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
+        # https://regexr.com/3g5j0
+        self.fqdn_re = re.compile(r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE)
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
@@ -538,6 +542,29 @@ class Naming:
                     services_set.add(parts[0])
         return sorted(services_set)
 
+    def GetFQDN(self, query: str) -> List[str]:
+        returnlist = []
+        data = query.split('#')
+        token = data[0].split()[0]
+        if token not in self.fqdn:
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
+        for i in self.fqdn[token].items:
+            comment = ''
+            if i.find('#') > -1:
+                (name, comment) = i.split('#', 1)
+            else:
+                name = i
+
+            name = name.strip()
+            # Check if hostname is actually a subtoken
+            if self.token_re.match(name):
+                returnlist.extend(self.GetFQDN(name))
+            elif self.fqdn_re.match(name):
+                returnlist.append(FQDN(name, token, comment))
+            else:
+                logging.debug(f"{name} did not match FQDN")
+        return returnlist
+
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
         """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
@@ -840,10 +867,12 @@ class Naming:
                     f'\nMultiple definitions found for network: {symbol}'
                 )
 
-            unit = _ItemUnit(symbol)
+            addr_unit = _ItemUnit(symbol)
+            fqdn_unit = _ItemUnit(symbol)
 
             # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.networks[symbol] = unit
+            self.networks[symbol] = addr_unit
+            self.fqdn[symbol] = fqdn_unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
 
@@ -852,6 +881,7 @@ class Naming:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
                 #    'address': A specific IP address or CIDR range
+                #    'hostname': A FQDN for use in DNS filtering.
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'address' or 'name' must be present in any dictionary item
@@ -866,6 +896,8 @@ class Naming:
                         value = network_ref = item['name']
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
+                    elif 'fqdn' in item and isinstance(item['fqdn'], str):
+                        value = item['fqdn']
                     else:
                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
                         continue
@@ -877,11 +909,26 @@ class Naming:
                     continue
 
                 if comment is None:
-                    unit.items.append(value)
+                    if network_ref:
+                        addr_unit.items.append(value)
+                        fqdn_unit.items.append(value)
+                    elif ip:
+                        addr_unit.items.append(value)
+                    else:
+                        fqdn_unit.items.append(value)
                 else:
-                    unit.items.append(f'{value} # {comment}')
+                    if network_ref:
+                        addr_unit.items.append(f'{value} # {comment}')
+                        fqdn_unit.items.append(f'{value} # {comment}')
+                    elif ip:
+                        addr_unit.items.append(f'{value} # {comment}')
+                    else:
+                        fqdn_unit.items.append(f'{value} # {comment}')
+                    
 
-                if network_ref and network_ref not in self.networks:
+                if network_ref and (
+                    network_ref not in self.networks or network_ref not in self.fqdn
+                ):
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
