@@ -6,19 +6,20 @@ from dataclasses import dataclass
 from typing import List, Union
 
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.fqdn import FQDN
 
 
 @dataclass
 class AddressEntry:
     addresses: List[Union[IPv4, IPv6]]
-    hostnames: List[str]
+    fqdn: List[str]
 
 
 class Addressbook:
     def __init__(self) -> None:
         self.addressbook = collections.OrderedDict()
 
-    def AddHostname(self, zone: str, hostname_list: List[str]):
+    def AddFQDN(self, zone: str, fqdn_list: List[FQDN]) -> List[FQDN]:
         """Create an entry in the addressbook for a hostname.
 
         Args:
@@ -27,17 +28,17 @@ class Addressbook:
         """
         if zone not in self.addressbook:
             self.addressbook[zone] = collections.defaultdict(lambda: AddressEntry([], []))
-        for parent_token, hostname_list in itertools.groupby(
+        for parent_token, fqdns in itertools.groupby(
             sorted(
-                hostname_list,
+                fqdn_list,
                 key=lambda host: (
                     host.parent_token,
-                    ipaddress.get_mixed_type_key(host),
+                    host,
                 ),
             ),
             key=lambda host: host.parent_token,
         ):
-            self.addressbook[zone][parent_token].hostnames = [i.name for i in hostname_list]
+            self.addressbook[zone][parent_token].fqdn = [i for i in fqdns]
 
     def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.

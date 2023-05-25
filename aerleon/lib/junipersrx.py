@@ -25,7 +25,7 @@ from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
 
-from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
+from aerleon.lib import aclgenerator, addressbook, fqdn, nacaddr, policy
 
 ICMP_TERM_LIMIT = 8
 
@@ -328,10 +328,12 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             'dscp_except',
             'dscp_match',
             'dscp_set',
+            'destination_fqdn',
             'destination_zone',
             'logging',
             'option',
             'owner',
+            'source_fqdn',
             'source_zone',
             'timeout',
             'verbatim',
@@ -566,7 +568,11 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     term.destination_address = valid_addrs
                     if term.destination_address:
                         self.addressbook.AddAddresses(self.to_zone, term.destination_address)
-
+                if term.source_fqdn:
+                    pass
+                if term.destination_fqdn:
+                    self.addressbook.AddFQDN(self.to_zone, term.destination_fqdn)
+                    pass
                 new_term = Term(term, self.from_zone, self.to_zone, self.expresspath, verbose)
                 new_terms.append(new_term)
 
@@ -704,26 +710,36 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
         # create address books if address-book-type set to global
         if self._GLOBAL_ADDR_BOOK in self.addr_book_type:
-            global_address_book = collections.defaultdict(list)
+            global_address_book = collections.defaultdict(set)
 
             target.IndentAppend(1, 'replace: address-book {')
             target.IndentAppend(2, 'global {')
             for zone in self.addressbook.addressbook:
                 for group in self.addressbook.addressbook[zone]:
                     for address in self.addressbook.addressbook[zone][group].addresses:
-                        global_address_book[group].append(address)
+                        global_address_book[group].add(address)
+                    for dname in self.addressbook.addressbook[zone][group].fqdn:
+                        global_address_book[group].add(dname.fqdn)
             names = sorted(global_address_book.keys())
             for name in names:
                 counter = 0
-                ips = nacaddr.SortAddrList(global_address_book[name])
+                ips = [i for i in global_address_book[name] if isinstance(i, (nacaddr.IPv4, nacaddr.IPv6))]
+                fqdns = sorted([i for i in global_address_book[name] if isinstance(i, str)])
+                ips = nacaddr.SortAddrList(ips)
                 ips = nacaddr.CollapseAddrList(ips)
-                global_address_book[name] = ips
+                import ipdb;ipdb.set_trace()
+                global_address_book[name].update(ips)
+                global_address_book[name].update(fqdns)
                 for ip in ips:
                     target.IndentAppend(
                         4, 'address ' + name + '_' + str(counter) + ' ' + str(ip) + ';'
                     )
                     counter += 1
+                for domain_name in fqdns:
 
+                    target.IndentAppend(
+                        4, 'dns-name ' + name + '_' + str(counter) + ' ' + str(domain_name) + ';'
+                    )
             for group in sorted(global_address_book.keys()):
                 target.IndentAppend(4, 'address-set ' + group + ' {')
                 counter = 0

@@ -538,6 +538,7 @@ SUPPORTED_TOKENS = frozenset(
         'comment',
         'destination_address',
         'destination_address_exclude',
+        'destination_fqdn',
         'destination_port',
         'destination_zone',
         'dscp_except',
@@ -555,6 +556,7 @@ SUPPORTED_TOKENS = frozenset(
         'platform_exclude',
         'protocol',
         'source_address',
+        'source_fqdn',
         'source_address_exclude',
         'source_port',
         'timeout',
@@ -1071,7 +1073,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_has_calls([mock.call('SMTP', 'tcp')] * 2)
         print(output)
 
-    @capture.stdout
+    # @capture.stdout
     def testAddressBookContainsLargerPrefix(self):
         _IPSET2[0].parent_token = 'FOOBAR'
         _IPSET2[1].parent_token = 'SOME_HOST'

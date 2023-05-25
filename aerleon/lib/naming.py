@@ -56,6 +56,7 @@ from yaml import YAMLError
 
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
+from aerleon.lib.fqdn import FQDN
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
@@ -216,11 +217,13 @@ class Naming:
         self.current_symbol = None
         self.services = {}
         self.networks = {}
-        self.hostnames = {}
+        self.fqdn = {}
         self.unseen_services = {}
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
+        # https://regexr.com/3g5j0
+        self.fqdn_re = re.compile(r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE)
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
@@ -539,13 +542,14 @@ class Naming:
                     services_set.add(parts[0])
         return sorted(services_set)
 
-    def GetHostnames(self, query: str) -> List[str]:
+    def GetFQDN(self, query: str) -> List[str]:
+        
         returnlist = []
         data = query.split('#')
         token = data[0].split()[0]
-        if token not in self.hostnames:
+        if token not in self.fqdn:
             raise UndefinedAddressError(f'UNDEFINED: {token}')
-        for i in self.hostnames[token].items:
+        for i in self.fqdn[token].items:
             comment = ''
             if i.find('#') > -1:
                 (name, comment) = i.split('#', 1)
@@ -555,9 +559,11 @@ class Naming:
             name = name.strip()
             # Check if hostname is actually a subtoken
             if self.token_re.match(name):
-                returnlist.extend(self.GetNet(hostname))
+                returnlist.extend(self.GetFQDN(name))
+            elif self.fqdn_re.match(name):
+                returnlist.append(FQDN(name, token, comment))
             else:
-                returnlist.append(hostname.Hostname(name, token, token, comment))
+                logging.debug(f"{name} did not match FQDN")
         return returnlist
 
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
@@ -866,11 +872,11 @@ class Naming:
                 )
 
             addr_unit = _ItemUnit(symbol)
-            hostname_unit = _ItemUnit(symbol)
+            fqdn_unit = _ItemUnit(symbol)
 
             # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
             self.networks[symbol] = addr_unit
-            self.hostnames[symbol] = hostname_unit
+            self.fqdn[symbol] = fqdn_unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
 
@@ -894,8 +900,8 @@ class Naming:
                         value = network_ref = item['name']
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
-                    elif 'hostname' in item and isinstance(item['hostname'], str):
-                        value = item['hostname']
+                    elif 'fqdn' in item and isinstance(item['fqdn'], str):
+                        value = item['fqdn']
                     else:
                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
                         continue
@@ -907,13 +913,13 @@ class Naming:
                     continue
                 if comment is None:
                     addr_unit.items.append(value)
-                    hostname_unit.items.append(value)
+                    fqdn_unit.items.append(value)
                 else:
                     addr_unit.items.append(f'{value} # {comment}')
-                    hostname_unit.items.append(f'{value} # {comment}')
+                    fqdn_unit.items.append(f'{value} # {comment}')
 
                 if network_ref and (
-                    network_ref not in self.networks or network_ref not in self.hostnames
+                    network_ref not in self.networks or network_ref not in self.fqdn
                 ):
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True

@@ -13,6 +13,10 @@ filters:
         logging: log-both
         action: accept
 
+      - name: google-dns-fqdn
+        destination-fqdn: GOOGLE_PUBLIC_DNS_ANYCAST
+        action: accept
+
       - name: test-icmp
         destination-address: RFC1918
         protocol: icmp

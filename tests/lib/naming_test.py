@@ -131,7 +131,6 @@ class NamingUnitTest(absltest.TestCase):
 
     def testNetParents(self):
         """BIN & NET2 contain NET1, BING & BAZ contain FOO_V6."""
-        print(self.defs.GetNetParents('NET1'))
         self.assertListEqual(sorted(self.defs.GetNetParents('NET1')), ['BING', 'NET2'])
         self.assertListEqual(sorted(self.defs.GetNetParents('FOO_V6')), ['BAZ', 'BING'])
 
@@ -259,6 +258,9 @@ networks:
 """
         self.defs = naming.Naming(None)
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
+
+    def testFQDN(self):
+        print(self.defs.GetFQDN('NET1'))
 
 
 class DefinitionObjectUnitTest(NamingUnitTest):
