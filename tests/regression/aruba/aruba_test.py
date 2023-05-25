@@ -976,9 +976,9 @@ class ArubaTest(absltest.TestCase):
     @capture.stdout
     def testMultiplePorts(self):
         definitions = naming.Naming()
-        definitions._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
-        definitions._ParseLine(
-            'DNS = 53/tcp 54/tcp 55/tcp 60/tcp 61/tcp 62/tcp 63/tcp 65/tcp', 'services'
+        definitions.ParseNetworkList(['SOME_NETWORK = 100.0.0.0/8'])
+        definitions.ParseServiceList(
+            ['DNS = 53/tcp 54/tcp 55/tcp 60/tcp 61/tcp 62/tcp 63/tcp 65/tcp']
         )
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, definitions),

@@ -47,8 +47,16 @@ DNS = 53/tcp
 
 
 import re
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Union
+
+if sys.version_info > (3, 11):
+    from typing import Self
+else:
+    from typing import TypeVar
+
+    Self = TypeVar("Self", bound="_ItemUnit")
 
 import yaml
 from absl import logging
@@ -182,9 +190,28 @@ class _ItemUnit:
       items: a list of strings containing values for the token.
     """
 
-    def __init__(self, symbol: str) -> None:
+    def __init__(
+        self,
+        symbol: str,
+        definition_type: str,
+        items: Dict[str, Self],
+        unseen_items: Dict[str, Self],
+    ) -> None:
         self.name = symbol
         self.items = []
+        if symbol in items:
+            raise NamespaceCollisionError(
+                f'\nMultiple definitions found for {definition_type}: {symbol}'
+            )
+
+        items[symbol] = self
+        if symbol in unseen_items:
+            unseen_items.pop(symbol)
+
+        if not Naming.TOKEN_RE.match(symbol):
+            logging.info(
+                f'\n{definition_type}: name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
+            )
 
 
 class Naming:
@@ -196,8 +223,10 @@ class Naming:
        networks: A collection of all the current network item tokens.
        unseen_services: Undefined service entries.
        unseen_networks: Undefined network entries.
-       port_re: Regular Expression matching valid port entries.
     """
+
+    TOKEN_RE = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
+    PORT_RE = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
 
     def __init__(
         self, naming_dir: str = None, naming_file: str = None, naming_type: str = None
@@ -218,8 +247,6 @@ class Naming:
         self.networks = {}
         self.unseen_services = {}
         self.unseen_networks = {}
-        self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
-        self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
@@ -238,28 +265,25 @@ class Naming:
                 logging.warning('Naming object: ignoring unexpected naming_type.')
 
             self._Parse(naming_dir)
-            self._CheckUnseen(DEF_TYPE_SERVICES)
-            self._CheckUnseen(DEF_TYPE_NETWORKS)
+            self._CheckUnseen()
 
-    def _CheckUnseen(self, def_type: str):
-        if def_type == DEF_TYPE_SERVICES:
-            if self.unseen_services:
-                raise UndefinedServiceError(
-                    '%s %s'
-                    % (
-                        'The following tokens were nested as a values, but not defined',
-                        self.unseen_services,
-                    )
+    def _CheckUnseen(self) -> None:
+        if self.unseen_services:
+            raise UndefinedServiceError(
+                '%s %s'
+                % (
+                    'The following tokens were nested as a values, but not defined',
+                    self.unseen_services,
                 )
-        if def_type == DEF_TYPE_NETWORKS:
-            if self.unseen_networks:
-                raise UndefinedAddressError(
-                    '%s %s'
-                    % (
-                        'The following tokens were nested as a values, but not defined',
-                        self.unseen_networks,
-                    )
+            )
+        if self.unseen_networks:
+            raise UndefinedAddressError(
+                '%s %s'
+                % (
+                    'The following tokens were nested as a values, but not defined',
+                    self.unseen_networks,
                 )
+            )
 
     def GetIpParents(self, query: str) -> List[str]:
         """Return network tokens that contain IP in query.
@@ -584,7 +608,7 @@ class Naming:
                 net = i
 
             net = net.strip()
-            if self.token_re.match(net):
+            if self.TOKEN_RE.match(net):
                 returnlist.extend(self.GetNet(net))
             else:
                 try:
@@ -639,8 +663,21 @@ class Naming:
                 raise NoDefinitionsError('%s' % error_info)
 
     def _ParseFile(self, file_handle: List[str], def_type: str) -> None:
-        for line in file_handle:
-            self._ParseLine(line, def_type)
+        if def_type == DEF_TYPE_SERVICES:
+            items = self.services
+            unseen_items = self.unseen_services
+            value_check = self._PortCheck
+        elif def_type == DEF_TYPE_NETWORKS:
+            items = self.networks
+            unseen_items = self.unseen_networks
+            value_check = None
+        else:
+            raise UnexpectedDefinitionTypeError(
+                '%s %s' % ('Received an unexpected definition type:', def_type)
+            )
+
+        generator = self._ParseLines(file_handle, def_type, items, unseen_items, value_check)
+        items.update(dict([(unit.name, unit) for unit in generator]))
 
     def ParseServiceList(self, data: List[str]) -> None:
         """Take an array of service data and import into class.
@@ -651,8 +688,14 @@ class Naming:
         Args:
           data: array of text lines containing service definitions.
         """
-        for line in data:
-            self._ParseLine(line, DEF_TYPE_SERVICES)
+        generator = self._ParseLines(
+            data,
+            DEF_TYPE_SERVICES,
+            self.services,
+            self.unseen_services,
+            self._PortCheck,
+        )
+        self.services.update(dict([(unit.name, unit) for unit in generator]))
 
     def ParseNetworkList(self, data: List[str]) -> None:
         """Take an array of network data and import into class.
@@ -664,111 +707,65 @@ class Naming:
           data: array of text lines containing net definitions.
 
         """
+        generator = self._ParseLines(data, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks)
+        self.networks.update(dict([(unit.name, unit) for unit in generator]))
+
+    def _PortCheck(self, line: str, values: str) -> None:
+        for port in values.strip().split():
+            if not self.PORT_RE.match(port):
+                raise NamingSyntaxError('%s: %s' % ('The following line has a syntax error', line))
+
+    def _ParseLines(
+        self,
+        data: Iterable,
+        def_type: str,
+        items: Dict[str, _ItemUnit],
+        unseen_items: Dict[str, Union[_ItemUnit | bool]],
+        value_check: Callable[[str, str], None] = None,
+    ) -> None:
+        unit = None
+        current_symbol = None
+
         for line in data:
-            self._ParseLine(line, DEF_TYPE_NETWORKS)
-
-    def _ParseLine(self, line: str, definition_type: str) -> None:
-        """Parse a single line of a service definition file.
-
-        This routine is used to parse a single line of a service
-        definition file, building a list of 'self.services' objects
-        as each line of the file is iterated through.
-
-        Args:
-          line: A single line from a service definition files.
-          definition_type: Either 'networks' or 'services'
-
-        Raises:
-          UnexpectedDefinitionTypeError: called with unexpected type of definitions.
-          NamespaceCollisionError: when overlapping tokens are found.
-          ParseError: If errors occur
-          NamingSyntaxError: Syntax error parsing config.
-        """
-
-        #
-        # NOTE: The "unseen name" logic defined in this function (_ParseLine) is duplicated in
-        # function ParseDefinitionsObject. Any changes to how "unseen name" checking is done
-        # need to be made in both places.
-        #
-        # TODO(jb): Consider splitting up _ParseLine so that it generates an intermediate
-        #  representation (ItemUnit) and "unseen name" checks are done on the IR (by both _Parse* flows).
-        if definition_type not in ['services', 'networks']:
-            raise UnexpectedDefinitionTypeError(
-                '%s %s' % ('Received an unexpected definition type:', definition_type)
-            )
-        line = line.strip()
-        if not line or line.startswith('#'):  # Skip comments and blanks.
-            return
-        comment = ''
-        if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
-        line_parts = line.split('=')  # Split on var = val lines.
-        # the value field still has the comment at this point
-        # If there was '=', then do var and value
-        if len(line_parts) > 1:
-            current_symbol = line_parts[0].strip()  # varname left of '='
-            if not self.token_re.match(current_symbol):
-                logging.info(
-                    '\nService name does not match recommended criteria: %s\nOnly A-Z, a-z, 0-9, -, and _ allowed'
-                    % current_symbol
-                )  # TODO(jb) This error is incorrect when current_symbol is a network name
-            self.current_symbol = current_symbol
-            if definition_type == DEF_TYPE_SERVICES:
-                for port in line_parts[1].strip().split():
-                    if not self.port_re.match(port):
-                        raise NamingSyntaxError(
-                            '%s: %s' % ('The following line has a syntax error', line)
-                        )
-                if self.current_symbol in self.services:
-                    raise NamespaceCollisionError(
-                        '%s %s'
-                        % ('\nMultiple definitions found for service: ', self.current_symbol)
-                    )
-            elif definition_type == DEF_TYPE_NETWORKS:
-                if self.current_symbol in self.networks:
-                    raise NamespaceCollisionError(
-                        '%s %s'
-                        % ('\nMultiple definitions found for network: ', self.current_symbol)
-                    )
-
-            self.unit = _ItemUnit(self.current_symbol)
-            if definition_type == DEF_TYPE_SERVICES:
-                self.services[self.current_symbol] = self.unit
-                # unseen_services is a list of service TOKENS found in the values
-                # of newly defined services, but not previously defined themselves.
-                # When we define a new service, we should remove it (if it exists)
-                # from the list of unseen_services.
-                if self.current_symbol in self.unseen_services:
-                    self.unseen_services.pop(self.current_symbol)
-            elif definition_type == DEF_TYPE_NETWORKS:
-                self.networks[self.current_symbol] = self.unit
-                if self.current_symbol in self.unseen_networks:
-                    self.unseen_networks.pop(self.current_symbol)
-            values = line_parts[1]
-        # No '=', so this is a value only line
-        else:
-            values = line_parts[0]  # values for previous var are continued this line
-        for value_piece in values.split():
-            if not value_piece:
+            line = line.strip()
+            if not line or line.startswith('#'):  # Skip comments and blanks.
                 continue
-            if not self.current_symbol:
-                break
-            if comment:
-                self.unit.items.append(value_piece + ' # ' + comment)
+            comment = ''
+            if line.find('#') > -1:  # if there is a comment, save it
+                (line, comment) = line.split('#', 1)
+            line_parts = line.split('=')  # Split on var = val lines.
+            # the value field still has the comment at this point
+            # If there was '=', then do var and value
+            if len(line_parts) > 1:
+                if unit:
+                    yield unit
+
+                current_symbol = line_parts[0].strip()  # varname left of '='
+
+                if value_check:
+                    value_check(line, line_parts[1])
+
+                unit = _ItemUnit(current_symbol, def_type, items, unseen_items)
+                values = line_parts[1]
+            # No '=', so this is a value only line
             else:
-                self.unit.items.append(value_piece)
-                # token?
-                if value_piece[0].isalpha() and ':' not in value_piece:
-                    if definition_type == DEF_TYPE_SERVICES:
-                        # already in top definitions list?
-                        if value_piece not in self.services:
-                            # already have it as an unused value?
-                            if value_piece not in self.unseen_services:
-                                self.unseen_services[value_piece] = True
-                    if definition_type == DEF_TYPE_NETWORKS:
-                        if value_piece not in self.networks:
-                            if value_piece not in self.unseen_networks:
-                                self.unseen_networks[value_piece] = True
+                if value_check:
+                    value_check(line, line_parts[0])
+                values = line_parts[0]  # values for previous var are continued this line
+
+            for value_piece in values.split():
+                if not value_piece:
+                    continue
+                if not current_symbol:
+                    break
+                if comment:
+                    unit.items.append(value_piece + ' # ' + comment)
+                else:
+                    unit.items.append(value_piece)
+                    # token?
+                    if value_piece[0].isalpha() and ':' not in value_piece:
+                        if value_piece not in items and value_piece not in unseen_items:
+                            unseen_items[value_piece] = True
 
     def ParseYaml(self, file_handle: str, file_name: str) -> None:
         """Load a definition yaml file as a string.
@@ -828,24 +825,7 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
-            if not self.token_re.match(symbol):
-                logging.info(
-                    f'\nNetwork name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
-                )
-
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
-            if symbol in self.networks:
-                raise NamespaceCollisionError(
-                    f'\nMultiple definitions found for network: {symbol}'
-                )
-
-            unit = _ItemUnit(symbol)
-
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.networks[symbol] = unit
-            if symbol in self.unseen_networks:
-                self.unseen_networks.pop(symbol)
+            unit = _ItemUnit(symbol, DEF_TYPE_NETWORKS, self.networks, self.unseen_networks)
 
             for item in symbol_def['values']:
                 # 'item' can be:
@@ -905,24 +885,7 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
-            if not self.token_re.match(symbol):
-                logging.info(
-                    f'\nService name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
-                )
-
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
-            if symbol in self.services:
-                raise NamespaceCollisionError(
-                    f'\nMultiple definitions found for service: {symbol}'
-                )
-
-            unit = _ItemUnit(symbol)
-
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.services[symbol] = unit
-            if symbol in self.unseen_services:
-                self.unseen_services.pop(symbol)
+            unit = _ItemUnit(symbol, DEF_TYPE_SERVICES, self.services, self.unseen_services)
 
             for item in symbol_def:
                 # 'item' can be:

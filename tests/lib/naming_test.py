@@ -144,8 +144,9 @@ class NamingUnitTest(absltest.TestCase):
         baddefs = naming.Naming(None)
         baddefs.ParseServiceList(bad_servicedata)
         baddefs.ParseNetworkList(bad_networkdata)
-        self.assertRaises(naming.UndefinedServiceError, baddefs._CheckUnseen, 'services')
-        self.assertRaises(naming.UndefinedAddressError, baddefs._CheckUnseen, 'networks')
+        self.assertRaises(
+            (naming.UndefinedAddressError, naming.UndefinedServiceError), baddefs._CheckUnseen
+        )
 
     def testParseNetFile(self):
         filedefs = naming.Naming(None)
@@ -162,6 +163,14 @@ class NamingUnitTest(absltest.TestCase):
     def testServiceIncorrectSyntax(self):
         badservicedata = []
         badservicedata.append('SVC1 = 80//tcp 80/udp')
+        badservicedata.append('SVC2 = 81/tcp')
+        testdefs = naming.Naming(None)
+        self.assertRaises(naming.NamingSyntaxError, testdefs.ParseServiceList, badservicedata)
+
+    def testServiceIncorrectSyntaxMultiline(self):
+        badservicedata = []
+        badservicedata.append('SVC1 = 80/udp')
+        badservicedata.append('       80//tcp')
         badservicedata.append('SVC2 = 81/tcp')
         testdefs = naming.Naming(None)
         self.assertRaises(naming.NamingSyntaxError, testdefs.ParseServiceList, badservicedata)
