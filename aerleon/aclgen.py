@@ -38,15 +38,13 @@ def SetupFlags():
         'The base directory to search recursively for policy files.\n'
         'Relative policy imports are resolved against this directory.\n'
         'If --policy_file is used, aclgen will not search this directory.\n'
-        'Default: \'%s\''
-        % config.defaults['base_directory'],
+        'Default: \'%s\'' % config.defaults['base_directory'],
     )
     flags.DEFINE_string(
         'definitions_directory',
         None,
         'Directory containing network and service definition files.\n'
-        'Default: \'%s\''
-        % config.defaults['definitions_directory'],
+        'Default: \'%s\'' % config.defaults['definitions_directory'],
     )
     flags.DEFINE_string('policy_file', None, 'Individual policy file to generate.')
     flags.DEFINE_string(
@@ -65,16 +63,14 @@ def SetupFlags():
         'recursive',
         None,
         'UNUSED. '
-        'Recursive policy file search is always enabled except when using the --policy_file flag.'
+        'Recursive policy file search is always enabled except when using the --policy_file flag.',
     )
     flags.DEFINE_boolean(
-        'debug', None, 'Display detailed messages.\nDefault: \'%s\'' % str(config.defaults['debug']).lower()
-    )
-    flags.DEFINE_boolean(
-        'verbose',
+        'debug',
         None,
-        'UNUSED. Use --debug instead.'
+        'Display detailed messages.\nDefault: \'%s\'' % str(config.defaults['debug']).lower(),
     )
+    flags.DEFINE_boolean('verbose', None, 'UNUSED. Use --debug instead.')
     flags.DEFINE_list(
         'ignore_directories',
         None,
@@ -99,9 +95,7 @@ def SetupFlags():
         'Print a message when a term is set to expire in that many weeks.\nDefault: \'%s\''
         % str(config.defaults['exp_info']),
     )
-    flags.DEFINE_multi_string(
-        'config_file', None, 'A YAML file with configuration options'
-    )
+    flags.DEFINE_multi_string('config_file', None, 'A YAML file with configuration options')
 
 
 class Error(Exception):
