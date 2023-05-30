@@ -83,6 +83,7 @@ def cli_options():
     parser.add_argument(
         '-d',
         '--def',
+        '--definitions_directory',
         dest='defs',
         help='Network Definitions directory location. \n',
         default='./def',

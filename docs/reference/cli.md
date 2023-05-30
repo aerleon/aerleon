@@ -8,28 +8,50 @@ Aerleon contains three command line programs:
 
 [`pol2yaml`](#pol2yaml) converts .pol, .inc, .svc, and .net files to equivalent YAML files. It can be found in [its own repository](https://github.com/aerleon/pol2yaml) but is documented here.
 
-### Config Files
+
+
+## Common Options
+
+Options used by more than one command line program are listed here. Setting these options in your config file is a good practice.
+
+Option | aclgen | aclcheck | pol2yaml | cgrep
+---- | --- | --- | --- | ---
+base_directory | input,<br>path resolution | path resolution | input,<br>path resolution |
+definitions_directory | ✔ | ✔ | ✔ | ✔
+output_directory | ✔ |  | ✔
+optimize | ✔ |  |  |
+debug | ✔ |  |  |
+max_renderers | ✔ |  |  |
+shade_check | ✔ |  |  |
+exp_info | ✔ |  |  |
+
+*Above: which config file options are supported by which program.*
+
+
+### base_directory
+
+Policy files should be placed in **base_directory**. `aclgen` and `pol2yaml` will search this directory recursively for input files to process, except if the flag `--policy_file` is used to give a specific input file (`aclgen` only). Relative paths that appear in "include" directives will be resolved against base_directory. The default value is './policies'.
+
+### definitions_directory
+
+Network and service definition files should be placed in **definitions_directory**. All files in this directory will be loaded and used to resolve symbolic network and service names. Unlike base_directory, definitions_directory is not searched recursively for input files. The default value is './def'.
+
+### output_directory
+
+`aclgen` will place all generated ACLs in this directory. For `aclgen` the default value is the current directory.
+
+`pol2yaml` will place each converted file adjacent to its input file by default. If **output_directory** is given, `pol2yaml` will mirror the directory structure of the input files in the output_directory, potentially creating directories in the process.
+
+### config_file
 
 In addition to accepting command line arguments, `aclgen`, `aclcheck`, and
 `pol2yaml` will look for a config file named 'aerleon.yml' in the current directory.
 This location can be configured with the `--config_file` option. Options specified on
 the command line take precendence over options in config files.
 
-A table showing which config file options are used by which program appears below.
-
-Option | aclgen | aclcheck  | pol2yaml
----- | --- | --- |  ---
-base_directory | ✔ | ✔ | ✔
-definitions_directory | ✔ | ✔ | ✔
-output_directory | ✔ |  | ✔
-optimize | ✔ |  |
-debug | ✔ |  |
-max_renderers | ✔ |  |
-shade_check | ✔ |  |
-exp_info | ✔ |  |
 
 
-## aclgen
+## Usage: aclgen
 
 ```
   --base_directory: The base directory to search recursively for policy files.
@@ -70,7 +92,9 @@ exp_info | ✔ |  |
     Default: 'false'
 ```
 
-## aclcheck
+
+
+## Usage: aclcheck
 
 ```
 usage: aclcheck [-h] -p POL [--definitions-directory DEFINITIONS_DIRECTORY] [--base-directory BASE_DIRECTORY] [--config-file CONFIG_FILE] [-d DESTINATION_IP] [-s SOURCE_IP]
@@ -80,13 +104,13 @@ Check where hosts, ports and protocols match in a NAC policy.
 
 options:
   -h, --help            show this help message and exit
-  -p POL, --policy-file POL
+  -p POL, --policy-file POL, --policy_file POL
                         The policy file to examine.
-  --definitions-directory DEFINITIONS_DIRECTORY
+  --definitions-directory DEFINITIONS_DIRECTORY, --definitions_directory DEFINITIONS_DIRECTORY
                         The directory where network and service definition files can be found.
-  --base-directory BASE_DIRECTORY
+  --base-directory BASE_DIRECTORY, --base_directory BASE_DIRECTORY
                         The base directory to use when resolving policy include paths.
-  --config-file CONFIG_FILE
+  --config-file CONFIG_FILE, --config_file CONFIG_FILE
                         Change the location searched for the configuration YAML file.
   -d DESTINATION_IP, --destination DESTINATION_IP
                         Destination IP.
@@ -94,13 +118,15 @@ options:
                         Source IP.
   --proto PROTOCOL, --protocol PROTOCOL
                         Protocol (tcp, udp, icmp, etc.)
-  --dport DESTINATION_PORT, --destination-port DESTINATION_PORT
+  --dport DESTINATION_PORT, --destination-port DESTINATION_PORT, --destination_port DESTINATION_PORT
                         Destination port.
-  --sport SOURCE_PORT, --source-port SOURCE_PORT
+  --sport SOURCE_PORT, --source-port SOURCE_PORT, --source-port SOURCE_PORT
                         Source port.
 ```
 
-## cgrep
+
+
+## Usage: cgrep
 
 ```
 usage: cgrep [-h] [-d DEFS] [-i IP [IP ...]] [-t TOKEN] [-c OBJ OBJ | -g IP IP | -o OBJ [OBJ ...] | -s SVC [SVC ...] | -p PORT PROTO]
@@ -129,7 +155,9 @@ options:
                         Must be used in conjunction with -i/--ip [addr].
 ```
 
-## pol2yaml
+
+
+## Usage: pol2yaml
 
 ```
 pol2yaml: Convert .pol, .inc policy files and .svc, .net definitions into equivalent YAML files.
