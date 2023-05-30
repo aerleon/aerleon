@@ -930,5 +930,4 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             # The policy name field should be given as an empty string if not provided
             # by the user.
             repr = (repr['name'], repr.get('policy', ''))
-
         return repr

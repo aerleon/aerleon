@@ -262,9 +262,10 @@ networks:
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
 
     def testGetFQDN(self):
-        
+
         expected = [fqdn.FQDN('foo.bar', 'FOOBAR', ' foo\'s fqdn')]
         self.assertListEqual(expected, self.defs.GetFQDN('FOOBAR'))
+
 
 class DefinitionObjectUnitTest(NamingUnitTest):
     """Runs the NamingUnitTest suite against object input.

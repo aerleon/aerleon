@@ -54,9 +54,9 @@ import yaml
 from absl import logging
 from yaml import YAMLError
 
-from aerleon.lib.fqdn import FQDN
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
+from aerleon.lib.fqdn import FQDN
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
@@ -223,7 +223,9 @@ class Naming:
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
         # https://regexr.com/3g5j0
-        self.fqdn_re = re.compile(r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE)
+        self.fqdn_re = re.compile(
+            r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE
+        )
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
@@ -924,7 +926,6 @@ class Naming:
                         addr_unit.items.append(f'{value} # {comment}')
                     else:
                         fqdn_unit.items.append(f'{value} # {comment}')
-                    
 
                 if network_ref and (
                     network_ref not in self.networks or network_ref not in self.fqdn

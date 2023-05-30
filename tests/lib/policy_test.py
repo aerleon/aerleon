@@ -1806,7 +1806,14 @@ filters:
         action: accept
         '''
         self.naming.GetFQDN.return_value = ['FOO']
-        p = yaml_frontend.ParsePolicy(pol, filename='', base_dir='', definitions=self.naming,optimize=True,shade_check=False)
+        p = yaml_frontend.ParsePolicy(
+            pol,
+            filename='',
+            base_dir='',
+            definitions=self.naming,
+            optimize=True,
+            shade_check=False,
+        )
         print(p)
 
     @parameterized.named_parameters(
