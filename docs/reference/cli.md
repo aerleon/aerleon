@@ -40,7 +40,8 @@ exp_info | ✔ |  |
   --config_file: A YAML file with configuration options;
     repeat this option to specify a list of values
 
-  --[no]debug: Display detailed messages. Default: 'false'
+  --[no]debug: Display detailed messages.
+    Default: 'false'
 
   --definitions_directory: Directory containing network and service definition files.
     Default: './def'
