@@ -1,8 +1,8 @@
 {
   "$id": "urn:aerleon:schemas:aerleon-config:1.0.0",
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Aerleon CLI",
-  "description": "YAML Schema for Aerleon CLI tools",
+  "title": "aerleon.yml",
+  "description": "Used to configure Aerleon's aclgen, aclcheck, and cgrep command line tools.",
   "type": "object",
   "properties": {
     "base_directory": {
@@ -12,7 +12,7 @@
     },
     "definitions_directory": {
       "type": "string",
-      "description": "When using the aclgen or aclcheck programs, definitions_directory specifies a root directory expected to contain network/service definition files.\n\nBoth aclgen and aclcheck will search this directory and its subdirectories for definition files and load them into memory. These definitions will be used to resolve network and service names referenced by policy files.",
+      "description": "When using the aclgen or aclcheck programs, definitions_directory should contain network and service definition files.\n\nBoth aclgen and aclcheck will search this directory and its subdirectories for definition files and load them into memory. These definitions will be used to resolve network and service names referenced by policy files.",
       "minLength": 1
     },
     "output_directory": {
@@ -22,7 +22,7 @@
     },
     "optimize": {
       "type": "boolean",
-      "description": "When using the aclgen program, setting optimize to true causes the program to produce a more compact address book by collapsing adjacent or overlapping CIDR expressions within the same network.\n\nOn some platforms (Juniper SRX and platforms configured with the 'object-group' option) address book compression is restricted to only collapse addresses that share the same network token (name).\n\nThis flag is not enabled by default, although an secondary address book compression pass is always performed for Juniper SRX and Palo Alto Networks firewalls regardless of this setting."
+      "description": "When using the aclgen program, setting optimize to true causes the program to produce a more compact address book by collapsing adjacent or overlapping CIDR expressions within the same network.\n\nOn some platforms (Juniper SRX and platforms configured with the 'object-group' option) address book compression is restricted to only collapse addresses that share the same network token (name).\n\nThis flag is not enabled by default, although a secondary address book compression pass is always performed for Juniper SRX and Palo Alto Networks firewalls regardless of this setting."
     },
     "recursive": {
       "type": "boolean",

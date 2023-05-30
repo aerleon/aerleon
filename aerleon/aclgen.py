@@ -35,70 +35,67 @@ def SetupFlags():
     flags.DEFINE_string(
         'base_directory',
         None,
-        'The base directory to look for acls; '
-        'typically where you\'d find ./corp and ./prod\n(default: \'%s\')'
-        % config.defaults['base_directory'],
+        'The base directory to search recursively for policy files.\n'
+        'Relative policy imports are resolved against this directory.\n'
+        'If --policy_file is used, aclgen will not search this directory.\n'
+        'Default: \'%s\'' % config.defaults['base_directory'],
     )
     flags.DEFINE_string(
         'definitions_directory',
         None,
-        'Directory where the definitions can be found.\n(default: \'%s\')'
-        % config.defaults['definitions_directory'],
+        'Directory containing network and service definition files.\n'
+        'Default: \'%s\'' % config.defaults['definitions_directory'],
     )
     flags.DEFINE_string('policy_file', None, 'Individual policy file to generate.')
     flags.DEFINE_string(
         'output_directory',
         None,
-        'Directory to output the rendered acls.\n(default: \'%s\')'
+        'Directory to output the rendered acls.\nDefault: \'%s\''
         % config.defaults['output_directory'],
     )
     flags.DEFINE_boolean(
         'optimize',
         None,
-        'Turn on optimization.\n(default: \'%s\')' % config.defaults['optimize'],
+        'Turn on optimization.\nDefault: \'%s\'' % config.defaults['optimize'],
         short_name='o',
     )
     flags.DEFINE_boolean(
         'recursive',
         None,
-        'Descend recursively from the base directory rendering acls\n(default: \'%s\')'
-        % str(config.defaults['recursive']).lower(),
+        'UNUSED. '
+        'Recursive policy file search is always enabled except when using the --policy_file flag.',
     )
     flags.DEFINE_boolean(
-        'debug', None, 'Debug messages\n(default: \'%s\')' % str(config.defaults['debug']).lower()
-    )
-    flags.DEFINE_boolean(
-        'verbose',
+        'debug',
         None,
-        'Verbose messages\n(default: \'%s\')' % str(config.defaults['verbose']).lower(),
+        'Display detailed messages.\nDefault: \'%s\'' % str(config.defaults['debug']).lower(),
     )
+    flags.DEFINE_boolean('verbose', None, 'UNUSED. Use --debug instead.')
     flags.DEFINE_list(
         'ignore_directories',
         None,
-        'Don\'t descend into directories that look like this string\n(default: \'%s\')'
+        'Don\'t descend into directories that look like this string.\nDefault: \'%s\''
         % ','.join(config.defaults['ignore_directories']),
     )
     flags.DEFINE_integer(
         'max_renderers',
         None,
-        'Max number of rendering processes to use.\n(default: \'%s\')'
+        'Max number of rendering processes to use.\nDefault: \'%s\''
         % config.defaults['max_renderers'],
     )
     flags.DEFINE_boolean(
         'shade_check',
         None,
-        'Raise an error when a term is completely shaded by a prior term.\n(default: \'%s\')'
+        'Raise an error when a term is completely shaded by a prior term.\nDefault: \'%s\''
         % str(config.defaults['shade_check']).lower(),
     )
     flags.DEFINE_integer(
         'exp_info',
         None,
-        'Print a info message when a term is set to expire in that many weeks.\n(default: \'%s\')'
+        'Print a message when a term is set to expire in that many weeks.\nDefault: \'%s\''
         % str(config.defaults['exp_info']),
     )
-    flags.DEFINE_multi_string(
-        'config_file', None, 'A yaml file with the configuration options for aerleon'
-    )
+    flags.DEFINE_multi_string('config_file', None, 'A YAML file with configuration options')
 
 
 class Error(Exception):

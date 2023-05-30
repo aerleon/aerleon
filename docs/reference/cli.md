@@ -1,40 +1,185 @@
 # CLI Reference
 
-`aclgen` is the CLI tool that is used translate your policy files into platform specific syntax. We use `abseil` for managing our flags and logging so in order to get a list of all flags you need to use the following command
+Aerleon contains three command line programs:
 
-```bash
-aclgen --helpfull
+* [`aclgen`](#aclgen) generates ACL files from your policy files (the primary program)
+* [`aclcheck`](#aclcheck) checks where hosts, ports and protocols are matched in a single policy file
+* [`cgrep`](#cgrep) answers queries about addresses, ports and protocols found in the definition files
+
+[`pol2yaml`](#pol2yaml) converts .pol, .inc, .svc, and .net files to equivalent YAML files. It can be found in [its own repository](https://github.com/aerleon/pol2yaml) but is documented here.
+
+### Config Files
+
+In addition to accepting command line arguments, `aclgen`, `aclcheck`, and
+`pol2yaml` will look for a config file named 'aerleon.yml' in the current directory.
+This location can be configured with the `--config_file` option. Options specified on
+the command line take precendence over options in config files.
+
+A table showing which config file options are used by which program appears below.
+
+Option | aclgen | aclcheck  | pol2yaml
+---- | --- | --- |  ---
+base_directory | ✔ | ✔ | ✔
+definitions_directory | ✔ | ✔ | ✔
+output_directory | ✔ |  | ✔
+optimize | ✔ |  |
+debug | ✔ |  |
+max_renderers | ✔ |  |
+shade_check | ✔ |  |
+exp_info | ✔ |  |
+
+
+## aclgen
+
+```
+  --base_directory: The base directory to search recursively for policy files.
+                    Relative policy imports are resolved against this directory.
+                    If --policy_file is used, aclgen will not search this directory.
+    Default: './policies'
+
+  --config_file: A YAML file with configuration options;
+    repeat this option to specify a list of values
+
+  --[no]debug: Display detailed messages.
+    Default: 'false'
+
+  --definitions_directory: Directory containing network and service definition files.
+    Default: './def'
+
+  --exp_info: Print a message when a term is set to expire in that many weeks.
+    Default: '2'
+    (an integer)
+
+  --ignore_directories: Don't descend into directories that look like this string.
+    Default: 'DEPRECATED,def'
+    (a comma separated list)
+
+  --max_renderers: Max number of rendering processes to use.
+    Default: '10'
+    (an integer)
+
+  -o,--[no]optimize: Turn on optimization.
+    Default: 'False'
+
+  --output_directory: Directory to output the rendered acls.
+    Default: './'
+
+  --policy_file: Individual policy file to generate.
+
+  --[no]shade_check: Raise an error when a term is completely shaded by a prior term.
+    Default: 'false'
 ```
 
-This will provide flags for each imported library that supports them. We provide below a current list of the supported flags.
+## aclcheck
 
-```bash
-  --base_directory: The base directory to look for acls; typically where you'd find ./corp and ./prod
-    (default: './policies')
-  --config_file: A yaml file with the configuration options for aerleon;
-    repeat this option to specify a list of values
-  --[no]debug: Debug messages
-    (default: 'false')
-  --definitions_directory: Directory where the definitions can be found.
-    (default: './def')
-  --exp_info: Print a info message when a term is set to expire in that many weeks.
-    (default: '2')
-    (an integer)
-  --ignore_directories: Don't descend into directories that look like this string
-    (default: 'DEPRECATED,def')
-    (a comma separated list)
-  --max_renderers: Max number of rendering processes to use.
-    (default: '10')
-    (an integer)
-  -o,--[no]optimize: Turn on optimization.
-    (default: 'False')
-  --output_directory: Directory to output the rendered acls.
-    (default: './')
-  --policy_file: Individual policy file to generate.
-  --[no]recursive: Descend recursively from the base directory rendering acls
-    (default: 'true')
-  --[no]shade_check: Raise an error when a term is completely shaded by a prior term.
-    (default: 'false')
-  --[no]verbose: Verbose messages
-    (default: 'false')
+```
+usage: aclcheck [-h] -p POL [--definitions-directory DEFINITIONS_DIRECTORY] [--base-directory BASE_DIRECTORY] [--config-file CONFIG_FILE] [-d DESTINATION_IP] [-s SOURCE_IP]
+                [--proto PROTOCOL] [--dport DESTINATION_PORT] [--sport SOURCE_PORT]
+
+Check where hosts, ports and protocols match in a NAC policy.
+
+options:
+  -h, --help            show this help message and exit
+  -p POL, --policy-file POL
+                        The policy file to examine.
+  --definitions-directory DEFINITIONS_DIRECTORY
+                        The directory where network and service definition files can be found.
+  --base-directory BASE_DIRECTORY
+                        The base directory to use when resolving policy include paths.
+  --config-file CONFIG_FILE
+                        Change the location searched for the configuration YAML file.
+  -d DESTINATION_IP, --destination DESTINATION_IP
+                        Destination IP.
+  -s SOURCE_IP, --source SOURCE_IP
+                        Source IP.
+  --proto PROTOCOL, --protocol PROTOCOL
+                        Protocol (tcp, udp, icmp, etc.)
+  --dport DESTINATION_PORT, --destination-port DESTINATION_PORT
+                        Destination port.
+  --sport SOURCE_PORT, --source-port SOURCE_PORT
+                        Source port.
+```
+
+## cgrep
+
+```
+usage: cgrep [-h] [-d DEFS] [-i IP [IP ...]] [-t TOKEN] [-c OBJ OBJ | -g IP IP | -o OBJ [OBJ ...] | -s SVC [SVC ...] | -p PORT PROTO]
+
+c[apirca]grep
+
+options:
+  -h, --help            show this help message and exit
+  -d DEFS, --def DEFS   Network Definitions directory location.
+  -c OBJ OBJ, --cmp OBJ OBJ
+                        Compare the two given network definition tokens
+  -g IP IP, --gmp IP IP
+                        Diff the network objects to which the given IP(s) belong
+  -o OBJ [OBJ ...], --obj OBJ [OBJ ...]
+                        Return list of IP(s) contained within the given token(s)
+  -s SVC [SVC ...], --svc SVC [SVC ...]
+                        Return list of port(s) contained within given token(s)
+  -p PORT PROTO, --port PORT PROTO
+                        Returns a list of tokens containing the given port and protocol
+
+  -i IP [IP ...], --ip IP [IP ...]
+                        Return list of definitions containing the IP(s).
+                        Multiple IPs permitted.
+  -t TOKEN, --token TOKEN
+                        See if an IP is contained within the given token.
+                        Must be used in conjunction with -i/--ip [addr].
+```
+
+## pol2yaml
+
+```
+pol2yaml: Convert .pol, .inc policy files and .svc, .net definitions into equivalent YAML files.
+
+Usage: pol2yaml [--base_directory DIRECTORY] [-c|--config_file FILE] [--definitions_directory DIRECTORY]
+    [-h|--help] [--no-fix-include] [--output_directory DIRECTORY] [-s|--sanity_check]
+
+Examples:
+
+* Recursively convert all .pol and .inc files in base_directory.
+  Original files are left in place. Each YAML files is placed in the same
+  directory as the original file. Run sanity_check after (-s).
+
+    npx pol2yaml -s --base_directory policies/
+
+
+Options:
+
+--base_directory    Convert .pol and .inc files found in this directory to
+                    YAML. Original files are left in place. Can be set in
+                    the 'aerleon.yml' config file.
+
+--config_file | -c  Defaults to 'aerleon.yml'. Can set base_directory and
+                    definitions_directory.
+
+--definitions_directory
+                    Convert .net and .svc files found in this directory to
+                    YAML. Original files are left in place. Can be set in
+                    the 'aerleon.yml' config file.
+
+--help | -h         Display this message and exit.
+
+--no_fix_include    By default, if an #include directive references a file
+                    name with the .inc extension, the file name will appear
+                    in the YAML output with the extension changed to
+                    ".yaml". This flag leaves the file name unchanged.
+
+--output_directory  Default: current directory. Sets the output directory
+                    where YAML files will be placed.
+
+--sanity_check | -s Run 'aclgen' on both the original and YAML files and
+                    ensure the results are identical.
+
+                    Sanity check requires that either Aerleon or pipx
+                    are available. To run 'aclgen' it will try each of
+                    the following commands in order:
+
+                        python3 -m aerleon
+
+                        python3 -m pipx run aerleon
+
+                        aclgen
 ```
