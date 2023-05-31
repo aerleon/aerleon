@@ -36,12 +36,14 @@
     "filter": {
       "type": "object",
       "required": ["header", "terms"],
-      "header": {
-        "type": { "$ref": "#/$defs/filterHeader" }
-      },
-      "terms": {
-        "type": "array",
-        "items": { "$ref": "#/$defs/term" }
+      "properties": {
+        "header": {
+          "type": { "$ref": "#/$defs/filterHeader" }
+        },
+        "terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/term" }
+        }
       },
       "additionalProperties": true
     },
@@ -49,8 +51,10 @@
       "type": "object",
       "title": "FilterHeader",
       "required": ["targets"],
-      "targets": {
-        "type": "object"
+      "properties": {
+        "targets": {
+          "type": "object"
+        }
       }
     },
     "term": {
