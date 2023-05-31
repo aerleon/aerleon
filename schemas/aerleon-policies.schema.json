@@ -38,7 +38,7 @@
       "required": ["header", "terms"],
       "properties": {
         "header": {
-          "type": { "$ref": "#/$defs/filterHeader" }
+          "$ref": "#/$defs/filterHeader"
         },
         "terms": {
           "type": "array",
