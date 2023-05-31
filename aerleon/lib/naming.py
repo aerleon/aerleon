@@ -550,6 +550,7 @@ class Naming:
         token = data[0].split()[0]
         if token not in self.fqdn:
             raise UndefinedAddressError(f'UNDEFINED: {token}')
+        import ipdb;ipdb.set_trace()
         for i in self.fqdn[token].items:
             comment = ''
             if i.find('#') > -1:
@@ -872,7 +873,6 @@ class Naming:
             addr_unit = _ItemUnit(symbol)
             fqdn_unit = _ItemUnit(symbol)
 
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
             self.networks[symbol] = addr_unit
             self.fqdn[symbol] = fqdn_unit
             if symbol in self.unseen_networks:
