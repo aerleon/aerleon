@@ -70,7 +70,7 @@
           "type": "object",
           "required": ["include"],
           "properties": {
-            "name": {
+            "include": {
               "type": "string"
             }
           },
