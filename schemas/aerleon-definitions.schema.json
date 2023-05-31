@@ -26,11 +26,11 @@
       "pattern": "^[-_A-Z0-9]+$"
     },
     "comment": {
-      "description": "When inserting a network or service value you can attach a comment directly to that value. The comment will be loaded and potentially included in generated output on platforms that support it.",
+      "description": "Attach a comment directly to a value. This comment may be included in generated output on platforms that support it.",
       "type": "string"
     },
     "address": {
-      "description": "When defining a network you can insert data as a specific IP address or a CIDR IP address range expression.",
+      "description": "Specifies an IP address or CIDR IP address range expression.",
       "type": "string"
     },
     "networkDefinition": {
@@ -48,6 +48,8 @@
             "oneOf": [
               {
                 "type": "string",
+                "title": "Network Reference",
+                "description": "Include another network by name. The referenced network must be defined in this file.",
                 "$ref": "#/$defs/token"
               },
               {
@@ -61,9 +63,15 @@
               },
               {
                 "type": "object",
+                "title": "Network Reference",
+                "description": "Include another network by name. The referenced network must be defined in this file.",
                 "required": ["name"],
                 "properties": {
-                  "name": { "$ref": "#/$defs/token" },
+                  "name": {
+                    "title": "Network Reference",
+                    "description": "Include another network by name. The referenced network must be defined in this file.",
+                    "$ref": "#/$defs/token"
+                  },
                   "comment": { "$ref": "#/$defs/comment" }
                 },
                 "additionalProperties": false

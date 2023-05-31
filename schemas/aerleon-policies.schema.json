@@ -1,6 +1,7 @@
 {
   "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "https://aerleon.readthedocs.io/en/latest/reference/yaml_reference/",
   "title": "Aerleon Policy",
   "description": "define a platform-agnostic network policy",
   "oneOf": [
@@ -39,7 +40,7 @@
         "type": { "$ref": "#/$defs/filterHeader" }
       },
       "terms": {
-        "type": "list",
+        "type": "array",
         "items": { "$ref": "#/$defs/term" }
       },
       "additionalProperties": true
