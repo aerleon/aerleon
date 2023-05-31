@@ -1,7 +1,9 @@
 {
+  "$id": "urn:aerleon:schemas:aerleon-definitions:1.0.0",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$comment": "https://aerleon.readthedocs.io/en/latest/reference/naming/",
-  "title": "Aerleon Definition File",
+  "title": "Aerleon Network & Service Definitions",
+  "description": "define named networks and services",
   "type": "object",
   "additionalProperties": false,
   "properties": {

@@ -1,28 +1,27 @@
 {
-  "$id": "urn:aerleon:schemas:aerleon-config:1.0.0",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "aerleon.yml",
-  "description": "Used to configure Aerleon's aclgen, aclcheck, and cgrep command line tools.",
+  "description": "configure Aerleon's aclgen, aclcheck, and pol2yaml command line tools",
   "type": "object",
   "properties": {
     "base_directory": {
       "type": "string",
-      "description": "When using the aclgen or aclcheck programs, base_directory specifies a root directory expected to contain policy files.\n\nRelative paths used in file includes will be resolved against base_directory.\n\nBy default, aclgen will process all policy files found within base_directory and any subdirectories of base_directory. If configured with --policy_file, aclgen will only process the file or files given by that flag.",
+      "description": "aclgen and pol2yaml will search this directory recursively for policy files to process, except if the flag `--policy_file` is used to give a specific input file (aclgen only).\n\nRelative paths that appear in 'include' directives will be resolved against base_directory.\n\nThe default value is './policies'.",
       "minLength": 1
     },
     "definitions_directory": {
       "type": "string",
-      "description": "When using the aclgen or aclcheck programs, definitions_directory should contain network and service definition files.\n\nBoth aclgen and aclcheck will search this directory and its subdirectories for definition files and load them into memory. These definitions will be used to resolve network and service names referenced by policy files.",
+      "description": "All network and service definition files in this directory will be loaded and used to resolve symbolic network and service names. \n\nUnlike base_directory, definitions_directory is not searched recursively for input files.\n\nThe default value is './def'.",
       "minLength": 1
     },
     "output_directory": {
       "type": "string",
-      "description": "When using the aclgen program, output_directory controls where generated ACL files will be placed.\n\nGenerated ACL files will be placed in the current directory if ouput_directory is not set.",
+      "description": "aclgen will place all generated ACLs in this directory. For `aclgen` the default value is the current directory.\n\npol2yaml will place each converted file adjacent to its input file by default. If output_directory is given, pol2yaml will mirror the directory structure of the input files in the output_directory, potentially creating directories in the process.",
       "minLength": 1
     },
     "optimize": {
       "type": "boolean",
-      "description": "When using the aclgen program, setting optimize to true causes the program to produce a more compact address book by collapsing adjacent or overlapping CIDR expressions within the same network.\n\nOn some platforms (Juniper SRX and platforms configured with the 'object-group' option) address book compression is restricted to only collapse addresses that share the same network token (name).\n\nThis flag is not enabled by default, although a secondary address book compression pass is always performed for Juniper SRX and Palo Alto Networks firewalls regardless of this setting."
+      "description": "Causes aclgen to produce a more compact address book by collapsing adjacent or overlapping CIDR expressions within the same network.\n\nOn some platforms (Juniper SRX and platforms configured with the 'object-group' option) address book compression is restricted to only collapse addresses that share the same network token (name).\n\nThis flag is not enabled by default, although a secondary address book compression pass is always performed for Juniper SRX and Palo Alto Networks firewalls regardless of this setting."
     },
     "recursive": {
       "type": "boolean",
@@ -30,7 +29,7 @@
     },
     "debug": {
       "type": "boolean",
-      "description": "When using the aclgen program, setting debug to true displays very detailed log messages."
+      "description": "Causes aclgen to display very detailed log messages if true. The default value is false."
     },
     "verbose": {
       "type": "boolean",
@@ -38,15 +37,15 @@
     },
     "max_renderers": {
       "type": "integer",
-      "description": "When using the aclgen program, max_renderers controls the number of parallel processes used to render ACLs. The aclgen program uses Python's OS process-based multiprocessing, so setting max_renderers to '2' would cause aclgen to spawn two OS processes that will generate ACLs.\n\nSetting max_renderers to '1' will disable multiprocessing.\n\nBy default, max_renderers is set to '10'. Users may wish to set this to the number of available CPUs on the current system."
+      "description": "Controls the number of parallel processes used by aclgen to render ACLs. The aclgen program uses Python's OS process-based multiprocessing, so setting max_renderers to '2' would cause aclgen to spawn two OS processes that will generate ACLs.\n\nSetting max_renderers to '1' will disable multiprocessing.\n\nBy default, max_renderers is set to '10'. Users may wish to set this to the number of available CPUs on the current system."
     },
     "shade_check": {
       "type": "boolean",
-      "description": "When using the aclgen program, setting shade_check to true causes the program to produce a warning if any unreachable term is encountered."
+      "description": "Causes aclgen to produce a warning if any unreachable term is encountered if true. The default value is false."
     },
     "exp_info": {
       "type": "integer",
-      "description": "When using the aclgen program, aclgen will produce a warning if it encounters a term set to expire in the near future. Expired terms are ignored. Setting exp_info controls the number of weeks ahead that aclgen will check for soon-to-expire terms.\n\nBy default, exp_info is set to '2' (two weeks)."
+      "description": "aclgen will produce a warning if it encounters a term set to expire in the near future. Expired terms are ignored. Setting exp_info controls the number of weeks ahead that aclgen will check for soon-to-expire terms.\n\nThe default value is '2' (two weeks)."
     }
   },
   "additionalProperties": false
