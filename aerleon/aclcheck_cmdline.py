@@ -32,22 +32,26 @@ def main():
     _parser.add_argument(
         '-p',
         '--policy-file',
+        '--policy_file',
         dest='pol',
         help='The policy file to examine.',
         required=True,
     )
     _parser.add_argument(
         '--definitions-directory',
+        '--definitions_directory',
         dest='definitions_directory',
         help='The directory where network and service definition files can be found.',
     )
     _parser.add_argument(
         '--base-directory',
+        '--base_directory',
         dest='base_directory',
         help='The base directory to use when resolving policy include paths.',
     )
     _parser.add_argument(
         '--config-file',
+        '--config_file',
         dest='config_file',
         help='Change the location searched for the configuration YAML file.',
     )
@@ -65,9 +69,15 @@ def main():
         help='Protocol (tcp, udp, icmp, etc.)',
     )
     _parser.add_argument(
-        '--dport', '--destination-port', dest='destination_port', help='Destination port.'
+        '--dport',
+        '--destination-port',
+        '--destination_port',
+        dest='destination_port',
+        help='Destination port.',
     )
-    _parser.add_argument('--sport', '--source-port', dest='source_port', help='Source port.')
+    _parser.add_argument(
+        '--sport', '--source-port', '--source_port', dest='source_port', help='Source port.'
+    )
     FLAGS = _parser.parse_args()
 
     default_flags = {
