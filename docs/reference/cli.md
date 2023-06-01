@@ -12,7 +12,7 @@ Aerleon contains three command line programs:
 
 ## Common Options
 
-Options used by more than one command line program are listed here. Setting these options in your config file is a good practice.
+Options used by more than one command line program are listed here. Setting these options in your config file is a good practice. See [--config_file](#config_file).
 
 Option | aclgen | aclcheck | pol2yaml | cgrep
 ---- | --- | --- | --- | ---
