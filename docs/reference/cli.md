@@ -120,7 +120,7 @@ options:
                         Protocol (tcp, udp, icmp, etc.)
   --dport DESTINATION_PORT, --destination-port DESTINATION_PORT, --destination_port DESTINATION_PORT
                         Destination port.
-  --sport SOURCE_PORT, --source-port SOURCE_PORT, --source-port SOURCE_PORT
+  --sport SOURCE_PORT, --source-port SOURCE_PORT, --source_port SOURCE_PORT
                         Source port.
 ```
 

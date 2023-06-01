@@ -76,7 +76,7 @@ def main():
         help='Destination port.',
     )
     _parser.add_argument(
-        '--sport', '--source-port', '--source-port', dest='source_port', help='Source port.'
+        '--sport', '--source-port', '--source_port', dest='source_port', help='Source port.'
     )
     FLAGS = _parser.parse_args()
 
