@@ -562,7 +562,7 @@ class Naming:
                     fqdn = FQDN(name, token, comment)
                     returnlist.append(fqdn)
                 except ValueError:
-                    returnlist.extend(self.GetFQDN(name))
+                    pass
         return returnlist
 
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
@@ -621,9 +621,7 @@ class Naming:
                     addr.token = token
                     returnlist.append(addr)
                 except ValueError:
-                    # if net was something like 'FOO', or the name of another token which
-                    # needs to be dereferenced, nacaddr.IP() will return a ValueError
-                    returnlist.extend(self.GetNet(net))
+                    pass
         for i in returnlist:
             i.parent_token = token
         return returnlist
@@ -924,7 +922,7 @@ class Naming:
                     else:
                         fqdn_unit.items.append(f'{value} # {comment}')
 
-                if network_ref:
+                if network_ref and network_ref not in self.networks:
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
