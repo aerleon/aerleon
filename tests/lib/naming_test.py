@@ -309,7 +309,6 @@ class DefinitionObjectUnitTest(NamingUnitTest):
         self.defs = naming.Naming(None)
         self.defs.ParseDefinitionsObject(defs_obj, "example_defs.yaml")
 
-class NamingRegexTests(absltest.TestCase):
-    def testFQDNRegex(self):
+
 if __name__ == '__main__':
     absltest.main()

@@ -222,10 +222,6 @@ class Naming:
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
         self.token_re = re.compile(r'(^[-_A-Z0-9]+$)', re.IGNORECASE)
-        # https://regexr.com/3g5j0
-        self.fqdn_re = re.compile(
-            r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE
-        )
 
         if naming_file:
             file_path = Path(naming_dir).joinpath(naming_file)
@@ -550,7 +546,6 @@ class Naming:
         token = data[0].split()[0]
         if token not in self.fqdn:
             raise UndefinedAddressError(f'UNDEFINED: {token}')
-        import ipdb;ipdb.set_trace()
         for i in self.fqdn[token].items:
             comment = ''
             if i.find('#') > -1:
@@ -562,10 +557,12 @@ class Naming:
             # Check if hostname is actually a subtoken
             if self.token_re.match(name):
                 returnlist.extend(self.GetFQDN(name))
-            elif self.fqdn_re.match(name):
-                returnlist.append(FQDN(name, token, comment))
             else:
-                logging.debug(f"{name} did not match FQDN")
+                try:
+                    fqdn = FQDN(name, token, comment)
+                    returnlist.append(fqdn)
+                except ValueError:
+                    returnlist.extend(self.GetFQDN(name))
         return returnlist
 
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
@@ -927,9 +924,7 @@ class Naming:
                     else:
                         fqdn_unit.items.append(f'{value} # {comment}')
 
-                if network_ref and (
-                    network_ref not in self.networks or network_ref not in self.fqdn
-                ):
+                if network_ref:
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
