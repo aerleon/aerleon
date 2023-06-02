@@ -8,13 +8,15 @@
   "additionalProperties": false,
   "properties": {
     "networks": {
-      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80) and can include port ranges.\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
+      "title": "Network Definition Section",
+      "description": "Policy files can reference the networks in this section by name. A network is a list of IP addresses or CIDR IP address ranges and may contain other networks.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/networkDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
     },
     "services": {
-      "description": "An Aerleon definition file defines named networks and services which can be referenced by Aerleon Policy files. Networks are lists of IP addresses or CIDR IP address ranges. Services are lists of port/protocol pairs (e.g. tcp/80) and can include port ranges.\nDefinition files must include a \"networks\" section, a \"services\" section, or both.\nNetworks and services may use composition in their definitions. Include another definition by creating an item containing the \"name\" property.",
+      "title": "Service Definition Section",
+      "description": "Policy files can reference the services in this section by name. A service is a list of port/protocol pairs (e.g. tcp/80) and can include port ranges. A service can include other services.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/serviceDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
@@ -33,6 +35,22 @@
       "description": "Specifies an IP address or CIDR IP address range expression.",
       "type": "string"
     },
+    "port": {
+      "description": "Specifies a port or port range.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d+-\\d+|^\\d+$"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "protocol": {
+      "description": "Specifies a protocol by name or number.",
+      "oneOf": [{ "type": "integer" }, { "type": "string" }]
+    },
     "networkDefinition": {
       "type": "object",
       "title": "Network Definition",
@@ -44,7 +62,6 @@
           "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
           "type": "array",
           "items": {
-            "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
             "oneOf": [
               {
                 "type": "string",
@@ -64,11 +81,9 @@
               {
                 "type": "object",
                 "title": "Network Reference",
-                "description": "Include another network by name. The referenced network must be defined in this file.",
                 "required": ["name"],
                 "properties": {
                   "name": {
-                    "title": "Network Reference",
                     "description": "Include another network by name. The referenced network must be defined in this file.",
                     "$ref": "#/$defs/token"
                   },
@@ -83,37 +98,31 @@
     },
     "serviceDefinition": {
       "type": "array",
-      "title": "ServiceDefinition",
-      "description": "Defines a named service, composed of portocol / port pairs and references to other services.",
+      "title": "Service Definition",
+      "description": "Defines a named service, composed of portocol, port pairs and/or references to other services.",
       "items": {
         "oneOf": [
           {
             "type": "object",
-            "title": "ServiceValueEntry",
-            "description": "Describes a protocol / port pair or protocol / port range pair.",
             "required": ["port", "protocol"],
             "properties": {
-              "port": {
-                "oneOf": [
-                  { "type": "string", "pattern": "^\\d+-\\d+|^\\d+$" },
-                  { "type": "integer" }
-                ]
-              },
-              "protocol": {
-                "oneOf": [{ "type": "integer" }, { "type": "string" }]
-              },
-              "comment": { "type": "string" }
+              "port": { "$ref": "#/$defs/port" },
+              "protocol": { "$ref": "#/$defs/protocol" },
+              "comment": { "$ref": "#/$defs/comment" }
             },
             "additionalProperties": false
           },
           {
             "type": "object",
-            "title": "ServiceReference",
-            "description": "References another service.",
+            "title": "Service Reference",
+            "description": "Include another service by name. The referenced service must be defined in this file.",
             "required": ["name"],
             "properties": {
-              "name": { "$ref": "#/$defs/token" },
-              "comment": { "type": "string" }
+              "name": {
+                "description": "Include another service by name. The referenced service must be defined in this file.",
+                "$ref": "#/$defs/token"
+              },
+              "comment": { "$ref": "#/$defs/comment" }
             },
             "additionalProperties": false
           }
