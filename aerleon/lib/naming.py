@@ -554,15 +554,18 @@ class Naming:
                 name = i
 
             name = name.strip()
-            # Check if hostname is actually a subtoken
             if self.token_re.match(name):
                 returnlist.extend(self.GetFQDN(name))
             else:
                 try:
                     fqdn = FQDN(name, token, comment)
+                    fqdn.text = comment.lstrip()
+                    fqdn.token = token
                     returnlist.append(fqdn)
                 except ValueError:
                     pass
+        for i in returnlist:
+            i.parent_token = token
         return returnlist
 
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
@@ -596,12 +599,10 @@ class Naming:
           UndefinedAddressError: for an undefined token value
         """
         returnlist = []
-        data = []
-        token = ''
-        data = query.split('#')  # Get the token keyword and remove any comment
-        token = data[0].split()[0]  # Remove whitespace and cast from list to string
+        data = query.split('#')
+        token = data[0].split()[0]
         if token not in self.networks:
-            raise UndefinedAddressError('%s %s' % ('\nUNDEFINED:', str(token)))
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
 
         for i in self.networks[token].items:
             comment = ''
@@ -615,7 +616,6 @@ class Naming:
                 returnlist.extend(self.GetNet(net))
             else:
                 try:
-                    # TODO(robankeny): Fix using error to continue processing.
                     addr = nacaddr.IP(net, strict=False)
                     addr.text = comment.lstrip()
                     addr.token = token
