@@ -15,7 +15,7 @@
     },
     "services": {
       "title": "Service Definition Section",
-      "description": "Policy files can reference the services in this section by name. A service is a list of port/protocol pairs (e.g. tcp/80) and can include port ranges. A service can include other services.",
+      "description": "Policy files can reference the services in this section by name. A service is a list of port/protocol pairs (e.g. port: 80, protocol: tcp) and can include port ranges. A service can include other services.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/serviceDefinition" },
       "propertyNames": { "$ref": "#/$defs/token" }
