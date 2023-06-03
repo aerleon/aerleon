@@ -108,6 +108,10 @@ class DefinitionFileTypeError(Error):
     """Invalid Definition File"""
 
 
+class EmptyDefinitionError(Error):
+    """A token returned no results."""
+
+
 # Consider making this span-oriented
 # (file > line > (start_ch, end_ch))
 class UserMessage:
@@ -541,6 +545,12 @@ class Naming:
         return sorted(services_set)
 
     def GetFQDN(self, query: str) -> List[str]:
+        results = self._GetFQDN(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
+        return results
+
+    def _GetFQDN(self, query: str, level=0) -> List[str]:
         returnlist = []
         data = query.split('#')
         token = data[0].split()[0]
@@ -555,7 +565,7 @@ class Naming:
 
             name = name.strip()
             if self.token_re.match(name):
-                returnlist.extend(self.GetFQDN(name))
+                returnlist.extend(self._GetFQDN(name))
             else:
                 try:
                     fqdn = FQDN(name, token, comment)
@@ -583,6 +593,12 @@ class Naming:
         return self.GetNet(token)
 
     def GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
+        results = self._GetNet(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
+        return results
+
+    def _GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
         """Expand a network token into a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
         Args:
@@ -904,7 +920,6 @@ class Naming:
                 else:
                     logging.info(f'\nUnexpected symbol definition: {symbol}')
                     continue
-
                 if comment is None:
                     if network_ref:
                         addr_unit.items.append(value)

@@ -256,15 +256,60 @@ networks:
       - name: NET1
         comment: "foo"
       - FOO_V6
-
+  PARENT_FQDN:
+    values:
+      - fqdn: parent.fqdn
+      - CHILD_FQDN
+  CHILD_FQDN:
+    values:
+      - fqdn: child.parent.fqdn
+  PARENT_WITH_ONLY_CHILDREN:
+    values:
+      - CHILD_IP
+      - CHILD_FQDN
+  CHILD_IP:
+    values:
+      - address: 192.168.0.1/32
+  BAD_FQDN_PARENT:
+    values:
+      - CHILD_IP
+  BAD_IP_PARENT:
+    values:
+      - CHILD_FQDN
 """
         self.defs = naming.Naming(None)
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
 
     def testGetFQDN(self):
-
-        expected = [fqdn.FQDN('foo.bar', 'FOOBAR', ' foo\'s fqdn')]
+        expected = [fqdn.FQDN('foo.bar', 'FOOBAR', 'foo\'s fqdn')]
         self.assertListEqual(expected, self.defs.GetFQDN('FOOBAR'))
+
+    def testTokenRequestWithMixedChildren(self):
+        expected = [fqdn.FQDN('child.parent.fqdn', 'CHILD_FQDN')]
+        expected[0].parent_token = 'PARENT_WITH_ONLY_CHILDREN'
+        self.assertListEqual(expected, self.defs.GetFQDN('PARENT_WITH_ONLY_CHILDREN'))
+
+    def testSingularFQDNToken(self):
+        expected = [fqdn.FQDN('child.parent.fqdn', 'CHILD_FQDN')]
+        self.assertListEqual(expected, self.defs.GetFQDN('CHILD_FQDN'))
+
+    def testIPwithFQDNOnlyChildren(self):
+        self.assertRaises(naming.EmptyDefinitionError, self.defs.GetNet, 'BAD_IP_PARENT')
+
+    def testFQDNWithIPOnlyChildren(self):
+        self.assertRaises(naming.EmptyDefinitionError, self.defs.GetFQDN, 'BAD_FQDN_PARENT')
+
+    def testFQDNSubToken(self):
+        expected = [
+            fqdn.FQDN('parent.fqdn', 'PARENT_FQDN', ''),
+            fqdn.FQDN('child.parent.fqdn', 'CHILD_FQDN', ''),
+        ]
+        expected[1].parent_token = 'PARENT_FQDN'
+
+        self.assertListEqual(expected, self.defs.GetFQDN('PARENT_FQDN'))
+
+    def testUndefinedToken(self):
+        self.assertRaises(naming.UndefinedAddressError, self.defs.GetFQDN, 'DOESNTEXIST')
 
 
 class DefinitionObjectUnitTest(NamingUnitTest):
