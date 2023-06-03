@@ -65,7 +65,7 @@
               {
                 "type": "string",
                 "title": "Network Reference",
-                "description": "Include another network by name. The referenced network must be defined in this file.",
+                "description": "Include another network by name.",
                 "$ref": "#/$defs/token"
               },
               {
@@ -83,7 +83,7 @@
                 "required": ["name"],
                 "properties": {
                   "name": {
-                    "description": "Include another network by name. The referenced network must be defined in this file.",
+                    "description": "Include another network by name.",
                     "$ref": "#/$defs/token"
                   },
                   "comment": { "$ref": "#/$defs/comment" }
@@ -114,11 +114,11 @@
           {
             "type": "object",
             "title": "Service Reference",
-            "description": "Include another service by name. The referenced service must be defined in this file.",
+            "description": "Include another service by name.",
             "required": ["name"],
             "properties": {
               "name": {
-                "description": "Include another service by name. The referenced service must be defined in this file.",
+                "description": "Include another service by name.",
                 "$ref": "#/$defs/token"
               },
               "comment": { "$ref": "#/$defs/comment" }
