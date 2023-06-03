@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "aerleon.yml",
-  "description": "configure Aerleon's aclgen, aclcheck, and pol2yaml command line tools",
+  "description": "Configure Aerleon's aclgen, aclcheck, and pol2yaml command line tools",
   "type": "object",
   "properties": {
     "base_directory": {

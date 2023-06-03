@@ -3,7 +3,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$comment": "https://aerleon.readthedocs.io/en/latest/reference/yaml_reference/",
   "title": "Aerleon Policy File",
-  "description": "define a platform-agnostic network policy",
   "oneOf": [
     { "$ref": "#/$defs/policyIncludeFile" },
     { "$ref": "#/$defs/policyFile" }
