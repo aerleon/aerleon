@@ -56,6 +56,7 @@ from yaml import YAMLError
 
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
+from aerleon.lib.fqdn import FQDN
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
@@ -105,6 +106,10 @@ class NamingSyntaxError(Error):
 
 class DefinitionFileTypeError(Error):
     """Invalid Definition File"""
+
+
+class EmptyDefinitionError(Error):
+    """A token returned no results."""
 
 
 # Consider making this span-oriented
@@ -216,6 +221,7 @@ class Naming:
         self.current_symbol = None
         self.services = {}
         self.networks = {}
+        self.fqdn = {}
         self.unseen_services = {}
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
@@ -538,6 +544,40 @@ class Naming:
                     services_set.add(parts[0])
         return sorted(services_set)
 
+    def GetFQDN(self, query: str) -> List[str]:
+        results = self._GetFQDN(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
+        return results
+
+    def _GetFQDN(self, query: str, level=0) -> List[str]:
+        returnlist = []
+        data = query.split('#')
+        token = data[0].split()[0]
+        if token not in self.fqdn:
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
+        for i in self.fqdn[token].items:
+            comment = ''
+            if i.find('#') > -1:
+                (name, comment) = i.split('#', 1)
+            else:
+                name = i
+
+            name = name.strip()
+            if self.token_re.match(name):
+                returnlist.extend(self._GetFQDN(name))
+            else:
+                try:
+                    fqdn = FQDN(name, token, comment)
+                    fqdn.text = comment.lstrip()
+                    fqdn.token = token
+                    returnlist.append(fqdn)
+                except ValueError:
+                    pass
+        for i in returnlist:
+            i.parent_token = token
+        return returnlist
+
     def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
         """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
@@ -553,6 +593,12 @@ class Naming:
         return self.GetNet(token)
 
     def GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
+        results = self._GetNet(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
+        return results
+
+    def _GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
         """Expand a network token into a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
         Args:
@@ -569,12 +615,10 @@ class Naming:
           UndefinedAddressError: for an undefined token value
         """
         returnlist = []
-        data = []
-        token = ''
-        data = query.split('#')  # Get the token keyword and remove any comment
-        token = data[0].split()[0]  # Remove whitespace and cast from list to string
+        data = query.split('#')
+        token = data[0].split()[0]
         if token not in self.networks:
-            raise UndefinedAddressError('%s %s' % ('\nUNDEFINED:', str(token)))
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
 
         for i in self.networks[token].items:
             comment = ''
@@ -588,15 +632,12 @@ class Naming:
                 returnlist.extend(self.GetNet(net))
             else:
                 try:
-                    # TODO(robankeny): Fix using error to continue processing.
                     addr = nacaddr.IP(net, strict=False)
                     addr.text = comment.lstrip()
                     addr.token = token
                     returnlist.append(addr)
                 except ValueError:
-                    # if net was something like 'FOO', or the name of another token which
-                    # needs to be dereferenced, nacaddr.IP() will return a ValueError
-                    returnlist.extend(self.GetNet(net))
+                    pass
         for i in returnlist:
             i.parent_token = token
         return returnlist
@@ -840,10 +881,11 @@ class Naming:
                     f'\nMultiple definitions found for network: {symbol}'
                 )
 
-            unit = _ItemUnit(symbol)
+            addr_unit = _ItemUnit(symbol)
+            fqdn_unit = _ItemUnit(symbol)
 
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.networks[symbol] = unit
+            self.networks[symbol] = addr_unit
+            self.fqdn[symbol] = fqdn_unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
 
@@ -852,6 +894,7 @@ class Naming:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
                 #    'address': A specific IP address or CIDR range
+                #    'hostname': A FQDN for use in DNS filtering.
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'address' or 'name' must be present in any dictionary item
@@ -866,6 +909,8 @@ class Naming:
                         value = network_ref = item['name']
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
+                    elif 'fqdn' in item and isinstance(item['fqdn'], str):
+                        value = item['fqdn']
                     else:
                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
                         continue
@@ -875,11 +920,22 @@ class Naming:
                 else:
                     logging.info(f'\nUnexpected symbol definition: {symbol}')
                     continue
-
                 if comment is None:
-                    unit.items.append(value)
+                    if network_ref:
+                        addr_unit.items.append(value)
+                        fqdn_unit.items.append(value)
+                    elif ip:
+                        addr_unit.items.append(value)
+                    else:
+                        fqdn_unit.items.append(value)
                 else:
-                    unit.items.append(f'{value} # {comment}')
+                    if network_ref:
+                        addr_unit.items.append(f'{value} # {comment}')
+                        fqdn_unit.items.append(f'{value} # {comment}')
+                    elif ip:
+                        addr_unit.items.append(f'{value} # {comment}')
+                    else:
+                        fqdn_unit.items.append(f'{value} # {comment}')
 
                 if network_ref and network_ref not in self.networks:
                     if network_ref not in self.unseen_networks:

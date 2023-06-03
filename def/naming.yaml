@@ -139,6 +139,7 @@ networks:
         comment: "IPv6 Anycast"
       - address: 2001:4860:4860::8888/128
         comment: "IPv6 Anycast"
+      - fqdn: dns.google.com
 
   GOOGLE_DNS:
     values:

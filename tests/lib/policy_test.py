@@ -21,6 +21,7 @@ from absl import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, policy
+from aerleon.lib import yaml as yaml_frontend
 
 HEADER = """
 header {
@@ -438,6 +439,12 @@ term good-term-48 {
   protocol:: icmp
   source-zone:: zone1 zone2
   destination-zone:: zone1 zone2
+  action:: accept
+}
+"""
+GOOD_TERM_49 = """
+term good-term-49 {
+  destination-fqdn:: GOOGLE_DNS
   action:: accept
 }
 """
@@ -1777,6 +1784,37 @@ class PolicyTest(parameterized.TestCase):
             ('proj4', 'vpc4'),
         ]
         self.assertListEqual(expected_target_resources, terms[0].target_resources)
+
+    def testFQDN(self):
+        pol = '''
+filters:
+  - header:
+      comment: |
+        this is a sample policy to generate Juniper SRX filter
+        from zone Untrust to zone DMZ.
+      targets:
+        srx: from-zone Untrust to-zone DMZ
+    terms:
+      - name: test-tcp
+        destination-address: RFC1918
+        protocol: tcp udp
+        logging: log-both
+        action: accept
+
+      - name: google-dns-fqdn
+        destination-fqdn: GOOGLE_PUBLIC_DNS_ANYCAST
+        action: accept
+        '''
+        self.naming.GetFQDN.return_value = ['FOO']
+        p = yaml_frontend.ParsePolicy(
+            pol,
+            filename='',
+            base_dir='',
+            definitions=self.naming,
+            optimize=True,
+            shade_check=False,
+        )
+        print(p)
 
     @parameterized.named_parameters(
         ('TestLowestValid', ['0'], True),

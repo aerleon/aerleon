@@ -323,6 +323,7 @@ class Term:
         VarType.(S|D)?ADDRESS's
       address_exclude/source_address_exclude/destination_address_exclude: list of
         VarType.(S|D)?ADDEXCLUDE's
+      source/destination_fqdn: list of VarType.(S|D)?FQDN's
       restrict-address-family: VarType.RESTRICT_ADDRESS_FAMILY
       port/source_port/destination_port: list of VarType.(S|D)?PORT's
       options: list of VarType.OPTION's.
@@ -433,6 +434,7 @@ class Term:
         self.expiration = None
         self.destination_address = []
         self.destination_address_exclude = []
+        self.destination_fqdn = []
         self.destination_port = []
         self.destination_prefix = []
         self.filter_term = None
@@ -454,6 +456,7 @@ class Term:
         self.routing_instance = None
         self.source_address = []
         self.source_address_exclude = []
+        self.source_fqdn = []
         self.source_port = []
         self.source_prefix = []
         self.ttl = None
@@ -715,6 +718,8 @@ class Term:
                 '  source_address_exclude: %s'
                 % self._SortAddressesByFamily('source_address_exclude')
             )
+        if self.source_fqdn:
+            ret_str.append(f'  source_fqdn: {self.source_fqdn}')
         if self.source_tag:
             ret_str.append('  source_tag: %s' % self.source_tag)
         if self.destination_address:
@@ -726,6 +731,8 @@ class Term:
                 '  destination_address_exclude: %s'
                 % self._SortAddressesByFamily('destination_address_exclude')
             )
+        if self.destination_fqdn:
+            ret_str.append(f'  destination_fqdn: {self.destination_fqdn}')
         if self.destination_tag:
             ret_str.append('  destination_tag: %s' % self.destination_tag)
         if self.target_resources:
@@ -1181,6 +1188,10 @@ class Term:
                     self.source_zone.append(x.value)
                 elif x.var_type is VarType.DZONE:
                     self.destination_zone.append(x.value)
+                elif x.var_type is VarType.DESTINATION_FQDN:
+                    self.destination_fqdn.extend(DEFINITIONS.GetFQDN(x.value))
+                elif x.var_type is VarType.SOURCE_FQDN:
+                    self.source_fqdn.extend(DEFINITIONS.GetFQDN(x.value))
                 else:
                     raise TermObjectTypeError(
                         '%s isn\'t a type I know how to deal with (contains \'%s\')'
@@ -1618,6 +1629,8 @@ class VarType:
     PORT_MIRROR = 64
     SZONE = 65
     DZONE = 66
+    SOURCE_FQDN = 67
+    DESTINATION_FQDN = 68
 
     def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type
