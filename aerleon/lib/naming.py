@@ -72,10 +72,6 @@ class NamespaceCollisionError(Error):
     """Used to report on duplicate symbol names found while parsing."""
 
 
-class BadNetmaskTypeError(Error):
-    """Used to report on duplicate symbol names found while parsing."""
-
-
 class NoDefinitionsError(Error):
     """Raised if no definitions are found."""
 
@@ -545,9 +541,21 @@ class Naming:
         return sorted(services_set)
 
     def GetFQDN(self, query: str) -> List[str]:
+        """Expand a network token into a list of FQDN objects.
+
+        Args:
+          query: Network definition token. May include comment text
+
+        Returns:
+          List of nacaddr.IPv4 or nacaddr.IPv6 objects
+
+        Raises:
+          UndefinedAddressError: Network token not defined
+          EmptyDefinitionError: No FQDN values found for this network token
+        """
         results = self._GetFQDN(query)
         if len(results) == 0:
-            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
+            raise EmptyDefinitionError(f"No FQDN values found for network: {query}")
         return results
 
     def _GetFQDN(self, query: str, level=0) -> List[str]:
@@ -578,42 +586,29 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
-        """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
-
-        Args:
-          token: A name of a network definition, such as 'INTERNAL'
-
-        Returns:
-          A list of nacaddr.IPv4 or nacaddr.IPv6 objects.
-
-        Raises:
-          UndefinedAddressError: if the network name isn't defined.
-        """
-        return self.GetNet(token)
+    def GetNetAddr(self, query: str) -> List[Union[IPv4, IPv6]]:
+        """Alias of Naming.GetNet"""
+        return self.GetNet(query)
 
     def GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
-        results = self._GetNet(query)
-        if len(results) == 0:
-            raise EmptyDefinitionError(f"Token expected to return results, returned none: {query}")
-        return results
-
-    def _GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
         """Expand a network token into a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
         Args:
-          query: Network definition token which may include comment text
-
-        Raises:
-          BadNetmaskTypeError: Results when an unknown netmask_type is
-          specified.  Acceptable values are 'cidr', 'netmask', and 'hostmask'.
+          query: Network definition token. May include comment text.
 
         Returns:
           List of nacaddr.IPv4 or nacaddr.IPv6 objects
 
         Raises:
-          UndefinedAddressError: for an undefined token value
+          UndefinedAddressError: Network token not defined
+          EmptyDefinitionError: No IP address values found for this network token
         """
+        results = self._GetNet(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"No IP addresses found for network: {query}")
+        return results
+
+    def _GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
         returnlist = []
         data = query.split('#')
         token = data[0].split()[0]
@@ -804,16 +799,16 @@ class Naming:
                             if value_piece not in self.unseen_networks:
                                 self.unseen_networks[value_piece] = True
 
-    def ParseYaml(self, file_handle: str, file_name: str) -> None:
-        """Load a definition yaml file as a string.
+    def ParseYaml(self, yaml: str, file_name: str) -> None:
+        """Load network and service definitions from YAML.
 
         Arguments:
-            file: A string containing the file contents.
-            filename: The original filename of the file.
+            yaml: A string containing the file contents.
+            file_name: The original filename of the file.
         """
 
         try:
-            file_data = yaml.load(file_handle, Loader=SpanSafeYamlLoader(filename=file_name))
+            file_data = yaml.load(yaml, Loader=SpanSafeYamlLoader(filename=file_name))
         except YAMLError as yaml_error:
             raise DefinitionFileTypeError(
                 UserMessage("Unable to read file as YAML.", filename=file_name)
@@ -822,6 +817,13 @@ class Naming:
         self.ParseDefinitionsObject(file_data, file_name)
 
     def ParseDefinitionsObject(self, file_data: Dict[str, str], file_name: str) -> None:
+        """Load network and service definitions from a Python object.
+
+        Arguments:
+            file_data: A Python dict where file_data.networks contains network
+                data and/or file_data.services contains service data.
+            file_name: The original filename of the file.
+        """
         # Empty files are ignored with a warning
         if not file_data:
             logging.warning(UserMessage("Ignoring empty address book file.", filename=file_name))

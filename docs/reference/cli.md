@@ -16,7 +16,7 @@ Options used by more than one command line program are listed here. Setting thes
 
 Option | aclgen | aclcheck | pol2yaml | cgrep
 ---- | --- | --- | --- | ---
-base_directory | input,<br>path resolution | path resolution | input,<br>path resolution |
+base_directory | input,<br>import resolution | import resolution | input,<br>import resolution | n/a
 definitions_directory | ✔ | ✔ | ✔ | ✔
 output_directory | ✔ |  | ✔
 optimize | ✔ |  |  |
