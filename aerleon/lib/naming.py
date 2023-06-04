@@ -726,13 +726,6 @@ class Naming:
           NamingSyntaxError: Syntax error parsing config.
         """
 
-        #
-        # NOTE: The "unseen name" logic defined in this function (_ParseLine) is duplicated in
-        # function ParseDefinitionsObject. Any changes to how "unseen name" checking is done
-        # need to be made in both places.
-        #
-        # TODO(jb): Consider splitting up _ParseLine so that it generates an intermediate
-        #  representation (ItemUnit) and "unseen name" checks are done on the IR (by both _Parse* flows).
         if definition_type not in ['services', 'networks']:
             raise UnexpectedDefinitionTypeError(
                 '%s %s' % ('Received an unexpected definition type:', definition_type)
@@ -869,13 +862,11 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if not self.token_re.match(symbol):
                 logging.info(
                     f'\nNetwork name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                 )
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if symbol in self.networks:
                 raise NamespaceCollisionError(
                     f'\nMultiple definitions found for network: {symbol}'
@@ -961,13 +952,11 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if not self.token_re.match(symbol):
                 logging.info(
                     f'\nService name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                 )
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if symbol in self.services:
                 raise NamespaceCollisionError(
                     f'\nMultiple definitions found for service: {symbol}'
@@ -975,7 +964,6 @@ class Naming:
 
             unit = _ItemUnit(symbol)
 
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
             self.services[symbol] = unit
             if symbol in self.unseen_services:
                 self.unseen_services.pop(symbol)
