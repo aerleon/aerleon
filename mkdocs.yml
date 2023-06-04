@@ -43,9 +43,7 @@ plugins:
           paths:
             - .
           options:
-            show_root_heading: true
-            heading_level: 2
-            show_category_heading: true
+            docstring_section_style: table
 nav:
   - Introduction: index.md
   - Install and Configure: install.md

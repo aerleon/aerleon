@@ -2,7 +2,7 @@
 
 The naming library is used by the Aerleon system to parse definitions of network
 and service data. These definitions are based on 'tokens' that are used in the
-high-level [policy language](Policy-format.md).
+high-level [policy language](yaml_reference.md).
 
 ## Basic Usage
 
@@ -84,61 +84,85 @@ defs.GetServiceByProto('DNS','udp')
 
 ## Methods
 
-```
-**GetIpParents(self, query)**
-> Return network tokens that contain IP in query.
-> Args:
-> > query: an ip string ('10.1.1.1') or nacaddr.IP object
-> Returns:
-> > rval2: a list of tokens containing this IP
-**GetNet(self, query)**
-> Expand a network token into a list of nacaddr.IP objects.
-> Args:
-> > query: Network definition token which may include comment text
-> Raises:
-> > BadNetmaskTypeError: Results when an unknown netmask\_type is
-> > specified.  Acceptable values are 'cidr', 'netmask', and 'hostmask'.
-> Returns:
-> > List of nacaddr.IP objects
-> Raises:
-> > UndefinedAddressError: for an undefined token value
-**GetNetAddr(self, token)**
-> Given a network token, return a list of nacaddr.IP objects.
-> Args:
-> > token: A name of a network definition, such as 'INTERNAL'
-> Returns:
-> > A list of nacaddr.IP objects.
-> Raises:
-> > UndefinedAddressError: if the network name isn't defined.
-**GetService(self, query)**
-> Given a service name, return a list of associated ports and protocols.
-> Args:
-> > query: Service name symbol or token.
-> Returns:
-> > A list of service values such as ['80/tcp', '443/tcp', '161/udp', ...]
-**GetServiceByProto(self, query, proto)**
-> Given a service name, return list of ports in the service by protocol.
-> Args:
-> > query: Service name to lookup.
-> > proto: A particular protocol to restrict results by, such as 'tcp'.
-> Returns:
-> > A list of service values of type 'proto', such as ['80', '443', ...]
-**GetServiceParents(self, query)**
-> Given a service, return any tokens containing the value.
-> Args:
-> > query: a service or token name, such as 53/tcp or DNS
-> Returns:
-> > rval2: a list of tokens that contain query or parents of query
-**ParseNetworkList(self, data)**
-> Take an array of network data and import into class.
-> This method allows us to pass an array of data that contains network
-> definitions that are appended to any definitions read from files.
-> Args:
-> > data: array of text lines containing net definitions.
-**ParseServiceList(self, data)**
-> Take an array of service data and import into class.
-> This method allows us to pass an array of data that contains service
-> definitions that are appended to any definitions read from files.
-> Args:
-> > data: array of text lines containing service definitions.
-```
+### Network Query Methods
+
+#### Naming.GetNet(query: str) -> List[Union[IPv4, IPv6]]
+::: aerleon.lib.naming.Naming.GetNet
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetIpParents(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetIpParents
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetNetParents(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetNetParents
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetNetChildren(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetNetChildren
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetFQDN(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetFQDN
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+### Service Query Methods
+
+#### Naming.GetService(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetService
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetServiceByProto(query: str, proto: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetServiceByProto
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetPortParents(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetPortParents
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.GetServiceParents(query: str) -> List[str]
+::: aerleon.lib.naming.Naming.GetServiceParents
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+### Data Loading Methods
+
+#### Naming.ParseYaml
+::: aerleon.lib.naming.Naming.ParseYaml
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
+
+#### Naming.ParseDefinitionsObject
+::: aerleon.lib.naming.Naming.ParseDefinitionsObject
+    options:
+      show_source: false
+      show_root_heading: false
+      show_root_toc_entry: false
