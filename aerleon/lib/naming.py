@@ -72,6 +72,10 @@ class NamespaceCollisionError(Error):
     """Used to report on duplicate symbol names found while parsing."""
 
 
+class BadNetmaskTypeError(Error):
+    """Deprecated."""
+
+
 class NoDefinitionsError(Error):
     """Raised if no definitions are found."""
 
