@@ -799,16 +799,16 @@ class Naming:
                             if value_piece not in self.unseen_networks:
                                 self.unseen_networks[value_piece] = True
 
-    def ParseYaml(self, yaml: str, file_name: str) -> None:
+    def ParseYaml(self, file: str, file_name: str) -> None:
         """Load network and service definitions from YAML.
 
         Arguments:
-            yaml: A string containing the file contents.
+            file: A string containing the file contents.
             file_name: The original filename of the file.
         """
 
         try:
-            file_data = yaml.load(yaml, Loader=SpanSafeYamlLoader(filename=file_name))
+            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=file_name))
         except YAMLError as yaml_error:
             raise DefinitionFileTypeError(
                 UserMessage("Unable to read file as YAML.", filename=file_name)
