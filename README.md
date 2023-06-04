@@ -6,15 +6,15 @@
 
 Generate firewall configs for multiple firewall platforms from a single platform-agnostic configuration language through a command line tool and Python API.
 
-Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following enhancements:
+Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following major additions:
 
-- New platform generators can now be added as plugins. Users no longer need to fork the project to add support for new platforms. Common platform support is still built in.
-- YAML is now supported for policy files, network definitions, and service definitions.
-- A powerful new Generate API is added that accepts policies, network definitions, and service definitions as native Python data.
-- Performance in address book generation for SRX and Palo Alto targets is greatly improved.
-- A detailed regression test suite was added to the project.
-- Unit and regression tests run automatically on all pull requests.
-- New developer tools are integrated with the project: Poetry, PyProject, nox, Codecov, Sigstore.
+- YAML policy and network definitions files are supported. A [converter from Capirca's policy DSL to YAML](https://github.com/aerleon/pol2yaml) is available.
+- FQDN values are supported in network definitions.
+- Support for new firewall platforms can be added through plugins.
+- Typed Python APIs are provided for ACL generation and aclcheck queries.
+- A [SLSA-compatible verifiable release process](https://aerleon.readthedocs.io/en/latest/install/#verifying-installation).
+- A detailed regression test suite.
+- Many bug fixes and performance enhancements.
 
 ## Install
 
