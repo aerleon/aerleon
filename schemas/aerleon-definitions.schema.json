@@ -35,7 +35,7 @@
       "type": "string"
     },
     "fqdn": {
-      "description": "Specifies a fully qualified domain name with at least two labels.",
+      "description": "Specifies a fully qualified domain name with two or more labels.",
       "type": "string",
       "pattern": "^(?!:\/\/)(?=.{1,255}$)((.{1,63}.){1,127}(?![0-9]*$)[a-z0-9-]+.?)$"
     },
