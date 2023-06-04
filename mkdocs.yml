@@ -17,7 +17,6 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
-    - search.highlight
 extra_css:
   - css/extra.css
 extra:
