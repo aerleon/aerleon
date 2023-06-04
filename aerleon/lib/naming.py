@@ -891,7 +891,7 @@ class Naming:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
                 #    'address': A specific IP address or CIDR range
-                #    'hostname': A FQDN for use in DNS filtering.
+                #    'fqdn': A FQDN for use in DNS filtering.
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'address' or 'name' must be present in any dictionary item
