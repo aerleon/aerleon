@@ -5,7 +5,18 @@ site_name: Aerleon Documentation
 site_url: 'https://aerleon.readthedocs.io/en/latest/'
 repo_url: 'https://github.com/aerleon/aerleon'
 copyright: Copyright &copy; The Authors
-theme: readthedocs
+theme:
+  name: "material"
+  navigation_depth: 4
+  hljs_languages:
+    - "python"
+    - "yaml"
+  features:
+    - "navigation.tracking"
+    - "search.suggest"
+    - "search.highlight"
+    - "search.share"
+    - "navigation.indexes"
 extra_css:
   - css/extra.css
 extra:
