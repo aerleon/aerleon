@@ -1,4 +1,4 @@
-# CLI Reference
+# Command Line Usage
 
 Aerleon contains three command line programs:
 
