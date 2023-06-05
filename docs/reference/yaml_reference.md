@@ -1,4 +1,4 @@
-# YAML Policy Files
+# Policy Files
 
 ## Usage
 

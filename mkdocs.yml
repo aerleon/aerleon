@@ -6,17 +6,17 @@ site_url: 'https://aerleon.readthedocs.io/en/latest/'
 repo_url: 'https://github.com/aerleon/aerleon'
 copyright: Copyright &copy; The Authors
 theme:
-  name: "material"
-  navigation_depth: 4
+  name: material
   hljs_languages:
-    - "python"
-    - "yaml"
+    - python
+    - yaml
   features:
-    - "navigation.tracking"
-    - "search.suggest"
-    - "search.highlight"
-    - "search.share"
-    - "navigation.indexes"
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
 extra_css:
   - css/extra.css
 extra:
@@ -56,16 +56,19 @@ plugins:
           options:
             docstring_section_style: table
 nav:
-  - Introduction: index.md
-  - Install and Configure: install.md
-  - Getting Started: getting_started.md
-  - Using the API: api.md
-  - Frequently Asked Questions: faq.md
-  - Contributing: contributing.md
-  - Links: links.md
+  - Overview:
+    - Overview: index.md
+    - Install and Configure: install.md
+    - Getting Started: getting_started.md
+    - FAQ: faq.md
+    - Contributing: contributing.md
+    - Links: links.md
+  - Usage:
+    - Command Line Usage: reference/cli.md
+    - Policy Files: reference/yaml_reference.md
+    - Naming: reference/naming.md
+  - API:
+    - API Reference: api.md
   - Reference:
-      - CLI Reference: reference/cli.md
-      - Generators: reference/generators.md
-      - Naming: reference/naming.md
-      - Generator Development: reference/generator_patterns.md
-      - YAML Reference: reference/yaml_reference.md
+    - Generators: reference/generators.md
+    - Generator Development: reference/generator_patterns.md

@@ -86,35 +86,35 @@ defs.GetServiceByProto('DNS','udp')
 
 ### Network Query Methods
 
-#### Naming.GetNet(query: str) -> List[Union[IPv4, IPv6]]
+#### Naming.GetNet
 ::: aerleon.lib.naming.Naming.GetNet
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetIpParents(query: str) -> List[str]
+#### Naming.GetIpParents
 ::: aerleon.lib.naming.Naming.GetIpParents
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetNetParents(query: str) -> List[str]
+#### Naming.GetNetParents
 ::: aerleon.lib.naming.Naming.GetNetParents
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetNetChildren(query: str) -> List[str]
+#### Naming.GetNetChildren
 ::: aerleon.lib.naming.Naming.GetNetChildren
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetFQDN(query: str) -> List[str]
+#### Naming.GetFQDN
 ::: aerleon.lib.naming.Naming.GetFQDN
     options:
       show_source: false
@@ -123,28 +123,28 @@ defs.GetServiceByProto('DNS','udp')
 
 ### Service Query Methods
 
-#### Naming.GetService(query: str) -> List[str]
+#### Naming.GetService
 ::: aerleon.lib.naming.Naming.GetService
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetServiceByProto(query: str, proto: str) -> List[str]
+#### Naming.GetServiceByProto
 ::: aerleon.lib.naming.Naming.GetServiceByProto
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetPortParents(query: str) -> List[str]
+#### Naming.GetPortParents
 ::: aerleon.lib.naming.Naming.GetPortParents
     options:
       show_source: false
       show_root_heading: false
       show_root_toc_entry: false
 
-#### Naming.GetServiceParents(query: str) -> List[str]
+#### Naming.GetServiceParents
 ::: aerleon.lib.naming.Naming.GetServiceParents
     options:
       show_source: false
