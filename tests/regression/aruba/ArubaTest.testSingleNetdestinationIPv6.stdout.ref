@@ -1,0 +1,11 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination6 gt-one-netd_src
+  host 2001::
+!
+
+ip access-list session test-filter
+  ipv6 alias gt-one-netd_src any 1 permit
+!
+

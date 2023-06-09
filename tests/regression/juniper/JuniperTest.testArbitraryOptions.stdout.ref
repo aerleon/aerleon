@@ -1,0 +1,23 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term option-term {
+                from {
+                    protocol tcp;
+                    source-port 22;
+                    is-fragment;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

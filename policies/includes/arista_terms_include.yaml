@@ -1,0 +1,87 @@
+terms:
+  - name: wonky-prots
+    protocol: igmp egp rdp
+    counter: wonky-prots-loopback
+    action: accept
+    owner: foo@arista.com
+
+  - name: wonky-prots-except
+    protocol-except: igmp egp rdp hopopt
+    counter: wonky-prots-loopback
+    action: accept
+
+  - name: accept-traceroute-exc
+    comment: "allow inbound traceroute from any source."
+    destination-port: TRACEROUTE
+    protocol: udp
+    counter: inbound-traceroute
+    action: accept
+    platform-exclude: arista_tp
+
+  - name: accept-traceroute
+    comment: "allow inbound traceroute from any source."
+    destination-port: TRACEROUTE
+    protocol: udp
+    counter: inbound-traceroute
+    action: accept
+    expiration: 2001-12-31
+
+  - name: accept-bgp-requests
+    comment: "Allow BGP requests from peers."
+    source-prefix: configured-neighbors-only
+    destination-port: BGP
+    protocol: tcp
+    counter: bgp-requests
+    action: accept
+
+  - name: accept-bgp-replies
+    comment: "Allow inbound replies to BGP requests."
+    source-prefix: configured-neighbors-only
+    source-port: BGP
+    protocol: tcp
+    option: tcp-established
+    counter: bgp-replies
+    action: accept
+
+  - name: accept-ospf
+    comment: "Allow outbound OSPF traffic from other RFC1918 routers."
+    source-address: INTERNAL
+    protocol: ospf
+    counter: ospf
+    action: accept
+
+  - name: LONG_MULTI_LINE_COMMENTS
+    comment: |
+      this is a sample inet6 edge input filter that has very long comments
+      10 this term has several lines in its output.
+      20 this term has several lines in its output.
+      30 this term has several lines in its output.
+    protocol: icmp
+    action: accept
+
+  - name: allow-vrrp
+    protocol: vrrp
+    counter: vrrp
+    action: accept
+
+  - name: accept-ike
+    source-port: IKE
+    destination-port: IKE
+    protocol: udp
+    counter: ipsec-ike
+    action: accept
+
+  - name: accept-ipsec
+    protocol: esp
+    counter: ipsec-esp
+    action: accept
+
+  - name: accept-pim
+    source-address: INTERNAL
+    protocol: pim
+    action: accept
+
+  - name: accept-igmp
+    source-address: INTERNAL
+    protocol: igmp
+    action: accept

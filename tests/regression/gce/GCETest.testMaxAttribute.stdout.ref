@@ -1,0 +1,18 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "icmp"
+      }
+    ],
+    "description": "ICMP from IP.",
+    "direction": "INGRESS",
+    "name": "default-good-term-5",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ]
+  }
+]
+
+

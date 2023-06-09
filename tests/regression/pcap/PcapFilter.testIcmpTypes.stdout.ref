@@ -1,0 +1,3 @@
+((((proto \icmp) and (icmp[icmptype] == 0 or icmp[icmptype] == 3 or icmp[icmptype] == 11))
+))
+

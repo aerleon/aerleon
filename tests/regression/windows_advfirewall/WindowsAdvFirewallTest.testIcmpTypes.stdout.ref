@@ -1,0 +1,11 @@
+: Windows_advfirewall out Policy
+: this is an out test acl
+:
+: $Id:$
+: $Date:$
+: $Revision:$
+: inet
+netsh advfirewall firewall add rule name=o_good-term-icmp-types enable=yes interfacetype=any dir=out localip=any remoteip=any protocol=icmpv4:0,any action=block
+netsh advfirewall firewall add rule name=o_good-term-icmp-types enable=yes interfacetype=any dir=out localip=any remoteip=any protocol=icmpv4:3,any action=block
+netsh advfirewall firewall add rule name=o_good-term-icmp-types enable=yes interfacetype=any dir=out localip=any remoteip=any protocol=icmpv4:11,any action=block
+

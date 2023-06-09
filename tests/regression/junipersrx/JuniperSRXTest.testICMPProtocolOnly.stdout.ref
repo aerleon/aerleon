@@ -1,0 +1,37 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy test-icmp {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-icmp-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application test-icmp-app1 {
+        term t1 protocol icmp;
+    }
+    application-set test-icmp-app {
+        application test-icmp-app1;
+    }
+}
+

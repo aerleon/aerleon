@@ -1,0 +1,17 @@
+[
+  {
+    "action": "allow",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "10.2.3.4/32"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  }
+]
+
+

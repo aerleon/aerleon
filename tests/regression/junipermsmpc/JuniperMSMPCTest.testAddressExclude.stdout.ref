@@ -1,0 +1,36 @@
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     ** this is a test acl
+     */
+    test-filter {
+        services {
+            stateful-firewall {
+                rule test-filter {
+                    match-direction input-output;
+                    term address-exclusions {
+                        from {
+                            destination-address {
+                                /* half of everything, RFC1918 10-net */
+                                0.0.0.0/1;
+                                /* RFC1918 172-net */
+                                172.16.0.0/12;
+                                /* RFC1918 10-net */
+                                10.0.0.0/8 except;
+                            }
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+apply-groups test-filter;
+

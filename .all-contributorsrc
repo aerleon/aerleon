@@ -1,0 +1,51 @@
+{
+  "projectName": "aerleon",
+  "projectOwner": "aerleon",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "itdependsnetworks",
+      "name": "Ken Celenza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9260483?v=4",
+      "profile": "https://github.com/itdependsnetworks",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "fischa",
+      "name": "Axel F",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11302991?v=4",
+      "profile": "https://github.com/fischa",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "nemith",
+      "name": "Brandon Bennett",
+      "avatar_url": "https://avatars.githubusercontent.com/u/349360?v=4",
+      "profile": "https://hachyderm.io/@nemith",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "btriller",
+      "name": "Bastian Triller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/851727?v=4",
+      "profile": "https://github.com/btriller",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7
+}

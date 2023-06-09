@@ -1,0 +1,162 @@
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address/>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="rule-1">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <negate-source>yes</negate-source>
+                  <negate-destination>yes</negate-destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

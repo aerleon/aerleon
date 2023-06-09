@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="MIXED_HEADER_NAME">
+  <rule logged="false">
+    <name>permit-mail-services</name>
+    <action>allow</action>
+    <destinations excluded="false">
+      <destination>
+        <type>Ipv6Address</type>
+        <value>2001:4860:4860::8844</value>
+      </destination>
+    </destinations>
+    <services>
+      <service>
+        <protocol>6</protocol>
+        <destinationPort>25</destinationPort>
+      </service>
+    </services>
+  </rule>
+</section>
+

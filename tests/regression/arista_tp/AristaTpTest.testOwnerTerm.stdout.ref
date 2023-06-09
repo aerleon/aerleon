@@ -1,0 +1,14 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match owner-term ipv4
+         !! owner: foo@google.com
+         !! owner: foo@google.com
+         protocol tcp
+      !
+      match ipv6-owner-term ipv6
+         !! owner: foo@google.com
+         !! owner: foo@google.com
+         protocol tcp
+      !
+

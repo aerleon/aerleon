@@ -1,0 +1,11 @@
+table inet filtering_policies {
+    chain default-accept {
+         ct state newaccept
+    }
+    chain root0 {
+        type filter hook output priority 300; policy drop;
+        ct state established,related accept
+        jump default-accept
+    }
+}
+

@@ -1,0 +1,12 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match MIXED_MIXED ipv4
+         source prefix 8.8.4.4/32 8.8.8.8/32
+         destination prefix 4.4.2.2/32 4.4.4.4/32
+      !
+      match ipv6-MIXED_MIXED ipv6
+         source prefix 2001:4860:4860::8844/128 2001:4860:4860::8888/128
+         destination prefix 2001:4860:1337::8844/128 2001:4860:1337::8888/128
+      !
+

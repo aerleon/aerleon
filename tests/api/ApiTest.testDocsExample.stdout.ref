@@ -1,0 +1,24 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended test-filter
+ip access-list extended test-filter
+ remark $Id:$
+
+
+ remark deny-to-reserved
+ deny ip any 0.0.0.0 0.255.255.255
+ deny ip any 10.0.0.0 0.255.255.255
+
+
+ remark deny-to-bogons
+ deny ip any 192.0.0.0 0.0.0.255
+ deny ip any 192.0.2.0 0.0.0.255
+
+
+ remark allow-web-to-mail
+ permit ip any host 200.1.2.4
+ permit ip any host 200.1.2.5
+
+exit
+

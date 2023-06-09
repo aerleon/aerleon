@@ -1,0 +1,36 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "restrict_egress: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "destIpRanges": [
+              "10.0.0.0/8"
+            ],
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp"
+              },
+              {
+                "ipProtocol": "icmp"
+              },
+              {
+                "ipProtocol": "udp"
+              }
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

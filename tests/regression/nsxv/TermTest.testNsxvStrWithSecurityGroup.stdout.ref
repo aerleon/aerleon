@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section id="1010" name="POLICY_WITH_SECURITY_GROUP_NAME">
+  <rule logged="false">
+    <name>accept-icmp</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>1</protocol>
+      </service>
+    </services>
+    <appliedToList>
+      <appliedTo>
+        <type>SecurityGroup</type>
+        <value>securitygroup-Id</value>
+      </appliedTo>
+    </appliedToList>
+  </rule>
+</section>
+

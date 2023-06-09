@@ -1,0 +1,33 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good-term-5 {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                    log {
+                        session-init;
+                        session-close;
+                    }
+                }
+            }
+        }
+    }
+}
+delete: applications;

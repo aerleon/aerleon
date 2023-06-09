@@ -1,5 +1,6 @@
 # Copyright 2023 The Capirca Project Authors All Rights Reserved.
 # Copyright 2023 VMware, Inc. SPDX-License-Identifier: Apache-2.0
+# Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,10 +19,10 @@ import json
 from unittest import mock
 from absl.testing import absltest
 
-from capirca.lib import nacaddr
-from capirca.lib import naming
-from capirca.lib import nsxt
-from capirca.lib import policy
+from aerleon.lib import nacaddr
+from aerleon.lib import naming
+from aerleon.lib import nsxt
+from aerleon.lib import policy
 
 ICMPV6_TERM = """\
   term test-icmpv6 {

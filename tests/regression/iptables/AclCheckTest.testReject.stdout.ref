@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_reject-term2
+-A INPUT -j I_reject-term2
+-A I_reject-term2 -p all -j REJECT --reject-with icmp-host-prohibited
+

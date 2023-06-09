@@ -1,0 +1,463 @@
+security {
+    replace: address-book {
+        global {
+                address BOGON_0 0.0.0.0/8;
+                address BOGON_1 192.0.0.0/24;
+                address BOGON_2 192.0.2.0/24;
+                address BOGON_3 198.18.0.0/15;
+                address BOGON_4 198.51.100.0/24;
+                address BOGON_5 203.0.113.0/24;
+                address BOGON_6 224.0.0.0/3;
+                address BOGON_7 2001:db8::/32;
+                address BOGON_8 3ffe::/16;
+                address BOGON_9 5f00::/8;
+                address BOGON_10 ff00::/8;
+                address GOOGLE_DNS_0 8.8.4.4/32;
+                address GOOGLE_DNS_1 8.8.8.8/32;
+                address GOOGLE_DNS_2 2001:4860:4860::8844/128;
+                address GOOGLE_DNS_3 2001:4860:4860::8888/128;
+                address INTERNAL_0 10.0.0.0/8;
+                address INTERNAL_1 172.16.0.0/12;
+                address INTERNAL_2 192.168.0.0/16;
+                address RESERVED_0 0.0.0.0/8;
+                address RESERVED_1 10.0.0.0/8;
+                address RESERVED_2 100.64.0.0/10;
+                address RESERVED_3 127.0.0.0/8;
+                address RESERVED_4 169.254.0.0/16;
+                address RESERVED_5 172.16.0.0/12;
+                address RESERVED_6 192.168.0.0/16;
+                address RESERVED_7 224.0.0.0/3;
+                address RESERVED_8 ::/3;
+                address RESERVED_9 4000::/2;
+                address RESERVED_10 8000::/1;
+                address RFC1918_0 10.0.0.0/8;
+                address RFC1918_1 172.16.0.0/12;
+                address RFC1918_2 192.168.0.0/16;
+                address WEB_IPV6_SERVERS_0 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128;
+                address WEB_SERVERS_0 200.1.1.1/32;
+                address WEB_SERVERS_1 200.1.1.2/32;
+                address-set BOGON {
+                    address BOGON_0;
+                    address BOGON_1;
+                    address BOGON_2;
+                    address BOGON_3;
+                    address BOGON_4;
+                    address BOGON_5;
+                    address BOGON_6;
+                    address BOGON_7;
+                    address BOGON_8;
+                    address BOGON_9;
+                    address BOGON_10;
+                }
+                address-set GOOGLE_DNS {
+                    address GOOGLE_DNS_0;
+                    address GOOGLE_DNS_1;
+                    address GOOGLE_DNS_2;
+                    address GOOGLE_DNS_3;
+                }
+                address-set INTERNAL {
+                    address INTERNAL_0;
+                    address INTERNAL_1;
+                    address INTERNAL_2;
+                }
+                address-set RESERVED {
+                    address RESERVED_0;
+                    address RESERVED_1;
+                    address RESERVED_2;
+                    address RESERVED_3;
+                    address RESERVED_4;
+                    address RESERVED_5;
+                    address RESERVED_6;
+                    address RESERVED_7;
+                    address RESERVED_8;
+                    address RESERVED_9;
+                    address RESERVED_10;
+                }
+                address-set RFC1918 {
+                    address RFC1918_0;
+                    address RFC1918_1;
+                    address RFC1918_2;
+                }
+                address-set WEB_IPV6_SERVERS {
+                    address WEB_IPV6_SERVERS_0;
+                }
+                address-set WEB_SERVERS {
+                    address WEB_SERVERS_0;
+                    address WEB_SERVERS_1;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        this is a sample policy for a zone based filter that generates
+        multiple output formats. It checks logging options, tcp, udp
+        and icmp type options.
+        */
+        from-zone internal to-zone external {
+            /*
+            Testing log-both for tcp.
+            */
+            policy test-tcp-log-both {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-tcp-log-both-app;
+                }
+                then {
+                    permit;
+                    log {
+                        session-init;
+                        session-close;
+                    }
+                }
+            }
+            /*
+            Testing logging for udp.
+            */
+            policy test-udp-log {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-udp-log-app;
+                }
+                then {
+                    permit;
+                    log {
+                        session-close;
+                    }
+                }
+            }
+            /*
+            Testing any port for tcp, udp,
+            `when destination-port is unspecified.
+            */
+            policy test-tcp-udp-any {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-tcp-udp-any-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow name resolution using honestdns.
+            */
+            policy accept-honestdns {
+                match {
+                    source-address any;
+                    destination-address [ GOOGLE_DNS ];
+                    application accept-honestdns-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow ICMPv4, with icmp types, and test counters.
+            */
+            policy accept-icmp-specific-types {
+                match {
+                    source-address [ INTERNAL ];
+                    destination-address any;
+                    application accept-icmp-specific-types-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow IGMP, and test syslog logging.
+            */
+            policy accept-igmp {
+                match {
+                    source-address [ INTERNAL ];
+                    destination-address any;
+                    application accept-igmp-app;
+                }
+                then {
+                    permit;
+                    log {
+                        session-close;
+                    }
+                }
+            }
+            /*
+            Allow traceroute with source port range for udp.
+            */
+            policy accept-traceroute-source-ports {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application accept-traceroute-source-ports-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Deny to bad destinations.
+            */
+            policy deny-to-bad-destinations {
+                match {
+                    source-address any;
+                    destination-address [ BOGON RESERVED RFC1918 ];
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        /*
+        this is a sample policy for a zone based filter that generates
+        multiple output formats. It checks tcp-established and udp
+        established options.
+        */
+        from-zone external to-zone internal {
+            /*
+            Allow webserver inbound traffic.
+            */
+            policy accept-webserver-traffic {
+                match {
+                    source-address any;
+                    destination-address [ WEB_SERVERS ];
+                    application accept-webserver-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        this is a sample policy for a zone based filter that generates
+        multiple output formats. It checks inet6 options and icmpv6.
+        */
+        from-zone internal to-zone external {
+            /*
+            Allow name resolution using honestdns.
+            */
+            policy ipv6-accept-honestdns {
+                match {
+                    source-address any;
+                    destination-address [ GOOGLE_DNS ];
+                    application accept-honestdns-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow ICMPv6, with icmpv6 types.
+            */
+            policy accept-icmpv6-specific-types {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application accept-icmpv6-specific-types-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Deny to bad destinations.
+            */
+            policy ipv6-deny-to-bad-destinations {
+                match {
+                    source-address any;
+                    destination-address [ BOGON RESERVED ];
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        /*
+        this is a sample policy for a zone based filter that generates
+        multiple output formats. It checks inet6 options.
+        */
+        from-zone external to-zone internal {
+            /*
+            Allow webserver inbound traffic.
+            */
+            policy ipv6-accept-webserver-traffic {
+                match {
+                    source-address any;
+                    destination-address [ WEB_IPV6_SERVERS ];
+                    application accept-webserver-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        this is a test policy for a zone based filter that generates
+        multiple output formats. It checks inet6 options for IPv4 rules.
+        */
+        from-zone unknown to-zone internal {
+            /*
+            Allow all tcp and icmp traffic.
+            The icmp term should not be generated since this is inet6.
+            The tcp term should be generated.
+            */
+            policy test-inet6-tcp-icmp-traffic {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-inet6-tcp-icmp-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow all tcp and icmpv6 traffic.
+            This should be generated since this has no ports specified.
+            */
+            policy test-inet6-tcp-icmpv6-traffic {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-inet6-tcp-icmpv6-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        this is a test policy for a zone based filter that generates
+        multiple output formats. It checks inet options for IPv6 rules.
+        */
+        from-zone unknown to-zone internal {
+            /*
+            Allow all tcp and icmp traffic.
+            This should be generated since this has no ports specified.
+            */
+            policy test-inet-tcp-icmp-traffic {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-inet6-tcp-icmp-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            /*
+            Allow all tcp and icmpv6 traffic.
+            The icmpv6 term should not be generated since this is inet.
+            The tcp term should be generated.
+            */
+            policy test-inet-tcp-icmpv6-traffic {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-inet-tcp-icmpv6-traffic-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application accept-honestdns-app1 {
+        term t1 protocol udp destination-port 53;
+    }
+    application accept-icmp-specific-types-app {
+        term t1 protocol icmp icmp-type 0 inactivity-timeout 60;
+        term t2 protocol icmp icmp-type 8 inactivity-timeout 60;
+    }
+    application accept-icmpv6-specific-types-app {
+        term t1 protocol icmp6 icmp6-type 128 inactivity-timeout 60;
+        term t2 protocol icmp6 icmp6-type 129 inactivity-timeout 60;
+    }
+    application accept-igmp-app1 {
+        term t1 protocol igmp;
+    }
+    application accept-traceroute-source-ports-app1 {
+        term t1 protocol udp source-port 33434-33534;
+    }
+    application accept-webserver-traffic-app1 {
+        term t1 protocol tcp destination-port 80;
+    }
+    application accept-webserver-traffic-app2 {
+        term t2 protocol tcp destination-port 443;
+    }
+    application test-inet-tcp-icmpv6-traffic-app1 {
+        term t1 protocol icmp6;
+    }
+    application test-inet-tcp-icmpv6-traffic-app2 {
+        term t2 protocol tcp;
+    }
+    application test-inet6-tcp-icmp-traffic-app1 {
+        term t1 protocol tcp;
+    }
+    application test-inet6-tcp-icmp-traffic-app2 {
+        term t2 protocol icmp;
+    }
+    application test-inet6-tcp-icmpv6-traffic-app1 {
+        term t1 protocol tcp;
+    }
+    application test-inet6-tcp-icmpv6-traffic-app2 {
+        term t2 protocol icmp6;
+    }
+    application test-tcp-log-both-app1 {
+        term t1 protocol tcp;
+    }
+    application test-tcp-udp-any-app1 {
+        term t1 protocol tcp;
+    }
+    application test-tcp-udp-any-app2 {
+        term t2 protocol udp;
+    }
+    application test-udp-log-app1 {
+        term t1 protocol udp;
+    }
+    application-set accept-honestdns-app {
+        application accept-honestdns-app1;
+    }
+    application-set accept-igmp-app {
+        application accept-igmp-app1;
+    }
+    application-set accept-traceroute-source-ports-app {
+        application accept-traceroute-source-ports-app1;
+    }
+    application-set accept-webserver-traffic-app {
+        application accept-webserver-traffic-app1;
+        application accept-webserver-traffic-app2;
+    }
+    application-set test-inet-tcp-icmpv6-traffic-app {
+        application test-inet-tcp-icmpv6-traffic-app1;
+        application test-inet-tcp-icmpv6-traffic-app2;
+    }
+    application-set test-inet6-tcp-icmp-traffic-app {
+        application test-inet6-tcp-icmp-traffic-app1;
+        application test-inet6-tcp-icmp-traffic-app2;
+    }
+    application-set test-inet6-tcp-icmpv6-traffic-app {
+        application test-inet6-tcp-icmpv6-traffic-app1;
+        application test-inet6-tcp-icmpv6-traffic-app2;
+    }
+    application-set test-tcp-log-both-app {
+        application test-tcp-log-both-app1;
+    }
+    application-set test-tcp-udp-any-app {
+        application test-tcp-udp-any-app1;
+        application test-tcp-udp-any-app2;
+    }
+    application-set test-udp-log-app {
+        application test-udp-log-app1;
+    }
+}

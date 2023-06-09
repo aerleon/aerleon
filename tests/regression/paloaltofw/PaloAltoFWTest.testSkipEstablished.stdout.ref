@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules/>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address/>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules/>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address/>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

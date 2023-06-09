@@ -1,0 +1,14 @@
+*filter
+# Speedway INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+:INPUT ACCEPT
+-N I_good-term-1
+-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -j I_good-term-1
+COMMIT
+

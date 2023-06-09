@@ -1,8 +1,1 @@
-# Dependencies
-# Usage:
-#   $ pip install -r requirements.txt
-
-absl-py
-ply
-PyYAML
-six>=1.12.0
+sigstore==1.0.0

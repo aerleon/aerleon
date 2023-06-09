@@ -1,0 +1,70 @@
+[
+  {
+    "action": "allow",
+    "description": "Sample CloudArmor Allow Rule [1/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "2001:4860:8000::5/128",
+          "24da:3ed8:32a0::7/128",
+          "3051:abd2:5400::9/128",
+          "577e:5400:3051::6/128",
+          "6f5d:abd2:1403::1/128"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  },
+  {
+    "action": "allow",
+    "description": "Sample CloudArmor Allow Rule [2/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "aee2:37ba:3cc0::3/128",
+          "af22:32d2:3f00::2/128"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 2
+  },
+  {
+    "action": "deny(404)",
+    "description": "Sample Deny Rule [1/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "2001:4860:8000::5/128",
+          "24da:3ed8:32a0::7/128",
+          "3051:abd2:5400::9/128",
+          "577e:5400:3051::6/128",
+          "6f5d:abd2:1403::1/128"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 3
+  },
+  {
+    "action": "deny(404)",
+    "description": "Sample Deny Rule [2/2]",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "aee2:37ba:3cc0::3/128",
+          "af22:32d2:3f00::2/128"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 4
+  }
+]
+
+

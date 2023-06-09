@@ -1,0 +1,9 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match logging-term-1 ipv4
+         protocol icmp
+         actions
+         !
+      !
+

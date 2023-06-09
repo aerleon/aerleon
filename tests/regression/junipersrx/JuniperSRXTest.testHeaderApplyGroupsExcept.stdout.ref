@@ -1,0 +1,35 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        */
+        from-zone trust to-zone untrust {
+            apply-groups-except [ tcp-test1 tcp-test2 ];
+            policy test-icmp {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application test-icmp-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application test-icmp-app {
+        term t1 protocol icmp icmp-type 0 inactivity-timeout 60;
+        term t2 protocol icmp icmp-type 8 inactivity-timeout 60;
+    }
+}
+

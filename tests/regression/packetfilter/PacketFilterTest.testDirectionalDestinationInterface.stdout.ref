@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term dest-intf
+pass out quick on lo0 from { any } to { any } flags S/SA keep state
+

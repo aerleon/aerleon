@@ -1,0 +1,8 @@
+Policy: {Target[cisco], Comments [Sample comment, Sample comment], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: deny-to-bogons
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}

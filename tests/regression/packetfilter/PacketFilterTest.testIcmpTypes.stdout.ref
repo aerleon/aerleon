@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term good-term-icmp-types
+block drop quick proto { icmp } from { any } to { any } icmp-type { 0, 3, 11 }
+

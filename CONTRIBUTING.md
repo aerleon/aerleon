@@ -1,29 +1,43 @@
-# Contributing Guidelines
+# Contributing to Aerleon
 
-Before contributing to Capirca please take into mind the following.
+Thank you for your curiosity on how to contribute! There are many different ways to help out. Please see below for different ways.
 
-## Contributors License Agreements
+## Community Engagement
+The easiest way to contribute is to engage with the community. Join our [slack](https://aerleon.slack.com/), make a blog post, join discussions. Getting the project name to people who could use it is one of the most impactful things you can do. If you have ideas on places we should be engaging in ourselves, conferences we should be attending, please let us know!
 
-We require everyone who submits code to us to sign the
-[Contributors License Agreement](https://cla.developers.google.com/clas).
-Please take the time to sign this before sending us a Pull Request.
+## Sponsorships
+Sponsoring our project is a great opportunity for companies or individuals to show their support for and investment in our community. It shows commitment to collaborating with us and advancing the project. If you would like to sponsor us there are multiple ways in which you can, including but not limited to:
 
-## Code Readability
+* Monetary: Donating money is the most straightforward way of showing support for the project. It will go towards paying for licenses and fees incurred in running the project, acquiring hardware needed to validate ACLs, or paying for contributor time in supporting the project.
+* Hardware: We try to validate our project against hardware, either virtual or physical. If you believe you have hardware that would be helpful for the project to have, please reach out and [contact us](README.md#Contact).
 
-Please take time to become familiar with the
-[Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-We try to adhere to the rules in the guide as much as possible. To help with
-that you can use our
-[lint tool](https://github.com/google/capirca/blob/master/tools/run_lint.sh).
-This runs pylint over the files and will display new lint errors. This will
-not catch certain style choices but it will find a majority of problems that
-are easy to fix. If you feel a lint error is incorrect let us know and we can
-suppress it.
+## File issues
+No one likes bugs, especially us! If you think you found one please file an issue. Be as detailed as possible in your description including example files to replicate the issue. This will help us to expedite a fix as quickly as possible. Even better, submit the fix with the issue! If the issue is possibly a vulnerability, please instead see our [SECURITY.md](SECURITY.md) file instead on how to report.
 
-## Development Environment
+## Documentation
+Writing documentation can sometimes be thankless work. We, however, appreciate it! Whether it is writing an entire new page providing a tutorial, fixing a single typo or anything in between.
 
-Run the following script to install `capirca` in development environment.
+## Code contributions
+Writing code can include adding new features or fixing issues that have been reported. To get started with contributing code you will want to familiarize yourself with our guidelines and tools.
 
-```bash
-dev-install
+### Guidelines
+
+* Generally it is best to reach out before writing any significant amount of code. It may be that someone is almost finished with a fix, or maybe an idea needs to be discussed before hand. The best place to reach out would be in a Github issue.
+* Tests always need to be included, these are important and cannot be skipped. Good tests make sure we are not accidentally breaking your code in the future.
+
+## Code Style and Formatting
+We have adopted [Black](https://github.com/ambv/black) as our code formatter. This takes a lot of guesswork out of formatting our code. The code we forked from adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) which we still adopt where it does not conflict with Black. Generally this means following the [Language Rules](https://google.github.io/styleguide/pyguide.html#s2-python-language-rules) while ignoring the [Style Rules](https://google.github.io/styleguide/pyguide.html#s3-python-style-rules)
+
+In addition to Black [isort](https://pycqa.github.io/isort/) has been added to sort and format import lines.
+
+It is a good idea to configure auto formatting on save in your editor:
+
+* black: https://black.readthedocs.io/en/stable/integrations/editors.html
+* isort: https://github.com/pycqa/isort/wiki/isort-Plugins
+
+## Testing
 ```
+poetry run pytest
+```
+
+This will run all tests and provide a report of what tests passed and failed.

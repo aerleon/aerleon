@@ -1,0 +1,4 @@
+Policy: {Target[iptables], Comments [test header 4], Apply groups: [], except: []:[ name: good-term-44
+  action: ['accept']
+  logging: [syslog]
+  log_limit: 999/day]}

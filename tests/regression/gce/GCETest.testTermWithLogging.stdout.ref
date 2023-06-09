@@ -1,0 +1,33 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp",
+        "ports": [
+          "53"
+        ]
+      },
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "53"
+        ]
+      }
+    ],
+    "description": "DNS access from corp.",
+    "direction": "INGRESS",
+    "logConfig": {
+      "enable": true
+    },
+    "name": "default-good-term-logging",
+    "network": "global/networks/default",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
+    "targetTags": [
+      "dns-servers"
+    ]
+  }
+]
+
+

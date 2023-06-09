@@ -1,0 +1,10 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+mary had a little lamb
+

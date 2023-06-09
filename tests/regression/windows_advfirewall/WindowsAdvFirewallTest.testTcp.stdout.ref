@@ -1,0 +1,9 @@
+: Windows_advfirewall out Policy
+: this is an out test acl
+:
+: $Id:$
+: $Date:$
+: $Revision:$
+: inet
+netsh advfirewall firewall add rule name=o_good-term-tcp enable=yes interfacetype=any dir=out localip=any remoteip=10.0.0.0/8 remoteport=25 protocol=tcp action=allow
+

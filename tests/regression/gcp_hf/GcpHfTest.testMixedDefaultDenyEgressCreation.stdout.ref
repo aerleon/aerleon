@@ -1,0 +1,46 @@
+[
+  {
+    "rules": [
+      {
+        "action": "deny",
+        "description": "default-deny-egress: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "destIpRanges": [
+            "0.0.0.0/0"
+          ],
+          "layer4Configs": [
+            {
+              "ipProtocol": "all"
+            }
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      },
+      {
+        "action": "deny",
+        "description": "default-deny-egress-v6: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "destIpRanges": [
+            "::/0"
+          ],
+          "layer4Configs": [
+            {
+              "ipProtocol": "all"
+            }
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 2
+      }
+    ],
+    "shortName": "displayname",
+    "type": "FIREWALL"
+  }
+]
+
+

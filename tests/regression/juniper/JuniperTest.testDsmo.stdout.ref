@@ -1,0 +1,30 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-1 {
+                from {
+                    protocol icmp;
+                }
+                then accept;
+            }
+            term good-term-2 {
+                from {
+                    destination-address {
+                        192.168.0.64/255.255.0.224;
+                    }
+                    protocol tcp;
+                    destination-port 25;
+                }
+                then accept;
+            }
+        }
+    }
+}
+

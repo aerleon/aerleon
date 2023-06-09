@@ -1,0 +1,30 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "Good term.",
+    "direction": "INGRESS",
+    "name": "good-term-no-protocol",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ]
+  },
+  {
+    "allowed": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "Good term.",
+    "direction": "INGRESS",
+    "name": "good-term-no-protocol-v6",
+    "sourceRanges": [
+      "2001:4860:8000::5/128"
+    ]
+  }
+]
+
+

@@ -1,0 +1,60 @@
+security {
+    replace: address-book {
+        global {
+                address FOOBAR_0 10.23.0.0/22;
+                address-set FOOBAR {
+                    address FOOBAR_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a header from untrust to trust
+        */
+        from-zone untrust to-zone trust {
+            policy dup-of-term-1 {
+                match {
+                    source-address any;
+                    destination-address [ FOOBAR ];
+                    application dup-of-term-1-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            /*
+            This header is very very very very very very very very very very
+            very very very very very very very very very very large
+            */
+            policy good-term-1 {
+                match {
+                    source-address any;
+                    destination-address [ FOOBAR ];
+                    application dup-of-term-1-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application dup-of-term-1-app1 {
+        term t1 protocol tcp destination-port 25;
+    }
+    application-set dup-of-term-1-app {
+        application dup-of-term-1-app1;
+    }
+}
+

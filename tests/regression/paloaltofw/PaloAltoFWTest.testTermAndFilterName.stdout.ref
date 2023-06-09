@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="service-good-term-1-tcp">
+              <protocol>
+                <tcp>
+                  <port>25</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="good-term-1">
+                  <description>This header is very very very very very very very very very very very very very very very very very very very very large</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member/>
+                  </destination>
+                  <service>
+                    <member>service-good-term-1-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="">
+              <static>
+                <member>_0</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="_0">
+              <description>_0</description>
+              <ip-netmask>10.0.0.0/8</ip-netmask>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>This is a test acl with a comment</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+

@@ -1,0 +1,48 @@
+security {
+    replace: address-book {
+        global {
+                address _0 10.0.0.0/8;
+                address _1 2001:4860:8000::/33;
+                address-set  {
+                    address _0;
+                    address _1;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy good-term-4 {
+                match {
+                    source-address any;
+                    destination-address [  ];
+                    application good-term-4-app;
+                }
+                then {
+                    permit {
+                        tunnel {
+                            ipsec-vpn good-vpn-4;
+                            pair-policy policy-4;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application good-term-4-app1 {
+        term t1 protocol tcp;
+    }
+    application-set good-term-4-app {
+        application good-term-4-app1;
+    }
+}
+

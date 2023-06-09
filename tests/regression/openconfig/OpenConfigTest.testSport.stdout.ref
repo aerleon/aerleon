@@ -1,0 +1,21 @@
+[
+  {
+    "actions": {
+      "config": {
+        "forwarding-action": "ACCEPT"
+      }
+    },
+    "ipv4": {
+      "config": {
+        "protocol": 6
+      },
+      "transport": {
+        "config": {
+          "source-port": 53
+        }
+      }
+    }
+  }
+]
+
+

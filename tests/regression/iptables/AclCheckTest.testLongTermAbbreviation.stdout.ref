@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl with abbreviation
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_google-EXP-abbreviations
+-A INPUT -j I_google-EXP-abbreviations
+-A I_google-EXP-abbreviations -p tcp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

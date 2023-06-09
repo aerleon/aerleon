@@ -1,0 +1,18 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination6 good-terms-combined-1_src
+  host 2001::
+  network 2002::/64
+!
+
+netdestination6 good-terms-combined-1_dst
+  host 2001::
+  network 2002::/64
+!
+
+ip access-list session test-filter
+  ipv6 alias good-terms-combined-1_src alias good-terms-combined-1_dst udp 69 permit
+  ipv6 any any any deny
+!
+

@@ -1,0 +1,17 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "icmp"
+      }
+    ],
+    "description": "Good term.",
+    "direction": "INGRESS",
+    "name": "good-term-ping",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ]
+  }
+]
+
+

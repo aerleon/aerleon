@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a stateless test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term udp-established
+pass quick proto { udp } from { any } to { any } no state
+

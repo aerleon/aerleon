@@ -1,0 +1,14 @@
+# Iptables INPUT Policy
+# test header for inet6 terms
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet6
+-P INPUT DROP
+-N I_inet6-icmp
+-A INPUT -j I_inet6-icmp
+-A I_inet6-icmp -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j DROP
+-A I_inet6-icmp -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j DROP
+-A I_inet6-icmp -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j DROP
+

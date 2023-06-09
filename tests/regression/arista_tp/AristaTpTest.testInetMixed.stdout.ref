@@ -1,0 +1,9 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match INET_MIXED ipv4
+         source prefix 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+         destination prefix 8.8.4.4/32 8.8.8.8/32
+         protocol tcp udp
+      !
+

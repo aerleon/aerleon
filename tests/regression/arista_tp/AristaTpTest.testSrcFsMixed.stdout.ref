@@ -1,0 +1,22 @@
+traffic-policies
+   field-set ipv4 prefix src-FS_MIXED
+      8.8.4.0/24
+      8.8.8.0/24
+      except 8.8.4.4/32
+      except 8.8.8.8/32
+   !
+   field-set ipv6 prefix src-ipv6-FS_MIXED
+      2001:4860:4860::/64
+      2001:4860:4861::/64
+      except 2001:4860:4860::8844/128
+      except 2001:4860:4861::8888/128
+   !
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match FS_MIXED ipv4
+         source prefix field-set src-FS_MIXED
+      !
+      match ipv6-FS_MIXED ipv6
+         source prefix field-set src-ipv6-FS_MIXED
+      !
+

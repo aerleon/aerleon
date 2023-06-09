@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "aerleon.yml",
+  "description": "Configure Aerleon's aclgen, aclcheck, and pol2yaml command line tools",
+  "type": "object",
+  "properties": {
+    "base_directory": {
+      "type": "string",
+      "description": "aclgen and pol2yaml will search this directory recursively for policy files to process, except if the flag `--policy_file` is used to give a specific input file (aclgen only).\n\nRelative paths that appear in 'include' directives will be resolved against base_directory.\n\nThe default value is './policies'.",
+      "minLength": 1
+    },
+    "definitions_directory": {
+      "type": "string",
+      "description": "All network and service definition files in this directory will be loaded and used to resolve symbolic network and service names. \n\nUnlike base_directory, definitions_directory is not searched recursively for input files.\n\nThe default value is './def'.",
+      "minLength": 1
+    },
+    "output_directory": {
+      "type": "string",
+      "description": "aclgen will place all generated ACLs in this directory. For `aclgen` the default value is the current directory.\n\npol2yaml will place each converted file adjacent to its input file by default. If output_directory is given, pol2yaml will mirror the directory structure of the input files in the output_directory, potentially creating directories in the process.",
+      "minLength": 1
+    },
+    "optimize": {
+      "type": "boolean",
+      "description": "Causes aclgen to produce a more compact address book by collapsing adjacent or overlapping CIDR expressions within the same network.\n\nOn some platforms (Juniper SRX and platforms configured with the 'object-group' option) address book compression is restricted to only collapse addresses that share the same network token (name).\n\nThis flag is not enabled by default, although a secondary address book compression pass is always performed for Juniper SRX and Palo Alto Networks firewalls regardless of this setting."
+    },
+    "recursive": {
+      "type": "boolean",
+      "description": "UNUSED. This field is not used."
+    },
+    "debug": {
+      "type": "boolean",
+      "description": "Causes aclgen to display very detailed log messages if true. The default value is false."
+    },
+    "verbose": {
+      "type": "boolean",
+      "description": "UNUSED. This field is not used. To get detailed log messages, use 'debug'."
+    },
+    "max_renderers": {
+      "type": "integer",
+      "description": "Controls the number of parallel processes used by aclgen to render ACLs. The aclgen program uses Python's OS process-based multiprocessing, so setting max_renderers to '2' would cause aclgen to spawn two OS processes that will generate ACLs.\n\nSetting max_renderers to '1' will disable multiprocessing.\n\nBy default, max_renderers is set to '10'. Users may wish to set this to the number of available CPUs on the current system."
+    },
+    "shade_check": {
+      "type": "boolean",
+      "description": "Causes aclgen to produce a warning if any unreachable term is encountered if true. The default value is false."
+    },
+    "exp_info": {
+      "type": "integer",
+      "description": "aclgen will produce a warning if it encounters a term set to expire in the near future. Expired terms are ignored. Setting exp_info controls the number of weeks ahead that aclgen will check for soon-to-expire terms.\n\nThe default value is '2' (two weeks)."
+    }
+  },
+  "additionalProperties": false
+}

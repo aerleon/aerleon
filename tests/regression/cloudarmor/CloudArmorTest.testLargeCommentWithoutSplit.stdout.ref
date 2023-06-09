@@ -1,0 +1,18 @@
+[
+  {
+    "action": "allow",
+    "description": "This is an unnecessarily long term comment that's going to be tr",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "10.2.3.4/32"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  }
+]
+
+

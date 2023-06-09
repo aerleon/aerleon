@@ -1,0 +1,27 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term good-term-8 {
+                from {
+                    source-prefix-list {
+                        foo_prefix_list;
+                    }
+                    destination-prefix-list {
+                        bar_prefix_list;
+                        baz_prefix_list;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

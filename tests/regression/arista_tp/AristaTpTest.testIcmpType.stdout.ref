@@ -1,0 +1,7 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-3 ipv4
+         protocol icmp type 0,10,13,15,16 code all
+      !
+

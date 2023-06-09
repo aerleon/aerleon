@@ -1,0 +1,12 @@
+# begin:ipset-rules
+# end:ipset-rules
+# Ipset OUTPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P OUTPUT DROP
+-A OUTPUT -p all -s 10.0.0.0/8 -d 172.16.0.0/12 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

@@ -1,0 +1,12 @@
+table ip filtering_policies {
+    chain good-term-1 {
+         ct state newaccept
+    }
+    chain root0 {
+        type filter hook output priority 0; policy accept;
+        ct state established,related accept
+        jump good-term-1
+    }
+}
+
+

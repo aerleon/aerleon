@@ -1,0 +1,46 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term address-exclusions {
+                from {
+                    source-address {
+                        0.0.0.0/1;
+                        192.168.0.64/255.255.254.224 except;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term address-exclusions {
+                from {
+                    destination-address {
+                        0.0.0.0/1;
+                        192.168.0.64/255.255.254.224 except;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

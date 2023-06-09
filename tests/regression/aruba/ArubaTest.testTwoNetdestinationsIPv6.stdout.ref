@@ -1,0 +1,15 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination6 gt-two-netd_src
+  host 2001::
+!
+
+netdestination6 gt-two-netd_dst
+  host 2001::
+!
+
+ip access-list session test-filter
+  ipv6 alias gt-two-netd_src alias gt-two-netd_dst 1 permit
+!
+

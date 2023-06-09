@@ -1,0 +1,12 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-8 ipv4
+         source prefix field-set foo_prefix_list
+         destination prefix field-set bar_prefix_list baz_prefix_list
+      !
+      match ipv6-good-term-8 ipv6
+         source prefix field-set foo_prefix_list
+         destination prefix field-set bar_prefix_list baz_prefix_list
+      !
+

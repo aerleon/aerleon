@@ -1,0 +1,51 @@
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "udp"
+      },
+      {
+        "IPProtocol": "tcp"
+      }
+    ],
+    "description": "Allow all GCE network internal traffic.",
+    "direction": "INGRESS",
+    "name": "good-term-1-v6",
+    "sourceRanges": [
+      "2001:4860:8000::5/128"
+    ],
+    "sourceTags": [
+      "internal-servers"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "default_deny.",
+    "direction": "INGRESS",
+    "name": "default-deny",
+    "priority": 65534,
+    "sourceRanges": [
+      "0.0.0.0/0"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "default_deny.",
+    "direction": "INGRESS",
+    "name": "default-deny-v6",
+    "priority": 65534,
+    "sourceRanges": [
+      "::/0"
+    ]
+  }
+]
+
+

@@ -1,0 +1,3 @@
+Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-38
+  source_prefix_except: ['foo_prefix_list']
+  action: ['accept']]}

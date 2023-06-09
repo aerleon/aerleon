@@ -1,0 +1,14 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended dsmo_acl
+ip access-list extended dsmo_acl
+ remark $Id:$
+ remark this is a dsmo test acl
+
+
+ remark good-term
+ permit tcp any 192.168.0.64 0.0.255.31
+
+exit
+

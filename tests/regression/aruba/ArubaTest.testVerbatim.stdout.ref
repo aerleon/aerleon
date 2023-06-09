@@ -1,0 +1,9 @@
+# $Id:$
+# $Date:$
+# $Revision:$
+ip access-list session test-filter
+  aruba uses some odd ACL format
+  which is kinda like, weird
+  any any any permit
+!
+

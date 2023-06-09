@@ -1,0 +1,74 @@
+dev_addr: '127.0.0.1:8001'
+edit_uri: edit/main/docs
+site_dir: site/docs
+site_name: Aerleon Documentation
+site_url: 'https://aerleon.readthedocs.io/en/latest/'
+repo_url: 'https://github.com/aerleon/aerleon'
+copyright: Copyright &copy; The Authors
+theme:
+  name: material
+  hljs_languages:
+    - python
+    - yaml
+  features:
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+extra_css:
+  - css/extra.css
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/slack
+      link: 'https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw'
+      name: Network to Code Community
+    - icon: fontawesome/brands/slack
+      link: 'https://slack.networktocode.com/'
+      name: Network to Code Community
+    - icon: fontawesome/brands/github
+      link: 'https://github.com/aerleon'
+      name: GitHub Organization
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.details # https://squidfunk.github.io/mkdocs-material/reference/admonitions/#details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+plugins:
+  - search
+  - mkdocs-version-annotations
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths:
+            - .
+          options:
+            docstring_section_style: table
+nav:
+  - Overview:
+    - Overview: index.md
+    - Install and Configure: install.md
+    - Getting Started: getting_started.md
+    - FAQ: faq.md
+    - Contributing: contributing.md
+    - Links: links.md
+  - Usage:
+    - Command Line Usage: reference/cli.md
+    - Policy Files: reference/yaml_reference.md
+    - Naming: reference/naming.md
+  - API:
+    - API Reference: api.md
+  - Reference:
+    - Generators: reference/generators.md
+    - Generator Development: reference/generator_patterns.md

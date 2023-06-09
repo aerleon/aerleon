@@ -1,0 +1,28 @@
+[
+  {
+    "rules": [
+      {
+        "action": "deny",
+        "description": "default-deny-ingress: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "layer4Configs": [
+            {
+              "ipProtocol": "all"
+            }
+          ],
+          "srcIpRanges": [
+            "::/0"
+          ],
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      }
+    ],
+    "shortName": "displayname",
+    "type": "FIREWALL"
+  }
+]
+
+

@@ -1,0 +1,20 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_good-term-6
+-A INPUT -j I_good-term-6
+-A I_good-term-6 -m comment --comment "Some text describing what this block does,"
+-A I_good-term-6 -m comment --comment "possibly including newines, blank lines,"
+-A I_good-term-6 -m comment --comment "and extra-long comments (over 255 characters)"
+-A I_good-term-6 -m comment --comment "-------------------------------------------------------------------------------"
+-A I_good-term-6 -m comment --comment "-------------------------------------------------------------------------------"
+-A I_good-term-6 -m comment --comment "-------------------------------------------------------------------------------"
+-A I_good-term-6 -m comment --comment "-----------------------"
+-A I_good-term-6 -m comment --comment "All these cause problems if passed verbatim to iptables."
+-A I_good-term-6 -p tcp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

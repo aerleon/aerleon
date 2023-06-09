@@ -1,0 +1,5 @@
+# .git-blame-ignore-revs
+# Reformat everything using 'black'
+f8937ef224b027ef20bd915f35bdb02312e8d6e5
+# (re)format all code with black/isort (#186)
+186d08e4037717207ae38941f76cb78733f490cd

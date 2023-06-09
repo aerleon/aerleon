@@ -1,0 +1,12 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_bad-mport-ranges
+-A INPUT -j I_bad-mport-ranges
+-A I_bad-mport-ranges -p tcp -m multiport --dports 1,3,5,7,9,11,13,15,17,19:21,23:25,27:29 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

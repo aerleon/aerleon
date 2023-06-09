@@ -1,0 +1,10 @@
+traffic-policies
+   no traffic-policy test-filter
+   traffic-policy test-filter
+      match good-term-1 ipv4
+         protocol 0
+      !
+      match ipv6-good-term-1 ipv6
+         protocol 0
+      !
+

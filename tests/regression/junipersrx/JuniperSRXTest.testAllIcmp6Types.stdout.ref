@@ -1,0 +1,149 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy accept-icmpv6-types {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application accept-icmpv6-types-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application-set accept-icmpv6-types-app {
+        application accept-icmpv6-types-app1;
+        application accept-icmpv6-types-app2;
+        application accept-icmpv6-types-app3;
+        application accept-icmpv6-types-app4;
+        application accept-icmpv6-types-app5;
+        application accept-icmpv6-types-app6;
+        application accept-icmpv6-types-app7;
+        application accept-icmpv6-types-app8;
+        application accept-icmpv6-types-app9;
+        application accept-icmpv6-types-app10;
+        application accept-icmpv6-types-app11;
+        application accept-icmpv6-types-app12;
+        application accept-icmpv6-types-app13;
+        application accept-icmpv6-types-app14;
+        application accept-icmpv6-types-app15;
+        application accept-icmpv6-types-app16;
+        application accept-icmpv6-types-app17;
+        application accept-icmpv6-types-app18;
+        application accept-icmpv6-types-app19;
+        application accept-icmpv6-types-app20;
+        application accept-icmpv6-types-app21;
+        application accept-icmpv6-types-app22;
+        application accept-icmpv6-types-app23;
+        application accept-icmpv6-types-app24;
+        application accept-icmpv6-types-app25;
+        application accept-icmpv6-types-app26;
+        application accept-icmpv6-types-app27;
+        application accept-icmpv6-types-app28;
+        application accept-icmpv6-types-app29;
+    }
+    application accept-icmpv6-types-app1 {
+        term t1 protocol icmp6 icmp6-type 1 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app2 {
+        term t1 protocol icmp6 icmp6-type 2 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app3 {
+        term t1 protocol icmp6 icmp6-type 3 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app4 {
+        term t1 protocol icmp6 icmp6-type 4 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app5 {
+        term t1 protocol icmp6 icmp6-type 128 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app6 {
+        term t1 protocol icmp6 icmp6-type 129 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app7 {
+        term t1 protocol icmp6 icmp6-type 130 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app8 {
+        term t1 protocol icmp6 icmp6-type 131 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app9 {
+        term t1 protocol icmp6 icmp6-type 132 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app10 {
+        term t1 protocol icmp6 icmp6-type 133 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app11 {
+        term t1 protocol icmp6 icmp6-type 134 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app12 {
+        term t1 protocol icmp6 icmp6-type 135 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app13 {
+        term t1 protocol icmp6 icmp6-type 136 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app14 {
+        term t1 protocol icmp6 icmp6-type 137 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app15 {
+        term t1 protocol icmp6 icmp6-type 138 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app16 {
+        term t1 protocol icmp6 icmp6-type 139 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app17 {
+        term t1 protocol icmp6 icmp6-type 140 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app18 {
+        term t1 protocol icmp6 icmp6-type 141 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app19 {
+        term t1 protocol icmp6 icmp6-type 142 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app20 {
+        term t1 protocol icmp6 icmp6-type 143 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app21 {
+        term t1 protocol icmp6 icmp6-type 144 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app22 {
+        term t1 protocol icmp6 icmp6-type 145 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app23 {
+        term t1 protocol icmp6 icmp6-type 146 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app24 {
+        term t1 protocol icmp6 icmp6-type 147 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app25 {
+        term t1 protocol icmp6 icmp6-type 148 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app26 {
+        term t1 protocol icmp6 icmp6-type 149 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app27 {
+        term t1 protocol icmp6 icmp6-type 151 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app28 {
+        term t1 protocol icmp6 icmp6-type 152 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app29 {
+        term t1 protocol icmp6 icmp6-type 153 inactivity-timeout 60;
+    }
+}
+

@@ -1,0 +1,50 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term address-exclusions {
+                from {
+                    source-address {
+                        0.0.0.0/1;
+                        172.16.0.0/12;
+                        10.0.0.0/8 except;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term address-exclusions {
+                from {
+                    destination-address {
+                        0.0.0.0/1;
+                        172.16.0.0/12;
+                        10.0.0.0/8 except;
+                    }
+                }
+                then accept;
+            }
+        }
+    }
+}
+

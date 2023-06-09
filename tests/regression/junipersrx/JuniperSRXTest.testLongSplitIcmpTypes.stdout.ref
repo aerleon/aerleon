@@ -1,0 +1,69 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy accept-icmpv6-types {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application accept-icmpv6-types-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application-set accept-icmpv6-types-app {
+        application accept-icmpv6-types-app1;
+        application accept-icmpv6-types-app2;
+        application accept-icmpv6-types-app3;
+        application accept-icmpv6-types-app4;
+        application accept-icmpv6-types-app5;
+        application accept-icmpv6-types-app6;
+        application accept-icmpv6-types-app7;
+        application accept-icmpv6-types-app8;
+        application accept-icmpv6-types-app9;
+    }
+    application accept-icmpv6-types-app1 {
+        term t1 protocol icmp6 icmp6-type 1 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app2 {
+        term t1 protocol icmp6 icmp6-type 2 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app3 {
+        term t1 protocol icmp6 icmp6-type 3 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app4 {
+        term t1 protocol icmp6 icmp6-type 4 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app5 {
+        term t1 protocol icmp6 icmp6-type 128 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app6 {
+        term t1 protocol icmp6 icmp6-type 129 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app7 {
+        term t1 protocol icmp6 icmp6-type 134 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app8 {
+        term t1 protocol icmp6 icmp6-type 135 inactivity-timeout 60;
+    }
+    application accept-icmpv6-types-app9 {
+        term t1 protocol icmp6 icmp6-type 136 inactivity-timeout 60;
+    }
+}
+

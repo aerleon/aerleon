@@ -1,0 +1,17 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv6 access-list test-filter
+ipv6 access-list test-filter
+ remark "$Date:$"
+ remark "$Revision:$"
+ remark this is a test inet6 acl
+
+
+ remark good-term-11
+ permit icmp any any 1
+ permit icmp any any 3
+ permit icmp any any 129
+
+exit
+

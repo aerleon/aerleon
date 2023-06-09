@@ -1,0 +1,105 @@
+security {
+    replace: address-book {
+        global {
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy accept-icmp-types {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application accept-icmp-types-app;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application-set accept-icmp-types-app {
+        application accept-icmp-types-app1;
+        application accept-icmp-types-app2;
+        application accept-icmp-types-app3;
+        application accept-icmp-types-app4;
+        application accept-icmp-types-app5;
+        application accept-icmp-types-app6;
+        application accept-icmp-types-app7;
+        application accept-icmp-types-app8;
+        application accept-icmp-types-app9;
+        application accept-icmp-types-app10;
+        application accept-icmp-types-app11;
+        application accept-icmp-types-app12;
+        application accept-icmp-types-app13;
+        application accept-icmp-types-app14;
+        application accept-icmp-types-app15;
+        application accept-icmp-types-app16;
+        application accept-icmp-types-app17;
+        application accept-icmp-types-app18;
+    }
+    application accept-icmp-types-app1 {
+        term t1 protocol icmp icmp-type 0 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app2 {
+        term t1 protocol icmp icmp-type 3 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app3 {
+        term t1 protocol icmp icmp-type 4 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app4 {
+        term t1 protocol icmp icmp-type 5 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app5 {
+        term t1 protocol icmp icmp-type 6 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app6 {
+        term t1 protocol icmp icmp-type 8 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app7 {
+        term t1 protocol icmp icmp-type 9 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app8 {
+        term t1 protocol icmp icmp-type 10 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app9 {
+        term t1 protocol icmp icmp-type 11 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app10 {
+        term t1 protocol icmp icmp-type 12 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app11 {
+        term t1 protocol icmp icmp-type 13 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app12 {
+        term t1 protocol icmp icmp-type 14 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app13 {
+        term t1 protocol icmp icmp-type 15 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app14 {
+        term t1 protocol icmp icmp-type 16 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app15 {
+        term t1 protocol icmp icmp-type 17 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app16 {
+        term t1 protocol icmp icmp-type 18 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app17 {
+        term t1 protocol icmp icmp-type 31 inactivity-timeout 60;
+    }
+    application accept-icmp-types-app18 {
+        term t1 protocol icmp icmp-type 32 inactivity-timeout 60;
+    }
+}
+

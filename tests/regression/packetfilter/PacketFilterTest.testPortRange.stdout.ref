@@ -1,0 +1,11 @@
+# Packetfilter test-filter Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# mixed
+
+# term portrange
+pass quick proto { tcp } from { any } to { any } port { 12345:12354 } flags S/SA keep state
+

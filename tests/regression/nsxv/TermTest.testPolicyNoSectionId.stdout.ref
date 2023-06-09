@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="POLICY_NO_SECTION_ID_NAME">
+  <rule logged="false">
+    <name>accept-icmp</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>1</protocol>
+      </service>
+    </services>
+  </rule>
+</section>
+

@@ -1,0 +1,21 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            /*
+             ** Owner: foo@google.com
+             */
+            term owner-term {
+                then accept;
+            }
+        }
+    }
+}
+

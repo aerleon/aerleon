@@ -1,0 +1,102 @@
+[
+  {
+    "displayName": "displayname",
+    "rules": [
+      {
+        "action": "goto_next",
+        "description": "allow-internal-traffic: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp"
+              },
+              {
+                "ipProtocol": "icmp"
+              },
+              {
+                "ipProtocol": "udp"
+              }
+            ],
+            "srcIpRanges": [
+              "0.0.0.0/0"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      },
+      {
+        "action": "deny",
+        "description": "default-deny-ingress: Generic description",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "all"
+              }
+            ],
+            "srcIpRanges": [
+              "0.0.0.0/0"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 2
+      },
+      {
+        "action": "goto_next",
+        "description": "restrict_egress: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "destIpRanges": [
+              "0.0.0.0/0"
+            ],
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp"
+              },
+              {
+                "ipProtocol": "icmp"
+              },
+              {
+                "ipProtocol": "udp"
+              }
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 3
+      },
+      {
+        "action": "deny",
+        "description": "default-deny-egress: Generic description",
+        "direction": "EGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "destIpRanges": [
+              "0.0.0.0/0"
+            ],
+            "layer4Configs": [
+              {
+                "ipProtocol": "all"
+              }
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 4
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+
+

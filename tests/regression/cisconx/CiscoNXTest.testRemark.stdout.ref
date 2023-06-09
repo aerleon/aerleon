@@ -1,0 +1,16 @@
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list test-filter
+ip access-list test-filter
+ remark "$Date:$"
+ remark "$Revision:$"
+ remark this is a test extended acl
+
+
+ remark good-term-4
+ remark Accept SNMP from internal sources.
+ permit ip any any
+
+exit
+

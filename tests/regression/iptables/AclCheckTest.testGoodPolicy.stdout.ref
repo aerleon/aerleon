@@ -1,0 +1,12 @@
+# Iptables OUTPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P OUTPUT DROP
+-N O_good-term-1
+-A OUTPUT -j O_good-term-1
+-A O_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

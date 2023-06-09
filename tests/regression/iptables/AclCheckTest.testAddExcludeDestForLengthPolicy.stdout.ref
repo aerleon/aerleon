@@ -1,0 +1,83 @@
+# Iptables INPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT ACCEPT
+-N I_good-term-9
+-A INPUT -j I_good-term-9
+-A I_good-term-9 -d 0.0.0.0/5 -j RETURN
+-A I_good-term-9 -d 8.0.0.0/7 -j RETURN
+-A I_good-term-9 -d 10.0.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.1.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.2.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.3.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.4.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.5.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.6.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.7.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.8.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.9.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.10.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.11.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.12.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.13.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.14.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.15.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.16.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.17.128.0/17 -j RETURN
+-A I_good-term-9 -d 10.18.0.0/15 -j RETURN
+-A I_good-term-9 -d 10.20.0.0/14 -j RETURN
+-A I_good-term-9 -d 10.24.0.0/13 -j RETURN
+-A I_good-term-9 -d 10.32.0.0/11 -j RETURN
+-A I_good-term-9 -d 10.64.0.0/10 -j RETURN
+-A I_good-term-9 -d 10.128.0.0/9 -j RETURN
+-A I_good-term-9 -d 11.0.0.0/8 -j RETURN
+-A I_good-term-9 -d 12.0.0.0/6 -j RETURN
+-A I_good-term-9 -d 16.0.0.0/4 -j RETURN
+-A I_good-term-9 -d 32.0.0.0/3 -j RETURN
+-A I_good-term-9 -d 64.0.0.0/2 -j RETURN
+-A I_good-term-9 -d 128.0.0.0/1 -j RETURN
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.0.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.1.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.2.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.3.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.4.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.5.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.6.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.7.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.8.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.9.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.10.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.11.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.12.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.13.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.14.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.15.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.16.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.17.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.18.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.19.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.20.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.21.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.22.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.23.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.24.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.25.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.26.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.27.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.28.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.29.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.30.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.31.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.32.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.33.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.34.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.35.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.36.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.37.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.38.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_good-term-9 -p tcp --sport 80 -s 10.0.39.0/25 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+
