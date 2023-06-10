@@ -24,7 +24,7 @@
   "$defs": {
     "token": {
       "type": "string",
-      "pattern": "^[-_A-Z0-9]+$"
+      "pattern": "^[-_a-zA-Z0-9]+$"
     },
     "comment": {
       "description": "Attach a comment directly to a value. This comment may be included in generated output on platforms that support it.",
