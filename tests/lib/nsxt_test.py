@@ -17,12 +17,10 @@
 
 import json
 from unittest import mock
+
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr
-from aerleon.lib import naming
-from aerleon.lib import nsxt
-from aerleon.lib import policy
+from aerleon.lib import nacaddr, naming, nsxt, policy
 
 ICMPV6_TERM = """\
   term test-icmpv6 {
@@ -50,32 +48,36 @@ UDP_POLICY = """\
   """
 
 UDP_NSXT_POLICY = {
-    'rules': [{
-        'action': 'ALLOW',
-        'resource_type': 'Rule',
-        'display_name': 'allow-ntp-request',
-        'source_groups': ['10.0.0.1/32', '10.0.0.2/32'],
-        'destination_groups': ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
-        'services': ['ANY'],
-        'profiles': ['ANY'],
-        'scope': ['ANY'],
-        'logged': False,
-        'notes': 'Allow ntp request',
-        'direction': 'IN_OUT',
-        'ip_protocol': 'IPV4_IPV6',
-        'service_entries': [{
-            'l4_protocol': 'UDP',
-            'resource_type': 'L4PortSetServiceEntry',
-            'source_ports': ['123-123'],
-            'destination_ports': ['123-123']
-        }]
-    }],
+    'rules': [
+        {
+            'action': 'ALLOW',
+            'resource_type': 'Rule',
+            'display_name': 'allow-ntp-request',
+            'source_groups': ['10.0.0.1/32', '10.0.0.2/32'],
+            'destination_groups': ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
+            'services': ['ANY'],
+            'profiles': ['ANY'],
+            'scope': ['ANY'],
+            'logged': False,
+            'notes': 'Allow ntp request',
+            'direction': 'IN_OUT',
+            'ip_protocol': 'IPV4_IPV6',
+            'service_entries': [
+                {
+                    'l4_protocol': 'UDP',
+                    'resource_type': 'L4PortSetServiceEntry',
+                    'source_ports': ['123-123'],
+                    'destination_ports': ['123-123'],
+                }
+            ],
+        }
+    ],
     'resource_type': 'SecurityPolicy',
     'display_name': 'INET_FILTER_NAME',
     'category': 'Application',
     'is_default': 'false',
     'id': 'INET_FILTER_NAME',
-    'scope': ['ANY']
+    'scope': ['ANY'],
 }
 
 UDP_RULE = {
@@ -91,12 +93,14 @@ UDP_RULE = {
     'notes': 'Allow ntp request',
     'direction': 'IN_OUT',
     'ip_protocol': 'IPV4_IPV6',
-    'service_entries': [{
-        'l4_protocol': 'UDP',
-        'resource_type': 'L4PortSetServiceEntry',
-        'source_ports': ['123-123'],
-        'destination_ports': ['123-123']
-    }]
+    'service_entries': [
+        {
+            'l4_protocol': 'UDP',
+            'resource_type': 'L4PortSetServiceEntry',
+            'source_ports': ['123-123'],
+            'destination_ports': ['123-123'],
+        }
+    ],
 }
 
 ICMPV6_POLICY = """\
@@ -126,11 +130,9 @@ ICMPV6_RULE = {
     'notes': '',
     'direction': 'IN_OUT',
     'ip_protocol': 'IPV4_IPV6',
-    'service_entries': [{
-        'protocol': 'ICMPv6',
-        'resource_type': 'ICMPTypeServiceEntry',
-        'icmp_type': 128
-    }]
+    'service_entries': [
+        {'protocol': 'ICMPv6', 'resource_type': 'ICMPTypeServiceEntry', 'icmp_type': 128}
+    ],
 }
 
 UDP_AND_TCP_POLICY = """\
@@ -175,11 +177,13 @@ UDP_AND_TCP_NSXT_POLICY = {
             'notes': 'Allow name resolution using honestdns.',
             'direction': 'IN_OUT',
             'ip_protocol': 'IPV4_IPV6',
-            'service_entries': [{
-                'l4_protocol': 'UDP',
-                'resource_type': 'L4PortSetServiceEntry',
-                'destination_ports': ['53-53'],
-            }],
+            'service_entries': [
+                {
+                    'l4_protocol': 'UDP',
+                    'resource_type': 'L4PortSetServiceEntry',
+                    'destination_ports': ['53-53'],
+                }
+            ],
         },
         {
             'action': 'ALLOW',
@@ -194,11 +198,13 @@ UDP_AND_TCP_NSXT_POLICY = {
             'notes': '',
             'direction': 'IN_OUT',
             'ip_protocol': 'IPV4_IPV6',
-            'service_entries': [{
-                'l4_protocol': 'TCP',
-                'resource_type': 'L4PortSetServiceEntry',
-                'destination_ports': ['53-53'],
-            }],
+            'service_entries': [
+                {
+                    'l4_protocol': 'TCP',
+                    'resource_type': 'L4PortSetServiceEntry',
+                    'destination_ports': ['53-53'],
+                }
+            ],
         },
     ],
     'resource_type': 'SecurityPolicy',
@@ -223,24 +229,28 @@ ICMP_POLICY_WITH_SECURITY_GROUP = """\
   """
 
 ICMP_NSXT_POLICY_WITH_SECURITY_GROUP = {
-    'rules': [{
-        'action': 'ALLOW',
-        'resource_type': 'Rule',
-        'display_name': 'accept-icmp',
-        'source_groups': ['ANY'],
-        'destination_groups': ['ANY'],
-        'services': ['ANY'],
-        'profiles': ['ANY'],
-        'scope': ['ANY'],
-        'logged': False,
-        'notes': '',
-        'direction': 'IN_OUT',
-        'ip_protocol': 'IPV4_IPV6',
-        'service_entries': [{
-            'protocol': 'ICMPv4',
-            'resource_type': 'ICMPTypeServiceEntry',
-        }],
-    }],
+    'rules': [
+        {
+            'action': 'ALLOW',
+            'resource_type': 'Rule',
+            'display_name': 'accept-icmp',
+            'source_groups': ['ANY'],
+            'destination_groups': ['ANY'],
+            'services': ['ANY'],
+            'profiles': ['ANY'],
+            'scope': ['ANY'],
+            'logged': False,
+            'notes': '',
+            'direction': 'IN_OUT',
+            'ip_protocol': 'IPV4_IPV6',
+            'service_entries': [
+                {
+                    'protocol': 'ICMPv4',
+                    'resource_type': 'ICMPTypeServiceEntry',
+                }
+            ],
+        }
+    ],
     'resource_type': 'SecurityPolicy',
     'display_name': 'POLICY_WITH_SECURITY_GROUP_NAME',
     'category': 'Application',
@@ -291,134 +301,123 @@ EXP_INFO = 2
 
 
 class TermTest(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.naming = mock.create_autospec(naming.Naming)
 
-  def setUp(self):
-    super().setUp()
-    self.naming = mock.create_autospec(naming.Naming)
+    def test_udp_term(self):
+        """Test __init__ and __str__.
 
-  def test_udp_term(self):
-    """Test __init__ and __str__.
+        test for udp term defining dst and src addrs and ports.
+        """
 
-    test for udp term defining dst and src addrs and ports.
-    """
+        self.naming.GetNetAddr.side_effect = [
+            [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
+            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
+        ]
+        self.naming.GetServiceByProto.return_value = ['123']
 
-    self.naming.GetNetAddr.side_effect = [
-        [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
-        [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'),
-         nacaddr.IP('192.168.0.0/16')]]
-    self.naming.GetServiceByProto.return_value = ['123']
+        policies = policy.ParsePolicy(UDP_POLICY, self.naming, False)
+        af = 4
+        pol = policies.filters[0]
+        terms = pol[1]
+        term = terms[0]
 
-    policies = policy.ParsePolicy(UDP_POLICY, self.naming, False)
-    af = 4
-    pol = policies.filters[0]
-    terms = pol[1]
-    term = terms[0]
+        nsxt_term = nsxt.Term(term, af)
+        rule_str = str(nsxt_term)
+        rule = json.loads(rule_str)
 
-    nsxt_term = nsxt.Term(term, af)
-    rule_str = str(nsxt_term)
-    rule = json.loads(rule_str)
+        self.assertEqual(nsxt_term.af, af)
+        self.assertEqual(rule, UDP_RULE)
 
-    self.assertEqual(nsxt_term.af, af)
-    self.assertEqual(rule, UDP_RULE)
+        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
 
-    self.naming.GetNetAddr.assert_has_calls(
-        [mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('NTP', 'udp')] * 2)
+    def test_icmpv6_term(self):
+        """Test __init__ and __str__ for term inet6."""
+        policies = policy.ParsePolicy(ICMPV6_POLICY, self.naming, False)
+        af = 6
+        filter_type = 'inet6'
+        pol = policies.filters[0]
+        terms = pol[1]
+        term = terms[0]
 
-  def test_icmpv6_term(self):
-    """Test __init__ and __str__ for term inet6."""
-    policies = policy.ParsePolicy(ICMPV6_POLICY, self.naming, False)
-    af = 6
-    filter_type = 'inet6'
-    pol = policies.filters[0]
-    terms = pol[1]
-    term = terms[0]
+        nsxt_term = nsxt.Term(term, filter_type, None, af)
+        rule_str = str(nsxt_term)
+        rule = json.loads(rule_str)
 
-    nsxt_term = nsxt.Term(term, filter_type, None, af)
-    rule_str = str(nsxt_term)
-    rule = json.loads(rule_str)
+        self.assertEqual(rule, ICMPV6_RULE)
 
-    self.assertEqual(rule, ICMPV6_RULE)
+    def test_udp_policy(self):
+        """Test for Nsxt.test_TranslatePolicy."""
+        self.naming.GetNetAddr.side_effect = [
+            [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
+            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
+        ]
+        self.naming.GetServiceByProto.return_value = ['123']
 
-  def test_udp_policy(self):
-    """Test for Nsxt.test_TranslatePolicy."""
-    self.naming.GetNetAddr.side_effect = [
-        [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
-        [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'),
-         nacaddr.IP('192.168.0.0/16')]]
-    self.naming.GetServiceByProto.return_value = ['123']
+        pol = policy.ParsePolicy(UDP_POLICY, self.naming, False)
+        nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
+        api_policy = json.loads(str(nsxt_policy))
 
-    pol = policy.ParsePolicy(UDP_POLICY, self.naming, False)
-    nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
-    api_policy = json.loads(str(nsxt_policy))
+        self.assertEqual(api_policy, UDP_NSXT_POLICY)
+        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
+        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
 
-    self.assertEqual(api_policy, UDP_NSXT_POLICY)
-    self.naming.GetNetAddr.assert_has_calls(
-        [mock.call('NTP_SERVERS'), mock.call('INTERNAL')]
-    )
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('NTP', 'udp')] * 2
-    )
+    def test_udp_and_tcp_policy(self):
+        """Test for Nsxt._str_."""
+        self.naming.GetNetAddr.side_effect = [
+            [
+                nacaddr.IP('8.8.4.4'),
+                nacaddr.IP('8.8.8.8'),
+                nacaddr.IP('2001:4860:4860::8844'),
+                nacaddr.IP('2001:4860:4860::8888'),
+            ],
+            nacaddr.IP('2001:4860:4860::8845'),
+        ]
+        self.naming.GetServiceByProto.return_value = ['53']
 
-  def test_udp_and_tcp_policy(self):
-    """Test for Nsxt._str_."""
-    self.naming.GetNetAddr.side_effect = [
-        [
-            nacaddr.IP('8.8.4.4'),
-            nacaddr.IP('8.8.8.8'),
-            nacaddr.IP('2001:4860:4860::8844'),
-            nacaddr.IP('2001:4860:4860::8888'),
-        ],
-        nacaddr.IP('2001:4860:4860::8845'),
-    ]
-    self.naming.GetServiceByProto.return_value = ['53']
+        pol = policy.ParsePolicy(UDP_AND_TCP_POLICY, self.naming, False)
+        nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
+        api_policy = json.loads(str(nsxt_policy))
 
-    pol = policy.ParsePolicy(UDP_AND_TCP_POLICY, self.naming, False)
-    nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
-    api_policy = json.loads(str(nsxt_policy))
+        self.assertEqual(api_policy, UDP_AND_TCP_NSXT_POLICY)
 
-    self.assertEqual(api_policy, UDP_AND_TCP_NSXT_POLICY)
+        self.naming.GetNetAddr.assert_has_calls(
+            [mock.call('GOOGLE_DNS'), mock.call('MAIL_SERVERS')]
+        )
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'udp'), mock.call('MAIL_SERVICES', 'tcp')]
+        )
 
-    self.naming.GetNetAddr.assert_has_calls(
-        [mock.call('GOOGLE_DNS'), mock.call('MAIL_SERVERS')])
-    self.naming.GetServiceByProto.assert_has_calls(
-        [mock.call('DNS', 'udp'), mock.call('MAIL_SERVICES', 'tcp')])
+    def test_icmp_policy_with_security_group(self):
+        """Test for Nsxt._str_ with security group in scope."""
+        pol = policy.ParsePolicy(ICMP_POLICY_WITH_SECURITY_GROUP, self.naming, False)
+        nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
+        api_policy = json.loads(str(nsxt_policy))
 
-  def test_icmp_policy_with_security_group(self):
-    """Test for Nsxt._str_ with security group in scope."""
-    pol = (
-        policy.ParsePolicy(ICMP_POLICY_WITH_SECURITY_GROUP, self.naming, False))
-    nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
-    api_policy = json.loads(str(nsxt_policy))
+        self.assertEqual(api_policy, ICMP_NSXT_POLICY_WITH_SECURITY_GROUP)
 
-    self.assertEqual(api_policy, ICMP_NSXT_POLICY_WITH_SECURITY_GROUP)
+    def test_bad_header_case_0(self):
+        pol = policy.ParsePolicy(BAD_HEADER + ICMPV6_TERM, self.naming, False)
+        self.assertRaises(nsxt.UnsupportedNsxtAccessListError, nsxt.Nsxt, pol, EXP_INFO)
 
-  def test_bad_header_case_0(self):
-    pol = policy.ParsePolicy(BAD_HEADER + ICMPV6_TERM, self.naming, False)
-    self.assertRaises(nsxt.UnsupportedNsxtAccessListError,
-                      nsxt.Nsxt, pol, EXP_INFO)
+    def test_bad_header_case_1(self):
+        pol = policy.ParsePolicy(BAD_HEADER_1 + ICMPV6_TERM, self.naming, False)
+        self.assertRaises(nsxt.UnsupportedNsxtAccessListError, nsxt.Nsxt, pol, EXP_INFO)
 
-  def test_bad_header_case_1(self):
-    pol = policy.ParsePolicy(BAD_HEADER_1 + ICMPV6_TERM, self.naming, False)
-    self.assertRaises(nsxt.UnsupportedNsxtAccessListError,
-                      nsxt.Nsxt, pol, EXP_INFO)
+    def test_bad_header_case_2(self):
+        pol = policy.ParsePolicy(BAD_HEADER_2 + ICMPV6_TERM, self.naming, False)
+        self.assertRaises(nsxt.UnsupportedNsxtAccessListError, nsxt.Nsxt, pol, EXP_INFO)
 
-  def test_bad_header_case_2(self):
-    pol = policy.ParsePolicy(BAD_HEADER_2 + ICMPV6_TERM, self.naming, False)
-    self.assertRaises(nsxt.UnsupportedNsxtAccessListError,
-                      nsxt.Nsxt, pol, EXP_INFO)
+    def test_bad_header_case_3(self):
+        pol = policy.ParsePolicy(BAD_HEADER_3 + ICMPV6_TERM, self.naming, False)
+        self.assertRaises(nsxt.UnsupportedNsxtAccessListError, nsxt.Nsxt, pol, EXP_INFO)
 
-  def test_bad_header_case_3(self):
-    pol = policy.ParsePolicy(BAD_HEADER_3 + ICMPV6_TERM, self.naming, False)
-    self.assertRaises(nsxt.UnsupportedNsxtAccessListError,
-                      nsxt.Nsxt, pol, EXP_INFO)
-
-  def test_bad_header_case_4(self):
-    pol = policy.ParsePolicy(BAD_HEADER_4 + ICMPV6_TERM, self.naming, False)
-    self.assertRaises(nsxt.UnsupportedNsxtAccessListError,
-                      nsxt.Nsxt, pol, EXP_INFO)
+    def test_bad_header_case_4(self):
+        pol = policy.ParsePolicy(BAD_HEADER_4 + ICMPV6_TERM, self.naming, False)
+        self.assertRaises(nsxt.UnsupportedNsxtAccessListError, nsxt.Nsxt, pol, EXP_INFO)
 
 
 if __name__ == '__main__':
-  absltest.main()
+    absltest.main()
