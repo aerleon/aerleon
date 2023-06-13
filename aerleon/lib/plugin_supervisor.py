@@ -106,6 +106,7 @@ BUILTIN_GENERATORS: list[Tuple] = [
     ('ipset',                'aerleon.lib.ipset',                'Ipset'),
     ('iptables',             'aerleon.lib.iptables',             'Iptables'),
     ('nsxv',                 'aerleon.lib.nsxv',                 'Nsxv'),
+    ('nsxt',                 'aerleon.lib.nsxt',                 'Nsxt'),
     ('openconfig',           'aerleon.lib.openconfig',           'OpenConfig'),
     ('speedway',             'aerleon.lib.speedway',             'Speedway'),
     ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
