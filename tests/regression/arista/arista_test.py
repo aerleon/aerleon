@@ -320,7 +320,7 @@ class AristaTest(absltest.TestCase):
         self.assertIn(expected, str(acl), str(acl))
 
         self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-    
+
     @capture.stdout
     def testSIPUsesInt(self):
         self.naming.GetServiceByProto.return_value = ['5060']
