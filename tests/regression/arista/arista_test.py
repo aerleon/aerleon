@@ -118,6 +118,13 @@ term good-term-6 {
   action:: accept
 }
 """
+GOOD_TERM_8 = """
+term good-term-2 {
+  destination-port:: SIP
+  protocol:: udp
+  action:: accept
+}
+"""
 
 SUPPORTED_TOKENS = {
     'action',
@@ -313,6 +320,14 @@ class AristaTest(absltest.TestCase):
         self.assertIn(expected, str(acl), str(acl))
 
         self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
+    
+    @capture.stdout
+    def testSIPUsesInt(self):
+        self.naming.GetServiceByProto.return_value = ['5060']
+        pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_8, self.naming)
+        acl = arista.Arista(pol, EXP_INFO)
+        self.assertIn('5060', str(acl))
+        self.assertNotIn('sip', str(acl))
 
 
 if __name__ == '__main__':

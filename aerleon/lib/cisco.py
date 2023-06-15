@@ -297,7 +297,6 @@ class PortMap:
         123: 'ntp',
         496: 'pim-auto-rp',
         520: 'rip',
-        5060: 'sip',
         161: 'snmp',
         162: 'snmptrap',
         111: 'sunrpc',
@@ -354,6 +353,7 @@ class PortMap:
         1645: 'radius',
         1646: 'radius-acct',
         5510: 'secureid-udp',
+        5060: 'sip',
     }
     _CISCO_PORTS_UDP.update(_PORTS_UDP)
 
