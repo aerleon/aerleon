@@ -326,6 +326,7 @@ class AristaTest(absltest.TestCase):
         self.naming.GetServiceByProto.return_value = ['5060']
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_8, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
+        print(acl)
         self.assertIn('5060', str(acl))
         self.assertNotIn('sip', str(acl))
 
