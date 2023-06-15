@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class FQDN:
     # https://regexr.com/3g5j0
     fqdn_re = re.compile(
-        r'^(?!:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE
+        r'^(?!.*:\/\/)(?=.{1,255}$)((.{1,63}\.){1,127}(?![0-9]*$)[a-z0-9-]+\.?)$', re.IGNORECASE
     )
     fqdn: str
     text: str
