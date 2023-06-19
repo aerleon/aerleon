@@ -68,6 +68,11 @@ ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport},
 )
+aclEntries = TypedDict("aclEntries", {"acl-entry": List[ACLEntry]})
+ACLSetConfig = TypedDict("ACLSetConfig", {"name": str, "type": str})
+ACLSet = TypedDict(
+    "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
+)
 
 
 class Term(aclgenerator.Term):
@@ -209,6 +214,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     _PLATFORM = 'openconfig'
     SUFFIX = '.oacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
+    FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -227,8 +233,8 @@ class OpenConfig(aclgenerator.ACLGenerator):
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
-        self.oc_policies = []
         total_rule_count = 0
+        self.acl_sets: List[ACLSet] = []
 
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -243,6 +249,8 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 if i in filter_options:
                     address_family = i
                     filter_options.remove(i)
+
+            oc_acl_entries: List[ACLEntry] = []
 
             for term in terms:
                 # TODO(b/196430344): Add support for options such as
@@ -259,16 +267,27 @@ class OpenConfig(aclgenerator.ACLGenerator):
                     term_address_families = [address_family]
                 for term_af in term_address_families:
                     t = Term(term, term_af)
+
                     for rule in t.ConvertToDict():
                         total_rule_count += 1
                         rule['sequence-id'] = total_rule_count * 5
-                        self.oc_policies.append(rule)
+                        oc_acl_entries.append(rule)
+
+            oc_type = self.FAMILY_MAP[address_family]
+
+            oc_acl_set = {
+                "acl-entries": {"acl-entry": oc_acl_entries},
+                "config": {"name": filter_name, "type": oc_type},
+                "name": filter_name,
+                "type": oc_type,
+            }
+            self.acl_sets.append(oc_acl_set)
 
         logging.info('Total rule count of policy %s is: %d', filter_name, total_rule_count)
 
     def __str__(self) -> str:
         out = '%s\n\n' % (
-            json.dumps(self.oc_policies, indent=2, separators=(',', ': '), sort_keys=True)
+            json.dumps(self.acl_sets, indent=2, separators=(',', ': '), sort_keys=True)
         )
 
         return out
