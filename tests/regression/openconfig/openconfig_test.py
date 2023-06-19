@@ -96,7 +96,8 @@ GOOD_JSON_SADDR = """
       "config": {
         "source-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -113,7 +114,8 @@ GOOD_JSON_V6_SADDR = """
       "config": {
         "source-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -130,7 +132,8 @@ GOOD_JSON_DADDR = """
       "config": {
         "destination-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -147,7 +150,8 @@ GOOD_JSON_V6_DADDR = """
       "config": {
         "destination-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -164,7 +168,8 @@ GOOD_JSON_MIXED_DADDR = """
       "config": {
         "destination-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   },
   {
     "actions": {
@@ -176,7 +181,8 @@ GOOD_JSON_MIXED_DADDR = """
       "config": {
         "destination-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 10
   }
 ]
 """
@@ -197,7 +203,8 @@ GOOD_JSON_SPORT = """
       "config": {
         "source-port": 53}
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -218,7 +225,8 @@ GOOD_JSON_DPORT = """
       "config": {
         "destination-port": 53}
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -239,7 +247,8 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
       "config": {
         "destination-port": 53}
       }
-    }
+    },
+    "sequence-id": 5
   },
   {
     "actions": {
@@ -255,7 +264,8 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
         "config": {
           "destination-port": 53}
         }
-      }
+      },
+    "sequence-id": 10
   }
 ]
 """
@@ -279,7 +289,8 @@ GOOD_JSON_EVERYTHING = """
           "destination-port": 53
         }
       }
-    }
+    },
+    "sequence-id": 5
   },
   {
     "actions": {
@@ -298,7 +309,8 @@ GOOD_JSON_EVERYTHING = """
           "destination-port": 53
         }
       }
-    }
+    },
+    "sequence-id": 10
   }
 ]
 """

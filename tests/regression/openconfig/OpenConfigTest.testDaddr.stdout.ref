@@ -9,7 +9,8 @@
       "config": {
         "destination-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 

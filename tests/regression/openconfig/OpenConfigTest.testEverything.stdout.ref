@@ -16,7 +16,8 @@
           "destination-port": 53
         }
       }
-    }
+    },
+    "sequence-id": 5
   },
   {
     "actions": {
@@ -35,7 +36,8 @@
           "destination-port": 53
         }
       }
-    }
+    },
+    "sequence-id": 10
   }
 ]
 
