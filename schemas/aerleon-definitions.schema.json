@@ -34,6 +34,11 @@
       "description": "Specifies an IP address or CIDR IP address range expression.",
       "type": "string"
     },
+    "fqdn": {
+      "description": "Specifies a fully qualified domain name with two or more labels.",
+      "type": "string",
+      "pattern": "^(?!.*://)(?=.{1,255}$)((.{1,63}\\.){1,127}(?![0-9]*$)[a-z0-9-]+\\.?)$"
+    },
     "port": {
       "description": "Specifies a port or port range.",
       "oneOf": [
@@ -73,6 +78,15 @@
                 "required": ["address"],
                 "properties": {
                   "address": { "$ref": "#/$defs/address" },
+                  "comment": { "$ref": "#/$defs/comment" }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": ["fqdn"],
+                "properties": {
+                  "fqdn": { "$ref": "#/$defs/fqdn" },
                   "comment": { "$ref": "#/$defs/comment" }
                 },
                 "additionalProperties": false

@@ -38,6 +38,7 @@ class FQDNTest(parameterized.TestCase):
             '',
             True,
         ),
+        ('URL scheme must not be included', 'https://foo.bar', '', '', True),
     )
     def testFQDNCreation(self, possible_fqdn: str, token: str, comment: str, error: Exception):
 
