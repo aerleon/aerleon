@@ -66,8 +66,9 @@ term good-term-1 {
 
 GOOD_MULTI_PROTO_DPORT = """
 term good-term-1 {
-  comment:: "Allow TCP & UDP 53."
-  destination-port:: DNS
+  comment:: "Allow TCP & UDP high."
+  source-port:: HIGH_PORTS
+  destination-port:: HIGH_PORTS
   protocol:: udp tcp
   action:: accept
 }
@@ -198,10 +199,11 @@ GOOD_JSON_SPORT = """
     "ipv4": {
       "config": {
         "protocol": 6
+      }
     },
     "transport": {
       "config": {
-        "source-port": 53}
+        "source-port": 53
       }
     },
     "sequence-id": 5
@@ -220,10 +222,11 @@ GOOD_JSON_DPORT = """
     "ipv4": {
       "config": {
         "protocol": 6
+      }
     },
     "transport": {
       "config": {
-        "destination-port": 53}
+        "destination-port": 53
       }
     },
     "sequence-id": 5
@@ -242,10 +245,12 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
     "ipv4": {
       "config": {
         "protocol": 17
+      }
     },
     "transport": {
       "config": {
-        "destination-port": 53}
+        "destination-port": "1024..65535",
+        "source-port": "1024..65535"
       }
     },
     "sequence-id": 5
@@ -259,13 +264,14 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
     "ipv4": {
       "config": {
         "protocol": 6
-      },
-      "transport": {
-        "config": {
-          "destination-port": 53}
-        }
-      },
-    "sequence-id": 10
+      }
+    },
+    "transport": {
+      "config": {
+        "destination-port": "1024..65535",
+        "source-port": "1024..65535"
+      }
+    }
   }
 ]
 """
@@ -283,11 +289,11 @@ GOOD_JSON_EVERYTHING = """
         "destination-address": "10.2.3.4/32",
         "protocol": 17,
         "source-address": "10.2.3.4/32"
-      },
-      "transport": {
-        "config": {
-          "destination-port": 53
-        }
+      }
+    },
+    "transport": {
+      "config": {
+        "destination-port": 53
       }
     },
     "sequence-id": 5
@@ -303,11 +309,11 @@ GOOD_JSON_EVERYTHING = """
         "destination-address": "10.2.3.4/32",
         "protocol": 6,
         "source-address": "10.2.3.4/32"
-      },
-      "transport": {
-        "config": {
-          "destination-port": 53
-        }
+      }
+    },
+    "transport": {
+      "config": {
+        "destination-port": 53
       }
     },
     "sequence-id": 10
@@ -401,6 +407,21 @@ class OpenConfigTest(absltest.TestCase):
         self.assertEqual(expected, json.loads(str(acl)))
 
         self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
+        print(acl)
+
+    @capture.stdout
+    def testMultiDport(self):
+        self.naming.GetServiceByProto.return_value = ['1024-65535']
+
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_MULTI_PROTO_DPORT)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('HIGH_PORTS', 'tcp'), mock.call('HIGH_PORTS', 'udp')], any_order=True
+        )
         print(acl)
 
     @capture.stdout

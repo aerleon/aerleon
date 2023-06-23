@@ -163,9 +163,9 @@ class Term(aclgenerator.Term):
                     # 'any' starts and ends with zero.
                     if not start == end == 0:
                         if start == end:
-                            ace_dict[family]['transport']['config']['source-port'] = int(start)
+                            ace_dict['transport']['config']['source-port'] = int(start)
                         else:
-                            ace_dict[family]['transport']['config']['source-port'] = '%d..%d' % (
+                            ace_dict['transport']['config']['source-port'] = '%d..%d' % (
                                 start,
                                 end,
                             )
@@ -174,13 +174,12 @@ class Term(aclgenerator.Term):
                     for start, end in dports:
                         if not start == end == 0:
                             if start == end:
-                                ace_dict[family]['transport']['config']['destination-port'] = int(
-                                    start
-                                )
+                                ace_dict['transport']['config']['destination-port'] = int(start)
                             else:
-                                ace_dict[family]['transport']['config'][
-                                    'destination-port'
-                                ] = '%d..%d' % (start, end)
+                                ace_dict['transport']['config']['destination-port'] = '%d..%d' % (
+                                    start,
+                                    end,
+                                )
 
                         # Protocol
                         for proto in protos:

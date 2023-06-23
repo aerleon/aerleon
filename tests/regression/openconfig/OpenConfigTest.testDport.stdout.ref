@@ -8,11 +8,11 @@
     "ipv4": {
       "config": {
         "protocol": 6
-      },
-      "transport": {
-        "config": {
-          "destination-port": 53
-        }
+      }
+    },
+    "transport": {
+      "config": {
+        "destination-port": 53
       }
     },
     "sequence-id": 5

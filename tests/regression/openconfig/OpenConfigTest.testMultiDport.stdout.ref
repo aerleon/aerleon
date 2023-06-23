@@ -7,17 +7,15 @@
     },
     "ipv4": {
       "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 17,
-        "source-address": "10.2.3.4/32"
+        "protocol": 17
       }
     },
     "transport": {
       "config": {
-        "destination-port": 53
+        "destination-port": "1024..65535",
+        "source-port": "1024..65535"
       }
-    },
-    "sequence-id": 5
+    }
   },
   {
     "actions": {
@@ -27,17 +25,15 @@
     },
     "ipv4": {
       "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 6,
-        "source-address": "10.2.3.4/32"
+        "protocol": 6
       }
     },
     "transport": {
       "config": {
-        "destination-port": 53
+        "destination-port": "1024..65535",
+        "source-port": "1024..65535"
       }
-    },
-    "sequence-id": 10
+    }
   }
 ]
 
