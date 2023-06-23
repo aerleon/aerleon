@@ -419,6 +419,14 @@ term established-term-1 {
   action:: accept
 }
 """
+NOTSYNACK_TERM_1 = """
+term notsynack-term-1 {
+  protocol:: tcp
+  destination-port:: HTTPS
+  option:: not-syn-ack
+  action:: accept
+}
+"""
 OPTION_TERM_1 = """
 term option-term {
   protocol:: tcp
