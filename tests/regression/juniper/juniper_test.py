@@ -419,6 +419,14 @@ term established-term-1 {
   action:: accept
 }
 """
+NOTSYNACK_TERM_1 = """
+term notsynack-term-1 {
+  protocol:: tcp
+  destination-port:: HTTPS
+  option:: not-syn-ack
+  action:: accept
+}
+"""
 OPTION_TERM_1 = """
 term option-term {
   protocol:: tcp
@@ -704,6 +712,7 @@ SUPPORTED_SUB_TOKENS = {
         'sample',
         'tcp-established',
         'tcp-initial',
+        'not-syn-ack'
     },
 }
 
@@ -909,6 +918,18 @@ class JuniperTest(parameterized.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testNotSynAck(self):
+        self.naming.GetServiceByProto.return_value = ['443']
+
+        policy_text = GOOD_HEADER + NOTSYNACK_TERM_1
+        jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
+        output = str(jcl)
+        self.assertIn('tcp-flags "!(syn&ack)";', output, output)
+
+        self.naming.GetServiceByProto.assert_called_once_with('HTTPS', 'tcp')
         print(output)
 
     @capture.stdout
@@ -2117,6 +2138,7 @@ class JuniperYAMLTest(JuniperTest):
             BAD_FLEX_MATCH_TERM_4=YAML_BAD_FLEX_MATCH_TERM_4,
             BAD_TERM_FILTER=YAML_BAD_TERM_FILTER,
             MIXED_TESTING_TERM=YAML_MIXED_TESTING_TERM,
+            NOTSYNACK_TERM_1=YAML_NOTSYNACK_TERM_1,
         )
 
         self.fixture_patcher.start()
@@ -2492,6 +2514,13 @@ YAML_ESTABLISHED_TERM_1 = """
     protocol: tcp
     source-port: DNS
     option: established
+    action: accept
+"""
+YAML_NOTSYNACK_TERM_1 = """
+  - name: notsynack-term-1
+    protocol: tcp
+    destination-port: HTTPS
+    option: not-syn-ack
     action: accept
 """
 YAML_OPTION_TERM_1 = """
