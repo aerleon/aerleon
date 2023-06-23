@@ -980,7 +980,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     'tcp-established',
                     'tcp-initial',
                     'inactive',
-                    'not-syn-ack'
+                    'not-syn-ack',
                 }
             }
         )
