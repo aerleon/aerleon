@@ -919,7 +919,7 @@ class JuniperTest(parameterized.TestCase):
         policy_text = GOOD_HEADER + NOTSYNACK_TERM_1
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
         output = str(jcl)
-        self.assertIn('not-syn-ack', output, output)
+        self.assertIn('tcp-flags "!(syn&ack)";', output, output)
 
         self.naming.GetServiceByProto.assert_called_once_with('HTTPS', 'tcp')
         print(output)
@@ -2108,7 +2108,6 @@ class JuniperYAMLTest(JuniperTest):
             GOOD_TERM_FILTER=YAML_GOOD_TERM_FILTER,
             BAD_TERM_1=YAML_BAD_TERM_1,
             ESTABLISHED_TERM_1=YAML_ESTABLISHED_TERM_1,
-            NOTSYNACK_TERM_1=YAML_NOTSYNACK_TERM_1,
             OPTION_TERM_1=YAML_OPTION_TERM_1,
             BAD_ICMPTYPE_TERM_1=YAML_BAD_ICMPTYPE_TERM_1,
             BAD_ICMPTYPE_TERM_2=YAML_BAD_ICMPTYPE_TERM_2,
@@ -2131,6 +2130,7 @@ class JuniperYAMLTest(JuniperTest):
             BAD_FLEX_MATCH_TERM_4=YAML_BAD_FLEX_MATCH_TERM_4,
             BAD_TERM_FILTER=YAML_BAD_TERM_FILTER,
             MIXED_TESTING_TERM=YAML_MIXED_TESTING_TERM,
+            NOTSYNACK_TERM_1=YAML_NOTSYNACK_TERM_1,
         )
 
         self.fixture_patcher.start()
