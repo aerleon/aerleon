@@ -201,12 +201,12 @@ GOOD_JSON_SPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "source-port": 53
       }
-    },
-    "sequence-id": 5
+    }
   }
 ]
 """
@@ -224,12 +224,12 @@ GOOD_JSON_DPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 5
+    }
   }
 ]
 """
@@ -247,13 +247,13 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
         "protocol": 17
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": "1024..65535",
         "source-port": "1024..65535"
       }
-    },
-    "sequence-id": 5
+    }
   },
   {
     "actions": {
@@ -266,6 +266,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": "1024..65535",
@@ -291,12 +292,12 @@ GOOD_JSON_EVERYTHING = """
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 5
+    }
   },
   {
     "actions": {
@@ -311,12 +312,12 @@ GOOD_JSON_EVERYTHING = """
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 10
+    }
   }
 ]
 """

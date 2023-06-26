@@ -12,12 +12,12 @@
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 5
+    }
   },
   {
     "actions": {
@@ -32,12 +32,12 @@
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 10
+    }
   }
 ]
 

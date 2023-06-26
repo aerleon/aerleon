@@ -10,12 +10,12 @@
         "protocol": 6
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
       }
-    },
-    "sequence-id": 5
+    }
   }
 ]
 
