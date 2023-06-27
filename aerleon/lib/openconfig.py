@@ -65,7 +65,8 @@ IP = TypedDict("IP", {"config": IPConfig})
 ActionConfig = TypedDict("ActionConfig", {"forwarding-action": str})
 Action = TypedDict("Action", {"config": ActionConfig})
 ACLEntry = TypedDict(
-    "ACLEntry", {"actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport}
+    "ACLEntry",
+    {"sequence-id": int, "actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport},
 )
 
 
@@ -260,6 +261,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
                     t = Term(term, term_af)
                     for rule in t.ConvertToDict():
                         total_rule_count += 1
+                        rule['sequence-id'] = total_rule_count * 5
                         self.oc_policies.append(rule)
 
         logging.info('Total rule count of policy %s is: %d', filter_name, total_rule_count)

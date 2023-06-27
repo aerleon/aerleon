@@ -10,6 +10,7 @@
         "protocol": 17
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": "1024..65535",
@@ -28,6 +29,7 @@
         "protocol": 6
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": "1024..65535",

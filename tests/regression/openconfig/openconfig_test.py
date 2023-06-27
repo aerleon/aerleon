@@ -97,7 +97,8 @@ GOOD_JSON_SADDR = """
       "config": {
         "source-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -114,7 +115,8 @@ GOOD_JSON_V6_SADDR = """
       "config": {
         "source-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -131,7 +133,8 @@ GOOD_JSON_DADDR = """
       "config": {
         "destination-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -148,7 +151,8 @@ GOOD_JSON_V6_DADDR = """
       "config": {
         "destination-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 5
   }
 ]
 """
@@ -165,7 +169,8 @@ GOOD_JSON_MIXED_DADDR = """
       "config": {
         "destination-address": "10.2.3.4/32"
       }
-    }
+    },
+    "sequence-id": 5
   },
   {
     "actions": {
@@ -177,7 +182,8 @@ GOOD_JSON_MIXED_DADDR = """
       "config": {
         "destination-address": "2001:4860:8000::5/128"
       }
-    }
+    },
+    "sequence-id": 10
   }
 ]
 """
@@ -195,6 +201,7 @@ GOOD_JSON_SPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "source-port": 53
@@ -217,6 +224,7 @@ GOOD_JSON_DPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
@@ -239,6 +247,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
         "protocol": 17
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": "1024..65535",
@@ -257,6 +266,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
         "protocol": 6
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": "1024..65535",
@@ -282,6 +292,7 @@ GOOD_JSON_EVERYTHING = """
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 5,
     "transport": {
       "config": {
         "destination-port": 53
@@ -301,6 +312,7 @@ GOOD_JSON_EVERYTHING = """
         "source-address": "10.2.3.4/32"
       }
     },
+    "sequence-id": 10,
     "transport": {
       "config": {
         "destination-port": 53
