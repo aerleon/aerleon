@@ -712,7 +712,7 @@ SUPPORTED_SUB_TOKENS = {
         'sample',
         'tcp-established',
         'tcp-initial',
-        'not-syn-ack'
+        'not-syn-ack',
     },
 }
 
