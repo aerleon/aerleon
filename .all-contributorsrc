@@ -45,7 +45,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "XioNoX",
+      "name": "Arzhel Younsi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/688817?v=4",
+      "profile": "https://github.com/XioNoX",
+      "contributions": [
+        "code"
+      ]
     }
   ],
-  "contributorsPerLine": 7
+  "contributorsPerLine": 7,
+  "commitType": "docs"
 }
