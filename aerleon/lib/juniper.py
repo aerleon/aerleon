@@ -288,6 +288,8 @@ class Term(aclgenerator.Term):
                     from_str.append('tcp-initial;')
                 elif opt.startswith('first-fragment'):
                     from_str.append('first-fragment;')
+                elif opt.startswith('not-syn-ack'):
+                    from_str.append('tcp-flags "!(syn&ack)";')
 
                 # we don't have a special way of dealing with this, so we output it and
                 # hope the user knows what they're doing.
@@ -978,6 +980,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     'tcp-established',
                     'tcp-initial',
                     'inactive',
+                    'not-syn-ack',
                 }
             }
         )
