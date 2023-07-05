@@ -3,7 +3,9 @@
 The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service definitions and putting them together to output firewall configurations.
 
 ## Setup
-> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/install/).
+!!! info
+
+    This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/install/).
 
 You will want to make a temporary directory with the following structure.
 ```bash
