@@ -1,9 +1,11 @@
 # Getting Started with Aerleon
 
-The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as Policy files, Network and Service definitions and putting them together to output firewall configurations.
+The following sections will take you through a guided tour of Aerleon. We will cover general concepts such as policy files, network and service definitions, and put them together to output firewall configurations.
 
 ## Setup
-> **_NOTE:_**  This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/install/).
+!!! info
+
+    This tutorial assumes you are working on a Linux operating system and have completed the [installation instructions](/en/latest/install/).
 
 You will want to make a temporary directory with the following structure.
 ```bash
@@ -22,7 +24,7 @@ cd aerleon_test
 The rest of this walkthrough will assume you are within the `aerleon_test` directory.
 
 ## Definition Files
-Definition files allow you to define Networks and Services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
+Definition files allow you to define networks and services used in your policies. Generally it is much easier to read a name like `WEB_SERVERS` rather than a list of IP addresses. It is also beneficial to compose definitions together in certain places.
 
 ```yaml
 networks:

@@ -8,9 +8,9 @@ Aerleon provides a per firewall platform configuration generator. It loads data 
 
 The data primarily consists of:
 
-* Policy Files that represent the actual firewall rules.
-* Address Files that represent the addresses, in the form of named objects.
-* Service Files that represent the services, in the form of named objects.
+* Policy files that represent the actual firewall rules.
+* Address files that represent the addresses, in the form of named objects.
+* Service files that represent the services, in the form of named objects.
 
 ## Supported Configuration Formats
 
