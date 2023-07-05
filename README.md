@@ -8,8 +8,8 @@ Generate firewall configs for multiple firewall platforms from a single platform
 
 Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following major additions:
 
-- YAML policy and network definitions files and [pol2yaml, a converter from Capirca policy DSL to YAML](https://github.com/aerleon/pol2yaml).
-- Network definition with FQDN data.
+- YAML policy and network definition files and [pol2yaml, a converter from Capirca policy DSL to YAML](https://github.com/aerleon/pol2yaml).
+- Network definitions with FQDN data.
 - New firewall platforms can be added through plugins.
 - Typed Python APIs for ACL generation and aclcheck queries.
 - A [SLSA-compatible verifiable release process](https://aerleon.readthedocs.io/en/latest/install/#verifying-installation).
