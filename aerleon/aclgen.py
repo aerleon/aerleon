@@ -310,7 +310,7 @@ def RenderACL(
 
     if source_map:
         map_suffix = '.map.json'
-        try:
+        if acl_obj.HasSourceMap():
             acl_src_map = str(acl_obj.GetSourceMap())
             input_filename = input_file.with_suffix(acl_suffix + map_suffix).name
             output_file = output_directory / input_filename
@@ -319,8 +319,6 @@ def RenderACL(
                 write_files.append((output_file, acl_src_map))
             else:
                 logging.debug('source map not changed: %s', output_file)
-        except NotImplementedError:
-            logging.debug('source map not implemented: %s', output_file)
 
 
 def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:

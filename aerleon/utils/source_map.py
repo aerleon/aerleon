@@ -1,9 +1,14 @@
+"""Utilities for building and loading source map files."""
+
 import json
+import typing
+from typing import Optional, TypedDict
 
-"""Utilities for generating a source map while emitting an ACL file."""
+if typing.TYPE_CHECKING:
+    from aerleon.lib.policy import Policy
 
 
-def getCursor(sm: "SourceMap"):
+def getCursor(sm: "SourceMapBuilder"):
     l = len(sm.lines)
     if l == 0:
         c = 0
@@ -16,7 +21,7 @@ def formatCursor(pos):
     return ':'.join((str(i) for i in pos))
 
 
-class SourceMap:
+class SourceMapBuilder:
     """Builds up and emits a source map file.
 
     The logical structure of the source map is a list of text spans paired with metadata
@@ -59,7 +64,10 @@ class SourceMap:
         self._current_filter = None
 
     def nextFilter(self):
-        self._current_filter = self._current_filter + 1 if self._current_filter is not None else 0
+        if self._current_filter is None:
+            self._current_filter = 0
+        else:
+            self._current_filter = self._current_filter + 1
 
     def startSpan(self, span_type, **kwargs):
         self.spans.append(
@@ -95,3 +103,60 @@ class SourceMap:
             entry = {key: value}
             emit.append(entry)
         return json.dumps(emit)
+
+
+SourceMapFile = "list[dict[str, SourceMapValue]]"
+
+
+class SourceMapValue(TypedDict):
+    filter: int
+    type: str
+    term: "Optional[int]"
+    term_name: "Optional[str]"
+
+
+class SourceMap:
+    """A source map relates a generated file"""
+
+    @classmethod
+    def load(cls, path):
+        with open(path, 'r') as f:
+            return cls.loads(f.read())
+
+    @classmethod
+    def loads(cls, file):
+        return cls(json.loads(file))
+
+    def __init__(self, source_map: "SourceMapFile", source=None, output=None):
+        self.source_map = source_map
+        self.source = source
+        self.output = output
+
+    def setSource(self, pol: "Policy"):
+        self.source = pol
+
+    def setOutput(self, file: str):
+        self.output = file
+
+    def resolveOutputLine(self, line):
+        if not self.output:
+            return
+        return self.output.splitlines()[line]
+
+    def resolveSourceLocation(self, locator: "SourceMapValue"):
+        if not self.source:
+            return
+        vtype = locator['type']
+        filter = locator['filter']
+        src_filter = self.source.filters[filter]
+        if vtype == 'header':
+            return src_filter
+        if vtype == 'term':
+            term = locator['term']
+            return src_filter.terms[term]
+
+    def isLineInSpan(self, line, span):
+        parts = span.split(':')
+
+    def getSourceLocationForLine(self, line):
+        pass

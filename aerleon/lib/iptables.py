@@ -25,7 +25,6 @@ from absl import logging
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.policy import Policy, Term
-from aerleon.utils.source_map import SourceMap
 
 
 class Term(aclgenerator.Term):
@@ -744,8 +743,6 @@ class Iptables(aclgenerator.ACLGenerator):
 
     def __init__(self, pol: Policy, exp_info: int) -> None:
         self.iptables_policies = []
-        self.source_map = SourceMap()
-        self.source_map.source_file = pol.filename
         super().__init__(pol, exp_info)
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
@@ -931,11 +928,6 @@ class Iptables(aclgenerator.ACLGenerator):
         if action:
             pol[3] = action
         self.iptables_policies[0] = tuple(pol)
-
-    def GetSourceMap(self):
-        if not len(self.source_map.spans):
-            str(self)
-        return self.source_map
 
     def __str__(self) -> str:
         sm = self.source_map

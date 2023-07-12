@@ -1049,13 +1049,19 @@ class Cisco(aclgenerator.ACLGenerator):
         return target
 
     def __str__(self) -> str:
+        sm = self.source_map
+        sm.clear()
+        target = self.source_map.lines
         target_header = []
-        target = []
+
         # add the p4 tags
         target.extend(aclgenerator.AddRepositoryTags('! '))
 
         for (header, filter_name, filter_list, terms, obj_target) in self.cisco_policies:
+            sm.nextFilter()
             for filter_type in filter_list:
+                sm.startSpan('header')
+
                 target.extend(self._AppendTargetByFilterType(filter_name, filter_type))
                 if filter_type == 'object-group':
                     obj_target.AddName(filter_name)
@@ -1078,12 +1084,15 @@ class Cisco(aclgenerator.ACLGenerator):
                                 target.append('access-list %s remark %s' % (filter_name, line))
                             else:
                                 target.append(' remark %s' % line)
+                sm.endSpan()
 
                 # now add the terms
-                for term in terms:
+                for i, term in enumerate(terms):
+                    sm.startSpan('term', term=i, term_name=term.term.name)
                     term_str = str(term)
                     if term_str:
                         target.append(term_str)
+                    sm.endSpan()
 
             if obj_target.addressbook.addressbook.keys():
                 target = [str(obj_target)] + target

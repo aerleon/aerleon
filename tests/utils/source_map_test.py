@@ -2,7 +2,7 @@ import json
 
 from absl.testing import absltest
 
-from aerleon.utils.source_map import SourceMap
+from aerleon.utils.source_map import SourceMapBuilder
 
 example_source_file_name = 'example.pol'
 
@@ -23,7 +23,7 @@ FILTER 1 > second-term'''
 class SourceMapTestSute(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.sm = SourceMap()
+        self.sm = SourceMapBuilder()
         self.sm.source_file = example_source_file_name
         self.buildExampleSourceMap()
 

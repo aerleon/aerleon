@@ -26,6 +26,7 @@ from typing import Dict, List, Set, Tuple, Union
 from absl import logging
 
 from aerleon.lib import policy
+from aerleon.utils.source_map import SourceMapBuilder
 
 
 # generic error class
@@ -305,6 +306,8 @@ class ACLGenerator:
             if (self._PLATFORM in header.platforms)
         ]
         self.policy = pol
+        self.source_map = SourceMapBuilder()
+        self.source_map.source_file = pol.filename
         all_err = []
         all_warn = []
         for header, terms in pol.filters:
@@ -611,10 +614,16 @@ class ACLGenerator:
 
         Returns:
           A JSON file relating a source structure to each generated line in the output file.
-        Raises:
-          NotImplementedError if not implemented
         """
-        raise NotImplementedError
+
+    def GetSourceMap(self):
+        if not len(self.source_map.spans):
+            str(self)
+        return self.source_map
+
+    def HasSourceMap(self):
+        sm = self.GetSourceMap()
+        return len(sm.spans) > 0
 
 
 def ProtocolNameToNumber(
