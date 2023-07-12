@@ -49,13 +49,23 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
+class TcpEstablishedWithNonTcpError(Error):
+    """Raised when the TCP established option is set with a non TCP protocol."""
+
+
 # Graceful handling of dict heierarchy for OpenConfig JSON.
 def RecursiveDict() -> DefaultDict[Any, Any]:
     return defaultdict(RecursiveDict)
 
 
 TransportConfig = TypedDict(
-    "TransportConfig", {"source-port": Union[int, str], "destination-port": Union[int, str]}
+    "TransportConfig",
+    {
+        "source-port": Union[int, str],
+        "destination-port": Union[int, str],
+        "detail-mode": str,
+        "builtin-detail": str,
+    },
 )
 Transport = TypedDict("Transport", {"transport": TransportConfig})
 IPConfig = TypedDict(
@@ -153,6 +163,16 @@ class Term(aclgenerator.Term):
             protos = ['none']
 
         ace_dict = copy.deepcopy(term_dict)
+
+        # options
+        if self.term.option:
+            if 'tcp-established' in self.term.option:
+                if self.term.protocol != ['tcp']:
+                    raise TcpEstablishedWithNonTcpError(
+                        f'tcp-established can only be used with tcp protocol in term {self.term.name}'
+                    )
+                ace_dict['transport']['config']['detail-mode'] = "BUILTIN"
+                ace_dict['transport']['config']['builtin-detail'] = "TCP_ESTABLISHED"
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
@@ -230,6 +250,14 @@ class OpenConfig(aclgenerator.ACLGenerator):
         # OpenConfig ACL model only supports these three forwarding actions.
         supported_sub_tokens['action'] = {'accept', 'deny', 'reject'}
 
+        supported_sub_tokens.update(
+            {
+                'option': {
+                    'tcp-established',
+                }
+            }
+        )
+
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
@@ -253,11 +281,6 @@ class OpenConfig(aclgenerator.ACLGenerator):
             oc_acl_entries: List[ACLEntry] = []
 
             for term in terms:
-                # TODO(b/196430344): Add support for options such as
-                # established/rst/first-fragment
-                if term.option:
-                    raise OcFirewallError('OpenConfig firewall does not support term options.')
-
                 # Handle mixed for each indvidual term as inet and inet6.
                 # inet/inet6 are treated the same.
                 term_address_families = []

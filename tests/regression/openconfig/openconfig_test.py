@@ -73,7 +73,23 @@ term good-term-1 {
   action:: accept
 }
 """
-
+GOOD_TCP_EST = """
+term good-tcp-est {
+  protocol:: tcp
+  destination-address:: CORP_EXTERNAL
+  source-port:: HTTP
+  option:: tcp-established
+  action:: accept
+}
+"""
+BAD_TCP_EST = """
+term bad-tcp-est {
+  protocol:: tcp udp
+  source-port:: DNS
+  option:: tcp-established
+  action:: accept
+}
+"""
 GOOD_EVERYTHING = """
 term good-term-1 {
   comment:: "Allow TCP & UDP 53 with saddr/daddr."
@@ -587,6 +603,33 @@ class OpenConfigTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
+
+    @capture.stdout
+    def testTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetNetAddr.return_value = TEST_IPS
+
+        policy_text = GOOD_HEADER + GOOD_TCP_EST
+        acl = openconfig.OpenConfig(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
+        output = str(acl)
+        self.assertIn('TCP_ESTABLISHED', output, output)
+        self.assertIn('BUILTIN', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
+        print(acl)
+
+    def testNonTcpWithTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        policy_text = GOOD_HEADER + BAD_TCP_EST
+        pol = policy.ParsePolicy(policy_text, self.naming)
+        self.assertRaises(
+            openconfig.TcpEstablishedWithNonTcpError, openconfig.OpenConfig, pol, EXP_INFO
+        )
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
+        )
 
 
 if __name__ == '__main__':
