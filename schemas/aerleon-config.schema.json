@@ -43,6 +43,10 @@
       "type": "boolean",
       "description": "Causes aclgen to produce a warning if any unreachable term is encountered if true. The default value is false."
     },
+    "source_map": {
+      "type": "boolean",
+      "description": "Causes aclgen to generate a source map next to each generated ACL. The default value is false."
+    },
     "exp_info": {
       "type": "integer",
       "description": "aclgen will produce a warning if it encounters a term set to expire in the near future. Expired terms are ignored. Setting exp_info controls the number of weeks ahead that aclgen will check for soon-to-expire terms.\n\nThe default value is '2' (two weeks)."

@@ -18,6 +18,7 @@ defaults = {
     'ignore_directories': ['DEPRECATED', 'def'],
     'max_renderers': 10,
     'shade_check': False,
+    'source_map': False,
     'exp_info': 2,
 }
 

@@ -581,6 +581,41 @@ class ACLGenerator:
 
         return new_terms
 
+    def GetSourceMap(self):
+        """Return a source map for the string representation of this file.
+        The function of the source map is to provide a relation from the generated file back to
+        the source file. This can be useful for automated tools that manipulate Aerleon
+        policies using information that refers to the original vendor file, or for systems
+        that want to display the Aerleon filter present on a device.
+
+        The logical structure of the source map is a list of text spans paired with metadata
+        about those spans. Not all characters in the generated file are necessarily covered
+        by a span with metadata.
+
+        The structure of the source map is an array of objects. Each object has a single key
+        which describes the start and end of the span, e.g. "0:0:8:27" represents the text span
+        starting at line 0, character 0, ending at line 8, character 27. This names a span in the
+        genrated file. The object value for that key is the span metadata. The span metadata can
+        have the following fields:
+
+          filter: int (required) - the position of the filter in the file, where 0 means the first
+            filter and 1 means the second.
+          type: str (required) - can be "header" or "term".
+          term: int (optional) - if the type is "term", the position of the term in the filter.
+            term list.
+          term_name: str (optional) - if the type is "term", the name of the term.
+
+        Conventionally, the first span should refer to the entire file and contain whole-file metadata.
+
+          source_file: str - the name of the Aerleon file used to generate this file
+
+        Returns:
+          A JSON file relating a source structure to each generated line in the output file.
+        Raises:
+          NotImplementedError if not implemented
+        """
+        raise NotImplementedError
+
 
 def ProtocolNameToNumber(
     protocols: List[str], proto_to_num: List[str], name_to_num_map: Dict[str, int]
