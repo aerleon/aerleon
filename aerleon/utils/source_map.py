@@ -146,6 +146,8 @@ class SourceMap:
     def resolveSourceLocation(self, locator: "SourceMapValue"):
         if not self.source:
             return
+        if locator is None:
+            return
         vtype = locator['type']
         filter = locator['filter']
         src_filter = self.source.filters[filter]
@@ -153,10 +155,20 @@ class SourceMap:
             return src_filter
         if vtype == 'term':
             term = locator['term']
-            return src_filter.terms[term]
+            return src_filter[1][term]
 
     def isLineInSpan(self, line, span):
         parts = span.split(':')
+        assert len(parts) == 4
+        start = int(parts[0])
+        start_col = int(parts[1])
+        end = int(parts[2])
+        if start_col > 0:
+            start = start + 1
+        return start <= line <= end
 
     def getSourceLocationForLine(self, line):
-        pass
+        for span in self.source_map[1:]:
+            span_key = list(span.keys())[0]
+            if self.isLineInSpan(line, span_key):
+                return span[span_key]
