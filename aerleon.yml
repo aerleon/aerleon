@@ -1,4 +1,5 @@
 base_directory: ./policies
 definitions_directory: ./def
 exp_info: 2
-max_renderers: 10
+max_renderers: 1
+source_map: true

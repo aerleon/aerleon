@@ -930,13 +930,18 @@ class Iptables(aclgenerator.ACLGenerator):
         self.iptables_policies[0] = tuple(pol)
 
     def __str__(self) -> str:
-        target = []
+        sm = self.source_map
+        sm.clear()
+        target = self.source_map.lines
         pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
 
         if self._RENDER_PREFIX:
             target.append(self._RENDER_PREFIX)
 
         for (header, filter_name, filter_type, default_action, terms) in self.iptables_policies:
+            sm.nextFilter()
+            sm.startSpan('header')
+
             # Add comments for this filter
             target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
 
@@ -960,11 +965,15 @@ class Iptables(aclgenerator.ACLGenerator):
             else:
                 # Custom chains have no concept of default policy.
                 target.append(self._DEFAULTACTION_FORMAT_CUSTOM_CHAIN % filter_name)
+            sm.endSpan()
+
             # add the terms
-            for term in terms:
+            for i, term in enumerate(terms):
+                sm.startSpan('term', term=i, term_name=term.term.name)
                 term_str = str(term)
                 if term_str:
                     target.append(term_str)
+                sm.endSpan()
 
         if self._RENDER_SUFFIX:
             target.append(self._RENDER_SUFFIX)

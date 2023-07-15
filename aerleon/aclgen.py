@@ -96,6 +96,12 @@ def SetupFlags():
         % str(config.defaults['exp_info']),
     )
     flags.DEFINE_multi_string('config_file', None, 'A YAML file with configuration options')
+    flags.DEFINE_boolean(
+        'source_map',
+        None,
+        'Also render a "source map" which shows which term produced each output line.\nDefault: \'%s\''
+        % str(config.defaults['source_map']).lower(),
+    )
 
 
 class Error(Exception):
@@ -137,6 +143,7 @@ def RenderFile(
     exp_info: int,
     optimize: bool,
     shade_check: bool,
+    source_map: bool,
     write_files: WriteList,
 ):
     """Render a single file.
@@ -150,6 +157,7 @@ def RenderFile(
         weeks.
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded
+      source_map: should we also generate a source map file
       write_files: a list of file tuples, (output_file, acl_text), to write
     """
     output_relative = input_file.relative_to(base_directory).parent.parent
@@ -200,7 +208,7 @@ def RenderFile(
         if pathlib.Path(input_file).suffix == '.yaml' or pathlib.Path(input_file).suffix == '.yml':
             pol = yaml.ParsePolicy(
                 conf,
-                filename=input_file,
+                filename=input_file.name,
                 base_dir=base_directory,
                 definitions=definitions,
                 optimize=optimize,
@@ -210,6 +218,7 @@ def RenderFile(
             pol = policy.ParsePolicy(
                 conf,
                 definitions,
+                filename=input_file.name,
                 optimize=optimize,
                 base_dir=base_directory,
                 shade_check=shade_check,
@@ -241,23 +250,27 @@ def RenderFile(
             if target == 'pcap':
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
-                    str(acl_obj),
+                    acl_obj,
                     '-accept' + acl_obj.SUFFIX,
                     output_directory,
                     input_file,
                     write_files,
+                    source_map,
                 )
                 acl_obj = generator(copy.deepcopy(pol), exp_info, invert=True)
                 RenderACL(
-                    str(acl_obj),
+                    acl_obj,
                     '-deny' + acl_obj.SUFFIX,
                     output_directory,
                     input_file,
                     write_files,
+                    source_map,
                 )
             else:
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
-                RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
+                RenderACL(
+                    acl_obj, acl_obj.SUFFIX, output_directory, input_file, write_files, source_map
+                )
 
         except aclgenerator.Error as e:
             raise ACLGeneratorError(
@@ -266,11 +279,12 @@ def RenderFile(
 
 
 def RenderACL(
-    acl_text: str,
+    acl_obj: aclgenerator.ACLGenerator,
     acl_suffix: str,
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
     write_files: List[Tuple[pathlib.Path, str]],
+    source_map: bool = False,
     binary: bool = False,
 ):
     """Write the ACL string out to file if appropriate.
@@ -281,8 +295,10 @@ def RenderACL(
       output_directory: The directory to write the output file.
       input_file: The name of the policy file that was used to render ACL.
       write_files: A list of file tuples, (output_file, acl_text), to write.
+      source_map: Should we also generate a source map file.
       binary: Boolean if the rendered ACL is in binary format.
     """
+    acl_text = str(acl_obj)
     input_filename = input_file.with_suffix(acl_suffix).name
     output_file = output_directory / input_filename
 
@@ -291,6 +307,18 @@ def RenderACL(
         write_files.append((output_file, acl_text))
     else:
         logging.debug('file not changed: %s', output_file)
+
+    if source_map:
+        map_suffix = '.map.json'
+        if acl_obj.HasSourceMap():
+            acl_src_map = str(acl_obj.GetSourceMap())
+            input_filename = input_file.with_suffix(acl_suffix + map_suffix).name
+            output_file = output_directory / input_filename
+            if FilesUpdated(output_file, acl_src_map, False):
+                logging.info('source map: %s', output_file)
+                write_files.append((output_file, acl_src_map))
+            else:
+                logging.debug('source map not changed: %s', output_file)
 
 
 def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
@@ -410,6 +438,7 @@ def Run(
     ignore_directories: List[str],
     optimize: bool,
     shade_check: bool,
+    source_map: bool,
     context: multiprocessing.context.BaseContext,
 ):
     """Generate ACLs.
@@ -453,6 +482,7 @@ def Run(
             exp_info,
             optimize,
             shade_check,
+            source_map,
             write_files,
         )
     elif max_renderers == 1:
@@ -467,6 +497,7 @@ def Run(
                 exp_info,
                 optimize,
                 shade_check,
+                source_map,
                 write_files,
             )
     else:
@@ -486,6 +517,7 @@ def Run(
                         exp_info,
                         optimize,
                         shade_check,
+                        source_map,
                         write_files,
                     ),
                 )
@@ -549,6 +581,7 @@ def main(argv):
         configs['ignore_directories'],
         configs['optimize'],
         configs['shade_check'],
+        configs['source_map'],
         context,
     )
 
