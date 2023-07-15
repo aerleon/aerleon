@@ -3,8 +3,8 @@ import re
 from absl.testing import absltest
 
 from aerleon import api
-from aerleon.lib import naming
-from aerleon.lib.policy_builder import PolicyDict
+from aerleon.lib import naming, policy
+from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict
 from tests.regression_utils import capture
 
 # fmt: off
@@ -207,6 +207,20 @@ class ApiTest(absltest.TestCase):
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
 
         configs = api.Generate([GOOD_POLICY_1], definitions)
+        acl = configs["raw_policy_all_builtin.acl"]
+
+        self.assertTrue(re.search(' deny-to-reserved', str(acl)))
+        self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
+
+    def testGeneratePolicyInput(self):
+
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(SERVICES_1, "blah")
+        definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
+
+        pol = policy.FromBuilder(PolicyBuilder(GOOD_POLICY_1, definitions=definitions))
+
+        configs = api.Generate([pol], definitions)
         acl = configs["raw_policy_all_builtin.acl"]
 
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))

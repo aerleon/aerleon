@@ -218,7 +218,7 @@ from aerleon.lib import (
 
 
 def Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: "list[policy_builder.PolicyDict] | list[policy.Policy]",
     definitions: naming.Naming,
     output_directory: pathlib.Path = None,
     optimize: bool = False,
@@ -233,6 +233,8 @@ def Generate(
         of filters. Each filter is a dictionary with "header" and "terms" keys.
         The structure of the filters and terms should exactly mirror the YAML
         policy file structure.
+
+        Alternatively, a list of Policy objects.
 
       definitions: A naming.Naming object containing definitions for all network
         and service names used in the given policies.
@@ -271,7 +273,7 @@ def Generate(
 
 
 def _Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: "list[policy_builder.PolicyDict] | list[policy.Policy]",
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
     output_directory: pathlib.Path = None,
@@ -334,7 +336,7 @@ def _Generate(
 
 
 def _GenerateACL(
-    input_policy: policy_builder.PolicyDict,
+    input_policy: "policy_builder.PolicyDict | policy.Policy",
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: dict,
@@ -343,18 +345,26 @@ def _GenerateACL(
     shade_check: bool = False,
     exp_info: int = 2,
 ):
-    filename = input_policy.get("filename")
-    try:
-        policy_obj = policy.FromBuilder(
-            policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
-        )
-    except policy.ShadingError as e:
-        logging.warning('shading errors for %s:\n%s', filename, e)
-        return
-    except (policy.Error, naming.Error) as e:
-        raise ACLParserError(
-            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
-        ) from e
+    def _parsePolicy():
+        if isinstance(input_policy, policy.Policy):
+            return input_policy, input_policy.filename
+
+        filename = input_policy.get("filename")
+        try:
+            policy_obj = policy.FromBuilder(
+                policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
+            )
+        except policy.ShadingError as e:
+            logging.warning('shading errors for %s:\n%s', filename, e)
+            return
+        except (policy.Error, naming.Error) as e:
+            raise ACLParserError(
+                'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+            ) from e
+
+        return policy_obj, filename
+
+    policy_obj, filename = _parsePolicy()
 
     platforms = set()
     for header in policy_obj.headers:
