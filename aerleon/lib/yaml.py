@@ -104,7 +104,6 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
         try:
             policy_dict = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
-            policy_dict['filename'] = pathlib.Path(filename).name
         except YAMLError as yaml_error:
             raise PolicyTypeError(
                 UserMessage("Unable to read file as YAML.", filename=filename)
@@ -112,6 +111,7 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
         return
+    policy_dict['filename'] = pathlib.Path(filename).name
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
@@ -136,7 +136,6 @@ def ParsePolicy(
     """
     try:
         policy_dict = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
-        policy_dict['filename'] = pathlib.Path(filename).name
     except YAMLError as yaml_error:
         raise PolicyTypeError(
             UserMessage("Unable to read file as YAML.", filename=filename)
@@ -145,6 +144,7 @@ def ParsePolicy(
     policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
         return
+    policy_dict['filename'] = pathlib.Path(filename).name
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
