@@ -371,6 +371,8 @@ def _GenerateACL(
         return policy_obj, filename
 
     policy_obj, filename = _parsePolicy()
+    if policy_obj is None:
+        return
 
     platforms = set()
     for header in policy_obj.headers:
