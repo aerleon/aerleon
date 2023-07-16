@@ -11,9 +11,14 @@ if typing.TYPE_CHECKING:
 def getCursor(sm: "SourceMapBuilder"):
     l = len(sm.lines)
     if l == 0:
-        c = 0
-    else:
-        c = len(sm.lines[-1])
+        return 0, 0
+    if sm._offset_cursor < l:
+        # Check latest lines for newlines
+        for i in range(sm._offset_cursor, l):
+            sm._offset = sm._offset + sm.lines[i].count('\n')
+        sm._offset_cursor = l
+    l = l + sm._offset
+    c = len(sm.lines[-1])
     return l - 1, c
 
 
@@ -56,12 +61,16 @@ class SourceMapBuilder:
         self.spans = []
         self.source_file = ''
         self._current_filter = None
+        self._offset = 0
+        self._offset_cursor = 0
         super().__init__()
 
     def clear(self):
         self.lines.clear()
         self.spans.clear()
         self._current_filter = None
+        self._offset = 0
+        self._offset_cursor = 0
 
     def nextFilter(self):
         if self._current_filter is None:
