@@ -308,17 +308,16 @@ def RenderACL(
     else:
         logging.debug('file not changed: %s', output_file)
 
-    if source_map:
+    if source_map and acl_obj.HasSourceMap():
         map_suffix = '.map.json'
-        if acl_obj.HasSourceMap():
-            acl_src_map = str(acl_obj.GetSourceMap())
-            input_filename = input_file.with_suffix(acl_suffix + map_suffix).name
-            output_file = output_directory / input_filename
-            if FilesUpdated(output_file, acl_src_map, False):
-                logging.info('source map: %s', output_file)
-                write_files.append((output_file, acl_src_map))
-            else:
-                logging.debug('source map not changed: %s', output_file)
+        acl_src_map = str(acl_obj.GetSourceMap())
+        input_filename = input_file.with_suffix(acl_suffix + map_suffix).name
+        output_file = output_directory / input_filename
+        if FilesUpdated(output_file, acl_src_map, False):
+            logging.info('source map: %s', output_file)
+            write_files.append((output_file, acl_src_map))
+        else:
+            logging.debug('source map not changed: %s', output_file)
 
 
 def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
@@ -438,8 +437,8 @@ def Run(
     ignore_directories: List[str],
     optimize: bool,
     shade_check: bool,
-    source_map: bool,
     context: multiprocessing.context.BaseContext,
+    source_map: bool = False,
 ):
     """Generate ACLs.
 
@@ -581,8 +580,8 @@ def main(argv):
         configs['ignore_directories'],
         configs['optimize'],
         configs['shade_check'],
-        configs['source_map'],
         context,
+        configs['source_map'],
     )
 
 

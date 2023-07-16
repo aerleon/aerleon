@@ -1,10 +1,12 @@
 import re
+from copy import deepcopy
 
 from absl.testing import absltest
 
 from aerleon import api
 from aerleon.lib import naming, policy
 from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict
+from aerleon.utils.source_map import SourceMap
 from tests.regression_utils import capture
 
 # fmt: off
@@ -199,9 +201,8 @@ NETWORKS_1 = {
 # fmt: on
 
 
-class ApiTest(absltest.TestCase):
+class GenerateAPITest(absltest.TestCase):
     def testGenerate(self):
-
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
@@ -213,7 +214,6 @@ class ApiTest(absltest.TestCase):
         self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
 
     def testGeneratePolicyInput(self):
-
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
@@ -226,16 +226,28 @@ class ApiTest(absltest.TestCase):
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
 
-    def testAclCheck(self):
+    def testGenerateSourceMap(self):
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
 
-        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
-        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+        configs = api.Generate([GOOD_POLICY_1], definitions, source_map=True)
+        acl = configs["raw_policy_all_builtin.acl"]
 
-        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.5')
-        self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+        self.assertTrue(re.search(' deny-to-reserved', str(acl)))
+        self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
+
+        source_map = configs["raw_policy_all_builtin.acl.map.json"]
+        sm = SourceMap.loads(source_map)
+        sm.setOutput(acl)
+
+        self.assertEqual(sm.resolveOutputLine(4), 'ip access-list extended test-filter')
+        self.assertEqual(sm.getSourceLocationForLine(4), {'filter': 0, 'type': 'header'})
+        self.assertEqual(sm.resolveOutputLine(9), ' deny ip any 10.0.0.0 0.255.255.255')
+        self.assertEqual(
+            sm.getSourceLocationForLine(9),
+            {'filter': 0, 'type': 'term', 'term': 0, 'term_name': 'deny-to-reserved'},
+        )
 
     @capture.stdout
     def testDocsExample(self):
@@ -311,3 +323,16 @@ class ApiTest(absltest.TestCase):
 
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' permit ip any host 200.1.2.4', str(acl)))
+
+
+class ACLCheckAPITest(absltest.TestCase):
+    def testAclCheck(self):
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(SERVICES_1, "blah")
+        definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
+
+        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
+        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+
+        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.5')
+        self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
