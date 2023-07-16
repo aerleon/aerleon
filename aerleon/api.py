@@ -224,6 +224,7 @@ def Generate(
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
+    source_map: bool = False,
 ) -> "dict[str, str]":
     """Generate ACLs from policies.
 
@@ -267,6 +268,7 @@ def Generate(
         optimize,
         shade_check,
         exp_info=expiration_weeks,
+        source_map=source_map,
     )
 
 
@@ -279,6 +281,7 @@ def _Generate(
     shade_check: bool = False,
     exp_info: int = 2,
     max_renderers: int = 1,
+    source_map: bool = False,
 ) -> "dict[str, str]":
 
     # thead-safe list for storing files to write
@@ -298,6 +301,7 @@ def _Generate(
                 optimize,
                 shade_check,
                 exp_info,
+                source_map,
             )
     else:
         pool = context.Pool(processes=max_renderers)
@@ -314,6 +318,7 @@ def _Generate(
                     optimize,
                     shade_check,
                     exp_info,
+                    source_map,
                 ),
             )
             async_results.append(async_result)
@@ -330,7 +335,7 @@ def _Generate(
         WriteFiles(write_files)
         return None
     else:
-        return generated_configs
+        return dict(generated_configs)
 
 
 def _GenerateACL(
@@ -342,6 +347,7 @@ def _GenerateACL(
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
+    source_map: bool = False,
 ):
     filename = input_policy.get("filename")
     try:
@@ -363,17 +369,26 @@ def _GenerateACL(
     acl_obj: aclgenerator.ACLGenerator
     plugin_supervisor.PluginSupervisor.Start()
 
-    def EmitACL(
-        acl_text: str,
+    def _EmitACL(
+        acl_obj: aclgenerator.ACLGenerator,
         acl_suffix: str,
         write_files: typing.List[typing.Tuple[pathlib.Path, str]],
         binary: bool = False,
+        source_map: bool = False,
     ):
         if output_directory:
-            RenderACL(acl_text, acl_suffix, output_directory, filename, write_files, binary)
-        else:
-            output_file = pathlib.Path(filename).with_suffix(acl_suffix).name
-            generated_configs[output_file] = acl_text
+            RenderACL(
+                acl_obj, acl_suffix, output_directory, filename, write_files, binary, source_map
+            )
+            return
+
+        output_file = pathlib.Path(filename).with_suffix(acl_suffix).name
+        generated_configs[output_file] = str(acl_obj)
+
+        if source_map and acl_obj.HasSourceMap():
+            map_suffix = '.map.json'
+            output_file = pathlib.Path(filename).with_suffix(acl_suffix + map_suffix).name
+            generated_configs[output_file] = str(acl_obj.GetSourceMap())
 
     for target in platforms:
         generator = plugin_supervisor.PluginSupervisor.generators.get(target)
@@ -385,20 +400,22 @@ def _GenerateACL(
             # special handling for pcap
             if target == 'pcap':
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
-                EmitACL(
-                    str(acl_obj),
+                _EmitACL(
+                    acl_obj,
                     '-accept' + acl_obj.SUFFIX,
                     write_files,
+                    source_map=source_map,
                 )
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info, invert=True)
-                EmitACL(
-                    str(acl_obj),
+                _EmitACL(
+                    acl_obj,
                     '-deny' + acl_obj.SUFFIX,
                     write_files,
+                    source_map=source_map,
                 )
             else:
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
-                EmitACL(str(acl_obj), acl_obj.SUFFIX, write_files)
+                _EmitACL(acl_obj, acl_obj.SUFFIX, write_files, source_map=source_map)
 
         except aclgenerator.Error as e:
             raise ACLGeneratorError(
