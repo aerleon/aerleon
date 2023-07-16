@@ -205,7 +205,7 @@ def RenderFile(
 
     try:
         # PolicySource[extension].ParsePolicy(conf)
-        if pathlib.Path(input_file).suffix == '.yaml' or pathlib.Path(input_file).suffix == '.yml':
+        if input_file.suffix == '.yaml' or input_file.suffix == '.yml':
             pol = yaml.ParsePolicy(
                 conf,
                 filename=input_file.name,

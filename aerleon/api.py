@@ -373,6 +373,7 @@ def _GenerateACL(
     policy_obj, filename = _parsePolicy()
     if policy_obj is None:
         return
+    filename = pathlib.Path(filename)
 
     platforms = set()
     for header in policy_obj.headers:
@@ -394,12 +395,12 @@ def _GenerateACL(
             )
             return
 
-        output_file = pathlib.Path(filename).with_suffix(acl_suffix).name
+        output_file = filename.with_suffix(acl_suffix).name
         generated_configs[output_file] = str(acl_obj)
 
         if source_map and acl_obj.HasSourceMap():
             map_suffix = '.map.json'
-            output_file = pathlib.Path(filename).with_suffix(acl_suffix + map_suffix).name
+            output_file = filename.with_suffix(acl_suffix + map_suffix).name
             generated_configs[output_file] = str(acl_obj.GetSourceMap())
 
     for target in platforms:
