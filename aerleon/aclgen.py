@@ -143,8 +143,8 @@ def RenderFile(
     exp_info: int,
     optimize: bool,
     shade_check: bool,
-    source_map: bool,
     write_files: WriteList,
+    source_map: bool,
 ):
     """Render a single file.
 
@@ -157,8 +157,8 @@ def RenderFile(
         weeks.
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded
-      source_map: should we also generate a source map file
       write_files: a list of file tuples, (output_file, acl_text), to write
+      source_map: should we also generate a source map file
     """
     output_relative = input_file.relative_to(base_directory).parent.parent
     output_directory = output_directory / output_relative
@@ -255,7 +255,7 @@ def RenderFile(
                     output_directory,
                     input_file,
                     write_files,
-                    source_map,
+                    source_map=source_map,
                 )
                 acl_obj = generator(copy.deepcopy(pol), exp_info, invert=True)
                 RenderACL(
@@ -264,12 +264,12 @@ def RenderFile(
                     output_directory,
                     input_file,
                     write_files,
-                    source_map,
+                    source_map=source_map,
                 )
             else:
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
-                    acl_obj, acl_obj.SUFFIX, output_directory, input_file, write_files, source_map
+                    acl_obj, acl_obj.SUFFIX, output_directory, input_file, write_files, source_map=source_map
                 )
 
         except aclgenerator.Error as e:
@@ -284,8 +284,8 @@ def RenderACL(
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
     write_files: List[Tuple[pathlib.Path, str]],
-    source_map: bool = False,
     binary: bool = False,
+    source_map: bool = False,
 ):
     """Write the ACL string out to file if appropriate.
 
@@ -295,8 +295,8 @@ def RenderACL(
       output_directory: The directory to write the output file.
       input_file: The name of the policy file that was used to render ACL.
       write_files: A list of file tuples, (output_file, acl_text), to write.
-      source_map: Should we also generate a source map file.
       binary: Boolean if the rendered ACL is in binary format.
+      source_map: Should we also generate a source map file.
     """
     acl_text = str(acl_obj)
     input_filename = input_file.with_suffix(acl_suffix).name
@@ -481,8 +481,8 @@ def Run(
             exp_info,
             optimize,
             shade_check,
-            source_map,
             write_files,
+            source_map,
         )
     elif max_renderers == 1:
         # If only one process, run it sequentially
@@ -496,8 +496,8 @@ def Run(
                 exp_info,
                 optimize,
                 shade_check,
-                source_map,
                 write_files,
+                source_map,
             )
     else:
         # render all files in parallel
@@ -516,8 +516,8 @@ def Run(
                         exp_info,
                         optimize,
                         shade_check,
-                        source_map,
                         write_files,
+                        source_map,
                     ),
                 )
             )
