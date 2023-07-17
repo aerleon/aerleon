@@ -47,6 +47,7 @@ class SourceMapBuilder:
         term_name: str (optional) - if the type is "term", the name of the term.
 
     Conventionally, the first span should refer to the entire file and contain whole-file metadata.
+    If multiple source files are involved, multiple SourceMapBuilders can be used.
 
         source_file: str - the name of the Aerleon file used to generate this file
 
@@ -94,7 +95,7 @@ class SourceMapBuilder:
         last_span = self.spans[-1]
         last_span["end"] = getCursor(self)
 
-    def __str__(self):
+    def toJSON(self):
         emit = []
         key = f"{formatCursor((0,0))}:{formatCursor(getCursor(self))}"
         entry = {key: {"source_file": self.source_file}}
@@ -111,7 +112,10 @@ class SourceMapBuilder:
 
             entry = {key: value}
             emit.append(entry)
-        return json.dumps(emit)
+        return emit
+
+    def __str__(self):
+        return json.dumps(self.toJSON())
 
 
 SourceMapFile = "list[dict[str, SourceMapValue]]"

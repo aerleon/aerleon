@@ -269,7 +269,12 @@ def RenderFile(
             else:
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
-                    acl_obj, acl_obj.SUFFIX, output_directory, input_file, write_files, source_map=source_map
+                    acl_obj,
+                    acl_obj.SUFFIX,
+                    output_directory,
+                    input_file,
+                    write_files,
+                    source_map=source_map,
                 )
 
         except aclgenerator.Error as e:
