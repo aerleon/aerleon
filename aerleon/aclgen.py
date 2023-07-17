@@ -310,7 +310,7 @@ def RenderACL(
 
     if source_map and acl_obj.HasSourceMap():
         map_suffix = '.map.json'
-        acl_src_map = str(acl_obj.GetSourceMap())
+        acl_src_map = str(acl_obj.GetSourceMap()) + '\n'
         input_filename = input_file.with_suffix(acl_suffix + map_suffix).name
         output_file = output_directory / input_filename
         if FilesUpdated(output_file, acl_src_map, False):

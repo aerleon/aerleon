@@ -401,7 +401,7 @@ def _GenerateACL(
         if source_map and acl_obj.HasSourceMap():
             map_suffix = '.map.json'
             output_file = filename.with_suffix(acl_suffix + map_suffix).name
-            generated_configs[output_file] = str(acl_obj.GetSourceMap())
+            generated_configs[output_file] = str(acl_obj.GetSourceMap()) + '\n'
 
     for target in platforms:
         generator = plugin_supervisor.PluginSupervisor.generators.get(target)
