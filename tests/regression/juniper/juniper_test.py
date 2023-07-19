@@ -52,6 +52,11 @@ header {
   target:: juniper test-filter bridge
 }
 """
+GOOD_HEADER_ETHERNET_SWITCHING = """
+header {
+  target:: juniper test-filter ethernet-switching
+}
+"""
 GOOD_DSMO_HEADER = """
 header {
   target:: juniper test-filter enable_dsmo
@@ -773,6 +778,22 @@ class JuniperTest(parameterized.TestCase):
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(jcl)
+        self.assertIn('ip-protocol tcp;', output, output)
+        self.assertNotIn(' destination-address {', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testEthernetSwitchingFilterType(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming.GetServiceByProto.return_value = ['25']
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_ETHERNET_SWITCHING + GOOD_TERM_1, self.naming), EXP_INFO
         )
         output = str(jcl)
         self.assertIn('ip-protocol tcp;', output, output)
@@ -2063,6 +2084,7 @@ class JuniperYAMLTest(JuniperTest):
             GOOD_HEADER_V6=YAML_GOOD_HEADER_V6,
             GOOD_HEADER_MIXED=YAML_GOOD_HEADER_MIXED,
             GOOD_HEADER_BRIDGE=YAML_GOOD_HEADER_BRIDGE,
+            GOOD_HEADER_ETHERNET_SWITCHING=YAML_GOOD_HEADER_ETHERNET_SWITCHING,
             GOOD_DSMO_HEADER=YAML_GOOD_DSMO_HEADER,
             GOOD_FILTER_ENHANCED_MODE_HEADER=YAML_GOOD_FILTER_ENHANCED_MODE_HEADER,
             GOOD_NOVERBOSE_V4_HEADER=YAML_GOOD_NOVERBOSE_V4_HEADER,
@@ -2183,6 +2205,13 @@ filters:
 - header:
     targets:
       juniper: test-filter bridge
+  terms:
+"""
+YAML_GOOD_HEADER_ETHERNET_SWITCHING = """
+filters:
+- header:
+    targets:
+      juniper: test-filter ethernet-switching
   terms:
 """
 YAML_GOOD_DSMO_HEADER = """

@@ -76,6 +76,7 @@ class Term(aclgenerator.Term):
         filter_action: Optional[str],
         af: str = 'inet',
         verbose: bool = True,
+        chained_terms: bool = True,
     ) -> None:
         """Setup a new term.
 
@@ -105,14 +106,17 @@ class Term(aclgenerator.Term):
         self.options = []
         self.af = af
         self.verbose = verbose
+        self.chained_terms = chained_terms
         if af == 'inet6':
             self._all_ips = nacaddr.IPv6('::/0')
             self._action_table['reject'] = '-j REJECT --reject-with ' 'icmp6-adm-prohibited'
         else:
             self._all_ips = nacaddr.IPv4('0.0.0.0/0')
             self._action_table['reject'] = '-j REJECT --reject-with ' 'icmp-host-prohibited'
-
-        self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
+        if self.chained_terms:
+            self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
+        else:
+            self.term_name = self.filter
 
     def __str__(self) -> str:
         ret_str = []
@@ -138,10 +142,9 @@ class Term(aclgenerator.Term):
 
         # Create a new term
         self._SetDefaultAction()
-        if self._TERM_FORMAT:
-            ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
 
-        if self._PREJUMP_FORMAT:
+        if self.chained_terms:
+            ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
             ret_str.append(
                 self._PREJUMP_FORMAT.substitute(filter=self.filter, term=self.term_name)
             )
@@ -739,7 +742,7 @@ class Iptables(aclgenerator.ACLGenerator):
     _TERM = Term
     _TERM_MAX_LENGTH = 24
     _GOOD_FILTERS = ['INPUT', 'OUTPUT', 'FORWARD']
-    _GOOD_OPTIONS = ['nostate', 'abbreviateterms', 'truncateterms', 'noverbose']
+    _GOOD_OPTIONS = ['nostate', 'abbreviateterms', 'truncateterms', 'noverbose', 'nochainedterms']
 
     def __init__(self, pol: Policy, exp_info: int) -> None:
         self.iptables_policies = []
@@ -805,6 +808,7 @@ class Iptables(aclgenerator.ACLGenerator):
         default_action = None
         good_default_actions = ['ACCEPT', 'DROP']
         good_afs = ['inet', 'inet6']
+        chained_terms = True
         all_protocols_stateful = True
         self.verbose = True
 
@@ -833,6 +837,8 @@ class Iptables(aclgenerator.ACLGenerator):
                 all_protocols_stateful = False
             if 'noverbose' in self.filter_options:
                 self.verbose = False
+            if 'nochainedterms' in self.filter_options:
+                chained_terms = False
 
             # Check for matching af
             for address_family in good_afs:
@@ -892,6 +898,8 @@ class Iptables(aclgenerator.ACLGenerator):
                     raise LimitButNoLogError(
                         'Term %s: Cannoy use log-limit without logging' % term.name
                     )
+                if not chained_terms:
+                    term.name = filter_name
 
                 term = self.FixHighPorts(
                     term, af=filter_type, all_protocols_stateful=all_protocols_stateful
@@ -907,6 +915,7 @@ class Iptables(aclgenerator.ACLGenerator):
                         default_action,
                         filter_type,
                         self.verbose,
+                        chained_terms
                     )
                 )
 

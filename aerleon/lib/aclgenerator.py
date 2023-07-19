@@ -104,7 +104,13 @@ class Term:
         'udplite': 136,
         'all': -1,  # Used for GCE default deny, do not use in pol file.
     }
-    AF_MAP = {'inet': 4, 'inet6': 6, 'bridge': 4}  # if this doesn't exist, output includes v4 & v6
+    AF_MAP = {
+        'inet': 4,
+        'inet6': 6,
+        'bridge': 4,
+        'ethernet-switching': 4,
+    }
+    # if this doesn't exist, output includes v4 & v6
     # These protos are always expressed as numbers instead of name
     #  due to inconsistencies on the end platform's name-to-number
     #  mapping.

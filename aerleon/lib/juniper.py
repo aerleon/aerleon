@@ -181,6 +181,14 @@ class Term(aclgenerator.Term):
             'protocol-except': 'ip-protocol-except',
             'tcp-est': 'tcp-flags "(ack|rst)"',
         },
+        'ethernet-switching': {
+            'addr': 'ip-address',
+            'saddr': 'ip-source-address',
+            'daddr': 'ip-destination-address',
+            'protocol': 'ip-protocol',
+            'protocol-except': 'ip-protocol-except',
+            'tcp-est': 'tcp-established',
+        },
     }
 
     def __init__(
@@ -920,7 +928,7 @@ class Juniper(aclgenerator.ACLGenerator):
 
     _PLATFORM = 'juniper'
     _DEFAULT_PROTOCOL = 'ip'
-    _SUPPORTED_AF = frozenset(('inet', 'inet6', 'bridge', 'mixed'))
+    _SUPPORTED_AF = frozenset(('inet', 'inet6', 'bridge', 'ethernet-switching', 'mixed'))
     _TERM = Term
     SUFFIX = '.jcl'
 
