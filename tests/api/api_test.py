@@ -242,11 +242,11 @@ class GenerateAPITest(absltest.TestCase):
         sm.setOutput(acl)
 
         self.assertEqual(sm.resolveOutputLine(4), 'ip access-list extended test-filter')
-        self.assertEqual(sm.getSourceLocationForLine(4), {'filter': 0, 'type': 'header'})
+        self.assertEqual(sm.getSourceLocationForLine(4), {'filter': 0, 'source_file': 'raw_policy_all_builtin', 'type': 'header'})
         self.assertEqual(sm.resolveOutputLine(9), ' deny ip any 10.0.0.0 0.255.255.255')
         self.assertEqual(
             sm.getSourceLocationForLine(9),
-            {'filter': 0, 'type': 'term', 'term': 0, 'term_name': 'deny-to-reserved'},
+            {'filter': 0, 'source_file': 'raw_policy_all_builtin', 'type': 'term', 'term': 0, 'term_name': 'deny-to-reserved'},
         )
 
     @capture.stdout

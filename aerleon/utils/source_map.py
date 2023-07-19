@@ -148,7 +148,8 @@ class SourceMapFlatten(dict):
                 ]
             )
 
-        for span in sm.source_map:
+        spans = copy(sm.source_map)
+        for span in spans:
             # Look for terminal spans that refer to a source_file
             # for which we have the source map, and don't already
             # contain interior spans
