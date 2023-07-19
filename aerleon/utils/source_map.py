@@ -257,7 +257,7 @@ class SourceMap:
         end = int(parts[1])
         return start <= line <= end
 
-    def isSpanInterecting(self, span1, span2):
+    def isSpanIntersecting(self, span1, span2):
         # is span1.start > span2.end -> no_overlap
         # else is span1.end > span2.start -> no overlap
         parts1 = span1.split(':')
@@ -265,20 +265,7 @@ class SourceMap:
         parts2 = span2.split(':')
         assert len(parts2) == 2
 
-        cmp = int(parts1[0]) - int(parts2[1])
-
-        # span1 follows span2
-        if cmp > 0:
-            return False
-        # overlap
-        elif cmp == 0:
-            return True
-
-        # Possible overlap, keep checking
-        cmp = int(parts2[0]) - int(parts1[1])
-
-        # True unless span2 follows span1
-        return cmp <= 0
+        return max(parts1[0], parts2[0]) <= min(parts1[1], parts2[1])
 
     def getSourceLocationForLine(self, line: int):
         file_locator = None
@@ -301,7 +288,7 @@ class SourceMap:
         match = []
         for span in self.source_map:
             span_key2 = list(span.keys())[0]
-            if not self.isSpanInterecting(span_key, span_key2):
+            if self.isSpanIntersecting(span_key, span_key2):
                 match.append(span)
         return match
 
