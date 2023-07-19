@@ -142,9 +142,10 @@ class Term(aclgenerator.Term):
 
         # Create a new term
         self._SetDefaultAction()
-
-        if self.chained_terms:
+        
+        if self.chained_terms and self._TERM_FORMAT:
             ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
+        if self.chained_terms and self._PREJUMP_FORMAT:
             ret_str.append(
                 self._PREJUMP_FORMAT.substitute(filter=self.filter, term=self.term_name)
             )
