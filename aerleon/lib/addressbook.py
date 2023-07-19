@@ -5,11 +5,20 @@ import itertools
 from typing import List, Union
 
 from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.fqdn import FQDN
+
+
 
 
 class Addressbook:
     def __init__(self) -> None:
         self.addressbook = collections.OrderedDict()
+
+    def AddFQDN(self, zone: str, fqdn_list: List[FQDN]):
+        if zone not in self.addressbook:
+            self.addressbook[zone] = collections.defaultdict(lambda: collections.defaultdict(list))
+        for fqdn in fqdn_list:
+            self.addressbook[zone][fqdn.parent_token]['fqdns'].append(fqdn)
 
     def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.
@@ -67,7 +76,7 @@ class Addressbook:
                     yield address
 
         if zone not in self.addressbook:
-            self.addressbook[zone] = collections.defaultdict(list)
+            self.addressbook[zone] = collections.defaultdict(lambda: collections.defaultdict(list))
 
         # sort by (parent_token, version, address),
         # then partition by parent_token
@@ -83,15 +92,9 @@ class Addressbook:
             key=lambda address: address.parent_token,
         ):
             # merge sorted lists of IP objects
-            self.addressbook[zone][parent_token] = list(
-                heapq.merge(
-                    self.addressbook[zone][parent_token],
-                    address_list,
-                    key=ipaddress.get_mixed_type_key,
-                )
-            )
+            addrs = list(heapq.merge(self.addressbook[zone][parent_token]['ips'],address_list,key=ipaddress.get_mixed_type_key,))
 
             # drop redundant addresses and networks
-            self.addressbook[zone][parent_token] = list(
-                _drop_subnets(self.addressbook[zone][parent_token])
-            )
+            self.addressbook[zone][parent_token]['ips'].extend(list(
+                _drop_subnets(addrs)
+            ))

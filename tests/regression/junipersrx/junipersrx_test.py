@@ -538,6 +538,7 @@ SUPPORTED_TOKENS = frozenset(
         'comment',
         'destination_address',
         'destination_address_exclude',
+        'destination_fqdn',
         'destination_port',
         'destination_zone',
         'dscp_except',
@@ -556,6 +557,7 @@ SUPPORTED_TOKENS = frozenset(
         'protocol',
         'source_address',
         'source_address_exclude',
+        'source_fqdn',
         'source_port',
         'timeout',
         'translated',
@@ -683,7 +685,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
-    @capture.stdout
+    # @capture.stdout
     def testVpnWithoutPolicy(self):
         self.naming.GetNetAddr.return_value = _IPSET
 
@@ -2633,6 +2635,11 @@ def _YamlParsePolicy(
         shade_check=shade_check,
     )
 
+FQDN_TERM= """
+  - name: fqdn-term
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
 
 class JuniperSRXYAMLTest(JuniperSRXTest):
     def setUp(self):
@@ -2717,6 +2724,24 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
         )
 
+    # @capture.stdout
+    def testFQDN(self):
+      definitions = naming.Naming()
+      definitions.ParseYaml("""
+networks:
+  GOOGLE_DNS:
+    values:
+      - fqdn: dns.google.com
+services:
+  WHOIS:
+    - port: 43
+      protocol: udp
+      """, file_name=""
+      )
+      pol = junipersrx.JuniperSRX(
+            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_TERM, definitions=definitions), EXP_INFO
+        )
+      print(pol)
 
 if __name__ == '__main__':
     absltest.main()
