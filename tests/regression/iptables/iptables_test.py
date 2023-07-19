@@ -32,6 +32,13 @@ header {
 }
 """
 
+GOOD_HEADER_NOCHAIN = """
+header {
+  comment:: "this is a test acl"
+  target:: iptables INPUT ACCEPT nochainedterms
+}
+"""
+
 GOOD_HEADER_2 = """
 header {
   comment:: "this is a test acl"
@@ -1402,6 +1409,13 @@ class AclCheckTest(absltest.TestCase):
             "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet address family.",
             ''.join(log.output),
         )
+    @capture.stdout
+    def testNoChain(self):
+        acl = iptables.Iptables(
+            policy.ParsePolicy(GOOD_HEADER_NOCHAIN + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        print(acl)
 
 
 YAML_GOOD_HEADER_1 = """
@@ -1410,6 +1424,15 @@ filters:
     comment: this is a test acl
     targets:
       iptables: INPUT ACCEPT
+  terms:
+"""
+
+YAML_GOOD_HEADER_NOCHAIN = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: INPUT ACCEPT nochainedterms
   terms:
 """
 
@@ -1864,6 +1887,7 @@ class IPTablesYAMLTest(AclCheckTest):
     def setUpFixtures(self):
         self.fixture_patcher = mock.patch.multiple(
             'iptables_test',
+            GOOD_HEADER_NOCHAIN=YAML_GOOD_HEADER_NOCHAIN,
             GOOD_HEADER_1=YAML_GOOD_HEADER_1,
             GOOD_HEADER_2=YAML_GOOD_HEADER_2,
             GOOD_HEADER_3=YAML_GOOD_HEADER_3,
