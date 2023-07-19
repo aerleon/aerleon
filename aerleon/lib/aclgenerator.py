@@ -306,8 +306,7 @@ class ACLGenerator:
             if (self._PLATFORM in header.platforms)
         ]
         self.policy = pol
-        self.source_map = SourceMapBuilder()
-        self.source_map.source_file = pol.filename
+        self.source_map = SourceMapBuilder(source_file=pol.filename)
         all_err = []
         all_warn = []
         for header, terms in pol.filters:

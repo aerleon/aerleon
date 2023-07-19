@@ -3,9 +3,9 @@ import json
 from absl.testing import absltest
 
 from aerleon.lib import yaml
-from aerleon.utils.source_map import SourceMap, SourceMapBuilder
+from aerleon.utils.source_map import SourceMap, SourceMapBuilder, SourceMapFlatten
 
-example_source_file_name = 'example.pol'
+example_source_file_name = 'example.yaml'
 example_source_file_text = """
 filters:
 -   header:
@@ -34,6 +34,20 @@ FILTER 1
 FILTER 1 > first-term
 FILTER 1 > second-term'''
 
+expected_concat_output = '''
+
+BEGIN FILTERS
+PREAMBLE
+FILTER 0
+FILTER 0 > first-term
+FILTER 0 > second-term
+FILTER 1
+FILTER 1 > first-term
+FILTER 1 > second-term
+END FILTERS
+
+'''
+
 
 def buildExampleSourceMap(sm: "SourceMapBuilder"):
 
@@ -55,6 +69,19 @@ def buildExampleSourceMap(sm: "SourceMapBuilder"):
             lines.append(f'FILTER {i} > {term.name}')
             sm.endSpan()
     return pol
+
+
+def buildConcatSourceMap(output_name, output_file):
+    concat_output = f"""
+
+BEGIN FILTERS
+{output_file}
+END FILTERS
+
+"""
+    concat_source_map = [{"2:8": {"source_file": output_name}}]
+    sm = SourceMap(concat_source_map)
+    return concat_output, sm
 
 
 class SourceMapBuilderTestSute(absltest.TestCase):
@@ -83,6 +110,54 @@ class SourceMapBuilderTestSute(absltest.TestCase):
         self.assertEqual(list(data[0].values())[0]['source_file'], example_source_file_name)
 
 
+class SourceMapFlattenTestSuite(absltest.TestCase):
+    def setUp(self):
+        super().setUp()
+        smb = SourceMapBuilder()
+        smb.source_file = example_source_file_name
+        self.pol = buildExampleSourceMap(smb)
+        self.map = SourceMap.loads(str(smb))
+        self.map.setSource(example_source_file_name, self.pol)
+        self.output = '\n'.join(smb.lines)
+        self.output_name = 'example.acl'
+        self.concat_output, self.concat_sm = buildConcatSourceMap(self.output_name, self.output)
+        self.concat_output_name = 'example.cfg'
+        self.sm = SourceMapFlatten(
+            {
+                self.output_name: self.map,
+                self.concat_output_name: self.concat_sm,
+            }
+        ).flatten(self.concat_output_name)
+
+    def testConcatSetup(self):
+        # Just test that buildConcatSourceMap did what we expect
+        self.assertEqual(self.concat_output, expected_concat_output)
+        self.assertEqual(len(self.concat_sm.source_map), 1)
+        self.assertEqual(
+            list(self.concat_sm.source_map[0].values())[0]['source_file'], self.output_name
+        )
+
+    def testFlattenSources(self):
+        self.assertEqual(len(self.sm.sources), 1)
+        self.assertEqual(self.sm.sources[example_source_file_name], self.pol)
+
+    def testFlattenSourceLookup(self):
+        line_count = len(self.concat_output.splitlines())
+        locators = []
+        for line in range(line_count):
+            locators.append(self.sm.getSourceLocationForLine(line))
+        self.assertEqual(
+            locators[5],
+            {
+                'filter': 0,
+                'type': 'term',
+                'source_file': 'example.yaml',
+                'term': 1,
+                'term_name': 'second-term',
+            },
+        )
+
+
 class SourceMapTestSuite(absltest.TestCase):
     def setUp(self):
         super().setUp()
@@ -91,7 +166,7 @@ class SourceMapTestSuite(absltest.TestCase):
         self.pol = buildExampleSourceMap(sm)
         self.map = SourceMap.loads(str(sm))
         self.map.setOutput(expected_output)
-        self.map.setSource(self.pol)
+        self.map.setSource(example_source_file_name, self.pol)
 
     def testMapSpans(self):
         self.assertEqual(len(self.map.source_map), 7)
@@ -105,14 +180,32 @@ class SourceMapTestSuite(absltest.TestCase):
         for line in range(line_count):
             locators.append(self.map.getSourceLocationForLine(line))
         self.assertEqual(locators[0], None)
-        self.assertEqual(locators[1], {'filter': 0, 'type': 'header'})
         self.assertEqual(
-            locators[2], {'filter': 0, 'type': 'term', 'term': 0, 'term_name': 'first-term'}
+            locators[1], {'filter': 0, 'source_file': 'example.yaml', 'type': 'header'}
         )
         self.assertEqual(
-            locators[3], {'filter': 0, 'type': 'term', 'term': 1, 'term_name': 'second-term'}
+            locators[2],
+            {
+                'filter': 0,
+                'type': 'term',
+                'source_file': 'example.yaml',
+                'term': 0,
+                'term_name': 'first-term',
+            },
         )
-        self.assertEqual(locators[4], {'filter': 1, 'type': 'header'})
+        self.assertEqual(
+            locators[3],
+            {
+                'filter': 0,
+                'type': 'term',
+                'source_file': 'example.yaml',
+                'term': 1,
+                'term_name': 'second-term',
+            },
+        )
+        self.assertEqual(
+            locators[4], {'filter': 1, 'source_file': 'example.yaml', 'type': 'header'}
+        )
 
         resolved_locators = [self.map.resolveSourceLocation(locator) for locator in locators]
         self.assertEqual(resolved_locators[1], self.pol.filters[0])  # Whole filter

@@ -2,28 +2,27 @@
 
 import json
 import typing
+from copy import copy, deepcopy
 from typing import Optional, TypedDict
 
 if typing.TYPE_CHECKING:
     from aerleon.lib.policy import Policy
 
 
-def getCursor(sm: "SourceMapBuilder"):
+def getCursor(sm: "SourceMapBuilder", start: bool = False):
     l = len(sm.lines)
     if l == 0:
-        return 0, 0
+        return 0
     if sm._offset_cursor < l:
         # Check latest lines for newlines
         for i in range(sm._offset_cursor, l):
             sm._offset = sm._offset + sm.lines[i].count('\n')
         sm._offset_cursor = l
     l = l + sm._offset
-    c = len(sm.lines[-1])
-    return l - 1, c
-
-
-def formatCursor(pos):
-    return ':'.join((str(i) for i in pos))
+    if start:
+        # Start at the beginning of the next line (unless len() == 0)
+        l = l + 1
+    return l - 1
 
 
 class SourceMapBuilder:
@@ -47,7 +46,6 @@ class SourceMapBuilder:
         term_name: str (optional) - if the type is "term", the name of the term.
 
     Conventionally, the first span should refer to the entire file and contain whole-file metadata.
-    If multiple source files are involved, multiple SourceMapBuilders can be used.
 
         source_file: str - the name of the Aerleon file used to generate this file
 
@@ -57,10 +55,10 @@ class SourceMapBuilder:
         source_file: str - The name of the source policy file used to generate the ACL file.
     """
 
-    def __init__(self):
+    def __init__(self, source_file=None):
         self.lines = []
         self.spans = []
-        self.source_file = ''
+        self.source_file = source_file if source_file is not None else ''
         self._current_filter = None
         self._offset = 0
         self._offset_cursor = 0
@@ -82,7 +80,7 @@ class SourceMapBuilder:
     def startSpan(self, span_type, **kwargs):
         self.spans.append(
             {
-                "start": getCursor(self),
+                "start": getCursor(self, start=True),
                 "filter": self._current_filter,
                 "type": span_type,
                 "data": kwargs,
@@ -97,11 +95,11 @@ class SourceMapBuilder:
 
     def toJSON(self):
         emit = []
-        key = f"{formatCursor((0,0))}:{formatCursor(getCursor(self))}"
+        key = f"{str(0)}:{str(getCursor(self))}"
         entry = {key: {"source_file": self.source_file}}
         emit.append(entry)
         for span in self.spans:
-            key = f"{formatCursor(span['start'])}:{formatCursor(span['end'])}"
+            key = f"{str(span['start'])}:{str(span['end'])}"
             value = {
                 "filter": span['filter'],
                 "type": span['type'],
@@ -116,6 +114,76 @@ class SourceMapBuilder:
 
     def __str__(self):
         return json.dumps(self.toJSON())
+
+
+class SourceMapFlatten(dict):
+    """Flatten referenced source maps into a parent source map.
+
+    The journey from an original source file to a generated file sometimes
+    has multiple processing steps. For example, a generated ACL might later
+    be concatenated into a larger config file. The user ultimately needs
+    a single source map file for the final config file and SourceMapFlatten
+    is designed to assemble that file from the intermediate source maps.
+
+    Functionally this class extends dict. It expects to be initialized as
+    a mapping from file name to SourceMap. Use .flatten(primary_file) to
+    produce a source map with simple source_file ranges replaced by
+    the source map for the source_file (if we have one)."""
+
+    def flatten(self: "dict[str, SourceMap]", primary_file: str):
+        """Flatten referenced source maps into a parent source map."""
+        primary = self[primary_file]
+        sm = copy(primary)
+
+        def offset(span: str, offset_span: str):
+            """Adjust span by the start of offset_span."""
+            parts1 = span.split(':')
+            parts2 = offset_span.split(':')
+            assert len(parts1) == 2 and len(parts2) == 2
+            line = int(parts2[0])
+            return ":".join(
+                [
+                    str(int(parts1[0]) + line),
+                    str(int(parts1[1]) + line),
+                ]
+            )
+
+        for span in sm.source_map:
+            # Look for terminal spans that refer to a source_file
+            # for which we have the source map, and don't already
+            # contain interior spans
+            if _SourceMap_isTerminalSpan(span):
+                continue
+
+            source_file = list(span.values())[0].get('source_file', None)
+            if source_file not in self:
+                continue
+
+            span_key = list(span.keys())[0]
+            if len(sm.getIntersectingSpans(span_key)) > 1:
+                # If we already have spans within this file locator, assume the
+                # source map was already flattened.
+                continue
+
+            # Collect the contents of the source map here (filtering out the top-level file span)
+            donor_spans = self[source_file]
+            # Offset all spans by the file span start location
+            for dspan in donor_spans.source_map:
+                dspan_items = list(dspan.items())
+                dspan_key = dspan_items[0][0]
+                dspan_key = offset(dspan_key, span_key)
+                dspan = {dspan_key: dspan_items[0][1]}
+                sm.source_map.append(dspan)
+
+            # Remove the original non-terminal span
+            sm.source_map.remove(span)
+
+            # Copy over any sources on the donor source map
+            temp = {}
+            temp.update(self[source_file].sources)
+            temp.update(sm.sources)
+            sm.sources = temp
+        return sm
 
 
 SourceMapFile = "list[dict[str, SourceMapValue]]"
@@ -140,13 +208,21 @@ class SourceMap:
     def loads(cls, file):
         return cls(json.loads(file))
 
-    def __init__(self, source_map: "SourceMapFile", source=None, output=None):
+    def __init__(self, source_map: "SourceMapFile", output: str = None):
         self.source_map = source_map
-        self.source = source
+        self.sources = {}
         self.output = output
 
-    def setSource(self, pol: "Policy"):
-        self.source = pol
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(
+            source_map=deepcopy(self.source_map), sources=copy(self.sources), output=self.output
+        )
+        return result
+
+    def setSource(self, source_file: "str", pol: "Policy"):
+        self.sources[source_file] = pol
 
     def setOutput(self, file: str):
         self.output = file
@@ -157,13 +233,17 @@ class SourceMap:
         return self.output.splitlines()[line]
 
     def resolveSourceLocation(self, locator: "SourceMapValue"):
-        if not self.source:
+        if not self.sources:
             return
         if locator is None:
             return
         vtype = locator['type']
         filter = locator['filter']
-        src_filter = self.source.filters[filter]
+        source_file = locator.get('source_file', None)
+        source = self.sources.get(source_file, None)
+        if not source:
+            return
+        src_filter = source.filters[filter]
         if vtype == 'header':
             return src_filter
         if vtype == 'term':
@@ -172,16 +252,59 @@ class SourceMap:
 
     def isLineInSpan(self, line, span):
         parts = span.split(':')
-        assert len(parts) == 4
+        assert len(parts) == 2
         start = int(parts[0])
-        start_col = int(parts[1])
-        end = int(parts[2])
-        if start_col > 0:
-            start = start + 1
+        end = int(parts[1])
         return start <= line <= end
 
-    def getSourceLocationForLine(self, line):
-        for span in self.source_map[1:]:
+    def isSpanInterecting(self, span1, span2):
+        # is span1.start > span2.end -> no_overlap
+        # else is span1.end > span2.start -> no overlap
+        parts1 = span1.split(':')
+        assert len(parts1) == 2
+        parts2 = span2.split(':')
+        assert len(parts2) == 2
+
+        cmp = int(parts1[0]) - int(parts2[1])
+
+        # span1 follows span2
+        if cmp > 0:
+            return False
+        # overlap
+        elif cmp == 0:
+            return True
+
+        # Possible overlap, keep checking
+        cmp = int(parts2[0]) - int(parts1[1])
+
+        # True unless span2 follows span1
+        return cmp <= 0
+
+    def getSourceLocationForLine(self, line: int):
+        file_locator = None
+        for span in self.source_map:
             span_key = list(span.keys())[0]
-            if self.isLineInSpan(line, span_key):
-                return span[span_key]
+            span_value = list(span.values())[0]
+            if not self.isLineInSpan(line, span_key):
+                continue
+            if not _SourceMap_isTerminalSpan(span):
+                file_locator = span_value
+                continue
+            # inject source_file into locator
+            locator = dict()
+            if file_locator:
+                locator.update(file_locator)
+            locator.update(span_value)
+            return locator
+
+    def getIntersectingSpans(self, span_key: str):
+        match = []
+        for span in self.source_map:
+            span_key2 = list(span.keys())[0]
+            if not self.isSpanInterecting(span_key, span_key2):
+                match.append(span)
+        return match
+
+
+def _SourceMap_isTerminalSpan(span):
+    return list(span.values())[0].keys() != {'source_file'}
