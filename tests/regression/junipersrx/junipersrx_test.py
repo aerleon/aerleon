@@ -2742,6 +2742,26 @@ services:
             _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_TERM, definitions=definitions), EXP_INFO
         )
       print(pol)
+    
+    @capture.stdout
+    def testFQDNMixedInTerm(self):
+        definitions = naming.Naming()
+        definitions.ParseYaml("""
+networks:
+  GOOGLE_DNS:
+    values:
+      - address: 8.8.8.8/32
+      - fqdn: dns.google.com
+services:
+  WHOIS:
+    - port: 43
+      protocol: udp
+      """, file_name=""
+      )
+        pol = junipersrx.JuniperSRX(
+            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_TERM, definitions=definitions), EXP_INFO
+        )
+        print(pol)
 
 if __name__ == '__main__':
     absltest.main()

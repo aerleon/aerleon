@@ -22,7 +22,7 @@ security {
             policy fqdn-term {
                 match {
                     source-address any;
-                    destination-address any;
+                    destination-address GOOGLE_DNS
                     application any;
                 }
                 then {
