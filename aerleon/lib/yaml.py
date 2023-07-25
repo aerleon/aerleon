@@ -196,16 +196,14 @@ def _preprocessYAMLPolicyInner(
 
         def expand_filter(filter):
             stack = debug_stack.copy()
-            stack.append(
-                (filter['__filename__'], filter['__line__'])
-            )  # TODO check if this debug info exists
+            stack.append((filter['__filename__'], filter['__line__']))
 
             if depth <= 0:
                 raise ExcessiveRecursionError(
                     UserMessage(
                         f"Excessive recursion: include depth limit of {MAX_INCLUDE_DEPTH} reached.",  # noqa: E501
-                        filename=term_item['__filename__'],
-                        line=term_item['__line__'],
+                        filename=filter['__filename__'],
+                        line=filter['__line__'],
                         include_chain=stack,
                     )
                 )
@@ -213,8 +211,8 @@ def _preprocessYAMLPolicyInner(
                 raise PolicyTypeError(
                     UserMessage(
                         f"Policy include source {filter['include']} must end in \".yaml\".",  # noqa: E501
-                        filename=term_item['__filename__'],
-                        line=term_item['__line__'],
+                        filename=filter['__filename__'],
+                        line=filter['__line__'],
                         include_chain=stack,
                     )
                 )
@@ -243,8 +241,16 @@ def _preprocessYAMLPolicyInner(
                 base_dir=base_dir,
                 policy_dict=include_data,
             )
-            if data and data['filters']:
-                found_filters.extend(data['filters'])
+            if not (data and data['filters']):
+                logging.warning(
+                    UserMessage(
+                        "Ignoring empty policy include source.",
+                        filename=str(include_path),
+                        include_chain=stack,
+                    )
+                )
+                return
+            found_filters.extend(data['filters'])
 
         if 'include' in filter:
             # This is an include directive
