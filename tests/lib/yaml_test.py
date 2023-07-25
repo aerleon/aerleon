@@ -64,6 +64,20 @@ filters:
     destination-address: MAIL_SERVERS
     action: accept
 """
+GOOD_INCLUDE_FILTERS_YAML_ONLY = """
+filters_include_only:
+- header:
+    targets:
+      ipset: OUTPUT DROP
+  terms:
+  - name: deny-to-reserved
+    destination-address: RESERVED
+    action: deny
+  - name: allow-web-to-mail
+    source-address: WEB_SERVERS
+    destination-address: MAIL_SERVERS
+    action: accept
+"""
 BAD_INCLUDE_YAML_EMPTY = """
 terms:
 """
@@ -464,6 +478,24 @@ Include stack:
             """Unable to read file as YAML. File=include_1.yaml.""",
         )
 
+    def testSkipIncludeFile(self):
+        pol = yaml_frontend.ParsePolicy(
+            GOOD_INCLUDE_YAML,
+            filename="terms_include.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        self.assertEqual(pol, None)
+
+    def testSkipIncludeFileFilter(self):
+        pol = yaml_frontend.ParsePolicy(
+            GOOD_INCLUDE_FILTERS_YAML_ONLY,
+            filename="filters_include.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        self.assertEqual(pol, None)
+
     def testParsePolicy(self):
         pol = yaml_frontend.ParsePolicy(
             GOOD_YAML_POLICY_BASIC,
@@ -501,6 +533,27 @@ Include stack:
 
     def testParsePolicyIncludeFilter(self):
         with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_FILTERS_YAML)):
+            pol = yaml_frontend.ParsePolicy(
+                GOOD_POLICY_INCLUDE_FILTERS,
+                filename="policy_include_filters.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        expected_pol = """Policy: {Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']], Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}"""
+        self.assertEqual(str(pol), expected_pol)
+
+    def testParsePolicyIncludeOnlyFilter(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_FILTERS_YAML_ONLY)):
             pol = yaml_frontend.ParsePolicy(
                 GOOD_POLICY_INCLUDE_FILTERS,
                 filename="policy_include_filters.yaml",

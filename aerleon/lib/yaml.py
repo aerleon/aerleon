@@ -169,12 +169,20 @@ def _preprocessYAMLPolicyInner(
         return
 
     # Malformed policy files should generate a PolicyTypeError (unless this is an include file)
-    if 'filters' not in policy_dict or not isinstance(policy_dict['filters'], list):
-
-        if 'terms' in policy_dict:
-            # In this case we are looking at an include file and need to quietly ignore it.
-            return
-
+    if 'filters' in policy_dict and isinstance(policy_dict['filters'], list):
+        pass  # Normal case.
+    elif (
+        depth < MAX_INCLUDE_DEPTH
+        and 'filters_include_only' in policy_dict
+        and isinstance(policy_dict['filters_include_only'], list)
+    ):
+        # Policy files with filters_include_only: are ignored by ParsePolicy but can be included.
+        policy_dict['filters'] = policy_dict['filters_include_only']
+        del policy_dict['filters_include_only']
+    elif 'terms' in policy_dict or 'filters_include_only' in policy_dict:
+        # We are looking at an include file and should quietly ignore it.
+        return
+    else:
         raise PolicyTypeError(
             UserMessage("Policy file must contain one or more filter sections.", filename=filename)
         )
