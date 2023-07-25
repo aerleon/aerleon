@@ -8,8 +8,6 @@ from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.fqdn import FQDN
 
 
-
-
 class Addressbook:
     def __init__(self) -> None:
         self.addressbook = collections.OrderedDict()
@@ -92,9 +90,10 @@ class Addressbook:
             key=lambda address: address.parent_token,
         ):
             # merge sorted lists of IP objects
-            addrs = list(heapq.merge(self.addressbook[zone][parent_token]['ips'],address_list,key=ipaddress.get_mixed_type_key,))
+            addrs = self.addressbook[zone][parent_token]['ips']
+            addrs = list(heapq.merge(addrs,address_list,key=ipaddress.get_mixed_type_key,))
 
             # drop redundant addresses and networks
-            self.addressbook[zone][parent_token]['ips'].extend(list(
+            self.addressbook[zone][parent_token]['ips'] = list(
                 _drop_subnets(addrs)
-            ))
+            )
