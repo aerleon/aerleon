@@ -1,11 +1,13 @@
 security {
     replace: address-book {
         global {
-                address GOOGLE_DNS_0 {
+                address GOOGLE_DNS_0 8.8.8.8/32;
+                address GOOGLE_DNS_1 {
                     dns-name dns.google.com;
                 }
                 address-set GOOGLE_DNS {
                     address GOOGLE_DNS_0;
+                    address GOOGLE_DNS_1;
                 }
         }
     }
@@ -22,7 +24,7 @@ security {
             policy fqdn-term {
                 match {
                     source-address any;
-                    destination-address GOOGLE_DNS
+                    destination-address [ GOOGLE_DNS ];
                     application any;
                 }
                 then {

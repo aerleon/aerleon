@@ -140,8 +140,8 @@ class Term(aclgenerator.Term):
             saddr_check = sorted(saddr_check)
             ret_str.IndentAppend(5, JunipersrxList('source-address', saddr_check))
         elif self.term.source_fqdn:
-            for ptoken in set([i.parent_token for i in self.term.source_fqdn]):
-              ret_str.IndentAppend(5, 'source-address {ptoken}')
+            sfqdn = sorted(set([i.parent_token for i in self.term.source_fqdn]))
+            ret_str.IndentAppend(5, JunipersrxList('source-address', sfqdn))
         else:
             ret_str.IndentAppend(5, 'source-address any;')
 
@@ -155,8 +155,8 @@ class Term(aclgenerator.Term):
             daddr_check.sort()
             ret_str.IndentAppend(5, JunipersrxList('destination-address', daddr_check))
         elif self.term.destination_fqdn:
-            for ptoken in set([i.parent_token for i in self.term.destination_fqdn]):
-              ret_str.IndentAppend(5, f'destination-address {ptoken}')
+            dfqdn = sorted(set([i.parent_token for i in self.term.destination_fqdn]))
+            ret_str.IndentAppend(5, JunipersrxList('destination-address', dfqdn))
         else:
             ret_str.IndentAppend(5, 'destination-address any;')
 

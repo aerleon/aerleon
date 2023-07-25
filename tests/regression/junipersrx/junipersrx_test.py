@@ -2635,9 +2635,22 @@ def _YamlParsePolicy(
         shade_check=shade_check,
     )
 
-FQDN_TERM= """
+FQDN_DST_TERM= """
   - name: fqdn-term
     destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+
+FQDN_SRC_TERM= """
+  - name: fqdn-term
+    source-fqdn: GOOGLE_DNS
+    action: accept
+"""
+
+FQDN_MIXED_TERM = """
+  - name: fqdn-term
+    destination-fqdn: GOOGLE_DNS
+    destination-address: GOOGLE_DNS
     action: accept
 """
 
@@ -2724,7 +2737,7 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
         )
 
-    # @capture.stdout
+    @capture.stdout
     def testFQDN(self):
       definitions = naming.Naming()
       definitions.ParseYaml("""
@@ -2738,10 +2751,16 @@ services:
       protocol: udp
       """, file_name=""
       )
-      pol = junipersrx.JuniperSRX(
-            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_TERM, definitions=definitions), EXP_INFO
-        )
+      pol = str(junipersrx.JuniperSRX(
+            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_DST_TERM, definitions=definitions), EXP_INFO
+        ))
       print(pol)
+      self.assertIn('destination-address [ GOOGLE_DNS ];', pol, pol)
+      pol = str(junipersrx.JuniperSRX(
+            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_SRC_TERM, definitions=definitions), EXP_INFO
+        ))
+      print(pol)
+      self.assertIn('source-address [ GOOGLE_DNS ];', pol, pol)
     
     @capture.stdout
     def testFQDNMixedInTerm(self):
@@ -2759,7 +2778,7 @@ services:
       """, file_name=""
       )
         pol = junipersrx.JuniperSRX(
-            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_TERM, definitions=definitions), EXP_INFO
+            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_MIXED_TERM, definitions=definitions), EXP_INFO
         )
         print(pol)
 
