@@ -133,6 +133,7 @@ class Term(aclgenerator.Term):
         interface e.g. INGRESS.
       interface_type: Enum indicating the type of interface filter will be applied
         e.g. LOOPBACK.
+      filter_type: String indicating the type of the filter, which may be mixed.
     """
 
     _PLATFORM = 'juniper'
@@ -199,6 +200,7 @@ class Term(aclgenerator.Term):
         noverbose: bool,
         filter_direction: str = None,
         interface_type: str = None,
+        filter_type: str = None,
     ):
         super().__init__(term)
         self.term = term
@@ -208,6 +210,7 @@ class Term(aclgenerator.Term):
         # Filter direction and interface type are needed in juniperevo sub-class for IPv6 filters.
         self.filter_direction = filter_direction
         self.interface_type = interface_type
+        self.filter_type = filter_type
 
         if self._PLATFORM != 'msmpc':
             if term_type not in self._TERM_TYPE:
@@ -369,9 +372,10 @@ class Term(aclgenerator.Term):
                         config.Append('%s;' % addr)
                 config.Append('}')
             elif self.term.address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(term=self.term.name, af=self.term_type)
-                )
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(term=self.term.name, af=self.term_type)
+                    )
                 return ''
 
             # source address
@@ -402,11 +406,12 @@ class Term(aclgenerator.Term):
                         config.Append('%s except;' % addr)
                 config.Append('}')
             elif self.term.source_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction='source', af=self.term_type
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction='source', af=self.term_type
+                        )
                     )
-                )
                 return ''
 
             # destination address
@@ -436,11 +441,12 @@ class Term(aclgenerator.Term):
                         config.Append('%s except;' % addr)
                 config.Append('}')
             elif self.term.destination_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction='destination', af=self.term_type
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction='destination', af=self.term_type
+                        )
                     )
-                )
                 return ''
 
             # forwarding-class
@@ -1035,14 +1041,14 @@ class Juniper(aclgenerator.ACLGenerator):
             else:
                 filter_types_to_process = [filter_type]
 
-            for filter_type in filter_types_to_process:
+            for term_filter_type in filter_types_to_process:
 
                 filter_name_suffix = ''
                 # If mixed filter_type, will append 4 or 6 to the filter name
                 if len(filter_types_to_process) > 1:
-                    if filter_type == 'inet':
+                    if term_filter_type == 'inet':
                         filter_name_suffix = '4'
-                    if filter_type == 'inet6':
+                    if term_filter_type == 'inet6':
                         filter_name_suffix = '6'
 
                 term_names = set()
@@ -1052,7 +1058,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     # Ignore if the term is for a different AF
                     if (
                         term.restrict_address_family
-                        and term.restrict_address_family != filter_type
+                        and term.restrict_address_family != term_filter_type
                     ):
                         continue
 
@@ -1069,11 +1075,11 @@ class Juniper(aclgenerator.ACLGenerator):
                         )
                     term_names.add(term.name)
 
-                    term = self.FixHighPorts(term, af=filter_type)
+                    term = self.FixHighPorts(term, af=term_filter_type)
                     if not term:
                         continue
 
-                    if 'is-fragment' in term.option and filter_type == 'inet6':
+                    if 'is-fragment' in term.option and term_filter_type == 'inet6':
                         raise JuniperFragmentInV6Error(
                             'The term %s uses "is-fragment" but ' 'is a v6 policy.' % term.name
                         )
@@ -1081,11 +1087,12 @@ class Juniper(aclgenerator.ACLGenerator):
                     new_terms.append(
                         self._TERM(
                             term,
-                            filter_type,
+                            term_filter_type,
                             enable_dsmo,
                             noverbose,
                             filter_direction,
                             interface_type,
+                            filter_type=filter_type,
                         )
                     )
 
@@ -1093,7 +1100,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     (
                         header,
                         filter_name + filter_name_suffix,
-                        filter_type,
+                        term_filter_type,
                         interface_specific,
                         filter_enhanced_mode,
                         new_terms,
