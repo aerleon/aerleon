@@ -208,22 +208,21 @@ may find this representation easier to assemble.
 
 ### Includes
 
-Place an item in the list of terms with a key "include" containing a file path
-to include that file. All terms found in the include file will be inserted into
-the terms list, replacing the "include" item. The include file will be resolved
-relative to the base directory. The include file name must match
-\*.yaml.
+Place an item in the list of terms with the key "include" containing the path
+of the file to include, relative to the base directory. All terms found in the
+included file will be inserted into the list of terms, replacing the "include" item.
+The included file name must end in ".yaml".
 
 ```
 # example_policy.yaml
 filters:
 - header:
-# ...
+    # ...
   terms:
   - name: deny-to-reserved
     destination-address: RESERVED
     action: deny
-  - include: include_1.yaml
+  - include: deny_bogons_include.yaml
   - name: allow-web-to-mail
     source-address: WEB_SERVERS
     destination-address: MAIL_SERVERS
@@ -231,14 +230,41 @@ filters:
 ```
 
 ```
-# include_1.yaml
+# deny_bogons_include.yaml
 terms:
 - name: deny-to-bogons
   destination-address: RESERVED
   action: deny
 ```
 
-Recursive includes are supported up to a recursion limit of 5. This is the same
+You can also include one or more filters by placing an item in the list of filters
+with the key "include" containing the path of the file to include, relative to the
+base directory. If you wish to create a common list of filters that should not be
+turned directly into ACLs, use the top level key "filters_include_only" instead of
+"filters".
+
+```
+# example_policy.yaml
+filters:
+- include: common_filters.yaml
+```
+
+```
+# common_filters.yaml
+filters_include_only:
+- header:
+    # ...
+  terms:
+  - name: deny-to-reserved
+    destination-address: RESERVED
+    action: deny
+  - name: allow-web-to-mail
+    source-address: WEB_SERVERS
+    destination-address: MAIL_SERVERS
+    action: accept
+```
+
+Recursive includes are supported with a recursion limit of 5. This is the same
 recursion limit as for .pol files.
 
 ### YAML Aliases and Anchors
