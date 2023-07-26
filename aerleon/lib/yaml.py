@@ -106,6 +106,8 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     policy_dict = _preprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
         return
+    if not policy_dict['filters']:
+        return
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
@@ -137,6 +139,8 @@ def ParsePolicy(
 
     policy_dict = _preprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
+        return
+    if not policy_dict['filters']:
         return
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
@@ -180,7 +184,7 @@ def _preprocessYAMLPolicyInner(
         policy_dict['filters'] = policy_dict['filters_include_only']
         del policy_dict['filters_include_only']
     elif 'terms' in policy_dict or 'filters_include_only' in policy_dict:
-        # We are looking at an include file and should quietly ignore it.
+        # We are looking at an include file outside of an include and should quietly ignore it.
         return
     else:
         raise PolicyTypeError(
