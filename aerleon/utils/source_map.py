@@ -187,10 +187,10 @@ class SourceMapFlatten(dict):
         return sm
 
 
-SourceMapFile = "list[dict[str, SourceMapValue]]"
+SourceMapFile = "list[dict[str, Locator]]"
 
 
-class SourceMapValue(TypedDict):
+class Locator(TypedDict):
     filter: int
     type: str
     term: "Optional[int]"
@@ -233,7 +233,7 @@ class SourceMap:
             return
         return self.output.splitlines()[line]
 
-    def resolveSourceLocation(self, locator: "SourceMapValue"):
+    def resolveSourceLocation(self, locator: "Locator"):
         if not self.sources:
             return
         if locator is None:
