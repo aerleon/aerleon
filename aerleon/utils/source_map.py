@@ -195,6 +195,7 @@ class Locator(TypedDict):
     type: str
     term: "Optional[int]"
     term_name: "Optional[str]"
+    source_file: "Optional[str]"
 
 
 class SourceMap:
