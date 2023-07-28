@@ -1,43 +1,55 @@
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32",
+              "protocol": 17,
+              "source-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "destination-port": 53
+            }
+          }
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32",
+              "protocol": 6,
+              "source-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 10,
+          "transport": {
+            "config": {
+              "destination-port": 53
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 17,
-        "source-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "destination-port": 53
-      }
-    }
-  },
-  {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
-    },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 6,
-        "source-address": "10.2.3.4/32"
-      }
-    },
-    "sequence-id": 10,
-    "transport": {
-      "config": {
-        "destination-port": 53
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 
