@@ -1409,6 +1409,7 @@ class AclCheckTest(absltest.TestCase):
             "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet address family.",
             ''.join(log.output),
         )
+
     @capture.stdout
     def testNoChain(self):
         acl = iptables.Iptables(
