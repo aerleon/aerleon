@@ -47,8 +47,9 @@ DNS = 53/tcp
 
 
 import re
+import typing
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, TypeAlias, TypedDict, Union
 
 import yaml
 from absl import logging
@@ -190,6 +191,54 @@ class _ItemUnit:
     def __init__(self, symbol: str) -> None:
         self.name = symbol
         self.items = []
+
+
+class DefinitionsFile(TypedDict):
+    """A network and service definitions file."""
+
+    networks: "typing.Optional[list[dict[str, NetworkDefinition]]]"
+    services: "typing.Optional[list[dict[str, ServiceDefinition]]]"
+
+
+class NetworkDefinition(TypedDict):
+    """An object that defines a network."""
+
+    values: "list[NetworkDefinitionValue]"
+
+
+NetworkDefinitionValue: TypeAlias = "typing.Union[str, NetworkDefinitionAddressValue, NetworkDefinitionFQDNValue, NetworkDefinitionReferenceValue]"
+
+
+class NetworkDefinitionAddressValue(TypedDict):
+    """Contains a network address."""
+
+    address: str
+    comment: "typing.Optional[str]"
+
+
+class NetworkDefinitionFQDNValue(TypedDict):
+    """Contains a FQDN."""
+
+    fqdn: str
+    comment: "typing.Optional[str]"
+
+
+class NetworkDefinitionReferenceValue(TypedDict):
+    """Contains a network reference."""
+
+    name: str
+    comment: "typing.Optional[str]"
+
+
+ServiceDefinition: TypeAlias = "list[Union[ServiceDefinitionPortProto, str]]"
+
+
+class ServiceDefinitionPortProto(TypedDict):
+    """An object that defines a service."""
+
+    port: "Union[str, int]"
+    protocol: "Union[str, int]"
+    comment: "typing.Optional[str]"
 
 
 class Naming:
@@ -812,7 +861,9 @@ class Naming:
         """
 
         try:
-            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=file_name))
+            file_data: DefinitionsFile = yaml.load(
+                file, Loader=SpanSafeYamlLoader(filename=file_name)
+            )
         except YAMLError as yaml_error:
             raise DefinitionFileTypeError(
                 UserMessage("Unable to read file as YAML.", filename=file_name)
@@ -820,7 +871,7 @@ class Naming:
 
         self.ParseDefinitionsObject(file_data, file_name)
 
-    def ParseDefinitionsObject(self, file_data: Dict[str, str], file_name: str) -> None:
+    def ParseDefinitionsObject(self, file_data: DefinitionsFile, file_name: str) -> None:
         """Load network and service definitions from a Python object.
 
         Arguments:
@@ -848,7 +899,7 @@ class Naming:
         if 'services' in file_data:
             self._ParseYamlServices(file_data, file_name)
 
-    def _ParseYamlNetworks(self, file_data: Dict[str, Any], file_name: str) -> None:
+    def _ParseYamlNetworks(self, file_data: DefinitionsFile, file_name: str) -> None:
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
             logging.warning(
                 UserMessage(
@@ -938,7 +989,7 @@ class Naming:
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
-    def _ParseYamlServices(self, file_data: Dict[str, Any], file_name: str) -> None:
+    def _ParseYamlServices(self, file_data: DefinitionsFile, file_name: str) -> None:
         if 'services' in file_data and not isinstance(file_data['services'], dict):
             logging.warning(
                 UserMessage(
