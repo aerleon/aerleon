@@ -4,19 +4,45 @@ import ipaddress
 import itertools
 from typing import List, Union
 
-from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.fqdn import FQDN
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class Addressbook:
     def __init__(self) -> None:
-        self.addressbook = collections.OrderedDict()
+        self._fqdn_addressbook = collections.OrderedDict()
+        self._ip_addressbook = collections.OrderedDict()
 
-    def AddFQDN(self, zone: str, fqdn_list: List[FQDN]):
-        if zone not in self.addressbook:
-            self.addressbook[zone] = collections.defaultdict(lambda: collections.defaultdict(list))
+    def WalkAddressBook(self):
+        return self._walk()
+    def _walk(self):
+        for zone in self._ip_addressbook:
+            groups = self._ip_addressbook[zone].keys()
+            groups.extend(self._fqdn_addressbook[zone].keys())
+            for group in groups:
+                ips = []
+                if group in self._ip_addressbook[zone]:
+                    ips = self._ip_addressbook[zone][group]
+                yield zone, group
+        
+    def GetFQDN(self, zone: str, name: str):
+        return self._fqdn_addressbook[zone][name]
+
+    def GetAddressTokensInZone(self, zone: str):
+        return [i for i in self._ip_addressbook['zone']]
+
+    def GetFQDNTokensInZone(self, zone: str):
+        return [i for i in self._fqdn_addressbook['zone']]
+
+    def AddFQDNs(self, zone: str, fqdn_list: List[FQDN]):
+        if zone not in self._fqdn_addressbook:
+            self._ip_addressbook[zone] = collections.defaultdict(list)
+            self._fqdn_addressbook[zone] = collections.defaultdict(list)
         for fqdn in fqdn_list:
-            self.addressbook[zone][fqdn.parent_token]['fqdns'].append(fqdn)
+            self._fqdn_addressbook[zone][fqdn.parent_token].append(fqdn)
+
+    def GetAddress(self, zone: str, name: str):
+        return self._ip_addressbook[zone][name]
 
     def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.
@@ -73,8 +99,9 @@ class Addressbook:
                     last_broadcast_addr = address.broadcast_address
                     yield address
 
-        if zone not in self.addressbook:
-            self.addressbook[zone] = collections.defaultdict(lambda: collections.defaultdict(list))
+        if zone not in self._ip_addressbook:
+            self._ip_addressbook[zone] = collections.defaultdict(list)
+            self._fqdn_addressbook[zone] = collections.defaultdict(list)
 
         # sort by (parent_token, version, address),
         # then partition by parent_token
@@ -90,10 +117,15 @@ class Addressbook:
             key=lambda address: address.parent_token,
         ):
             # merge sorted lists of IP objects
-            addrs = self.addressbook[zone][parent_token]['ips']
-            addrs = list(heapq.merge(addrs,address_list,key=ipaddress.get_mixed_type_key,))
+            self._ip_addressbook[zone][parent_token] = list(
+                heapq.merge(
+                    self._ip_addressbook[zone][parent_token],
+                    address_list,
+                    key=ipaddress.get_mixed_type_key,
+                )
+            )
 
             # drop redundant addresses and networks
-            self.addressbook[zone][parent_token]['ips'] = list(
-                _drop_subnets(addrs)
+            self._ip_addressbook[zone][parent_token] = list(
+                _drop_subnets(self._ip_addressbook[zone][parent_token])
             )

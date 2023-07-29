@@ -2635,13 +2635,14 @@ def _YamlParsePolicy(
         shade_check=shade_check,
     )
 
-FQDN_DST_TERM= """
+
+FQDN_DST_TERM = """
   - name: fqdn-term
     destination-fqdn: GOOGLE_DNS
     action: accept
 """
 
-FQDN_SRC_TERM= """
+FQDN_SRC_TERM = """
   - name: fqdn-term
     source-fqdn: GOOGLE_DNS
     action: accept
@@ -2653,6 +2654,7 @@ FQDN_MIXED_TERM = """
     destination-address: GOOGLE_DNS
     action: accept
 """
+
 
 class JuniperSRXYAMLTest(JuniperSRXTest):
     def setUp(self):
@@ -2739,8 +2741,9 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
 
     @capture.stdout
     def testFQDN(self):
-      definitions = naming.Naming()
-      definitions.ParseYaml("""
+        definitions = naming.Naming()
+        definitions.ParseYaml(
+            """
 networks:
   GOOGLE_DNS:
     values:
@@ -2749,23 +2752,31 @@ services:
   WHOIS:
     - port: 43
       protocol: udp
-      """, file_name=""
-      )
-      pol = str(junipersrx.JuniperSRX(
-            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_DST_TERM, definitions=definitions), EXP_INFO
-        ))
-      print(pol)
-      self.assertIn('destination-address [ GOOGLE_DNS ];', pol, pol)
-      pol = str(junipersrx.JuniperSRX(
-            _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_SRC_TERM, definitions=definitions), EXP_INFO
-        ))
-      print(pol)
-      self.assertIn('source-address [ GOOGLE_DNS ];', pol, pol)
-    
+      """,
+            file_name="",
+        )
+        pol = str(
+            junipersrx.JuniperSRX(
+                _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_DST_TERM, definitions=definitions),
+                EXP_INFO,
+            )
+        )
+        print(pol)
+        self.assertIn('destination-address [ GOOGLE_DNS ];', pol, pol)
+        pol = str(
+            junipersrx.JuniperSRX(
+                _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_SRC_TERM, definitions=definitions),
+                EXP_INFO,
+            )
+        )
+        print(pol)
+        self.assertIn('source-address [ GOOGLE_DNS ];', pol, pol)
+
     @capture.stdout
     def testFQDNMixedInTerm(self):
         definitions = naming.Naming()
-        definitions.ParseYaml("""
+        definitions.ParseYaml(
+            """
 networks:
   GOOGLE_DNS:
     values:
@@ -2775,12 +2786,14 @@ services:
   WHOIS:
     - port: 43
       protocol: udp
-      """, file_name=""
-      )
+      """,
+            file_name="",
+        )
         pol = junipersrx.JuniperSRX(
             _YamlParsePolicy(YAML_GOOD_HEADER + FQDN_MIXED_TERM, definitions=definitions), EXP_INFO
         )
         print(pol)
+
 
 if __name__ == '__main__':
     absltest.main()
