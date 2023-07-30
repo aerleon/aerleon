@@ -12,19 +12,29 @@ class Addressbook:
     def __init__(self) -> None:
         self._fqdn_addressbook = collections.OrderedDict()
         self._ip_addressbook = collections.OrderedDict()
+        
+    def GetZoneNames(self) -> List:
+        return list(self._ip_addressbook.keys())
+    
+    def WalkAddressBook(self, zone_filter=None):
+        
+        return self._walk(zone_filter)
 
-    def WalkAddressBook(self):
-        return self._walk()
-    def _walk(self):
+    def _walk(self, zone_filter=None):
         for zone in self._ip_addressbook:
-            groups = self._ip_addressbook[zone].keys()
-            groups.extend(self._fqdn_addressbook[zone].keys())
-            for group in groups:
+            if zone_filter and zone != zone_filter:
+                continue
+            groups = set(self._ip_addressbook[zone].keys())
+            groups.update(list(self._fqdn_addressbook[zone].keys()))
+            for group in sorted(groups):
                 ips = []
+                fqdns = []
                 if group in self._ip_addressbook[zone]:
                     ips = self._ip_addressbook[zone][group]
-                yield zone, group
-        
+                if group in self._fqdn_addressbook[zone]:
+                    fqdns = self._fqdn_addressbook[zone][group]
+                yield zone, group, ips, fqdns
+
     def GetFQDN(self, zone: str, name: str):
         return self._fqdn_addressbook[zone][name]
 

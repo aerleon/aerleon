@@ -208,9 +208,9 @@ class ObjectGroup:
         # for using cisco, which has decided to implement its own meta language.
 
         # Create network object-groups
-        for name, addresses in self.addressbook.addressbook[''].items():
+        for zone, name, ips, _ in self.addressbook.WalkAddressBook():
             for version in (4, 6):
-                vips = [i for i in addresses['ips'] if i.version == version]
+                vips = [i for i in ips if i.version == version]
                 vips = nacaddr.CollapseAddrList(vips)
                 if vips:
 
@@ -1086,7 +1086,7 @@ class Cisco(aclgenerator.ACLGenerator):
                     if term_str:
                         target.append(term_str)
 
-            if obj_target.addressbook.addressbook.keys():
+            if obj_target.addressbook.GetZones():
                 target = [str(obj_target)] + target
             # ensure that the header is always first
             target = target_header + target

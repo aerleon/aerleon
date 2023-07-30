@@ -709,38 +709,34 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 port_list.append('%s-%s' % (str(i[0]), str(i[1])))
         return port_list
 
-    def _GenerateAddresses(self, addressbook_zone: dict):
+    def _GenerateAddresses(self, token: str, ips, fqdns):
         target = IndentList(self.INDENT)
-        tokens = sorted(addressbook_zone.keys())
-        for token in tokens:
-            counter = 0
-            ips = nacaddr.SortAddrList(addressbook_zone[token])
-            ips = nacaddr.CollapseAddrList(ips)
-            for ip in ips:
-                target.IndentAppend(
-                    4, 'address ' + token + '_' + str(counter) + ' ' + str(ip) + ';'
-                )
-                counter += 1
-            for fqdn in addressbook_zone[token]['fqdns']:
-                target.IndentAppend(4, f'address {token}_{counter} {{')
-                target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
-                target.IndentAppend(4, f'}}')
+        counter = 0
+        ips = nacaddr.SortAddrList(ips)
+        ips = nacaddr.CollapseAddrList(ips)
+        for ip in ips:
+            target.IndentAppend(
+                4, 'address ' + token + '_' + str(counter) + ' ' + str(ip) + ';'
+            )
+            counter += 1
+        for fqdn in fqdns:
+            target.IndentAppend(4, f'address {token}_{counter} {{')
+            target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
+            target.IndentAppend(4, f'}}')
         return target
 
-    def _GenerateAddressSets(self, addressbook_zone: dict) -> IndentList:
+    def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
         target = IndentList(self.INDENT)
-        for group in sorted(addressbook_zone.keys()):
-            target.IndentAppend(4, 'address-set ' + group + ' {')
-            counter = 0
-            for _ in nacaddr.CollapseAddrList(addressbook_zone[group]['ips']):
-                target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
-                counter += 1
-            for _ in addressbook_zone[group]['fqdns']:
-                target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
-                counter += 1
-            target.IndentAppend(4, '}')
+        target.IndentAppend(4, 'address-set ' + group + ' {')
+        counter = 0
+        for _ in nacaddr.CollapseAddrList(ips):
+            target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
+            counter += 1
+        for _ in fqdns:
+            target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
+            counter += 1
+        target.IndentAppend(4, '}')
         return target
-        pass
 
     def _GenerateAddressBook(self) -> IndentList:
         """Creates address book."""
@@ -752,28 +748,32 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(1, 'replace: address-book {')
             target.IndentAppend(2, 'global {')
             global_addressbook = addressbook.Addressbook()
-            for zone in self.addressbook._ip_addressbook:
-                for group in self.addressbook._ip_addressbook[zone]:
-                    global_addressbook.AddAddresses(
-                        'global', self.addressbook._ip_addressbook[zone][group]
+            for zone, _, ips, fqdns in self.addressbook.WalkAddressBook():
+                global_addressbook.AddAddresses(
+                    'global', ips
                     )
-                for group in self.addressbook._fqdn_addressbook[zone]:
-                    global_addressbook.AddFQDNs(
-                        'global', self.addressbook._fqdn_addressbook[zone][group]
-                    )
-            if 'global' in global_addressbook._ip_addressbook.keys():
-                target.extend(self._GenerateAddresses(global_addressbook.addressbook['global']))
-                target.extend(self._GenerateAddressSets(global_addressbook.addressbook['global']))
+                global_addressbook.AddFQDNs('global', fqdns)
+            if 'global' in global_addressbook.GetZoneNames():
+                addrs = []
+                addr_sets = []
+                for _, group, ips, fqdns in global_addressbook.WalkAddressBook('global'):
+                    addrs.extend(self._GenerateAddresses(group, ips, fqdns))
+                    addr_sets.extend(self._GenerateAddressSets(group, ips, fqdns))
+                target.extend(addrs)
+                target.extend(addr_sets)
+
             target.IndentAppend(2, '}')
             target.IndentAppend(1, '}')
 
         else:
             target.IndentAppend(1, 'zones {')
-            for zone in self.addressbook.addressbook:
+            zones = self.addressbook.GetZoneNames()
+            for zone in zones:
                 target.IndentAppend(2, 'security-zone ' + zone + ' {')
                 target.IndentAppend(3, 'replace: address-book {')
-                target.extend(self._GenerateAddresses(self.addressbook.addressbook[zone]))
-                target.extend(self._GenerateAddressSets(self.addressbook.addressbook[zone]))
+                for _, group, ips, fqdns in self.addressbook.WalkAddressBook(zone):
+                    target.extend(self._GenerateAddresses(group, ips, fqdns))
+                    target.extend(self._GenerateAddressSets(group, ips, fqdns))
                 target.IndentAppend(3, '}')
                 target.IndentAppend(2, '}')
             target.IndentAppend(1, '}')
