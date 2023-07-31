@@ -1821,15 +1821,15 @@ term rule-1 {
         x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET5']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
+        self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
         x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_0']/ip-netmask")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"4000::/3"}, addrs, output)
+        self.assertEqual({"4000::/3"}, addrs, output)
         x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_1']/ip-netmask")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"6000::/3"}, addrs, output)
+        self.assertEqual({"6000::/3"}, addrs, output)
 
         T = """
   source-address:: NET4
@@ -1840,21 +1840,21 @@ term rule-1 {
         output = str(paloalto)
         print(output)
         x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"NET5"}, addrs, output)
+        self.assertEqual({"NET5"}, addrs, output)
         x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET5']/static/member")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
+        self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
         x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_0']/ip-netmask")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"4000::/3"}, addrs, output)
+        self.assertEqual({"4000::/3"}, addrs, output)
         x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_1']/ip-netmask")
-        # self.assertTrue(len(x) > 0, output)
+        self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
-        # self.assertEqual({"6000::/3"}, addrs, output)
+        self.assertEqual({"6000::/3"}, addrs, output)
 
 
 if __name__ == '__main__':

@@ -715,9 +715,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         ips = nacaddr.SortAddrList(ips)
         ips = nacaddr.CollapseAddrList(ips)
         for ip in ips:
-            target.IndentAppend(
-                4, 'address ' + token + '_' + str(counter) + ' ' + str(ip) + ';'
-            )
+            target.IndentAppend(4, 'address ' + token + '_' + str(counter) + ' ' + str(ip) + ';')
             counter += 1
         for fqdn in fqdns:
             target.IndentAppend(4, f'address {token}_{counter} {{')
@@ -749,9 +747,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(2, 'global {')
             global_addressbook = addressbook.Addressbook()
             for zone, _, ips, fqdns in self.addressbook.WalkAddressBook():
-                global_addressbook.AddAddresses(
-                    'global', ips
-                    )
+                global_addressbook.AddAddresses('global', ips)
                 global_addressbook.AddFQDNs('global', fqdns)
             if 'global' in global_addressbook.GetZoneNames():
                 addrs = []

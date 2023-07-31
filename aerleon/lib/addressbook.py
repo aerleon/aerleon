@@ -12,12 +12,12 @@ class Addressbook:
     def __init__(self) -> None:
         self._fqdn_addressbook = collections.OrderedDict()
         self._ip_addressbook = collections.OrderedDict()
-        
+
     def GetZoneNames(self) -> List:
         return list(self._ip_addressbook.keys())
-    
+
     def WalkAddressBook(self, zone_filter=None):
-        
+
         return self._walk(zone_filter)
 
     def _walk(self, zone_filter=None):

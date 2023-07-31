@@ -1086,7 +1086,7 @@ class Cisco(aclgenerator.ACLGenerator):
                     if term_str:
                         target.append(term_str)
 
-            if obj_target.addressbook.GetZones():
+            if obj_target.addressbook.GetZoneNames():
                 target = [str(obj_target)] + target
             # ensure that the header is always first
             target = target_header + target
