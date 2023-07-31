@@ -862,39 +862,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         # destination address are not specified (any any).
         ANY_IPV4_RANGE = "0.0.0.0-255.255.255.255"
         add_any_ipv4 = False
-        # Name to IP addresses
-        # address_book_names_dict = {}
-        # address_book_groups_dict = {}
-        # import ipdb;ipdb.set_trace()
-        # try:
-        #     groups = sorted(self.addressbook.addressbook[''].keys())
-        # except:
-        #     groups = []
-        # for group in groups:
-        # for _, group, ips, _ in self.addressbook.WalkAddressBook(''):
-        #     count = 0
-        #     for ip in ips:
-        #         name = f'{ip.parent_token}_{count}'
-        #         count = count + 1
-        #         address = ip.with_prefixlen
-        #         if name in address_book_names_dict:
-        #             if address_book_names_dict[name].supernet_of(address):
-        #                 continue
-        #         address_book_names_dict[name] = address
-
-        # building individual address-group dictionary
-        # group_names = [i for i in address_book_names_dict.keys() if nested_group in i]
-
-        # address_book_groups_dict[group] = group_names
-        # import ipdb;ipdb.set_trace()
-
-        # sort address books and address sets
-        # address_book_groups_dict = collections.OrderedDict(
-        #     sorted(address_book_groups_dict.items())
-        # )
-        # address_book_keys = sorted(
-        #     list(address_book_names_dict.keys()), key=self._SortAddressBookNumCheck
-        # )
 
         # INITAL CONFIG
         config = etree.Element("config", {"urldb": "paloaltonetworks", "version": "8.1.0"})
