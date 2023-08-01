@@ -208,7 +208,7 @@ def RenderFile(
         if input_file.suffix == '.yaml' or input_file.suffix == '.yml':
             pol = yaml.ParsePolicy(
                 conf,
-                filename=input_file.name,
+                filename=str(input_file.relative_to(base_directory)),
                 base_dir=base_directory,
                 definitions=definitions,
                 optimize=optimize,
@@ -218,7 +218,7 @@ def RenderFile(
             pol = policy.ParsePolicy(
                 conf,
                 definitions,
-                filename=input_file.name,
+                filename=str(input_file.relative_to(base_directory)),
                 optimize=optimize,
                 base_dir=base_directory,
                 shade_check=shade_check,
