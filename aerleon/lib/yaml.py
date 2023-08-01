@@ -111,7 +111,7 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
         return
-    policy_dict['filename'] = pathlib.Path(filename).name
+    policy_dict['filename'] = filename
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
@@ -144,7 +144,7 @@ def ParsePolicy(
     policy_dict = PreprocessYAMLPolicy(filename, base_dir, policy_dict)
     if not policy_dict:
         return
-    policy_dict['filename'] = pathlib.Path(filename).name
+    policy_dict['filename'] = filename
     return policy.FromBuilder(PolicyBuilder(policy_dict, definitions, optimize, shade_check))
 
 
