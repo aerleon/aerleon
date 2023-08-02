@@ -685,7 +685,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
-    # @capture.stdout
+    @capture.stdout
     def testVpnWithoutPolicy(self):
         self.naming.GetNetAddr.return_value = _IPSET
 

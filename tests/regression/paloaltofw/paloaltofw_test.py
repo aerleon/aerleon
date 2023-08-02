@@ -590,7 +590,7 @@ class PaloAltoFWTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
-    # @capture.stdout
+    @capture.stdout
     def testServiceMap(self):
         definitions = naming.Naming()
         definitions._ParseLine('SSH = 22/tcp', 'services')
