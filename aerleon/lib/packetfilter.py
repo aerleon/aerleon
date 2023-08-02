@@ -155,20 +155,24 @@ class Term(aclgenerator.Term):
         # source address
         term_saddrs = self._CheckAddressAf(self.term.source_address)
         if not term_saddrs:
-            logging.warning(
-                self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
-            )
+            if self.af != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_ADDR.substitute(
+                        term=self.term.name, direction='source', af=self.af
+                    )
+                )
             return ''
         term_saddr = self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude)
 
         # destination address
         term_daddrs = self._CheckAddressAf(self.term.destination_address)
         if not term_daddrs:
-            logging.warning(
-                self.NO_AF_LOG_ADDR.substitute(
-                    term=self.term.name, direction='destination', af=self.af
+            if self.af != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_ADDR.substitute(
+                        term=self.term.name, direction='destination', af=self.af
+                    )
                 )
-            )
             return ''
         term_daddr = self._GenerateAddrStatement(
             term_daddrs, self.term.destination_address_exclude
