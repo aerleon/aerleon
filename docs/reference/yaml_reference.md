@@ -331,6 +331,8 @@ A Term must contain a `name` field naming the term.
 | terms[].destination-address       |            | list of words                | `destination-address: ["[IP \| CIDR \| NAME]", ...]`                                                       |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: "[IP \| CIDR \| NAME] ..."`                                                          |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                       |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: "[NAME] ..."`                                                          |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: ["[NAME]", ...]`                                                       |
 | terms[].destination-port          |            | list of words                | `destination-port: "[PORT_NUMBER \| NAME] ..."`                                                            |
 | terms[].destination-port          |            | list of words                | `destination-port: ["[PORT_NUMBER \| NAME]", ...]`                                                         |
 | terms[].destination-prefix        |            | list of words                | `destination-prefix: "[IP \| CIDR \| NAME] ..."`                                                           |
@@ -374,6 +376,8 @@ A Term must contain a `name` field naming the term.
 | terms[].source-address            |            | list of words                | `source-address: ["[IP \| CIDR \| NAME]", ...]`                                                            |
 | terms[].source-exclude            |            | list of words                | `source-exclude: "[IP \| CIDR \| NAME] ..."`                                                               |
 | terms[].source-exclude            |            | list of words                | `source-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                            |
+| terms[].source-fqdn               |            | list of words                | `source-address: "[NAME] ..."`                                                               |
+| terms[].source-fqdn               |            | list of words                | `source-address: ["[NAME]", ...]`                                                            |
 | terms[].source-port               |            | list of words                | `source-port: "[PORT_NUMBER \| NAME] ..."`                                                                 |
 | terms[].source-port               |            | list of words                | `source-port: ["[PORT_NUMBER \| NAME]", ...]`                                                              |
 | terms[].source-prefix             |            | list of words                | `source-prefix: "[IP \| CIDR \| NAME] ..."`                                                                |
