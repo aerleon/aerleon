@@ -872,6 +872,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
 * for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
+* _destination-fqdn_: One or more destination FQDNs to filter.
 * _destination-zone_: one or more destination zones tokens. Only supported by global policy
 * _dscp-except_: Do not match the DSCP number.
 * _dscp-match_: Match a DSCP number.
@@ -889,6 +890,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
         * See [here](https://kb.juniper.net/InfoCenter/index?page=content&id=KB16506) for explanation.
 * _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
+* _source-fqdn_: One or more source FQDNs to filter.
 * _source-zone_: one or more source zones tokens. Only supported by global policy
 * _timeout_: specify application timeout. (default 60)
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.

@@ -995,7 +995,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 else:
                     for x in options["source"]:
                         if no_addr_obj:
-                            pass
                             for ip in self.addressbook.GetAddress('', x):
                                 member = etree.SubElement(source, "member")
                                 member.text = str(ip)
@@ -1030,7 +1029,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 else:
                     for x in options["destination"]:
                         if no_addr_obj:
-                            pass
                             for ip in self.addressbook.GetAddress('', x):
                                 member = etree.SubElement(dest, "member")
                                 member.text = str(ip)
