@@ -5,7 +5,9 @@
     * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
 * [pip](https://pip.pypa.io/en/stable/getting-started/)
 
-**_NOTE:_** It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package. 
+!!! tip
+
+    It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package.
 
 Option 1: Install from PyPI.
 

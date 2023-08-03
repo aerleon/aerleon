@@ -39,11 +39,44 @@ filters:
     destination-address: MAIL_SERVERS
     action: accept
 """
+GOOD_POLICY_INCLUDE_FILTERS = """
+filters:
+- include: filters_include1.yaml
+- include: filters_include2.yaml
+"""
 GOOD_INCLUDE_YAML = """
 terms:
 - name: deny-to-bogons
   destination-address: RESERVED
   action: deny
+"""
+GOOD_INCLUDE_FILTERS_YAML = """
+filters:
+- header:
+    targets:
+      ipset: OUTPUT DROP
+  terms:
+  - name: deny-to-reserved
+    destination-address: RESERVED
+    action: deny
+  - name: allow-web-to-mail
+    source-address: WEB_SERVERS
+    destination-address: MAIL_SERVERS
+    action: accept
+"""
+GOOD_INCLUDE_FILTERS_YAML_ONLY = """
+filters_include_only:
+- header:
+    targets:
+      ipset: OUTPUT DROP
+  terms:
+  - name: deny-to-reserved
+    destination-address: RESERVED
+    action: deny
+  - name: allow-web-to-mail
+    source-address: WEB_SERVERS
+    destination-address: MAIL_SERVERS
+    action: accept
 """
 BAD_INCLUDE_YAML_EMPTY = """
 terms:
@@ -61,6 +94,24 @@ terms:
 - include: /tmp/include_2.yaml
 """
 BAD_INCLUDE_YAML_INVALID_YAML = """
+%INVALID YAML% &unknown
+"""
+BAD_INCLUDE_FILTERS_YAML_EMPTY = """
+filters:
+"""
+BAD_INCLUDE_FILTERS_YAML_INFINITE_RECURSION = """
+filters:
+- include: filters_include1.yaml
+"""
+BAD_INCLUDE_FILTERS_YAML_INVALID_FILENAME = """
+filters:
+- include: include_1.pol
+"""
+BAD_INCLUDE_FILTERS_YAML_INVALID_PATH = """
+filters:
+- include: /tmp/include_2.yaml
+"""
+BAD_INCLUDE_FILTERS_YAML_INVALID_YAML = """
 %INVALID YAML% &unknown
 """
 BAD_YAML_POLICY_NO_HEADER = """
@@ -155,19 +206,7 @@ filters2:
 """
 
 
-def open_good_includes():
-    pass
-
-
-def open_bad_include_infinite_recursion():
-    pass
-
-
-def open_bad_include_empty():
-    pass
-
-
-class YAMLFrontEndTest(absltest.TestCase):
+class YAMLParsePolicyTest(absltest.TestCase):
     def setUp(self):
         self.naming = mock.create_autospec(naming.Naming)
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
@@ -314,6 +353,21 @@ class YAMLFrontEndTest(absltest.TestCase):
         self.assertEqual(mock_warning.call_args[0][0].message, "Ignoring empty policy file.")
         mock_warning.reset_mock()
 
+    def testInvalidYAML(self):
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            yaml_frontend.ParsePolicy(
+                BAD_INCLUDE_YAML_INVALID_YAML,
+                filename="bad_yaml.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "bad_yaml.yaml")
+        self.assertEqual(
+            str(user_message),
+            """Unable to read file as YAML. File=bad_yaml.yaml.""",
+        )
+
     @mock.patch.object(yaml_frontend.policy, "FromBuilder")
     @mock.patch.object(yaml_frontend.logging, "warning")
     def testIncludeEmptySource(self, mock_warning, _mock_raw_to_policy):
@@ -329,34 +383,79 @@ class YAMLFrontEndTest(absltest.TestCase):
         )
         self.assertEqual(mock_warning.call_args[0][0].filename, "include_1.yaml")
 
+    @mock.patch.object(yaml_frontend.policy, "FromBuilder")
+    @mock.patch.object(yaml_frontend.logging, "warning")
+    def testIncludeFiltersEmptySource(self, mock_warning, _mock_raw_to_policy):
+        with mock.patch("builtins.open", mock.mock_open(read_data="")):
+            yaml_frontend.ParsePolicy(
+                GOOD_POLICY_INCLUDE_FILTERS,
+                filename="policy_with_empty_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        self.assertEqual(
+            mock_warning.call_args[0][0].message, "Ignoring empty policy include source."
+        )
+        self.assertEqual(mock_warning.call_args[0][0].filename, "filters_include2.yaml")
+
+    @mock.patch.object(yaml_frontend.policy, "FromBuilder")
+    @mock.patch.object(yaml_frontend.logging, "warning")
+    def testIncludeWrongSourceType(self, mock_warning, _mock_raw_to_policy):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_FILTERS_YAML)):
+            yaml_frontend.ParsePolicy(
+                GOOD_YAML_POLICY_INCLUDE,
+                filename="policy_with_empty_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        self.assertEqual(
+            mock_warning.call_args[0][0].message, "Ignoring empty policy include source."
+        )
+        self.assertEqual(mock_warning.call_args[0][0].filename, "include_1.yaml")
+
+    @mock.patch.object(yaml_frontend.policy, "FromBuilder")
+    @mock.patch.object(yaml_frontend.logging, "warning")
+    def testIncludeFiltersWrongSourceType(self, mock_warning, _mock_raw_to_policy):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_YAML)):
+            yaml_frontend.ParsePolicy(
+                GOOD_POLICY_INCLUDE_FILTERS,
+                filename="policy_with_empty_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        self.assertEqual(
+            mock_warning.call_args[0][0].message, "Ignoring empty policy include source."
+        )
+        self.assertEqual(mock_warning.call_args[0][0].filename, "filters_include2.yaml")
+
     def testIncludeInfiniteRecursion(self):
-        with mock.patch(
-            "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INFINITE_RECURSION)
-        ):
-            with self.assertRaises(yaml_frontend.ExcessiveRecursionError) as arcm:
+        with self.assertRaises(yaml_frontend.ExcessiveRecursionError) as arcm:
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INFINITE_RECURSION)
+            ):
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
-            user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.yaml")
-            self.assertEqual(user_message.line, 3)
-            self.assertEqual(
-                user_message.include_chain,
-                [
-                    ('policy_with_include.yaml', 10),
-                    ('include_1.yaml', 3),
-                    ('include_1.yaml', 3),
-                    ('include_1.yaml', 3),
-                    ('include_1.yaml', 3),
-                    ('include_1.yaml', 3),
-                ],
-            )
-            self.assertEqual(
-                str(user_message),
-                """Excessive recursion: include depth limit of 5 reached. File=include_1.yaml, Line=3.
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "include_1.yaml")
+        self.assertEqual(user_message.line, 3)
+        self.assertEqual(
+            user_message.include_chain,
+            [
+                ('policy_with_include.yaml', 10),
+                ('include_1.yaml', 3),
+                ('include_1.yaml', 3),
+                ('include_1.yaml', 3),
+                ('include_1.yaml', 3),
+                ('include_1.yaml', 3),
+            ],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Excessive recursion: include depth limit of 5 reached. File=include_1.yaml, Line=3.
 Include stack:
 > File='policy_with_include.yaml', Line=10 (Top Level)
 > File='include_1.yaml', Line=3
@@ -364,65 +463,180 @@ Include stack:
 > File='include_1.yaml', Line=3
 > File='include_1.yaml', Line=3
 > File='include_1.yaml', Line=3""",  # noqa: E501
-            )
+        )
+
+    def testIncludeFiltersInfiniteRecursion(self):
+        with self.assertRaises(yaml_frontend.ExcessiveRecursionError) as arcm:
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=GOOD_POLICY_INCLUDE_FILTERS)
+            ):
+                yaml_frontend.ParsePolicy(
+                    GOOD_POLICY_INCLUDE_FILTERS,
+                    filename="policy_with_include.yaml",
+                    base_dir=self.base_dir,
+                    definitions=self.naming,
+                )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "filters_include1.yaml")
+        self.assertEqual(user_message.line, 3)
+        self.assertEqual(
+            user_message.include_chain,
+            [
+                ('policy_with_include.yaml', 3),
+                ('filters_include1.yaml', 3),
+                ('filters_include1.yaml', 3),
+                ('filters_include1.yaml', 3),
+                ('filters_include1.yaml', 3),
+                ('filters_include1.yaml', 3),
+            ],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Excessive recursion: include depth limit of 5 reached. File=filters_include1.yaml, Line=3.
+Include stack:
+> File='policy_with_include.yaml', Line=3 (Top Level)
+> File='filters_include1.yaml', Line=3
+> File='filters_include1.yaml', Line=3
+> File='filters_include1.yaml', Line=3
+> File='filters_include1.yaml', Line=3
+> File='filters_include1.yaml', Line=3""",  # noqa: E501
+        )
 
     def testIncludeInvalidFilename(self):
-        with mock.patch(
-            "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_FILENAME)
-        ):
-            with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_FILENAME)
+            ):
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
-            user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.yaml")
-            self.assertEqual(user_message.line, 3)
-            self.assertEqual(
-                user_message.include_chain,
-                [('policy_with_include.yaml', 10), ('include_1.yaml', 3)],
-            )
-            self.assertEqual(
-                str(user_message),
-                """Policy include source include_1.pol must end in ".yaml". File=include_1.yaml, Line=3.
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "include_1.yaml")
+        self.assertEqual(user_message.line, 3)
+        self.assertEqual(
+            user_message.include_chain,
+            [('policy_with_include.yaml', 10), ('include_1.yaml', 3)],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Policy include source include_1.pol must end in ".yaml". File=include_1.yaml, Line=3.
 Include stack:
 > File='policy_with_include.yaml', Line=10 (Top Level)
 > File='include_1.yaml', Line=3""",  # noqa: E501
+        )
+
+    def testIncludeFiltersInvalidFilename(self):
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            yaml_frontend.ParsePolicy(
+                BAD_INCLUDE_FILTERS_YAML_INVALID_FILENAME,
+                filename="policy_with_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
             )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "policy_with_include.yaml")
+        self.assertEqual(user_message.line, 3)
+        self.assertEqual(
+            user_message.include_chain,
+            [('policy_with_include.yaml', 3)],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Policy include source include_1.pol must end in ".yaml". File=policy_with_include.yaml, Line=3.""",  # noqa: E501
+        )
 
     def testIncludeInvalidPath(self):
-        with mock.patch("builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_PATH)):
-            with self.assertRaises(yaml_frontend.BadIncludePath):
+        with self.assertRaises(yaml_frontend.BadIncludePath):
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_PATH)
+            ):
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
+
+    def testIncludeFiltersInvalidPath(self):
+        with self.assertRaises(yaml_frontend.BadIncludePath) as arcm:
+            yaml_frontend.ParsePolicy(
+                BAD_INCLUDE_FILTERS_YAML_INVALID_PATH,
+                filename="policy_with_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(
+            str(user_message),
+            """Include file cannot be loaded from outside the base directory. File=/tmp/include_2.yaml base_directory=""",  # noqa: E501
+        )
 
     def testIncludeInvalidYAML(self):
-        with mock.patch("builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_YAML)):
-            with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_YAML)
+            ):
                 yaml_frontend.ParsePolicy(
                     GOOD_YAML_POLICY_INCLUDE,
                     filename="policy_with_include.yaml",
                     base_dir=self.base_dir,
                     definitions=self.naming,
                 )
-            user_message = arcm.exception.args[0]
-            self.assertEqual(user_message.filename, "include_1.yaml")
-            self.assertEqual(
-                user_message.include_chain,
-                [('policy_with_include.yaml', 10)],
-            )
-            self.assertEqual(
-                str(user_message),
-                """Unable to read file as YAML. File=include_1.yaml.""",
-            )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "include_1.yaml")
+        self.assertEqual(
+            user_message.include_chain,
+            [('policy_with_include.yaml', 10)],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Unable to read file as YAML. File=include_1.yaml.""",
+        )
 
-    def testBasicPolicyModel(self):
+    def testIncludeFiltersInvalidYAML(self):
+        with self.assertRaises(yaml_frontend.PolicyTypeError) as arcm:
+            with mock.patch(
+                "builtins.open", mock.mock_open(read_data=BAD_INCLUDE_YAML_INVALID_YAML)
+            ):
+                yaml_frontend.ParsePolicy(
+                    GOOD_POLICY_INCLUDE_FILTERS,
+                    filename="policy_with_include.yaml",
+                    base_dir=self.base_dir,
+                    definitions=self.naming,
+                )
+        user_message = arcm.exception.args[0]
+        self.assertEqual(user_message.filename, "filters_include1.yaml")
+        self.assertEqual(
+            user_message.include_chain,
+            [('policy_with_include.yaml', 3)],
+        )
+        self.assertEqual(
+            str(user_message),
+            """Unable to read file as YAML. File=filters_include1.yaml.""",
+        )
+
+    def testSkipIncludeFile(self):
+        pol = yaml_frontend.ParsePolicy(
+            GOOD_INCLUDE_YAML,
+            filename="terms_include.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        self.assertEqual(pol, None)
+
+    def testSkipIncludeFileFilter(self):
+        pol = yaml_frontend.ParsePolicy(
+            GOOD_INCLUDE_FILTERS_YAML_ONLY,
+            filename="filters_include.yaml",
+            base_dir=self.base_dir,
+            definitions=self.naming,
+        )
+        self.assertEqual(pol, None)
+
+    def testParsePolicy(self):
         pol = yaml_frontend.ParsePolicy(
             GOOD_YAML_POLICY_BASIC,
             filename="policy_basic.yaml",
@@ -439,9 +653,66 @@ Include stack:
   action: ['accept']]}"""
         self.assertEqual(str(pol), expected_pol)
 
+    def testParsePolicyInclude(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_YAML)):
+            pol = yaml_frontend.ParsePolicy(
+                GOOD_YAML_POLICY_INCLUDE,
+                filename="policy_include.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        expected_pol = """Policy: {Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: deny-to-bogons
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}"""
+        self.assertEqual(str(pol), expected_pol)
+
+    def testParsePolicyIncludeFilter(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_FILTERS_YAML)):
+            pol = yaml_frontend.ParsePolicy(
+                GOOD_POLICY_INCLUDE_FILTERS,
+                filename="policy_include_filters.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        expected_pol = """Policy: {Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']], Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}"""
+        self.assertEqual(str(pol), expected_pol)
+
+    def testParsePolicyIncludeOnlyFilter(self):
+        with mock.patch("builtins.open", mock.mock_open(read_data=GOOD_INCLUDE_FILTERS_YAML_ONLY)):
+            pol = yaml_frontend.ParsePolicy(
+                GOOD_POLICY_INCLUDE_FILTERS,
+                filename="policy_include_filters.yaml",
+                base_dir=self.base_dir,
+                definitions=self.naming,
+            )
+        expected_pol = """Policy: {Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']], Target[ipset], Comments [], Apply groups: [], except: []:[ name: deny-to-reserved
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['deny'],  name: allow-web-to-mail
+  source_address: [IPv4('10.1.1.1/32')]
+  destination_address: [IPv4('10.1.1.1/32')]
+  action: ['accept']]}"""
+        self.assertEqual(str(pol), expected_pol)
+
 
 if __name__ == '__main__':
     absltest.main()
-
-# TODO(jb) try MULTI_DOC example
-# TODO(jb) seems like buildPolicy crashes when targets is not recognized, should raise

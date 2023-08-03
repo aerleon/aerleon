@@ -52,6 +52,11 @@ header {
   target:: juniper test-filter bridge
 }
 """
+GOOD_HEADER_ETHERNET_SWITCHING = """
+header {
+  target:: juniper test-filter ethernet-switching
+}
+"""
 GOOD_DSMO_HEADER = """
 header {
   target:: juniper test-filter enable_dsmo
@@ -783,6 +788,22 @@ class JuniperTest(parameterized.TestCase):
         print(output)
 
     @capture.stdout
+    def testEthernetSwitchingFilterType(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming.GetServiceByProto.return_value = ['25']
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_ETHERNET_SWITCHING + GOOD_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(jcl)
+        self.assertIn('ip-protocol tcp;', output, output)
+        self.assertNotIn(' destination-address {', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
+        print(output)
+
+    @capture.stdout
     def testCommentShrinking(self):
         long_comment = ' this is a very descriptive comment ' * 10
         expected = (
@@ -1228,6 +1249,21 @@ class JuniperTest(parameterized.TestCase):
         print(output)
 
     @capture.stdout
+    def testSkipTerm(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1')]
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_12, self.naming), EXP_INFO
+        )
+        output = str(jcl)
+        self.assertIn('test-filter4', output, output)
+        self.assertIn('127.0.0.1', output, output)
+        self.assertIn('test-filter6', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('LOCALHOST')
+        print(output)
+
+    @capture.stdout
     def testBridgeFilterInetType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1'), nacaddr.IPv6('::1/128')]
 
@@ -1410,6 +1446,21 @@ class JuniperTest(parameterized.TestCase):
 
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
         print(output)
+
+    @mock.patch.object(juniper.logging, 'warning')
+    def testSkippedTermWarning(self, mock_warning):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1')]
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_12, self.naming), EXP_INFO
+        )
+        str(jcl)
+
+        mock_warning.assert_called_once_with(
+            'Term good-term-12 will not be rendered,'
+            ' as it has source address match specified but'
+            ' no source addresses of inet6 address family are present.'
+        )
 
     @mock.patch.object(juniper.logging, 'warning')
     def testIcmpv6InetMismatch(self, mock_warning):
@@ -2063,6 +2114,7 @@ class JuniperYAMLTest(JuniperTest):
             GOOD_HEADER_V6=YAML_GOOD_HEADER_V6,
             GOOD_HEADER_MIXED=YAML_GOOD_HEADER_MIXED,
             GOOD_HEADER_BRIDGE=YAML_GOOD_HEADER_BRIDGE,
+            GOOD_HEADER_ETHERNET_SWITCHING=YAML_GOOD_HEADER_ETHERNET_SWITCHING,
             GOOD_DSMO_HEADER=YAML_GOOD_DSMO_HEADER,
             GOOD_FILTER_ENHANCED_MODE_HEADER=YAML_GOOD_FILTER_ENHANCED_MODE_HEADER,
             GOOD_NOVERBOSE_V4_HEADER=YAML_GOOD_NOVERBOSE_V4_HEADER,
@@ -2183,6 +2235,13 @@ filters:
 - header:
     targets:
       juniper: test-filter bridge
+  terms:
+"""
+YAML_GOOD_HEADER_ETHERNET_SWITCHING = """
+filters:
+- header:
+    targets:
+      juniper: test-filter ethernet-switching
   terms:
 """
 YAML_GOOD_DSMO_HEADER = """

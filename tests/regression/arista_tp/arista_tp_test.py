@@ -43,6 +43,11 @@ header {
   target:: arista_tp test-filter inet6
 }
 """
+GOOD_MIXED_HEADER = """
+header {
+  target:: arista_tp test-filter mixed
+}
+"""
 GOOD_NOVERBOSE_MIXED_HEADER = """
 header {
   target:: arista_tp test-filter mixed noverbose
@@ -900,6 +905,24 @@ class AristaTpTest(absltest.TestCase):
         )
         output = str(atp)
         self.assertIn(" log\n", output)
+        print(atp)
+
+    @mock.patch.object(arista_tp.logging, "warning")
+    @capture.stdout
+    def testSkipTermAF(self, mock_warning):
+        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
+        self.naming.GetServiceByProto.return_value = ["25"]
+
+        atp = arista_tp.AristaTrafficPolicy(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
+        )
+        str(atp)
+
+        mock_warning.assert_called_once_with(
+            "Term good-term-2 will not be rendered,"
+            " as it has destination address match specified"
+            " but no destination addresses of inet6 address family are present."
+        )
         print(atp)
 
     @mock.patch.object(arista_tp.logging, "warning")

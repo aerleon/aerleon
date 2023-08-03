@@ -1,29 +1,41 @@
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv6": {
+            "config": {
+              "destination-address": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 10
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-mixed",
+      "type": "ACL_MIXED"
     },
-    "sequence-id": 5
-  },
-  {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
-    },
-    "ipv6": {
-      "config": {
-        "destination-address": "2001:4860:8000::5/128"
-      }
-    },
-    "sequence-id": 10
+    "name": "good-name-mixed",
+    "type": "ACL_MIXED"
   }
 ]
 
