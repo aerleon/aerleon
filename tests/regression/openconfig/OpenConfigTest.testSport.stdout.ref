@@ -1,21 +1,33 @@
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "source-port": 53
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "protocol": 6
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "source-port": 53
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 

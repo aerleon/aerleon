@@ -1249,6 +1249,21 @@ class JuniperTest(parameterized.TestCase):
         print(output)
 
     @capture.stdout
+    def testSkipTerm(self):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1')]
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_12, self.naming), EXP_INFO
+        )
+        output = str(jcl)
+        self.assertIn('test-filter4', output, output)
+        self.assertIn('127.0.0.1', output, output)
+        self.assertIn('test-filter6', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('LOCALHOST')
+        print(output)
+
+    @capture.stdout
     def testBridgeFilterInetType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1'), nacaddr.IPv6('::1/128')]
 
@@ -1431,6 +1446,21 @@ class JuniperTest(parameterized.TestCase):
 
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
         print(output)
+
+    @mock.patch.object(juniper.logging, 'warning')
+    def testSkippedTermWarning(self, mock_warning):
+        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1')]
+
+        jcl = juniper.Juniper(
+            policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_12, self.naming), EXP_INFO
+        )
+        str(jcl)
+
+        mock_warning.assert_called_once_with(
+            'Term good-term-12 will not be rendered,'
+            ' as it has source address match specified but'
+            ' no source addresses of inet6 address family are present.'
+        )
 
     @mock.patch.object(juniper.logging, 'warning')
     def testIcmpv6InetMismatch(self, mock_warning):

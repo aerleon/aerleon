@@ -150,11 +150,14 @@ class Term(aclgenerator.Term):
         },
     }
 
-    def __init__(self, term: policy.Term, term_type: str, noverbose: bool) -> None:
+    def __init__(
+        self, term: policy.Term, term_type: str, noverbose: bool, filter_type: str = None
+    ) -> None:
         super().__init__(term)
         self.term = term
         self.term_type = term_type  # drives the address-family
         self.noverbose = noverbose
+        self.filter_type = filter_type
 
         if term_type not in self._TERM_TYPE:
             raise ValueError("unknown filter type: %s" % term_type)
@@ -260,11 +263,12 @@ class Term(aclgenerator.Term):
 
                 term_block.append([MATCH_INDENT, src_str, False])
             elif self.term.source_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction="source", af=self.term_type
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction="source", af=self.term_type
+                        )
                     )
-                )
                 return ""
 
             # destination address
@@ -283,11 +287,12 @@ class Term(aclgenerator.Term):
                 term_block.append([MATCH_INDENT, dst_str, False])
 
             elif self.term.destination_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction="destination", af=self.term_type
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction="destination", af=self.term_type
+                        )
                     )
-                )
                 return ""
 
             if self.term.source_prefix:
@@ -905,7 +910,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                         term.counter = re.sub(r"\.", "-", str(term.counter))
                         policy_counters.add(term.counter)
 
-                    new_terms.append(self._TERM(term, ft, noverbose))
+                    new_terms.append(self._TERM(term, ft, noverbose, filter_type=filter_type))
 
             self.arista_traffic_policies.append(
                 (

@@ -208,7 +208,7 @@ class ObjectGroup:
         # for using cisco, which has decided to implement its own meta language.
 
         # Create network object-groups
-        for name, ips in self.addressbook.addressbook[''].items():
+        for zone, name, ips, _ in self.addressbook.Walk():
             for version in (4, 6):
                 vips = [i for i in ips if i.version == version]
                 if vips:
@@ -426,6 +426,7 @@ class Term(aclgenerator.Term):
         term_remark: bool = True,
         platform: str = 'cisco',
         verbose: bool = True,
+        filter_type: str = None,
     ) -> None:
         self.term = term
         self.proto_int = proto_int
@@ -434,6 +435,7 @@ class Term(aclgenerator.Term):
         self.term_remark = term_remark
         self.platform = platform
         self.verbose = verbose
+        self.filter_type = filter_type
         # Our caller should have already verified the address family.
         assert af in (4, 6)
         self.af = af
@@ -518,11 +520,12 @@ class Term(aclgenerator.Term):
             if source_address_exclude:
                 source_address = nacaddr.ExcludeAddrs(source_address, source_address_exclude)
             if not source_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction='source', af=self.text_af
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction='source', af=self.text_af
+                        )
                     )
-                )
                 return ''
             if self.enable_dsmo:
                 source_address = summarizer.Summarize(source_address)
@@ -542,11 +545,12 @@ class Term(aclgenerator.Term):
                     destination_address, destination_address_exclude
                 )
             if not destination_address:
-                logging.warning(
-                    self.NO_AF_LOG_ADDR.substitute(
-                        term=self.term.name, direction='destination', af=self.text_af
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_ADDR.substitute(
+                            term=self.term.name, direction='destination', af=self.text_af
+                        )
                     )
-                )
                 return ''
             if self.enable_dsmo:
                 destination_address = summarizer.Summarize(destination_address)
@@ -971,6 +975,7 @@ class Cisco(aclgenerator.ACLGenerator):
                                 term_remark=self._TERM_REMARK,
                                 platform=self._PLATFORM,
                                 verbose=self.verbose,
+                                filter_type=filter_type,
                             )
                         )
                     elif next_filter == 'object-group':
@@ -984,6 +989,7 @@ class Cisco(aclgenerator.ACLGenerator):
                                 proto_int=self._PROTO_INT,
                                 platform=self._PLATFORM,
                                 verbose=self.verbose,
+                                filter_type=filter_type,
                             )
                         )
 
@@ -1085,7 +1091,7 @@ class Cisco(aclgenerator.ACLGenerator):
                     if term_str:
                         target.append(term_str)
 
-            if obj_target.addressbook.addressbook.keys():
+            if obj_target.addressbook.GetZoneNames():
                 target = [str(obj_target)] + target
             # ensure that the header is always first
             target = target_header + target
