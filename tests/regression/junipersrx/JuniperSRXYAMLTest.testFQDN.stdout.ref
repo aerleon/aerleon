@@ -1,11 +1,11 @@
 security {
     replace: address-book {
         global {
-                address GOOGLE_DNS_0 {
+                address GOOGLE_DNS_FQDN_0 {
                     dns-name dns.google.com;
                 }
-                address-set GOOGLE_DNS {
-                    address GOOGLE_DNS_0;
+                address-set GOOGLE_DNS_FQDN {
+                    address GOOGLE_DNS_FQDN_0;
                 }
         }
     }
@@ -22,7 +22,7 @@ security {
             policy fqdn-term {
                 match {
                     source-address any;
-                    destination-address [ GOOGLE_DNS ];
+                    destination-address [ GOOGLE_DNS_FQDN ];
                     application any;
                 }
                 then {
@@ -36,11 +36,11 @@ delete: applications;
 security {
     replace: address-book {
         global {
-                address GOOGLE_DNS_0 {
+                address GOOGLE_DNS_FQDN_0 {
                     dns-name dns.google.com;
                 }
-                address-set GOOGLE_DNS {
-                    address GOOGLE_DNS_0;
+                address-set GOOGLE_DNS_FQDN {
+                    address GOOGLE_DNS_FQDN_0;
                 }
         }
     }
@@ -56,7 +56,7 @@ security {
         from-zone trust to-zone untrust {
             policy fqdn-term {
                 match {
-                    source-address [ GOOGLE_DNS ];
+                    source-address [ GOOGLE_DNS_FQDN ];
                     destination-address any;
                     application any;
                 }

@@ -33,6 +33,16 @@ security {
                     permit;
                 }
             }
+            policy goog-ip-term {
+                match {
+                    source-address any;
+                    destination-address [ GOOGLE_DNS ];
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
         }
     }
 }

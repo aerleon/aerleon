@@ -14,44 +14,87 @@ class Addressbook:
         self._ip_addressbook = collections.OrderedDict()
 
     def GetZoneNames(self) -> List:
+        """Get each zone name contained within the address book.
+
+        Returns:
+          A list containing the names of each zone within the addressbook.
+        """
         return list(self._ip_addressbook.keys())
 
-    def WalkAddressBook(self, zone_filter=None):
+    def Walk(self, zone=None):
+        """Walks the addressbook by each zone and address/fqdns within.
 
-        return self._walk(zone_filter)
+        Args:
+          zone_filter: A specific zone to walk rather than the entire addressbook.
 
-    def _walk(self, zone_filter=None):
-        for zone in self._ip_addressbook:
-            if zone_filter and zone != zone_filter:
+        Yields:
+          izone: The zone of the addressbook.
+          group: The token of a set of address objects.
+          ips: A list of nacaddr objects.
+          fqdns: A list of FQDN objects.
+        """
+        for izone in self._ip_addressbook:
+            if zone and izone != zone:
                 continue
-            groups = set(self._ip_addressbook[zone].keys())
-            groups.update(list(self._fqdn_addressbook[zone].keys()))
+            groups = set(self._ip_addressbook[izone].keys())
+            groups.update(list(self._fqdn_addressbook[izone].keys()))
             for group in sorted(groups):
                 ips = []
                 fqdns = []
-                if group in self._ip_addressbook[zone]:
-                    ips = self._ip_addressbook[zone][group]
-                if group in self._fqdn_addressbook[zone]:
-                    fqdns = self._fqdn_addressbook[zone][group]
-                yield zone, group, ips, fqdns
+                if group in self._ip_addressbook[izone]:
+                    ips = self._ip_addressbook[izone][group]
+                if group in self._fqdn_addressbook[izone]:
+                    fqdns = self._fqdn_addressbook[izone][group]
+                yield izone, group, ips, fqdns
 
     def GetFQDN(self, zone: str, name: str):
+        """Gets an FQDN entry from the addressbook.
+        Args:
+          zone: The zone to retrieve from.
+          name: The name of the address object to retrieve.
+        Returns:
+          A list of FQDN objects.
+        """
         return self._fqdn_addressbook[zone][name]
 
     def GetAddressTokensInZone(self, zone: str):
-        return [i for i in self._ip_addressbook['zone']]
+        """Gets all address tokens in a zone.
+        Args:
+          zone: The zone to retrieve from.
+        Returns:
+          A list of address tokens."""
+        return [i for i in self._ip_addressbook[zone]]
 
     def GetFQDNTokensInZone(self, zone: str):
-        return [i for i in self._fqdn_addressbook['zone']]
+        """Gets all FQDN tokens in a zone.
+        Args:
+          zone: The zone to retrieve from.
+        Returns:
+          A list of FQDN tokens
+        """
+        return [i for i in self._fqdn_addressbook[zone]]
 
-    def AddFQDNs(self, zone: str, fqdn_list: List[FQDN]):
+    def AddFQDNs(self, zone: str, fqdn_list: List[FQDN], suffix=''):
+        """Adds a list of FQDNs to the addressbook.
+        Args:
+          zone: The zone in which to add the FQDNs.
+          fqdn_list: A list of FQDN objects.
+          suffix: An optional suffix to add to the token.
+        """
         if zone not in self._fqdn_addressbook:
             self._ip_addressbook[zone] = collections.defaultdict(list)
             self._fqdn_addressbook[zone] = collections.defaultdict(list)
         for fqdn in fqdn_list:
-            self._fqdn_addressbook[zone][fqdn.parent_token].append(fqdn)
+            self._fqdn_addressbook[zone][fqdn.parent_token + suffix].append(fqdn)
 
     def GetAddress(self, zone: str, name: str):
+        """Gets an Nacaddr entry from the addressbook.
+        Args:
+          zone: The zone to retrieve from.
+          name: The name of the address object to retrieve.
+        Returns:
+          A list of Nacaddr objects.
+        """
         return self._ip_addressbook[zone][name]
 
     def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):

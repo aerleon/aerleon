@@ -17,6 +17,20 @@ class ACLGeneratorTest(absltest.TestCase):
             self.ab.GetFQDN('zone', 'FOO'), [FQDN(fqdn='foo.com', comment='', token='FOO')]
         )
 
+    def testMultipleZones(self):
+        foo = FQDN('foo.com', 'FOO')
+        self.ab.AddFQDNs('zone', [foo])
+        self.ab.AddFQDNs('zone2', [foo])
+        self.assertEqual(['zone', 'zone2'], self.ab.GetZoneNames())
+
+    def testGetTokens(self):
+        foo = FQDN('foo.com', 'FOO')
+        bar = IPv4('1.1.1.1/32', '', 'BAR')
+        self.ab.AddFQDNs('zone', [foo])
+        self.ab.AddAddresses('zone2', [bar])
+        self.assertEqual(['FOO'], self.ab.GetFQDNTokensInZone('zone'))
+        self.assertEqual(['BAR'], self.ab.GetAddressTokensInZone('zone2'))
+
     def testAddresses(self):
         foo = IPv4('1.1.1.1/32', '', 'FOO')
         self.ab.AddAddresses('zone', [foo])
@@ -48,6 +62,6 @@ class ACLGeneratorTest(absltest.TestCase):
             ['untrust', 'LOL', [IPv4('2.2.2.1/32', '', 'LOL'), IPv4('2.2.2.2/32', '', 'LOL')], []],
         ]
         count = 0
-        for zone, group, ips, fqdns in self.ab.WalkAddressBook():
+        for zone, group, ips, fqdns in self.ab.Walk():
             self.assertEqual([zone, group, ips, fqdns], expected[count])
             count += 1

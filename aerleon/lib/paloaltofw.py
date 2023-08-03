@@ -1109,7 +1109,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         addr_group = etree.SubElement(vsys_entry, "address-group")
 
         if not no_addr_obj:
-            for _, token, ips, _ in self.addressbook.WalkAddressBook(''):
+            for _, token, ips, _ in self.addressbook.Walk(''):
                 entry = etree.SubElement(addr_group, "entry", {"name": token})
                 static = etree.SubElement(entry, "static")
                 count = 0
@@ -1122,7 +1122,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         addr = etree.SubElement(vsys_entry, "address")
         if not no_addr_obj:
 
-            for _, token, ips, _ in self.addressbook.WalkAddressBook(''):
+            for _, token, ips, _ in self.addressbook.Walk(''):
                 count = 0
                 for ip in ips:
                     entry = etree.SubElement(addr, "entry", {"name": f'{token}_{count}'})

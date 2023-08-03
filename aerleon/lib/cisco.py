@@ -208,10 +208,9 @@ class ObjectGroup:
         # for using cisco, which has decided to implement its own meta language.
 
         # Create network object-groups
-        for zone, name, ips, _ in self.addressbook.WalkAddressBook():
+        for zone, name, ips, _ in self.addressbook.Walk():
             for version in (4, 6):
                 vips = [i for i in ips if i.version == version]
-                vips = nacaddr.CollapseAddrList(vips)
                 if vips:
 
                     ret_str.append(f'object-group network ipv{version} {name}')

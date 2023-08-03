@@ -28,6 +28,7 @@ from absl import logging
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 
 ICMP_TERM_LIMIT = 8
+FQDNSUFFIX = '_FQDN'
 
 
 def JunipersrxList(name, data):
@@ -133,30 +134,20 @@ class Term(aclgenerator.Term):
         ret_str.IndentAppend(3, 'policy ' + self.term.name + ' {')
         ret_str.IndentAppend(4, 'match {')
         # SOURCE-ADDRESS
-        if self.term.source_address:
-            saddr_check = set()
-            for saddr in self.term.source_address:
-                saddr_check.add(saddr.parent_token)
-            saddr_check = sorted(saddr_check)
-            ret_str.IndentAppend(5, JunipersrxList('source-address', saddr_check))
-        elif self.term.source_fqdn:
-            sfqdn = sorted(set([i.parent_token for i in self.term.source_fqdn]))
-            ret_str.IndentAppend(5, JunipersrxList('source-address', sfqdn))
+        saddrs = sorted(set([i.parent_token for i in self.term.source_address]))
+        saddrs.extend(sorted(set([i.parent_token + FQDNSUFFIX for i in self.term.source_fqdn])))
+        if saddrs:
+            ret_str.IndentAppend(5, JunipersrxList('source-address', saddrs))
         else:
             ret_str.IndentAppend(5, 'source-address any;')
 
         # DESTINATION-ADDRESS
-        if self.term.destination_address:
-            daddr_check = []
-            for daddr in self.term.destination_address:
-                daddr_check.append(daddr.parent_token)
-            daddr_check = set(daddr_check)
-            daddr_check = list(daddr_check)
-            daddr_check.sort()
-            ret_str.IndentAppend(5, JunipersrxList('destination-address', daddr_check))
-        elif self.term.destination_fqdn:
-            dfqdn = sorted(set([i.parent_token for i in self.term.destination_fqdn]))
-            ret_str.IndentAppend(5, JunipersrxList('destination-address', dfqdn))
+        daddrs = sorted(set([i.parent_token for i in self.term.destination_address]))
+        daddrs.extend(
+            sorted(set([i.parent_token + FQDNSUFFIX for i in self.term.destination_fqdn]))
+        )
+        if daddrs:
+            ret_str.IndentAppend(5, JunipersrxList('destination-address', daddrs))
         else:
             ret_str.IndentAppend(5, 'destination-address any;')
 
@@ -560,7 +551,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     if term.source_address:
                         self.addressbook.AddAddresses(self.from_zone, term.source_address)
                 if term.source_fqdn:
-                    self.addressbook.AddFQDNs(self.from_zone, term.source_fqdn)
+                    self.addressbook.AddFQDNs(self.from_zone, term.source_fqdn, suffix=FQDNSUFFIX)
 
                 # Filter destination_address based on filter_type & add to address book
                 if term.destination_address:
@@ -577,7 +568,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     if term.destination_address:
                         self.addressbook.AddAddresses(self.to_zone, term.destination_address)
                 if term.destination_fqdn:
-                    self.addressbook.AddFQDNs(self.to_zone, term.destination_fqdn)
+                    self.addressbook.AddFQDNs(
+                        self.to_zone, term.destination_fqdn, suffix=FQDNSUFFIX
+                    )
                 new_term = Term(term, self.from_zone, self.to_zone, self.expresspath, verbose)
                 new_terms.append(new_term)
 
@@ -746,13 +739,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(1, 'replace: address-book {')
             target.IndentAppend(2, 'global {')
             global_addressbook = addressbook.Addressbook()
-            for zone, _, ips, fqdns in self.addressbook.WalkAddressBook():
+            for zone, _, ips, fqdns in self.addressbook.Walk():
                 global_addressbook.AddAddresses('global', ips)
-                global_addressbook.AddFQDNs('global', fqdns)
+                global_addressbook.AddFQDNs('global', fqdns, suffix=FQDNSUFFIX)
             if 'global' in global_addressbook.GetZoneNames():
                 addrs = []
                 addr_sets = []
-                for _, group, ips, fqdns in global_addressbook.WalkAddressBook('global'):
+                for _, group, ips, fqdns in global_addressbook.Walk('global'):
                     addrs.extend(self._GenerateAddresses(group, ips, fqdns))
                     addr_sets.extend(self._GenerateAddressSets(group, ips, fqdns))
                 target.extend(addrs)
@@ -767,7 +760,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             for zone in zones:
                 target.IndentAppend(2, 'security-zone ' + zone + ' {')
                 target.IndentAppend(3, 'replace: address-book {')
-                for _, group, ips, fqdns in self.addressbook.WalkAddressBook(zone):
+                for _, group, ips, fqdns in self.addressbook.Walk(zone):
                     target.extend(self._GenerateAddresses(group, ips, fqdns))
                     target.extend(self._GenerateAddressSets(group, ips, fqdns))
                 target.IndentAppend(3, '}')
