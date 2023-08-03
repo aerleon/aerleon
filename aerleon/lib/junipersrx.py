@@ -143,8 +143,7 @@ class Term(aclgenerator.Term):
 
         # DESTINATION-ADDRESS
         daddrs = {i.parent_token for i in self.term.destination_address}
-        daddrs.update({i.parent_token + FQDNSUFFIX for i in self.term.destination_fqdn}
-        )
+        daddrs.update({i.parent_token + FQDNSUFFIX for i in self.term.destination_fqdn})
         if daddrs:
             ret_str.IndentAppend(5, JunipersrxList('destination-address', sorted(daddrs)))
         else:
