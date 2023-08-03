@@ -134,20 +134,19 @@ class Term(aclgenerator.Term):
         ret_str.IndentAppend(3, 'policy ' + self.term.name + ' {')
         ret_str.IndentAppend(4, 'match {')
         # SOURCE-ADDRESS
-        saddrs = sorted(set([i.parent_token for i in self.term.source_address]))
-        saddrs.extend(sorted(set([i.parent_token + FQDNSUFFIX for i in self.term.source_fqdn])))
+        saddrs = {i.parent_token for i in self.term.source_address}
+        saddrs.update({i.parent_token + FQDNSUFFIX for i in self.term.source_fqdn})
         if saddrs:
-            ret_str.IndentAppend(5, JunipersrxList('source-address', saddrs))
+            ret_str.IndentAppend(5, JunipersrxList('source-address', sorted(saddrs)))
         else:
             ret_str.IndentAppend(5, 'source-address any;')
 
         # DESTINATION-ADDRESS
-        daddrs = sorted(set([i.parent_token for i in self.term.destination_address]))
-        daddrs.extend(
-            sorted(set([i.parent_token + FQDNSUFFIX for i in self.term.destination_fqdn]))
+        daddrs = {i.parent_token for i in self.term.destination_address}
+        daddrs.update({i.parent_token + FQDNSUFFIX for i in self.term.destination_fqdn}
         )
         if daddrs:
-            ret_str.IndentAppend(5, JunipersrxList('destination-address', daddrs))
+            ret_str.IndentAppend(5, JunipersrxList('destination-address', sorted(daddrs)))
         else:
             ret_str.IndentAppend(5, 'destination-address any;')
 
