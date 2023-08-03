@@ -1,0 +1,39 @@
+security {
+    replace: address-book {
+        global {
+                address GOOGLE_DNS_0 8.8.8.8/32;
+                address GOOGLE_DNS_FQDN_0 {
+                    dns-name dns.google.com;
+                }
+                address-set GOOGLE_DNS {
+                    address GOOGLE_DNS_0;
+                }
+                address-set GOOGLE_DNS_FQDN {
+                    address GOOGLE_DNS_FQDN_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy fqdn-term {
+                match {
+                    source-address any;
+                    destination-address [ GOOGLE_DNS GOOGLE_DNS_FQDN ];
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+delete: applications;

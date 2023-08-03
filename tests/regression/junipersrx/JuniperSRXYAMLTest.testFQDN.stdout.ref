@@ -1,0 +1,70 @@
+security {
+    replace: address-book {
+        global {
+                address GOOGLE_DNS_FQDN_0 {
+                    dns-name dns.google.com;
+                }
+                address-set GOOGLE_DNS_FQDN {
+                    address GOOGLE_DNS_FQDN_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy fqdn-term {
+                match {
+                    source-address any;
+                    destination-address [ GOOGLE_DNS_FQDN ];
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+delete: applications;
+security {
+    replace: address-book {
+        global {
+                address GOOGLE_DNS_FQDN_0 {
+                    dns-name dns.google.com;
+                }
+                address-set GOOGLE_DNS_FQDN {
+                    address GOOGLE_DNS_FQDN_0;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        This is a test acl with a comment
+        */
+        from-zone trust to-zone untrust {
+            policy fqdn-term {
+                match {
+                    source-address [ GOOGLE_DNS_FQDN ];
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+}
+delete: applications;
