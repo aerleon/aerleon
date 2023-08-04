@@ -145,7 +145,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
                 t = SRLTerm(term, term_af)
                 for rule in t.ConvertToDict():
                     self.total_rule_count += 1
-                    rule['sequence-id'] = self.total_rule_count * 5
+                    rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
                     srl_acl_entries.append(rule)
         ip_filter = {
             'ipv4-filter'
