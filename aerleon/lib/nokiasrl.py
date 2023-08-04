@@ -30,9 +30,22 @@ if sys.version_info < (3, 8):
 else:
     from typing import TypedDict
 
+IPPrefix = TypedDict("IPPrefix", {"prefix": str})
+PortRange = TypedDict("PortRange", {"start": int, "end": int})
+Port = TypedDict("Port", {"value": int, "range": PortRange})
 
 Match = TypedDict(
-    "Match", {"fragment": bool, "first-fragment": bool, "protocol": int, "next-header": int}
+    "Match",
+    {
+        "fragment": bool,
+        "first-fragment": bool,
+        "protocol": int,
+        "next-header": int,
+        "source-ip": IPPrefix,
+        "destination-ip": IPPrefix,
+        "source-port": Port,
+        "destination-port": Port,
+    },
 )
 Action = TypedDict("Action", {"accept": None, "drop": None})
 ACLEntry = TypedDict(
