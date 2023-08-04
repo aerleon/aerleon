@@ -1,5 +1,4 @@
-# Copyright 2021 Google Inc. All Rights Reserved.
-# Modifications Copyright 2022-2023 Aerleon Project Authors.
+# Copyright 2023 Nokia All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -105,7 +104,6 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
     _PLATFORM = 'nokiasrl'
     SUFFIX = '.srl_acl'
-    _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
