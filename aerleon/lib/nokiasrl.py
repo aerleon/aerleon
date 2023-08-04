@@ -84,11 +84,6 @@ class Term(aclgenerator.Term):
     # common names are more convenient in a policy file.
     _ALLOW_PROTO_NAME = frozenset(['tcp', 'udp', 'icmp', 'esp', 'ah', 'ipip', 'sctp'])
 
-    AF_RENAME = {
-        4: 'ipv4',
-        6: 'ipv6',
-    }
-
     def __init__(self, term: Term, inet_version: str = 'inet') -> None:
         super().__init__(term)
         self.term = term
@@ -198,6 +193,7 @@ class Term(aclgenerator.Term):
                                 }
 
                         # Protocol
+                        field_name = "protocol" if self.inet_version == "inet" else "next-header"
                         for proto in protos:
                             if isinstance(proto, str):
                                 if proto != 'none':
@@ -207,11 +203,11 @@ class Term(aclgenerator.Term):
                                         raise SRLinuxACLError(
                                             'Protocol %s unknown. Use an integer.', proto
                                         )
-                                    _match['protocol'] = proto_num
+                                    _match[field_name] = proto_num
                                 rules.append(copy.deepcopy(ace_dict))
                             else:
                                 proto_num = proto
-                                _match['protocol'] = proto_num
+                                _match[field_name] = proto_num
                                 # This is the business end of ace explosion.
                                 # A dict is a reference type, so deepcopy is actually required.
                                 rules.append(copy.deepcopy(ace_dict))
