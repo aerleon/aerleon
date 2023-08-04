@@ -19,17 +19,11 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 
 """
 
-import copy
-import json
 import sys
-from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple
 
-from absl import logging
-
-from aerleon.lib import aclgenerator
 from aerleon.lib import openconfig
-from aerleon.lib.policy import Policy, Term
+from aerleon.lib.policy import Term
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
