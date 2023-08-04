@@ -289,13 +289,6 @@ header {
 }
 """
 
-GOOD_HEADER_MIXED = """
-header {
-  comment:: "The general policy comment."
-  target:: nokiasrl good-name-mixed mixed
-}
-"""
-
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
 EXP_INFO = 2

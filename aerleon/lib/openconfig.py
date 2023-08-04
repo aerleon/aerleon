@@ -70,12 +70,14 @@ ACLEntry = TypedDict(
 )
 aclEntries = TypedDict("aclEntries", {"acl-entry": List[ACLEntry]})
 ACLSetConfig = TypedDict("ACLSetConfig", {"name": str, "type": str})
-ACLSet = TypedDict(
-    "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
-)
 
 
-class Term(aclgenerator.Term):
+# ACLSet = TypedDict(
+#     "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
+# )
+
+
+class OCTerm(aclgenerator.Term):
     """Creates the term for the OpenConfig firewall."""
 
     ACTION_MAP = {'accept': 'ACCEPT', 'deny': 'DROP', 'reject': 'REJECT'}
@@ -126,10 +128,7 @@ class Term(aclgenerator.Term):
         family = self.AF_RENAME[term_af]
 
         # Action
-        action = self.ACTION_MAP[self.term.action[0]]
-        term_dict['actions'] = {}
-        term_dict['actions']['config'] = {}
-        term_dict['actions']['config']['forwarding-action'] = action
+        self.SetAction(term_dict)
 
         # Ballot fatigue handling for 'any'.
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
@@ -153,38 +152,30 @@ class Term(aclgenerator.Term):
             protos = ['none']
 
         ace_dict = copy.deepcopy(term_dict)
+
+        # Options
+        self.SetOptions(ace_dict)
+
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
-                ace_dict[family]['config']['source-address'] = str(saddr)
+                self.SetSourceAddress(ace_dict, family, str(saddr))
 
             # Destination Addresses
             for daddr in daddrs:
                 if daddr != 'any':
-                    ace_dict[family]['config']['destination-address'] = str(daddr)
+                    self.SetDestAddress(ace_dict, family, str(daddr))
 
                 # Source Port
                 for start, end in sports:
                     # 'any' starts and ends with zero.
                     if not start == end == 0:
-                        if start == end:
-                            ace_dict['transport']['config']['source-port'] = int(start)
-                        else:
-                            ace_dict['transport']['config']['source-port'] = '%d..%d' % (
-                                start,
-                                end,
-                            )
+                        self.SetSourcePorts(ace_dict, start, end)
 
                     # Destination Port
                     for start, end in dports:
                         if not start == end == 0:
-                            if start == end:
-                                ace_dict['transport']['config']['destination-port'] = int(start)
-                            else:
-                                ace_dict['transport']['config']['destination-port'] = '%d..%d' % (
-                                    start,
-                                    end,
-                                )
+                            self.SetDestPorts(ace_dict, start, end)
 
                         # Protocol
                         for proto in protos:
@@ -196,16 +187,51 @@ class Term(aclgenerator.Term):
                                         raise OcFirewallError(
                                             'Protocol %s unknown. Use an integer.', proto
                                         )
-                                    ace_dict[family]['config']['protocol'] = proto_num
+                                    self.SetProtocol(ace_dict, family, proto_num)
                                 rules.append(copy.deepcopy(ace_dict))
                             else:
-                                proto_num = proto
-                                ace_dict[family]['config']['protocol'] = proto_num
+                                self.SetProtocol(ace_dict, family, proto)
                                 # This is the business end of ace explosion.
-                                # A dict is a reference type, so deepcopy is atually required.
+                                # A dict is a reference type, so deepcopy is actually required.
                                 rules.append(copy.deepcopy(ace_dict))
 
         return rules
+
+    def SetAction(self, dict: dict) -> None:
+        action = self.ACTION_MAP[self.term.action[0]]
+        dict['actions'] = {}
+        dict['actions']['config'] = {}
+        dict['actions']['config']['forwarding-action'] = action
+
+    def SetOptions(self, dict: dict) -> None:
+        pass  # no-op, override in subclasses
+
+    def SetSourceAddress(self, dict: dict, family: str, saddr: str) -> None:
+        dict[family]['config']['source-address'] = saddr
+
+    def SetDestAddress(self, dict: dict, family: str, daddr: str) -> None:
+        dict[family]['config']['destination-address'] = daddr
+
+    def SetSourcePorts(self, dict: dict, start: int, end: int) -> None:
+        if start == end:
+            dict['transport']['config']['source-port'] = start
+        else:
+            dict['transport']['config']['source-port'] = '%d..%d' % (
+                start,
+                end,
+            )
+
+    def SetDestPorts(self, dict: dict, start: int, end: int) -> None:
+        if start == end:
+            dict['transport']['config']['destination-port'] = start
+        else:
+            dict['transport']['config']['destination-port'] = '%d..%d' % (
+                start,
+                end,
+            )
+
+    def SetProtocol(self, dict: dict, family: str, protocol: int) -> None:
+        dict[family]['config']['protocol'] = protocol
 
 
 class OpenConfig(aclgenerator.ACLGenerator):
@@ -233,8 +259,8 @@ class OpenConfig(aclgenerator.ACLGenerator):
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
-        total_rule_count = 0
-        self.acl_sets: List[ACLSet] = []
+        self.total_rule_count = 0
+        self.acl_sets: List[TypedDict] = []
 
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -250,40 +276,42 @@ class OpenConfig(aclgenerator.ACLGenerator):
                     address_family = i
                     filter_options.remove(i)
 
-            oc_acl_entries: List[ACLEntry] = []
+            self._TranslateTerms(terms, address_family, filter_name)
 
-            for term in terms:
-                # TODO(b/196430344): Add support for options such as
-                # established/rst/first-fragment
-                if term.option:
-                    raise OcFirewallError('OpenConfig firewall does not support term options.')
+        logging.info('Total rule count of policy %s is: %d', filter_name, self.total_rule_count)
 
-                # Handle mixed for each indvidual term as inet and inet6.
-                # inet/inet6 are treated the same.
-                term_address_families = []
-                if address_family == 'mixed':
-                    term_address_families = ['inet', 'inet6']
-                else:
-                    term_address_families = [address_family]
-                for term_af in term_address_families:
-                    t = Term(term, term_af)
+    def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str) -> None:
+        """
+        Factor out the translation of terms, such that it can be overridden by subclasses
+        """
+        oc_acl_entries: List[ACLEntry] = []
 
-                    for rule in t.ConvertToDict():
-                        total_rule_count += 1
-                        rule['sequence-id'] = total_rule_count * 5
-                        oc_acl_entries.append(rule)
-
-            oc_type = self.FAMILY_MAP[address_family]
-
-            oc_acl_set = {
-                "acl-entries": {"acl-entry": oc_acl_entries},
-                "config": {"name": filter_name, "type": oc_type},
-                "name": filter_name,
-                "type": oc_type,
-            }
-            self.acl_sets.append(oc_acl_set)
-
-        logging.info('Total rule count of policy %s is: %d', filter_name, total_rule_count)
+        for term in terms:
+            # TODO(b/196430344): Add support for options such as
+            # established/rst/first-fragment
+            if term.option:
+                raise OcFirewallError('OpenConfig firewall does not support term options.')
+            # Handle mixed for each indvidual term as inet and inet6.
+            # inet/inet6 are treated the same.
+            term_address_families = []
+            if address_family == 'mixed':
+                term_address_families = ['inet', 'inet6']
+            else:
+                term_address_families = [address_family]
+            for term_af in term_address_families:
+                t = OCTerm(term, term_af)
+                for rule in t.ConvertToDict():
+                    self.total_rule_count += 1
+                    rule['sequence-id'] = self.total_rule_count * 5
+                    oc_acl_entries.append(rule)
+        oc_type = self.FAMILY_MAP[address_family]
+        oc_acl_set = {
+            "acl-entries": {"acl-entry": oc_acl_entries},
+            "config": {"name": filter_name, "type": oc_type},
+            "name": filter_name,
+            "type": oc_type,
+        }
+        self.acl_sets.append(oc_acl_set)
 
     def __str__(self) -> str:
         out = '%s\n\n' % (
