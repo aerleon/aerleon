@@ -123,10 +123,8 @@ class Term(aclgenerator.Term):
 
         # Convert the integer to the proper openconfig schema name str, ipv4/ipv6.
         term_af = self.AF_MAP.get(self.inet_version)
-        family = self.AF_RENAME[term_af]
 
         opts = [str(x) for x in self.term.option]
-        print( f"JvB: {opts}" )
 
         # Action
         action = self.ACTION_MAP[self.term.action[0]]
