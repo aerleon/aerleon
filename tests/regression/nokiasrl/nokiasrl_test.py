@@ -428,5 +428,12 @@ class NokiaSRLTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
+#
+# TODO:
+# - Fragments
+# - TCP flags
+# - ICMP type codes
+#
+
 if __name__ == '__main__':
     absltest.main()

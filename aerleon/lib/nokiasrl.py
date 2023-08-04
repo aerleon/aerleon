@@ -40,16 +40,13 @@ else:
 class Error(aclgenerator.Error):
     """Generic error class."""
 
-
-class OcFirewallError(Error):
+class SRLinuxACLError(Error):
     """Raised with problems in formatting for OpenConfig firewall."""
-
 
 class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
-
-# Graceful handling of dict heierarchy for OpenConfig JSON.
+# Graceful handling of dict hierarchy for SR Linux JSON.
 def RecursiveDict() -> DefaultDict[Any, Any]:
     return defaultdict(RecursiveDict)
 
@@ -76,11 +73,11 @@ ACLSet = TypedDict(
 
 
 class Term(aclgenerator.Term):
-    """Creates the term for the OpenConfig firewall."""
+    """Creates the term for the SR Linux ACL."""
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
 
-    # OpenConfig ip-protocols always will resolve to an 8-bit int, but these
+    # ip-protocols always will resolve to an 8-bit int, but these
     # common names are more convenient in a policy file.
     _ALLOW_PROTO_NAME = frozenset(['tcp', 'udp', 'icmp', 'esp', 'ah', 'ipip', 'sctp'])
 
@@ -109,12 +106,12 @@ class Term(aclgenerator.Term):
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
-        output easily as an Openconfig JSON blob. It represents an "acl-entry"
+        output easily as an SR Linux JSON blob. It represents an "acl-entry"
         message from the OpenConfig ACL schema.
 
         Returns:
           A list of dictionaries that contains all fields necessary to create or
-          update a OpenConfig acl-entry.
+          update an SR Linux acl-entry.
         """
         term_dict = RecursiveDict()
 
@@ -154,6 +151,7 @@ class Term(aclgenerator.Term):
         ace_dict = copy.deepcopy(term_dict)
         _match = ace_dict['match'] = {}
 
+        # Handle various options
         if ('fragments' in opts) or ('is-fragment' in opts):
             _match['fragment'] = True
         if 'first-fragment' in opts:
@@ -203,7 +201,7 @@ class Term(aclgenerator.Term):
                                     try:
                                         proto_num = self.PROTO_MAP[proto]
                                     except KeyError:
-                                        raise OcFirewallError(
+                                        raise SRLinuxACLError(
                                             'Protocol %s unknown. Use an integer.', proto
                                         )
                                     _match['protocol'] = proto_num
@@ -219,11 +217,11 @@ class Term(aclgenerator.Term):
 
 
 class NokiaSRLinux(aclgenerator.ACLGenerator):
-    """A OpenConfig firewall policy object."""
+    """A Nokia SR Linux ACL object."""
 
     _PLATFORM = 'nokiasrl'
     SUFFIX = '.srl_acl'
-    _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
+    _SUPPORTED_AF = frozenset(('inet', 'inet6'))
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -233,8 +231,8 @@ class NokiaSRLinux(aclgenerator.ACLGenerator):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-        # Remove unsupported things
-        supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
+        # Remove unsupported things, note icmp-type could be supported
+        supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
 
         # SR Linux ACL model only supports these 2 forwarding actions.
         supported_sub_tokens['action'] = {'accept', 'deny' } # removed 'reject'
@@ -272,10 +270,6 @@ class NokiaSRLinux(aclgenerator.ACLGenerator):
             oc_acl_entries: List[ACLEntry] = []
 
             for term in terms:
-                # TODO(b/196430344): Add support for options such as
-                # established/rst/first-fragment
-                # if term.option:
-                #    raise OcFirewallError('OpenConfig firewall does not support term options.')
 
                 # Handle mixed for each indvidual term as inet and inet6.
                 # inet/inet6 are treated the same.
