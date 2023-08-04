@@ -428,6 +428,7 @@ class NokiaSRLTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
+
 #
 # TODO:
 # - Fragments

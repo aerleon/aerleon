@@ -40,11 +40,14 @@ else:
 class Error(aclgenerator.Error):
     """Generic error class."""
 
+
 class SRLinuxACLError(Error):
     """Raised with problems in formatting for OpenConfig firewall."""
 
+
 class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
+
 
 # Graceful handling of dict hierarchy for SR Linux JSON.
 def RecursiveDict() -> DefaultDict[Any, Any]:
@@ -125,7 +128,7 @@ class Term(aclgenerator.Term):
 
         # Action
         action = self.ACTION_MAP[self.term.action[0]]
-        term_dict['action'] = { action: {} }
+        term_dict['action'] = {action: {}}
 
         # Ballot fatigue handling for 'any'.
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
@@ -156,7 +159,7 @@ class Term(aclgenerator.Term):
             _match['fragment'] = True
         if 'first-fragment' in opts:
             _match['first-fragment'] = True
-        
+
         if 'initial' in opts or 'tcp-initial' in opts:
             _match['tcp-flags'] = "syn"
         if 'rst' in opts:
@@ -168,31 +171,31 @@ class Term(aclgenerator.Term):
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
-                _match['source-ip'] = { 'prefix': str(saddr) }
+                _match['source-ip'] = {'prefix': str(saddr)}
 
             # Destination Addresses
             for daddr in daddrs:
                 if daddr != 'any':
-                    _match['destination-ip'] = { 'prefix': str(daddr) }
+                    _match['destination-ip'] = {'prefix': str(daddr)}
 
                 # Source Port
                 for start, end in sports:
                     # 'any' starts and ends with zero.
                     if not start == end == 0:
                         if start == end:
-                            _match['source-port'] = { 'value': int(start) }
+                            _match['source-port'] = {'value': int(start)}
                         else:
-                            _match['source-port'] = { 'range': { 'start': start, 
-                                                                 'end': end } }
+                            _match['source-port'] = {'range': {'start': start, 'end': end}}
 
                     # Destination Port
                     for start, end in dports:
                         if not start == end == 0:
                             if start == end:
-                              _match['destination-port'] = { 'value': int(start) }
+                                _match['destination-port'] = {'value': int(start)}
                             else:
-                              _match['destination-port'] = { 'range': { 'start': start,
-                                                                        'end': end } }
+                                _match['destination-port'] = {
+                                    'range': {'start': start, 'end': end}
+                                }
 
                         # Protocol
                         for proto in protos:
@@ -235,17 +238,17 @@ class NokiaSRLinux(aclgenerator.ACLGenerator):
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
 
         # SR Linux ACL model only supports these 2 forwarding actions.
-        supported_sub_tokens['action'] = {'accept', 'deny' } # removed 'reject'
+        supported_sub_tokens['action'] = {'accept', 'deny'}  # removed 'reject'
         supported_sub_tokens['option'] = {
-         #  'established',
-           'first-fragment',
-           'is-fragment',
-           'fragments',
-         #  'sample',
-         #  'tcp-established',
-           'tcp-initial',
-         #  'inactive',
-           'not-syn-ack',
+            #  'established',
+            'first-fragment',
+            'is-fragment',
+            'fragments',
+            #  'sample',
+            #  'tcp-established',
+            'tcp-initial',
+            #  'inactive',
+            'not-syn-ack',
         }
         return supported_tokens, supported_sub_tokens
 
@@ -287,9 +290,9 @@ class NokiaSRLinux(aclgenerator.ACLGenerator):
                         oc_acl_entries.append(rule)
 
             ip_filter = {
-                'ipv4-filter' if address_family=='inet' else 'ipv6-filter': {
-                   'entry': oc_acl_entries
-                }
+                'ipv4-filter'
+                if address_family == 'inet'
+                else 'ipv6-filter': {'entry': oc_acl_entries}
             }
             self.acl_sets.append(ip_filter)
 
