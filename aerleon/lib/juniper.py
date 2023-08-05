@@ -224,6 +224,7 @@ class Term(aclgenerator.Term):
 
             # some options need to modify the actions
             self.extra_actions = []
+        self._ReplaceICMPv6()
 
     def __str__(self):
         config = Config(indent=self._DEFAULT_INDENT)
@@ -780,6 +781,19 @@ class Term(aclgenerator.Term):
                     break
 
         return include_result, exclude_result
+
+    def _ReplaceICMPv6(self):
+        """Juniper has deprecated the use ic icmpv6 in favor of icmp6.
+        https://github.com/aerleon/aerleon/issues/323
+        """
+        if 'icmpv6' in self.term.protocol:
+            i = self.term.protocol.index('icmpv6')
+            del self.term.protocol[i]
+            self.term.protocol.insert(i, 'icmp6')
+        if 'icmpv6' in self.term.protocol_except:
+            i = self.term.protocol_except.index('icmpv6')
+            del self.term.protocol_except[i]
+            self.term.protocol_except.insert(i, 'icmp6')
 
     def _Comment(
         self,

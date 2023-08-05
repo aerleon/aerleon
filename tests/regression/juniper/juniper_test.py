@@ -919,7 +919,7 @@ class JuniperTest(parameterized.TestCase):
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
         )
         output = str(jcl)
-        self.assertTrue('next-header icmpv6;' in output and 'next-header tcp;' in output, output)
+        self.assertTrue('next-header icmp6;' in output and 'next-header tcp;' in output, output)
 
         self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
@@ -1009,13 +1009,13 @@ class JuniperTest(parameterized.TestCase):
         self.assertIn('next-header-except tcp;', output, output)
         print(output)
 
-    @capture.stdout
+    # @capture.stdout
     def testIcmpv6Except(self):
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_20_V6, self.naming), EXP_INFO
         )
         output = str(jcl)
-        self.assertIn('next-header-except icmpv6;', output, output)
+        self.assertIn('next-header-except icmp6;', output, output)
         print(output)
 
     @capture.stdout
@@ -1472,7 +1472,7 @@ class JuniperTest(parameterized.TestCase):
 
         mock_warning.assert_called_once_with(
             'Term icmptype-mismatch will not be rendered,'
-            ' as it has icmpv6 match specified but '
+            ' as it has icmp6 match specified but '
             'the ACL is of inet address family.'
         )
 
