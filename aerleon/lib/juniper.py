@@ -16,7 +16,7 @@
 
 """Juniper JCL generator."""
 
-
+import copy
 from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
@@ -490,29 +490,33 @@ class Term(aclgenerator.Term):
                 # https://github.com/aerleon/aerleon/issues/323
 
                 if 'icmpv6' in self.term.protocol:
-                    loc = self.term.protocol.index('icmpv6')
-                    self.term.protocol[loc] = 'icmp6'
-                if 'icmpv6' in self.term.protocol_except:
-                    loc = self.term.protocol_except.index('icmpv6')
-                    self.term.protocol_except[loc] = 'icmp6'
-                # both are supported on JunOS, but only icmp6 is supported
-                # on SRX loopback stateless filter
-                config.Append(family_keywords['protocol'] + ' ' + self._Group(self.term.protocol))
+                    protocol = copy.copy(self.term.protocol)
+                    loc = protocol.index('icmpv6')
+                    protocol[loc] = 'icmp6'
+                    config.Append(family_keywords['protocol'] + ' ' + self._Group(protocol))
+                else:
+                    # both are supported on JunOS, but only icmp6 is supported
+                    # on SRX loopback stateless filter
+                    config.Append(
+                        family_keywords['protocol'] + ' ' + self._Group(self.term.protocol)
+                    )
 
             # protocol
             if self.term.protocol_except:
                 # same as above
-                if 'icmpv6' in self.term.protocol:
-                    loc = self.term.protocol.index('icmpv6')
-                    self.term.protocol[loc] = 'icmp6'
                 if 'icmpv6' in self.term.protocol_except:
-                    loc = self.term.protocol_except.index('icmpv6')
-                    self.term.protocol_except[loc] = 'icmp6'
-                config.Append(
-                    family_keywords['protocol-except']
-                    + ' '
-                    + self._Group(self.term.protocol_except)
-                )
+                    protocol_except = copy.copy(self.term.protocol_except)
+                    loc = protocol_except.index('icmpv6')
+                    protocol_except[loc] = 'icmp6'
+                    config.Append(
+                        family_keywords['protocol-except'] + ' ' + self._Group(protocol_except)
+                    )
+                else:
+                    config.Append(
+                        family_keywords['protocol-except']
+                        + ' '
+                        + self._Group(self.term.protocol_except)
+                    )
 
             # port
             if self.term.port:
