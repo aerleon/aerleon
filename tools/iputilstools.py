@@ -21,7 +21,7 @@ def write_excludes_testcase(ipstr, excludelist='', max_prefix_range=8, max_rando
     if len(excludelist) == 0:  # empty excludelist, making a random one
         prefixrange = min(max_prefix_range, ip.max_prefixlen - ip.prefixlen)
         excludelist = it.chain.from_iterable(ip.subnets(i) for i in range(1, prefixrange + 1))
-        total_ips = 2 ** prefixrange
+        total_ips = 2**prefixrange
         ip_positions = set(random.choices(range(total_ips), k=min(max_random_subnets, total_ips)))
         compress_map = (1 if i in ip_positions else 0 for i in range(total_ips))
         excludelist = list(it.compress(excludelist, compress_map))
