@@ -224,7 +224,7 @@ class Term(aclgenerator.Term):
 
             # some options need to modify the actions
             self.extra_actions = []
-        self._ReplaceICMPv6()
+
 
     def __str__(self):
         config = Config(indent=self._DEFAULT_INDENT)
@@ -232,7 +232,7 @@ class Term(aclgenerator.Term):
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
         if (self.term_type == 'inet6' and 'icmp' in self.term.protocol) or (
             self.term_type == 'inet'
-            and ('icmpv6' in self.term.protocol or 'icmp6' in self.term.protocol)
+            and ('icmpv6' in self.term.protocol or 'icmpv6' in self.term.protocol)
         ):
             logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
@@ -487,6 +487,15 @@ class Term(aclgenerator.Term):
 
             # protocol
             if self.term.protocol:
+                # Juniper has deprecated the use of icmpv6 in favor of icmp6.
+                # https://github.com/aerleon/aerleon/issues/323
+
+                if 'icmpv6' in self.term.protocol:
+                    loc = self.term.protocol.index('icmpv6')
+                    self.term.protocol[loc]= 'icmp6'
+                if 'icmpv6' in self.term.protocol_except:
+                    loc = self.term.protocol_except.index('icmpv6')
+                    self.term.protocol_except[loc] =  'icmp6'
                 # both are supported on JunOS, but only icmp6 is supported
                 # on SRX loopback stateless filter
                 config.Append(family_keywords['protocol'] + ' ' + self._Group(self.term.protocol))
@@ -494,6 +503,12 @@ class Term(aclgenerator.Term):
             # protocol
             if self.term.protocol_except:
                 # same as above
+                if 'icmpv6' in self.term.protocol:
+                    loc = self.term.protocol.index('icmpv6')
+                    self.term.protocol[loc]= 'icmp6'
+                if 'icmpv6' in self.term.protocol_except:
+                    loc = self.term.protocol_except.index('icmpv6')
+                    self.term.protocol_except[loc] =  'icmp6'
                 config.Append(
                     family_keywords['protocol-except']
                     + ' '
@@ -781,19 +796,6 @@ class Term(aclgenerator.Term):
                     break
 
         return include_result, exclude_result
-
-    def _ReplaceICMPv6(self):
-        """Juniper has deprecated the use ic icmpv6 in favor of icmp6.
-        https://github.com/aerleon/aerleon/issues/323
-        """
-        if 'icmpv6' in self.term.protocol:
-            i = self.term.protocol.index('icmpv6')
-            del self.term.protocol[i]
-            self.term.protocol.insert(i, 'icmp6')
-        if 'icmpv6' in self.term.protocol_except:
-            i = self.term.protocol_except.index('icmpv6')
-            del self.term.protocol_except[i]
-            self.term.protocol_except.insert(i, 'icmp6')
 
     def _Comment(
         self,

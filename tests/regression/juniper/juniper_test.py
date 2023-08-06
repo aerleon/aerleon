@@ -1009,7 +1009,7 @@ class JuniperTest(parameterized.TestCase):
         self.assertIn('next-header-except tcp;', output, output)
         print(output)
 
-    # @capture.stdout
+    @capture.stdout
     def testIcmpv6Except(self):
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_20_V6, self.naming), EXP_INFO
@@ -1472,7 +1472,7 @@ class JuniperTest(parameterized.TestCase):
 
         mock_warning.assert_called_once_with(
             'Term icmptype-mismatch will not be rendered,'
-            ' as it has icmp6 match specified but '
+            ' as it has icmpv6 match specified but '
             'the ACL is of inet address family.'
         )
 
