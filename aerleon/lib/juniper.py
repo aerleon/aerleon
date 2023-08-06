@@ -225,7 +225,6 @@ class Term(aclgenerator.Term):
             # some options need to modify the actions
             self.extra_actions = []
 
-
     def __str__(self):
         config = Config(indent=self._DEFAULT_INDENT)
         from_str = []
@@ -492,10 +491,10 @@ class Term(aclgenerator.Term):
 
                 if 'icmpv6' in self.term.protocol:
                     loc = self.term.protocol.index('icmpv6')
-                    self.term.protocol[loc]= 'icmp6'
+                    self.term.protocol[loc] = 'icmp6'
                 if 'icmpv6' in self.term.protocol_except:
                     loc = self.term.protocol_except.index('icmpv6')
-                    self.term.protocol_except[loc] =  'icmp6'
+                    self.term.protocol_except[loc] = 'icmp6'
                 # both are supported on JunOS, but only icmp6 is supported
                 # on SRX loopback stateless filter
                 config.Append(family_keywords['protocol'] + ' ' + self._Group(self.term.protocol))
@@ -505,10 +504,10 @@ class Term(aclgenerator.Term):
                 # same as above
                 if 'icmpv6' in self.term.protocol:
                     loc = self.term.protocol.index('icmpv6')
-                    self.term.protocol[loc]= 'icmp6'
+                    self.term.protocol[loc] = 'icmp6'
                 if 'icmpv6' in self.term.protocol_except:
                     loc = self.term.protocol_except.index('icmpv6')
-                    self.term.protocol_except[loc] =  'icmp6'
+                    self.term.protocol_except[loc] = 'icmp6'
                 config.Append(
                     family_keywords['protocol-except']
                     + ' '
