@@ -1,4 +1,4 @@
-# Copyright 2021 Google Inc. All Rights Reserved.
+# Copyright 2023 Nokia All Rights Reserved.
 # Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
 import json
 from unittest import mock
 
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, gcp, nacaddr, naming, nokiasrl, policy
+from aerleon.lib import nacaddr, naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
