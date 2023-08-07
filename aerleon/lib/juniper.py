@@ -16,7 +16,6 @@
 
 """Juniper JCL generator."""
 
-import copy
 from typing import Dict, List, Set, Tuple, Union
 
 from absl import logging
@@ -488,35 +487,24 @@ class Term(aclgenerator.Term):
             if self.term.protocol:
                 # Juniper has deprecated the use of icmpv6 in favor of icmp6.
                 # https://github.com/aerleon/aerleon/issues/323
-
+                protocol = self.term.protocol[:]
                 if 'icmpv6' in self.term.protocol:
-                    protocol = copy.copy(self.term.protocol)
                     loc = protocol.index('icmpv6')
                     protocol[loc] = 'icmp6'
-                    config.Append(family_keywords['protocol'] + ' ' + self._Group(protocol))
-                else:
-                    # both are supported on JunOS, but only icmp6 is supported
-                    # on SRX loopback stateless filter
-                    config.Append(
-                        family_keywords['protocol'] + ' ' + self._Group(self.term.protocol)
-                    )
+                # both are supported on JunOS, but only icmp6 is supported
+                # on SRX loopback stateless filter
+                config.Append(family_keywords['protocol'] + ' ' + self._Group(protocol))
 
             # protocol
             if self.term.protocol_except:
                 # same as above
+                protocol_except = self.term.protocol_except[:]
                 if 'icmpv6' in self.term.protocol_except:
-                    protocol_except = copy.copy(self.term.protocol_except)
                     loc = protocol_except.index('icmpv6')
                     protocol_except[loc] = 'icmp6'
-                    config.Append(
-                        family_keywords['protocol-except'] + ' ' + self._Group(protocol_except)
-                    )
-                else:
-                    config.Append(
-                        family_keywords['protocol-except']
-                        + ' '
-                        + self._Group(self.term.protocol_except)
-                    )
+                config.Append(
+                    family_keywords['protocol-except'] + ' ' + self._Group(protocol_except)
+                )
 
             # port
             if self.term.port:
