@@ -69,18 +69,18 @@ class SRLTerm(openconfig.OCTerm):
     def SetOptions(self, dict: dict) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
-        _match = dict['match'] = {}
+        dict['match'] = {}
         if ('fragments' in opts) or ('is-fragment' in opts):
-            _match['fragment'] = True
+            dict['match']['fragment'] = True
         if 'first-fragment' in opts:
-            _match['first-fragment'] = True
+            dict['match']['first-fragment'] = True
 
         if 'initial' in opts or 'tcp-initial' in opts:
-            _match['tcp-flags'] = "syn"
+            dict['match']['tcp-flags'] = "syn"
         if 'rst' in opts:
-            _match['tcp-flags'] = "syn&rst" if 'tcp-flags' in _match else "rst"
+            dict['match']['tcp-flags'] = "syn&rst" if 'tcp-flags' in dict['match'] else "rst"
         if 'not-syn-ack' in opts:
-            _match['tcp-flags'] = "!(syn&ack)"
+            dict['match']['tcp-flags'] = "!(syn&ack)"
         # Note: not handling established | tcp-established, could throw error
 
     def SetSourceAddress(self, dict: dict, family: str, saddr: str) -> None:

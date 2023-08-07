@@ -306,11 +306,6 @@ class NokiaSRLTest(absltest.TestCase):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
 
-    def _StripAclHeaders(self, acl):
-        return '\n'.join(
-            [line for line in str(acl).split('\n') if not line.lstrip().startswith('#')]
-        )
-
     @capture.stdout
     def testSaddr(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
