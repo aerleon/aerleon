@@ -1149,6 +1149,30 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(POLICY_INCORRECT_FILTERTYPE, self.naming)
         self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, 2)
 
+    @capture.stdout
+    def testWarnMismatchedProtoAF(self):
+        self.naming.GetServiceByProto.return_value = ['123']
+
+        pol = policy.ParsePolicy(INET_FILTER + INET6_TERM, self.naming)
+        with mock.patch.object(nsxv.logging, "warning") as mock_warning:
+            fw = nsxv.Nsxv(pol, EXP_INFO)
+            print(str(fw))
+            mock_warning.assert_called_with(
+                "Term test-icmpv6 will not be rendered, "
+                "as it has icmpv6 match specified but "
+                "the ACL is of inet address family."
+            )
+
+        pol = policy.ParsePolicy(INET6_FILTER + TERM, self.naming)
+        with mock.patch.object(nsxv.logging, "warning") as mock_warning:
+            fw = nsxv.Nsxv(pol, EXP_INFO)
+            print(str(fw))
+            mock_warning.assert_called_with(
+                "Term accept-icmp will not be rendered, "
+                "as it has icmp match specified but "
+                "the ACL is of inet6 address family."
+            )
+
 
 if __name__ == '__main__':
     absltest.main()
