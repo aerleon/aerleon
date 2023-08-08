@@ -137,7 +137,9 @@ class Term(aclgenerator.Term):
             if self.filter_type != 'mixed':
                 logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
-                        term=self.term.name, proto=', '.join(self.term.protocol), af=self.filter_type
+                        term=self.term.name,
+                        proto=', '.join(self.term.protocol),
+                        af=self.filter_type,
                     )
                 )
             return ''
