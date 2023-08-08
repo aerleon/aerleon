@@ -232,11 +232,12 @@ class Term(aclgenerator.Term):
             self.term_type == 'inet'
             and ('icmpv6' in self.term.protocol or 'icmp6' in self.term.protocol)
         ):
-            logging.warning(
-                self.NO_AF_LOG_PROTO.substitute(
-                    term=self.term.name, proto=', '.join(self.term.protocol), af=self.term_type
+            if self.filter_type != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name, proto=', '.join(self.term.protocol), af=self.term_type
+                    )
                 )
-            )
             return ''
 
         # comment

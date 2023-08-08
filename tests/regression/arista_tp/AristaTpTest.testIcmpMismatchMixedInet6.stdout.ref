@@ -1,8 +1,0 @@
-traffic-policies
-   no traffic-policy test-filter
-   traffic-policy test-filter
-      match icmptype-mismatch ipv4
-         !! error when icmp paired with inet6 filter
-         protocol icmp type 0,8 code all
-      !
-

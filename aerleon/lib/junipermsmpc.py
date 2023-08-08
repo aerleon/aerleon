@@ -214,11 +214,12 @@ class Term(juniper.Term):
                 (has_icmpv6 and not has_icmp and suffix == 'inet')
                 or (has_icmp and not has_icmpv6 and suffix == 'inet6')
             ) and self.term_type != 'mixed':
-                logging.warning(
-                    self.NO_AF_LOG_PROTO.substitute(
-                        term=self.term.name, proto=', '.join(self.term.protocol), af=suffix
+                if self.filter_type != 'mixed':
+                    logging.warning(
+                        self.NO_AF_LOG_PROTO.substitute(
+                            term=self.term.name, proto=', '.join(self.term.protocol), af=suffix
+                        )
                     )
-                )
                 return ''
 
             # NAME
