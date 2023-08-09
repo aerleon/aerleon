@@ -113,6 +113,13 @@ class Term(aclgenerator.Term):
         rules = self.ConvertToDict()
         json.dumps(rules, indent=2)
 
+    def _tcp_established(self) -> Dict[str, str]:
+        """Return's openconfig TCP_ESTABLISHED configuration.
+
+        Other vendors (eg. SONiC) have slighly different implementations,
+        This function permits inheritance."""
+        return {'detail-mode': 'BUILTIN', 'builtin-detail': "TCP_ESTABLISHED"}
+
     def ConvertToDict(
         self,
     ) -> List[ACLEntry]:
@@ -171,8 +178,7 @@ class Term(aclgenerator.Term):
                     raise TcpEstablishedWithNonTcpError(
                         f'tcp-established can only be used with tcp protocol in term {self.term.name}'
                     )
-                ace_dict['transport']['config']['detail-mode'] = "BUILTIN"
-                ace_dict['transport']['config']['builtin-detail'] = "TCP_ESTABLISHED"
+                ace_dict['transport']['config'].update(self._tcp_established())
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
@@ -235,6 +241,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     SUFFIX = '.oacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
     FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
+    _TERM_CLASS = Term
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -289,7 +296,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 else:
                     term_address_families = [address_family]
                 for term_af in term_address_families:
-                    t = Term(term, term_af)
+                    t = self._TERM_CLASS(term, term_af)
 
                     for rule in t.ConvertToDict():
                         total_rule_count += 1
