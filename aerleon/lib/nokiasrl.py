@@ -52,9 +52,7 @@ ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "action": Action, "match": Match},
 )
-aclEntries = TypedDict(
-    "aclEntries", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]}
-)
+IPFilters = TypedDict("IPFilters", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]})
 
 
 class SRLTerm(openconfig.OCTerm):
@@ -62,48 +60,50 @@ class SRLTerm(openconfig.OCTerm):
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
 
-    def SetAction(self, dict: dict) -> None:
+    def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
-        dict['action'] = {action: {}}
+        self.term_dict['action'] = {action: {}}
 
-    def SetOptions(self, dict: dict) -> None:
+    def SetOptions(self) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
-        dict['match'] = {}
+        self.term_dict['match'] = {}
         if ('fragments' in opts) or ('is-fragment' in opts):
-            dict['match']['fragment'] = True
+            self.term_dict['match']['fragment'] = True
         if 'first-fragment' in opts:
-            dict['match']['first-fragment'] = True
+            self.term_dict['match']['first-fragment'] = True
 
         if 'initial' in opts or 'tcp-initial' in opts:
-            dict['match']['tcp-flags'] = "syn"
+            self.term_dict['match']['tcp-flags'] = "syn"
         if 'rst' in opts:
-            dict['match']['tcp-flags'] = "syn&rst" if 'tcp-flags' in dict['match'] else "rst"
+            self.term_dict['match']['tcp-flags'] = (
+                "syn&rst" if 'tcp-flags' in self.term_dict['match'] else "rst"
+            )
         if 'not-syn-ack' in opts:
-            dict['match']['tcp-flags'] = "!(syn&ack)"
+            self.term_dict['match']['tcp-flags'] = "!(syn&ack)"
         # Note: not handling established | tcp-established, could throw error
 
-    def SetSourceAddress(self, dict: dict, family: str, saddr: str) -> None:
-        dict['match']['source-ip'] = {'prefix': saddr}
+    def SetSourceAddress(self, family: str, saddr: str) -> None:
+        self.term_dict['match']['source-ip'] = {'prefix': saddr}
 
-    def SetDestAddress(self, dict: dict, family: str, daddr: str) -> None:
-        dict['match']['destination-ip'] = {'prefix': daddr}
+    def SetDestAddress(self, family: str, daddr: str) -> None:
+        self.term_dict['match']['destination-ip'] = {'prefix': daddr}
 
-    def SetSourcePorts(self, dict: dict, start: int, end: int) -> None:
+    def SetSourcePorts(self, start: int, end: int) -> None:
         if start == end:
-            dict['match']['source-port'] = {'value': start}
+            self.term_dict['match']['source-port'] = {'value': start}
         else:
-            dict['match']['source-port'] = {'range': {'start': start, 'end': end}}
+            self.term_dict['match']['source-port'] = {'range': {'start': start, 'end': end}}
 
-    def SetDestPorts(self, dict: dict, start: int, end: int) -> None:
+    def SetDestPorts(self, start: int, end: int) -> None:
         if start == end:
-            dict['match']['destination-port'] = {'value': start}
+            self.term_dict['match']['destination-port'] = {'value': start}
         else:
-            dict['match']['destination-port'] = {'range': {'start': start, 'end': end}}
+            self.term_dict['match']['destination-port'] = {'range': {'start': start, 'end': end}}
 
-    def SetProtocol(self, dict: dict, family: str, protocol: int) -> None:
+    def SetProtocol(self, family: str, protocol: int) -> None:
         field_name = "protocol" if family == "ipv4" else "next-header"
-        dict['match'][field_name] = protocol
+        self.term_dict['match'][field_name] = protocol
 
 
 class NokiaSRLinux(openconfig.OpenConfig):
@@ -120,11 +120,9 @@ class NokiaSRLinux(openconfig.OpenConfig):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-        # Remove unsupported things, note icmp-type could be supported
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
 
-        # SR Linux ACL model only supports these 2 forwarding actions.
-        supported_sub_tokens['action'] = {'accept', 'deny'}  # removed 'reject'
+        supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {
             #  'established',
             'first-fragment',
@@ -137,6 +135,10 @@ class NokiaSRLinux(openconfig.OpenConfig):
             'not-syn-ack',
         }
         return supported_tokens, supported_sub_tokens
+
+    def _InitACLSet(self) -> None:
+        """Initialize self.acl_sets with proper Typing"""
+        self.acl_sets: List[IPFilters] = []
 
     def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str) -> None:
         srl_acl_entries: List[ACLEntry] = []

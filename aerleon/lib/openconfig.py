@@ -71,10 +71,9 @@ ACLEntry = TypedDict(
 aclEntries = TypedDict("aclEntries", {"acl-entry": List[ACLEntry]})
 ACLSetConfig = TypedDict("ACLSetConfig", {"name": str, "type": str})
 
-
-# ACLSet = TypedDict(
-#     "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
-# )
+ACLSet = TypedDict(
+    "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
+)
 
 
 class OCTerm(aclgenerator.Term):
@@ -118,7 +117,7 @@ class OCTerm(aclgenerator.Term):
           A list of dictionaries that contains all fields necessary to create or
           update a OpenConfig acl-entry.
         """
-        term_dict = RecursiveDict()
+        self.term_dict = RecursiveDict()
 
         # Rules will hold all exploded acl-entry dictionaries.
         rules = []
@@ -128,7 +127,7 @@ class OCTerm(aclgenerator.Term):
         family = self.AF_RENAME[term_af]
 
         # Action
-        self.SetAction(term_dict)
+        self.SetAction()
 
         # Ballot fatigue handling for 'any'.
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
@@ -151,31 +150,31 @@ class OCTerm(aclgenerator.Term):
         if not protos:
             protos = ['none']
 
-        ace_dict = copy.deepcopy(term_dict)
+        self.term_dict = copy.deepcopy(self.term_dict)
 
         # Options
-        self.SetOptions(ace_dict)
+        self.SetOptions()
 
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
-                self.SetSourceAddress(ace_dict, family, str(saddr))
+                self.SetSourceAddress(family, str(saddr))
 
             # Destination Addresses
             for daddr in daddrs:
                 if daddr != 'any':
-                    self.SetDestAddress(ace_dict, family, str(daddr))
+                    self.SetDestAddress(family, str(daddr))
 
                 # Source Port
                 for start, end in sports:
                     # 'any' starts and ends with zero.
                     if not start == end == 0:
-                        self.SetSourcePorts(ace_dict, start, end)
+                        self.SetSourcePorts(start, end)
 
                     # Destination Port
                     for start, end in dports:
                         if not start == end == 0:
-                            self.SetDestPorts(ace_dict, start, end)
+                            self.SetDestPorts(start, end)
 
                         # Protocol
                         for proto in protos:
@@ -187,51 +186,51 @@ class OCTerm(aclgenerator.Term):
                                         raise OcFirewallError(
                                             'Protocol %s unknown. Use an integer.', proto
                                         )
-                                    self.SetProtocol(ace_dict, family, proto_num)
-                                rules.append(copy.deepcopy(ace_dict))
+                                    self.SetProtocol(family, proto_num)
                             else:
-                                self.SetProtocol(ace_dict, family, proto)
-                                # This is the business end of ace explosion.
-                                # A dict is a reference type, so deepcopy is actually required.
-                                rules.append(copy.deepcopy(ace_dict))
+                                self.SetProtocol(family, proto)
+
+                            # This is the business end of ace explosion.
+                            # A dict is a reference type, so deepcopy is actually required.
+                            rules.append(copy.deepcopy(self.term_dict))
 
         return rules
 
-    def SetAction(self, dict: dict) -> None:
+    def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
-        dict['actions'] = {}
-        dict['actions']['config'] = {}
-        dict['actions']['config']['forwarding-action'] = action
+        self.term_dict['actions'] = {}
+        self.term_dict['actions']['config'] = {}
+        self.term_dict['actions']['config']['forwarding-action'] = action
 
-    def SetOptions(self, dict: dict) -> None:
-        pass  # no-op, override in subclasses
+    def SetOptions(self) -> None:
+        pass
 
-    def SetSourceAddress(self, dict: dict, family: str, saddr: str) -> None:
-        dict[family]['config']['source-address'] = saddr
+    def SetSourceAddress(self, family: str, saddr: str) -> None:
+        self.term_dict[family]['config']['source-address'] = saddr
 
-    def SetDestAddress(self, dict: dict, family: str, daddr: str) -> None:
-        dict[family]['config']['destination-address'] = daddr
+    def SetDestAddress(self, family: str, daddr: str) -> None:
+        self.term_dict[family]['config']['destination-address'] = daddr
 
-    def SetSourcePorts(self, dict: dict, start: int, end: int) -> None:
+    def SetSourcePorts(self, start: int, end: int) -> None:
         if start == end:
-            dict['transport']['config']['source-port'] = start
+            self.term_dict['transport']['config']['source-port'] = start
         else:
-            dict['transport']['config']['source-port'] = '%d..%d' % (
+            self.term_dict['transport']['config']['source-port'] = '%d..%d' % (
                 start,
                 end,
             )
 
-    def SetDestPorts(self, dict: dict, start: int, end: int) -> None:
+    def SetDestPorts(self, start: int, end: int) -> None:
         if start == end:
-            dict['transport']['config']['destination-port'] = start
+            self.term_dict['transport']['config']['destination-port'] = start
         else:
-            dict['transport']['config']['destination-port'] = '%d..%d' % (
+            self.term_dict['transport']['config']['destination-port'] = '%d..%d' % (
                 start,
                 end,
             )
 
-    def SetProtocol(self, dict: dict, family: str, protocol: int) -> None:
-        dict[family]['config']['protocol'] = protocol
+    def SetProtocol(self, family: str, protocol: int) -> None:
+        self.term_dict[family]['config']['protocol'] = protocol
 
 
 class OpenConfig(aclgenerator.ACLGenerator):
@@ -258,9 +257,13 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
+    def _InitACLSet(self) -> None:
+        """Initialize self.acl_sets with proper Typing"""
+        self.acl_sets: List[ACLSet] = []
+
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.total_rule_count = 0
-        self.acl_sets: List[TypedDict] = []
+        self._InitACLSet()
 
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
