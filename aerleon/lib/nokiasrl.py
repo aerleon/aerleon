@@ -71,8 +71,10 @@ class EstablishedWithNoProtocolError(Error):
 class EstablishedWithNonTcpUdpError(Error):
     pass
 
+
 class UnsupportedLogging(Error):
     pass
+
 
 class SRLTerm(openconfig.OCTerm):
     """Creates the term for the SR Linux ACL."""
@@ -83,12 +85,11 @@ class SRLTerm(openconfig.OCTerm):
         action = self.ACTION_MAP[self.term.action[0]]
         log = {}
         if self.term.logging:
-            if action=='drop':
-                log = { "log": True }
+            if action == 'drop':
+                log = {"log": True}
             else:
-                raise UnsupportedLogging (
-                    'logging can only be used with deny in term %s'
-                    % self.term.name
+                raise UnsupportedLogging(
+                    'logging can only be used with deny in term %s' % self.term.name
                 )
         self.term_dict['action'] = {action: log}
 
