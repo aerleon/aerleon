@@ -71,6 +71,8 @@ class EstablishedWithNoProtocolError(Error):
 class EstablishedWithNonTcpUdpError(Error):
     pass
 
+class UnsupportedLogging(Error):
+    pass
 
 class SRLTerm(openconfig.OCTerm):
     """Creates the term for the SR Linux ACL."""
@@ -79,7 +81,16 @@ class SRLTerm(openconfig.OCTerm):
 
     def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
-        self.term_dict['action'] = {action: {}}
+        log = {}
+        if self.term.logging:
+            if action=='drop':
+                log = { "log": True }
+            else:
+                raise UnsupportedLogging (
+                    'logging can only be used with deny in term %s'
+                    % self.term.name
+                )
+        self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
         self.term_dict['description'] = "\n".join(comments)

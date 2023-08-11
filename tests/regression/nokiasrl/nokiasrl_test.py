@@ -76,12 +76,13 @@ term good-term-1 {
 
 GOOD_EVERYTHING = """
 term good-term-1 {
-  comment:: "Allow TCP & UDP 53 with saddr/daddr."
+  comment:: "Deny TCP & UDP 53 with saddr/daddr and logging."
   destination-address:: CORP_EXTERNAL
   source-address:: CORP_EXTERNAL
   destination-port:: DNS
   protocol:: udp tcp
-  action:: accept
+  action:: deny
+  logging:: True
 }
 """
 
@@ -271,9 +272,11 @@ GOOD_JSON_EVERYTHING = """
       "entry": [
         {
           "action": {
-            "accept": {}
+            "drop": {
+             "log": true
+            }
           },
-          "description": "Allow TCP & UDP 53 with saddr/daddr.",
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 17,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -284,9 +287,11 @@ GOOD_JSON_EVERYTHING = """
         },
         {
           "action": {
-            "accept": {}
+            "drop": {
+             "log": true
+            }
           },
-          "description": "Allow TCP & UDP 53 with saddr/daddr.",
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 6,
             "destination-ip": { "prefix": "10.2.3.4/32" },
