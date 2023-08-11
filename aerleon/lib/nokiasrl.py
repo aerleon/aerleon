@@ -67,6 +67,10 @@ class EstablishedWithNoProtocolError(Error):
     pass
 
 
+class EstablishedWithNonTcpUdpError(Error):
+    pass
+
+
 class SRLTerm(openconfig.OCTerm):
     """Creates the term for the SR Linux ACL."""
 
@@ -113,9 +117,9 @@ class SRLTerm(openconfig.OCTerm):
                     self.SetProtocol(family=family, protocol="udp")
                     if not self.term.destination_port:
                         self.SetDestPorts(1024, 65535)
-                else:  # Could produce 2 rules
-                    raise TcpEstablishedWithNonTcpError(
-                        'tcp-established can only be used with tcp protocol in term %s'
+                else:  # Could produce 2 rules if [tcp,udp]
+                    raise EstablishedWithNonTcpUdpError(
+                        'established can only be used with tcp or udp protocol in term %s'
                         % self.term.name
                     )
             else:
