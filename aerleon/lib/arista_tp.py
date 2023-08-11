@@ -174,13 +174,14 @@ class Term(aclgenerator.Term):
         if (self.term_type == "inet6" and "icmp" in self.term.protocol) or (
             self.term_type == "inet" and "icmpv6" in self.term.protocol
         ):
-            logging.warning(
-                self.NO_AF_LOG_PROTO.substitute(
-                    term=self.term.name,
-                    proto=", ".join(self.term.protocol),
-                    af=self.term_type,
+            if self.filter_type != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name,
+                        proto=", ".join(self.term.protocol),
+                        af=self.term_type,
+                    )
                 )
-            )
             return ""
 
         # term verbatim output - this will skip over normal term creation

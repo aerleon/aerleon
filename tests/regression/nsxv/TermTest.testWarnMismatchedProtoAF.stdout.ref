@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="INET_FILTER_NAME">
+  <rule logged="false">
+    <name>allow-ntp-request</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>17</protocol>
+        <sourcePort>123</sourcePort>
+        <destinationPort>123</destinationPort>
+      </service>
+    </services>
+    <notes>Allow ntp request</notes>
+  </rule>
+</section>
+
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="INET6_FILTER_NAME">
+  <rule logged="false">
+    <name>test-icmpv6</name>
+    <action>allow</action>
+    <services>
+      <service>
+        <protocol>58</protocol>
+        <subProtocol>128</subProtocol>
+      </service>
+      <service>
+        <protocol>58</protocol>
+        <subProtocol>129</subProtocol>
+      </service>
+    </services>
+  </rule>
+</section>
+

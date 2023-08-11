@@ -454,11 +454,12 @@ class Term(aclgenerator.Term):
             or (self.af == 4 and 'icmpv6' in self.term.protocol)
             or (self.af == 4 and self.PROTO_MAP['icmpv6'] in self.term.protocol)
         ):
-            logging.warning(
-                self.NO_AF_LOG_PROTO.substitute(
-                    term=self.term.name, proto=', '.join(self.term.protocol), af=self.text_af
+            if self.filter_type != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name, proto=', '.join(self.term.protocol), af=self.text_af
+                    )
                 )
-            )
             return ''
 
         # verbose

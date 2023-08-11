@@ -929,7 +929,7 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testIcmpv6InetMismatch(self, mock_warning):
         atp = arista_tp.AristaTrafficPolicy(
-            policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_1, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_INET + BAD_ICMPTYPE_TERM_1, self.naming), EXP_INFO
         )
         str(atp)
 
@@ -951,39 +951,6 @@ class AristaTpTest(absltest.TestCase):
 
         mock_warning.assert_called_once_with(
             "Term icmptype-mismatch will not be rendered, "
-            "as it has icmp match specified but "
-            "the ACL is of inet6 address family."
-        )
-        print(atp)
-
-    # icmptype-mismatch test for mixed filter type
-    @mock.patch.object(arista_tp.logging, "warning")
-    @capture.stdout
-    def testIcmpMismatchMixedInet(self, mock_warning):
-        atp = arista_tp.AristaTrafficPolicy(
-            policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_1, self.naming),
-            EXP_INFO,
-        )
-        str(atp)
-
-        mock_warning.assert_called_once_with(
-            "Term icmptype-mismatch will not be rendered, "
-            "as it has icmpv6 match specified but "
-            "the ACL is of inet address family."
-        )
-        print(atp)
-
-    @mock.patch.object(arista_tp.logging, "warning")
-    @capture.stdout
-    def testIcmpMismatchMixedInet6(self, mock_warning):
-        atp = arista_tp.AristaTrafficPolicy(
-            policy.ParsePolicy(GOOD_HEADER + BAD_ICMPTYPE_TERM_2, self.naming),
-            EXP_INFO,
-        )
-        str(atp)
-
-        mock_warning.assert_called_once_with(
-            "Term ipv6-icmptype-mismatch will not be rendered, "
             "as it has icmp match specified but "
             "the ACL is of inet6 address family."
         )
