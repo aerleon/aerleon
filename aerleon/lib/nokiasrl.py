@@ -55,7 +55,7 @@ ACLEntry = TypedDict(
 IPFilters = TypedDict("IPFilters", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]})
 
 
-class SRLTerm(openconfig.OCTerm):
+class SRLTerm(openconfig.Term):
     """Creates the term for the SR Linux ACL."""
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
