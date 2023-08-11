@@ -153,7 +153,7 @@ class OCTerm(aclgenerator.Term):
         self.term_dict = copy.deepcopy(self.term_dict)
 
         # Options
-        self.SetOptions()
+        self.SetOptions(family)
 
         # Source Addresses
         for saddr in saddrs:
@@ -202,7 +202,7 @@ class OCTerm(aclgenerator.Term):
         self.term_dict['actions']['config'] = {}
         self.term_dict['actions']['config']['forwarding-action'] = action
 
-    def SetOptions(self) -> None:
+    def SetOptions(self, family: str) -> None:
         pass
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:

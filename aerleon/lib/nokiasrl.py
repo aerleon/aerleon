@@ -76,7 +76,7 @@ class SRLTerm(openconfig.OCTerm):
         action = self.ACTION_MAP[self.term.action[0]]
         self.term_dict['action'] = {action: {}}
 
-    def SetOptions(self) -> None:
+    def SetOptions(self, family: str) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
         self.term_dict['match'] = {}
@@ -98,13 +98,19 @@ class SRLTerm(openconfig.OCTerm):
             self.term_dict['match']['tcp-flags'] = "!syn&ack&!rst"
 
         if 'tcp-established' in opts:
-            _tcp_established()
+            if not self.term.protocol or self.term.protocol == ['tcp']:
+                _tcp_established()
+            else:
+                raise TcpEstablishedWithNonTcpError(
+                    'tcp-established can only be used with tcp protocol in term %s'
+                    % self.term.name
+                )
         elif 'established' in opts:
             if self.term.protocol:
                 if self.term.protocol == ['tcp']:
                     _tcp_established()
                 elif self.term.protocol == ['udp']:
-                    self.SetProtocol("udp")
+                    self.SetProtocol(family=family, protocol="udp")
                     if not self.term.destination_port:
                         self.SetDestPorts(1024, 65535)
                 else:  # Could produce 2 rules
@@ -118,7 +124,7 @@ class SRLTerm(openconfig.OCTerm):
                 )
 
         if 'tcp-flags' in self.term_dict['match']:
-            self.SetProtocol("tcp")
+            self.SetProtocol(family=family, protocol="tcp")
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:
         self.term_dict['match']['source-ip'] = {'prefix': saddr}
@@ -161,12 +167,12 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {
-            #  'established',
+            'established',
             'first-fragment',
             'is-fragment',
             'fragments',
             #  'sample',
-            #  'tcp-established',
+            'tcp-established',
             'tcp-initial',
             #  'inactive',
             'not-syn-ack',

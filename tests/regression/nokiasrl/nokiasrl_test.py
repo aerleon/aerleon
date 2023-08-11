@@ -282,6 +282,24 @@ GOOD_JSON_EVERYTHING = """
 }
 ]
 """
+
+BAD_TERM_1 = """
+term bad-term-1 {
+  protocol:: tcp udp
+  source-port:: DNS
+  option:: tcp-established
+  action:: accept
+}
+"""
+GOOD_ESTABLISHED_TERM_1 = """
+term established-term-1 {
+  protocol:: tcp
+  source-port:: DNS
+  option:: established
+  action:: accept
+}
+"""
+
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
@@ -416,6 +434,30 @@ class NokiaSRLTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
+
+    @capture.stdout
+    def testTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(acl)
+        self.assertIn('"!syn&ack&!rst"', output, output)
+
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
+        print(output)
+
+    def testNonTcpWithTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_1, self.naming)
+        with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
+        )
 
 
 #
