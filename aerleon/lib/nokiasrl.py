@@ -22,7 +22,7 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 import sys
 from typing import Dict, List, Set, Tuple
 
-from aerleon.lib import openconfig, aclgenerator
+from aerleon.lib import aclgenerator, openconfig
 from aerleon.lib.policy import Term
 
 if sys.version_info < (3, 8):
