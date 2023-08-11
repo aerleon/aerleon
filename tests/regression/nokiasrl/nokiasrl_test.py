@@ -299,6 +299,14 @@ term established-term-1 {
   action:: accept
 }
 """
+GOOD_UDP_ESTABLISHED_TERM_1 = """
+term udp-established-term-1 {
+  protocol:: udp
+  source-port:: DNS
+  option:: established
+  action:: accept
+}
+"""
 
 GOOD_HEADER_INET6 = """
 header {
@@ -446,6 +454,18 @@ class NokiaSRLTest(absltest.TestCase):
         self.assertIn('"ack|rst"', output, output)
 
         self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testUdpEstablishedv6(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
         print(output)
 
     def testNonTcpWithTcpEstablished(self):
