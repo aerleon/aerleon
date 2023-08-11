@@ -1,0 +1,29 @@
+[
+  {
+    "ipv6-filter": {
+      "description": "The general policy comment.",
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-port": {
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
+            },
+            "next-header": 17,
+            "source-port": {
+              "value": 53
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+  }
+]
+
+
