@@ -227,7 +227,7 @@ class OCTerm(aclgenerator.Term):
                     raise TcpEstablishedWithNonTcpError(
                         f'tcp-established can only be used with tcp protocol in term {self.term.name}'
                     )
-                ace_dict['transport']['config'].update(self._tcp_established())
+                self.term_dict['transport']['config'].update(self._tcp_established())
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:
         self.term_dict[family]['config']['source-address'] = saddr
