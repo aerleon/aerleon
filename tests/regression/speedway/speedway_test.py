@@ -163,7 +163,7 @@ class SpeedwayTest(absltest.TestCase):
             result[0],
             '*filter designation does not appear at top of generated ' 'policy.',
         )
-        self.assertIn(':INPUT ACCEPT', result, 'input default policy of accept not set.')
+        self.assertIn(':INPUT ACCEPT [0:0]', result, 'input default policy of accept not set.')
         self.assertIn('-N I_good-term-1', result, 'did not find new chain for good-term-1.')
         self.assertIn(
             '-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED' ' -j ACCEPT',
