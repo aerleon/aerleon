@@ -26,4 +26,4 @@ class SONiC(openconfig.OpenConfig):
     """
 
     _PLATFORM = 'sonic'
-    _TERM_CLASS = Term
+    _TERM = Term
