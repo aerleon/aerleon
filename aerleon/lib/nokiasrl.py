@@ -95,7 +95,7 @@ class SRLTerm(openconfig.OCTerm):
             self.term_dict['match']['tcp-flags'] = "!(syn&ack)"
 
         def _tcp_established():
-            self.term_dict['match']['tcp-flags'] = "!syn&ack&!rst"
+            self.term_dict['match']['tcp-flags'] = "ack|rst"
 
         if 'tcp-established' in opts:
             if not self.term.protocol or self.term.protocol == ['tcp']:

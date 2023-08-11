@@ -443,7 +443,7 @@ class NokiaSRLTest(absltest.TestCase):
             policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
         )
         output = str(acl)
-        self.assertIn('"!syn&ack&!rst"', output, output)
+        self.assertIn('"ack|rst"', output, output)
 
         self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)

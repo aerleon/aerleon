@@ -11,7 +11,7 @@
             "source-port": {
               "value": 53
             },
-            "tcp-flags": "!syn&ack&!rst"
+            "tcp-flags": "ack|rst"
           },
           "sequence-id": 5
         }
