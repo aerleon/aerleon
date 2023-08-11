@@ -1,0 +1,22 @@
+[
+  {
+    "ipv4-filter": {
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-port": {
+              "value": 53
+            },
+            "protocol": 6
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+  }
+]
+
+

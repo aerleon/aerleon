@@ -1,0 +1,21 @@
+[
+  {
+    "ipv6-filter": {
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-ip": {
+              "prefix": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+  }
+]
+
+

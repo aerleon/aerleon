@@ -1,0 +1,21 @@
+[
+  {
+    "ipv4-filter": {
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+  }
+]
+
+

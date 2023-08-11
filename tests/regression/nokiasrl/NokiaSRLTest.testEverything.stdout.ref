@@ -1,0 +1,46 @@
+[
+  {
+    "ipv4-filter": {
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-ip": {
+              "prefix": "10.2.3.4/32"
+            },
+            "destination-port": {
+              "value": 53
+            },
+            "protocol": 17,
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-ip": {
+              "prefix": "10.2.3.4/32"
+            },
+            "destination-port": {
+              "value": 53
+            },
+            "protocol": 6,
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 10
+        }
+      ]
+    }
+  }
+]
+
+

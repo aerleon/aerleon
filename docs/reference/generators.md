@@ -1075,6 +1075,38 @@ _source:_ https://www.netfilter.org/projects/nftables/manpage.html
 
 ***
 
+## Nokia SR Linux
+
+### Header Format
+
+The Nokia SR Linux header designation has the following format:
+
+```yaml
+targets:
+    nokiasrl: {section_name} {inet|inet6|mixed} section-id
+```
+
+* _section_name_: specifies the name of the section all terms in this header apply to.
+* _inet_: specifies that the resulting filter should only render IPv4 addresses.
+* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
+* _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
+* _section-id_: specifies the id for the section (optional)
+
+(Required keywords option and verbatim are not supported)
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+
+***
+
 ## NSXv
 
 ### Header Format

@@ -1,0 +1,52 @@
+[
+  {
+    "ipv4-filter": {
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-port": {
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
+            },
+            "protocol": 17,
+            "source-port": {
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "action": {
+            "accept": {}
+          },
+          "match": {
+            "destination-port": {
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
+            },
+            "protocol": 6,
+            "source-port": {
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
+            }
+          },
+          "sequence-id": 10
+        }
+      ]
+    }
+  }
+]
+
+
