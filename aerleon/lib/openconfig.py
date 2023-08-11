@@ -289,7 +289,9 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
         logging.info('Total rule count of policy %s is: %d', filter_name, self.total_rule_count)
 
-    def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]) -> None:
+    def _TranslateTerms(
+        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+    ) -> None:
         """
         Factor out the translation of terms, such that it can be overridden by subclasses
         """
