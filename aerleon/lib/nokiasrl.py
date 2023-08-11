@@ -22,7 +22,7 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 import sys
 from typing import Dict, List, Set, Tuple
 
-from aerleon.lib import openconfig
+from aerleon.lib import openconfig, aclgenerator
 from aerleon.lib.policy import Term
 
 if sys.version_info < (3, 8):
@@ -54,6 +54,18 @@ ACLEntry = TypedDict(
 )
 IPFilters = TypedDict("IPFilters", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]})
 
+# generic error class
+class Error(aclgenerator.Error):
+    pass
+
+
+class TcpEstablishedWithNonTcpError(Error):
+    pass
+
+
+class EstablishedWithNoProtocolError(Error):
+    pass
+
 
 class SRLTerm(openconfig.OCTerm):
     """Creates the term for the SR Linux ACL."""
@@ -81,7 +93,32 @@ class SRLTerm(openconfig.OCTerm):
             )
         if 'not-syn-ack' in opts:
             self.term_dict['match']['tcp-flags'] = "!(syn&ack)"
-        # Note: not handling established | tcp-established, could throw error
+
+        def _tcp_established():
+            self.term_dict['match']['tcp-flags'] = "!syn&ack&!rst"
+
+        if 'tcp-established' in opts:
+            _tcp_established()
+        elif 'established' in opts:
+            if self.term.protocol:
+                if self.term.protocol == ['tcp']:
+                    _tcp_established()
+                elif self.term.protocol == ['udp']:
+                    self.SetProtocol("udp")
+                    if not self.term.destination_port:
+                        self.SetDestPorts(1024, 65535)
+                else:  # Could produce 2 rules
+                    raise TcpEstablishedWithNonTcpError(
+                        'tcp-established can only be used with tcp protocol in term %s'
+                        % self.term.name
+                    )
+            else:
+                raise EstablishedWithNoProtocolError(
+                    'must specify a protocol for "established" in term %s' % self.term.name
+                )
+
+        if 'tcp-flags' in self.term_dict['match']:
+            self.SetProtocol("tcp")
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:
         self.term_dict['match']['source-ip'] = {'prefix': saddr}
