@@ -29,7 +29,7 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 from absl import logging
 
 from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Policy, Term
+from  aerleon.lib import policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
@@ -86,7 +86,7 @@ ACLSet = TypedDict(
 )
 
 
-class OCTerm(aclgenerator.Term):
+class Term(aclgenerator.Term):
     """Creates the term for the OpenConfig firewall."""
 
     ACTION_MAP = {'accept': 'ACCEPT', 'deny': 'DROP', 'reject': 'REJECT'}
@@ -100,7 +100,7 @@ class OCTerm(aclgenerator.Term):
         6: 'ipv6',
     }
 
-    def __init__(self, term: Term, inet_version: str = 'inet') -> None:
+    def __init__(self, term: policy.Term, inet_version: str = 'inet') -> None:
         super().__init__(term)
         self.term = term
         self.inet_version = inet_version
@@ -264,7 +264,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     SUFFIX = '.oacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
     FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
-    _TERM_CLASS = Term
+    _TERM = Term
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -294,7 +294,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
         """Initialize self.acl_sets with proper Typing"""
         self.acl_sets: List[ACLSet] = []
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.total_rule_count = 0
         self._InitACLSet()
 
@@ -330,7 +330,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
             else:
                 term_address_families = [address_family]
             for term_af in term_address_families:
-                t = OCTerm(term, term_af)
+                t = self._TERM(term, term_af)
                 for rule in t.ConvertToDict():
                     self.total_rule_count += 1
                     rule['sequence-id'] = self.total_rule_count * 5
