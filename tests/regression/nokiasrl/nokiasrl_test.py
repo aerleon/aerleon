@@ -1,4 +1,4 @@
-# Copyright 2021 Google Inc. All Rights Reserved.
+# Copyright 2023 Nokia All Rights Reserved.
 # Modifications Copyright 2022-2023 Aerleon Project Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for OpenConfig rendering module."""
+"""Unittest for SR Linux rendering module."""
 
 import json
 from unittest import mock
 
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, gcp, nacaddr, naming, openconfig, policy
+from aerleon.lib import nacaddr, naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
   comment:: "The general policy comment."
-  target:: openconfig good-name-v4 inet
+  target:: nokiasrl good-name-v4 inet
 }
 """
 
@@ -87,359 +87,205 @@ term good-term-1 {
 
 GOOD_JSON_SADDR = """
 [
-  {
-    "acl-entries": {
-      "acl-entry": [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "source-address": "10.2.3.4/32"
+          "match": {
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
             }
           },
           "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_V6_SADDR = """
 [
-  {
-    "acl-entries": {
-      "acl-entry":  [
+{
+    "ipv6-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv6": {
-            "config": {
-              "source-address": "2001:4860:8000::5/128"
+          "match": {
+            "source-ip": {
+              "prefix": "2001:4860:8000::5/128"
             }
           },
           "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v6",
-      "type": "ACL_IPV6"
-    },
-    "name": "good-name-v6",
-    "type": "ACL_IPV6"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_DADDR = """
 [
-  {
-    "acl-entries": {
-      "acl-entry": [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "destination-address": "10.2.3.4/32"
+          "match": {
+            "destination-ip": {
+              "prefix": "10.2.3.4/32"
             }
           },
           "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_V6_DADDR = """
 [
-  {
-    "acl-entries": {
-      "acl-entry":  [
+{
+    "ipv6-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv6": {
-            "config": {
-              "destination-address": "2001:4860:8000::5/128"
+          "match": {
+            "destination-ip": {
+              "prefix": "2001:4860:8000::5/128"
             }
           },
           "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v6",
-      "type": "ACL_IPV6"
-    },
-    "name": "good-name-v6",
-    "type": "ACL_IPV6"
-  }
-]
-"""
-
-GOOD_JSON_MIXED_DADDR = """
-[
-  {
-    "acl-entries": {
-      "acl-entry": [
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
-          },
-          "ipv4": {
-            "config": {
-              "destination-address": "10.2.3.4/32"
-            }
-          },
-          "sequence-id": 5
-        },
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
-          },
-          "ipv6": {
-            "config": {
-              "destination-address": "2001:4860:8000::5/128"
-            }
-          },
-          "sequence-id": 10
-        }
-      ]
-    },
-    "config": {
-      "name": "good-name-mixed",
-      "type": "ACL_MIXED"
-    },
-    "name": "good-name-mixed",
-    "type": "ACL_MIXED"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_SPORT = """
 [
-  {
-    "acl-entries": {
-      "acl-entry": [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "protocol": 6
-            }
+          "match": {
+            "protocol": 6,
+            "source-port": { "value": 53 }
           },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "source-port": 53
-            }
-          }
+          "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_DPORT = """
 [
-  {
-    "acl-entries": {
-      "acl-entry": [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "protocol": 6
-            }
+          "match": {
+            "protocol": 6,
+            "destination-port": { "value": 53 }
           },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "destination-port": 53
-            }
-          }
+          "sequence-id": 5
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_MULTI_PROTO_DPORT = """
 [
-  {
-    "acl-entries": {
-      "acl-entry": [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "protocol": 17
-            }
+          "match": {
+            "protocol": 17,
+            "source-port": { "range": { "start": 1024, "end": 65535 } },
+            "destination-port": { "range": { "start": 1024, "end": 65535 } }
           },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "destination-port": "1024..65535",
-              "source-port": "1024..65535"
-            }
-          }
+          "sequence-id": 5
         },
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "protocol": 6
-            }
+          "match": {
+            "protocol": 6,
+            "source-port": { "range": { "start": 1024, "end": 65535 } },
+            "destination-port": { "range": { "start": 1024, "end": 65535 } }
           },
-          "sequence-id": 10,
-          "transport": {
-            "config": {
-              "destination-port": "1024..65535",
-              "source-port": "1024..65535"
-            }
-          }
+          "sequence-id": 10
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 
 GOOD_JSON_EVERYTHING = """
 [
-  {
-    "acl-entries": {
-      "acl-entry":  [
+{
+    "ipv4-filter": {
+      "entry": [
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "destination-address": "10.2.3.4/32",
-              "protocol": 17,
-              "source-address": "10.2.3.4/32"
-            }
+          "match": {
+            "protocol": 17,
+            "destination-ip": { "prefix": "10.2.3.4/32" },
+            "destination-port": { "value": 53 },
+            "source-ip": { "prefix": "10.2.3.4/32" }
           },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "destination-port": 53
-            }
-          }
+          "sequence-id": 5
         },
         {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
+          "action": {
+            "accept": {}
           },
-          "ipv4": {
-            "config": {
-              "destination-address": "10.2.3.4/32",
-              "protocol": 6,
-              "source-address": "10.2.3.4/32"
-            }
+          "match": {
+            "protocol": 6,
+            "destination-ip": { "prefix": "10.2.3.4/32" },
+            "destination-port": { "value": 53 },
+            "source-ip": { "prefix": "10.2.3.4/32" }
           },
-          "sequence-id": 10,
-          "transport": {
-            "config": {
-              "destination-port": 53
-            }
-          }
+          "sequence-id": 10
         }
       ]
-    },
-    "config": {
-      "name": "good-name-v4",
-      "type": "ACL_IPV4"
-    },
-    "name": "good-name-v4",
-    "type": "ACL_IPV4"
-  }
+    }
+}
 ]
 """
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
-  target:: openconfig good-name-v6 inet6
-}
-"""
-
-GOOD_HEADER_MIXED = """
-header {
-  comment:: "The general policy comment."
-  target:: openconfig good-name-mixed mixed
+  target:: nokiasrl good-name-v6 inet6
 }
 """
 
@@ -455,7 +301,7 @@ _TERM_TARGET_TAGS_LIMIT = 70
 _TERM_PORTS_LIMIT = 256
 
 
-class OpenConfigTest(absltest.TestCase):
+class NokiaSRLTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
@@ -464,7 +310,7 @@ class OpenConfigTest(absltest.TestCase):
     def testSaddr(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SADDR)
@@ -477,7 +323,7 @@ class OpenConfigTest(absltest.TestCase):
     def testDaddr(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DADDR)
@@ -491,7 +337,7 @@ class OpenConfigTest(absltest.TestCase):
         self.naming.GetNetAddr.return_value = TEST_IPS
         self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SPORT)
@@ -500,11 +346,12 @@ class OpenConfigTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
         print(acl)
 
+    # TODO v6 s/dport
     @capture.stdout
     def testDport(self):
         self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DPORT)
@@ -517,7 +364,7 @@ class OpenConfigTest(absltest.TestCase):
     def testMultiDport(self):
         self.naming.GetServiceByProto.return_value = ['1024-65535']
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_MULTI_PROTO_DPORT)
@@ -533,7 +380,7 @@ class OpenConfigTest(absltest.TestCase):
         self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
         self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_EVERYTHING)
@@ -548,7 +395,7 @@ class OpenConfigTest(absltest.TestCase):
     def testV6Saddr(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_SADDR)
@@ -561,7 +408,7 @@ class OpenConfigTest(absltest.TestCase):
     def testV6Daddr(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
+        acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_DADDR)
@@ -570,19 +417,13 @@ class OpenConfigTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
-    @capture.stdout
-    def testMixedDaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
 
-        acl = openconfig.OpenConfig(
-            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_DADDR, self.naming), EXP_INFO
-        )
-        expected = json.loads(GOOD_JSON_MIXED_DADDR)
-        self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        print(acl)
-
+#
+# TODO:
+# - Fragments
+# - TCP flags
+# - ICMP type codes
+#
 
 if __name__ == '__main__':
     absltest.main()
