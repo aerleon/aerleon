@@ -1,11 +1,13 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "10.2.3.4/32"

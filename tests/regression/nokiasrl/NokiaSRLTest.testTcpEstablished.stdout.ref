@@ -1,6 +1,7 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {

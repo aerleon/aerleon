@@ -1,11 +1,13 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "destination-port": {
               "range": {
@@ -27,6 +29,7 @@
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "destination-port": {
               "range": {

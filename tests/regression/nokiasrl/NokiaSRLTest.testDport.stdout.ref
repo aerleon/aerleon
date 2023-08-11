@@ -1,11 +1,13 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 dest.",
           "match": {
             "destination-port": {
               "value": 53

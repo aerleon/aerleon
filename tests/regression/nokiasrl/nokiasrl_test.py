@@ -89,11 +89,13 @@ GOOD_JSON_SADDR = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "10.2.3.4/32"
@@ -111,11 +113,13 @@ GOOD_JSON_V6_SADDR = """
 [
 {
     "ipv6-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -133,11 +137,13 @@ GOOD_JSON_DADDR = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -155,11 +161,13 @@ GOOD_JSON_V6_DADDR = """
 [
 {
     "ipv6-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -177,11 +185,13 @@ GOOD_JSON_SPORT = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 source.",
           "match": {
             "protocol": 6,
             "source-port": { "value": 53 }
@@ -198,11 +208,13 @@ GOOD_JSON_DPORT = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 dest.",
           "match": {
             "protocol": 6,
             "destination-port": { "value": 53 }
@@ -219,11 +231,13 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 17,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -235,6 +249,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 6,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -252,11 +267,13 @@ GOOD_JSON_EVERYTHING = """
 [
 {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP 53 with saddr/daddr.",
           "match": {
             "protocol": 17,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -269,6 +286,7 @@ GOOD_JSON_EVERYTHING = """
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP 53 with saddr/daddr.",
           "match": {
             "protocol": 6,
             "destination-ip": { "prefix": "10.2.3.4/32" },

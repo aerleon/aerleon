@@ -52,7 +52,8 @@ ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "action": Action, "match": Match},
 )
-IPFilters = TypedDict("IPFilters", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]})
+Entries = TypedDict("Entries", {"entry": List[ACLEntry], "description": str})
+IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
 
 # generic error class
 class Error(aclgenerator.Error):
@@ -79,6 +80,9 @@ class SRLTerm(openconfig.OCTerm):
     def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         self.term_dict['action'] = {action: {}}
+
+    def SetComments(self, comments: List[str]) -> None:
+        self.term_dict['description'] = "\n".join(comments)
 
     def SetOptions(self, family: str) -> None:
         # Handle various options
@@ -187,7 +191,9 @@ class NokiaSRLinux(openconfig.OpenConfig):
         """Initialize self.acl_sets with proper Typing"""
         self.acl_sets: List[IPFilters] = []
 
-    def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str) -> None:
+    def _TranslateTerms(
+        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+    ) -> None:
         srl_acl_entries: List[ACLEntry] = []
         for term in terms:
             # Handle mixed for each indvidual term as inet and inet6.
@@ -203,9 +209,10 @@ class NokiaSRLinux(openconfig.OpenConfig):
                     self.total_rule_count += 1
                     rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
                     srl_acl_entries.append(rule)
+        desc = "\n".join(hdr_comments) if hdr_comments else ""
         ip_filter = {
             'ipv4-filter'
             if address_family == 'inet'
-            else 'ipv6-filter': {'entry': srl_acl_entries}
+            else 'ipv6-filter': {'description': desc,'entry': srl_acl_entries}
         }
         self.acl_sets.append(ip_filter)

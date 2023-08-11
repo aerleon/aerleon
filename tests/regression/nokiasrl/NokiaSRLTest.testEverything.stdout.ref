@@ -1,11 +1,13 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP 53 with saddr/daddr.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -24,6 +26,7 @@
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP 53 with saddr/daddr.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"

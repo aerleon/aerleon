@@ -1,11 +1,13 @@
 [
   {
     "ipv6-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "2001:4860:8000::5/128"
