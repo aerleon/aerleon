@@ -309,11 +309,26 @@ term bad-term-1 {
   action:: accept
 }
 """
+BAD_TERM_2 = """
+term bad-term-2 {
+  protocol:: icmp
+  option:: tcp-established
+  action:: accept
+}
+"""
 GOOD_ESTABLISHED_TERM_1 = """
 term established-term-1 {
   protocol:: tcp
   source-port:: DNS
   option:: established
+  action:: accept
+}
+"""
+GOOD_TCP_ESTABLISHED_TERM_1 = """
+term tcp-established-term-1 {
+  protocol:: tcp
+  source-port:: DNS
+  option:: tcp-established
   action:: accept
 }
 """
@@ -462,11 +477,24 @@ class NokiaSRLTest(absltest.TestCase):
         print(acl)
 
     @capture.stdout
-    def testTcpEstablished(self):
+    def testEstablished(self):
         self.naming.GetServiceByProto.return_value = ['53']
 
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(acl)
+        self.assertIn('"ack|rst"', output, output)
+
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TCP_ESTABLISHED_TERM_1, self.naming), EXP_INFO
         )
         output = str(acl)
         self.assertIn('"ack|rst"', output, output)
@@ -497,6 +525,12 @@ class NokiaSRLTest(absltest.TestCase):
             [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
         )
 
+    def testEstablishedNonTcpUdp(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_2, self.naming)
+        with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
 #
 # TODO:
