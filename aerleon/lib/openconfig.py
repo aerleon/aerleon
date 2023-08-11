@@ -29,7 +29,7 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 from absl import logging
 
 from aerleon.lib import aclgenerator
-from  aerleon.lib import policy
+from aerleon.lib import policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
