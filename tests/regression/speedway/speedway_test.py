@@ -163,16 +163,16 @@ class SpeedwayTest(absltest.TestCase):
             result[0],
             '*filter designation does not appear at top of generated ' 'policy.',
         )
-        # self.assertIn(':INPUT ACCEPT [0:0]', result, 'input default policy of accept not set.')
-        # self.assertIn('-N I_good-term-1', result, 'did not find new chain for good-term-1.')
-        # self.assertIn(
-        #     '-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED' ' -j ACCEPT',
-        #     result,
-        #     'did not find append for good-term-1.',
-        # )
-        # self.assertEqual(
-        #     'COMMIT', result[len(result) - 2], 'COMMIT does not appear at end of output policy.'
-        # )
+        self.assertIn(':INPUT ACCEPT [0:0]', result, 'input default policy of accept not set.')
+        self.assertIn('-N I_good-term-1', result, 'did not find new chain for good-term-1.')
+        self.assertIn(
+            '-A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED' ' -j ACCEPT',
+            result,
+            'did not find append for good-term-1.',
+        )
+        self.assertEqual(
+            'COMMIT', result[len(result) - 2], 'COMMIT does not appear at end of output policy.'
+        )
         print(acl)
 
     def testBuildTokens(self):
