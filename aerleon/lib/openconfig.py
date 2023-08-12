@@ -28,8 +28,7 @@ from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 
 from absl import logging
 
-from aerleon.lib import aclgenerator
-from aerleon.lib.policy import Policy, Term
+from aerleon.lib import aclgenerator, policy
 
 if sys.version_info < (3, 8):
     from typing_extensions import TypedDict
@@ -49,13 +48,23 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
+class TcpEstablishedWithNonTcpError(Error):
+    """Raised when the TCP established option is set with a non TCP protocol."""
+
+
 # Graceful handling of dict heierarchy for OpenConfig JSON.
 def RecursiveDict() -> DefaultDict[Any, Any]:
     return defaultdict(RecursiveDict)
 
 
 TransportConfig = TypedDict(
-    "TransportConfig", {"source-port": Union[int, str], "destination-port": Union[int, str]}
+    "TransportConfig",
+    {
+        "source-port": Union[int, str],
+        "destination-port": Union[int, str],
+        "detail-mode": str,
+        "builtin-detail": str,
+    },
 )
 Transport = TypedDict("Transport", {"transport": TransportConfig})
 IPConfig = TypedDict(
@@ -76,7 +85,7 @@ ACLSet = TypedDict(
 )
 
 
-class OCTerm(aclgenerator.Term):
+class Term(aclgenerator.Term):
     """Creates the term for the OpenConfig firewall."""
 
     ACTION_MAP = {'accept': 'ACCEPT', 'deny': 'DROP', 'reject': 'REJECT'}
@@ -90,7 +99,7 @@ class OCTerm(aclgenerator.Term):
         6: 'ipv6',
     }
 
-    def __init__(self, term: Term, inet_version: str = 'inet') -> None:
+    def __init__(self, term: policy.Term, inet_version: str = 'inet') -> None:
         super().__init__(term)
         self.term = term
         self.inet_version = inet_version
@@ -103,6 +112,13 @@ class OCTerm(aclgenerator.Term):
         """Convert term to a string."""
         rules = self.ConvertToDict()
         json.dumps(rules, indent=2)
+
+    def _tcp_established(self) -> Dict[str, str]:
+        """Return's openconfig TCP_ESTABLISHED configuration.
+
+        Other vendors (eg. SONiC) have slighly different implementations,
+        This function permits inheritance."""
+        return {'detail-mode': 'BUILTIN', 'builtin-detail': "TCP_ESTABLISHED"}
 
     def ConvertToDict(
         self,
@@ -203,7 +219,14 @@ class OCTerm(aclgenerator.Term):
         self.term_dict['actions']['config']['forwarding-action'] = action
 
     def SetOptions(self) -> None:
-        pass
+        # options
+        if self.term.option:
+            if 'tcp-established' in self.term.option:
+                if self.term.protocol != ['tcp']:
+                    raise TcpEstablishedWithNonTcpError(
+                        f'tcp-established can only be used with tcp protocol in term {self.term.name}'
+                    )
+                self.term_dict['transport']['config'].update(self._tcp_established())
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:
         self.term_dict[family]['config']['source-address'] = saddr
@@ -240,6 +263,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     SUFFIX = '.oacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
     FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
+    _TERM = Term
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -255,13 +279,21 @@ class OpenConfig(aclgenerator.ACLGenerator):
         # OpenConfig ACL model only supports these three forwarding actions.
         supported_sub_tokens['action'] = {'accept', 'deny', 'reject'}
 
+        supported_sub_tokens.update(
+            {
+                'option': {
+                    'tcp-established',
+                }
+            }
+        )
+
         return supported_tokens, supported_sub_tokens
 
     def _InitACLSet(self) -> None:
         """Initialize self.acl_sets with proper Typing"""
         self.acl_sets: List[ACLSet] = []
 
-    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.total_rule_count = 0
         self._InitACLSet()
 
@@ -278,7 +310,6 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 if i in filter_options:
                     address_family = i
                     filter_options.remove(i)
-
             self._TranslateTerms(terms, address_family, filter_name)
 
         logging.info('Total rule count of policy %s is: %d', filter_name, self.total_rule_count)
@@ -290,10 +321,6 @@ class OpenConfig(aclgenerator.ACLGenerator):
         oc_acl_entries: List[ACLEntry] = []
 
         for term in terms:
-            # TODO(b/196430344): Add support for options such as
-            # established/rst/first-fragment
-            if term.option:
-                raise OcFirewallError('OpenConfig firewall does not support term options.')
             # Handle mixed for each indvidual term as inet and inet6.
             # inet/inet6 are treated the same.
             term_address_families = []
@@ -302,7 +329,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
             else:
                 term_address_families = [address_family]
             for term_af in term_address_families:
-                t = OCTerm(term, term_af)
+                t = self._TERM(term, term_af)
                 for rule in t.ConvertToDict():
                     self.total_rule_count += 1
                     rule['sequence-id'] = self.total_rule_count * 5
