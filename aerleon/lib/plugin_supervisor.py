@@ -108,6 +108,7 @@ BUILTIN_GENERATORS: list[Tuple] = [
     ('nsxv',                 'aerleon.lib.nsxv',                 'Nsxv'),
     ('nsxt',                 'aerleon.lib.nsxt',                 'Nsxt'),
     ('openconfig',           'aerleon.lib.openconfig',           'OpenConfig'),
+    ('sonic',                'aerleon.lib.sonic',                'SONiC'),
     ('speedway',             'aerleon.lib.speedway',             'Speedway'),
     ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
     ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
