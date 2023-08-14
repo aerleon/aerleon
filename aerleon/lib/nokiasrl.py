@@ -89,7 +89,7 @@ class SRLTerm(openconfig.Term):
                 log = {"log": True}
             else:
                 raise UnsupportedLogging(
-                    'logging can only be used with deny in term %s' % self.term.name
+                    f'logging can only be used with deny in term {self.term.name}'
                 )
         self.term_dict['action'] = {action: log}
 
@@ -122,8 +122,7 @@ class SRLTerm(openconfig.Term):
                 _tcp_established()
             else:
                 raise TcpEstablishedWithNonTcpError(
-                    'tcp-established can only be used with tcp protocol in term %s'
-                    % self.term.name
+                    f'tcp-established can only be used with tcp protocol in term {self.term.name}'
                 )
         elif 'established' in opts:
             if self.term.protocol:
@@ -135,12 +134,11 @@ class SRLTerm(openconfig.Term):
                         self.SetDestPorts(1024, 65535)
                 else:  # Could produce 2 rules if [tcp,udp]
                     raise EstablishedWithNonTcpUdpError(
-                        'established can only be used with tcp or udp protocol in term %s'
-                        % self.term.name
+                        f'established can only be used with tcp or udp protocol in term {self.term.name}'
                     )
             else:
                 raise EstablishedWithNoProtocolError(
-                    'must specify a protocol for "established" in term %s' % self.term.name
+                    f'must specify a protocol for "established" in term {self.term.name}'
                 )
 
         if 'tcp-flags' in self.term_dict['match']:

@@ -321,6 +321,32 @@ term bad-term-2 {
   action:: accept
 }
 """
+BAD_TERM_3 = """
+term bad-term-3 {
+  protocol:: icmp
+  option:: established
+  action:: accept
+}
+"""
+BAD_TERM_4 = """
+term bad-term-4 {
+  option:: established
+  action:: accept
+}
+"""
+
+BAD_LOGGING = """
+term good-term-1 {
+  comment:: "Allow TCP & UDP 53 with saddr/daddr and logging."
+  destination-address:: CORP_EXTERNAL
+  source-address:: CORP_EXTERNAL
+  destination-port:: DNS
+  protocol:: udp tcp
+  action:: accept
+  logging:: True
+}
+"""
+
 GOOD_ESTABLISHED_TERM_1 = """
 term established-term-1 {
   protocol:: tcp
@@ -519,7 +545,7 @@ class NokiaSRLTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
         print(output)
 
-    def testNonTcpWithTcpEstablished(self):
+    def testTcpEstablishedWithNonTcpError1(self):
         self.naming.GetServiceByProto.return_value = ['53']
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_1, self.naming)
@@ -530,11 +556,32 @@ class NokiaSRLTest(absltest.TestCase):
             [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
         )
 
-    def testEstablishedNonTcpUdp(self):
+    def testTcpEstablishedWithNonTcpError2(self):
         self.naming.GetServiceByProto.return_value = ['53']
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_2, self.naming)
         with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testUnsupportedLogging(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_LOGGING, self.naming)
+        with self.assertRaises(nokiasrl.UnsupportedLogging):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testEstablishedWithNonTcpUdpError(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_3, self.naming)
+        with self.assertRaises(nokiasrl.EstablishedWithNonTcpUdpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testEstablishedWithNoProtocolError(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_4, self.naming)
+        with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
 
