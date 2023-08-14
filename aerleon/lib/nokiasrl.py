@@ -94,7 +94,7 @@ class SRLTerm(openconfig.Term):
         self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
-        self.term_dict['description'] = "\n".join(comments)
+        self.term_dict['description'] = "_".join(comments)[:255]
 
     def SetOptions(self, family: str) -> None:
         # Handle various options
@@ -219,7 +219,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
                     self.total_rule_count += 1
                     rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
                     srl_acl_entries.append(rule)
-        desc = "\n".join(hdr_comments) if hdr_comments else ""
+        desc = "_".join(hdr_comments)[:255] if hdr_comments else ""
         ip_filter = {
             'ipv4-filter'
             if address_family == 'inet'
