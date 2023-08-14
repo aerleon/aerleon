@@ -90,6 +90,7 @@ GOOD_JSON_SADDR = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -114,6 +115,7 @@ GOOD_JSON_V6_SADDR = """
 [
 {
     "ipv6-filter": {
+      "name": "good-name-v6",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -138,6 +140,7 @@ GOOD_JSON_DADDR = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -162,6 +165,7 @@ GOOD_JSON_V6_DADDR = """
 [
 {
     "ipv6-filter": {
+      "name": "good-name-v6",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -186,6 +190,7 @@ GOOD_JSON_SPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -209,6 +214,7 @@ GOOD_JSON_DPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -232,6 +238,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {
@@ -268,6 +275,7 @@ GOOD_JSON_EVERYTHING = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
       "description": "The general policy comment.",
       "entry": [
         {

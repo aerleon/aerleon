@@ -47,7 +47,8 @@
           },
           "sequence-id": 10
         }
-      ]
+      ],
+      "name": "good-name-v4"
     }
   }
 ]
