@@ -223,6 +223,10 @@ class NokiaSRLinux(openconfig.OpenConfig):
         ip_filter = {
             'ipv4-filter'
             if address_family == 'inet'
-            else 'ipv6-filter': {'description': desc, 'entry': srl_acl_entries}
+            else 'ipv6-filter': {
+                'description': desc,
+                'entry': srl_acl_entries,
+                'name': filter_name,
+            }
         }
         self.acl_sets.append(ip_filter)
