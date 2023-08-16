@@ -7,7 +7,7 @@
 # $Date:$
 # $Revision:$
 # inet
-:INPUT DROP
+:INPUT DROP [0:0]
 -N I_deny-from-bogons
 -A I_deny-from-bogons -m comment --comment "this is a sample edge input filter with a very very very long and"
 -A I_deny-from-bogons -m comment --comment "multi-line comment that"
@@ -69,7 +69,7 @@
 # $Date:$
 # $Revision:$
 # inet
-:OUTPUT DROP
+:OUTPUT DROP [0:0]
 -N O_deny-to-bad-destinations
 -A O_deny-to-bad-destinations -p all -d 0.0.0.0/8 -j DROP
 -A O_deny-to-bad-destinations -p all -d 0.0.0.0/8 -j DROP

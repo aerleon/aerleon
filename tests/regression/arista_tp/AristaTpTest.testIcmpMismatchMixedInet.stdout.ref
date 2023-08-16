@@ -1,8 +1,0 @@
-traffic-policies
-   no traffic-policy test-filter
-   traffic-policy test-filter
-      match ipv6-icmptype-mismatch ipv6
-         !! error when icmpv6 paired with inet filter
-         protocol icmpv6 type 128,129 code all
-      !
-

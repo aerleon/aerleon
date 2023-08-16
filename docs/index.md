@@ -39,6 +39,8 @@ The data primarily consists of:
     * Juniper MPC
 * Kubernetes
 * NFTables
+* Nokia
+    * Nokia SR Linux (nokiasrl)
 * VMWare NSXV
 * Packet Filter
 * Palo Alto

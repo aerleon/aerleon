@@ -872,6 +872,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
 * for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
+* _destination-fqdn_: One or more destination FQDNs to filter.
 * _destination-zone_: one or more destination zones tokens. Only supported by global policy
 * _dscp-except_: Do not match the DSCP number.
 * _dscp-match_: Match a DSCP number.
@@ -889,6 +890,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
         * See [here](https://kb.juniper.net/InfoCenter/index?page=content&id=KB16506) for explanation.
 * _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
+* _source-fqdn_: One or more source FQDNs to filter.
 * _source-zone_: one or more source zones tokens. Only supported by global policy
 * _timeout_: specify application timeout. (default 60)
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
@@ -1070,6 +1072,38 @@ _source:_ https://www.netfilter.org/projects/nftables/manpage.html
 ### Option
 
 * _tcp-established_ and _established_ will cause the term to not be rendered in the final NFT configuration. See 'Important' section above.
+
+***
+
+## Nokia SR Linux
+
+### Header Format
+
+The Nokia SR Linux header designation has the following format:
+
+```yaml
+targets:
+    nokiasrl: {section_name} {inet|inet6|mixed} section-id
+```
+
+* _section_name_: specifies the name of the section all terms in this header apply to.
+* _inet_: specifies that the resulting filter should only render IPv4 addresses.
+* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
+* _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
+* _section-id_: specifies the id for the section (optional)
+
+(Required keywords option and verbatim are not supported)
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
 
 ***
 

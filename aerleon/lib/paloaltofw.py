@@ -862,37 +862,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         # destination address are not specified (any any).
         ANY_IPV4_RANGE = "0.0.0.0-255.255.255.255"
         add_any_ipv4 = False
-        # Name to IP addresses
-        address_book_names_dict = {}
-        address_book_groups_dict = {}
-        try:
-            groups = sorted(self.addressbook.addressbook[''].keys())
-        except:
-            groups = []
-        for group in groups:
-            count = 0
-            for ip in self.addressbook.addressbook[''][group]:
-                name = f'{ip.parent_token}_{count}'
-                count = count + 1
-                address = ip.with_prefixlen
-                if name in address_book_names_dict:
-                    if address_book_names_dict[name].supernet_of(address):
-                        continue
-                address_book_names_dict[name] = address
-
-            # building individual address-group dictionary
-            for nested_group in groups:
-                group_names = [i for i in address_book_names_dict.keys() if nested_group in i]
-
-                address_book_groups_dict[nested_group] = group_names
-
-        # sort address books and address sets
-        address_book_groups_dict = collections.OrderedDict(
-            sorted(address_book_groups_dict.items())
-        )
-        address_book_keys = sorted(
-            list(address_book_names_dict.keys()), key=self._SortAddressBookNumCheck
-        )
 
         # INITAL CONFIG
         config = etree.Element("config", {"urldb": "paloaltonetworks", "version": "8.1.0"})
@@ -1026,9 +995,9 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 else:
                     for x in options["source"]:
                         if no_addr_obj:
-                            for group in address_book_groups_dict[x]:
+                            for ip in self.addressbook.GetAddress('', x):
                                 member = etree.SubElement(source, "member")
-                                member.text = str(address_book_names_dict[group])
+                                member.text = str(ip)
                                 max_src_dst += 1
                         else:
                             member = etree.SubElement(source, "member")
@@ -1060,9 +1029,9 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                 else:
                     for x in options["destination"]:
                         if no_addr_obj:
-                            for group in address_book_groups_dict[x]:
+                            for ip in self.addressbook.GetAddress('', x):
                                 member = etree.SubElement(dest, "member")
-                                member.text = str(address_book_names_dict[group])
+                                member.text = str(ip)
                                 max_src_dst += 1
                         else:
                             member = etree.SubElement(dest, "member")
@@ -1133,30 +1102,33 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
         # pytype: enable=key-error
 
-        if no_addr_obj:
-            address_book_groups_dict = {}
-            address_book_keys = {}
-
         # ADDRESS
         vsys_entry.append(etree.Comment(" Address Groups "))
         addr_group = etree.SubElement(vsys_entry, "address-group")
 
-        for group, address_list in address_book_groups_dict.items():
-            entry = etree.SubElement(addr_group, "entry", {"name": group})
-            static = etree.SubElement(entry, "static")
-            for name in address_list:
-                member = etree.SubElement(static, "member")
-                member.text = name
+        if not no_addr_obj:
+            for _, token, ips, _ in self.addressbook.Walk(''):
+                entry = etree.SubElement(addr_group, "entry", {"name": token})
+                static = etree.SubElement(entry, "static")
+                count = 0
+                for ip in ips:
+                    member = etree.SubElement(static, "member")
+                    member.text = f'{ip.parent_token}_{count}'
+                    count += 1
 
         vsys_entry.append(etree.Comment(" Addresses "))
         addr = etree.SubElement(vsys_entry, "address")
+        if not no_addr_obj:
 
-        for name in address_book_keys:
-            entry = etree.SubElement(addr, "entry", {"name": name})
-            desc = etree.SubElement(entry, "description")
-            desc.text = name
-            ip = etree.SubElement(entry, "ip-netmask")
-            ip.text = str(address_book_names_dict[name])
+            for _, token, ips, _ in self.addressbook.Walk(''):
+                count = 0
+                for ip in ips:
+                    entry = etree.SubElement(addr, "entry", {"name": f'{token}_{count}'})
+                    desc = etree.SubElement(entry, "description")
+                    desc.text = f'{token}_{count}'
+                    elem = etree.SubElement(entry, "ip-netmask")
+                    elem.text = str(ip)
+                    count += 1
 
         if add_any_ipv4:
             entry = etree.SubElement(addr, "entry", {"name": "any-ipv4"})

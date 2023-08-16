@@ -1,16 +1,28 @@
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv6": {
+            "config": {
+              "destination-address": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
     },
-    "ipv6": {
-      "config": {
-        "destination-address": "2001:4860:8000::5/128"
-      }
+    "config": {
+      "name": "good-name-v6",
+      "type": "ACL_IPV6"
     },
-    "sequence-id": 5
+    "name": "good-name-v6",
+    "type": "ACL_IPV6"
   }
 ]
 

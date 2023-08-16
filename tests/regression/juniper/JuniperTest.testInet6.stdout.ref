@@ -10,7 +10,7 @@ firewall {
             interface-specific;
             term good-term-1 {
                 from {
-                    next-header icmpv6;
+                    next-header icmp6;
                 }
                 then accept;
             }

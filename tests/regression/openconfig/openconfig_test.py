@@ -20,13 +20,13 @@ from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, gcp, nacaddr, naming, openconfig, policy
+from aerleon.lib import aclgenerator, nacaddr, naming, openconfig, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
   comment:: "The general policy comment."
-  target:: openconfig inet
+  target:: openconfig good-name-v4 inet
 }
 """
 
@@ -73,7 +73,23 @@ term good-term-1 {
   action:: accept
 }
 """
-
+GOOD_TCP_EST = """
+term good-tcp-est {
+  protocol:: tcp
+  destination-address:: CORP_EXTERNAL
+  source-port:: HTTP
+  option:: tcp-established
+  action:: accept
+}
+"""
+BAD_TCP_EST = """
+term bad-tcp-est {
+  protocol:: tcp udp
+  source-port:: DNS
+  option:: tcp-established
+  action:: accept
+}
+"""
 GOOD_EVERYTHING = """
 term good-term-1 {
   comment:: "Allow TCP & UDP 53 with saddr/daddr."
@@ -88,35 +104,59 @@ term good-term-1 {
 GOOD_JSON_SADDR = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "source-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "source-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
 
 GOOD_JSON_V6_SADDR = """
- [
+[
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry":  [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv6": {
+            "config": {
+              "source-address": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
     },
-    "ipv6": {
-      "config": {
-        "source-address": "2001:4860:8000::5/128"
-      }
+    "config": {
+      "name": "good-name-v6",
+      "type": "ACL_IPV6"
     },
-    "sequence-id": 5
+    "name": "good-name-v6",
+    "type": "ACL_IPV6"
   }
 ]
 """
@@ -124,35 +164,59 @@ GOOD_JSON_V6_SADDR = """
 GOOD_JSON_DADDR = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
 
 GOOD_JSON_V6_DADDR = """
- [
+[
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry":  [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv6": {
+            "config": {
+              "destination-address": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
     },
-    "ipv6": {
-      "config": {
-        "destination-address": "2001:4860:8000::5/128"
-      }
+    "config": {
+      "name": "good-name-v6",
+      "type": "ACL_IPV6"
     },
-    "sequence-id": 5
+    "name": "good-name-v6",
+    "type": "ACL_IPV6"
   }
 ]
 """
@@ -160,30 +224,42 @@ GOOD_JSON_V6_DADDR = """
 GOOD_JSON_MIXED_DADDR = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv6": {
+            "config": {
+              "destination-address": "2001:4860:8000::5/128"
+            }
+          },
+          "sequence-id": 10
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-mixed",
+      "type": "ACL_MIXED"
     },
-    "sequence-id": 5
-  },
-  {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
-    },
-    "ipv6": {
-      "config": {
-        "destination-address": "2001:4860:8000::5/128"
-      }
-    },
-    "sequence-id": 10
+    "name": "good-name-mixed",
+    "type": "ACL_MIXED"
   }
 ]
 """
@@ -191,22 +267,34 @@ GOOD_JSON_MIXED_DADDR = """
 GOOD_JSON_SPORT = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "source-port": 53
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "protocol": 6
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "source-port": 53
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
@@ -214,22 +302,34 @@ GOOD_JSON_SPORT = """
 GOOD_JSON_DPORT = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "destination-port": 53
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "protocol": 6
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "destination-port": 53
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
@@ -237,101 +337,125 @@ GOOD_JSON_DPORT = """
 GOOD_JSON_MULTI_PROTO_DPORT = """
 [
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 17
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "destination-port": "1024..65535",
+              "source-port": "1024..65535"
+            }
+          }
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6
+            }
+          },
+          "sequence-id": 10,
+          "transport": {
+            "config": {
+              "destination-port": "1024..65535",
+              "source-port": "1024..65535"
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "protocol": 17
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "destination-port": "1024..65535",
-        "source-port": "1024..65535"
-      }
-    }
-  },
-  {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
-    },
-    "ipv4": {
-      "config": {
-        "protocol": 6
-      }
-    },
-    "sequence-id": 10,
-    "transport": {
-      "config": {
-        "destination-port": "1024..65535",
-        "source-port": "1024..65535"
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
 
 GOOD_JSON_EVERYTHING = """
- [
+[
   {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
+    "acl-entries": {
+      "acl-entry":  [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32",
+              "protocol": 17,
+              "source-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "destination-port": 53
+            }
+          }
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32",
+              "protocol": 6,
+              "source-address": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 10,
+          "transport": {
+            "config": {
+              "destination-port": 53
+            }
+          }
+        }
+      ]
     },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 17,
-        "source-address": "10.2.3.4/32"
-      }
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
     },
-    "sequence-id": 5,
-    "transport": {
-      "config": {
-        "destination-port": 53
-      }
-    }
-  },
-  {
-    "actions": {
-      "config": {
-        "forwarding-action": "ACCEPT"
-      }
-    },
-    "ipv4": {
-      "config": {
-        "destination-address": "10.2.3.4/32",
-        "protocol": 6,
-        "source-address": "10.2.3.4/32"
-      }
-    },
-    "sequence-id": 10,
-    "transport": {
-      "config": {
-        "destination-port": 53
-      }
-    }
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
   }
 ]
 """
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
-  target:: openconfig inet6
+  target:: openconfig good-name-v6 inet6
 }
 """
 
 GOOD_HEADER_MIXED = """
 header {
   comment:: "The general policy comment."
-  target:: openconfig mixed
+  target:: openconfig good-name-mixed mixed
 }
 """
 
@@ -351,11 +475,6 @@ class OpenConfigTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = mock.create_autospec(naming.Naming)
-
-    def _StripAclHeaders(self, acl):
-        return '\n'.join(
-            [line for line in str(acl).split('\n') if not line.lstrip().startswith('#')]
-        )
 
     @capture.stdout
     def testSaddr(self):
@@ -479,6 +598,33 @@ class OpenConfigTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
+
+    @capture.stdout
+    def testTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetNetAddr.return_value = TEST_IPS
+
+        policy_text = GOOD_HEADER + GOOD_TCP_EST
+        acl = openconfig.OpenConfig(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
+        output = str(acl)
+        self.assertIn('TCP_ESTABLISHED', output, output)
+        self.assertIn('BUILTIN', output, output)
+
+        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
+        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
+        print(acl)
+
+    def testNonTcpWithTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        policy_text = GOOD_HEADER + BAD_TCP_EST
+        pol = policy.ParsePolicy(policy_text, self.naming)
+        self.assertRaises(
+            openconfig.TcpEstablishedWithNonTcpError, openconfig.OpenConfig, pol, EXP_INFO
+        )
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
+        )
 
 
 if __name__ == '__main__':

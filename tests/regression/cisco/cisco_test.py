@@ -714,6 +714,57 @@ class CiscoTest(absltest.TestCase):
         print(acl)
 
     @capture.stdout
+    def testMixedFilterSkipTerms(self):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('10.0.0.0/8'),
+        ]
+
+        acl = cisco.Cisco(
+            policy.ParsePolicy(GOOD_MIXED_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
+        )
+        inet6_test1 = 'no ip access-list extended mixed_acl'
+        inet6_test2 = 'ip access-list extended mixed_acl'
+        inet6_test3 = 'permit tcp any 10.0.0.0 0.255.255.255'
+        inet6_test4 = 'no ipv6 access-list ipv6-mixed_acl'
+        inet6_test5 = 'ipv6 access-list ipv6-mixed_acl'
+        inet6_test6 = 'permit tcp any 2001:4860:8000::/33'
+        with mock.patch.object(cisco.logging, 'warning') as mock_warning:
+            aclout = str(acl)
+            mock_warning.assert_not_called()
+        self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
+        self.assertTrue(re.search(inet6_test3, aclout), aclout)
+        self.assertIn(inet6_test4, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test5, aclout, '[%s]' % aclout)
+        self.assertFalse(re.search(inet6_test6, aclout), aclout)
+
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        print(acl)
+
+    @mock.patch.object(cisco.logging, 'warning')
+    def testSkippedTerm(self, mock_warning):
+        self.naming.GetNetAddr.return_value = [
+            nacaddr.IP('10.0.0.0/8'),
+        ]
+
+        acl = cisco.Cisco(
+            policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
+        )
+        inet6_test1 = 'no ipv6 access-list inet6_acl'
+        inet6_test2 = 'ipv6 access-list inet6_acl'
+        aclout = str(acl)
+        mock_warning.assert_called_once_with(
+            'Term good-term will not be rendered,'
+            ' as it has destination address match specified but '
+            'no destination addresses of inet6 address family are present.'
+        )
+        self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
+
+        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
+        print(acl)
+
+    @capture.stdout
     def testDsmo(self):
         addr_list = list()
         for octet in range(0, 256):
