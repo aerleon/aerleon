@@ -59,7 +59,7 @@ class SourceMapBuilder:
         self.lines = []
         self.spans = []
         self.source_file = source_file if source_file is not None else ''
-        self._current_filter = None
+        self._current_filter = 0
         self._offset = 0
         self._offset_cursor = 0
         super().__init__()
@@ -67,15 +67,12 @@ class SourceMapBuilder:
     def clear(self):
         self.lines.clear()
         self.spans.clear()
-        self._current_filter = None
+        self._current_filter = 0
         self._offset = 0
         self._offset_cursor = 0
 
     def nextFilter(self):
-        if self._current_filter is None:
-            self._current_filter = 0
-        else:
-            self._current_filter = self._current_filter + 1
+        self._current_filter += 1
 
     def startSpan(self, span_type, **kwargs):
         self.spans.append(
@@ -150,7 +147,7 @@ class SourceMapFlatten(dict):
 
         spans = copy(sm.source_map)
         for span in spans:
-            # Look for terminal spans that refer to a source_file
+            # Look for non-terminal spans that refer to a source_file
             # for which we have the source map, and don't already
             # contain interior spans
             if _SourceMap_isTerminalSpan(span):

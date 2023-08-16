@@ -1102,8 +1102,8 @@ class Cisco(aclgenerator.ACLGenerator):
                     sm.endSpan()
 
             if obj_target.addressbook.GetZoneNames():
-                target = [str(obj_target)] + target
+                target.insert(0, str(obj_target))
             # ensure that the header is always first
-            target = target_header + target
+            target[:0] = target_header
             target += ['', 'exit', '']
         return '\n'.join(target)
