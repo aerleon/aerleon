@@ -76,12 +76,13 @@ term good-term-1 {
 
 GOOD_EVERYTHING = """
 term good-term-1 {
-  comment:: "Allow TCP & UDP 53 with saddr/daddr."
+  comment:: "Deny TCP & UDP 53 with saddr/daddr and logging."
   destination-address:: CORP_EXTERNAL
   source-address:: CORP_EXTERNAL
   destination-port:: DNS
   protocol:: udp tcp
-  action:: accept
+  action:: deny
+  logging:: True
 }
 """
 
@@ -89,11 +90,14 @@ GOOD_JSON_SADDR = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "10.2.3.4/32"
@@ -111,11 +115,14 @@ GOOD_JSON_V6_SADDR = """
 [
 {
     "ipv6-filter": {
+      "name": "good-name-v6",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -133,11 +140,14 @@ GOOD_JSON_DADDR = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -155,11 +165,14 @@ GOOD_JSON_V6_DADDR = """
 [
 {
     "ipv6-filter": {
+      "name": "good-name-v6",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -177,11 +190,14 @@ GOOD_JSON_SPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 source.",
           "match": {
             "protocol": 6,
             "source-port": { "value": 53 }
@@ -198,11 +214,14 @@ GOOD_JSON_DPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 dest.",
           "match": {
             "protocol": 6,
             "destination-port": { "value": 53 }
@@ -219,11 +238,14 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 17,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -235,6 +257,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 6,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -252,11 +275,16 @@ GOOD_JSON_EVERYTHING = """
 [
 {
     "ipv4-filter": {
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
-            "accept": {}
+            "drop": {
+             "log": true
+            }
           },
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 17,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -267,8 +295,11 @@ GOOD_JSON_EVERYTHING = """
         },
         {
           "action": {
-            "accept": {}
+            "drop": {
+             "log": true
+            }
           },
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 6,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -282,6 +313,73 @@ GOOD_JSON_EVERYTHING = """
 }
 ]
 """
+
+BAD_TERM_1 = """
+term bad-term-1 {
+  protocol:: tcp udp
+  source-port:: DNS
+  option:: tcp-established
+  action:: accept
+}
+"""
+BAD_TERM_2 = """
+term bad-term-2 {
+  protocol:: icmp
+  option:: tcp-established
+  action:: accept
+}
+"""
+BAD_TERM_3 = """
+term bad-term-3 {
+  protocol:: icmp
+  option:: established
+  action:: accept
+}
+"""
+BAD_TERM_4 = """
+term bad-term-4 {
+  option:: established
+  action:: accept
+}
+"""
+
+BAD_LOGGING = """
+term good-term-1 {
+  comment:: "Allow TCP & UDP 53 with saddr/daddr and logging."
+  destination-address:: CORP_EXTERNAL
+  source-address:: CORP_EXTERNAL
+  destination-port:: DNS
+  protocol:: udp tcp
+  action:: accept
+  logging:: True
+}
+"""
+
+GOOD_ESTABLISHED_TERM_1 = """
+term established-term-1 {
+  protocol:: tcp
+  source-port:: DNS
+  option:: established
+  action:: accept
+}
+"""
+GOOD_TCP_ESTABLISHED_TERM_1 = """
+term tcp-established-term-1 {
+  protocol:: tcp
+  source-port:: DNS
+  option:: tcp-established
+  action:: accept
+}
+"""
+GOOD_UDP_ESTABLISHED_TERM_1 = """
+term udp-established-term-1 {
+  protocol:: udp
+  source-port:: DNS
+  option:: established
+  action:: accept
+}
+"""
+
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
@@ -416,6 +514,83 @@ class NokiaSRLTest(absltest.TestCase):
 
         self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
+
+    @capture.stdout
+    def testEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(acl)
+        self.assertIn('"ack|rst"', output, output)
+
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testTcpEstablished(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TCP_ESTABLISHED_TERM_1, self.naming), EXP_INFO
+        )
+        output = str(acl)
+        self.assertIn('"ack|rst"', output, output)
+
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
+        print(output)
+
+    @capture.stdout
+    def testUdpEstablishedv6(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
+        print(output)
+
+    def testTcpEstablishedWithNonTcpError1(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_1, self.naming)
+        with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+        self.naming.GetServiceByProto.assert_has_calls(
+            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
+        )
+
+    def testTcpEstablishedWithNonTcpError2(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_2, self.naming)
+        with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testUnsupportedLogging(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_LOGGING, self.naming)
+        with self.assertRaises(nokiasrl.UnsupportedLogging):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testEstablishedWithNonTcpUdpError(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_3, self.naming)
+        with self.assertRaises(nokiasrl.EstablishedWithNonTcpUdpError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testEstablishedWithNoProtocolError(self):
+        self.naming.GetServiceByProto.return_value = ['53']
+
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_4, self.naming)
+        with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
 
 #

@@ -168,8 +168,11 @@ class Term(aclgenerator.Term):
 
         self.term_dict = copy.deepcopy(self.term_dict)
 
+        if self.term.comment:
+            self.SetComments(self.term.comment)
+
         # Options
-        self.SetOptions()
+        self.SetOptions(family)
 
         # Source Addresses
         for saddr in saddrs:
@@ -218,8 +221,11 @@ class Term(aclgenerator.Term):
         self.term_dict['actions']['config'] = {}
         self.term_dict['actions']['config']['forwarding-action'] = action
 
-    def SetOptions(self) -> None:
-        # options
+    def SetComments(self, comments: List[str]) -> None:
+        pass
+
+    def SetOptions(self, family: str) -> None:
+        # options, 'family' unused
         if self.term.option:
             if 'tcp-established' in self.term.option:
                 if self.term.protocol != ['tcp']:
@@ -310,11 +316,13 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 if i in filter_options:
                     address_family = i
                     filter_options.remove(i)
-            self._TranslateTerms(terms, address_family, filter_name)
+            self._TranslateTerms(terms, address_family, filter_name, header.comment)
 
         logging.info('Total rule count of policy %s is: %d', filter_name, self.total_rule_count)
 
-    def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str) -> None:
+    def _TranslateTerms(
+        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+    ) -> None:
         """
         Factor out the translation of terms, such that it can be overridden by subclasses
         """

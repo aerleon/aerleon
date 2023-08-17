@@ -22,7 +22,7 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 import sys
 from typing import Dict, List, Set, Tuple
 
-from aerleon.lib import openconfig
+from aerleon.lib import aclgenerator, openconfig
 from aerleon.lib.policy import Term
 
 if sys.version_info < (3, 8):
@@ -52,7 +52,28 @@ ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "action": Action, "match": Match},
 )
-IPFilters = TypedDict("IPFilters", {"ipv4-filter": List[ACLEntry], "ipv6-filter": List[ACLEntry]})
+Entries = TypedDict("Entries", {"entry": List[ACLEntry], "description": str})
+IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
+
+# generic error class
+class Error(aclgenerator.Error):
+    pass
+
+
+class TcpEstablishedWithNonTcpError(Error):
+    pass
+
+
+class EstablishedWithNoProtocolError(Error):
+    pass
+
+
+class EstablishedWithNonTcpUdpError(Error):
+    pass
+
+
+class UnsupportedLogging(Error):
+    pass
 
 
 class SRLTerm(openconfig.Term):
@@ -62,9 +83,20 @@ class SRLTerm(openconfig.Term):
 
     def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
-        self.term_dict['action'] = {action: {}}
+        log = {}
+        if self.term.logging:
+            if action == 'drop':
+                log = {"log": True}
+            else:
+                raise UnsupportedLogging(
+                    f'logging can only be used with deny in term {self.term.name}'
+                )
+        self.term_dict['action'] = {action: log}
 
-    def SetOptions(self) -> None:
+    def SetComments(self, comments: List[str]) -> None:
+        self.term_dict['description'] = "_".join(comments)[:255]
+
+    def SetOptions(self, family: str) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
         self.term_dict['match'] = {}
@@ -81,7 +113,36 @@ class SRLTerm(openconfig.Term):
             )
         if 'not-syn-ack' in opts:
             self.term_dict['match']['tcp-flags'] = "!(syn&ack)"
-        # Note: not handling established | tcp-established, could throw error
+
+        def _tcp_established():
+            self.term_dict['match']['tcp-flags'] = "ack|rst"
+
+        if 'tcp-established' in opts:
+            if not self.term.protocol or self.term.protocol == ['tcp']:
+                _tcp_established()
+            else:
+                raise TcpEstablishedWithNonTcpError(
+                    f'tcp-established can only be used with tcp protocol in term {self.term.name}'
+                )
+        elif 'established' in opts:
+            if self.term.protocol:
+                if self.term.protocol == ['tcp']:
+                    _tcp_established()
+                elif self.term.protocol == ['udp']:
+                    self.SetProtocol(family=family, protocol="udp")
+                    if not self.term.destination_port:
+                        self.SetDestPorts(1024, 65535)
+                else:  # Could produce 2 rules if [tcp,udp]
+                    raise EstablishedWithNonTcpUdpError(
+                        f'established can only be used with tcp or udp protocol in term {self.term.name}'
+                    )
+            else:
+                raise EstablishedWithNoProtocolError(
+                    f'must specify a protocol for "established" in term {self.term.name}'
+                )
+
+        if 'tcp-flags' in self.term_dict['match']:
+            self.SetProtocol(family=family, protocol="tcp")
 
     def SetSourceAddress(self, family: str, saddr: str) -> None:
         self.term_dict['match']['source-ip'] = {'prefix': saddr}
@@ -124,12 +185,12 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {
-            #  'established',
+            'established',
             'first-fragment',
             'is-fragment',
             'fragments',
             #  'sample',
-            #  'tcp-established',
+            'tcp-established',
             'tcp-initial',
             #  'inactive',
             'not-syn-ack',
@@ -140,7 +201,9 @@ class NokiaSRLinux(openconfig.OpenConfig):
         """Initialize self.acl_sets with proper Typing"""
         self.acl_sets: List[IPFilters] = []
 
-    def _TranslateTerms(self, terms: List[Term], address_family: str, filter_name: str) -> None:
+    def _TranslateTerms(
+        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+    ) -> None:
         srl_acl_entries: List[ACLEntry] = []
         for term in terms:
             # Handle mixed for each indvidual term as inet and inet6.
@@ -156,9 +219,14 @@ class NokiaSRLinux(openconfig.OpenConfig):
                     self.total_rule_count += 1
                     rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
                     srl_acl_entries.append(rule)
+        desc = "_".join(hdr_comments)[:255] if hdr_comments else ""
         ip_filter = {
             'ipv4-filter'
             if address_family == 'inet'
-            else 'ipv6-filter': {'entry': srl_acl_entries}
+            else 'ipv6-filter': {
+                'description': desc,
+                'entry': srl_acl_entries,
+                'name': filter_name,
+            }
         }
         self.acl_sets.append(ip_filter)

@@ -1,11 +1,13 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
             "accept": {}
           },
+          "description": "Allow TCP 53 source.",
           "match": {
             "protocol": 6,
             "source-port": {
@@ -14,7 +16,8 @@
           },
           "sequence-id": 5
         }
-      ]
+      ],
+      "name": "good-name-v4"
     }
   }
 ]

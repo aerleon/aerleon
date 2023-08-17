@@ -7,12 +7,12 @@
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP 53 dest.",
           "match": {
-            "destination-port": {
+            "protocol": 6,
+            "source-port": {
               "value": 53
             },
-            "protocol": 6
+            "tcp-flags": "ack|rst"
           },
           "sequence-id": 5
         }

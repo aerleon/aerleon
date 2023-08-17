@@ -1,11 +1,15 @@
 [
   {
     "ipv4-filter": {
+      "description": "The general policy comment.",
       "entry": [
         {
           "action": {
-            "accept": {}
+            "drop": {
+              "log": true
+            }
           },
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -22,8 +26,11 @@
         },
         {
           "action": {
-            "accept": {}
+            "drop": {
+              "log": true
+            }
           },
+          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -38,7 +45,8 @@
           },
           "sequence-id": 10
         }
-      ]
+      ],
+      "name": "good-name-v4"
     }
   }
 ]
