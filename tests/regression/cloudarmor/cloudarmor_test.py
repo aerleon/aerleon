@@ -839,7 +839,6 @@ class CloudArmorTest(absltest.TestCase):
         print(acl)
 
     def testInvalidAddressFamilyCheck(self):
-
         self.naming.GetNetAddr.return_value = TEST_IPS_NOSPLIT
 
         self.assertRaisesRegex(

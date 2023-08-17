@@ -283,7 +283,6 @@ class Term(aclgenerator.Term):
         # Use the ports info to make one selector per port pair per proto
         port_selectors = []
         for proto in self.term.protocol:
-
             # If the list of ports is null, we still need to specify proto
             if not base_port_selectors:
                 port_selectors.append({'protocol': proto.upper()})

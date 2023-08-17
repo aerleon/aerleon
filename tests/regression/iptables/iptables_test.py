@@ -939,7 +939,6 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testCommentQuoteStripping(self):
-
         parsed_policy = policy.ParsePolicy(GOOD_HEADER_1 + BAD_QUOTE_TERM_1, self.naming)
         parsed_policy.filters[0][1][0].comment = ['Text "describing" "with" quotes']
 

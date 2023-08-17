@@ -1396,7 +1396,6 @@ class Term:
 
         if self.ttl:
             if not _MIN_TTL <= self.ttl <= _MAX_TTL:
-
                 raise InvalidTermTTLValue(
                     'Term %s contains invalid TTL: %s' % (self.name, self.ttl)
                 )

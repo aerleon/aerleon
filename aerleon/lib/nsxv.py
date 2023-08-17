@@ -282,7 +282,6 @@ class Term(aclgenerator.Term):
         if source_addr:
             sources = '<sources excluded="false">'
             for saddr in source_addr:
-
                 # inet4
                 if isinstance(saddr, nacaddr.IPv4):
                     if saddr.num_addresses > 1:
@@ -649,7 +648,7 @@ class Nsxv(aclgenerator.ACLGenerator):
         target.append('\n')
         target.append('-->')
 
-        for (_, _, _, terms) in self.nsxv_policies:
+        for _, _, _, terms in self.nsxv_policies:
             section_name = self._FILTER_OPTIONS_DICT['section_name']
             # check section id value
             section_id = self._FILTER_OPTIONS_DICT['section_id']

@@ -609,7 +609,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
             entries = ',\\\n'.join(str(x) for x in v4 + v6)
             target.append('table <%s> {%s}' % (name, entries))
         # pylint: disable=unused-variable
-        for (header, filter_name, filter_type, terms) in self.pf_policies:
+        for header, filter_name, filter_type, terms in self.pf_policies:
             # Add comments for this filter
             target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
 

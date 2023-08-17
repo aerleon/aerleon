@@ -232,7 +232,6 @@ class Term(aclgenerator.Term):
         # icmp-types
         icmp_types = ['']
         if self.term.icmp_type:
-
             icmp_types = self.NormalizeIcmpTypes(self.term.icmp_type, protocol, self.af)
 
         source_interface = ''
@@ -936,7 +935,7 @@ class Iptables(aclgenerator.ACLGenerator):
         if self._RENDER_PREFIX:
             target.append(self._RENDER_PREFIX)
 
-        for (header, filter_name, filter_type, default_action, terms) in self.iptables_policies:
+        for header, filter_name, filter_type, default_action, terms in self.iptables_policies:
             # Add comments for this filter
             target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
 

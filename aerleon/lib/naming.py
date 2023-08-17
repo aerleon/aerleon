@@ -662,7 +662,6 @@ class Naming:
         }
 
         for path in Path(definitions_directory).iterdir():
-
             def_type = file_def_type.get(path.suffix)
 
             if not def_type:

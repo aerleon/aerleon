@@ -212,7 +212,6 @@ class ObjectGroup:
             for version in (4, 6):
                 vips = [i for i in ips if i.version == version]
                 if vips:
-
                     ret_str.append(f'object-group network ipv{version} {name}')
                     for ip in vips:
                         ret_str.append(f' {ip.network_address}/{ip.prefixlen}')
@@ -495,7 +494,6 @@ class Term(aclgenerator.Term):
         elif self.term.protocol == ['hopopt'] or self.term.protocol == self.PROTO_MAP['hopopt']:
             protocol = ['hbh']
         elif self.proto_int:
-
             protocol = [
                 proto
                 if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
@@ -1061,7 +1059,7 @@ class Cisco(aclgenerator.ACLGenerator):
         # add the p4 tags
         target.extend(aclgenerator.AddRepositoryTags('! '))
 
-        for (header, filter_name, filter_list, terms, obj_target) in self.cisco_policies:
+        for header, filter_name, filter_list, terms, obj_target in self.cisco_policies:
             for filter_type in filter_list:
                 target.extend(self._AppendTargetByFilterType(filter_name, filter_type))
                 if filter_type == 'object-group':

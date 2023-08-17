@@ -9,7 +9,7 @@ class PrebuiltRecognizerTest(parameterized.TestCase):
     """Test pre-made recognizers."""
 
     def assertTokenizerBehavior(self, tests, tokenizer):
-        for (value, acceptable, expected) in tests:
+        for value, acceptable, expected in tests:
             if acceptable:
                 self.assertEqual(tokenizer.Recognize(value), expected)
             else:
@@ -17,7 +17,7 @@ class PrebuiltRecognizerTest(parameterized.TestCase):
                     tokenizer.Recognize(value)
 
     def assertListTokenizerBehavior(self, tests, tokenizer):
-        for (value, acceptable, expected) in tests:
+        for value, acceptable, expected in tests:
             if acceptable:
                 self.assertEqual(list(tokenizer.Recognize(value)), expected)
             else:

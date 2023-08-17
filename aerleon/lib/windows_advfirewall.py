@@ -157,7 +157,7 @@ class Term(windows.Term):
             return ''
 
         multiports = []
-        for (start, end) in ports:
+        for start, end in ports:
             if start == end:
                 multiports.append(str(start))
             else:

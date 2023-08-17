@@ -563,7 +563,7 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(INET_FILTER, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
         nsxv_policies = translate_pol.nsxv_policies
-        for (_, filter_name, filter_list, terms) in nsxv_policies:
+        for _, filter_name, filter_list, terms in nsxv_policies:
             self.assertEqual(filter_name, 'inet')
             self.assertEqual(filter_list, ['inet'])
             self.assertEqual(len(terms), 1)
@@ -581,7 +581,7 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
         nsxv_policies = translate_pol.nsxv_policies
-        for (_, filter_name, filter_list, terms) in nsxv_policies:
+        for _, filter_name, filter_list, terms in nsxv_policies:
             self.assertEqual(filter_name, 'mixed')
             self.assertEqual(filter_list, ['mixed'])
             self.assertEqual(len(terms), 1)
@@ -601,7 +601,7 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
         nsxv_policies = translate_pol.nsxv_policies
-        for (_, filter_name, filter_list, terms) in nsxv_policies:
+        for _, filter_name, filter_list, terms in nsxv_policies:
             self.assertEqual(filter_name, 'mixed')
             self.assertEqual(filter_list, ['mixed'])
             self.assertEqual(len(terms), 1)
@@ -623,7 +623,7 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
         nsxv_policies = translate_pol.nsxv_policies
-        for (_, filter_name, filter_list, terms) in nsxv_policies:
+        for _, filter_name, filter_list, terms in nsxv_policies:
             self.assertEqual(filter_name, 'mixed')
             self.assertEqual(filter_list, ['mixed'])
             self.assertEqual(len(terms), 1)
@@ -651,7 +651,7 @@ class TermTest(absltest.TestCase):
         pol = policy.ParsePolicy(INET_FILTER_WITH_ESTABLISHED, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
         nsxv_policies = translate_pol.nsxv_policies
-        for (_, filter_name, filter_list, terms) in nsxv_policies:
+        for _, filter_name, filter_list, terms in nsxv_policies:
             self.assertEqual(filter_name, 'inet')
             self.assertEqual(filter_list, ['inet'])
             self.assertEqual(len(terms), 1)
@@ -821,7 +821,7 @@ class TermTest(absltest.TestCase):
         pol = nsxv.Nsxv(
             policy.ParsePolicy(HEADER_WITH_SECTIONID + TERM, self.naming, False), EXP_INFO
         )
-        for (header, _, _, _) in pol.nsxv_policies:
+        for header, _, _, _ in pol.nsxv_policies:
             filter_options = header.FilterOptions(_PLATFORM)
             pol._ParseFilterOptions(filter_options)
             self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['filter_type'], 'inet')
@@ -835,7 +835,7 @@ class TermTest(absltest.TestCase):
             policy.ParsePolicy(HEADER_WITH_SECURITYGROUP + INET6_TERM, self.naming, False),
             EXP_INFO,
         )
-        for (header, _, _, _) in pol.nsxv_policies:
+        for header, _, _, _ in pol.nsxv_policies:
             filter_options = header.FilterOptions(_PLATFORM)
             pol._ParseFilterOptions(filter_options)
             self.assertEqual(nsxv.Nsxv._FILTER_OPTIONS_DICT['filter_type'], 'inet6')
@@ -864,7 +864,6 @@ class TermTest(absltest.TestCase):
         self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, EXP_INFO)
 
     def testMixedToV4(self):
-
         get_net_addr_call1 = [
             nacaddr.IP('8.8.4.4'),
             nacaddr.IP('8.8.8.8'),

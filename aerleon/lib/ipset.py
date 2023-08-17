@@ -200,7 +200,7 @@ class Ipset(iptables.Iptables):
         iptables_output = super().__str__()
         output = []
         output.append(self._MARKER_BEGIN)
-        for (_, _, _, _, terms) in self.iptables_policies:
+        for _, _, _, _, terms in self.iptables_policies:
             for term in terms:
                 output.extend(self._GenerateSetConfig(term))
         output.append(self._MARKER_END)
