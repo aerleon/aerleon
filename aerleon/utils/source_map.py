@@ -59,7 +59,7 @@ class SourceMapBuilder:
         self.lines = []
         self.spans = []
         self.source_file = source_file if source_file is not None else ''
-        self._current_filter = 0
+        self._current_filter = None
         self._offset = 0
         self._offset_cursor = 0
         super().__init__()
@@ -67,12 +67,15 @@ class SourceMapBuilder:
     def clear(self):
         self.lines.clear()
         self.spans.clear()
-        self._current_filter = 0
+        self._current_filter = None
         self._offset = 0
         self._offset_cursor = 0
 
     def nextFilter(self):
-        self._current_filter += 1
+       if self._current_filter is None:
+           self._current_filter = 0
+       else:
+           self._current_filter = self._current_filter + 1
 
     def startSpan(self, span_type, **kwargs):
         self.spans.append(
