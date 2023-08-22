@@ -166,7 +166,6 @@ def _preprocessYAMLPolicy(
 def _preprocessYAMLPolicyInner(
     depth: int, debug_stack: list, filename: str, base_dir: str, policy_dict: Optional[PolicyDict]
 ) -> Optional[Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]]:
-
     # Empty files are ignored with a warning
     if policy_dict is None or not policy_dict:
         logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))

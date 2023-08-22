@@ -204,7 +204,6 @@ class _PluginSetup:
 
         # Attempt to load, initialize, interrogate, and register generators from each plugin
         for plugin_name, loaded_plugin in loaded_plugins:
-
             # Initialize entrypoint class or function and request metadata
             try:
                 plugin_instance: plugin.BasePlugin = loaded_plugin()

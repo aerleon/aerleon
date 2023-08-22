@@ -55,6 +55,7 @@ ACLEntry = TypedDict(
 Entries = TypedDict("Entries", {"entry": List[ACLEntry], "description": str})
 IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
 
+
 # generic error class
 class Error(aclgenerator.Error):
     pass

@@ -453,7 +453,6 @@ class PcapFilter(aclgenerator.ACLGenerator):
             accept_terms,
             deny_terms,
         ) in self.pcap_policies:
-
             accept = []
             for term in accept_terms:
                 term_str = str(term)

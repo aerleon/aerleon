@@ -280,7 +280,6 @@ def _Generate(
     exp_info: int = 2,
     max_renderers: int = 1,
 ) -> "dict[str, str]":
-
     # thead-safe list for storing files to write
     manager: multiprocessing.managers.SyncManager = context.Manager()
     write_files: WriteList = manager.list()

@@ -733,7 +733,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
         # create address books if address-book-type set to global
         if self._GLOBAL_ADDR_BOOK in self.addr_book_type:
-
             target.IndentAppend(1, 'replace: address-book {')
             target.IndentAppend(2, 'global {')
             global_addressbook = addressbook.Addressbook()
@@ -889,7 +888,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
         target.IndentAppend(1, 'replace: policies {')
 
-        for (header, terms, filter_options) in self.srx_policies:
+        for header, terms, filter_options in self.srx_policies:
             if self._NOVERBOSE not in filter_options[4:]:
                 target.IndentAppend(2, '/*')
                 target.extend(

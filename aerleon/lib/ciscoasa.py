@@ -354,8 +354,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
     def __str__(self) -> str:
         target = []
 
-        for (header, filter_name, terms) in self.ciscoasa_policies:
-
+        for header, filter_name, terms in self.ciscoasa_policies:
             target.append('clear configure access-list %s' % filter_name)
 
             # add the p4 tags

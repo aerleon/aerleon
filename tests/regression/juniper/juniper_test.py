@@ -1859,7 +1859,6 @@ class JuniperTest(parameterized.TestCase):
         self.assertRaises(juniper.JuniperFragmentInV6Error, juniper.Juniper, pol, EXP_INFO)
 
     def testFailFlexibleMatch(self):
-
         # bad bit-length
         self.assertRaises(
             policy.FlexibleMatchError,

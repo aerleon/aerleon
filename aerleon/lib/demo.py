@@ -204,7 +204,7 @@ class Demo(aclgenerator.ACLGenerator):
 
     def __str__(self):
         target = []
-        for (header, filter_name, filter_type, interface_specific, terms) in self.demo_policies:
+        for header, filter_name, filter_type, interface_specific, terms in self.demo_policies:
             target.append('Header {')
             target.append(' ' * 4 + 'Name: %s {' % filter_name)
             target.append(' ' * 8 + 'Type: %s ' % filter_type)

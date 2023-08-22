@@ -201,7 +201,6 @@ NETWORKS_1 = {
 
 class ApiTest(absltest.TestCase):
     def testGenerate(self):
-
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")

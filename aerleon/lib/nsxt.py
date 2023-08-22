@@ -372,7 +372,7 @@ class Nsxt(aclgenerator.ACLGenerator):
         """Render the output of the nsxt policy."""
         if len(self.nsxt_policies) > 1:
             raise NsxtUnsupportedManyPoliciesError('Only one policy can be rendered')
-        for (_, _, _, terms) in self.nsxt_policies:
+        for _, _, _, terms in self.nsxt_policies:
             rules = [json.loads(str(term)) for term in terms]
 
         section_name = self._FILTER_OPTIONS_DICT['section_name']

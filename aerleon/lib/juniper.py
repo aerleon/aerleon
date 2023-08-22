@@ -848,7 +848,6 @@ class Term(aclgenerator.Term):
 
         if isinstance(addr, (nacaddr.IPv4, nacaddr.IPv6, summarizer.DSMNet)):
             if addr.text:
-
                 if line_length == 0:
                     # line_length of 0 means that we don't want to truncate the comment.
                     line_length = len(addr.text)
@@ -858,7 +857,6 @@ class Term(aclgenerator.Term):
                 if addr.text.find('/*') >= 0 or addr.text.find('*/') >= 0:
                     logging.warning('Malformed comment [%s] ignoring', addr.text)
                 else:
-
                     text = addr.text[:line_length]
 
                     comment = ' /*'
@@ -1050,7 +1048,6 @@ class Juniper(aclgenerator.ACLGenerator):
                 filter_types_to_process = [filter_type]
 
             for term_filter_type in filter_types_to_process:
-
                 filter_name_suffix = ''
                 # If mixed filter_type, will append 4 or 6 to the filter name
                 if len(filter_types_to_process) > 1:
@@ -1062,7 +1059,6 @@ class Juniper(aclgenerator.ACLGenerator):
                 term_names = set()
                 new_terms = []
                 for term in terms:
-
                     # Ignore if the term is for a different AF
                     if (
                         term.restrict_address_family

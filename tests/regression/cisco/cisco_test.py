@@ -987,7 +987,6 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testNumericProtocols(self):
-
         pol = policy.ParsePolicy(
             """header {
   comment:: "Test policy for numeric proto"

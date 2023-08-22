@@ -21,6 +21,7 @@ if sys.version_info < (3, 8):
 else:
     from typing import TypedDict
 
+
 # Generic error class
 class Error(aclgenerator.Error):
     """Generic error class."""
@@ -243,7 +244,6 @@ class CloudArmor(aclgenerator.ACLGenerator):
             counter = 1
 
             for term in terms:
-
                 json_rule_list = Term(
                     term, address_family=filter_type, verbose=verbose
                 ).ConvertToDict(priority_index=counter)
@@ -257,7 +257,6 @@ class CloudArmor(aclgenerator.ACLGenerator):
                 total_rule_count = len(self.cloudarmor_policies)
 
                 if total_rule_count > self._RULECOUNT_WARN_THRESHOLD:
-
                     if total_rule_count > self._MAX_RULES_PER_POLICY:
                         raise ExceededMaxTermsError(
                             'Exceeded maximum number of rules in '

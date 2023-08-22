@@ -932,7 +932,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
         # pytype: disable=key-error
         # pylint: disable=unused-variable
-        for (header, pa_rules, filter_options) in self.pafw_policies:
+        for header, pa_rules, filter_options in self.pafw_policies:
             tag_name = None
             if header.comment:
                 comment = " ".join(header.comment).strip()
@@ -1119,7 +1119,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         vsys_entry.append(etree.Comment(" Addresses "))
         addr = etree.SubElement(vsys_entry, "address")
         if not no_addr_obj:
-
             for _, token, ips, _ in self.addressbook.Walk(''):
                 count = 0
                 for ip in ips:

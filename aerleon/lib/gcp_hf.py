@@ -429,7 +429,6 @@ class HierarchicalFirewall(gcp.GCP):
         policies_max_cost = self._DEFAULT_MAXIMUM_COST
         previous_max_cost = -1
         for header, terms in pol.filters:
-
             filter_options = header.FilterOptions(self._PLATFORM)
 
             is_policy_modified = True
