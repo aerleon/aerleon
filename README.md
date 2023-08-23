@@ -24,6 +24,12 @@ Aerleon requires Python 3.7 or higher.
 pip install aerleon
 ```
 
+To install via [`brew`](https://brew.sh):
+
+```bash
+brew install aerleon
+```
+
 ## Overview
 
 Aerleon provides a command line tool and a Python API that will generate configs for multiple firewall platforms from a single platform-agnostic configuration language. It can generate configs for Cisco, Juniper, Palo Alto Networks and [many other firewall vendors](https://aerleon.readthedocs.io/en/latest/#core-supported-generators).
