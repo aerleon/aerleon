@@ -52,7 +52,9 @@ ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "action": Action, "match": Match},
 )
-Entries = TypedDict("Entries", {"entry": List[ACLEntry], "description": str})
+Entries = TypedDict(
+    "Entries", {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str}
+)
 IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
 
 
@@ -225,6 +227,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
             'ipv4-filter'
             if address_family == 'inet'
             else 'ipv6-filter': {
+                '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
                 'description': desc,
                 'entry': srl_acl_entries,
                 'name': filter_name,

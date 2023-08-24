@@ -1,6 +1,7 @@
 [
   {
     "ipv6-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
       "description": "The general policy comment.",
       "entry": [
         {
