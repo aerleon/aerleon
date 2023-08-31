@@ -50,10 +50,17 @@ Match = TypedDict(
 Action = TypedDict("Action", {"accept": None, "drop": None})
 ACLEntry = TypedDict(
     "ACLEntry",
-    {"sequence-id": int, "action": Action, "match": Match},
+    {
+        "sequence-id": int,
+        "action": Action,
+        "match": Match,
+        "description": str,
+        "_annotate_description": str,
+    },
 )
 Entries = TypedDict(
-    "Entries", {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str}
+    "Entries",
+    {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str},
 )
 IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
 
@@ -97,7 +104,8 @@ class SRLTerm(openconfig.Term):
         self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
-        self.term_dict['description'] = "_".join(comments)[:255]
+        self.term_dict['description'] = self.term.name
+        self.term_dict['_annotate_description'] = "_".join(comments)[:255]
 
     def SetOptions(self, family: str) -> None:
         # Handle various options
