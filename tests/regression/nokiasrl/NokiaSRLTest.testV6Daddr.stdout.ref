@@ -5,10 +5,11 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Allow destination address.",
           "action": {
             "accept": {}
           },
-          "description": "Allow destination address.",
+          "description": "good-term-1",
           "match": {
             "destination-ip": {
               "prefix": "2001:4860:8000::5/128"

@@ -8,6 +8,7 @@
           "action": {
             "accept": {}
           },
+          "description": "tcp-established-term-1",
           "match": {
             "protocol": 6,
             "source-port": {

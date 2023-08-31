@@ -5,10 +5,11 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Allow TCP & UDP high.",
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP & UDP high.",
+          "description": "good-term-1",
           "match": {
             "destination-port": {
               "range": {
@@ -27,10 +28,11 @@
           "sequence-id": 5
         },
         {
+          "_annotate_description": "Allow TCP & UDP high.",
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP & UDP high.",
+          "description": "good-term-1",
           "match": {
             "destination-port": {
               "range": {

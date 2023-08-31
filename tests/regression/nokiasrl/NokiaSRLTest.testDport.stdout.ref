@@ -5,10 +5,11 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Allow TCP 53 dest.",
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP 53 dest.",
+          "description": "good-term-1",
           "match": {
             "destination-port": {
               "value": 53

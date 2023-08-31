@@ -5,10 +5,11 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Allow TCP 53 source.",
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP 53 source.",
+          "description": "good-term-1",
           "match": {
             "protocol": 6,
             "source-port": {
