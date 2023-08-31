@@ -91,6 +91,10 @@ class SRLTerm(openconfig.Term):
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
 
+    def SetName(self, name: str) -> None:
+        # Put name in description field
+        self.term_dict['description'] = name
+
     def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         log = {}
@@ -104,7 +108,6 @@ class SRLTerm(openconfig.Term):
         self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
-        self.term_dict['description'] = self.term.name
         self.term_dict['_annotate_description'] = "_".join(comments)[:255]
 
     def SetOptions(self, family: str) -> None:
