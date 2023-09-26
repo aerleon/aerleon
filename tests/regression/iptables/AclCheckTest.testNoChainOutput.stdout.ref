@@ -1,0 +1,11 @@
+# Iptables OUTPUT Policy
+# this is a test acl
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P OUTPUT ACCEPT
+-A OUTPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A OUTPUT -p tcp --sport 80 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+

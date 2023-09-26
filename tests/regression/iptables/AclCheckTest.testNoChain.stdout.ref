@@ -7,4 +7,5 @@
 # inet
 -P INPUT ACCEPT
 -A INPUT -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p tcp --sport 80 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 

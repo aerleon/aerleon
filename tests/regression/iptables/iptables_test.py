@@ -32,13 +32,18 @@ header {
 }
 """
 
-GOOD_HEADER_NOCHAIN = """
+GOOD_HEADER_NOCHAIN_INPUT = """
 header {
   comment:: "this is a test acl"
   target:: iptables INPUT ACCEPT nochainedterms
 }
 """
-
+GOOD_HEADER_NOCHAIN_OUTPUT = """
+header {
+  comment:: "this is a test acl"
+  target:: iptables OUTPUT ACCEPT nochainedterms
+}
+"""
 GOOD_HEADER_2 = """
 header {
   comment:: "this is a test acl"
@@ -1411,12 +1416,23 @@ class AclCheckTest(absltest.TestCase):
         )
     @capture.stdout
     def testNoChain(self):
+        self.naming.GetServiceByProto.return_value = ['80']
+        
         acl = iptables.Iptables(
-            policy.ParsePolicy(GOOD_HEADER_NOCHAIN + GOOD_TERM_1, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_INPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming), EXP_INFO
         )
         result = str(acl)
         print(acl)
 
+    @capture.stdout
+    def testNoChainOutput(self):
+        self.naming.GetServiceByProto.return_value = ['80']
+        
+        acl = iptables.Iptables(
+            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_OUTPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        print(acl)
 
 YAML_GOOD_HEADER_1 = """
 filters:
@@ -1427,12 +1443,21 @@ filters:
   terms:
 """
 
-YAML_GOOD_HEADER_NOCHAIN = """
+YAML_GOOD_HEADER_NOCHAIN_INPUT = """
 filters:
 - header:
     comment: this is a test acl
     targets:
       iptables: INPUT ACCEPT nochainedterms
+  terms:
+"""
+
+YAML_GOOD_HEADER_NOCHAIN_OUTPUT = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: OUTPUT ACCEPT nochainedterms
   terms:
 """
 
@@ -1887,7 +1912,8 @@ class IPTablesYAMLTest(AclCheckTest):
     def setUpFixtures(self):
         self.fixture_patcher = mock.patch.multiple(
             'iptables_test',
-            GOOD_HEADER_NOCHAIN=YAML_GOOD_HEADER_NOCHAIN,
+            GOOD_HEADER_NOCHAIN_INPUT=YAML_GOOD_HEADER_NOCHAIN_INPUT,
+            GOOD_HEADER_NOCHAIN_OUTPUT=YAML_GOOD_HEADER_NOCHAIN_OUTPUT,
             GOOD_HEADER_1=YAML_GOOD_HEADER_1,
             GOOD_HEADER_2=YAML_GOOD_HEADER_2,
             GOOD_HEADER_3=YAML_GOOD_HEADER_3,
