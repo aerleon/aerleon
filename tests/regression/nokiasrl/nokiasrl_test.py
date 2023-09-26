@@ -98,7 +98,8 @@ GOOD_JSON_SADDR = """
           "action": {
             "accept": {}
           },
-          "description": "Allow source address.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "10.2.3.4/32"
@@ -124,7 +125,8 @@ GOOD_JSON_V6_SADDR = """
           "action": {
             "accept": {}
           },
-          "description": "Allow source address.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow source address.",
           "match": {
             "source-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -150,7 +152,8 @@ GOOD_JSON_DADDR = """
           "action": {
             "accept": {}
           },
-          "description": "Allow destination address.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -176,7 +179,8 @@ GOOD_JSON_V6_DADDR = """
           "action": {
             "accept": {}
           },
-          "description": "Allow destination address.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow destination address.",
           "match": {
             "destination-ip": {
               "prefix": "2001:4860:8000::5/128"
@@ -202,7 +206,8 @@ GOOD_JSON_SPORT = """
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP 53 source.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow TCP 53 source.",
           "match": {
             "protocol": 6,
             "source-port": { "value": 53 }
@@ -227,7 +232,8 @@ GOOD_JSON_DPORT = """
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP 53 dest.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow TCP 53 dest.",
           "match": {
             "protocol": 6,
             "destination-port": { "value": 53 }
@@ -252,7 +258,8 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP & UDP high.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 17,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -264,7 +271,8 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
           "action": {
             "accept": {}
           },
-          "description": "Allow TCP & UDP high.",
+          "description": "good-term-1",
+          "_annotate_description": "Allow TCP & UDP high.",
           "match": {
             "protocol": 6,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
@@ -292,7 +300,8 @@ GOOD_JSON_EVERYTHING = """
              "log": true
             }
           },
-          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "description": "good-term-1",
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 17,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -307,7 +316,8 @@ GOOD_JSON_EVERYTHING = """
              "log": true
             }
           },
-          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "description": "good-term-1",
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "match": {
             "protocol": 6,
             "destination-ip": { "prefix": "10.2.3.4/32" },
@@ -352,7 +362,7 @@ term bad-term-4 {
 """
 
 BAD_LOGGING = """
-term good-term-1 {
+term bad-term-5 {
   comment:: "Allow TCP & UDP 53 with saddr/daddr and logging."
   destination-address:: CORP_EXTERNAL
   source-address:: CORP_EXTERNAL

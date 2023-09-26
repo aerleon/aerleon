@@ -142,6 +142,8 @@ class Term(aclgenerator.Term):
         term_af = self.AF_MAP.get(self.inet_version)
         family = self.AF_RENAME[term_af]
 
+        self.SetName(self.term.name)
+
         # Action
         self.SetAction()
 
@@ -214,6 +216,9 @@ class Term(aclgenerator.Term):
                             rules.append(copy.deepcopy(self.term_dict))
 
         return rules
+
+    def SetName(self, name: str) -> None:
+        pass
 
     def SetAction(self) -> None:
         action = self.ACTION_MAP[self.term.action[0]]

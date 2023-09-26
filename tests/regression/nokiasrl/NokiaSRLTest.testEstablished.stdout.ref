@@ -8,6 +8,7 @@
           "action": {
             "accept": {}
           },
+          "description": "established-term-1",
           "match": {
             "protocol": 6,
             "source-port": {

@@ -5,10 +5,11 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Allow source address.",
           "action": {
             "accept": {}
           },
-          "description": "Allow source address.",
+          "description": "good-term-1",
           "match": {
             "source-ip": {
               "prefix": "2001:4860:8000::5/128"

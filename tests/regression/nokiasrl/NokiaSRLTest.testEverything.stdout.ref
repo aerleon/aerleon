@@ -5,12 +5,13 @@
       "description": "The general policy comment.",
       "entry": [
         {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "action": {
             "drop": {
               "log": true
             }
           },
-          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "description": "good-term-1",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
@@ -26,12 +27,13 @@
           "sequence-id": 5
         },
         {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
           "action": {
             "drop": {
               "log": true
             }
           },
-          "description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "description": "good-term-1",
           "match": {
             "destination-ip": {
               "prefix": "10.2.3.4/32"
