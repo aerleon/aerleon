@@ -142,7 +142,7 @@ class Term(aclgenerator.Term):
 
         # Create a new term
         self._SetDefaultAction()
-        
+
         if self.chained_terms and self._TERM_FORMAT:
             ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
         if self.chained_terms and self._PREJUMP_FORMAT:
@@ -916,7 +916,7 @@ class Iptables(aclgenerator.ACLGenerator):
                         default_action,
                         filter_type,
                         self.verbose,
-                        chained_terms
+                        chained_terms,
                     )
                 )
 

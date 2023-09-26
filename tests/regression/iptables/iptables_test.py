@@ -1414,12 +1414,14 @@ class AclCheckTest(absltest.TestCase):
             "permit-icmp will not be rendered, as it has icmp, icmpv6 match specified but the ACL is of inet address family.",
             ''.join(log.output),
         )
+
     @capture.stdout
     def testNoChain(self):
         self.naming.GetServiceByProto.return_value = ['80']
-        
+
         acl = iptables.Iptables(
-            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_INPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_INPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming),
+            EXP_INFO,
         )
         result = str(acl)
         print(acl)
@@ -1427,12 +1429,16 @@ class AclCheckTest(absltest.TestCase):
     @capture.stdout
     def testNoChainOutput(self):
         self.naming.GetServiceByProto.return_value = ['80']
-        
+
         acl = iptables.Iptables(
-            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_OUTPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming), EXP_INFO
+            policy.ParsePolicy(
+                GOOD_HEADER_NOCHAIN_OUTPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming
+            ),
+            EXP_INFO,
         )
         result = str(acl)
         print(acl)
+
 
 YAML_GOOD_HEADER_1 = """
 filters:
