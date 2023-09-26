@@ -1,0 +1,13 @@
+*filter
+# Speedway OUTPUT Policy
+# foo
+#
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+:OUTPUT DROP
+-A OUTPUT -p tcp -j DROP
+-A OUTPUT -p udp -j DROP
+-A OUTPUT -j OUTPUT
+COMMIT
