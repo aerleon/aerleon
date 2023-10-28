@@ -29,7 +29,7 @@ from ply import lex, yacc
 from ply.lex import LexToken
 from ply.yacc import YaccProduction
 
-from aerleon.lib import nacaddr, naming
+from aerleon.lib import nacaddr, naming, port
 from aerleon.lib.nacaddr import IPv4, IPv6
 
 if TYPE_CHECKING:
@@ -144,9 +144,7 @@ class InvalidNumericProtoValue(Error):
     """Error when protocols are numeric and not between -1 and 255."""
 
 
-def TranslatePorts(
-    ports: List[str], protocols: List[str], term_name: str
-) -> List[Tuple[int, int]]:
+def TranslatePorts(ports: List[str], protocols: List[str], term_name: str) -> List[port.PPP]:
     """Return all ports of all protocols requested.
 
     Args:
@@ -174,12 +172,7 @@ def TranslatePorts(
                     port,
                     proto,
                 )
-
-            for p in [x.split('-') for x in service_by_proto]:
-                if len(p) == 1:
-                    ret_array.append((int(p[0]), int(p[0])))
-                else:
-                    ret_array.append((int(p[0]), int(p[1])))
+            ret_array.extend(service_by_proto)
     return ret_array
 
 

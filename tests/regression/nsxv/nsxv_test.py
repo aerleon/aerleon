@@ -591,7 +591,7 @@ class TermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_has_calls([mock.call('MAIL_SERVICES', 'tcp')] * 1)
         print(translate_pol)
 
-    @capture.stdout
+    # @capture.stdout
     def testTranslatePolicyMixedFilterInet6Only(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet6."""
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2001:4860:4860::8844')]

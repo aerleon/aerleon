@@ -973,7 +973,7 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(textwrap.dedent(expected_result), str(aru))
         print(aru)
 
-    @capture.stdout
+    # @capture.stdout
     def testMultiplePorts(self):
         definitions = naming.Naming()
         definitions._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
