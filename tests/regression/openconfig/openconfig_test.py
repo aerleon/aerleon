@@ -20,7 +20,7 @@ from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, nacaddr, naming, openconfig, policy
+from aerleon.lib import aclgenerator, nacaddr, naming, openconfig, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -531,7 +531,7 @@ class OpenConfigTest(absltest.TestCase):
 
     @capture.stdout
     def testMultiDport(self):
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
+        self.naming.GetServiceByProto.return_value = [port.PPP('1024-65535/tcp')]
 
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
@@ -601,7 +601,7 @@ class OpenConfigTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
         self.naming.GetNetAddr.return_value = TEST_IPS
 
         policy_text = GOOD_HEADER + GOOD_TCP_EST
@@ -615,7 +615,7 @@ class OpenConfigTest(absltest.TestCase):
         print(acl)
 
     def testNonTcpWithTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + BAD_TCP_EST
         pol = policy.ParsePolicy(policy_text, self.naming)

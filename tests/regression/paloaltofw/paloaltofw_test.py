@@ -18,7 +18,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, nacaddr, naming, paloaltofw, policy
+from aerleon.lib import aclgenerator, nacaddr, naming, paloaltofw, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -577,7 +577,7 @@ class PaloAltoFWTest(absltest.TestCase):
     @capture.stdout
     def testTermAndFilterName(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         paloalto = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO

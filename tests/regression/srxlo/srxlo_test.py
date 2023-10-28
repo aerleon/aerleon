@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, policy, srxlo
+from aerleon.lib import naming, policy, srxlo, port
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -293,7 +293,7 @@ class SRXloTest(absltest.TestCase):
 
     @capture.stdout
     def testNotSynAck(self):
-        self.naming.GetServiceByProto.return_value = ['443']
+        self.naming.GetServiceByProto.return_value = [port.PPP('443/tcp')]
 
         policy_text = GOOD_HEADER_2 + NOTSYNACK_TERM_1
         srx = srxlo.SRXlo(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)

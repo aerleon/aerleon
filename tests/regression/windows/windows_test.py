@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, policy, windows
+from aerleon.lib import naming, policy, windows, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -168,7 +168,7 @@ class WindowsGeneratorTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testSkipEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
         pol = windows.WindowsGenerator(
             policy.ParsePolicy(GOOD_HEADER + TCP_ESTABLISHED_TERM + GOOD_TERM, self.naming),
             EXP_INFO,

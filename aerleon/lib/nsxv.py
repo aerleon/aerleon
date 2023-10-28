@@ -458,7 +458,6 @@ class Term(aclgenerator.Term):
             if dports:
                 str_dport = []
                 for dport in dports:
-                    import ipdb;ipdb.set_trace()
                     if dport[0] != dport[1]:
                         str_dport.append('%s-%s' % (dport[0], dport[1]))
                     else:

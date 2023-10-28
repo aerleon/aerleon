@@ -1445,7 +1445,7 @@ class Term:
         if self.destination_port:
             self.destination_port = self.CollapsePortList(self.destination_port)
 
-    def CollapsePortList(self, ports: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def CollapsePortList(self, ports: List[port.PPP]) -> List[port.PPP]:
         """Given a list of ports, Collapse to the smallest required.
 
         Args:

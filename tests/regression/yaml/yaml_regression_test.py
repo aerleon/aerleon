@@ -1502,7 +1502,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: tcp udp gre
           action: accept
         """
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         self.assertTermRaises(policy.MixedPortandNonPortProtos)
 
     def assertTermRaises(self, error_type):

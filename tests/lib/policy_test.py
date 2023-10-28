@@ -663,7 +663,7 @@ class PolicyTest(parameterized.TestCase):
     def testService(self):
         pol = HEADER + GOOD_TERM_1 + GOOD_TERM_3
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         ret = policy.ParsePolicy(pol, self.naming)
         self.assertEqual(len(ret.filters), 1)
@@ -1127,7 +1127,7 @@ class PolicyTest(parameterized.TestCase):
         self.assertEqual(terms[0].precedence, [1])
 
     def testLossPriority(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         pol = policy.ParsePolicy(HEADER + GOOD_TERM_23, self.naming)
         self.assertEqual(len(pol.filters), 1)
@@ -1137,7 +1137,7 @@ class PolicyTest(parameterized.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     def testRoutingInstance(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         pol = policy.ParsePolicy(HEADER + GOOD_TERM_24, self.naming)
         self.assertEqual(len(pol.filters), 1)
@@ -1147,7 +1147,7 @@ class PolicyTest(parameterized.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     def testSourceInterface(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         pol = policy.ParsePolicy(HEADER_4 + GOOD_TERM_25, self.naming)
         self.assertEqual(len(pol.filters), 1)
@@ -1164,7 +1164,7 @@ class PolicyTest(parameterized.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.0.0.0/8')],
         ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         # same protocol, same saddr, shaded term defines a port.
         policy.ParsePolicy(pol2, self.naming, shade_check=True)
@@ -1274,7 +1274,7 @@ class PolicyTest(parameterized.TestCase):
         unoptimized_addr = [nacaddr.IPv4('10.16.128.6/32'), nacaddr.IPv4('10.16.128.7/32')]
         optimized_addr = nacaddr.CollapseAddrList(unoptimized_addr)
         self.naming.GetNetAddr.return_value = unoptimized_addr
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         ret_unoptimized = policy.ParsePolicy(pol, self.naming, optimize=False)
         self.assertFalse(policy._OPTIMIZE)
         ret_optimized = policy.ParsePolicy(pol, self.naming)
@@ -1353,7 +1353,7 @@ class PolicyTest(parameterized.TestCase):
 
     def testGREandTCPUDPError(self):
         pol = HEADER + BAD_TERM_16
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         self.assertRaises(policy.MixedPortandNonPortProtos, policy.ParsePolicy, pol, self.naming)
 
     def testTargetServiceAccount(self):

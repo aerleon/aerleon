@@ -18,7 +18,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import ciscoxr, nacaddr, naming, policy
+from aerleon.lib import ciscoxr, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -219,7 +219,7 @@ class CiscoXRTest(absltest.TestCase):
     @capture.stdout
     def testStandardTermHostIPv6(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::3/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_4, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -316,7 +316,7 @@ class CiscoXRTest(absltest.TestCase):
 
     def testBuildWarningTokens(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::3/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         pol1 = ciscoxr.CiscoXR(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO

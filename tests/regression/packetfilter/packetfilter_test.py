@@ -20,7 +20,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, nacaddr, naming, packetfilter, policy
+from aerleon.lib import aclgenerator, nacaddr, naming, packetfilter, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -404,7 +404,7 @@ class PacketFilterTest(absltest.TestCase):
         ip = nacaddr.IP('10.0.0.0/8')
         ip.parent_token = 'PROD_NETWORK'
         self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -603,7 +603,7 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testPortRange(self):
-        self.naming.GetServiceByProto.return_value = ['12345-12354']
+        self.naming.GetServiceByProto.return_value = [port.PPP('12345-12354/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + PORTRANGE_TERM, self.naming), EXP_INFO
@@ -660,7 +660,7 @@ class PacketFilterTest(absltest.TestCase):
         ip = nacaddr.IP('10.0.0.0/8')
         ip.parent_token = 'PROD_NETWORK'
         self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_STATELESS + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -711,7 +711,7 @@ class PacketFilterTest(absltest.TestCase):
         ip = nacaddr.IP('10.0.0.0/8')
         ip.parent_token = 'PROD_NETWORK'
         self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -785,7 +785,7 @@ class PacketFilterTest(absltest.TestCase):
         ip = nacaddr.IP('10.0.0.0/8')
         ip.parent_token = 'PROD_NETWORK'
         self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL_STATELESS + GOOD_TERM_TCP, self.naming),
@@ -894,7 +894,7 @@ class PacketFilterTest(absltest.TestCase):
             [prod_network],
             [corp_internal_one, corp_internal_two],
         ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + MULTIPLE_NAME_TERM, self.naming), EXP_INFO
@@ -926,7 +926,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network = nacaddr.IP('10.0.0.0/8')
         prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
         self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL + LONG_NAME_TERM_DNS_TCP, self.naming),
@@ -958,7 +958,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network_two = nacaddr.IP('172.0.0.0/8')
         prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME'
         self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -982,7 +982,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network = nacaddr.IP('10.0.0.0/8')
         prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
         self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(
@@ -1028,7 +1028,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network = nacaddr.IP('10.0.0.0/8')
         prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
         self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(
@@ -1078,7 +1078,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network_two = nacaddr.IP('172.0.0.0/8')
         prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VER'
         self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -1108,7 +1108,7 @@ class PacketFilterTest(absltest.TestCase):
         prod_network_two = nacaddr.IP('172.0.0.0/8')
         prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VER'
         self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -1154,7 +1154,7 @@ class PacketFilterTest(absltest.TestCase):
         ip = nacaddr.IP('10.0.0.0/8')
         ip.parent_token = 'PROD_NETWORK'
         self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol1 = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO

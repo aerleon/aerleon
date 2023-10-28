@@ -20,7 +20,7 @@ from xml.etree import ElementTree as ET
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nsxv, policy
+from aerleon.lib import nacaddr, naming, nsxv, policy, port
 from tests.regression_utils import capture
 
 INET_TERM = """\
@@ -469,7 +469,7 @@ class TermTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
 
         pol = policy.ParsePolicy(INET_FILTER, self.naming, False)
         af = 4
@@ -558,7 +558,7 @@ class TermTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
 
         pol = policy.ParsePolicy(INET_FILTER, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -576,7 +576,7 @@ class TermTest(absltest.TestCase):
     def testTranslatePolicyMixedFilterInetOnly(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet."""
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -591,12 +591,12 @@ class TermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_has_calls([mock.call('MAIL_SERVICES', 'tcp')] * 1)
         print(translate_pol)
 
-    # @capture.stdout
+    @capture.stdout
     def testTranslatePolicyMixedFilterInet6Only(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet6."""
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2001:4860:4860::8844')]
 
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -618,7 +618,7 @@ class TermTest(absltest.TestCase):
             nacaddr.IP('2001:4860:4860::8844'),
             nacaddr.IP('10.0.0.0/8'),
         ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -646,7 +646,7 @@ class TermTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
 
         pol = policy.ParsePolicy(INET_FILTER_WITH_ESTABLISHED, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -673,7 +673,7 @@ class TermTest(absltest.TestCase):
                 nacaddr.IP('2001:4860:4860::8888'),
             ]
         ]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         pol = policy.ParsePolicy(MIXED_FILTER, self.naming, False)
         target = nsxv.Nsxv(pol, EXP_INFO)
@@ -787,7 +787,7 @@ class TermTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
         pol1 = nsxv.Nsxv(policy.ParsePolicy(INET_FILTER, self.naming), 2)
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
@@ -807,7 +807,7 @@ class TermTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
 
         pol1 = nsxv.Nsxv(policy.ParsePolicy(INET_FILTER_2, self.naming), 2)
         st, sst = pol1._BuildTokens()
@@ -1150,7 +1150,7 @@ class TermTest(absltest.TestCase):
 
     @capture.stdout
     def testWarnMismatchedProtoAF(self):
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/tcp')]
 
         pol = policy.ParsePolicy(INET_FILTER + INET6_TERM, self.naming)
         with mock.patch.object(nsxv.logging, "warning") as mock_warning:

@@ -274,7 +274,7 @@ class PcapFilter(absltest.TestCase):
     @capture.stdout
     def testTcp(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -473,7 +473,7 @@ class PcapFilter(absltest.TestCase):
 
     def testBuildTokens(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         pol1 = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -483,7 +483,7 @@ class PcapFilter(absltest.TestCase):
 
     def testBuildWarningTokens(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol1 = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_WARNING_TERM, self.naming), EXP_INFO

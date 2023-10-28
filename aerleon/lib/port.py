@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Tuple
 
 
 class Error(Exception):
@@ -60,44 +61,29 @@ class PPP:
         """
         # remove comments (if any)
         self.service = service.split('#')[0].strip()
+        self.nested=True
+        self.port = None
+        self.protocol = None
+        self.is_range = False
+        self.is_single_port = True
+        self.start = None
+        self.end = None
         if '/' in self.service:
             self.port = self.service.split('/')[0]
             self.protocol = self.service.split('/')[1]
             self.nested = False
-        else:
-            # for nested services
-            self.nested = True
-            self.port = None
-            self.protocol = None
-
-    @property
-    def is_range(self):
-        if self.port:
-            return '-' in self.port
-        else:
-            return False
-
-    @property
-    def is_single_port(self):
-        return not self.is_range
-
-    @property
-    def start(self) -> int:
-        # return the first port in the range as int
-        if '-' in self.port:
-            self._start = int(self.port.split('-')[0])
-        else:
-            self._start = int(self.port)
-        return self._start
-
-    @property
-    def end(self) -> int:
-        # return the last port in the range as int
-        if '-' in self.port:
-            self._end = int(self.port.split('-')[1])
-        else:
-            self._end = int(self.port)
-        return self._end
+            if '-' in self.port:
+                self.start = int(self.port.split('-')[0])
+            else:
+                self.start = int(self.port)
+            if '-' in self.port:
+                self.end = int(self.port.split('-')[1])
+            else:
+                self.end = int(self.port)
+            if '-' in self.port and self.start != self.end:
+                self.is_range = True
+            self.is_single_port = not self.is_range
+            
 
     def __contains__(self, other: PPP):
         # determine if a PPP object is contained within another.
@@ -106,20 +92,35 @@ class PPP:
             and (other.end <= self.end)
             and self.protocol == other.protocol
         )
+    @staticmethod
+    def _tupleToPPP(t:Tuple):
+        logging.warning("Comparing a Tuple to PPP object will be deprecated soon.")
+        return PPP(f'{t[0]}-{t[1]}/na')
 
     def __lt__(self, other: PPP):
+        if isinstance(other, Tuple):
+            other = self._tupleToPPP(other)
+
         return (self.start, self.end) < (other.start, other.end)
 
     def __gt__(self, other: PPP):
+        if isinstance(other, Tuple):
+            other = self._tupleToPPP(other)
         return (self.start, self.end) > (other.start, other.end)
 
     def __le__(self, other: PPP):
+        if isinstance(other, Tuple):
+            other = self._tupleToPPP(other)
         return (self.start, self.end) <= (other.start, other.end)
         
     def __ge__(self, other: PPP):
+        if isinstance(other, Tuple):
+            other = self._tupleToPPP(other)
         return (self.start, self.end) >= (other.start, other.end)
 
     def __eq__(self, other: PPP):
+        if isinstance(other, Tuple):
+            other = self._tupleToPPP(other)
         return (self.start, self.end) == (other.start, other.end)
 
     def __str__(self):

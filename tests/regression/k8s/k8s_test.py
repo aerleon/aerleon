@@ -19,7 +19,7 @@ from unittest import mock
 import yaml
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, k8s, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, k8s, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -398,7 +398,7 @@ class K8sTest(parameterized.TestCase):
     @capture.stdout
     def testPortRangeTerm(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['0-1024']
+        self.naming.GetServiceByProto.return_value = [port.PPP('0-1024/tcp')]
 
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
         policy_list = yaml.safe_load(str(acl))
@@ -417,7 +417,7 @@ class K8sTest(parameterized.TestCase):
     @capture.stdout
     def testAllowAllTcpTerm(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
         expected_ingress_ports = [{'protocol': 'TCP'}]
 
         acl = k8s.K8s(
@@ -690,7 +690,7 @@ class K8sTest(parameterized.TestCase):
 
     def testSkipExpiredTerm(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming), EXP_INFO)
         self.assertEqual(str(acl), '')
@@ -700,7 +700,7 @@ class K8sTest(parameterized.TestCase):
 
     def testSkipStatelessReply(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         # Add stateless_reply to terms, there is no current way to include it in the
         # term definition.
@@ -721,7 +721,7 @@ class K8sTest(parameterized.TestCase):
     def testValidTermProtos(self):
         for proto in SUPPORTED_PROTOS:
             self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.return_value = ['53']
+            self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
             acl = k8s.K8s(pol, EXP_INFO)
             self.assertIsNotNone(str(acl))
@@ -730,14 +730,14 @@ class K8sTest(parameterized.TestCase):
     def testInvalidTermProtos(self):
         for proto in UNSUPPORTED_PROTOS:
             self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.return_value = ['53']
+            self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
             self.assertRaises(aclgenerator.UnsupportedFilterError, k8s.K8s, pol, EXP_INFO)
 
     @capture.stdout
     def testMultipleTerms(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM + GOOD_TERM_ALLOW_ALL_TCP, self.naming),

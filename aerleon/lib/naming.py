@@ -528,24 +528,10 @@ class Naming:
         Raises:
           UndefinedServiceError: If the service name isn't defined.
         """
-        # services_set = []
-        # for service in self.GetService(query):
-        #     if not service.nested and service.protocol.lower() == proto.lower():
-        #         services_set.append(service)
-        services_set = set()
-        proto = proto.upper()
-        data = []
-        servicename = ''
-        data = query.split('#')  # Get the token keyword and remove any comment
-        servicename = data[0].split()[0]  # strip and cast from list to string
-        if servicename not in self.services:
-            raise UndefinedServiceError('%s %s' % ('\nNo such service,', servicename))
-
-        for service in self.GetService(servicename):
-            if service and '/' in service:
-                parts = service.split('/')
-                if parts[1].upper() == proto:
-                    services_set.add(parts[0])
+        services_set = []
+        for service in self.GetService(query):
+            if not service.nested and service.protocol.lower() == proto.lower():
+                services_set.append(service)
         return sorted(services_set)
 
     def GetFQDN(self, query: str) -> List[str]:
