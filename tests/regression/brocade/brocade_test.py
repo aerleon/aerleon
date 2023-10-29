@@ -128,7 +128,7 @@ EXP_INFO = 2
 class BrocadeTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testTcpEstablished(self):

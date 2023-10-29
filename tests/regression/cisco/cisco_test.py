@@ -429,48 +429,40 @@ EXP_INFO = 2
 class CiscoTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testIPVersion(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0'), nacaddr.IP('::/0')]
-
+        self.naming._ParseLine('ANY = 0.0.0.0/0 ::/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_6, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         # check if we've got a v6 address in there.
         self.assertNotIn('::', str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('ANY')
         print(acl)
 
     @capture.stdout
     def testOptions(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO)
         # this is a hacky sort of way to test that 'established' maps to HIGH_PORTS
         # in the destination port section.
         range_test = 'permit tcp any eq 80 10.0.0.0 0.255.255.255 range 1024 65535'
         self.assertIn(range_test, str(acl), '[%s]' % str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(acl)
 
     @capture.stdout
     def testExpandingConsequtivePorts(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['80', '81']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8','networks')
+        self.naming._ParseLine('CONSECUTIVE_PORTS = 80/tcp 81/tcp','services')
 
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_14, self.naming), EXP_INFO)
         first_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 80'
         second_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 81'
         self.assertIn(first_string, str(acl), '[%s]' % str(acl))
         self.assertIn(second_string, str(acl), '[%s]' % str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('CONSECUTIVE_PORTS', 'tcp')
         print(acl)
 
     @capture.stdout
@@ -481,6 +473,7 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testTermAndFilterName(self):
+        self.naming._ParseLine('ANY = 0.0.0.0/0', 'networks')
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1 + GOOD_TERM_6, self.naming), EXP_INFO
         )
@@ -491,8 +484,7 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testRemark(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
-
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32','networks')
         # Extended ACLs should have extended remark style.
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_EXTENDED_NUMBERED_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -509,8 +501,6 @@ class CiscoTest(absltest.TestCase):
         self.assertIn('access-list 50 remark standard-term-1', str(acl), str(acl))
         self.assertIn('access-list 50 remark %sId:%s' % ('$', '$'), str(acl), str(acl))
         self.assertNotIn('access-list 50 remark %sRevision:%s' % ('$', '$'), str(acl), str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
@@ -535,47 +525,42 @@ class CiscoTest(absltest.TestCase):
         print(acl)
 
     def testDuplicateTermNames(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/24')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/24', 'networks')
         pol = policy.ParsePolicy(
             GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_1 + GOOD_STANDARD_TERM_1, self.naming
         )
         self.assertRaises(cisco.CiscoDuplicateTermError, cisco.Cisco, pol, EXP_INFO)
 
     def testBadStandardTerm(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + BAD_STANDARD_TERM_1, self.naming)
         self.assertRaises(cisco.StandardAclTermError, cisco.Cisco, pol, EXP_INFO)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
 
     @capture.stdout
     def testStandardTermHost(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
-
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_1, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         expected = 'access-list 99 permit 10.1.1.1'
         self.assertIn(expected, str(acl), '[%s]' % str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testStandardTermNet(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_HOST =10.0.0.0/8', 'networks')
 
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         expected = 'access-list 99 permit 10.0.0.0 0.255.255.255'
         self.assertIn(expected, str(acl), '[%s]' % str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testNamedStandard(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_2 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
@@ -583,36 +568,29 @@ class CiscoTest(absltest.TestCase):
         self.assertIn(expected, str(acl), '[%s]' % str(acl))
         expected = ' permit 10.0.0.0 0.255.255.255\n'
         self.assertIn(expected, str(acl), '[%s]' % str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testNoIPv6InOutput(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:0:1000::/40')]
+        self.naming._ParseLine('SOME_HOST = 2620:0:1000::/40', 'networks')
 
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         self.assertNotIn('::', str(acl), '[%s]' % str(acl))
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     def testStandardFilterName(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         pol = policy.ParsePolicy(BAD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         self.assertRaises(cisco.UnsupportedCiscoAccessListError, cisco.Cisco, pol, EXP_INFO)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
 
     def testStandardFilterRange(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         pol = policy.ParsePolicy(BAD_STANDARD_HEADER_2 + GOOD_STANDARD_TERM_2, self.naming)
         self.assertRaises(cisco.UnsupportedCiscoAccessListError, cisco.Cisco, pol, EXP_INFO)
-
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
 
     @capture.stdout
     def testObjectGroup(self):
@@ -626,8 +604,8 @@ class CiscoTest(absltest.TestCase):
         port_grp2.append(' range 1024 65535')
         port_grp2.append('exit')
 
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8', token='SOME_HOST')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')        
 
         pol = policy.ParsePolicy(GOOD_OBJGRP_HEADER + GOOD_TERM_2 + GOOD_TERM_18, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
@@ -648,16 +626,11 @@ class CiscoTest(absltest.TestCase):
         for addrgroup in re.findall(r'net-group ([a-f0-9.:/]+)', str(acl)):
             self.assertRaises(ValueError, nacaddr.IP(addrgroup))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(acl)
 
     @capture.stdout
     def testInet6(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('2001:4860:8000::/33'),
-        ]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
 
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
@@ -670,15 +643,11 @@ class CiscoTest(absltest.TestCase):
         self.assertTrue(re.search(inet6_test3, str(acl)), str(acl))
         self.assertNotIn('10.0.0.0', str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testMixed(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('2001:4860:8000::/33'),
-        ]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
 
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_MIXED_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
@@ -697,12 +666,11 @@ class CiscoTest(absltest.TestCase):
         self.assertIn(inet6_test5, aclout, '[%s]' % aclout)
         self.assertTrue(re.search(inet6_test6, aclout), aclout)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testRestrictAddressFamilyType(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('127.0.0.1'), nacaddr.IPv6('::1/128')]
+        self.naming._ParseLine('SOME_HOST = 127.0.0.1/32 ::1/128', 'networks')
 
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_MIXED_HEADER + GOOD_TERM_23, self.naming), EXP_INFO
@@ -710,15 +678,12 @@ class CiscoTest(absltest.TestCase):
         output = str(acl)
         self.assertIn('127.0.0.1', output, output)
         self.assertNotIn('::1/128', output, output)
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testMixedFilterSkipTerms(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/8'),
-        ]
-
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_MIXED_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
         )
@@ -738,14 +703,11 @@ class CiscoTest(absltest.TestCase):
         self.assertIn(inet6_test5, aclout, '[%s]' % aclout)
         self.assertFalse(re.search(inet6_test6, aclout), aclout)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @mock.patch.object(cisco.logging, 'warning')
     def testSkippedTerm(self, mock_warning):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.0.0.0/8'),
-        ]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_INET6_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
@@ -761,7 +723,6 @@ class CiscoTest(absltest.TestCase):
         self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
         self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
@@ -769,15 +730,15 @@ class CiscoTest(absltest.TestCase):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
+            addr_list.append(str(net))
+        
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
 
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_DSMO_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
         )
         self.assertIn('permit tcp any 192.168.0.64 0.0.255.31', str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
@@ -922,18 +883,17 @@ class CiscoTest(absltest.TestCase):
     @capture.stdout
     def testFragments01(self):
         """Test policy term using 'fragments' (ref Github issue #187)."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/24')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/24', 'networks')
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_20, self.naming), EXP_INFO)
         expected = 'permit ip 10.0.0.0 0.0.0.255 10.0.0.0 0.0.0.255 fragments'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST')])
         print(acl)
 
     @capture.stdout
     def testFragments02(self):
         """Test policy term using 'is-fragment' (ref Github issue #187)."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/24')]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/24', 'networks')
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_22, self.naming), EXP_INFO)
         expected = 'permit ip 10.0.0.0 0.0.0.255 10.0.0.0 0.0.0.255 fragments'
         self.assertIn(expected, str(acl))
@@ -941,25 +901,23 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testTermDSCPMarker(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/24')]
+        self.naming._ParseLine('cs4-valid_network_name = 10.0.0.0/24', 'networks')
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_21, self.naming), EXP_INFO)
         expected = 'permit ip 10.0.0.0 0.0.0.255 10.0.0.0 0.0.0.255'
         self.assertIn(expected, str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls(
-            [mock.call('cs4-valid_network_name'), mock.call('cs4-valid_network_name')]
-        )
         print(acl)
 
     @capture.stdout
     def testNoVerbose(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/24', 'networks')
         for i in [
             GOOD_NOVERBOSE_HEADER,
             GOOD_NOVERBOSE_STANDARD_HEADER,
             GOOD_NOVERBOSE_OBJGRP_HEADER,
             GOOD_NOVERBOSE_INET6_HEADER,
         ]:
-            self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/24')]
+            
             acl = cisco.Cisco(policy.ParsePolicy(i + GOOD_STANDARD_TERM_1, self.naming), EXP_INFO)
             self.assertNotIn('remark', str(acl), str(acl))
             print(acl)
@@ -987,6 +945,7 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testNumericProtocols(self):
+        self.naming._ParseLine('NTP_SERVERS = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(
             """header {
   comment:: "Test policy for numeric proto"

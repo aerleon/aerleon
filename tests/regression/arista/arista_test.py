@@ -210,11 +210,12 @@ EXP_INFO = 2
 class AristaTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testRemark(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -225,7 +226,6 @@ class AristaTest(absltest.TestCase):
         expected = 'test-filter remark'
         self.assertNotIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
@@ -238,18 +238,21 @@ class AristaTest(absltest.TestCase):
 
     @capture.stdout
     def testESPIsAnInteger(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
         acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_5, self.naming), EXP_INFO)
         self.assertIn('permit 50', str(acl))
         print(acl)
 
     @capture.stdout
     def testAHIsAnInteger(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
         acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_6, self.naming), EXP_INFO)
         self.assertIn('permit 51', str(acl))
         print(acl)
 
     @capture.stdout
     def testAHAndESPAreIntegers(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
         acl = arista.Arista(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_7, self.naming), EXP_INFO)
         self.assertIn('permit 50', str(acl))
         self.assertIn('permit 51', str(acl))
@@ -273,8 +276,11 @@ class AristaTest(absltest.TestCase):
 
     @capture.stdout
     def testStandardTermHost(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
-        self.naming.GetServiceByProto.return_value = ['22', '6537']
+        self.naming._ParseLine('SOME_HOST = 10.1.1.0/24', 'networks')
+        self.naming._ParseLine('SOME_HOST2 = 10.1.1.0/24', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        self.naming._ParseLine('GOPENFLOW = 6537/tcp', 'services')
+        
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -286,16 +292,11 @@ class AristaTest(absltest.TestCase):
         expected = ' permit tcp 10.1.1.0/24 any eq 6537'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST2')])
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('SSH', 'tcp'), mock.call('GOPENFLOW', 'tcp')]
-        )
-
     @capture.stdout
     def testStandardTermHostV6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
-        self.naming.GetServiceByProto.return_value = ['22']
-
+        self.naming._ParseLine('SOME_HOST = 2620:1::/64', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        
         pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)
@@ -304,12 +305,9 @@ class AristaTest(absltest.TestCase):
         expected = ' permit tcp 2620:1::/64 any eq ssh'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
-
     @capture.stdout
     def testStandardTermV4(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
+        self.naming._ParseLine('SOME_HOST = 10.1.1.0/24', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -319,11 +317,9 @@ class AristaTest(absltest.TestCase):
         expected = ' permit 10.1.1.0/24\n'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-
     @capture.stdout
     def testSIPUsesInt(self):
-        self.naming.GetServiceByProto.return_value = ['5060']
+        self.naming._ParseLine('SIP = 5060/udp', 'services')
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_8, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)

@@ -10,11 +10,9 @@ ip access-list test-filter
 
  remark good-term-2
  permit tcp 10.1.1.0 0.0.0.255 any eq 22
- permit tcp 10.1.1.0 0.0.0.255 any eq 6537
 
 
  remark good-term-3
- permit tcp 10.1.1.0 0.0.0.255 any eq 22
  permit tcp 10.1.1.0 0.0.0.255 any eq 6537
 
 exit
