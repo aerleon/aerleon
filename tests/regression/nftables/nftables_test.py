@@ -206,7 +206,7 @@ def IPhelper(addresses):
 class NftablesTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
         self.dummyterm = nftables.Term('', '', '')
 
     @parameterized.parameters(('ip protocol tcp', ' ip protocol tcp'), ('', ''))
@@ -521,7 +521,6 @@ class NftablesTest(parameterized.TestCase):
         self.assertEqual(result, expected_output)
 
     def testBuildTokens(self):
-        self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
         pol1 = nftables.Nftables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )

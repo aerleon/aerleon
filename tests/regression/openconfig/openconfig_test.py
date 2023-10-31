@@ -463,9 +463,6 @@ header {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
-
-
 _TERM_SOURCE_TAGS_LIMIT = 30
 _TERM_TARGET_TAGS_LIMIT = 70
 _TERM_PORTS_LIMIT = 256
@@ -474,156 +471,109 @@ _TERM_PORTS_LIMIT = 256
 class OpenConfigTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
+        self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp', 'services')
 
     @capture.stdout
     def testSaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SADDR)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testDaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testSport(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SPORT)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
         print(acl)
 
     @capture.stdout
     def testDport(self):
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DPORT)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
         print(acl)
 
     @capture.stdout
     def testMultiDport(self):
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_MULTI_PROTO_DPORT)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('HIGH_PORTS', 'tcp'), mock.call('HIGH_PORTS', 'udp')], any_order=True
-        )
         print(acl)
 
     @capture.stdout
     def testEverything(self):
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_EVERYTHING)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testV6Saddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_SADDR)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testV6Daddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testMixedDaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = openconfig.OpenConfig(
             policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_MIXED_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['80']
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         policy_text = GOOD_HEADER + GOOD_TCP_EST
         acl = openconfig.OpenConfig(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
         output = str(acl)
         self.assertIn('TCP_ESTABLISHED', output, output)
         self.assertIn('BUILTIN', output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(acl)
 
     def testNonTcpWithTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         policy_text = GOOD_HEADER + BAD_TCP_EST
         pol = policy.ParsePolicy(policy_text, self.naming)
         self.assertRaises(
             openconfig.TcpEstablishedWithNonTcpError, openconfig.OpenConfig, pol, EXP_INFO
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
         )
 
 

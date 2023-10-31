@@ -172,18 +172,16 @@ EXP_INFO = 2
 class IpsetTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testMarkers(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
         result = str(acl)
         self.assertIn('# begin:ipset-rules', result)
         self.assertIn('# end:ipset-rules', result)
-
-        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
         print(result)
 
     def testGenerateSetName(self):
@@ -209,34 +207,30 @@ class IpsetTest(absltest.TestCase):
 
     @capture.stdout
     def testOneSourceAddress(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
         result = str(acl)
         self.assertIn('-s 10.0.0.0/8', result)
         self.assertNotIn('-m set --match-set good-term-3-src src', result)
 
-        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
         print(acl)
 
     @capture.stdout
     def testOneDestinationAddress(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('172.16.0.0/12')]
+        self.naming._ParseLine('EXTERNAL = 172.16.0.0/12', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO)
         result = str(acl)
         self.assertIn('-d 172.16.0.0/12', result)
         self.assertNotIn('-m set --match-set good-term-2-dst dst', result)
 
-        self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testOneSourceAndDestinationAddress(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [nacaddr.IPv4('172.16.0.0/12')],
-        ]
+        self.naming._ParseLine('EXTERNAL = 172.16.0.0/12', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
         result = str(acl)
@@ -245,15 +239,11 @@ class IpsetTest(absltest.TestCase):
         self.assertNotIn('-m set --match-set good-term-3-src src', result)
         self.assertNotIn('-m set --match-set good-term-3-dst dst', result)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('EXTERNAL')])
         print(acl)
 
     @capture.stdout
     def testManySourceAddresses(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IPv4('10.0.0.0/24'),
-            nacaddr.IPv4('10.1.0.0/24'),
-        ]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/24 10.1.0.0/24', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO)
         result = str(acl)
@@ -266,15 +256,11 @@ class IpsetTest(absltest.TestCase):
         self.assertNotIn('-s ', result)
         self.assertNotIn('-exist', result)
 
-        self.naming.GetNetAddr.assert_called_once_with('INTERNAL')
         print(acl)
 
     @capture.stdout
     def testManyDestinationAddresses(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IPv4('172.16.0.0/24'),
-            nacaddr.IPv4('172.17.0.0/24'),
-        ]
+        self.naming._ParseLine("EXTERNAL = 172.16.0.0/24 172.17.0.0/24", 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO)
         result = str(acl)
@@ -287,15 +273,12 @@ class IpsetTest(absltest.TestCase):
         self.assertNotIn('-s ', result)
         self.assertNotIn('-exist', result)
 
-        self.naming.GetNetAddr.assert_called_once_with('EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testManySourceAndDestinationAddresses(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4('10.0.0.0/24'), nacaddr.IPv4('10.1.0.0/24')],
-            [nacaddr.IPv4('172.16.0.0/24'), nacaddr.IPv4('172.17.0.0/24')],
-        ]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/24 10.1.0.0/24', 'networks')
+        self.naming._ParseLine('EXTERNAL = 172.16.0.0/24 172.17.0.0/24', 'networks')
 
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
         result = str(acl)
@@ -314,16 +297,19 @@ class IpsetTest(absltest.TestCase):
         self.assertNotIn('-s ', result)
         self.assertNotIn('-d ', result)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('EXTERNAL')])
         print(acl)
 
     def testBuildTokens(self):
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('EXTERNAL = 1.1.1.1/32', 'networks')
         pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO)
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('EXTERNAL = 1.1.1.1/32', 'networks')
         pol1 = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_4, self.naming), EXP_INFO)
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
@@ -331,10 +317,7 @@ class IpsetTest(absltest.TestCase):
 
     @capture.stdout
     def testAddsExistsOption(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IPv4('10.0.0.0/24'),
-            nacaddr.IPv4('10.1.0.0/24'),
-        ]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/24 10.1.0.0/24','networks')
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1, self.naming), EXP_INFO)
         self.assertIn('create -exist', str(acl))
         self.assertIn('add -exist', str(acl))

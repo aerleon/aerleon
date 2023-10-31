@@ -8,6 +8,30 @@ $Revision:$
   <rule logged="false">
     <name>allow-ntp-request</name>
     <action>allow</action>
+    <sources excluded="false">
+      <source>
+        <type>Ipv4Address</type>
+        <value>10.0.0.1</value>
+      </source>
+      <source>
+        <type>Ipv4Address</type>
+        <value>10.0.0.2</value>
+      </source>
+    </sources>
+    <destinations excluded="false">
+      <destination>
+        <type>Ipv4Address</type>
+        <value>10.0.0.0/8</value>
+      </destination>
+      <destination>
+        <type>Ipv4Address</type>
+        <value>172.16.0.0/12</value>
+      </destination>
+      <destination>
+        <type>Ipv4Address</type>
+        <value>192.168.0.0/16</value>
+      </destination>
+    </destinations>
     <services>
       <service>
         <protocol>17</protocol>

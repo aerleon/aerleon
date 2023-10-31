@@ -267,7 +267,7 @@ EXP_INFO = 2
 class WindowsAdvFirewallTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def assertTrue(self, strings, result, term):
         for string in strings:
@@ -280,8 +280,8 @@ class WindowsAdvFirewallTest(absltest.TestCase):
 
     @capture.stdout
     def testTcp(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         acl = windows_advfirewall.WindowsAdvFirewall(
             policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -295,9 +295,6 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -390,7 +387,7 @@ class WindowsAdvFirewallTest(absltest.TestCase):
 
     @capture.stdout
     def testAnyProtocol(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('FOO = 10.0.0.0/8', 'networks')
         acl = windows_advfirewall.WindowsAdvFirewall(
             policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_ANYPROTO, self.naming), EXP_INFO
         )

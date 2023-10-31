@@ -118,7 +118,7 @@ EXP_INFO = 2
 class WindowsIPSecTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     # pylint: disable=invalid-name
     def assertTrue(self, strings, result, term):
@@ -128,24 +128,19 @@ class WindowsIPSecTest(absltest.TestCase):
 
     @capture.stdout
     def testPolicy(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
-
+        self.naming._ParseLine('PROD_NET = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         acl = windows_ipsec.WindowsIPSec(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
         result = str(acl)
         self.assertTrue(['policy name=test-filter-policy assign=yes'], result, 'header')
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NET')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
     def testTcp(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
-
+        self.naming._ParseLine('PROD_NET = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         acl = windows_ipsec.WindowsIPSec(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -162,9 +157,6 @@ class WindowsIPSecTest(absltest.TestCase):
             result,
             'good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NET')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout

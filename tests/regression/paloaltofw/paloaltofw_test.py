@@ -557,9 +557,9 @@ SUPPORTED_SUB_TOKENS = {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-_IPSET = [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('2001:4860:8000::/33')]
-_IPSET2 = [nacaddr.IP('10.23.0.0/22'), nacaddr.IP('10.23.0.6/23', strict=False)]
-_IPSET3 = [nacaddr.IP('10.23.0.0/23')]
+_IPSET = ['10.0.0.0/8 2001:4860:8000::/33']
+_IPSET2 = ['10.23.0.0/22 10.23.0.6/23']
+_IPSET3 = ['10.23.0.0/23']
 
 PATH_VSYS = "./devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']"
 PATH_RULES = PATH_VSYS + '/rulebase/security/rules'
@@ -572,12 +572,12 @@ PATH_ADDRESS_GROUP = PATH_VSYS + '/address-group'
 class PaloAltoFWTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testTermAndFilterName(self):
-        self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('FOOBAR = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp','services')
 
         paloalto = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
@@ -586,20 +586,17 @@ class PaloAltoFWTest(absltest.TestCase):
         x = paloalto.config.find(PATH_RULES + "/entry[@name='good-term-1']")
         self.assertIsNotNone(x, output)
 
-        self.naming.GetNetAddr.assert_called_once_with('FOOBAR')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
     @capture.stdout
     def testServiceMap(self):
-        definitions = naming.Naming()
-        definitions._ParseLine('SSH = 22/tcp', 'services')
-        definitions._ParseLine('SMTP = 25/tcp', 'services')
-        definitions._ParseLine('FOOBAR = 10.0.0.0/8', 'networks')
-        definitions._ParseLine('         2001:4860:8000::/33', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        self.naming._ParseLine('FOOBAR = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('         2001:4860:8000::/33', 'networks')
 
         pol1 = paloaltofw.PaloAltoFW(
-            policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_1, definitions), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_1, self.naming), EXP_INFO
         )
         self.assertEqual(
             pol1.service_map.entries,
@@ -612,7 +609,7 @@ class PaloAltoFWTest(absltest.TestCase):
         print(pol1)
 
         pol2 = paloaltofw.PaloAltoFW(
-            policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_2, definitions), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_1 + SVC_TERM_2, self.naming), EXP_INFO
         )
         # The expectation is that there will be a single port mapped.
         expected_entries = {((), ('25',), 'tcp'): {'name': 'service-smtp-term-1-tcp'}}
@@ -825,6 +822,7 @@ term rule-1 {
 
     @capture.stdout
     def testSkipStatelessReply(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_4_STATELESS_REPLY, self.naming)
 
         # Add stateless_reply to terms, there is no current way to include it in the
@@ -841,6 +839,7 @@ term rule-1 {
 
     @capture.stdout
     def testSkipEstablished(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + TCP_ESTABLISHED_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -856,13 +855,15 @@ term rule-1 {
         print(output)
 
     def testUnsupportedOptions(self):
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + UNSUPPORTED_OPTION_TERM, self.naming)
         self.assertRaises(
             aclgenerator.UnsupportedFilterError, paloaltofw.PaloAltoFW, pol, EXP_INFO
         )
 
     def testBuildTokens(self):
-        self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
         pol1 = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
         )
@@ -1002,6 +1003,7 @@ term rule-1 {
 
     @capture.stdout
     def testGreProtoTerm(self):
+        self.naming._ParseLine('FOOBAR = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GRE_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -1014,6 +1016,7 @@ term rule-1 {
 
     @capture.stdout
     def testAhProtoTerm(self):
+        self.naming._ParseLine('FOOBAR = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + AH_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -1026,6 +1029,7 @@ term rule-1 {
 
     @capture.stdout
     def testAhTcpMixedProtoTerm(self):
+        self.naming._ParseLine('FOOBAR = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + AH_TCP_MIXED_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -1061,6 +1065,7 @@ term rule-1 {
 
     @capture.stdout
     def testEspProtoTerm(self):
+        self.naming._ParseLine('FOOBAR = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ESP_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
@@ -1073,6 +1078,7 @@ term rule-1 {
 
     @capture.stdout
     def testEspTcpMixedProtoTerm(self):
+        self.naming._ParseLine('FOOBAR = 0.0.0.0/0', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ESP_TCP_MIXED_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)

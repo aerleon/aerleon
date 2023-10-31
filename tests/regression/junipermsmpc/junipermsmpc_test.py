@@ -458,12 +458,12 @@ EXP_INFO = 2
 class JuniperMSMPCTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testTermAndFilterName(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -472,25 +472,20 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertIn('term good-term-1 {', output, output)
         self.assertIn('rule test-filter {', output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
     def testBadFilterType(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(BAD_HEADER_2 + GOOD_TERM_1, self.naming)
         self.assertRaises(
             junipermsmpc.UnsupportedHeaderError, junipermsmpc.JuniperMSMPC, pol, EXP_INFO
         )
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
-
     def testMultipleFilterType(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(BAD_HEADER_3 + GOOD_TERM_1, self.naming)
         self.assertRaises(
@@ -499,8 +494,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testMixedv4(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('192.168.0.0/24')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 192.168.0.0/24', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expected = (
             '                    term good-term-2 {\n'
             + '                        from {\n'
@@ -518,8 +513,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testMixedv6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv6('2001::/33')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 2001::/33', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expected = (
             '                    term good-term-2 {\n'
             + '                        from {\n'
@@ -537,11 +532,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testMixedBoth(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IPv4('192.168.0.0/24'),
-            nacaddr.IPv6('2001::/33'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 192.168.0.0/24 2001::/33', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expectedv4 = (
             '                    term good-term-2-inet {\n'
             + '                        from {\n'
@@ -576,10 +568,10 @@ class JuniperMSMPCTest(parameterized.TestCase):
             + ' ' * 33
             + '** very descriptive comment  this is a very\n'
             + ' ' * 33
-            + '** descript */'
+            + '** descripti */'
         )
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8', comment=long_comment)]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8 # {long_comment}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -587,8 +579,6 @@ class JuniperMSMPCTest(parameterized.TestCase):
         output = str(msmpc)
         self.assertIn(expected, output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
     @capture.stdout
@@ -626,7 +616,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testInactiveTerm(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8', 'networks')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_36, self.naming), EXP_INFO
         )
@@ -636,8 +626,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testInet6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::/33')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine(f'SOME_HOST = 2001::/33', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -645,8 +635,6 @@ class JuniperMSMPCTest(parameterized.TestCase):
         output = str(msmpc)
         self.assertTrue('protocol icmp6;' in output and 'protocol tcp;' in output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(output)
 
     @parameterized.named_parameters(
@@ -733,7 +721,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testAccept(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER + GOOD_TERM_25
         msmpc = junipermsmpc.JuniperMSMPC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -741,12 +729,11 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertIn('then {', output, output)
         self.assertIn('accept;', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testDiscardIPv4(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER + GOOD_TERM_26
         msmpc = junipermsmpc.JuniperMSMPC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -754,12 +741,11 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertIn('then {', output, output)
         self.assertIn('discard;', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testDiscardIPv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER_V6 + GOOD_TERM_26_V6
         msmpc = junipermsmpc.JuniperMSMPC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -767,12 +753,11 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertIn('then {', output, output)
         self.assertIn('discard;', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testRejectIPv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER_V6 + GOOD_TERM_26_V6_REJECT
         msmpc = junipermsmpc.JuniperMSMPC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -780,12 +765,11 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertIn('then {', output, output)
         self.assertIn('reject;', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER + ESTABLISHED_TERM_1
         msmpc = junipermsmpc.JuniperMSMPC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -793,13 +777,12 @@ class JuniperMSMPCTest(parameterized.TestCase):
         self.assertNotIn('term established-term-1', output, output)
         self.assertNotIn('tcp-established', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testStatelessReply(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.1/32')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine(f'SOME_HOST = 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         ret = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming)
 
@@ -820,9 +803,9 @@ class JuniperMSMPCTest(parameterized.TestCase):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+            addr_list.append(str(net))
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(
@@ -832,8 +815,6 @@ class JuniperMSMPCTest(parameterized.TestCase):
         )
         self.assertIn('192.168.0.64/27;', str(msmpc))
         self.assertNotIn('COMMENT', str(msmpc))
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(msmpc)
 
     @capture.stdout
@@ -841,9 +822,9 @@ class JuniperMSMPCTest(parameterized.TestCase):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IPv6('2001:db8:1010:' + str(octet) + '::64/64', strict=False)
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+            addr_list.append(str(net))
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(
@@ -853,8 +834,6 @@ class JuniperMSMPCTest(parameterized.TestCase):
         )
         self.assertIn('2001:db8:1010:90::/61;', str(msmpc))
         self.assertNotIn('COMMENT', str(msmpc))
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(msmpc)
 
     def testTermTypeIndexKeys(self):
@@ -943,13 +922,11 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testAddressExclude(self):
-        big = nacaddr.IPv4('0.0.0.0/1', comment='half of everything')
-        ip1 = nacaddr.IPv4('10.0.0.0/8', comment='RFC1918 10-net')
-        ip2 = nacaddr.IPv4('172.16.0.0/12', comment='RFC1918 172-net')
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/1 172.16.0.0/12', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        
         terms = (GOOD_TERM_18_SRC, GOOD_TERM_18_DST)
-        self.naming.GetNetAddr.side_effect = [[big, ip1, ip2], [ip1]] * len(terms)
 
-        mock_calls = []
         for term in terms:
             msmpc = junipermsmpc.JuniperMSMPC(
                 policy.ParsePolicy(GOOD_HEADER + term, self.naming), EXP_INFO
@@ -959,36 +936,24 @@ class JuniperMSMPCTest(parameterized.TestCase):
                 '                            '
                 + ('source' if term == GOOD_TERM_18_SRC else 'destination')
                 + '-address {\n'
-                + '                                /* half of everything, RFC1918 '
-                '10-net */\n'
                 + '                                0.0.0.0/1;\n'
-                + '                                /* RFC1918 172-net */\n'
                 + '                                172.16.0.0/12;\n'
-                + '                                /* RFC1918 10-net */\n'
                 + '                                10.0.0.0/8 except;\n'
                 + '                            }'
             )
             self.assertIn(expected_output, output, output)
             self.assertNotIn('10.0.0.0/8;', output, output)
             self.assertNotIn('172.16.0.0/12 except;', output, output)
-            mock_calls.append(mock.call('INTERNAL'))
-            mock_calls.append(mock.call('SOME_HOST'))
 
-        self.naming.GetNetAddr.assert_has_calls(mock_calls)
         print(output)
 
     @capture.stdout
     def testMinimizePrefixes(self):
-        includes = ['1.0.0.0/8', '2.0.0.0/8']
-        excludes = ['1.1.1.1/32', '2.0.0.0/8', '3.3.3.3/32']
-
+        self.naming._ParseLine('INCLUDES = 1.0.0.0/8 2.0.0.0/8', 'networks')
+        self.naming._ParseLine('EXCLUDES = 1.1.1.1/32 2.0.0.0/8 3.3.3.3/32', 'networks')
+        
         expected = ['1.0.0.0/8;', '1.1.1.1/32 except;']
         unexpected = ['2.0.0.0/8;', '2.0.0.0/8 except;', '3.3.3.3/32']
-
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4(ip) for ip in includes],
-            [nacaddr.IPv4(ip) for ip in excludes],
-        ]
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_19, self.naming), EXP_INFO
@@ -999,20 +964,14 @@ class JuniperMSMPCTest(parameterized.TestCase):
         for result in unexpected:
             self.assertNotIn(result, output, 'unexpected "%s" in %s' % (result, output))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INCLUDES'), mock.call('EXCLUDES')])
         print(output)
 
     @capture.stdout
     def testNoMatchReversal(self):
-        includes = ['10.0.0.0/8', '10.0.0.0/10']
-        excludes = ['10.0.0.0/9']
+        self.naming._ParseLine('INCLUDES = 10.0.0.0/8 10.0.0.0/10', 'networks')
+        self.naming._ParseLine('EXCLUDES = 10.0.0.0/9', 'networks')
 
         expected = ['10.0.0.0/8;', '10.0.0.0/10;', '10.0.0.0/9 except;']
-
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4(ip) for ip in includes],
-            [nacaddr.IPv4(ip) for ip in excludes],
-        ]
 
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_19, self.naming), EXP_INFO
@@ -1032,7 +991,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testRangedPorts(self):
-        self.naming.GetServiceByProto.side_effect = [['67'], ['68']]
+        self.naming._ParseLine('BOOTPC = 67/udp', 'services')
+        self.naming._ParseLine('BOOTPS = 68/udp', 'services')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + RANGE_PORTS_TERM, self.naming), EXP_INFO
         )
@@ -1041,7 +1001,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testNotRangedPorts(self):
-        self.naming.GetServiceByProto.side_effect = [['67'], ['69']]
+        self.naming._ParseLine('BOOTPC = 67/udp', 'services')
+        self.naming._ParseLine('BOOTPS = 69/udp', 'services')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + RANGE_PORTS_TERM, self.naming), EXP_INFO
         )
@@ -1059,7 +1020,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         header = GOOD_HEADER
         if not apply_groups:
             header = re.sub(r'(target:: msmpc .+)', r'\1 no-apply-groups', header)
-        self.naming.GetServiceByProto.side_effect = [['67'], ['69']]
+        self.naming._ParseLine('BOOTPC = 67/udp', 'services')
+        self.naming._ParseLine('BOOTPS = 69/udp', 'services')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(header + RANGE_PORTS_TERM, self.naming), EXP_INFO
         )
@@ -1103,8 +1065,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_V4',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv4('192.168.0.0/24')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['192.168.0.0/24'],
             ],
             expected=[
                 '                    term good-term-inet {\n'
@@ -1121,8 +1083,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='V4_TO_MIXED',
             addresses=[
-                [nacaddr.IPv4('192.168.0.0/24')],
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
+                ['192.168.0.0/24'],
+                ['0.0.0.0/1', '2001::/33'],
             ],
             expected=[
                 '                    term good-term-inet {\n'
@@ -1139,8 +1101,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_V6',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv6('2201::/48')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['2201::/48'],
             ],
             expected=[
                 '                    term good-term-inet6 {\n'
@@ -1157,8 +1119,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='V6_TO_MIXED',
             addresses=[
-                [nacaddr.IPv6('2201::/48')],
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
+                ['2201::/48'],
+                ['0.0.0.0/1', '2001::/33'],
             ],
             expected=[
                 '                    term good-term-inet6 {\n'
@@ -1175,8 +1137,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_MIXED',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv4('192.168.0.0/24'), nacaddr.IPv6('2201::/48')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['192.168.0.0/24', '2201::/48'],
             ],
             expected=[
                 '                    term good-term-inet {\n'
@@ -1200,7 +1162,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V4_TO_V4',
-            addresses=[[nacaddr.IPv4('0.0.0.0/1')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['0.0.0.0/1'], ['192.168.0.0/24']],
             expected=[
                 '                    term good-term {\n'
                 + '                        from {\n'
@@ -1215,7 +1177,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V6_TO_V6',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv6('2201::/48')]],
+            addresses=[['2001::/33'], ['2201::/48']],
             expected=[
                 '                    term good-term {\n'
                 + '                        from {\n'
@@ -1230,19 +1192,19 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V4_TO_V6',
-            addresses=[[nacaddr.IPv4('0.0.0.0/1')], [nacaddr.IPv6('2201::/48')]],
+            addresses=[['0.0.0.0/1'], ['2201::/48']],
             expected=[],
             notexpected=['0.0.0.0/1', '192.168.0.0/24', '2001::/33', '2201::/48'],
         ),
         dict(
             testcase_name='V6_TO_V4',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['2001::/33'], ['192.168.0.0/24']],
             expected=[],
             notexpected=['0.0.0.0/1', '192.168.0.0/24', '2001::/33', '2201::/48'],
         ),
         dict(
             testcase_name='PARTLY_UNSPECIFIED',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['2001::/33'], ['192.168.0.0/24']],
             expected=['term good_term_25 '],
             notexpected=[
                 '0.0.0.0/1',
@@ -1254,8 +1216,10 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
     )
     def testMixed(self, addresses, expected, notexpected):
-        self.naming.GetNetAddr.side_effect = addresses
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addresses[0])}', 'networks')
+        self.naming._ParseLine(f'SOME_OTHER_HOST = {" ".join(addresses[1])}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER_MIXED + MIXED_TESTING_TERM + GOOD_TERM_25, self.naming),
             EXP_INFO,
@@ -1270,8 +1234,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_V4',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv4('192.168.0.0/24')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['192.168.0.0/24'],
             ],
             expected=[
                 '                    term good-term-icmp-inet {\n'
@@ -1318,8 +1282,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='V4_TO_MIXED',
             addresses=[
-                [nacaddr.IPv4('192.168.0.0/24')],
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
+                ['192.168.0.0/24'],
+                ['0.0.0.0/1', '2001::/33'],
             ],
             expected=[
                 '                    term good-term-icmp-inet {\n'
@@ -1366,8 +1330,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_V6',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv6('2201::/48')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['2201::/48'],
             ],
             expected=[
                 '                    term good-term-icmp-2 {\n'
@@ -1414,8 +1378,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='V6_TO_MIXED',
             addresses=[
-                [nacaddr.IPv6('2201::/48')],
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
+                ['2201::/48'],
+                ['0.0.0.0/1', '2001::/33'],
             ],
             expected=[
                 '                    term good-term-icmp-2 {\n'
@@ -1462,8 +1426,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         dict(
             testcase_name='MIXED_TO_MIXED',
             addresses=[
-                [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('2001::/33')],
-                [nacaddr.IPv4('192.168.0.0/24'), nacaddr.IPv6('2201::/48')],
+                ['0.0.0.0/1', '2001::/33'],
+                ['192.168.0.0/24', '2201::/48'],
             ],
             expected=[
                 '                    term good-term-icmp-inet {\n'
@@ -1539,7 +1503,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V4_TO_V4',
-            addresses=[[nacaddr.IPv4('0.0.0.0/1')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['0.0.0.0/1'], ['192.168.0.0/24']],
             expected=[
                 '                    term good-term-icmp {\n'
                 '                        from {\n'
@@ -1584,7 +1548,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V6_TO_V6',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv6('2201::/48')]],
+            addresses=[['2001::/33'], ['2201::/48']],
             expected=[
                 '                    term good-term-icmp-2 {\n'
                 '                        from {\n'
@@ -1629,7 +1593,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V4_TO_V6',
-            addresses=[[nacaddr.IPv4('0.0.0.0/1')], [nacaddr.IPv6('2201::/48')]],
+            addresses=[['0.0.0.0/1'], ['2201::/48']],
             expected=[
                 '                    term good-term-icmp-2 {\n'
                 '                        from {\n'
@@ -1644,7 +1608,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='V6_TO_V4',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['2001::/33'], ['192.168.0.0/24']],
             expected=[
                 '                    term good-term-icmp-2 {\n'
                 '                        from {\n'
@@ -1659,7 +1623,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
         dict(
             testcase_name='PARTLY_UNSPECIFIED',
-            addresses=[[nacaddr.IPv6('2001::/33')], [nacaddr.IPv4('192.168.0.0/24')]],
+            addresses=[['2001::/33'], ['192.168.0.0/24']],
             expected=[
                 '                    term good-term-icmp-2 {\n'
                 '                        from {\n'
@@ -1682,7 +1646,10 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
     )
     def testMixedICMP(self, addresses, expected, notexpected):
-        self.naming.GetNetAddr.side_effect = addresses * 4
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addresses[0])}', 'networks')
+        self.naming._ParseLine(f'SOME_OTHER_HOST = {" ".join(addresses[1])}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER_MIXED + MIXED_TESTING_TERM_ICMP, self.naming), EXP_INFO
         )
@@ -1761,8 +1728,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
         ),
     )
     def testLogging(self, option, want_logging, apply_groups):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('192.168.0.0/24')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 192.168.0.0/24', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expected_output = (
             '    test-filter {\n'
             + '        services {\n'
@@ -1872,8 +1839,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testSlashZeroReplacement(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('0.0.0.0/0'), nacaddr.IPv6('::/0')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 0.0.0.0/0 ::/0', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expectedv4 = (
             '                    term good-term-2-inet {\n'
             + '                        from {\n'
@@ -1899,8 +1866,8 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testV6SlashFourteenReplacement(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('0.0.0.0/1'), nacaddr.IPv6('::/14')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('SOME_HOST = 0.0.0.0/1 ::/14', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         expectedv4 = (
             '                    term good-term-2-inet {\n'
             + '                        from {\n'

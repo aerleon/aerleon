@@ -397,14 +397,12 @@ EXP_INFO = 2
 class PacketFilterTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testTcp(self):
-        ip = nacaddr.IP('10.0.0.0/8')
-        ip.parent_token = 'PROD_NETWORK'
-        self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -416,9 +414,6 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -603,8 +598,7 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testPortRange(self):
-        self.naming.GetServiceByProto.return_value = ['12345-12354']
-
+        self.naming._ParseLine('HIGH_PORTS = 12345-12354/tcp', 'services')
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + PORTRANGE_TERM, self.naming), EXP_INFO
         )
@@ -615,8 +609,6 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for portrange',
         )
-
-        self.naming.GetServiceByProto.assert_called_once_with('HIGH_PORTS', 'tcp')
         print(result)
 
     @capture.stdout
@@ -657,11 +649,8 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testStateless(self):
-        ip = nacaddr.IP('10.0.0.0/8')
-        ip.parent_token = 'PROD_NETWORK'
-        self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
-
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_STATELESS + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -672,9 +661,6 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -708,11 +694,8 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testDirectional(self):
-        ip = nacaddr.IP('10.0.0.0/8')
-        ip.parent_token = 'PROD_NETWORK'
-        self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
-
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -723,9 +706,6 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -782,10 +762,8 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testDirectionalStateless(self):
-        ip = nacaddr.IP('10.0.0.0/8')
-        ip.parent_token = 'PROD_NETWORK'
-        self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL_STATELESS + GOOD_TERM_TCP, self.naming),
@@ -799,9 +777,6 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -884,17 +859,9 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testTableCreation(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK'
-        corp_internal_one = nacaddr.IP('100.96.0.1/11', strict=False)
-        corp_internal_one.parent_token = 'CORP_INTERNAL'
-        corp_internal_two = nacaddr.IP('172.16.0.0/16')
-        corp_internal_two.parent_token = 'CORP_INTERNAL'
-        self.naming.GetNetAddr.side_effect = [
-            [prod_network],
-            [corp_internal_one, corp_internal_two],
-        ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('CORP_INTERNAL = 100.96.0.1/11 172.16.0.0/16', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + MULTIPLE_NAME_TERM, self.naming), EXP_INFO
@@ -914,20 +881,13 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual term for multiple-name',
         )
-
-        self.naming.GetNetAddr.assert_has_calls(
-            [mock.call('PROD_NETWORK'), mock.call('CORP_INTERNAL')]
-        )
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
     def testTableNameShortened(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
-
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
+        
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL + LONG_NAME_TERM_DNS_TCP, self.naming),
             EXP_INFO,
@@ -946,19 +906,12 @@ class PacketFilterTest(absltest.TestCase):
             'did not find actual term for multiple-name',
         )
 
-        self.naming.GetNetAddr.assert_called_once_with(
-            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        )
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(result)
 
     def testTableDuplicateShortNameError(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        prod_network_two = nacaddr.IP('172.0.0.0/8')
-        prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME'
-        self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME = 172.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -969,21 +922,13 @@ class PacketFilterTest(absltest.TestCase):
             ),
             EXP_INFO,
         )
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME'),
-            ]
-        )
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
+
 
     @capture.stdout
     def testTableSameLongNameSameFilter(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
-
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
+        
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(
                 GOOD_HEADER_DIRECTIONAL + LONG_NAME_TERM_DNS_TCP + LONG_NAME_TERM_DNS_UDP,
@@ -1012,23 +957,12 @@ class PacketFilterTest(absltest.TestCase):
             'did not find actual UDP for multiple-name',
         )
 
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-            ]
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
-        )
         print(result)
 
     @capture.stdout
     def testTableSameLongNameDiffFilter(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        self.naming.GetNetAddr.return_value = [prod_network]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(
@@ -1060,25 +994,12 @@ class PacketFilterTest(absltest.TestCase):
             result,
             'did not find actual UDP for multiple-name',
         )
-
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-            ]
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
-        )
         print(result)
 
     def testTableDiffObjectsShortenedAndNonShortened(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        prod_network_two = nacaddr.IP('172.0.0.0/8')
-        prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VER'
-        self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VER = 172.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -1092,23 +1013,12 @@ class PacketFilterTest(absltest.TestCase):
             ),
             EXP_INFO,
         )
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VER'),
-            ]
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
-        )
+
 
     def testTableDuplicateShortNameErrorDiffFilter(self):
-        prod_network = nacaddr.IP('10.0.0.0/8')
-        prod_network.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'
-        prod_network_two = nacaddr.IP('172.0.0.0/8')
-        prod_network_two.parent_token = 'PROD_NETWORK_EXTREAMLY_LONG_VER'
-        self.naming.GetNetAddr.side_effect = [[prod_network], [prod_network_two]]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VER = 172.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
         self.assertRaises(
             packetfilter.DuplicateShortenedTableNameError,
@@ -1122,15 +1032,6 @@ class PacketFilterTest(absltest.TestCase):
                 self.naming,
             ),
             EXP_INFO,
-        )
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME'),
-                mock.call('PROD_NETWORK_EXTREAMLY_LONG_VER'),
-            ]
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
         )
 
     def testTermNameConflict(self):
@@ -1151,10 +1052,8 @@ class PacketFilterTest(absltest.TestCase):
         self.assertRaises(packetfilter.UnsupportedProtoError, str, acl)
 
     def testBuildTokens(self):
-        ip = nacaddr.IP('10.0.0.0/8')
-        ip.parent_token = 'PROD_NETWORK'
-        self.naming.GetNetAddr.return_value = [ip]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         pol1 = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO

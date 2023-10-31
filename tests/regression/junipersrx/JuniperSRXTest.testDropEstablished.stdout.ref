@@ -1,9 +1,9 @@
 security {
     replace: address-book {
         global {
-                address FOO_0 10.0.0.1/32;
-                address-set FOO {
-                    address FOO_0;
+                address SOME_HOST_0 10.0.0.1/32;
+                address-set SOME_HOST {
+                    address SOME_HOST_0;
                 }
         }
     }
@@ -24,7 +24,7 @@ security {
             policy good-term-1 {
                 match {
                     source-address any;
-                    destination-address [ FOO ];
+                    destination-address [ SOME_HOST ];
                     application good-term-1-app;
                 }
                 then {
@@ -34,7 +34,7 @@ security {
             policy good_term_21 {
                 match {
                     source-address any;
-                    destination-address [ FOO ];
+                    destination-address [ SOME_HOST ];
                     application good_term_21-app;
                 }
                 then {

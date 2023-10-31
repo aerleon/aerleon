@@ -633,26 +633,6 @@ SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny'}}
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = ['10.2.3.4/32 2001:4860:8000::5/128']
-
-TEST_INCLUDE_IPS = ['10.2.3.4/32 10.4.3.2/32']
-
-TEST_EXCLUDE_IPS = ['10.4.3.2/32']
-
-TEST_INCLUDE_RANGE = ['10.128.0.0/9']
-
-TEST_EXCLUDE_RANGE = ['10.240.0.0/16']
-
-ANY_IPS = ['0.0.0.0/0 ::/0']
-
-TEST_IPV4_ONLY = ['10.2.3.4/32']
-
-TEST_IPV6_ONLY = ['2001:4860:8000::5/128']
-
-_TERM_SOURCE_TAGS_LIMIT = 30
-_TERM_TARGET_TAGS_LIMIT = 70
-_TERM_PORTS_LIMIT = 256
-
 
 class GCETest(parameterized.TestCase):
     def setUp(self):
@@ -1341,7 +1321,7 @@ class GCETest(parameterized.TestCase):
 
     @capture.stdout
     def testMixedWithSourceTagOnly(self):
-        # self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32', 'networks')
         self.naming._ParseLine('DNS = 53/udp', 'services')
         acl = gce.GCE(
             policy.ParsePolicy(
@@ -1351,210 +1331,209 @@ class GCETest(parameterized.TestCase):
         )
         self.assertIn('INGRESS', str(acl))
         self.assertNotIn('EGRESS', str(acl))
-        self.assertNotIn('10.2.3.4/32', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
         self.assertNotIn('2001:4860:8000::5/128', str(acl))
         self.assertIn('internal-servers', str(acl))
         self.assertNotIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
         print(acl)
 
-    # @capture.stdout
-    # def testMixedWithSourceTagAndV6Addresses(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPV6_ONLY
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_ADDRESS_SOURCETAG + DEFAULT_DENY, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-    #     self.assertIn('INGRESS', str(acl))
-    #     self.assertNotIn('EGRESS', str(acl))
-    #     self.assertNotIn('10.2.3.4/32', str(acl))
-    #     self.assertIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn('internal-servers', str(acl))
-    #     self.assertIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMixedWithSourceTagAndV6Addresses(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(
+                GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_ADDRESS_SOURCETAG + DEFAULT_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        self.assertIn('INGRESS', str(acl))
+        self.assertNotIn('EGRESS', str(acl))
+        self.assertNotIn('10.2.3.4/32', str(acl))
+        self.assertIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn('internal-servers', str(acl))
+        self.assertIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testMixedWithSourceTagAndV4Addresses(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_ADDRESS_SOURCETAG + DEFAULT_DENY, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-    #     self.assertIn('INGRESS', str(acl))
-    #     self.assertNotIn('EGRESS', str(acl))
-    #     self.assertNotIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertIn('internal-servers', str(acl))
-    #     self.assertNotIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMixedWithSourceTagAndV4Addresses(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(
+                GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_ADDRESS_SOURCETAG + DEFAULT_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        self.assertIn('INGRESS', str(acl))
+        self.assertNotIn('EGRESS', str(acl))
+        self.assertNotIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertIn('internal-servers', str(acl))
+        self.assertNotIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testMixedWithEgressSourceTag(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_EGRESS_MIXED + GOOD_TERM_EGRESS_SOURCETAG, self.naming),
-    #         EXP_INFO,
-    #     )
-    #     self.assertNotIn('INGRESS', str(acl))
-    #     self.assertIn('EGRESS', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn('dns-servers', str(acl))
-    #     self.assertIn(gcp.GetIpv6TermName('good-term-1-e'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMixedWithEgressSourceTag(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_EGRESS_MIXED + GOOD_TERM_EGRESS_SOURCETAG, self.naming),
+            EXP_INFO,
+        )
+        self.assertNotIn('INGRESS', str(acl))
+        self.assertIn('EGRESS', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn('dns-servers', str(acl))
+        self.assertIn(gcp.GetIpv6TermName('good-term-1-e'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testMixedDefaultDenyEgressCreation(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_EGRESS_MIXED + GOOD_TERM_EGRESS + DEFAULT_DENY, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-    #     self.assertNotIn('INGRESS', str(acl))
-    #     self.assertIn('EGRESS', str(acl))
-    #     self.assertIn('"priority": 65534', str(acl))
-    #     self.assertIn('default-deny-e', str(acl))
-    #     self.assertIn(gcp.GetIpv6TermName('default-deny-e'), str(acl))
-    #     self.assertIn('::/0', str(acl))
-    #     self.assertIn('0.0.0.0/0', str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMixedDefaultDenyEgressCreation(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(
+                GOOD_HEADER_EGRESS_MIXED + GOOD_TERM_EGRESS + DEFAULT_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        self.assertNotIn('INGRESS', str(acl))
+        self.assertIn('EGRESS', str(acl))
+        self.assertIn('"priority": 65534', str(acl))
+        self.assertIn('default-deny-e', str(acl))
+        self.assertIn(gcp.GetIpv6TermName('default-deny-e'), str(acl))
+        self.assertIn('::/0', str(acl))
+        self.assertIn('0.0.0.0/0', str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testMixedDefaultDenyIngressCreation(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_SOURCETAG + DEFAULT_DENY, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-    #     self.assertIn('INGRESS', str(acl))
-    #     self.assertNotIn('EGRESS', str(acl))
-    #     self.assertIn('"priority": 65534', str(acl))
-    #     self.assertIn('default-deny', str(acl))
-    #     self.assertIn(gcp.GetIpv6TermName('default-deny'), str(acl))
-    #     self.assertIn('::/0', str(acl))
-    #     self.assertIn('0.0.0.0/0', str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMixedDefaultDenyIngressCreation(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(
+                GOOD_HEADER_MIXED + GOOD_TERM_INGRESS_SOURCETAG + DEFAULT_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
+        self.assertIn('INGRESS', str(acl))
+        self.assertNotIn('EGRESS', str(acl))
+        self.assertIn('"priority": 65534', str(acl))
+        self.assertIn('default-deny', str(acl))
+        self.assertIn(gcp.GetIpv6TermName('default-deny'), str(acl))
+        self.assertIn('::/0', str(acl))
+        self.assertIn('0.0.0.0/0', str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testIcmpMixed(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ICMP, self.naming), EXP_INFO
-    #     )
-    #     self.assertIn('icmp', str(acl))
-    #     self.assertNotIn('58', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertNotIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertNotIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testIcmpMixed(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ICMP, self.naming), EXP_INFO
+        )
+        self.assertIn('icmp', str(acl))
+        self.assertNotIn('58', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertNotIn('2001:4860:8000::5/128', str(acl))
+        self.assertNotIn(gcp.GetIpv6TermName('good-term-1'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testIcmpv6Mixed(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ICMPV6, self.naming), EXP_INFO
-    #     )
-    #     self.assertIn('58', str(acl))
-    #     self.assertNotIn('icmp', str(acl))
-    #     self.assertNotIn('10.2.3.4/32', str(acl))
-    #     self.assertIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn(gcp.GetIpv6TermName('good-term-pingv6'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testIcmpv6Mixed(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_ICMPV6, self.naming), EXP_INFO
+        )
+        self.assertIn('58', str(acl))
+        self.assertNotIn('icmp', str(acl))
+        self.assertNotIn('10.2.3.4/32', str(acl))
+        self.assertIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn(gcp.GetIpv6TermName('good-term-pingv6'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testIgmpMixed(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_IGMP, self.naming), EXP_INFO
-    #     )
-    #     self.assertIn('2', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertNotIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertNotIn(gcp.GetIpv6TermName('good-term-pingv6'), str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testIgmpMixed(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_IGMP, self.naming), EXP_INFO
+        )
+        self.assertIn('2', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertNotIn('2001:4860:8000::5/128', str(acl))
+        self.assertNotIn(gcp.GetIpv6TermName('good-term-pingv6'), str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testNoProtocol(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_NO_PROTOCOL, self.naming), EXP_INFO
-    #     )
-    #     self.assertIn('all', str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testNoProtocol(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_TERM_NO_PROTOCOL, self.naming), EXP_INFO
+        )
+        self.assertIn('all', str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testPlatformExclude(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_INET + GOOD_PLATFORM_EXCLUDE_TERM + GOOD_TERM, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-    #     self.assertIn('INGRESS', str(acl))
-    #     self.assertNotIn('EGRESS', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertNotIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn('good-term-1', str(acl))
-    #     self.assertNotIn('good-platform-exclude-term', str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testPlatformExclude(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(
+                GOOD_HEADER_INET + GOOD_PLATFORM_EXCLUDE_TERM + GOOD_TERM, self.naming
+            ),
+            EXP_INFO,
+        )
+        self.assertIn('INGRESS', str(acl))
+        self.assertNotIn('EGRESS', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertNotIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn('good-term-1', str(acl))
+        self.assertNotIn('good-platform-exclude-term', str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testPlatform(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     acl = gce.GCE(
-    #         policy.ParsePolicy(GOOD_HEADER_INET + GOOD_PLATFORM_TERM, self.naming), EXP_INFO
-    #     )
-    #     self.assertIn('INGRESS', str(acl))
-    #     self.assertNotIn('EGRESS', str(acl))
-    #     self.assertIn('10.2.3.4/32', str(acl))
-    #     self.assertNotIn('2001:4860:8000::5/128', str(acl))
-    #     self.assertIn('good-platform-term', str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testPlatform(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(
+            policy.ParsePolicy(GOOD_HEADER_INET + GOOD_PLATFORM_TERM, self.naming), EXP_INFO
+        )
+        self.assertIn('INGRESS', str(acl))
+        self.assertNotIn('EGRESS', str(acl))
+        self.assertIn('10.2.3.4/32', str(acl))
+        self.assertNotIn('2001:4860:8000::5/128', str(acl))
+        self.assertIn('good-platform-term', str(acl))
+        print(acl)
 
-    # @capture.stdout
-    # def testTermOwners(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+    @capture.stdout
+    def testTermOwners(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_OWNERS, self.naming), EXP_INFO)
+        rendered_acl = json.loads(str(acl))[0]
+        self.assertEqual(rendered_acl['description'], 'DNS access from corp. Owner: test-owner')
+        print(acl)
 
-    #     acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_OWNERS, self.naming), EXP_INFO)
-    #     rendered_acl = json.loads(str(acl))[0]
-    #     self.assertEqual(rendered_acl['description'], 'DNS access from corp. Owner: test-owner')
-    #     print(acl)
+    def testMaxAttributeExceeded(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp 53/tcp', 'services')
+        self.assertRaises(
+            gce.ExceededAttributeCountError,
+            gce.GCE,
+            policy.ParsePolicy(
+                GOOD_HEADER_MAX_ATTRIBUTE_COUNT + GOOD_TERM + DEFAULT_DENY, self.naming
+            ),
+            EXP_INFO,
+        )
 
-    # def testMaxAttributeExceeded(self):
-    #     self.naming.GetNetAddr.return_value = TEST_IPS
-    #     self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-    #     self.assertRaises(
-    #         gce.ExceededAttributeCountError,
-    #         gce.GCE,
-    #         policy.ParsePolicy(
-    #             GOOD_HEADER_MAX_ATTRIBUTE_COUNT + GOOD_TERM + DEFAULT_DENY, self.naming
-    #         ),
-    #         EXP_INFO,
-    #     )
-
-    # @capture.stdout
-    # def testMaxAttribute(self):
-    #     self.naming.GetNetAddr.return_value = [nacaddr.IP('10.2.3.4/32')]
-    #     pol = policy.ParsePolicy(GOOD_HEADER_MAX_ATTRIBUTE_COUNT + GOOD_TERM_5, self.naming)
-    #     acl = gce.GCE(pol, EXP_INFO)
-    #     self.assertIsNotNone(str(acl))
-    #     print(acl)
+    @capture.stdout
+    def testMaxAttribute(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32', 'networks')
+        pol = policy.ParsePolicy(GOOD_HEADER_MAX_ATTRIBUTE_COUNT + GOOD_TERM_5, self.naming)
+        acl = gce.GCE(pol, EXP_INFO)
+        self.assertIsNotNone(str(acl))
+        print(acl)
 
     @parameterized.named_parameters(
         (

@@ -200,7 +200,7 @@ EXP_INFO = 2
 class SRXloTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testIcmp(self):
@@ -293,14 +293,11 @@ class SRXloTest(absltest.TestCase):
 
     @capture.stdout
     def testNotSynAck(self):
-        self.naming.GetServiceByProto.return_value = ['443']
-
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
         policy_text = GOOD_HEADER_2 + NOTSYNACK_TERM_1
         srx = srxlo.SRXlo(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
         output = str(srx)
         self.assertIn('tcp-flags "!(syn&ack)";', output, output)
-
-        self.naming.GetServiceByProto.assert_called_once_with('HTTPS', 'tcp')
         print(output)
 
 

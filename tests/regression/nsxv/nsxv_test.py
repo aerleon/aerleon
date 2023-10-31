@@ -428,7 +428,7 @@ _PLATFORM = 'nsxv'
 class TermTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def testInitForinet(self):
         """Test for Term._init_."""
@@ -460,16 +460,9 @@ class TermTest(absltest.TestCase):
 
     def testStrForinet(self):
         """Test for Term._str_."""
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         pol = policy.ParsePolicy(INET_FILTER, self.naming, False)
         af = 4
@@ -518,8 +511,6 @@ class TermTest(absltest.TestCase):
         notes = root.find('notes').text
         self.assertEqual(notes, 'Allow ntp request')
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
 
     def testStrForinet6(self):
         """Test for Term._str_."""
@@ -549,16 +540,9 @@ class TermTest(absltest.TestCase):
     @capture.stdout
     def testTranslatePolicy(self):
         """Test for Nsxv.test_TranslatePolicy."""
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         pol = policy.ParsePolicy(INET_FILTER, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -568,15 +552,13 @@ class TermTest(absltest.TestCase):
             self.assertEqual(filter_list, ['inet'])
             self.assertEqual(len(terms), 1)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
         print(translate_pol)
 
     @capture.stdout
     def testTranslatePolicyMixedFilterInetOnly(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('MAIL_SERVERS = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('MAIL_SERVICES = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -587,16 +569,13 @@ class TermTest(absltest.TestCase):
             self.assertEqual(len(terms), 1)
             self.assertIn('10.0.0.0/8', str(terms[0]))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('MAIL_SERVICES', 'tcp')] * 1)
         print(translate_pol)
 
     @capture.stdout
     def testTranslatePolicyMixedFilterInet6Only(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with inet6."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001:4860:4860::8844')]
-
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('MAIL_SERVERS = 2001:4860:4860::8844', 'networks')
+        self.naming._ParseLine('MAIL_SERVICES = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -607,18 +586,13 @@ class TermTest(absltest.TestCase):
             self.assertEqual(len(terms), 1)
             self.assertIn('2001:4860:4860::8844', str(terms[0]))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('MAIL_SERVICES', 'tcp')] * 1)
         print(translate_pol)
 
     @capture.stdout
     def testTranslatePolicyMixedFilterInetMixed(self):
         """Test for Nsxv.test_TranslatePolicy. Testing Mixed filter with mixed."""
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('2001:4860:4860::8844'),
-            nacaddr.IP('10.0.0.0/8'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('MAIL_SERVERS = 10.0.0.0/8 2001:4860:4860::8844', 'networks')
+        self.naming._ParseLine('MAIL_SERVICES = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(MIXED_FILTER_INET_ONLY, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -630,23 +604,14 @@ class TermTest(absltest.TestCase):
             self.assertIn('2001:4860:4860::8844', str(terms[0]))
             self.assertIn('10.0.0.0/8', str(terms[0]))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('MAIL_SERVERS')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('MAIL_SERVICES', 'tcp')] * 1)
         print(translate_pol)
 
     @capture.stdout
     def testTranslatePolicyWithEstablished(self):
         """Test for Nsxv.test_TranslatePolicy."""
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         pol = policy.ParsePolicy(INET_FILTER_WITH_ESTABLISHED, self.naming, False)
         translate_pol = nsxv.Nsxv(pol, EXP_INFO)
@@ -658,22 +623,13 @@ class TermTest(absltest.TestCase):
 
             self.assertNotIn('<sourcePort>123</sourcePort><destinationPort>123', str(terms[0]))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
         print(translate_pol)
 
     @capture.stdout
     def testNsxvStr(self):
         """Test for Nsxv._str_."""
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ]
-        ]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
 
         pol = policy.ParsePolicy(MIXED_FILTER, self.naming, False)
         target = nsxv.Nsxv(pol, EXP_INFO)
@@ -731,9 +687,6 @@ class TermTest(absltest.TestCase):
         # check notes
         notes = root.find('./rule/notes').text
         self.assertEqual(notes, 'Allow name resolution using honestdns.')
-
-        self.naming.GetNetAddr.assert_called_once_with('GOOGLE_DNS')
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
         print(target)
 
     @capture.stdout
@@ -778,42 +731,26 @@ class TermTest(absltest.TestCase):
 
     @capture.stdout
     def testBuildTokens(self):
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
         pol1 = nsxv.Nsxv(policy.ParsePolicy(INET_FILTER, self.naming), 2)
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
         print(pol1)
 
     @capture.stdout
     def testBuildWarningTokens(self):
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         pol1 = nsxv.Nsxv(policy.ParsePolicy(INET_FILTER_2, self.naming), 2)
         st, sst = pol1._BuildTokens()
         self.assertEqual(st, SUPPORTED_TOKENS)
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
         print(pol1)
 
     @capture.stdout
@@ -864,182 +801,94 @@ class TermTest(absltest.TestCase):
         self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, EXP_INFO)
 
     def testMixedToV4(self):
-        get_net_addr_call1 = [
-            nacaddr.IP('8.8.4.4'),
-            nacaddr.IP('8.8.8.8'),
-            nacaddr.IP('2001:4860:4860::8844'),
-            nacaddr.IP('2001:4860:4860::8888'),
-        ]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_V4)
         self.verify_address_type(source_addr, 'Ipv4Address')
         self.verify_address_type(dest_addr, 'Ipv4Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('GOOGLE_DNS'), mock.call('INTERNAL')])
 
     def testV4ToMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-        ]
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + V4_TO_MIXED)
         self.verify_address_type(source_addr, 'Ipv4Address')
         self.verify_address_type(dest_addr, 'Ipv4Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('GOOGLE_DNS')])
 
     def testMixedToV6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-            [nacaddr.IP('2001:4860:8000::/33')],
-        ]
-
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_V6)
         self.verify_address_type(source_addr, 'Ipv6Address')
         self.verify_address_type(dest_addr, 'Ipv6Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('GOOGLE_DNS'), mock.call('SOME_HOST')])
 
     def testV6ToMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('2001:4860:8000::/33')],
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-        ]
-
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + V6_TO_MIXED)
         self.verify_address_type(source_addr, 'Ipv6Address')
         self.verify_address_type(dest_addr, 'Ipv6Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('GOOGLE_DNS')])
 
     def testMixedToMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-        ]
-
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_MIXED)
         self.verify_mixed_address_types(source_addr)
         self.verify_mixed_address_types(dest_addr)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('GOOGLE_DNS')] * 2)
-
     def testMixedToAny(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ]
-        ]
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_ANY)
         self.verify_mixed_address_types(source_addr)
         self.assertEqual(len(dest_addr), 0)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('GOOGLE_DNS')])
 
     def testAnyToMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ]
-        ]
-
+        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + ANY_TO_MIXED)
         self.assertEqual(len(source_addr), 0)
         self.verify_mixed_address_types(dest_addr)
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('GOOGLE_DNS')])
 
     def testV4ToV4(self):
-        get_net_addr_call1 = [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')]
-
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
 
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + V4_TO_V4)
         self.verify_address_type(source_addr, 'Ipv4Address')
         self.verify_address_type(dest_addr, 'Ipv4Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
 
     def testV6ToV6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('2001:4860:8000::/33')],
-            [nacaddr.IP('2001:4860:8000::/33')],
-        ]
-
+        self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33 2001:4860:8000::/33', 'networks')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + V6_TO_V6)
         self.verify_address_type(source_addr, 'Ipv6Address')
         self.verify_address_type(dest_addr, 'Ipv6Address')
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')] * 2)
 
     def testV4ToV6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
-            [nacaddr.IP('2001:4860:8000::/33')],
-        ]
-
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
+        
         root = self.get_xml_root(MIXED_HEADER + V4_TO_V6)
         rule = root.findall('./rule')
         # No term(rule) will be rendered in this case
         self.assertEqual(len(rule), 0)
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('SOME_HOST')])
 
     def testV6ToV4(self):
-        get_net_addr_call1 = [nacaddr.IP('2001:4860:8000::/33')]
-        get_net_addr_call2 = [
-            nacaddr.IP('10.0.0.0/8'),
-            nacaddr.IP('172.16.0.0/12'),
-            nacaddr.IP('192.168.0.0/16'),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [get_net_addr_call1, get_net_addr_call2]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
 
         root = self.get_xml_root(MIXED_HEADER + V6_TO_V4)
         rule = root.findall('./rule')
         # No term(rule) will be rendered in this case
         self.assertEqual(len(rule), 0)
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('INTERNAL')])
 
     def get_xml_root(self, data):
         pol = policy.ParsePolicy(data, self.naming, False)
@@ -1150,7 +999,9 @@ class TermTest(absltest.TestCase):
 
     @capture.stdout
     def testWarnMismatchedProtoAF(self):
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
+        self.naming._ParseLine('NTP = 123/udp', 'services')
 
         pol = policy.ParsePolicy(INET_FILTER + INET6_TERM, self.naming)
         with mock.patch.object(nsxv.logging, "warning") as mock_warning:

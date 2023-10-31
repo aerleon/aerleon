@@ -18,9 +18,9 @@ firewall {
             term good-term-2 {
                 from {
                     destination-address {
-                        /* this is a very descriptive comment  this is a
-                         ** very descriptive comment  this is a very
-                         ** descriptive comment  this is a very descript */
+                        /* this is a very descriptive comment  this is a very
+                         ** descriptive comment  this is a very descriptive
+                         ** comment  this is a very descripti */
                         10.0.0.0/8;
                     }
                     protocol tcp;

@@ -212,7 +212,7 @@ EXP_INFO = 2
 class JuniperEvoTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testIPv6HopOptProtocolIngressPhysical(self):

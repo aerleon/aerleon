@@ -11,6 +11,9 @@
     "description": "Allow all GCE network internal traffic.",
     "direction": "INGRESS",
     "name": "good-term-1",
+    "sourceRanges": [
+      "10.2.3.4/32"
+    ],
     "sourceTags": [
       "internal-servers"
     ]

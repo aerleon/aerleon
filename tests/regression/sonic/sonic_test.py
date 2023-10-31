@@ -43,8 +43,6 @@ term good-tcp-est {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
-
 
 _TERM_SOURCE_TAGS_LIMIT = 30
 _TERM_TARGET_TAGS_LIMIT = 70
@@ -54,7 +52,7 @@ _TERM_PORTS_LIMIT = 256
 class SONiCTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def _StripAclHeaders(self, acl):
         return '\n'.join(
@@ -63,16 +61,12 @@ class SONiCTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['80']
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
         policy_text = GOOD_HEADER + GOOD_TCP_EST
         acl = sonic.SONiC(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
         output = str(acl)
         self.assertIn('tcp-session-established', output, output)
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(acl)
 
 
