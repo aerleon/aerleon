@@ -14,7 +14,7 @@ term default-accept {
 
 header {
   comment:: "Inbound traffic nftables policy example"
-  target:: newnftables inet INPUT
+  target:: nftables inet INPUT
 }
 
 term allow-anything {
@@ -23,7 +23,7 @@ term allow-anything {
 
 header {
   comment:: "2 Inbound traffic nftables policy example"
-  target:: newnftables inet INPUT ACCEPT
+  target:: nftables inet INPUT ACCEPT
 }
 
 term allow-anything {
@@ -32,7 +32,7 @@ term allow-anything {
 
 header {
   comment:: "Outbound dual-stack traffic nftables policy example"
-  target:: newnftables mixed OUTPUT
+  target:: nftables mixed OUTPUT
 }
 
 term default-deny {
@@ -62,7 +62,7 @@ term source-address-term {
 
 header {
   comment:: "Outbound IPv6 traffic nftables policy example"
-  target:: newnftables inet6 OUTPUT
+  target:: nftables inet6 OUTPUT
 }
 
 term default-deny {
@@ -71,7 +71,7 @@ term default-deny {
 
 header {
   comment:: "Priority outbound IPv6"
-  target:: newnftables inet6 OUTPUT 100
+  target:: nftables inet6 OUTPUT 100
 }
 
 term awesome-term {
@@ -93,7 +93,7 @@ term awesome-term3 {
 
 header {
   comment:: "This policy expected to test every combination of REQUIRED keywords."
-  target:: newnftables inet INPUT
+  target:: nftables inet INPUT
 }
 
 term test-icmp {
