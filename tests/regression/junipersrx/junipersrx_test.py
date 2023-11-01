@@ -1290,7 +1290,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertEqual(len(srx.policy.filters[0][1]), 1)
         print(srx)
 
-    #TODO(rankeny) This is a bad test and will shortly be replaced once we allow for
+    # TODO(rankeny) This is a bad test and will shortly be replaced once we allow for
     # named application sets
     # def testDuplicateTermsInDifferentZones(self):
     #     self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
@@ -1302,7 +1302,6 @@ class JuniperSRXTest(absltest.TestCase):
     #     self.assertRaises(
     #         junipersrx.ConflictingApplicationSetsError, junipersrx.JuniperSRX, pol, EXP_INFO
     #     )
-
 
     def testBuildTokens(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
@@ -1449,7 +1448,6 @@ class JuniperSRXTest(absltest.TestCase):
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
         self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
-
         pol = policy.ParsePolicy(
             GOOD_HEADER + GOOD_TERM_2 + GOOD_TERM_20 + GOOD_TERM_12 + GOOD_HEADER_2 + GOOD_TERM_14,
             self.naming,
@@ -1580,7 +1578,6 @@ class JuniperSRXTest(absltest.TestCase):
         # Confirm that address set names used in policy are also created in
         # address book
 
-        
         overflow_ips = [
             '2001:4860:8000::5/128',
             '3051:abd2:5400::9/128',
@@ -1909,7 +1906,7 @@ class JuniperSRXTest(absltest.TestCase):
                 self.assertGreater(address_set_count, 1)
         print(output)
 
-    #TODO(Jason) This test causes a recursion error when using the decorator.
+    # TODO(Jason) This test causes a recursion error when using the decorator.
     # @capture.stdout
     def testCreateV4AddressEntriesForV4Render2(self):
         # 513V6 and 512V4 IPs; V4 rendering
@@ -2645,6 +2642,7 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_TERM=YAML_PLATFORM_TERM,
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
         )
+
 
 #     @capture.stdout
 #     def testFQDN(self):

@@ -455,8 +455,8 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testExpandingConsequtivePorts(self):
-        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8','networks')
-        self.naming._ParseLine('CONSECUTIVE_PORTS = 80/tcp 81/tcp','services')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('CONSECUTIVE_PORTS = 80/tcp 81/tcp', 'services')
 
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_14, self.naming), EXP_INFO)
         first_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 80'
@@ -484,7 +484,7 @@ class CiscoTest(absltest.TestCase):
 
     @capture.stdout
     def testRemark(self):
-        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32','networks')
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
         # Extended ACLs should have extended remark style.
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_EXTENDED_NUMBERED_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -537,7 +537,6 @@ class CiscoTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + BAD_STANDARD_TERM_1, self.naming)
         self.assertRaises(cisco.StandardAclTermError, cisco.Cisco, pol, EXP_INFO)
 
-
     @capture.stdout
     def testStandardTermHost(self):
         self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
@@ -585,7 +584,6 @@ class CiscoTest(absltest.TestCase):
         pol = policy.ParsePolicy(BAD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         self.assertRaises(cisco.UnsupportedCiscoAccessListError, cisco.Cisco, pol, EXP_INFO)
 
-
     def testStandardFilterRange(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
@@ -605,7 +603,7 @@ class CiscoTest(absltest.TestCase):
         port_grp2.append('exit')
 
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
-        self.naming._ParseLine('HTTP = 80/tcp', 'services')        
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         pol = policy.ParsePolicy(GOOD_OBJGRP_HEADER + GOOD_TERM_2 + GOOD_TERM_18, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
@@ -683,7 +681,7 @@ class CiscoTest(absltest.TestCase):
     @capture.stdout
     def testMixedFilterSkipTerms(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
-        
+
         acl = cisco.Cisco(
             policy.ParsePolicy(GOOD_MIXED_HEADER + GOOD_TERM_8, self.naming), EXP_INFO
         )
@@ -731,7 +729,7 @@ class CiscoTest(absltest.TestCase):
         for octet in range(0, 256):
             net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
             addr_list.append(str(net))
-        
+
         self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
 
         acl = cisco.Cisco(
@@ -917,7 +915,7 @@ class CiscoTest(absltest.TestCase):
             GOOD_NOVERBOSE_OBJGRP_HEADER,
             GOOD_NOVERBOSE_INET6_HEADER,
         ]:
-            
+
             acl = cisco.Cisco(policy.ParsePolicy(i + GOOD_STANDARD_TERM_1, self.naming), EXP_INFO)
             self.assertNotIn('remark', str(acl), str(acl))
             print(acl)

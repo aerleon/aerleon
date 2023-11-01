@@ -885,9 +885,11 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testTableNameShortened(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('DNS = 53/tcp', 'services')
-        
+
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(GOOD_HEADER_DIRECTIONAL + LONG_NAME_TERM_DNS_TCP, self.naming),
             EXP_INFO,
@@ -909,8 +911,12 @@ class PacketFilterTest(absltest.TestCase):
         print(result)
 
     def testTableDuplicateShortNameError(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME = 172.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_GOOD_NAME = 172.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         self.assertRaises(
@@ -923,12 +929,13 @@ class PacketFilterTest(absltest.TestCase):
             EXP_INFO,
         )
 
-
     @capture.stdout
     def testTableSameLongNameSameFilter(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
-        
+
         acl = packetfilter.PacketFilter(
             policy.ParsePolicy(
                 GOOD_HEADER_DIRECTIONAL + LONG_NAME_TERM_DNS_TCP + LONG_NAME_TERM_DNS_UDP,
@@ -961,7 +968,9 @@ class PacketFilterTest(absltest.TestCase):
 
     @capture.stdout
     def testTableSameLongNameDiffFilter(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
         acl = packetfilter.PacketFilter(
@@ -997,7 +1006,9 @@ class PacketFilterTest(absltest.TestCase):
         print(result)
 
     def testTableDiffObjectsShortenedAndNonShortened(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VER = 172.0.0.0/8', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
@@ -1014,9 +1025,10 @@ class PacketFilterTest(absltest.TestCase):
             EXP_INFO,
         )
 
-
     def testTableDuplicateShortNameErrorDiffFilter(self):
-        self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine(
+            'PROD_NETWORK_EXTREAMLY_LONG_VERY_NO_GOOD_NAME = 10.0.0.0/8', 'networks'
+        )
         self.naming._ParseLine('PROD_NETWORK_EXTREAMLY_LONG_VER = 172.0.0.0/8', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
 

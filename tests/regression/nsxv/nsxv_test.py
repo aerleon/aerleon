@@ -511,7 +511,6 @@ class TermTest(absltest.TestCase):
         notes = root.find('notes').text
         self.assertEqual(notes, 'Allow ntp request')
 
-
     def testStrForinet6(self):
         """Test for Term._str_."""
         pol = policy.ParsePolicy(INET6_FILTER, self.naming, False)
@@ -628,7 +627,10 @@ class TermTest(absltest.TestCase):
     @capture.stdout
     def testNsxvStr(self):
         """Test for Nsxv._str_."""
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         self.naming._ParseLine('DNS = 53/udp', 'services')
 
         pol = policy.ParsePolicy(MIXED_FILTER, self.naming, False)
@@ -801,7 +803,10 @@ class TermTest(absltest.TestCase):
         self.assertRaises(nsxv.UnsupportedNsxvAccessListError, nsxv.Nsxv, pol, EXP_INFO)
 
     def testMixedToV4(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
         self.naming._ParseLine('NTP = 123/udp', 'services')
 
@@ -810,7 +815,10 @@ class TermTest(absltest.TestCase):
         self.verify_address_type(dest_addr, 'Ipv4Address')
 
     def testV4ToMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
         self.naming._ParseLine('NTP = 123/udp', 'services')
 
@@ -819,7 +827,10 @@ class TermTest(absltest.TestCase):
         self.verify_address_type(dest_addr, 'Ipv4Address')
 
     def testMixedToV6(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
         self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_V6)
@@ -827,7 +838,10 @@ class TermTest(absltest.TestCase):
         self.verify_address_type(dest_addr, 'Ipv6Address')
 
     def testV6ToMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
         self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + V6_TO_MIXED)
@@ -835,28 +849,35 @@ class TermTest(absltest.TestCase):
         self.verify_address_type(dest_addr, 'Ipv6Address')
 
     def testMixedToMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_MIXED)
         self.verify_mixed_address_types(source_addr)
         self.verify_mixed_address_types(dest_addr)
 
     def testMixedToAny(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('NTP = 123/udp', 'services')
 
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + MIXED_TO_ANY)
         self.verify_mixed_address_types(source_addr)
         self.assertEqual(len(dest_addr), 0)
 
-
     def testAnyToMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/32 2001:4860:4860::8888/32',
+            'networks',
+        )
         self.naming._ParseLine('NTP = 123/udp', 'services')
         source_addr, dest_addr = self.get_source_dest_addresses(MIXED_HEADER + ANY_TO_MIXED)
         self.assertEqual(len(source_addr), 0)
         self.verify_mixed_address_types(dest_addr)
-
 
     def testV4ToV4(self):
         self.naming._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32', 'networks')
@@ -875,7 +896,7 @@ class TermTest(absltest.TestCase):
     def testV4ToV6(self):
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
         self.naming._ParseLine('SOME_HOST = 2001:4860:8000::/33', 'networks')
-        
+
         root = self.get_xml_root(MIXED_HEADER + V4_TO_V6)
         rule = root.findall('./rule')
         # No term(rule) will be rendered in this case

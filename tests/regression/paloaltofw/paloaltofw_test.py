@@ -577,7 +577,7 @@ class PaloAltoFWTest(absltest.TestCase):
     @capture.stdout
     def testTermAndFilterName(self):
         self.naming._ParseLine('FOOBAR = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
-        self.naming._ParseLine('SMTP = 25/tcp','services')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         paloalto = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO

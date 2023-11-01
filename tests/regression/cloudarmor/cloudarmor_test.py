@@ -753,7 +753,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testGenericIPv4Term(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -766,7 +768,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testGenericIPv6Term(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -781,7 +785,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testGenericMixedTerm(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -794,7 +800,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testDefaultAddressFamily(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -807,7 +815,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testIPv4TermSplitting(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -820,7 +830,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testIPv6TermSplitting(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -835,7 +847,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedTermSplitting(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -847,7 +861,9 @@ class CloudArmorTest(absltest.TestCase):
         print(acl)
 
     def testInvalidAddressFamilyCheck(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         self.assertRaisesRegex(
@@ -869,7 +885,9 @@ class CloudArmorTest(absltest.TestCase):
             rand_ip = '.'.join(random_ip_octets)
             test_1001_ips_list.append(str(nacaddr.IP(rand_ip + '/32')))
 
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(test_1001_ips_list)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(test_1001_ips_list)}', 'networks'
+        )
         self.assertRaisesRegex(
             cloudarmor.ExceededMaxTermsError,
             'Exceeded maximum number of rules in a single policy | MAX = 200',
@@ -880,7 +898,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testNoCommentWithSplit(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -892,7 +912,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testNoCommentWithoutSplit(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -904,7 +926,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testLargeCommentWithSplit(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -916,7 +940,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testLargeCommentWithoutSplit(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -928,7 +954,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testNoVerbose(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -940,7 +968,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testDefaultDenyStandalone(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_NOSPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_NOSPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(
@@ -952,7 +982,9 @@ class CloudArmorTest(absltest.TestCase):
 
     @capture.stdout
     def testDefaultDenyWithSplit(self):
-        self.naming._ParseLine(f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks')
+        self.naming._ParseLine(
+            f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(TEST_IPS_SPLIT)}', 'networks'
+        )
         self.naming._ParseLine(f'INTERNAL = {" ".join(TEST_IPS_SPLIT)}', 'networks')
 
         acl = cloudarmor.CloudArmor(

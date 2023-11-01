@@ -672,7 +672,7 @@ class AclCheckTest(absltest.TestCase):
         #
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('OOB_NET = 10.0.0.0/24', 'networks')
-        self.naming._ParseLine('HTTP = 80/tcp','services')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -700,7 +700,7 @@ class AclCheckTest(absltest.TestCase):
         #
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('OOB_NET = 10.128.0.0/9 10.64.0.0/10', 'networks')
-        self.naming._ParseLine('HTTP = 80/tcp','services')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -733,8 +733,7 @@ class AclCheckTest(absltest.TestCase):
 
         self.naming._ParseLine(f'SOME_SOURCE = {" ".join(source_range)}', 'networks')
         self.naming._ParseLine(f'SOME_DEST = {" ".join(dest_range)}', 'networks')
-        self.naming._ParseLine('HTTP = 80/tcp','services')
-        
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -781,7 +780,7 @@ class AclCheckTest(absltest.TestCase):
 
         self.naming._ParseLine(f'SOME_SOURCE = {" ".join(source_range)}', 'networks')
         self.naming._ParseLine(f'SOME_DEST = {" ".join(dest_range)}', 'networks')
-        self.naming._ParseLine('HTTP = 80/tcp','services')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -811,7 +810,7 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testOptions(self):
-        self.naming._ParseLine('HTTP = 80/tcp','services')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO
@@ -1113,13 +1112,14 @@ class AclCheckTest(absltest.TestCase):
             '-m multiport --dports  -d', str(acl), 'invalid multiport syntax produced.'
         )
 
-      
         print(acl)
 
     @capture.stdout
     def testMultiPortWithRanges(self):
         ports = [str(x) for x in (1, 3, 5, 7, 9, 11, 13, 15, 17, '19-21', '23-25', '27-29')]
-        self.naming._ParseLine(f'FIFTEEN_PORTS_WITH_RANGES = {"/tcp ".join(ports)}/tcp', 'services')
+        self.naming._ParseLine(
+            f'FIFTEEN_PORTS_WITH_RANGES = {"/tcp ".join(ports)}/tcp', 'services'
+        )
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_MULTIPORT_RANGE, self.naming), EXP_INFO
@@ -1398,8 +1398,8 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testNoChain(self):
-        self.naming._ParseLine('INTERNAL = 0.0.0.0/0','networks')
-        self.naming._ParseLine('OOB_NET = 0.0.0.0/0','networks')
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('OOB_NET = 0.0.0.0/0', 'networks')
         self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
@@ -1410,8 +1410,8 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testNoChainOutput(self):
-        self.naming._ParseLine('INTERNAL = 0.0.0.0/0','networks')
-        self.naming._ParseLine('OOB_NET = 0.0.0.0/0','networks')
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('OOB_NET = 0.0.0.0/0', 'networks')
         self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(

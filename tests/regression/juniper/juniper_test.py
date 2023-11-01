@@ -764,7 +764,6 @@ class JuniperTest(parameterized.TestCase):
         pol = policy.ParsePolicy(BAD_HEADER_2 + GOOD_TERM_1, self.naming)
         self.assertRaises(aclgenerator.UnsupportedAFError, juniper.Juniper, pol, EXP_INFO)
 
-
     @capture.stdout
     def testBridgeFilterType(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
@@ -810,7 +809,7 @@ class JuniperTest(parameterized.TestCase):
         jcl = juniper.Juniper(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
         output = str(jcl)
         self.assertIn(expected, output, output)
-        
+
         print(output)
 
     @capture.stdout
@@ -1185,7 +1184,6 @@ class JuniperTest(parameterized.TestCase):
         jcl = juniper.Juniper(pol_obj, EXP_INFO)
         self.assertRaises(juniper.TcpEstablishedWithNonTcpError, str, jcl)
 
-
     @capture.stdout
     def testMixedFilterInetType(self):
         self.naming._ParseLine('LOCALHOST = 127.0.0.1 ::1/128', 'networks')
@@ -1320,7 +1318,6 @@ class JuniperTest(parameterized.TestCase):
             self.assertIn('192.168.0.64/255.255.254.224 except;', str(jcl))
 
             print(jcl)
-
 
     def testTermTypeIndexKeys(self):
         # ensure an _INET entry for each _TERM_TYPE entry
@@ -1687,14 +1684,12 @@ class JuniperTest(parameterized.TestCase):
         )
         self.assertRaises(juniper.JuniperNextIpError, str, jcl)
 
-
     def testFailNextIpNetworkIP(self):
         self.naming._ParseLine('TEST_NEXT = 10.1.1.1/26', 'networks')
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_28, self.naming), EXP_INFO
         )
         self.assertRaises(juniper.JuniperNextIpError, str, jcl)
-
 
     def testBuildTokens(self):
         self.naming._ParseLine('TEST_NEXT = 10.1.1.1/26', 'networks')

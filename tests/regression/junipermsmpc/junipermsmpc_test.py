@@ -924,7 +924,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
     def testAddressExclude(self):
         self.naming._ParseLine('INTERNAL = 0.0.0.0/1 172.16.0.0/12', 'networks')
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
-        
+
         terms = (GOOD_TERM_18_SRC, GOOD_TERM_18_DST)
 
         for term in terms:
@@ -951,7 +951,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
     def testMinimizePrefixes(self):
         self.naming._ParseLine('INCLUDES = 1.0.0.0/8 2.0.0.0/8', 'networks')
         self.naming._ParseLine('EXCLUDES = 1.1.1.1/32 2.0.0.0/8 3.3.3.3/32', 'networks')
-        
+
         expected = ['1.0.0.0/8;', '1.1.1.1/32 except;']
         unexpected = ['2.0.0.0/8;', '2.0.0.0/8 except;', '3.3.3.3/32']
 

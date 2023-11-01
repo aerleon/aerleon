@@ -317,7 +317,7 @@ class IpsetTest(absltest.TestCase):
 
     @capture.stdout
     def testAddsExistsOption(self):
-        self.naming._ParseLine('INTERNAL = 10.0.0.0/24 10.1.0.0/24','networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/24 10.1.0.0/24', 'networks')
         acl = ipset.Ipset(policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1, self.naming), EXP_INFO)
         self.assertIn('create -exist', str(acl))
         self.assertIn('add -exist', str(acl))

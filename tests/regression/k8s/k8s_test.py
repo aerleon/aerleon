@@ -257,7 +257,7 @@ EXP_INFO = 2
 
 TEST_IPS = ['10.2.3.4/32', '2001:4860:8000::5/128']
 
-TEST_INCLUDE_IPS = ['10.2.3.4/32','10.4.3.2/32']
+TEST_INCLUDE_IPS = ['10.2.3.4/32', '10.4.3.2/32']
 
 TEST_EXCLUDE_IPS = ['10.4.3.2/32']
 
@@ -265,7 +265,7 @@ TEST_INCLUDE_RANGE = ['10.128.0.0/9']
 
 TEST_EXCLUDE_RANGE = ['10.240.0.0/16']
 
-ANY_IPS = ['0.0.0.0/0','::/0']
+ANY_IPS = ['0.0.0.0/0', '::/0']
 
 ANY_IPV4 = ['0.0.0.0/0']
 
@@ -688,7 +688,6 @@ class K8sTest(parameterized.TestCase):
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming), EXP_INFO)
         self.assertEqual(str(acl), '')
 
-
     def testSkipStatelessReply(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('DNS = 53/tcp', 'services')
@@ -702,7 +701,6 @@ class K8sTest(parameterized.TestCase):
 
         acl = k8s.K8s(ret, EXP_INFO)
         self.assertEqual(str(acl), '')
-
 
     @capture.stdout
     def testValidTermProtos(self):

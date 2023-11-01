@@ -660,7 +660,6 @@ class GCETest(parameterized.TestCase):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('DNS = 53/udp', 'services')
 
-
         acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_3, self.naming), EXP_INFO)
         self.assertIn('"priority": "1",', str(acl), str(acl))
         print(acl)
@@ -694,7 +693,6 @@ class GCETest(parameterized.TestCase):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 10.4.3.2/32', 'networks')
         self.naming._ParseLine('GUEST_WIRELESS_EXTERNAL = 10.4.3.2/32', 'networks')
         self.naming._ParseLine('DNS = 53/udp', 'services')
-        
 
         acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXCLUDE, self.naming), EXP_INFO)
         expected = json.loads(GOOD_TERM_JSON)
@@ -733,7 +731,6 @@ class GCETest(parameterized.TestCase):
 
         acl = gce.GCE(ret, EXP_INFO)
         self.assertEqual(self._StripAclHeaders(str(acl)), '[]\n\n')
-
 
     @capture.stdout
     def testSourceNetworkSplit(self):
@@ -789,7 +786,6 @@ class GCETest(parameterized.TestCase):
             EXP_INFO,
         )
 
-
     def testRaisesWithSourcePort(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('SSH = 22/tcp', 'services')
@@ -812,7 +808,6 @@ class GCETest(parameterized.TestCase):
             policy.ParsePolicy(GOOD_HEADER + BAD_TERM_NAME_TOO_LONG, self.naming),
             EXP_INFO,
         )
-
 
     def testRaisesWithUnsupportedOption(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
@@ -883,7 +878,6 @@ class GCETest(parameterized.TestCase):
             policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_EGRESS, self.naming),
             EXP_INFO,
         )
-
 
     def testRaisesWithEgressSourceAddress(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
@@ -1205,7 +1199,7 @@ class GCETest(parameterized.TestCase):
 
     def testPortsCountExceededError(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
-        ports = [str(i)+"/tcp" for i in range(1024, 1024 + (gce.Term._TERM_PORTS_LIMIT) * 3, 2)]
+        ports = [str(i) + "/tcp" for i in range(1024, 1024 + (gce.Term._TERM_PORTS_LIMIT) * 3, 2)]
         self.naming._ParseLine(f'SSH = {" ".join(ports)}', 'services')
         self.assertRaisesRegex(
             gce.GceFirewallError,
@@ -1214,7 +1208,6 @@ class GCETest(parameterized.TestCase):
             policy.ParsePolicy(GOOD_HEADER_INET + BAD_TERM_PORTS_COUNT, self.naming),
             EXP_INFO,
         )
-        
 
     def testSourceTagCountExceededError(self):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')

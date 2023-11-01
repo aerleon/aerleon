@@ -214,7 +214,7 @@ class AristaTest(absltest.TestCase):
 
     @capture.stdout
     def testRemark(self):
-        
+
         self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
@@ -280,7 +280,6 @@ class AristaTest(absltest.TestCase):
         self.naming._ParseLine('SOME_HOST2 = 10.1.1.0/24', 'networks')
         self.naming._ParseLine('SSH = 22/tcp', 'services')
         self.naming._ParseLine('GOPENFLOW = 6537/tcp', 'services')
-        
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -296,7 +295,7 @@ class AristaTest(absltest.TestCase):
     def testStandardTermHostV6(self):
         self.naming._ParseLine('SOME_HOST = 2620:1::/64', 'networks')
         self.naming._ParseLine('SSH = 22/tcp', 'services')
-        
+
         pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)

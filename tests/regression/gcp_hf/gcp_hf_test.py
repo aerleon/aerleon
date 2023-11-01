@@ -2767,7 +2767,7 @@ class GcpHfTest(parameterized.TestCase):
         for x in range(2000, 2520):
             if x % 2 == 0:
                 self.naming._ParseLine(f'TP{x} = {x}/tcp', 'services')
-        self.naming._ParseLine('INTERNAL = 10.0.0.0/8','networks')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_DESTINATION_PORTS, self.naming),

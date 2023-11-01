@@ -613,7 +613,6 @@ class AristaTpTest(absltest.TestCase):
             EXP_INFO,
         )
 
-
     def testDuplicateTermName(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
@@ -890,7 +889,7 @@ class AristaTpTest(absltest.TestCase):
     def testSkipTermAF(self, mock_warning):
         self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
-        
+
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
         )
@@ -1034,10 +1033,12 @@ class AristaTpTest(absltest.TestCase):
             mock_calls.append(mock.call("INTERNAL"))
             mock_calls.append(mock.call("SOME_HOST"))
 
-
     @capture.stdout
     def testMixedInet(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER + MIXED_INET, self.naming)
@@ -1052,7 +1053,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInetMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET_MIXED, self.naming), EXP_INFO
@@ -1067,7 +1071,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedInet6(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_INET6, self.naming), EXP_INFO
@@ -1084,7 +1091,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Mixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_MIXED, self.naming), EXP_INFO
@@ -1099,8 +1109,14 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
-        self.naming._ParseLine('SOME_HOST = 4.4.2.2/32 4.4.4.4/32 2001:4860:1337::8844/128 2001:4860:1337::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 4.4.2.2/32 4.4.4.4/32 2001:4860:1337::8844/128 2001:4860:1337::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_MIXED, self.naming), EXP_INFO
         )
@@ -1116,7 +1132,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedAny(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_ANY, self.naming), EXP_INFO
         )
@@ -1130,7 +1149,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testAnyMixed(self):
-        self.naming._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + ANY_MIXED, self.naming), EXP_INFO
         )
@@ -1157,8 +1179,12 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Inet6(self):
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
-        self.naming._ParseLine('INTERNAL = 2001:4860:1337::8844/128 2001:4860:1337::8888/128', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks'
+        )
+        self.naming._ParseLine(
+            'INTERNAL = 2001:4860:1337::8844/128 2001:4860:1337::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_INET6, self.naming), EXP_INFO
         )
@@ -1184,7 +1210,9 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Inet(self):
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks'
+        )
         self.naming._ParseLine('INTERNAL = 8.8.4.4/32 8.8.8.8/32', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_INET, self.naming), EXP_INFO
@@ -1209,7 +1237,9 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testSrcFsInet6(self):
         self.naming._ParseLine('INTERNAL = 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + SRC_FIELD_SET_INET6, self.naming), EXP_INFO
         )
@@ -1220,8 +1250,14 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testSrcFsMixed(self):
-        self.naming._ParseLine('INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128 8.8.4.4/32 8.8.8.8/32', 'networks')
+        self.naming._ParseLine(
+            'INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128 8.8.4.4/32 8.8.8.8/32',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + SRC_FIELD_SET_MIXED, self.naming), EXP_INFO
         )
@@ -1247,7 +1283,9 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testDstFsInet6(self):
         self.naming._ParseLine('INTERNAL = 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + DST_FIELD_SET_INET6, self.naming), EXP_INFO
         )
@@ -1258,8 +1296,13 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testDstFsMixed(self):
-        self.naming._ParseLine('INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
-        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844 2001:4860:4861::8888 8.8.4.4 8.8.8.8', 'networks')
+        self.naming._ParseLine(
+            'INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844 2001:4860:4861::8888 8.8.4.4 8.8.8.8', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + DST_FIELD_SET_MIXED, self.naming), EXP_INFO
         )
