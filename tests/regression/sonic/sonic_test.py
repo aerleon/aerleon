@@ -15,12 +15,10 @@
 
 """Unittest for OpenConfig rendering module."""
 
-import json
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, nacaddr, naming, policy, sonic
+from aerleon.lib import naming, policy, sonic
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

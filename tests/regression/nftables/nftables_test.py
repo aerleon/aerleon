@@ -14,13 +14,10 @@
 # limitations under the License.
 """Unittest for Nftables rendering module."""
 
-import datetime
-from unittest import mock
-
 from absl import logging
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, nacaddr, naming, nftables, policy
+from aerleon.lib import nacaddr, naming, nftables, policy
 from tests.regression_utils import capture
 
 

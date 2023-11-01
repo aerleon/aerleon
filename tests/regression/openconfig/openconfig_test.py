@@ -16,11 +16,10 @@
 """Unittest for OpenConfig rendering module."""
 
 import json
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, nacaddr, naming, openconfig, policy
+from aerleon.lib import naming, openconfig, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -462,10 +461,6 @@ header {
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
 EXP_INFO = 2
-
-_TERM_SOURCE_TAGS_LIMIT = 30
-_TERM_TARGET_TAGS_LIMIT = 70
-_TERM_PORTS_LIMIT = 256
 
 
 class OpenConfigTest(absltest.TestCase):

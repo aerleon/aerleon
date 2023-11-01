@@ -15,8 +15,6 @@
 
 """Unittest for juniper evo acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import juniperevo, naming, policy

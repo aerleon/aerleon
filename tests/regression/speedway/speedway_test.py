@@ -15,8 +15,6 @@
 
 """Unittest for Speedway rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, speedway

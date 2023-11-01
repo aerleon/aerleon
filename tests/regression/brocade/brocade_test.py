@@ -15,7 +15,6 @@
 """Tests for brocade acl rendering module."""
 
 import re
-from unittest import mock
 
 from absl.testing import absltest
 

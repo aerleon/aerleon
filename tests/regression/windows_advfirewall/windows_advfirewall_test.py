@@ -19,14 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import (
-    aclgenerator,
-    nacaddr,
-    naming,
-    policy,
-    windows,
-    windows_advfirewall,
-)
+from aerleon.lib import aclgenerator, naming, policy, windows, windows_advfirewall
 from tests.regression_utils import capture
 
 GOOD_HEADER_OUT = """

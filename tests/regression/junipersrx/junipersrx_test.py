@@ -618,12 +618,6 @@ SUPPORTED_SUB_TOKENS = {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-_IPSET = [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('2001:4860:8000::/33')]
-_IPSET2 = [nacaddr.IP('10.23.0.0/22'), nacaddr.IP('10.23.0.6/23', strict=False)]
-_IPSET3 = [nacaddr.IP('10.23.0.0/23')]
-_IPSET4 = [nacaddr.IP('10.0.0.0/20')]
-_IPSET5 = [nacaddr.IP('10.0.0.0/24')]
-
 
 class JuniperSRXTest(absltest.TestCase):
     def setUp(self):

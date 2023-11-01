@@ -3,11 +3,10 @@
 """Tests for google3.third_party.py.aerleon.lib.gcp_hf.py."""
 
 import json
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import gcp, gcp_hf, nacaddr, naming, policy
+from aerleon.lib import gcp, gcp_hf, naming, policy
 from tests.regression_utils import capture
 
 HEADER_NO_OPTIONS = """
@@ -2476,11 +2475,6 @@ SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny', 'next'}}
 
 EXP_INFO = 2
 
-TEST_IP = ['10.0.0.0/8']
-TEST_IPV6_IP = [nacaddr.IP('2001:4860:8000::5/128')]
-TEST_MIXED_IPS = [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('2001:4860:8000::5/128')]
-ALL_IPV4_IPS = [nacaddr.IP('0.0.0.0/0')]
-ALL_IPV6_IPS = [nacaddr.IP('::/0')]
 MANY_IPS = ['192.168.' + str(x) + '.0/32' for x in range(0, 256)]
 MANY_IPS.extend(['10.0.0.1', '10.0.1.1'])
 

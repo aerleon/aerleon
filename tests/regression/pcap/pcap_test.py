@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, nacaddr, naming, pcap, policy
+from aerleon.lib import aclgenerator, naming, pcap, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """

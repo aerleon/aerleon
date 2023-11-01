@@ -16,11 +16,10 @@
 """Unittest for SR Linux rendering module."""
 
 import json
-from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nokiasrl, policy
+from aerleon.lib import naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -408,13 +407,6 @@ header {
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
 EXP_INFO = 2
-
-TEST_IPS = ['10.2.3.4/32', '2001:4860:8000::5/128']
-
-
-_TERM_SOURCE_TAGS_LIMIT = 30
-_TERM_TARGET_TAGS_LIMIT = 70
-_TERM_PORTS_LIMIT = 256
 
 
 class NokiaSRLTest(absltest.TestCase):

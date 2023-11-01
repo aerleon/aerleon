@@ -14,11 +14,9 @@
 # limitations under the License.
 """Unittest for Cisco XR acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
-from aerleon.lib import ciscoxr, nacaddr, naming, policy
+from aerleon.lib import ciscoxr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """

@@ -4,7 +4,6 @@
 
 import json
 import random
-from unittest import mock
 
 from absl.testing import absltest
 

@@ -15,11 +15,10 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import ciscoasa, nacaddr, naming, policy
+from aerleon.lib import ciscoasa, naming, policy
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 

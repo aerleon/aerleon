@@ -20,7 +20,7 @@ from xml.etree import ElementTree as ET
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nsxv, policy
+from aerleon.lib import naming, nsxv, policy
 from tests.regression_utils import capture
 
 INET_TERM = """\

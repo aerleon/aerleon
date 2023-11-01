@@ -15,12 +15,10 @@
 
 """Unittest for windows acl rendering module."""
 
-from unittest import mock
 
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, windows
-from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {

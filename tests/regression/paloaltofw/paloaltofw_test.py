@@ -14,11 +14,9 @@
 # limitations under the License.
 """Unit test for Palo Alto Firewalls acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, nacaddr, naming, paloaltofw, policy
+from aerleon.lib import aclgenerator, naming, paloaltofw, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -556,10 +554,6 @@ SUPPORTED_SUB_TOKENS = {
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
 EXP_INFO = 2
-
-_IPSET = ['10.0.0.0/8 2001:4860:8000::/33']
-_IPSET2 = ['10.23.0.0/22 10.23.0.6/23']
-_IPSET3 = ['10.23.0.0/23']
 
 PATH_VSYS = "./devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']"
 PATH_RULES = PATH_VSYS + '/rulebase/security/rules'

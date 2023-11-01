@@ -14,12 +14,10 @@
 # limitations under the License.
 """Unittest for K8s NetworkPolicy rendering module."""
 
-from unittest import mock
-
 import yaml
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, k8s, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, k8s, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -270,8 +268,6 @@ ANY_IPS = ['0.0.0.0/0', '::/0']
 ANY_IPV4 = ['0.0.0.0/0']
 
 ANY_IPV6 = ['::/0']
-
-TEST_IPV4_ONLY = ['10.2.3.4/32']
 
 TEST_IPV6_ONLY = ['2001:4860:8000::5/128']
 

@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, policy, windows_ipsec
+from aerleon.lib import naming, policy, windows_ipsec
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
