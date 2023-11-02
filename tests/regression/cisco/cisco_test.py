@@ -915,7 +915,6 @@ class CiscoTest(absltest.TestCase):
             GOOD_NOVERBOSE_OBJGRP_HEADER,
             GOOD_NOVERBOSE_INET6_HEADER,
         ]:
-
             acl = cisco.Cisco(policy.ParsePolicy(i + GOOD_STANDARD_TERM_1, self.naming), EXP_INFO)
             self.assertNotIn('remark', str(acl), str(acl))
             print(acl)

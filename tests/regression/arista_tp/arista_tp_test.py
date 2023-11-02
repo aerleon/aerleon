@@ -1346,7 +1346,6 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testBuildTokens(self):
-
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_28, self.naming), EXP_INFO
         )

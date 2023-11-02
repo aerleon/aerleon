@@ -212,7 +212,6 @@ class AristaTest(absltest.TestCase):
 
     @capture.stdout
     def testRemark(self):
-
         self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
