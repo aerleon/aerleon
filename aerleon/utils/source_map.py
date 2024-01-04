@@ -72,10 +72,10 @@ class SourceMapBuilder:
         self._offset_cursor = 0
 
     def nextFilter(self):
-       if self._current_filter is None:
-           self._current_filter = 0
-       else:
-           self._current_filter = self._current_filter + 1
+        if self._current_filter is None:
+            self._current_filter = 0
+        else:
+            self._current_filter = self._current_filter + 1
 
     def startSpan(self, span_type, **kwargs):
         self.spans.append(
