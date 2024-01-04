@@ -33,7 +33,7 @@ PyYAML = "^6.0"
 ply = "^3.11"
 absl-py = "^1.2.0"
 typing_extensions = "^4.4.0"
-importlib-metadata = { version = "^4.2", markers = "python_version <= '3.10'" }
+importlib-metadata = { version = "^6.0", markers = "python_version <= '3.10'" }
 
 [tool.poetry.dev-dependencies]
 black = {version = "^22.8.0"}
