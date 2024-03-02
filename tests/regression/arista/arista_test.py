@@ -18,7 +18,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import arista, nacaddr, naming, policy
+from aerleon.lib import arista, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -274,7 +274,7 @@ class AristaTest(absltest.TestCase):
     @capture.stdout
     def testStandardTermHost(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
-        self.naming.GetServiceByProto.return_value = ['22', '6537']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp'), port.PPP('6537/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -294,7 +294,7 @@ class AristaTest(absltest.TestCase):
     @capture.stdout
     def testStandardTermHostV6(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
@@ -323,7 +323,7 @@ class AristaTest(absltest.TestCase):
 
     @capture.stdout
     def testSIPUsesInt(self):
-        self.naming.GetServiceByProto.return_value = ['5060']
+        self.naming.GetServiceByProto.return_value = [port.PPP('5060/udp')]
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_8, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)

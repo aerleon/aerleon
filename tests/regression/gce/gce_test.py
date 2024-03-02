@@ -20,7 +20,7 @@ from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, gce, gcp, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, gce, gcp, nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -752,7 +752,7 @@ class GCETest(parameterized.TestCase):
 
     def testSkipExpiredTerm(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming), EXP_INFO)
         self.assertEqual(self._StripAclHeaders(str(acl)), '[]\n\n')
@@ -762,7 +762,7 @@ class GCETest(parameterized.TestCase):
 
     def testSkipStatelessReply(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         # Add stateless_reply to terms, there is no current way to include it in the
         # term definition.
@@ -786,7 +786,7 @@ class GCETest(parameterized.TestCase):
             for j in range(20):
                 lots_of_ips.append(nacaddr.IP('10.%d.%d.1/32' % (i, j)))
         self.naming.GetNetAddr.return_value = lots_of_ips
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = gce.GCE(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
         self.assertIn('default-good-term-1-1', str(acl))
@@ -799,7 +799,7 @@ class GCETest(parameterized.TestCase):
         print(acl)
 
     def testRaisesWithoutSource(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaisesRegex(
             gce.GceFirewallError,
@@ -813,7 +813,7 @@ class GCETest(parameterized.TestCase):
 
     def testRaisesWithOnlySourceExclusion(self):
         self.naming.GetNetAddr.return_value = TEST_EXCLUDE_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaisesRegex(
             gce.GceFirewallError,
@@ -850,7 +850,7 @@ class GCETest(parameterized.TestCase):
 
     def testRaisesWithSourcePort(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaisesRegex(
             gce.GceFirewallError,
@@ -865,7 +865,7 @@ class GCETest(parameterized.TestCase):
 
     def testRaisesWithLongTermName(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaises(
             aclgenerator.TermNameTooLongError,
@@ -879,7 +879,7 @@ class GCETest(parameterized.TestCase):
 
     def testRaisesWithUnsupportedOption(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaisesRegex(
             gce.GceFirewallError,
@@ -1035,7 +1035,7 @@ class GCETest(parameterized.TestCase):
 
     def testRaisesConflictingDirectionAddress(self):
         self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         self.assertRaisesRegex(
             gce.GceFirewallError,

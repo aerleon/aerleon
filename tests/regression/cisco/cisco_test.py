@@ -21,7 +21,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, cisco, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, cisco, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -446,7 +446,7 @@ class CiscoTest(absltest.TestCase):
     @capture.stdout
     def testOptions(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO)
         # this is a hacky sort of way to test that 'established' maps to HIGH_PORTS
@@ -461,7 +461,7 @@ class CiscoTest(absltest.TestCase):
     @capture.stdout
     def testExpandingConsequtivePorts(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['80', '81']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp'), port.PPP('81/tcp')]
 
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_14, self.naming), EXP_INFO)
         first_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 80'
@@ -627,7 +627,7 @@ class CiscoTest(absltest.TestCase):
         port_grp2.append('exit')
 
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8', token='SOME_HOST')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         pol = policy.ParsePolicy(GOOD_OBJGRP_HEADER + GOOD_TERM_2 + GOOD_TERM_18, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)

@@ -17,7 +17,7 @@
 
 from absl.testing import absltest
 
-from aerleon.lib import fqdn, nacaddr, naming
+from aerleon.lib import fqdn, nacaddr, naming, port
 
 
 class NamingUnitTest(absltest.TestCase):
@@ -34,7 +34,7 @@ class NamingUnitTest(absltest.TestCase):
         self.defs = naming.Naming(None)
         servicedata = []
         servicedata.append('SVC1 = 80/tcp 81/udp 82/tcp')
-        servicedata.append('SVC2 = 80/tcp 81/udp 82/tcp SVC2')
+        servicedata.append('SVC2 = 80/tcp 81/udp 82/tcp SVC2 # foo')
         servicedata.append('SVC3 = 80/tcp 81/udp')
         servicedata.append('SVC4 = 80/tcp # some service')
         servicedata.append('TCP_90 = 90/tcp')
@@ -57,8 +57,8 @@ class NamingUnitTest(absltest.TestCase):
         self.defs.ParseNetworkList(networkdata)
 
     def testCommentedServices(self):
-        self.assertEqual(self.defs.GetService('SVC4'), ['80/tcp'])
-        self.assertListEqual(self.defs.GetServiceByProto('SVC4', 'tcp'), ['80'])
+        self.assertEqual(self.defs.GetService('SVC4'), [port.PPP('80/tcp')])
+        self.assertListEqual(self.defs.GetServiceByProto('SVC4', 'tcp'), [port.PPP('80/tcp')])
 
     def testBadGetRequest(self):
         """Test proper handling of a non-existant service request."""
@@ -67,22 +67,30 @@ class NamingUnitTest(absltest.TestCase):
 
     def testGetServiceRecursion(self):
         """Ensure we don't slip into recursion hell when object contains itself."""
-        self.assertListEqual(self.defs.GetService('SVC2'), ['80/tcp', '81/udp', '82/tcp'])
+        self.assertListEqual(
+            self.defs.GetService('SVC2'),
+            [port.PPP('80/tcp'), port.PPP('81/udp'), port.PPP('82/tcp')],
+        )
 
     def testGetService(self):
         """Verify proper results from a service lookup request."""
-        self.assertListEqual(self.defs.GetService('SVC1'), ['80/tcp', '81/udp', '82/tcp'])
+        self.assertListEqual(
+            self.defs.GetService('SVC1'),
+            [port.PPP('80/tcp'), port.PPP('81/udp'), port.PPP('82/tcp')],
+        )
 
     def testBadProtocol(self):
         """Test proper handling of a non-existant service request."""
         self.assertListEqual(self.defs.GetServiceByProto('SVC1', 'fud'), [])
 
     def testGetServiceByProto(self):
-        self.assertListEqual(self.defs.GetServiceByProto('SVC1', 'tcp'), ['80', '82'])
+        self.assertListEqual(
+            self.defs.GetServiceByProto('SVC1', 'tcp'), [port.PPP('80/tcp'), port.PPP('82/tcp')]
+        )
 
     def testGetServiceByProtoWithoutProtocols(self):
         """Ensure services with protocol are not returned when type is specified."""
-        self.assertListEqual(self.defs.GetServiceByProto('SVC3', 'tcp'), ['80'])
+        self.assertListEqual(self.defs.GetServiceByProto('SVC3', 'tcp'), [port.PPP('80/tcp')])
 
     def testNetworkComment(self):
         self.assertEqual(self.defs.GetNetAddr('NET1')[0].text, 'network1')
@@ -123,7 +131,10 @@ class NamingUnitTest(absltest.TestCase):
         )
 
     def testNestedServices(self):
-        self.assertListEqual(self.defs.GetServiceByProto('SVC6', 'tcp'), ['80', '82', '90'])
+        self.assertListEqual(
+            self.defs.GetServiceByProto('SVC6', 'tcp'),
+            [port.PPP('80/tcp'), port.PPP('82/tcp'), port.PPP('90/tcp')],
+        )
 
     def testServiceParents(self):
         """SVC6 contains SVC5 which contains TCP_90 which contains 90/tcp."""
@@ -157,7 +168,7 @@ class NamingUnitTest(absltest.TestCase):
         filedefs = naming.Naming(None)
         data = ['HTTP = 80/tcp\n']
         filedefs._ParseFile(data, 'services')
-        self.assertEqual(filedefs.GetService('HTTP'), ['80/tcp'])
+        self.assertEqual(filedefs.GetService('HTTP'), [port.PPP('80/tcp')])
 
     def testServiceIncorrectSyntax(self):
         badservicedata = []

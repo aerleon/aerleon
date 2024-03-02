@@ -22,7 +22,7 @@ from unittest import mock
 from absl import logging
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, juniper, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, juniper, nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -734,7 +734,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testOptions(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         jcl = juniper.Juniper(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO)
         output = str(jcl)
@@ -750,7 +750,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testTermAndFilterName(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
         output = str(jcl)
@@ -763,7 +763,7 @@ class JuniperTest(parameterized.TestCase):
 
     def testBadFilterType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(BAD_HEADER_2 + GOOD_TERM_1, self.naming)
         self.assertRaises(aclgenerator.UnsupportedAFError, juniper.Juniper, pol, EXP_INFO)
@@ -774,7 +774,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testBridgeFilterType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_1, self.naming), EXP_INFO
@@ -790,7 +790,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testEthernetSwitchingFilterType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_ETHERNET_SWITCHING + GOOD_TERM_1, self.naming), EXP_INFO
@@ -815,7 +815,7 @@ class JuniperTest(parameterized.TestCase):
             + '** descriptive comment  this is a very descript */'
         )
         self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8', comment=long_comment)]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
         output = str(jcl)
@@ -913,7 +913,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testInet6(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::/33')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -928,7 +928,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testNotInterfaceSpecificHeader(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_NOT_INTERFACE_SPECIFIC + GOOD_TERM_1, self.naming),
@@ -943,7 +943,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testNotSynAck(self):
-        self.naming.GetServiceByProto.return_value = ['443']
+        self.naming.GetServiceByProto.return_value = [port.PPP('443/tcp')]
 
         policy_text = GOOD_HEADER + NOTSYNACK_TERM_1
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -956,7 +956,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testInterfaceSpecificHeader(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO)
         output = str(jcl)
@@ -969,7 +969,7 @@ class JuniperTest(parameterized.TestCase):
     @capture.stdout
     def testFilterEnhancedModeHeader(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_FILTER_ENHANCED_MODE_HEADER + GOOD_TERM_1, self.naming),
@@ -1093,7 +1093,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testDscpByte(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + GOOD_TERM_22
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1105,7 +1105,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testDscpClass(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + GOOD_TERM_23
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1119,7 +1119,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testDscpIPv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER_V6 + GOOD_TERM_23
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1134,7 +1134,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testSimplifiedThenStatement(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + GOOD_TERM_24
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1147,7 +1147,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testSimplifiedThenStatementWithSingleAction(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + GOOD_TERM_25
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1159,7 +1159,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testSimplifiedThenStatementWithSingleActionDiscardIPv4(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + GOOD_TERM_26
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1172,7 +1172,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testSimplifiedThenStatementWithSingleActionDiscardIPv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER_V6 + GOOD_TERM_26_V6
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1184,7 +1184,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testSimplifiedThenStatementWithSingleActionRejectIPv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER_V6 + GOOD_TERM_26_V6_REJECT
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1197,7 +1197,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + ESTABLISHED_TERM_1
         jcl = juniper.Juniper(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -1208,7 +1208,7 @@ class JuniperTest(parameterized.TestCase):
         print(output)
 
     def testNonTcpWithTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + BAD_TERM_1
         pol_obj = policy.ParsePolicy(policy_text, self.naming)
@@ -1283,7 +1283,7 @@ class JuniperTest(parameterized.TestCase):
             net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(
@@ -1304,7 +1304,7 @@ class JuniperTest(parameterized.TestCase):
             net = nacaddr.IPv6('2001:db8:1010:' + str(octet) + '::64/64', strict=False)
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(
@@ -1325,7 +1325,7 @@ class JuniperTest(parameterized.TestCase):
             net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_DSMO_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -1340,7 +1340,7 @@ class JuniperTest(parameterized.TestCase):
     def testDsmoJuniperFriendly(self):
         addr_list = [nacaddr.IP('192.168.%d.0/24' % octet) for octet in range(256)]
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_DSMO_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -1397,7 +1397,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testPrecedence(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_15, self.naming), EXP_INFO
@@ -1410,7 +1410,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testMultiplePrecedence(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_16, self.naming), EXP_INFO
@@ -1436,7 +1436,7 @@ class JuniperTest(parameterized.TestCase):
 
     @capture.stdout
     def testArbitraryOptions(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
 
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER + OPTION_TERM_1, self.naming), EXP_INFO
@@ -1853,7 +1853,7 @@ class JuniperTest(parameterized.TestCase):
         print(output)
 
     def testFailIsFragmentInV6(self):
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
         pol = policy.ParsePolicy(GOOD_HEADER_V6 + OPTION_TERM_1, self.naming)
 
         self.assertRaises(juniper.JuniperFragmentInV6Error, juniper.Juniper, pol, EXP_INFO)
@@ -2065,7 +2065,7 @@ class JuniperTest(parameterized.TestCase):
     )
     def testMixed(self, addresses, expected, notexpected):
         self.naming.GetNetAddr.side_effect = addresses
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         jcl = juniper.Juniper(
             policy.ParsePolicy(GOOD_HEADER_MIXED + MIXED_TESTING_TERM + GOOD_TERM_25, self.naming),
             EXP_INFO,

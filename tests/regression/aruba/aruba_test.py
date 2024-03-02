@@ -21,7 +21,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, aruba, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, aruba, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER_V4 = """
@@ -677,7 +677,7 @@ class ArubaTest(absltest.TestCase):
             nacaddr.IP('100.0.0.0/8'),
             nacaddr.IP('10.0.0.1/32'),
         ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_COMBINED_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -701,7 +701,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2002::/64'), nacaddr.IP('2001::/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_COMBINED_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -734,7 +734,7 @@ class ArubaTest(absltest.TestCase):
             nacaddr.IP('100.0.0.0/8'),
             nacaddr.IP('10.0.0.1/32'),
         ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming.GetServiceByProto.return_value = [port.PPP('69/udp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming),
             EXP_INFO,
@@ -764,7 +764,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('2002::/64'), nacaddr.IP('2001::/128')]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming.GetServiceByProto.return_value = [port.PPP('69/udp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming),
             EXP_INFO,
@@ -787,7 +787,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_SOURCE_IS_USER, self.naming), EXP_INFO
         )
@@ -809,7 +809,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -832,7 +832,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53-55', '54']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53-55/tcp'), port.PPP('54/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -857,7 +857,7 @@ class ArubaTest(absltest.TestCase):
     !
     """
         self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53-55', '54', '10-20', '1']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53-55/tcp'), port.PPP('54/tcp'), port.PPP('10-20/tcp'), port.PPP('1/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -908,7 +908,7 @@ class ArubaTest(absltest.TestCase):
             nacaddr.IP('100.0.0.0/8'),
             nacaddr.IP('10.0.0.1/32'),
         ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming.GetServiceByProto.return_value = [port.PPP('69/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + MISSING_PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,
@@ -926,7 +926,7 @@ class ArubaTest(absltest.TestCase):
             nacaddr.IP('100.0.0.0/8'),
             nacaddr.IP('10.0.0.1/32'),
         ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming.GetServiceByProto.return_value = [port.PPP('69/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming
@@ -943,7 +943,7 @@ class ArubaTest(absltest.TestCase):
             nacaddr.IP('100.0.0.0/8'),
             nacaddr.IP('10.0.0.1/32'),
         ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming.GetServiceByProto.return_value = [port.PPP('69/tcp')]
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + PLATFORM_EXCLUDE_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,

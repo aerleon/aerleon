@@ -21,7 +21,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, arista_tp, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, arista_tp, nacaddr, naming, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -576,7 +576,7 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testOptions(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["80"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO
@@ -594,7 +594,7 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testTermAndFilterName(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -609,7 +609,7 @@ class AristaTpTest(absltest.TestCase):
 
     def testBadFilterType(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(BAD_HEADER + GOOD_TERM_1, self.naming)
         self.assertRaises(
@@ -623,7 +623,7 @@ class AristaTpTest(absltest.TestCase):
 
     def testDuplicateTermName(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER + DUPLICATE_TERMS, self.naming)
         self.assertRaises(
@@ -683,7 +683,7 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testInet6(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("2001::/33")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -761,7 +761,7 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ["53"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         policy_text = GOOD_HEADER + ESTABLISHED_TERM_1
         atp = arista_tp.AristaTrafficPolicy(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
@@ -772,7 +772,7 @@ class AristaTpTest(absltest.TestCase):
         print(output)
 
     def testNonTcpWithTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ["53"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/udp')]
 
         policy_text = GOOD_HEADER + BAD_TERM_1
         pol_obj = policy.ParsePolicy(policy_text, self.naming)
@@ -790,7 +790,7 @@ class AristaTpTest(absltest.TestCase):
             net = nacaddr.IP("192.168." + str(octet) + ".64/27")
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -811,7 +811,7 @@ class AristaTpTest(absltest.TestCase):
             net = nacaddr.IP("192.168." + str(octet) + ".64/27")
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -832,7 +832,7 @@ class AristaTpTest(absltest.TestCase):
             net = nacaddr.IPv6("2001:db8:1010:" + str(octet) + "::64/64", strict=False)
             addr_list.append(net)
         self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -911,7 +911,7 @@ class AristaTpTest(absltest.TestCase):
     @capture.stdout
     def testSkipTermAF(self, mock_warning):
         self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -1459,7 +1459,7 @@ class AristaTpTest(absltest.TestCase):
         print(atp)
 
     def testFailIsFragmentInV6(self):
-        self.naming.GetServiceByProto.return_value = ["22"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
         pol = policy.ParsePolicy(GOOD_HEADER_INET6 + OPTION_TERM_1, self.naming)
 
         self.assertRaises(
@@ -1472,7 +1472,7 @@ class AristaTpTest(absltest.TestCase):
     @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testFailIsFragmentInMixed(self, mock_warn):
-        self.naming.GetServiceByProto.return_value = ["22"]
+        self.naming.GetServiceByProto.return_value = [port.PPP('22/tcp')]
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + OPTION_TERM_1, self.naming), EXP_INFO
         )

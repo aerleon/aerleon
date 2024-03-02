@@ -57,6 +57,7 @@ from yaml import YAMLError
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
 from aerleon.lib.fqdn import FQDN
+from aerleon.lib import port
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
@@ -423,7 +424,7 @@ class Naming:
         """Returns the list of all known service names."""
         return list(self.services.keys())
 
-    def GetService(self, query: str) -> List[str]:
+    def GetService(self, query: str) -> List[port.PPP]:
         """Given a service name, return a list of associated ports and protocols.
 
         Args:
@@ -435,7 +436,7 @@ class Naming:
         Raises:
           UndefinedServiceError: If the service name isn't defined.
         """
-        expandset = set()
+        expandset = []
         already_done = set()
         data = []
         service_name = ''
@@ -445,7 +446,6 @@ class Naming:
             raise UndefinedServiceError('\nNo such service: %s' % query)
 
         already_done.add(service_name)
-
         for next_item in self.services[service_name].items:
             # Remove any trailing comment.
             service = next_item.split('#')[0].strip()
@@ -455,13 +455,13 @@ class Naming:
                 if service not in already_done:
                     already_done.add(service)
                     try:
-                        expandset.update(self.GetService(service))
+                        expandset.extend(self.GetService(service))
                     except UndefinedServiceError as e:
                         # One of the services in query is undefined, refine the error msg.
                         raise UndefinedServiceError('%s (in %s)' % (e, query))
             else:
-                expandset.add(service)
-        return sorted(expandset)
+                expandset.append(port.PPP(service))
+        return sorted(expandset, key=lambda x: x.service)
 
     def GetPortParents(self, query: str, proto: str) -> List[str]:
         """Returns a list of all service tokens containing the port/protocol pair.
@@ -515,7 +515,7 @@ class Naming:
             raise UndefinedPortError('%s/%s is not found in any service tokens' % (query, proto))
         return sorted(matches)
 
-    def GetServiceByProto(self, query: str, proto: str) -> List[str]:
+    def GetServiceByProto(self, query: str, proto: str) -> List[port.PPP]:
         """Given a service name, return list of ports in the service by protocol.
 
         Args:
@@ -523,25 +523,15 @@ class Naming:
           proto: A particular protocol to restrict results by, such as 'tcp'.
 
         Returns:
-          A list of service values of type 'proto', such as ['80', '443', ...]
+          A list of PPP objects filtered by protocol.
 
         Raises:
           UndefinedServiceError: If the service name isn't defined.
         """
-        services_set = set()
-        proto = proto.upper()
-        data = []
-        servicename = ''
-        data = query.split('#')  # Get the token keyword and remove any comment
-        servicename = data[0].split()[0]  # strip and cast from list to string
-        if servicename not in self.services:
-            raise UndefinedServiceError('%s %s' % ('\nNo such service,', servicename))
-
-        for service in self.GetService(servicename):
-            if service and '/' in service:
-                parts = service.split('/')
-                if parts[1].upper() == proto:
-                    services_set.add(parts[0])
+        services_set = []
+        for service in self.GetService(query):
+            if not service.nested and service.protocol.lower() == proto.lower():
+                services_set.append(service)
         return sorted(services_set)
 
     def GetFQDN(self, query: str) -> List[str]:

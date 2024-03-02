@@ -24,6 +24,7 @@ from aerleon.lib import (
     nacaddr,
     naming,
     policy,
+    port,
     windows,
     windows_advfirewall,
 )
@@ -281,7 +282,7 @@ class WindowsAdvFirewallTest(absltest.TestCase):
     @capture.stdout
     def testTcp(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = windows_advfirewall.WindowsAdvFirewall(
             policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_TCP, self.naming), EXP_INFO

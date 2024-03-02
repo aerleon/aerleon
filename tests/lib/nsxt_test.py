@@ -20,7 +20,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nsxt, policy
+from aerleon.lib import nacaddr, naming, nsxt, policy, port
 
 ICMPV6_TERM = """\
   term test-icmpv6 {
@@ -315,8 +315,7 @@ class TermTest(absltest.TestCase):
             [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
             [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
         ]
-        self.naming.GetServiceByProto.return_value = ['123']
-
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/udp')]
         policies = policy.ParsePolicy(UDP_POLICY, self.naming, False)
         af = 4
         pol = policies.filters[0]
@@ -354,7 +353,7 @@ class TermTest(absltest.TestCase):
             [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
             [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
         ]
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming.GetServiceByProto.return_value = [port.PPP('123/udp')]
 
         pol = policy.ParsePolicy(UDP_POLICY, self.naming, False)
         nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
@@ -375,7 +374,7 @@ class TermTest(absltest.TestCase):
             ],
             nacaddr.IP('2001:4860:4860::8845'),
         ]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         pol = policy.ParsePolicy(UDP_AND_TCP_POLICY, self.naming, False)
         nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)

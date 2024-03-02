@@ -22,7 +22,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -659,7 +659,7 @@ class JuniperSRXTest(absltest.TestCase):
             very very very very very very very very very very large
             */"""
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         srx = junipersrx.JuniperSRX(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
         )
@@ -673,7 +673,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testTermAndFilterName(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         srx = junipersrx.JuniperSRX(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -914,7 +914,7 @@ class JuniperSRXTest(absltest.TestCase):
 
     def testBadHeaderType(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(BAD_HEADER + GOOD_TERM_1, self.naming)
         self.assertRaises(junipersrx.UnsupportedFilterError, junipersrx.JuniperSRX, pol, EXP_INFO)
@@ -925,7 +925,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testBadHeaderMultiAF(self):
         # test for multiple address faimilies in header
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(BAD_HEADER_1 + GOOD_TERM_1, self.naming)
         self.assertRaises(
@@ -995,7 +995,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testReplaceStatement(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1010,7 +1010,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testAdressBookBothAFs(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1026,7 +1026,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testAdressBookIPv4(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1042,7 +1042,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testAdressBookIPv6(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1061,7 +1061,7 @@ class JuniperSRXTest(absltest.TestCase):
         _IPSET2[1].parent_token = 'SOME_HOST'
         _IPSET3[0].parent_token = 'FOOBAR'
         self.naming.GetNetAddr.side_effect = [_IPSET2, _IPSET3]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(
             GOOD_HEADER + GOOD_TERM_1 + GOOD_HEADER_2 + GOOD_TERM_12, self.naming
@@ -1079,7 +1079,7 @@ class JuniperSRXTest(absltest.TestCase):
         _IPSET2[1].parent_token = 'SOME_HOST'
         _IPSET3[0].parent_token = 'FOOBAR'
         self.naming.GetNetAddr.side_effect = [_IPSET3, _IPSET2]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(
             GOOD_HEADER_2 + GOOD_TERM_12 + GOOD_HEADER + GOOD_TERM_1, self.naming
@@ -1094,7 +1094,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testZoneAdressBookBothAFs(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_9 + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1110,7 +1110,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testZoneAdressBookIPv4(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_7 + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1126,7 +1126,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testZoneAdressBookIPv6(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_8 + GOOD_TERM_1, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1160,7 +1160,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testAddressBookOrderingSuccess(self):
         self.naming.GetNetAddr.return_value = self._OutOfOrderAddresses()
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_2, self.naming)
         p = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1175,7 +1175,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testAddressBookOrderingAlreadyOrdered(self):
         y, x = self._OutOfOrderAddresses()
         self.naming.GetNetAddr.return_value = [x, y]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_2, self.naming)
         p = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1203,7 +1203,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testApplicationsOrderingSuccess(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.side_effect = [['80', '80'], ['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('80/tcp'), port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_2 + GOOD_TERM_1, self.naming)
         p = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1224,7 +1224,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testApplicationsOrderingAlreadyOrdered(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.side_effect = [['25', '25'], ['80', '80']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp'), port.PPP('80/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_1 + GOOD_TERM_2, self.naming)
         p = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1288,7 +1288,7 @@ class JuniperSRXTest(absltest.TestCase):
             counter += 1
 
         self.naming.GetNetAddr.side_effect = [mo_ips, prodcolos_ips]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_14, self.naming)
         srx = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1317,7 +1317,7 @@ class JuniperSRXTest(absltest.TestCase):
             counter += 1
 
         self.naming.GetNetAddr.side_effect = [mo_ips, prodcolos_ips]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_14, self.naming)
         srx = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1347,7 +1347,7 @@ class JuniperSRXTest(absltest.TestCase):
             counter += 1
 
         self.naming.GetNetAddr.side_effect = [mo_ips, prodcolos_ips]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_14, self.naming)
         srx = junipersrx.JuniperSRX(pol, EXP_INFO)
@@ -1356,7 +1356,7 @@ class JuniperSRXTest(absltest.TestCase):
 
     def testDuplicateTermsInDifferentZones(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp'), port.PPP('26/tcp')]
 
         pol = policy.ParsePolicy(
             GOOD_HEADER + GOOD_TERM_2 + GOOD_HEADER_11 + GOOD_TERM_2, self.naming
@@ -1369,7 +1369,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_has_calls([mock.call('SMTP', 'tcp')] * 2)
 
     def testBuildTokens(self):
-        self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp'), port.PPP('26/tcp')]
         pol1 = junipersrx.JuniperSRX(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO
         )
@@ -1378,7 +1378,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
-        self.naming.GetServiceByProto.side_effect = [['25'], ['26']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp'), port.PPP('26/tcp')]
 
         pol1 = junipersrx.JuniperSRX(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_15, self.naming), EXP_INFO
@@ -1412,7 +1412,7 @@ class JuniperSRXTest(absltest.TestCase):
         ]
 
         self.naming.GetNetAddr.side_effect = [foobar_ips, some_host_ips, some_host_ips]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         pol = policy.ParsePolicy(
             GOOD_HEADER + GOOD_TERM_17 + GOOD_HEADER_2 + GOOD_TERM_15, self.naming
@@ -1509,21 +1509,16 @@ class JuniperSRXTest(absltest.TestCase):
 
     @capture.stdout
     def testOptimizedApplicationset(self):
-        some_host = [nacaddr.IP('10.0.0.1/32', token='SOMEHOST')]
-        foo = [nacaddr.IP('10.0.0.2/32', token='FOO')]
-        foobar = [nacaddr.IP('10.0.0.3/32', token='FOOBAR')]
-        self.naming.GetNetAddr.side_effect = [some_host, foo, foobar, foobar, some_host]
-
-        self.naming.GetServiceByProto.side_effect = [
-            ['25', '25'],
-            ['80', '80'],
-            ['25', '25'],
-            ['25', '25'],
-        ]
-
+        
+        definitions = naming.Naming()
+        definitions._ParseLine('SOME_HOST = 10.1.0.1/32', 'networks')
+        definitions._ParseLine('FOO = 10.0.0.2/32', 'networks')
+        definitions._ParseLine('FOOBAR = 10.0.0.3/32', 'networks')
+        definitions._ParseLine('SMTP = 25/tcp', 'services')
+        definitions._ParseLine('HTTP = 80/tcp', 'services')
         pol = policy.ParsePolicy(
             GOOD_HEADER + GOOD_TERM_2 + GOOD_TERM_20 + GOOD_TERM_12 + GOOD_HEADER_2 + GOOD_TERM_14,
-            self.naming,
+            definitions,
         )
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
         self.assertNotIn('dup-of-term-1-app', output)
@@ -1531,13 +1526,13 @@ class JuniperSRXTest(absltest.TestCase):
 
     @capture.stdout
     def testExpressPath(self):
-        some_host = [nacaddr.IP('10.0.0.1/32', token='SOMEHOST')]
-        self.naming.GetNetAddr.side_effect = [some_host, some_host]
-
-        self.naming.GetServiceByProto.side_effect = [['25', '25'], ['25', '25']]
-
+        definitions = naming.Naming()
+        definitions._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
+        definitions._ParseLine('SMTP = 25/tcp', 'services')
+        
+        
         pol = policy.ParsePolicy(
-            GOOD_HEADER_14 + GOOD_TERM_2 + DEFAULT_TERM_1 + GOOD_HEADER + GOOD_TERM_1, self.naming
+            GOOD_HEADER_14 + GOOD_TERM_2 + DEFAULT_TERM_1 + GOOD_HEADER + GOOD_TERM_1, definitions
         )
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
         self.assertIn('services-offload;', output)
@@ -1547,14 +1542,13 @@ class JuniperSRXTest(absltest.TestCase):
 
     @capture.stdout
     def testDropEstablished(self):
-        some_host = [nacaddr.IP('10.0.0.1/32', token='FOO')]
-        self.naming.GetServiceByProto.side_effect = [
-            ['25', '25'],
-            ['443', '443'],
-            ['25', '25'],
-            ['443', '443'],
-        ]
-        self.naming.GetNetAddr.side_effect = [some_host, some_host, some_host, some_host]
+        definitions = naming.Naming()
+        definitions._ParseLine('FOO = 10.0.0.1/32', 'networks')
+        definitions._ParseLine('SOME_HOST = 10.1.0.1/32', 'networks')
+        definitions._ParseLine('HTTPS = 443/tcp', 'services')
+        definitions._ParseLine('SMTP = 25/tcp', 'services')
+        definitions._ParseLine('QUIC = 25/udp', 'services')
+        
         pol = policy.ParsePolicy(
             GOOD_HEADER
             + GOOD_TERM_1
@@ -1564,7 +1558,7 @@ class JuniperSRXTest(absltest.TestCase):
             + TCP_ESTABLISHED_TERM
             + UDP_ESTABLISHED_TERM
             + DEFAULT_TERM_1,
-            self.naming,
+            definitions,
         )
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
         self.assertNotIn('udp-established-term', output)
@@ -1574,7 +1568,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testStatelessReply(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         ret = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1 + ICMP_RESPONSE_TERM, self.naming)
 
@@ -1593,7 +1587,7 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testNoVerbose(self):
         self.naming.GetNetAddr.return_value = _IPSET
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
         pol = policy.ParsePolicy(GOOD_HEADER_NOVERBOSE + GOOD_TERM_1, self.naming)
         srx = junipersrx.JuniperSRX(pol, EXP_INFO)
         self.assertNotIn('This is a test acl with a comment', str(srx))
@@ -1604,7 +1598,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testDropUndefinedAddressbookTermsV4ForV6Render(self):
         # V4-only term should be dropped when rendering ACL as V6 - b/172933068
         udon = [nacaddr.IP('10.0.0.2/32', token='UDON')]
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [udon]
 
         # GOOD_HEADER_4 specifies V6 rendering
@@ -1617,7 +1611,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testDeleteV4AddressEntriesForV6Render(self):
         # Confirm V4 address book entries are not generated when rendering as V6
         udon = [nacaddr.IP('10.0.0.2/32', token='UDON')]
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [udon]
 
         # GOOD_HEADER_4 specifies V6 rendering
@@ -1630,7 +1624,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testDropUndefinedAddressbookTermsV6ForV4Render(self):
         # V6-only term should be dropped when rendering ACL as V4 - b/172933068
         udon = [nacaddr.IP('2001:4860:8000::5/128', token='UDON')]
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [udon]
 
         # GOOD_HEADER_3 specifies V4 rendering
@@ -1643,7 +1637,7 @@ class JuniperSRXTest(absltest.TestCase):
     def testDeleteV6AddressEntriesForV4Render(self):
         # Confirm V6 address book entries are not generated when rendering as V4
         udon = [nacaddr.IP('2001:4860:8000::5/128', token='UDON')]
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [udon]
 
         # GOOD_HEADER_3 specifies V4 rendering
@@ -1677,7 +1671,7 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER = MIXED rendering
@@ -1723,7 +1717,7 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER_4 = V6 rendering
@@ -1752,16 +1746,12 @@ class JuniperSRXTest(absltest.TestCase):
     @capture.stdout
     def testEmptyACLEmptyAddressBookV6IpsV4Render(self):
         # V6-only 1024+ IPs; V4 rendering
-        overflow_ips = [
-            nacaddr.IP('2001:4860:8000::5/128'),
-            nacaddr.IP('3051:abd2:5400::9/128'),
-            nacaddr.IP('aee2:37ba:3cc0::3/128'),
-            nacaddr.IP('6f5d:abd2:1403::1/128'),
-            nacaddr.IP('577e:5400:3051::6/128'),
-            nacaddr.IP('af22:32d2:3f00::2/128'),
-        ]
-
+        definitions = naming.Naming()
         ips = list(nacaddr.IP('2620:0:1000:3103:eca0:2c09:6b32:e000/117').subnets(new_prefix=128))
+        definitions._ParseLine(f'FOO = 2001:4860:8000::5/128 3051:abd2:5400::9/128 aee2:37ba:3cc0::3/128 6f5d:abd2:1403::1/128 577e:5400:3051::6/128 af22:32d2:3f00::2/128 {ips}', 'networks')
+        definitions._ParseLine('QUIC = 25/udp', 'services')
+        definitions._ParseLine('HTTP = 80/tcp', 'services')
+
         mo_ips = []
         counter = 0
         for ip in ips:
@@ -1769,11 +1759,9 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
-        self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER_3 = V4 rendering
-        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_21, self.naming)
+        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_21, definitions)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
         address_set_count = output.count('address')
 
@@ -1803,7 +1791,7 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER = MIXED rendering
@@ -1848,7 +1836,7 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER_4 = V6 rendering
@@ -1882,7 +1870,7 @@ class JuniperSRXTest(absltest.TestCase):
                 mo_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + mo_ips]
 
         # GOOD_HEADER_3 = V4 rendering
@@ -1929,7 +1917,7 @@ class JuniperSRXTest(absltest.TestCase):
                 v6_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + v4_ips + v6_ips]
 
         # GOOD_HEADER = MIXED rendering
@@ -1976,7 +1964,7 @@ class JuniperSRXTest(absltest.TestCase):
                 v6_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + v4_ips + v6_ips]
 
         # GOOD_HEADER_4 = V6 rendering
@@ -2023,7 +2011,7 @@ class JuniperSRXTest(absltest.TestCase):
                 v6_ips.append(nacaddr.IP(ip))
             counter += 1
 
-        self.naming.GetServiceByProto.side_effect = [['25', '25']]
+        self.naming.GetServiceByProto.side_effect = [port.PPP('25/tcp')]
         self.naming.GetNetAddr.side_effect = [overflow_ips + v4_ips + v6_ips]
 
         # GOOD_HEADER_3 = V4 rendering

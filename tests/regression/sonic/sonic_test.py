@@ -63,7 +63,7 @@ class SONiCTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
         self.naming.GetNetAddr.return_value = TEST_IPS
 
         policy_text = GOOD_HEADER + GOOD_TCP_EST

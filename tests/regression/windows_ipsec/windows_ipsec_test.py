@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, policy, windows_ipsec
+from aerleon.lib import nacaddr, naming, policy, windows_ipsec, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -129,7 +129,7 @@ class WindowsIPSecTest(absltest.TestCase):
     @capture.stdout
     def testPolicy(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = windows_ipsec.WindowsIPSec(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -144,7 +144,7 @@ class WindowsIPSecTest(absltest.TestCase):
     @capture.stdout
     def testTcp(self):
         self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming.GetServiceByProto.return_value = [port.PPP('25/tcp')]
 
         acl = windows_ipsec.WindowsIPSec(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO

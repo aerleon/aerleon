@@ -20,7 +20,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nokiasrl, policy
+from aerleon.lib import nacaddr, naming, nokiasrl, policy, port
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -478,7 +478,7 @@ class NokiaSRLTest(absltest.TestCase):
 
     @capture.stdout
     def testMultiDport(self):
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
+        self.naming.GetServiceByProto.return_value = [port.PPP('1024-65535/tcp')]
 
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
@@ -535,7 +535,7 @@ class NokiaSRLTest(absltest.TestCase):
 
     @capture.stdout
     def testEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
@@ -548,7 +548,7 @@ class NokiaSRLTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TCP_ESTABLISHED_TERM_1, self.naming), EXP_INFO
@@ -561,7 +561,7 @@ class NokiaSRLTest(absltest.TestCase):
 
     @capture.stdout
     def testUdpEstablishedv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
@@ -572,7 +572,7 @@ class NokiaSRLTest(absltest.TestCase):
         print(output)
 
     def testTcpEstablishedWithNonTcpError1(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_1, self.naming)
         with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
@@ -583,28 +583,28 @@ class NokiaSRLTest(absltest.TestCase):
         )
 
     def testTcpEstablishedWithNonTcpError2(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_2, self.naming)
         with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testUnsupportedLogging(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_LOGGING, self.naming)
         with self.assertRaises(nokiasrl.UnsupportedLogging):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testEstablishedWithNonTcpUdpError(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_3, self.naming)
         with self.assertRaises(nokiasrl.EstablishedWithNonTcpUdpError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testEstablishedWithNoProtocolError(self):
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming.GetServiceByProto.return_value = [port.PPP('53/tcp')]
 
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_4, self.naming)
         with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):

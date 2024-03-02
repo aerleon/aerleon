@@ -21,7 +21,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, iptables, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, iptables, nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -674,7 +674,7 @@ class AclCheckTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.0.0.0/24')],
         ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -706,7 +706,7 @@ class AclCheckTest(absltest.TestCase):
             [nacaddr.IPv4('10.0.0.0/8')],
             [nacaddr.IPv4('10.128.0.0/9'), nacaddr.IPv4('10.64.0.0/10')],
         ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -740,7 +740,7 @@ class AclCheckTest(absltest.TestCase):
             dest_range.append(address.supernet(7))  # Grow to /25
 
         self.naming.GetNetAddr.side_effect = [source_range, dest_range]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -789,7 +789,7 @@ class AclCheckTest(absltest.TestCase):
             dest_range.append(address.supernet(15))  # Grow to /17
 
         self.naming.GetNetAddr.side_effect = [source_range, dest_range]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -822,7 +822,7 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testOptions(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO
@@ -1366,7 +1366,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         pol1 = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_WARNING_TERM, self.naming), EXP_INFO
@@ -1416,7 +1416,7 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testNoChain(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_NOCHAIN_INPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming),
@@ -1427,7 +1427,7 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testNoChainOutput(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming.GetServiceByProto.return_value = [port.PPP('80/tcp')]
 
         acl = iptables.Iptables(
             policy.ParsePolicy(
