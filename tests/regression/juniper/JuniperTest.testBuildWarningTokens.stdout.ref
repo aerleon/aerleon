@@ -12,6 +12,9 @@ firewall {
             term good_term_28 {
                 from {
                 }
+                then {
+                    next-ip 1.1.1.1/32;
+                }
             }
         }
     }

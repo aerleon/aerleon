@@ -15,8 +15,6 @@
 
 """Unittest for Speedway rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, speedway
@@ -149,7 +147,7 @@ EXP_INFO = 2
 class SpeedwayTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testSpeedwayOutputFormat(self):

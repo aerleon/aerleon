@@ -32,7 +32,7 @@
                     <member>any</member>
                   </source>
                   <destination>
-                    <member/>
+                    <member>FOOBAR</member>
                   </destination>
                   <service>
                     <member>service-good-term-1-tcp</member>
@@ -51,16 +51,16 @@
           </rulebase>
           <!-- Address Groups -->
           <address-group>
-            <entry name="">
+            <entry name="FOOBAR">
               <static>
-                <member>_0</member>
+                <member>FOOBAR_0</member>
               </static>
             </entry>
           </address-group>
           <!-- Addresses -->
           <address>
-            <entry name="_0">
-              <description>_0</description>
+            <entry name="FOOBAR_0">
+              <description>FOOBAR_0</description>
               <ip-netmask>10.0.0.0/8</ip-netmask>
             </entry>
           </address>

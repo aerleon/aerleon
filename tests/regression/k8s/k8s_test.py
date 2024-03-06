@@ -14,12 +14,10 @@
 # limitations under the License.
 """Unittest for K8s NetworkPolicy rendering module."""
 
-from unittest import mock
-
 import yaml
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import aclgenerator, k8s, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, k8s, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -255,36 +253,34 @@ UNSUPPORTED_PROTOS = ['igmp', 'pim', 'ah']
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
+TEST_IPS = ['10.2.3.4/32', '2001:4860:8000::5/128']
 
-TEST_INCLUDE_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('10.4.3.2/32')]
+TEST_INCLUDE_IPS = ['10.2.3.4/32', '10.4.3.2/32']
 
-TEST_EXCLUDE_IPS = [nacaddr.IP('10.4.3.2/32')]
+TEST_EXCLUDE_IPS = ['10.4.3.2/32']
 
-TEST_INCLUDE_RANGE = [nacaddr.IP('10.128.0.0/9')]
+TEST_INCLUDE_RANGE = ['10.128.0.0/9']
 
-TEST_EXCLUDE_RANGE = [nacaddr.IP('10.240.0.0/16')]
+TEST_EXCLUDE_RANGE = ['10.240.0.0/16']
 
-ANY_IPS = [nacaddr.IP('0.0.0.0/0'), nacaddr.IP('::/0')]
+ANY_IPS = ['0.0.0.0/0', '::/0']
 
-ANY_IPV4 = [nacaddr.IP('0.0.0.0/0')]
+ANY_IPV4 = ['0.0.0.0/0']
 
-ANY_IPV6 = [nacaddr.IP('::/0')]
+ANY_IPV6 = ['::/0']
 
-TEST_IPV4_ONLY = [nacaddr.IP('10.2.3.4/32')]
-
-TEST_IPV6_ONLY = [nacaddr.IP('2001:4860:8000::5/128')]
+TEST_IPV6_ONLY = ['2001:4860:8000::5/128']
 
 
 class K8sTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testGenericTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         expected = {
             'apiVersion': k8s.K8s._API_VERSION,
@@ -321,17 +317,12 @@ class K8sTest(parameterized.TestCase):
 
         policy_list = yaml.safe_load(str(acl))
         self.assertDictEqual(expected, policy_list)
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testGenericEgressTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         expected = {
             'apiVersion': k8s.K8s._API_VERSION,
@@ -370,17 +361,12 @@ class K8sTest(parameterized.TestCase):
 
         policy_list = yaml.safe_load(str(acl))
         self.assertDictEqual(expected, policy_list)
-
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testAllProtosTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53'], ['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_PROTO_ALL, self.naming), EXP_INFO)
 
@@ -397,8 +383,8 @@ class K8sTest(parameterized.TestCase):
 
     @capture.stdout
     def testPortRangeTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['0-1024']
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 0-1024/tcp', 'services')
 
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM, self.naming), EXP_INFO)
         policy_list = yaml.safe_load(str(acl))
@@ -416,8 +402,8 @@ class K8sTest(parameterized.TestCase):
 
     @capture.stdout
     def testAllowAllTcpTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         expected_ingress_ports = [{'protocol': 'TCP'}]
 
         acl = k8s.K8s(
@@ -474,6 +460,7 @@ class K8sTest(parameterized.TestCase):
         print(acl)
 
     def testBadDenyTerm(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
             'not support explicit deny',
@@ -483,7 +470,7 @@ class K8sTest(parameterized.TestCase):
         )
 
     def testBadSourceExclusionTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
             'missing required field',
@@ -493,7 +480,7 @@ class K8sTest(parameterized.TestCase):
         )
 
     def testBadIngressNoAddressTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
             'missing required field.+source',
@@ -503,7 +490,7 @@ class K8sTest(parameterized.TestCase):
         )
 
     def testBadEgressNoAddressTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
             'missing required field.+destination',
@@ -555,7 +542,8 @@ class K8sTest(parameterized.TestCase):
                 'policyTypes': ['Ingress'],
             },
         }
-        self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
+        self.naming._ParseLine(f'ANY_IPS = {" ".join(ip_block_cidr)}', 'networks')
+        self.naming._ParseLine(f'TEST_IPS = {" ".join(ip_block_exclude)}', 'networks')
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXCLUDE_SOURCE, self.naming), EXP_INFO
         )
@@ -607,7 +595,8 @@ class K8sTest(parameterized.TestCase):
                 'policyTypes': ['Egress'],
             },
         }
-        self.naming.GetNetAddr.side_effect = [ip_block_cidr, ip_block_exclude]
+        self.naming._ParseLine(f'ANY_IPS = {" ".join(ip_block_cidr)}', 'networks')
+        self.naming._ParseLine(f'TEST_IPS = {" ".join(ip_block_exclude)}', 'networks')
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER_EGRESS + GOOD_TERM_EXCLUDE_DEST, self.naming), EXP_INFO
         )
@@ -617,7 +606,7 @@ class K8sTest(parameterized.TestCase):
         self.assertDictEqual(expected, policies[0])
 
     def testBadSourceAddressExcludeTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32', 'networks')
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER + BAD_TERM_EMPTY_SOURCE, self.naming), EXP_INFO
         )
@@ -625,7 +614,7 @@ class K8sTest(parameterized.TestCase):
         self.assertEqual(str(acl), '')
 
     def testBadDestinationAddressExcludeTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPV4_ONLY
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32', 'networks')
 
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER_EGRESS + BAD_TERM_EMPTY_DEST, self.naming), EXP_INFO
@@ -634,8 +623,8 @@ class K8sTest(parameterized.TestCase):
         self.assertEqual(str(acl), '')
 
     def testBadSourcePortTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
 
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
@@ -646,8 +635,8 @@ class K8sTest(parameterized.TestCase):
         )
 
     def testBadIngressDestinationTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
 
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
@@ -658,8 +647,8 @@ class K8sTest(parameterized.TestCase):
         )
 
     def testBadEgressSourceTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/udp', 'services')
 
         self.assertRaisesRegex(
             k8s.K8sNetworkPolicyError,
@@ -671,36 +660,33 @@ class K8sTest(parameterized.TestCase):
 
     @capture.stdout
     def testValidTermNames(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         for name in VALID_TERM_NAMES:
-            self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name, self.naming)
             acl = k8s.K8s(pol, EXP_INFO)
             self.assertIsNotNone(str(acl))
             print(acl)
 
     def testInvalidTermNames(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         for name in INVALID_TERM_NAMES:
-            self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name, self.naming)
             self.assertRaisesRegex(
                 k8s.K8sNetworkPolicyError, 'name %s is not valid' % name, k8s.K8s, pol, EXP_INFO
             )
 
     def testSkipExpiredTerm(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
 
         acl = k8s.K8s(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_EXPIRED, self.naming), EXP_INFO)
         self.assertEqual(str(acl), '')
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
-
     def testSkipStatelessReply(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         # Add stateless_reply to terms, there is no current way to include it in the
         # term definition.
@@ -712,32 +698,27 @@ class K8sTest(parameterized.TestCase):
         acl = k8s.K8s(ret, EXP_INFO)
         self.assertEqual(str(acl), '')
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
-        )
-
     @capture.stdout
     def testValidTermProtos(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         for proto in SUPPORTED_PROTOS:
-            self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.return_value = ['53']
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
             acl = k8s.K8s(pol, EXP_INFO)
             self.assertIsNotNone(str(acl))
             print(acl)
 
     def testInvalidTermProtos(self):
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         for proto in UNSUPPORTED_PROTOS:
-            self.naming.GetNetAddr.return_value = TEST_IPS
-            self.naming.GetServiceByProto.return_value = ['53']
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_PROTO % proto, self.naming)
             self.assertRaises(aclgenerator.UnsupportedFilterError, k8s.K8s, pol, EXP_INFO)
 
     @capture.stdout
     def testMultipleTerms(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         acl = k8s.K8s(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM + GOOD_TERM_ALLOW_ALL_TCP, self.naming),

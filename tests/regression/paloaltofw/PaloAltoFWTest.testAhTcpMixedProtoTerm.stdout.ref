@@ -29,10 +29,10 @@
                     <member>trust</member>
                   </from>
                   <source>
-                    <member>any-ipv4</member>
+                    <member>FOOBAR</member>
                   </source>
                   <destination>
-                    <member>any-ipv4</member>
+                    <member>any</member>
                   </destination>
                   <service>
                     <member>any-tcp</member>
@@ -55,10 +55,10 @@
                     <member>trust</member>
                   </from>
                   <source>
-                    <member>any-ipv4</member>
+                    <member>FOOBAR</member>
                   </source>
                   <destination>
-                    <member>any-ipv4</member>
+                    <member>any</member>
                   </destination>
                   <service>
                     <member>application-default</member>
@@ -76,12 +76,18 @@
             </security>
           </rulebase>
           <!-- Address Groups -->
-          <address-group/>
+          <address-group>
+            <entry name="FOOBAR">
+              <static>
+                <member>FOOBAR_0</member>
+              </static>
+            </entry>
+          </address-group>
           <!-- Addresses -->
           <address>
-            <entry name="any-ipv4">
-              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
-              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            <entry name="FOOBAR_0">
+              <description>FOOBAR_0</description>
+              <ip-netmask>0.0.0.0/0</ip-netmask>
             </entry>
           </address>
           <tag>

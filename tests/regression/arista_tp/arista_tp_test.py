@@ -360,7 +360,7 @@ term INET6_MIXED {
 MIXED_MIXED = """
 term MIXED_MIXED {
   source-address:: GOOGLE_DNS
-  destination-address:: GOOGLE_DNS
+  destination-address:: SOME_HOST
   action:: accept
 }
 """
@@ -390,7 +390,7 @@ term INET_INET {
 INET6_INET6 = """
 term INET6_INET6 {
   source-address:: SOME_HOST
-  destination-address:: SOME_HOST
+  destination-address:: INTERNAL
   action:: accept
 }
 """
@@ -571,12 +571,12 @@ EXP_INFO = 2
 class AristaTpTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testOptions(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["80"]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_2, self.naming), EXP_INFO
@@ -586,15 +586,12 @@ class AristaTpTest(absltest.TestCase):
         # verify that tcp-established; doesn't get duplicated if both
         # 'established' and 'tcp-established' options are included in term
         self.assertEqual(output.count("established"), 1)
-
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("HTTP", "tcp")
         print(output)
 
     @capture.stdout
     def testTermAndFilterName(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming), EXP_INFO
@@ -604,12 +601,9 @@ class AristaTpTest(absltest.TestCase):
         self.assertIn("match good-term-1", output, output)
         self.assertIn("traffic-policy test-filter", output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
-
     def testBadFilterType(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(BAD_HEADER + GOOD_TERM_1, self.naming)
         self.assertRaises(
@@ -618,12 +612,10 @@ class AristaTpTest(absltest.TestCase):
             pol,
             EXP_INFO,
         )
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
 
     def testDuplicateTermName(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         pol = policy.ParsePolicy(GOOD_HEADER + DUPLICATE_TERMS, self.naming)
         self.assertRaises(
@@ -632,8 +624,6 @@ class AristaTpTest(absltest.TestCase):
             pol,
             EXP_INFO,
         )
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
 
     @capture.stdout
     def testCounterCleanup(self):
@@ -682,8 +672,8 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("2001::/33")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming._ParseLine('SOME_HOST = 2001::/33', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -691,8 +681,6 @@ class AristaTpTest(absltest.TestCase):
         output = str(atp)
         self.assertTrue("protocol icmpv6" in output and "protocol tcp" in output, output)
 
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
         print(output)
 
     @capture.stdout
@@ -761,36 +749,31 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ["53"]
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER + ESTABLISHED_TERM_1
         atp = arista_tp.AristaTrafficPolicy(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
         output = str(atp)
         self.assertIn("established", output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with("DNS", "tcp")
         print(output)
 
     def testNonTcpWithTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ["53"]
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         policy_text = GOOD_HEADER + BAD_TERM_1
         pol_obj = policy.ParsePolicy(policy_text, self.naming)
         atp = arista_tp.AristaTrafficPolicy(pol_obj, EXP_INFO)
         self.assertRaises(arista_tp.TcpEstablishedWithNonTcpError, str, atp)
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call("DNS", "tcp"), mock.call("DNS", "udp")]
-        )
-
     @capture.stdout
     def testNoVerboseMixed(self):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IP("192.168." + str(octet) + ".64/27")
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+            addr_list.append(str(net))
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -800,8 +783,6 @@ class AristaTpTest(absltest.TestCase):
         )
         self.assertIn("192.168.0.64/27", str(atp))
         self.assertNotIn("COMMENT", str(atp))
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
         print(atp)
 
     @capture.stdout
@@ -809,9 +790,9 @@ class AristaTpTest(absltest.TestCase):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IP("192.168." + str(octet) + ".64/27")
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+            addr_list.append(str(net))
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -821,8 +802,6 @@ class AristaTpTest(absltest.TestCase):
         )
         self.assertIn("192.168.0.64/27", str(atp))
         self.assertNotIn("COMMENT", str(atp))
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
         print(atp)
 
     @capture.stdout
@@ -830,9 +809,9 @@ class AristaTpTest(absltest.TestCase):
         addr_list = list()
         for octet in range(0, 256):
             net = nacaddr.IPv6("2001:db8:1010:" + str(octet) + "::64/64", strict=False)
-            addr_list.append(net)
-        self.naming.GetNetAddr.return_value = addr_list
-        self.naming.GetServiceByProto.return_value = ["25"]
+            addr_list.append(str(net))
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(
@@ -842,8 +821,6 @@ class AristaTpTest(absltest.TestCase):
         )
         self.assertIn("2001:db8:1010:90::/61", str(atp))
         self.assertNotIn("COMMENT", str(atp))
-        self.naming.GetNetAddr.assert_called_once_with("SOME_HOST")
-        self.naming.GetServiceByProto.assert_called_once_with("SMTP", "tcp")
         print(atp)
 
     def testTermTypeIndexKeys(self):
@@ -910,8 +887,8 @@ class AristaTpTest(absltest.TestCase):
     @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testSkipTermAF(self, mock_warning):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.0.0.0/8")]
-        self.naming.GetServiceByProto.return_value = ["25"]
+        self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_TERM_1_V6, self.naming), EXP_INFO
@@ -1037,7 +1014,8 @@ class AristaTpTest(absltest.TestCase):
         ip1 = nacaddr.IPv4("10.0.0.0/8")
         ip2 = nacaddr.IPv4("172.16.0.0/12")
         terms = (GOOD_TERM_18_SRC, GOOD_TERM_18_DST)
-        self.naming.GetNetAddr.side_effect = [[big, ip1, ip2], [ip1]] * len(terms)
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/1 10.0.0.0/8 172.16.0.0/12', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
 
         mock_calls = []
         for term in terms:
@@ -1055,24 +1033,13 @@ class AristaTpTest(absltest.TestCase):
             mock_calls.append(mock.call("INTERNAL"))
             mock_calls.append(mock.call("SOME_HOST"))
 
-        self.naming.GetNetAddr.assert_has_calls(mock_calls)
-
     @capture.stdout
     def testMixedInet(self):
-        mockGetNetAddr1 = [
-            nacaddr.IP("8.8.4.4"),
-            nacaddr.IP("8.8.8.8"),
-            nacaddr.IP("2001:4860:4860::8844"),
-            nacaddr.IP("2001:4860:4860::8888"),
-        ]
-
-        mockGetNetAddr2 = [
-            nacaddr.IP("10.0.0.0/8"),
-            nacaddr.IP("172.16.0.0/12"),
-            nacaddr.IP("192.168.0.0/16"),
-        ]
-
-        self.naming.GetNetAddr.side_effect = [mockGetNetAddr1, mockGetNetAddr2]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER + MIXED_INET, self.naming)
         atp = arista_tp.AristaTrafficPolicy(pol, EXP_INFO)
@@ -1086,16 +1053,11 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInetMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("10.0.0.0/8"), nacaddr.IP("172.16.0.0/12"), nacaddr.IP("192.168.0.0/16")],
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ],
-        ]
-
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET_MIXED, self.naming), EXP_INFO
         )
@@ -1109,15 +1071,11 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedInet6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ],
-            [nacaddr.IP("2001:4860:4860::8844")],
-        ]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_INET6, self.naming), EXP_INFO
         )
@@ -1133,15 +1091,11 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Mixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("2001:4860:4860::8844")],
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ],
-        ]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844/128', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_MIXED, self.naming), EXP_INFO
         )
@@ -1155,20 +1109,14 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ],
-            [
-                nacaddr.IP("4.4.2.2"),
-                nacaddr.IP("4.4.4.4"),
-                nacaddr.IP("2001:4860:1337::8844"),
-                nacaddr.IP("2001:4860:1337::8888"),
-            ],
-        ]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 4.4.2.2/32 4.4.4.4/32 2001:4860:1337::8844/128 2001:4860:1337::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_MIXED, self.naming), EXP_INFO
         )
@@ -1184,14 +1132,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testMixedAny(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ]
-        ]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + MIXED_ANY, self.naming), EXP_INFO
         )
@@ -1205,14 +1149,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testAnyMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4860::8888"),
-            ]
-        ]
+        self.naming._ParseLine(
+            'GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + ANY_MIXED, self.naming), EXP_INFO
         )
@@ -1226,10 +1166,8 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInetInet(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("8.8.4.4"), nacaddr.IP("8.8.8.8")],
-            [nacaddr.IP("4.4.2.2"), nacaddr.IP("4.4.4.4")],
-        ]
+        self.naming._ParseLine('NTP_SERVERS = 8.8.4.4/32 8.8.8.8/32', 'networks')
+        self.naming._ParseLine('INTERNAL = 4.4.2.2/32 4.4.4.4/32', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET_INET, self.naming), EXP_INFO
         )
@@ -1241,10 +1179,12 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Inet6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("2001:4860:4860::8844"), nacaddr.IP("2001:4860:4860::8888")],
-            [nacaddr.IP("2001:4860:1337::8844"), nacaddr.IP("2001:4860:1337::8888")],
-        ]
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks'
+        )
+        self.naming._ParseLine(
+            'INTERNAL = 2001:4860:1337::8844/128 2001:4860:1337::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_INET6, self.naming), EXP_INFO
         )
@@ -1256,10 +1196,8 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInetInet6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("8.8.4.4"), nacaddr.IP("8.8.8.8")],
-            [nacaddr.IP("2001:4860:4860::8844"), nacaddr.IP("2001:4860:4860::8888")],
-        ]
+        self.naming._ParseLine('INTERNAL = 8.8.4.4/32 8.8.8.8/32', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001:4860:4860::8844 2001:4860:4860::8888', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET_INET6, self.naming), EXP_INFO
         )
@@ -1272,10 +1210,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testInet6Inet(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("2001:4860:4860::8844"), nacaddr.IP("2001:4860:4860::8888")],
-            [nacaddr.IP("8.8.4.4"), nacaddr.IP("8.8.8.8")],
-        ]
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks'
+        )
+        self.naming._ParseLine('INTERNAL = 8.8.4.4/32 8.8.8.8/32', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + INET6_INET, self.naming), EXP_INFO
         )
@@ -1286,10 +1224,8 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testSrcFsInet(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("8.8.4.0/24"), nacaddr.IP("8.8.8.0/24")],
-            [nacaddr.IP("8.8.4.4"), nacaddr.IP("8.8.8.8")],
-        ]
+        self.naming._ParseLine('INTERNAL = 8.8.4.0/24 8.8.8.0/24', 'networks')
+        self.naming._ParseLine('SOME_HOST = 8.8.4.4/32 8.8.8.8/32', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + SRC_FIELD_SET_INET, self.naming), EXP_INFO
         )
@@ -1300,10 +1236,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testSrcFsInet6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("2001:4860:4860::/64"), nacaddr.IP("2001:4860:4861::/64")],
-            [nacaddr.IP("2001:4860:4860::8844"), nacaddr.IP("2001:4860:4861::8888")],
-        ]
+        self.naming._ParseLine('INTERNAL = 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + SRC_FIELD_SET_INET6, self.naming), EXP_INFO
         )
@@ -1314,21 +1250,14 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testSrcFsMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.0/24"),
-                nacaddr.IP("8.8.8.0/24"),
-                nacaddr.IP("2001:4860:4860::/64"),
-                nacaddr.IP("2001:4860:4860::/64"),
-                nacaddr.IP("2001:4860:4861::/64"),
-            ],
-            [
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4861::8888"),
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-            ],
-        ]
+        self.naming._ParseLine(
+            'INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128 8.8.4.4/32 8.8.8.8/32',
+            'networks',
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + SRC_FIELD_SET_MIXED, self.naming), EXP_INFO
         )
@@ -1341,10 +1270,8 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testDstFsInet(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("8.8.4.0/24"), nacaddr.IP("8.8.8.0/24")],
-            [nacaddr.IP("8.8.4.4"), nacaddr.IP("8.8.8.8")],
-        ]
+        self.naming._ParseLine('INTERNAL = 8.8.4.0/24 8.8.8.0/24', 'networks')
+        self.naming._ParseLine('SOME_HOST = 8.8.4.4/32 8.8.8.8/32', 'networks')
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + DST_FIELD_SET_INET, self.naming), EXP_INFO
         )
@@ -1355,10 +1282,10 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testDstFsInet6(self):
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP("2001:4860:4860::/64"), nacaddr.IP("2001:4860:4861::/64")],
-            [nacaddr.IP("2001:4860:4860::8844"), nacaddr.IP("2001:4860:4861::8888")],
-        ]
+        self.naming._ParseLine('INTERNAL = 2001:4860:4860::/64 2001:4860:4861::/64', 'networks')
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844/128 2001:4860:4861::8888/128', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + DST_FIELD_SET_INET6, self.naming), EXP_INFO
         )
@@ -1369,21 +1296,13 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testDstFsMixed(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP("8.8.4.0/24"),
-                nacaddr.IP("8.8.8.0/24"),
-                nacaddr.IP("2001:4860:4860::/64"),
-                nacaddr.IP("2001:4860:4860::/64"),
-                nacaddr.IP("2001:4860:4861::/64"),
-            ],
-            [
-                nacaddr.IP("2001:4860:4860::8844"),
-                nacaddr.IP("2001:4860:4861::8888"),
-                nacaddr.IP("8.8.4.4"),
-                nacaddr.IP("8.8.8.8"),
-            ],
-        ]
+        self.naming._ParseLine(
+            'INTERNAL = 8.8.4.0/24 8.8.8.0/24 2001:4860:4860::/64 2001:4860:4860::/64 2001:4860:4861::/64',
+            'networks',
+        )
+        self.naming._ParseLine(
+            'SOME_HOST = 2001:4860:4860::8844 2001:4860:4861::8888 8.8.4.4 8.8.8.8', 'networks'
+        )
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + DST_FIELD_SET_MIXED, self.naming), EXP_INFO
         )
@@ -1427,8 +1346,6 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testBuildTokens(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP("10.1.1.1/26", strict=False)]
-
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_28, self.naming), EXP_INFO
         )
@@ -1459,7 +1376,6 @@ class AristaTpTest(absltest.TestCase):
         print(atp)
 
     def testFailIsFragmentInV6(self):
-        self.naming.GetServiceByProto.return_value = ["22"]
         pol = policy.ParsePolicy(GOOD_HEADER_INET6 + OPTION_TERM_1, self.naming)
 
         self.assertRaises(
@@ -1472,7 +1388,6 @@ class AristaTpTest(absltest.TestCase):
     @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testFailIsFragmentInMixed(self, mock_warn):
-        self.naming.GetServiceByProto.return_value = ["22"]
         atp = arista_tp.AristaTrafficPolicy(
             policy.ParsePolicy(GOOD_HEADER + OPTION_TERM_1, self.naming), EXP_INFO
         )

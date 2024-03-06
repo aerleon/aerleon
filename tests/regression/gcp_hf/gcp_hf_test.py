@@ -3,11 +3,10 @@
 """Tests for google3.third_party.py.aerleon.lib.gcp_hf.py."""
 
 import json
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import gcp, gcp_hf, nacaddr, naming, policy
+from aerleon.lib import gcp, gcp_hf, naming, policy
 from tests.regression_utils import capture
 
 HEADER_NO_OPTIONS = """
@@ -661,266 +660,265 @@ BAD_TERM_DESTINATION_PORTS = """
 term hf-too-many-destination-ports {
   comment:: "Generic description"
   source-address:: INTERNAL
-  destination-port:: TP2000
-  destination-port:: TP2001
   destination-port:: TP2002
-  destination-port:: TP2003
   destination-port:: TP2004
-  destination-port:: TP2005
   destination-port:: TP2006
-  destination-port:: TP2007
   destination-port:: TP2008
-  destination-port:: TP2009
   destination-port:: TP2010
-  destination-port:: TP2011
   destination-port:: TP2012
-  destination-port:: TP2013
   destination-port:: TP2014
-  destination-port:: TP2015
   destination-port:: TP2016
-  destination-port:: TP2017
   destination-port:: TP2018
-  destination-port:: TP2019
   destination-port:: TP2020
-  destination-port:: TP2021
   destination-port:: TP2022
-  destination-port:: TP2023
   destination-port:: TP2024
-  destination-port:: TP2025
   destination-port:: TP2026
-  destination-port:: TP2027
   destination-port:: TP2028
-  destination-port:: TP2029
   destination-port:: TP2030
-  destination-port:: TP2031
   destination-port:: TP2032
-  destination-port:: TP2033
   destination-port:: TP2034
-  destination-port:: TP2035
   destination-port:: TP2036
-  destination-port:: TP2037
   destination-port:: TP2038
-  destination-port:: TP2039
   destination-port:: TP2040
-  destination-port:: TP2041
   destination-port:: TP2042
-  destination-port:: TP2043
   destination-port:: TP2044
-  destination-port:: TP2045
   destination-port:: TP2046
-  destination-port:: TP2047
   destination-port:: TP2048
-  destination-port:: TP2049
   destination-port:: TP2050
-  destination-port:: TP2051
   destination-port:: TP2052
-  destination-port:: TP2053
   destination-port:: TP2054
-  destination-port:: TP2055
   destination-port:: TP2056
-  destination-port:: TP2057
   destination-port:: TP2058
-  destination-port:: TP2059
   destination-port:: TP2060
-  destination-port:: TP2061
   destination-port:: TP2062
-  destination-port:: TP2063
   destination-port:: TP2064
-  destination-port:: TP2065
   destination-port:: TP2066
-  destination-port:: TP2067
   destination-port:: TP2068
-  destination-port:: TP2069
   destination-port:: TP2070
-  destination-port:: TP2071
   destination-port:: TP2072
-  destination-port:: TP2073
   destination-port:: TP2074
-  destination-port:: TP2075
   destination-port:: TP2076
-  destination-port:: TP2077
   destination-port:: TP2078
-  destination-port:: TP2079
   destination-port:: TP2080
-  destination-port:: TP2081
   destination-port:: TP2082
-  destination-port:: TP2083
   destination-port:: TP2084
-  destination-port:: TP2085
   destination-port:: TP2086
-  destination-port:: TP2087
   destination-port:: TP2088
-  destination-port:: TP2089
   destination-port:: TP2090
-  destination-port:: TP2091
   destination-port:: TP2092
-  destination-port:: TP2093
   destination-port:: TP2094
-  destination-port:: TP2095
   destination-port:: TP2096
-  destination-port:: TP2097
   destination-port:: TP2098
-  destination-port:: TP2099
   destination-port:: TP2100
-  destination-port:: TP2101
   destination-port:: TP2102
-  destination-port:: TP2103
   destination-port:: TP2104
-  destination-port:: TP2105
   destination-port:: TP2106
-  destination-port:: TP2107
   destination-port:: TP2108
-  destination-port:: TP2109
   destination-port:: TP2110
-  destination-port:: TP2111
   destination-port:: TP2112
-  destination-port:: TP2113
   destination-port:: TP2114
-  destination-port:: TP2115
   destination-port:: TP2116
-  destination-port:: TP2117
   destination-port:: TP2118
-  destination-port:: TP2119
   destination-port:: TP2120
-  destination-port:: TP2121
   destination-port:: TP2122
-  destination-port:: TP2123
   destination-port:: TP2124
-  destination-port:: TP2125
   destination-port:: TP2126
-  destination-port:: TP2127
   destination-port:: TP2128
-  destination-port:: TP2129
   destination-port:: TP2130
-  destination-port:: TP2131
   destination-port:: TP2132
-  destination-port:: TP2133
   destination-port:: TP2134
-  destination-port:: TP2135
   destination-port:: TP2136
-  destination-port:: TP2137
   destination-port:: TP2138
-  destination-port:: TP2139
   destination-port:: TP2140
-  destination-port:: TP2141
   destination-port:: TP2142
-  destination-port:: TP2143
   destination-port:: TP2144
-  destination-port:: TP2145
   destination-port:: TP2146
-  destination-port:: TP2147
   destination-port:: TP2148
-  destination-port:: TP2149
   destination-port:: TP2150
-  destination-port:: TP2151
   destination-port:: TP2152
-  destination-port:: TP2153
   destination-port:: TP2154
-  destination-port:: TP2155
   destination-port:: TP2156
-  destination-port:: TP2157
   destination-port:: TP2158
-  destination-port:: TP2159
   destination-port:: TP2160
-  destination-port:: TP2161
   destination-port:: TP2162
-  destination-port:: TP2163
   destination-port:: TP2164
-  destination-port:: TP2165
   destination-port:: TP2166
-  destination-port:: TP2167
   destination-port:: TP2168
-  destination-port:: TP2169
   destination-port:: TP2170
-  destination-port:: TP2171
   destination-port:: TP2172
-  destination-port:: TP2173
   destination-port:: TP2174
-  destination-port:: TP2175
   destination-port:: TP2176
-  destination-port:: TP2177
   destination-port:: TP2178
-  destination-port:: TP2179
   destination-port:: TP2180
-  destination-port:: TP2181
   destination-port:: TP2182
-  destination-port:: TP2183
   destination-port:: TP2184
-  destination-port:: TP2185
   destination-port:: TP2186
-  destination-port:: TP2187
   destination-port:: TP2188
-  destination-port:: TP2189
   destination-port:: TP2190
-  destination-port:: TP2191
   destination-port:: TP2192
-  destination-port:: TP2193
   destination-port:: TP2194
-  destination-port:: TP2195
   destination-port:: TP2196
-  destination-port:: TP2197
   destination-port:: TP2198
-  destination-port:: TP2199
   destination-port:: TP2200
-  destination-port:: TP2201
   destination-port:: TP2202
-  destination-port:: TP2203
   destination-port:: TP2204
-  destination-port:: TP2205
   destination-port:: TP2206
-  destination-port:: TP2207
   destination-port:: TP2208
-  destination-port:: TP2209
   destination-port:: TP2210
-  destination-port:: TP2211
   destination-port:: TP2212
-  destination-port:: TP2213
   destination-port:: TP2214
-  destination-port:: TP2215
   destination-port:: TP2216
-  destination-port:: TP2217
   destination-port:: TP2218
-  destination-port:: TP2219
   destination-port:: TP2220
-  destination-port:: TP2221
   destination-port:: TP2222
-  destination-port:: TP2223
   destination-port:: TP2224
-  destination-port:: TP2225
   destination-port:: TP2226
-  destination-port:: TP2227
   destination-port:: TP2228
-  destination-port:: TP2229
   destination-port:: TP2230
-  destination-port:: TP2231
   destination-port:: TP2232
-  destination-port:: TP2233
   destination-port:: TP2234
-  destination-port:: TP2235
   destination-port:: TP2236
-  destination-port:: TP2237
   destination-port:: TP2238
-  destination-port:: TP2239
   destination-port:: TP2240
-  destination-port:: TP2241
   destination-port:: TP2242
-  destination-port:: TP2243
   destination-port:: TP2244
-  destination-port:: TP2245
   destination-port:: TP2246
-  destination-port:: TP2247
   destination-port:: TP2248
-  destination-port:: TP2249
   destination-port:: TP2250
-  destination-port:: TP2251
   destination-port:: TP2252
-  destination-port:: TP2253
   destination-port:: TP2254
-  destination-port:: TP2255
   destination-port:: TP2256
-  destination-port:: TP2257
   destination-port:: TP2258
-  destination-port:: TP2259
+  destination-port:: TP2260
+  destination-port:: TP2262
+  destination-port:: TP2264
+  destination-port:: TP2266
+  destination-port:: TP2268
+  destination-port:: TP2270
+  destination-port:: TP2272
+  destination-port:: TP2274
+  destination-port:: TP2276
+  destination-port:: TP2278
+  destination-port:: TP2280
+  destination-port:: TP2282
+  destination-port:: TP2284
+  destination-port:: TP2286
+  destination-port:: TP2288
+  destination-port:: TP2290
+  destination-port:: TP2292
+  destination-port:: TP2294
+  destination-port:: TP2296
+  destination-port:: TP2298
+  destination-port:: TP2300
+  destination-port:: TP2302
+  destination-port:: TP2304
+  destination-port:: TP2306
+  destination-port:: TP2308
+  destination-port:: TP2310
+  destination-port:: TP2312
+  destination-port:: TP2314
+  destination-port:: TP2316
+  destination-port:: TP2318
+  destination-port:: TP2320
+  destination-port:: TP2322
+  destination-port:: TP2324
+  destination-port:: TP2326
+  destination-port:: TP2328
+  destination-port:: TP2330
+  destination-port:: TP2332
+  destination-port:: TP2334
+  destination-port:: TP2336
+  destination-port:: TP2338
+  destination-port:: TP2340
+  destination-port:: TP2342
+  destination-port:: TP2344
+  destination-port:: TP2346
+  destination-port:: TP2348
+  destination-port:: TP2350
+  destination-port:: TP2352
+  destination-port:: TP2354
+  destination-port:: TP2356
+  destination-port:: TP2358
+  destination-port:: TP2360
+  destination-port:: TP2362
+  destination-port:: TP2364
+  destination-port:: TP2366
+  destination-port:: TP2368
+  destination-port:: TP2370
+  destination-port:: TP2372
+  destination-port:: TP2374
+  destination-port:: TP2376
+  destination-port:: TP2378
+  destination-port:: TP2380
+  destination-port:: TP2382
+  destination-port:: TP2384
+  destination-port:: TP2386
+  destination-port:: TP2388
+  destination-port:: TP2390
+  destination-port:: TP2392
+  destination-port:: TP2394
+  destination-port:: TP2396
+  destination-port:: TP2398
+  destination-port:: TP2400
+  destination-port:: TP2402
+  destination-port:: TP2404
+  destination-port:: TP2406
+  destination-port:: TP2408
+  destination-port:: TP2410
+  destination-port:: TP2412
+  destination-port:: TP2414
+  destination-port:: TP2416
+  destination-port:: TP2418
+  destination-port:: TP2420
+  destination-port:: TP2422
+  destination-port:: TP2424
+  destination-port:: TP2426
+  destination-port:: TP2428
+  destination-port:: TP2430
+  destination-port:: TP2432
+  destination-port:: TP2434
+  destination-port:: TP2436
+  destination-port:: TP2438
+  destination-port:: TP2440
+  destination-port:: TP2442
+  destination-port:: TP2444
+  destination-port:: TP2446
+  destination-port:: TP2448
+  destination-port:: TP2450
+  destination-port:: TP2452
+  destination-port:: TP2454
+  destination-port:: TP2456
+  destination-port:: TP2458
+  destination-port:: TP2460
+  destination-port:: TP2462
+  destination-port:: TP2464
+  destination-port:: TP2466
+  destination-port:: TP2468
+  destination-port:: TP2470
+  destination-port:: TP2472
+  destination-port:: TP2474
+  destination-port:: TP2476
+  destination-port:: TP2478
+  destination-port:: TP2480
+  destination-port:: TP2482
+  destination-port:: TP2484
+  destination-port:: TP2486
+  destination-port:: TP2488
+  destination-port:: TP2490
+  destination-port:: TP2492
+  destination-port:: TP2494
+  destination-port:: TP2496
+  destination-port:: TP2498
+  destination-port:: TP2500
+  destination-port:: TP2502
+  destination-port:: TP2504
+  destination-port:: TP2506
+  destination-port:: TP2508
+  destination-port:: TP2510
+  destination-port:: TP2512
+  destination-port:: TP2514
+  destination-port:: TP2516
+  destination-port:: TP2518
   protocol:: tcp
   action:: next
 }
@@ -2477,19 +2475,14 @@ SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny', 'next'}}
 
 EXP_INFO = 2
 
-TEST_IP = [nacaddr.IP('10.0.0.0/8')]
-TEST_IPV6_IP = [nacaddr.IP('2001:4860:8000::5/128')]
-TEST_MIXED_IPS = [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('2001:4860:8000::5/128')]
-ALL_IPV4_IPS = [nacaddr.IP('0.0.0.0/0')]
-ALL_IPV6_IPS = [nacaddr.IP('::/0')]
-MANY_IPS = [nacaddr.IP('192.168.' + str(x) + '.0/32') for x in range(0, 256)]
-MANY_IPS.extend([nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.1.1')])
+MANY_IPS = ['192.168.' + str(x) + '.0/32' for x in range(0, 256)]
+MANY_IPS.extend(['10.0.0.1', '10.0.1.1'])
 
 
 class GcpHfTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def _StripAclHeaders(self, acl):
         return '\n'.join(
@@ -2499,7 +2492,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testDefaultHeader(self):
         """Test that a header without options is accepted."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('ALL = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
@@ -2511,7 +2504,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionMaxHeader(self):
         """Test that a header with a default maximum cost is accepted."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('ALL = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MAX + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
@@ -2523,7 +2516,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionEgressHeader(self):
         """Test that a header with direction is accepted."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_RESTRICT_EGRESS, self.naming), EXP_INFO
@@ -2535,7 +2528,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionAFHeader(self):
         """Test that a header with address family is accepted."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_AF + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
@@ -2547,7 +2540,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionEgressAndMaxHeader(self):
         """Test a header with direction and default maximum cost is accepted."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_MAX + TERM_RESTRICT_EGRESS, self.naming),
@@ -2560,7 +2553,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionEgressAndAF(self):
         """Test a header with a direction and address family is accepted."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
@@ -2573,7 +2566,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionMaxAndAF(self):
         """Test a header with default maximum cost & address family is accepted."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('ANY = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MAX_AND_AF + TERM_ALLOW_ALL_INTERNAL, self.naming),
@@ -2586,7 +2579,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testOptionApiVersionAFHeader(self):
         """Test that a header with api_version is accepted."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_BETA + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
@@ -2708,6 +2701,7 @@ class GcpHfTest(parameterized.TestCase):
 
         Tags are not supported in HF.
         """
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_DEST_TAG, self.naming),
@@ -2719,6 +2713,7 @@ class GcpHfTest(parameterized.TestCase):
 
         Tags are not supported in HF.
         """
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_USING_SOURCE_TAG, self.naming),
@@ -2728,7 +2723,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testTermWithNumberedProtocol(self):
         """Test that a protocol number is supported."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_NUMBERED_PROTOCOL, self.naming), EXP_INFO
@@ -2739,8 +2734,8 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnTermWithSourcePort(self):
         """Test that a term with a source port raises Term error."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-        self.naming.GetServiceByProto.side_effect = [['53']]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PORT = 53/tcp', 'services')
 
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
@@ -2749,7 +2744,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnTermWithTooManyTargetResources(self):
         """Test that a term with > 256 targetResources raises TermError."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
@@ -2759,17 +2754,14 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnTermWithTooManyDestinationPorts(self):
         """Test that a term with > 256 destination ports raises TermError."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        # self.naming.GetNetAddr.return_value = TEST_IP
 
         # Create a list of 260 numbers to use as destination ports and raise an error
         # Using even numbers ensures that the port list does not get condensed to a range.
-        se_array = []
         for x in range(2000, 2520):
             if x % 2 == 0:
-                se_array.append([str(x)])
-        # Use destination port list to successively mock return values.
-        self.naming.GetServiceByProto.side_effect = se_array
-
+                self.naming._ParseLine(f'TP{x} = {x}/tcp', 'services')
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_DESTINATION_PORTS, self.naming),
@@ -2778,7 +2770,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnTermWithOptions(self):
         """Test that a term with a source port raises Term error."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
@@ -2787,7 +2779,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnInvalidProjectID(self):
         """Test that an invalid project ID on target resources raises Term error."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('ANY = 10.0.0.0/8', 'networks')
 
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
@@ -2797,8 +2789,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesTermErrorOnInvalidVPCName(self):
         """Test that an invalid VPC name on target resources raises Term error."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-
+        self.naming._ParseLine('ANY = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp.TermError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(HEADER_NO_OPTIONS + BAD_TERM_NON_VALID_VPC_NAME, self.naming),
@@ -2830,8 +2821,6 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testIgnoreTermWithPlatformExclude(self):
         """Test that a term with platform exclude is ignored."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(
                 HEADER_OPTION_AF + TERM_PLATFORM_EXCLUDE + TERM_ALLOW_ALL_INTERNAL, self.naming
@@ -2845,7 +2834,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testTermWithPlatformExists(self):
         """Test that a term with platform is rendered."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('ANY = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_AF + TERM_PLATFORM_ALLOW_ALL_INTERNAL, self.naming),
@@ -2857,8 +2846,9 @@ class GcpHfTest(parameterized.TestCase):
 
     @capture.stdout
     def testIgnoreTermWithICMPv6(self):
-        """Test that a term with only an icmpv6 protocol is not rendered."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        """Test that a term with only an icmpv6 protocol is no
+        t rendered."""
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_AF + BAD_TERM_IP_VERSION_MISMATCH, self.naming),
@@ -2871,7 +2861,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6IgnoreTermWithICMP(self):
         """Test that a term with only an icmp protocol is not rendered for inet6."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_ICMP_VERSION_MISMATCH, self.naming),
@@ -2884,7 +2874,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6IgnoreTermWithIGMP(self):
         """Test that a term with only an igmp protocol is not rendered for inet6."""
-        self.naming.GetNetAddr.return_value = TEST_IP
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + BAD_TERM_IGMP_VERSION_MISMATCH, self.naming),
@@ -2897,8 +2887,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6TermWithIPv6Addresses(self):
         """Test that IPv6 addresses are supported with inet6."""
-        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -2910,8 +2900,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6TermWithMixedAddresses(self):
         """Test that Mixed addresses are supported with inet6."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -2923,8 +2913,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6TermWithIPv4Addresses(self):
         """Test that IPv4 addresses are not rendered with inet6."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -2936,8 +2926,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInetTermWithMixedAddresses(self):
         """Test that Mixed addresses are supported with inet."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
@@ -2950,8 +2940,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInetTermWithIPv6Addresses(self):
         """Test that IPv6 addresses are not rendered with inet."""
-        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS_AND_AF + TERM_RESTRICT_EGRESS, self.naming),
@@ -2964,8 +2954,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testMixedTermWithMixedAddresses(self):
         """Test that IPv4 and IPv6 addresses are supported with mixed."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -2977,8 +2967,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testMixedTermWithIPv4Addresses(self):
         """Test that IPv4 addresses are supported with mixed."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -2990,8 +2980,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testMixedTermWithIPv6Addresses(self):
         """Test that IPv6 addresses are supported with mixed."""
-        self.naming.GetNetAddr.return_value = TEST_IPV6_IP
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -3003,7 +2993,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testMixedTermWithICMP(self):
         """Test that ICMP protocol is supported with mixed."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL, self.naming),
             EXP_INFO,
@@ -3015,7 +3005,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testMixedTermWithICMPv6(self):
         """Test that ICMPv6 protocol is supported with mixed."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(
                 HEADER_OPTION_MIXED + TERM_ALLOW_MULTIPLE_PROTOCOL_ICMPV6, self.naming
@@ -3029,8 +3019,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInetIsDefaultInetVersion(self):
         """Test that inet is the default inet version when not specified."""
-        self.naming.GetNetAddr.return_value = TEST_MIXED_IPS
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_GA_NO_INET_OPTIONS + TERM_ALLOW_PORT, self.naming), EXP_INFO
@@ -3042,8 +3032,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testPriority(self):
         """Test that priority is set based on terms' ordering."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming._ParseLine('PUBLIC_NAT = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(
@@ -3058,8 +3048,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testLogging(self):
         """Test that logging is used when it is set on a term."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        self.naming._ParseLine('ANY = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_LOGGING, self.naming), EXP_INFO
@@ -3071,7 +3061,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testTargetResources(self):
         """Test that the target resources is used correctly."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
+        self.naming._ParseLine('ANY = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES, self.naming),
@@ -3084,7 +3074,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testSecondWayOfPassingTargetResources(self):
         """Test that the target resources is used correctly."""
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('0.0.0.0/0')]
+        self.naming._ParseLine('ANY = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_WITH_TARGET_RESOURCES_2, self.naming),
@@ -3098,7 +3088,7 @@ class GcpHfTest(parameterized.TestCase):
     def testMultiplePolicies(self):
         """Tests that both ingress and egress rules are included in one policy."""
         self.maxDiff = None
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('PUBLIC_NAT = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(
@@ -3119,8 +3109,8 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testPortRange(self):
         """Test that a port range is accepted and used correctly."""
-        self.naming.GetNetAddr.return_value = TEST_IP
-        self.naming.GetServiceByProto.side_effect = [['8000-9000']]
+        self.naming._ParseLine('PUBLIC_NAT = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('RANGE = 8000-9000/tcp', 'services')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_PORT_RANGE, self.naming), EXP_INFO
@@ -3132,7 +3122,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testTermLongComment(self):
         """Test that a term's long comment gets truncated and prefixed with term name."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_LONG_COMMENT, self.naming), EXP_INFO
@@ -3147,7 +3137,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testDefaultDenyIngressCreation(self):
         """Test that the correct IP is correctly set on a deny all ingress term."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_DENY_INGRESS, self.naming), EXP_INFO
@@ -3159,7 +3149,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6DefaultDenyIngressCreation(self):
         """Test that the IPv6 IP is correctly set on a deny all ingress term."""
-        self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
+        self.naming._ParseLine('INTERNAL = ::/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_INET6 + TERM_DENY_INGRESS, self.naming), EXP_INFO
@@ -3182,7 +3172,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testDefaultDenyEgressCreation(self):
         """Test that the correct IP is correctly set on a deny all egress term."""
-        self.naming.GetNetAddr.return_value = ALL_IPV4_IPS
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS + TERM_DENY_EGRESS, self.naming), EXP_INFO
@@ -3194,7 +3184,7 @@ class GcpHfTest(parameterized.TestCase):
     @capture.stdout
     def testInet6DefaultDenyEgressCreation(self):
         """Test that the IPv6 IP is correctly set on a deny all egress term."""
-        self.naming.GetNetAddr.return_value = ALL_IPV6_IPS
+        self.naming._ParseLine('INTERNAL = ::/0', 'networks')
 
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_EGRESS_INET6 + TERM_DENY_EGRESS, self.naming),
@@ -3218,7 +3208,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testBuildTokens(self):
         """Test that _BuildTokens generates the expected list of tokens."""
-        self.naming.GetNetAddr.side_effect = [TEST_IP]
+        self.naming._ParseLine('INTERNAL = ::/0', 'networks')
 
         pol1 = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_NO_OPTIONS + TERM_ALLOW_ALL_INTERNAL, self.naming), EXP_INFO
@@ -3229,7 +3219,7 @@ class GcpHfTest(parameterized.TestCase):
 
     def testRaisesExceededCostError(self):
         """Test that ExceededCostError is raised when policy exceeds max cost."""
-        self.naming.GetNetAddr.side_effect = [TEST_IP]
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
         with self.assertRaises(gcp_hf.ExceededCostError):
             gcp_hf.HierarchicalFirewall(
                 policy.ParsePolicy(
@@ -3242,8 +3232,8 @@ class GcpHfTest(parameterized.TestCase):
     def testChunkedIPRanges(self):
         """Test that source IP ranges that exceed limit are chunked."""
         self.maxDiff = None
-        self.naming.GetNetAddr.side_effect = [MANY_IPS]
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine(f'PUBLIC_NAT = {" ".join(MANY_IPS)}', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(HEADER_OPTION_HIGH_QUOTA + TERM_ALLOW_PORT, self.naming), EXP_INFO
         )
@@ -3255,8 +3245,8 @@ class GcpHfTest(parameterized.TestCase):
     def testChunkedEgressIPRanges(self):
         """Test that destination IP ranges that exceed limit are chunked."""
         self.maxDiff = None
-        self.naming.GetNetAddr.side_effect = [MANY_IPS]
-        self.naming.GetServiceByProto.side_effect = [['80']]
+        self.naming._ParseLine(f'PUBLIC_NAT = {" ".join(MANY_IPS)}', 'networks')
+        self.naming._ParseLine('PORT = 80/tcp', 'services')
         acl = gcp_hf.HierarchicalFirewall(
             policy.ParsePolicy(
                 HEADER_OPTION_EGRESS_HIGH_QUOTA + TERM_ALLOW_EGRESS_PORT, self.naming

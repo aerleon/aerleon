@@ -15,8 +15,6 @@
 
 """Unittest for juniper evo acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import juniperevo, naming, policy
@@ -212,7 +210,7 @@ EXP_INFO = 2
 class JuniperEvoTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testIPv6HopOptProtocolIngressPhysical(self):

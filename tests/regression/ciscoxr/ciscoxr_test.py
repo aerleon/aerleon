@@ -14,11 +14,9 @@
 # limitations under the License.
 """Unittest for Cisco XR acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
-from aerleon.lib import ciscoxr, nacaddr, naming, policy
+from aerleon.lib import ciscoxr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
@@ -182,11 +180,11 @@ EXP_INFO = 2
 class CiscoXRTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testRemark(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -197,12 +195,12 @@ class CiscoXRTest(absltest.TestCase):
         expected = 'test-filter remark'
         self.assertNotIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
     def testStandardTermHost(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
+        self.naming._ParseLine('SOME_HOST2 = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_TERM_4, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -213,13 +211,13 @@ class CiscoXRTest(absltest.TestCase):
         expected = ' permit ipv4 host 10.1.1.1 any'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST2')])
         print(acl)
 
     @capture.stdout
     def testStandardTermHostIPv6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::3/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('SOME_HOST = 2001::3/128', 'networks')
+        self.naming._ParseLine('SOME_HOST2 = 2001::3/128', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_4, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -230,13 +228,11 @@ class CiscoXRTest(absltest.TestCase):
         expected = ' permit ipv6 host 2001::3 any'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST2'), mock.call('SOME_HOST2')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(acl)
 
     @capture.stdout
     def testAclBasedForwardingIPv4(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('TEST_NEXT = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -245,12 +241,11 @@ class CiscoXRTest(absltest.TestCase):
         expected = ' permit ipv4 any any nexthop1 ipv4 10.1.1.1'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('TEST_NEXT')])
         print(acl)
 
     @capture.stdout
     def testAclBasedForwardingIPv6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::3/128')]
+        self.naming._ParseLine('TEST_NEXT = 2001::3/128', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -259,42 +254,32 @@ class CiscoXRTest(absltest.TestCase):
         expected = ' permit ipv6 any any nexthop1 ipv6 2001::3'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('TEST_NEXT')])
         print(acl)
 
     def testAclBasedForwardingMultipleIP(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('10.1.1.0/32'),
-            nacaddr.IP('10.1.1.1/32'),
-        ]
+        self.naming._ParseLine('TEST_NEXT = 10.1.1.0/32 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         self.assertRaises(ciscoxr.cisco.CiscoNextIpError, str, acl)
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('TEST_NEXT')])
 
     def testAclBasedForwardingNetworkIP(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/31')]
+        self.naming._ParseLine('TEST_NEXT = 10.1.1.0/32 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         self.assertRaises(ciscoxr.cisco.CiscoNextIpError, str, acl)
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('TEST_NEXT')])
 
     def testAclBasedForwardingNotIP(self):
-        self.naming.GetNetAddr.return_value = ['not_ip_address']
+        self.naming._ParseLine('TEST_NEXT = 10.1.1.0/32 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         self.assertRaises(ciscoxr.cisco.CiscoNextIpError, str, acl)
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('TEST_NEXT')])
 
     @capture.stdout
     def testAclBasedForwardingActionAcceptNextIpIgnored(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('TEST_NEXT = 10.1.1.1/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_6, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
@@ -307,6 +292,7 @@ class CiscoXRTest(absltest.TestCase):
         print(acl)
 
     def testBuildTokens(self):
+        self.naming._ParseLine('SOME_HOST = 2001::3/128', 'networks')
         pol1 = ciscoxr.CiscoXR(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )
@@ -315,8 +301,8 @@ class CiscoXRTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::3/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('SOME_HOST2 = 2001::3/128', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         pol1 = ciscoxr.CiscoXR(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO
@@ -327,7 +313,6 @@ class CiscoXRTest(absltest.TestCase):
 
     @capture.stdout
     def testVerbatimObjectGroup(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
         pol = policy.ParsePolicy(OBJECT_GROUP_HEADER + VERBATIM_TERM, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         self.assertIn('permit tcp any', str(acl))

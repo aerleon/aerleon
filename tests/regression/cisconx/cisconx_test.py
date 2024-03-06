@@ -14,11 +14,9 @@
 # limitations under the License.
 """Tests for cisconx acl rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
-from aerleon.lib import cisconx, nacaddr, naming, policy
+from aerleon.lib import cisconx, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -210,12 +208,11 @@ EXP_INFO = 2
 class CiscoNXTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testRemark(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
-
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32', 'networks')
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_4, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
         expected = 'remark this is a test extended acl'
@@ -228,7 +225,6 @@ class CiscoNXTest(absltest.TestCase):
         self.assertIn(' remark "%sRevision:%s"' % ('$', '$'), str(acl), str(acl))
         self.assertNotIn(' remark $', str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_called_once_with('SOME_HOST')
         print(acl)
 
     @capture.stdout
@@ -255,8 +251,10 @@ class CiscoNXTest(absltest.TestCase):
 
     @capture.stdout
     def testStandardTermHost(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.0/24')]
-        self.naming.GetServiceByProto.return_value = ['22', '6537']
+        self.naming._ParseLine('SOME_HOST = 10.1.1.0/24', 'networks')
+        self.naming._ParseLine('SOME_HOST2 = 10.1.1.0/24', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        self.naming._ParseLine('GOPENFLOW = 6537/tcp', 'services')
 
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
@@ -267,16 +265,12 @@ class CiscoNXTest(absltest.TestCase):
         expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 6537'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST'), mock.call('SOME_HOST2')])
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('SSH', 'tcp'), mock.call('GOPENFLOW', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testStandardTermHostV6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2620:1::/64')]
-        self.naming.GetServiceByProto.return_value = ['22']
+        self.naming._ParseLine('SOME_HOST = 2620:1::/64', 'networks')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
 
         pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
@@ -285,8 +279,6 @@ class CiscoNXTest(absltest.TestCase):
         expected = ' permit tcp 2620:1::/64 any eq 22'
         self.assertIn(expected, str(acl), str(acl))
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_HOST')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('SSH', 'tcp')])
         print(acl)
 
     @capture.stdout

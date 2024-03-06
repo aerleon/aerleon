@@ -15,12 +15,10 @@
 
 """Unittest for windows acl rendering module."""
 
-from unittest import mock
 
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, windows
-from tests.regression_utils import capture
 
 GOOD_HEADER = """
 header {
@@ -149,7 +147,7 @@ EXP_INFO = 2
 class WindowsGeneratorTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def testBuildTokens(self):
         pol1 = windows.WindowsGenerator(
@@ -168,7 +166,8 @@ class WindowsGeneratorTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testSkipEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['123']
+        self.naming._ParseLine('FOO = 123/tcp 123/udp', 'services')
+        self.naming._ParseLine('BAR = 123/tcp 123/udp', 'services')
         pol = windows.WindowsGenerator(
             policy.ParsePolicy(GOOD_HEADER + TCP_ESTABLISHED_TERM + GOOD_TERM, self.naming),
             EXP_INFO,

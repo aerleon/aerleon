@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, nacaddr, naming, pcap, policy
+from aerleon.lib import aclgenerator, naming, pcap, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -269,13 +269,13 @@ EXP_INFO = 2
 class PcapFilter(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
+        self.naming._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('ANY = ::/0', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
     @capture.stdout
     def testTcp(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
-
         acl = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -286,8 +286,6 @@ class PcapFilter(absltest.TestCase):
             'did not find actual term for good-term-tcp',
         )
 
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -446,8 +444,6 @@ class PcapFilter(absltest.TestCase):
 
     @capture.stdout
     def testUnicastIPv6(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('::/0')]
-
         acl = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER_IN + UNICAST_TERM, self.naming), EXP_INFO
         )
@@ -457,8 +453,6 @@ class PcapFilter(absltest.TestCase):
             result,
             'did not find actual terms for unicast-term',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('ANY')
         print(result)
 
     @capture.stdout
@@ -472,8 +466,6 @@ class PcapFilter(absltest.TestCase):
         print(result)
 
     def testBuildTokens(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
         pol1 = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_TCP, self.naming), EXP_INFO
         )
@@ -482,9 +474,6 @@ class PcapFilter(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
-
         pol1 = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_WARNING_TERM, self.naming), EXP_INFO
         )

@@ -15,11 +15,10 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import ciscoasa, nacaddr, naming, policy
+from aerleon.lib import ciscoasa, naming, policy
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -150,7 +149,7 @@ EXP_INFO = 2
 class CiscoASATest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def testBuildTokens(self):
         pol1 = ciscoasa.CiscoASA(
@@ -183,10 +182,7 @@ class CiscoASATest(parameterized.TestCase):
     )
     @capture.stdout
     def testDSMO(self, term, expected):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IPv4('192.168.0.0/25'),
-            nacaddr.IPv4('128.168.0.0/25'),
-        ]
+        self.naming._ParseLine('CORP = 192.168.0.0/25 128.168.0.0/25', 'networks')
         pol = ciscoasa.CiscoASA(policy.ParsePolicy(DSMO_HEADER + term, self.naming), EXP_INFO)
         print(pol)
         self.assertIn(expected, str(pol))

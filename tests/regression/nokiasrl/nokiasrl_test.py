@@ -16,11 +16,10 @@
 """Unittest for SR Linux rendering module."""
 
 import json
-from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import nacaddr, naming, nokiasrl, policy
+from aerleon.lib import naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -409,203 +408,145 @@ header {
 # This is normally passed from command line.
 EXP_INFO = 2
 
-TEST_IPS = [nacaddr.IP('10.2.3.4/32'), nacaddr.IP('2001:4860:8000::5/128')]
-
-
-_TERM_SOURCE_TAGS_LIMIT = 30
-_TERM_TARGET_TAGS_LIMIT = 70
-_TERM_PORTS_LIMIT = 256
-
 
 class NokiaSRLTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
+        self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
+        self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp 1024-65535/udp', 'services')
 
     @capture.stdout
     def testSaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SADDR)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testDaddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testSport(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_SPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_SPORT)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
         print(acl)
 
     # TODO v6 s/dport
     @capture.stdout
     def testDport(self):
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_DPORT)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('DNS', 'tcp')])
         print(acl)
 
     @capture.stdout
     def testMultiDport(self):
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_PROTO_DPORT, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_MULTI_PROTO_DPORT)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('HIGH_PORTS', 'tcp'), mock.call('HIGH_PORTS', 'udp')], any_order=True
-        )
         print(acl)
 
     @capture.stdout
     def testEverything(self):
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_EVERYTHING)
         self.assertEqual(expected, json.loads(str(acl)))
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('DNS', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testV6Saddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_SADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_SADDR)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testV6Daddr(self):
-        self.naming.GetNetAddr.return_value = TEST_IPS
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_DADDR, self.naming), EXP_INFO
         )
         expected = json.loads(GOOD_JSON_V6_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
 
-        self.naming.GetNetAddr.assert_called_once_with('CORP_EXTERNAL')
         print(acl)
 
     @capture.stdout
     def testEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_ESTABLISHED_TERM_1, self.naming), EXP_INFO
         )
         output = str(acl)
         self.assertIn('"ack|rst"', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testTcpEstablished(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TCP_ESTABLISHED_TERM_1, self.naming), EXP_INFO
         )
         output = str(acl)
         self.assertIn('"ack|rst"', output, output)
 
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'tcp')
         print(output)
 
     @capture.stdout
     def testUdpEstablishedv6(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
             EXP_INFO,
         )
         output = str(acl)
-        self.naming.GetServiceByProto.assert_called_once_with('DNS', 'udp')
         print(output)
 
     def testTcpEstablishedWithNonTcpError1(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_1, self.naming)
         with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')]
-        )
-
     def testTcpEstablishedWithNonTcpError2(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_2, self.naming)
         with self.assertRaises(nokiasrl.TcpEstablishedWithNonTcpError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testUnsupportedLogging(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_LOGGING, self.naming)
         with self.assertRaises(nokiasrl.UnsupportedLogging):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testEstablishedWithNonTcpUdpError(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_3, self.naming)
         with self.assertRaises(nokiasrl.EstablishedWithNonTcpUdpError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
     def testEstablishedWithNoProtocolError(self):
-        self.naming.GetServiceByProto.return_value = ['53']
-
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_4, self.naming)
         with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)

@@ -1,13 +1,11 @@
 security {
     replace: address-book {
         global {
-                address out_of_order_0 1.0.0.0/8;
-                address test_0 10.0.0.0/8;
-                address-set out_of_order {
-                    address out_of_order_0;
-                }
-                address-set test {
-                    address test_0;
+                address SOME_HOST_0 1.0.0.0/8;
+                address SOME_HOST_1 10.0.0.0/8;
+                address-set SOME_HOST {
+                    address SOME_HOST_0;
+                    address SOME_HOST_1;
                 }
         }
     }
@@ -24,7 +22,7 @@ security {
             policy good-term-2 {
                 match {
                     source-address any;
-                    destination-address [ out_of_order test ];
+                    destination-address [ SOME_HOST ];
                     application good-term-2-app;
                 }
                 then {
