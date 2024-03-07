@@ -7,5 +7,132 @@ table inet filtering_policies {
         ct state established,related accept
         jump default-accept
     }
+    chain default-deny {
+        drop
+    }
+    chain full-tuple-term {
+        ip saddr { 200.1.1.1/32, 200.1.1.2/32 } ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 53 tcp dport 53 ct state new accept
+        ip saddr { 200.1.1.1/32, 200.1.1.2/32 } ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 53 tcp dport 53 ct state new accept
+    }
+    chain ssh-deny {
+        ip protocol tcp drop
+        tcp dport { 22, 53 } drop
+    }
+    chain source-address-term {
+        ip saddr { 0.0.0.0/8, 0.0.0.0/8, 10.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, 192.168.0.0/16, 192.168.0.0/16, 198.18.0.0/15, 198.51.100.0/24, 203.0.113.0/24, 224.0.0.0/4, 224.0.0.0/4, 240.0.0.0/4, 240.0.0.0/4 } drop
+        ip6 saddr { ::/8, ::1/128, 100::/8, 200::/7, 400::/6, 800::/5, 1000::/4, 2001:db8::/32, 3ffe::/16, 4000::/3, 5f00::/8, 6000::/3, 8000::/3, a000::/3, c000::/3, e000::/4, f000::/5, f800::/6, fc00::/7, fe00::/9, fe80::/10, fec0::/10, ff00::/8, ff00::/8 } drop
+    }
+    chain root3 {
+        comment "Outbound dual-stack traffic nftables policy example"
+        type filter hook output priority 0; policy drop;
+        ct state established,related accept
+        jump default-deny
+        jump full-tuple-term
+        jump ssh-deny
+        jump source-address-term
+    }
+}
+table ip filtering_policies {
+    chain allow-anything {
+         ct state newaccept
+    }
+    chain root1 {
+        comment "Inbound traffic nftables policy example"
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump allow-anything
+    }
+    chain allow-anything {
+         ct state newaccept
+    }
+    chain root2 {
+        comment "2 Inbound traffic nftables policy example"
+        type filter hook input priority 0; policy accept;
+        ct state established,related accept
+        jump allow-anything
+    }
+    chain test-icmp {
+        comment "Allow ICMP from company."
+        ip saddr 200.1.1.3/32 ip protocol icmp ct state new accept
+    }
+    chain test-icmp-type-ip4 {
+        comment "IPv4 icmp-type test"
+        icmp type { echo-request, echo-reply } ct state new accept
+    }
+    chain test-icmp-type-ip6 {
+        comment "IPv6 icmp-type test"
+         ct state newaccept
+    }
+    chain test-protocol-udp {
+        comment "All UDP traffic for both IPv4 and IPv6."
+        ip protocol udp ct state new accept
+    }
+    chain test-protocol-tcp {
+        comment "All UDP traffic for both IPv4 and IPv6."
+        ip protocol tcp ct state new accept
+    }
+    chain test-port-snmp {
+        comment "Test SNMP port 161 UDP - No addresses"
+        ip protocol udp ct state new accept
+    }
+    chain test-src-rdp {
+        comment "Test source port RDP 3389/tcp - No addresses"
+        ip protocol tcp ct state new log prefix "test-src-rdp" counter accept
+    }
+    chain test-combined-port {
+        comment "Test src/dest 80 - No addresses"
+        tcp sport 80 tcp dport 80 ct state new accept
+    }
+    chain high-ports {
+        comment "Test tcp + udp high ports - No addresses"
+        ip protocol { tcp, udp } ct state new accept
+    }
+    chain root6 {
+        comment "This policy expected to test every combination of REQUIRED keywords."
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump test-icmp
+        jump test-icmp-type-ip4
+        jump test-icmp-type-ip6
+        jump test-protocol-udp
+        jump test-protocol-tcp
+        jump test-port-snmp
+        jump test-src-rdp
+        jump test-combined-port
+        jump high-ports
+    }
+}
+table ip6 filtering_policies {
+    chain default-deny {
+        drop
+    }
+    chain root4 {
+        comment "Outbound IPv6 traffic nftables policy example"
+        type filter hook output priority 0; policy drop;
+        ct state established,related accept
+        jump default-deny
+    }
+    chain awesome-term {
+        comment "Awesomeness."
+         ct state newaccept
+    }
+    chain multiline-comment-term {
+        comment "First line of comment."
+        comment "Second line of defense."
+        comment "Third base."
+         ct state newaccept
+    }
+    chain awesome-term3 {
+        comment "Awesomeness."
+         ct state newaccept
+    }
+    chain root5 {
+        comment "Priority outbound IPv6"
+        type filter hook output priority 100; policy drop;
+        ct state established,related accept
+        jump awesome-term
+        jump multiline-comment-term
+        jump awesome-term3
+    }
 }
 

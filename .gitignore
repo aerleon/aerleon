@@ -8,7 +8,7 @@ tests/**/*.actual
 tools/new_lint_errors.txt
 
 # Swap files
-*.swp
+[_.]*.sw?
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
