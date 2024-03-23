@@ -472,6 +472,15 @@ term logging-term-1 {
 }
 """
 
+MULTIPLE_PORTS = """
+term good-term-1 {
+  protocol:: tcp
+  destination-port:: SMTP SSH
+  destination-address:: SOME_HOST
+  action:: accept
+}
+"""
+
 SUPPORTED_TOKENS = frozenset(
     [
         "action",
@@ -1384,6 +1393,18 @@ class AristaTpTest(absltest.TestCase):
             pol,
             EXP_INFO,
         )
+    
+    @capture.stdout
+    def testMultiplePorts(self):
+        self.naming._ParseLine("SSH = 22/tcp", "services")
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        atp = arista_tp.AristaTrafficPolicy(
+            policy.ParsePolicy(GOOD_HEADER + MULTIPLE_PORTS, self.naming), EXP_INFO
+        )
+        output = str(atp)
+        # self.assertIn("protocol 0", output, output)
+        print(atp)
 
     @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout

@@ -403,11 +403,11 @@ class Term(aclgenerator.Term):
 
         # source port generation
         if term.source_port:
-            port_str += " source port %s" % self._Group(term.source_port)
+            port_str += " source port %s" % ",".join([str(i) for i in term.source_port])
 
         # destination port
         if term.destination_port:
-            port_str += " destination port %s" % self._Group(term.destination_port)
+            port_str += " destination port %s" % ",".join([str(i) for i in term.destination_port])
 
         return port_str
 
