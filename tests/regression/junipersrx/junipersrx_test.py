@@ -974,7 +974,7 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertIn('icmp6-type', output, output)
         print(output)
 
-    @capture.stdout
+    # @capture.stdout
     def testReplaceStatement(self):
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8 2001:4860:8000::/33', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')

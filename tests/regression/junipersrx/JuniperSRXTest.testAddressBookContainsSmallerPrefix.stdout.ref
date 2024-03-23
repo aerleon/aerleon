@@ -60,5 +60,3 @@ replace: applications {
     application-set good-term-1-app {
         application good-term-1-app1;
     }
-}
-

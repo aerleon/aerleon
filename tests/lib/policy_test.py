@@ -20,7 +20,7 @@ from unittest import mock
 from absl import logging
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import nacaddr, naming, policy
+from aerleon.lib import nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 
 HEADER = """
@@ -661,19 +661,18 @@ class PolicyTest(parameterized.TestCase):
         self.assertRaises(policy.ParseError, policy.ParsePolicy, pol, self.naming)
 
     def testService(self):
+        defs = naming.Naming()
         pol = HEADER + GOOD_TERM_1 + GOOD_TERM_3
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        defs._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
+        defs._ParseLine('SMTP = 25/tcp','services')
 
-        ret = policy.ParsePolicy(pol, self.naming)
+        ret = policy.ParsePolicy(pol, defs)
         self.assertEqual(len(ret.filters), 1)
         _, terms = ret.filters[0]
         self.assertEqual(len(terms), 2)
         self.assertEqual(str(terms[1].protocol[0]), 'tcp')
         self.assertEqual(terms[1].destination_port[0], (25, 25))
 
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
 
     def testInvalidKeyword(self):
         pol = HEADER + BAD_TERM_2
@@ -719,30 +718,24 @@ class PolicyTest(parameterized.TestCase):
 
     def testPortCollapsing(self):
         pol = HEADER + GOOD_TERM_6
-        self.naming.GetServiceByProto.return_value = ['3306']
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
+        defs = naming.Naming()
+        defs._ParseLine('MYSQL = 3306/tcp', 'services')
+        defs._ParseLine('HIGH_PORTS = 1024-65535/tcp', 'services')
 
-        ret = policy.ParsePolicy(pol, self.naming)
+        ret = policy.ParsePolicy(pol, defs)
         self.assertEqual(len(ret.filters), 1)
         _, terms = ret.filters[0]
         self.assertSequenceEqual(terms[0].destination_port, [(1024, 65535)])
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('MYSQL', 'tcp'), mock.call('HIGH_PORTS', 'tcp')], any_order=True
-        )
-
     def testPortCollapsing2(self):
         pol = HEADER + GOOD_TERM_8
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        defs = naming.Naming()
+        defs._ParseLine('DNS = 53/tcp 53/udp', 'services')
 
-        ret = policy.ParsePolicy(pol, self.naming)
+        ret = policy.ParsePolicy(pol, defs)
         self.assertEqual(len(ret.filters), 1)
         _, terms = ret.filters[0]
         self.assertSequenceEqual(terms[0].destination_port, [(53, 53)])
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')], any_order=True
-        )
 
     def testMinimumTerm2(self):
         pol = HEADER + GOOD_TERM_9
@@ -760,74 +753,24 @@ class PolicyTest(parameterized.TestCase):
         self.assertEqual(str(terms[0].log_name), 'my special prefix')
 
     def testTermEquality(self):
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-        ]
-        self.naming.GetServiceByProto.side_effect = [
-            ['80'],
-            ['3306'],
-            ['3306'],
-            ['80'],
-            ['3306'],
-            ['443'],
-        ]
+        defs = naming.Naming()
+        defs._ParseLine('HTTP = 80/tcp', 'services')
+        defs._ParseLine('HTTPS = 443/tcp', 'services')
+        defs._ParseLine('MYSQL = 3306/tcp', 'services')
+        defs._ParseLine(
+            'PROD_EXTERNAL_SUPER = 64.233.160.0/19 66.102.0.0/20 66.249.80.0/20 72.14.192.0/18 72.14.224.0/20 216.239.32.0/19',
+            'networks')
+        defs._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
 
         pol_text = HEADER + GOOD_TERM_19 + GOOD_TERM_20 + GOOD_TERM_21
-        ret = policy.ParsePolicy(pol_text, self.naming, shade_check=False)
+        ret = policy.ParsePolicy(pol_text, defs, shade_check=False)
         self.assertEqual(len(ret.filters), 1)
         _, terms = ret.filters[0]
         self.assertEqual(len(terms), 3)
         self.assertEqual(terms[0], terms[1])
         self.assertNotEqual(terms[0], terms[2])
 
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_EXTERNAL_SUPER'),
-                mock.call('PROD_NETWRK'),
-                mock.call('PROD_NETWRK'),
-                mock.call('PROD_EXTERNAL_SUPER'),
-                mock.call('PROD_NETWRK'),
-                mock.call('PROD_EXTERNAL_SUPER'),
-            ],
-            any_order=True,
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [
-                mock.call('HTTP', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('HTTP', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('HTTPS', 'tcp'),
-            ],
-            any_order=True,
-        )
+
 
     def testGoodDestAddrExcludes(self):
         pol = HEADER + GOOD_TERM_7
@@ -1006,17 +949,16 @@ class PolicyTest(parameterized.TestCase):
         self.assertEqual(terms[0].name, 'qos-good-term-12')
 
     def testMultiPortLines(self):
+        defs = naming.Naming()
+        defs._ParseLine('GOOGLE_PUBLIC = 22/udp 161/udp', 'services')
+        defs._ParseLine('SNMP = 160-162/udp', 'services')
         pol = HEADER + GOOD_TERM_13
-        self.naming.GetServiceByProto.side_effect = [['22', '160-162'], ['161']]
 
-        ret = policy.ParsePolicy(pol, self.naming)
+        ret = policy.ParsePolicy(pol, defs)
         self.assertEqual(len(ret.filters), 1)
         _, terms = ret.filters[0]
-        self.assertSequenceEqual(terms[0].source_port, [(22, 22), (160, 162)])
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('GOOGLE_PUBLIC', 'udp'), mock.call('SNMP', 'udp')], any_order=True
-        )
+        self.assertSequenceEqual(terms[0].source_port, [port.PPP("22/udp"), port.PPP("160-162/udp")])
+        
 
     def testErrorLineNumber(self):
         pol = HEADER + GOOD_TERM_13 + BAD_TERM_8

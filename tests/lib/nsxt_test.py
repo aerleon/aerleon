@@ -190,7 +190,7 @@ UDP_AND_TCP_NSXT_POLICY = {
             'resource_type': 'Rule',
             'display_name': 'permit-mail-services',
             'source_groups': ['ANY'],
-            'destination_groups': ['2001:4860:4860::8845'],
+            'destination_groups': ['2001:4860:4860::8845/128'],
             'services': ['ANY'],
             'profiles': ['ANY'],
             'scope': ['ANY'],
@@ -311,13 +311,11 @@ class TermTest(absltest.TestCase):
         test for udp term defining dst and src addrs and ports.
         """
 
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
-            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
-        ]
-        self.naming.GetServiceByProto.return_value = ['123']
-
-        policies = policy.ParsePolicy(UDP_POLICY, self.naming, False)
+        defs = naming.Naming()
+        defs._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32','networks')
+        defs._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16','networks')
+        defs._ParseLine('NTP = 123/udp','services')
+        policies = policy.ParsePolicy(UDP_POLICY, defs, False)
         af = 4
         pol = policies.filters[0]
         terms = pol[1]
@@ -329,9 +327,6 @@ class TermTest(absltest.TestCase):
 
         self.assertEqual(nsxt_term.af, af)
         self.assertEqual(rule, UDP_RULE)
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
 
     def test_icmpv6_term(self):
         """Test __init__ and __str__ for term inet6."""
@@ -350,45 +345,30 @@ class TermTest(absltest.TestCase):
 
     def test_udp_policy(self):
         """Test for Nsxt.test_TranslatePolicy."""
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IP('10.0.0.1'), nacaddr.IP('10.0.0.2')],
-            [nacaddr.IP('10.0.0.0/8'), nacaddr.IP('172.16.0.0/12'), nacaddr.IP('192.168.0.0/16')],
-        ]
-        self.naming.GetServiceByProto.return_value = ['123']
+        defs = naming.Naming()
+        defs._ParseLine('NTP_SERVERS = 10.0.0.1/32 10.0.0.2/32','networks')
+        defs._ParseLine('INTERNAL = 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16','networks')
+        defs._ParseLine('NTP = 123/udp','services')
 
-        pol = policy.ParsePolicy(UDP_POLICY, self.naming, False)
+        pol = policy.ParsePolicy(UDP_POLICY, defs, False)
         nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
         api_policy = json.loads(str(nsxt_policy))
 
         self.assertEqual(api_policy, UDP_NSXT_POLICY)
-        self.naming.GetNetAddr.assert_has_calls([mock.call('NTP_SERVERS'), mock.call('INTERNAL')])
-        self.naming.GetServiceByProto.assert_has_calls([mock.call('NTP', 'udp')] * 2)
+
 
     def test_udp_and_tcp_policy(self):
         """Test for Nsxt._str_."""
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IP('8.8.4.4'),
-                nacaddr.IP('8.8.8.8'),
-                nacaddr.IP('2001:4860:4860::8844'),
-                nacaddr.IP('2001:4860:4860::8888'),
-            ],
-            nacaddr.IP('2001:4860:4860::8845'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['53']
-
-        pol = policy.ParsePolicy(UDP_AND_TCP_POLICY, self.naming, False)
+        defs = naming.Naming()
+        defs._ParseLine('GOOGLE_DNS = 8.8.4.4/32 8.8.8.8/32 2001:4860:4860::8844/128 2001:4860:4860::8888/128', 'networks')
+        defs._ParseLine('MAIL_SERVERS = 2001:4860:4860::8845', 'networks')
+        defs._ParseLine('DNS = 53/udp', 'services')
+        defs._ParseLine('MAIL_SERVICES = 53/tcp', 'services')
+        pol = policy.ParsePolicy(UDP_AND_TCP_POLICY, defs, False)
         nsxt_policy = nsxt.Nsxt(pol, EXP_INFO)
         api_policy = json.loads(str(nsxt_policy))
-
         self.assertEqual(api_policy, UDP_AND_TCP_NSXT_POLICY)
 
-        self.naming.GetNetAddr.assert_has_calls(
-            [mock.call('GOOGLE_DNS'), mock.call('MAIL_SERVERS')]
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'udp'), mock.call('MAIL_SERVICES', 'tcp')]
-        )
 
     def test_icmp_policy_with_security_group(self):
         """Test for Nsxt._str_ with security group in scope."""

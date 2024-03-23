@@ -1,4 +1,4 @@
 Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: routing-instance-term
   protocol: ['tcp']
-  source_port: [(22, 22)]
+  source_port: [PPP("22/tcp")]
   action: ['accept']]}

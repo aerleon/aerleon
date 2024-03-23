@@ -1,13 +1,13 @@
 Policy: {Target[juniper], Comments [this is a test acl, this is another comment], Apply groups: [], except: []:[ name: good-term-19
   destination_address: [IPv4('10.0.0.0/8'), IPv4('64.233.160.0/19'), IPv4('66.102.0.0/20'), IPv4('66.249.80.0/20'), IPv4('72.14.192.0/18'), IPv4('72.14.224.0/20'), IPv4('216.239.32.0/19')]
   protocol: ['tcp']
-  source_port: [(80, 80), (3306, 3306)]
+  source_port: [PPP("80/tcp"), PPP("3306/tcp")]
   action: ['accept'],  name: good-term-20
   destination_address: [IPv4('10.0.0.0/8'), IPv4('64.233.160.0/19'), IPv4('66.102.0.0/20'), IPv4('66.249.80.0/20'), IPv4('72.14.192.0/18'), IPv4('72.14.224.0/20'), IPv4('216.239.32.0/19')]
   protocol: ['tcp']
-  source_port: [(80, 80), (3306, 3306)]
+  source_port: [PPP("80/tcp"), PPP("3306/tcp")]
   action: ['accept'],  name: good-term-21
   destination_address: [IPv4('10.0.0.0/8'), IPv4('64.233.160.0/19'), IPv4('66.102.0.0/20'), IPv4('66.249.80.0/20'), IPv4('72.14.192.0/18'), IPv4('72.14.224.0/20'), IPv4('216.239.32.0/19')]
   protocol: ['tcp']
-  source_port: [(443, 443), (3306, 3306)]
+  source_port: [PPP("443/tcp"), PPP("3306/tcp")]
   action: ['accept']]}

@@ -9,7 +9,7 @@ from unittest import mock
 from absl.testing import absltest
 
 from aerleon import aclgen
-from aerleon.lib import nacaddr, naming, policy
+from aerleon.lib import nacaddr, naming, policy, port
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -236,14 +236,15 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-port: SMTP
           action: accept
         """
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv4('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        defs = naming.Naming()
+        defs._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
+        defs._ParseLine('SMTP = 25/tcp', 'services')
 
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
 
@@ -251,10 +252,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         _, terms = pol.filters[0]
         self.assertEqual(len(terms), 2)
         self.assertEqual(str(terms[1].protocol[0]), 'tcp')
-        self.assertEqual(terms[1].destination_port[0], (25, 25))
+        self.assertEqual(terms[1].destination_port[0], port.PPP("25/tcp"))
 
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
 
     @capture.stdout
     def testNumericProtocol(self, mock_open_include, _mock_warn):
@@ -378,22 +377,19 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-port: MYSQL HIGH_PORTS
           action: accept
         """
-        self.naming.GetServiceByProto.return_value = ['3306']
-        self.naming.GetServiceByProto.return_value = ['1024-65535']
+        defs = naming.Naming()
+        defs._ParseLine('MYSQL = 3306/tcp', 'services')
+        defs._ParseLine('HIGH_PORTS = 1024-65535/tcp', 'services')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         _, terms = pol.filters[0]
-        self.assertSequenceEqual(terms[0].destination_port, [(1024, 65535)])
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('MYSQL', 'tcp'), mock.call('HIGH_PORTS', 'tcp')], any_order=True
-        )
+        self.assertSequenceEqual(terms[0].destination_port, [port.PPP("1024-65535/tcp"),])
 
     @capture.stdout
     def testPortCollapsing2(self, mock_open_include, _mock_warn):
@@ -403,21 +399,18 @@ class YAMLPolicyTermTest(absltest.TestCase):
           destination-port: DNS
           action: accept
         """
-        self.naming.GetServiceByProto.side_effect = [['53'], ['53']]
+        defs = naming.Naming()
+        defs._ParseLine('DNS = 53/udp 53/tcp', 'services')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         _, terms = pol.filters[0]
-        self.assertSequenceEqual(terms[0].destination_port, [(53, 53)])
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('DNS', 'tcp'), mock.call('DNS', 'udp')], any_order=True
-        )
+        self.assertSequenceEqual(terms[0].destination_port, [port.PPP("53/tcp")])
 
     @capture.stdout
     def testTermEquality(self, mock_open_include, _mock_warn):
@@ -438,48 +431,19 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: tcp
           action: accept
         """
-        self.naming.GetNetAddr.side_effect = [
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [
-                nacaddr.IPv4('64.233.160.0/19'),
-                nacaddr.IPv4('66.102.0.0/20'),
-                nacaddr.IPv4('66.249.80.0/20'),
-                nacaddr.IPv4('72.14.192.0/18'),
-                nacaddr.IPv4('72.14.224.0/20'),
-                nacaddr.IPv4('216.239.32.0/19'),
-            ],
-        ]
-        self.naming.GetServiceByProto.side_effect = [
-            ['80'],
-            ['3306'],
-            ['3306'],
-            ['80'],
-            ['3306'],
-            ['443'],
-        ]
+        defs = naming.Naming()
+        defs._ParseLine('HTTP = 80/tcp', 'services')
+        defs._ParseLine('HTTPS = 443/tcp', 'services')
+        defs._ParseLine('MYSQL = 3306/tcp', 'services')
+        defs._ParseLine(
+            'PROD_EXTERNAL_SUPER = 64.233.160.0/19 66.102.0.0/20 66.249.80.0/20 72.14.192.0/18 72.14.224.0/20 216.239.32.0/19',
+            'networks')
+        defs._ParseLine('PROD_NETWORK = 10.0.0.0/8', 'networks')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
@@ -487,29 +451,6 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(len(terms), 3)
         self.assertEqual(terms[0], terms[1])
         self.assertNotEqual(terms[0], terms[2])
-
-        self.naming.GetNetAddr.assert_has_calls(
-            [
-                mock.call('PROD_EXTERNAL_SUPER'),
-                mock.call('PROD_NETWORK'),
-                mock.call('PROD_NETWORK'),
-                mock.call('PROD_EXTERNAL_SUPER'),
-                mock.call('PROD_NETWORK'),
-                mock.call('PROD_EXTERNAL_SUPER'),
-            ],
-            any_order=True,
-        )
-        self.naming.GetServiceByProto.assert_has_calls(
-            [
-                mock.call('HTTP', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('HTTP', 'tcp'),
-                mock.call('MYSQL', 'tcp'),
-                mock.call('HTTPS', 'tcp'),
-            ],
-            any_order=True,
-        )
 
     @capture.stdout
     def testGoodDestAddrExcludes(self, mock_open_include, _mock_warn):
@@ -804,21 +745,19 @@ class YAMLPolicyTermTest(absltest.TestCase):
           protocol: udp
           action: accept
         """
-        self.naming.GetServiceByProto.side_effect = [['22', '160-162'], ['161']]
+        defs = naming.Naming()
+        defs._ParseLine('GOOGLE_PUBLIC = 22/udp 161/udp', 'services')
+        defs._ParseLine('SNMP = 160-162/udp', 'services')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         _, terms = pol.filters[0]
         self.assertSequenceEqual(terms[0].source_port, [(22, 22), (160, 162)])
-
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('GOOGLE_PUBLIC', 'udp'), mock.call('SNMP', 'udp')], any_order=True
-        )
 
     @capture.stdout
     def testSourcePrefixList(self, mock_open_include, _mock_warn):
@@ -1043,18 +982,20 @@ class YAMLPolicyTermTest(absltest.TestCase):
           loss-priority: low
           action: accept
         """
-        self.naming.GetServiceByProto.return_value = ['22']
+        defs = naming.Naming()
+        defs._ParseLine('SSH = 22/tcp', 'services')
+        # self.naming.GetServiceByProto.return_value = ['22']
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         _, terms = pol.filters[0]
         self.assertEqual(terms[0].loss_priority, 'low')
-        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
+        # self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
     def testRoutingInstance(self, mock_open_include, _mock_warn):
@@ -1065,18 +1006,18 @@ class YAMLPolicyTermTest(absltest.TestCase):
           routing-instance: foobar-router
           action: accept
         """
-        self.naming.GetServiceByProto.return_value = ['22']
+        defs = naming.Naming()
+        defs._ParseLine('SSH = 22/tcp', 'services')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_1,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         _, terms = pol.filters[0]
         self.assertEqual(terms[0].routing_instance, 'foobar-router')
-        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
     def testSourceInterface(self, mock_open_include, _mock_warn):
@@ -1087,19 +1028,19 @@ class YAMLPolicyTermTest(absltest.TestCase):
           source-interface: foo0
           action: accept
         """
-        self.naming.GetServiceByProto.return_value = ['22']
+        defs = naming.Naming()
+        defs._ParseLine('SSH = 22/tcp', 'services')
         pol = yaml_frontend.ParsePolicy(
             YAML_POLICY_BASE_4,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
-            definitions=self.naming,
+            definitions=defs,
         )
         print(pol)
         self.assertEqual(len(pol.filters), 1)
         header, terms = pol.filters[0]
         self.assertEqual(str(header.target[0]), 'iptables')
         self.assertEqual(terms[0].source_interface, 'foo0')
-        self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
     def testVpnConfigWithoutPairPolicy(self, mock_open_include, _mock_warn):

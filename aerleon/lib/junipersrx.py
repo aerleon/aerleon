@@ -592,8 +592,8 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 else:
                     protocol = term.protocol
                 new_application_set = {
-                    'sport': self._BuildPort(term.source_port),
-                    'dport': self._BuildPort(term.destination_port),
+                    'sport': term.source_port,
+                    'dport': term.destination_port,
                     'protocol': protocol,
                     'icmp-type': normalized_icmptype,
                     'timeout': term.timeout,
@@ -618,7 +618,6 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 if new_application_set:
                     new_application_set['name'] = term.name
                     self.applications.append(new_application_set)
-
             self.srx_policies.append((header, new_terms, filter_options))
 
     def _FixLargePolices(self, terms: List[policy.Term], address_family: str):
@@ -683,22 +682,22 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildPort(self, ports: List[Tuple[int, int]]):
-        """Transform specified ports into list and ranges.
+    # def _BuildPort(self, ports: List[Tuple[int, int]]):
+    #     """Transform specified ports into list and ranges.
 
-        Args:
-          ports: a policy terms list of ports
+    #     Args:
+    #       ports: a policy terms list of ports
 
-        Returns:
-          port_list: list of ports and port ranges
-        """
-        port_list = []
-        for i in ports:
-            if i[0] == i[1]:
-                port_list.append(str(i[0]))
-            else:
-                port_list.append('%s-%s' % (str(i[0]), str(i[1])))
-        return port_list
+    #     Returns:
+    #       port_list: list of ports and port ranges
+    #     """
+    #     port_list = []
+    #     for i in ports:
+    #         if i[0] == i[1]:
+    #             port_list.append(str(i[0]))
+    #         else:
+    #             port_list.append('%s-%s' % (str(i[0]), str(i[1])))
+    #     return port_list
 
     def _GenerateAddresses(self, token: str, ips, fqdns):
         target = IndentList(self.INDENT)
@@ -828,6 +827,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 # generate non-ICMP statements
                 else:
                     i = 1
+                    import ipdb;ipdb.set_trace()
                     apps_set_list.IndentAppend(1, 'application-set ' + app['name'] + '-app {')
 
                     for proto in app['protocol'] or ['']:
