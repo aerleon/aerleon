@@ -403,11 +403,11 @@ class Term(aclgenerator.Term):
 
         # source port generation
         if term.source_port:
-            port_str += " source port %s" % ",".join([str(i) for i in term.source_port])
+            port_str += " source port %s" % self._Group(term.source_port, delimeter=",")
 
         # destination port
         if term.destination_port:
-            port_str += " destination port %s" % ",".join([str(i) for i in term.destination_port])
+            port_str += " destination port %s" % self._Group(term.destination_port, delimeter=",")
 
         return port_str
 
@@ -561,7 +561,7 @@ class Term(aclgenerator.Term):
 
         return flags, misc_options
 
-    def _Group(self, group: List[Union[str, Tuple[int, int]]], lc: bool = True) -> str:
+    def _Group(self, group: List[Union[str, Tuple[int, int]]], lc: bool = True, delimeter=" ") -> str:
         """If 1 item return it, else return [item1 item2].
 
         Args:
@@ -599,7 +599,7 @@ class Term(aclgenerator.Term):
                 return "%d-%d" % (el[0], el[1])
 
         if len(group) > 1:
-            rval = " ".join([_FormattedGroup(x, lc) for x in group])
+            rval = delimeter.join([_FormattedGroup(x, lc) for x in group])
         else:
             rval = _FormattedGroup(group[0])
         return rval
