@@ -60,9 +60,16 @@ ACLEntry = TypedDict(
 )
 Entries = TypedDict(
     "Entries",
-    {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str},
+    {
+        "entry": List[ACLEntry],
+        "description": str,
+        "name": str,
+        "type": str,
+        "_annotate": str,
+        "statistics-per-entry": bool,
+    },
 )
-IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
+IPFilters = TypedDict("IPFilters", {"acl-filter": Entries})
 
 
 # generic error class
@@ -216,7 +223,12 @@ class NokiaSRLinux(openconfig.OpenConfig):
         self.acl_sets: List[IPFilters] = []
 
     def _TranslateTerms(
-        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+        self,
+        terms: List[Term],
+        address_family: str,
+        filter_name: str,
+        hdr_comments: List[str],
+        filter_options: List[str],
     ) -> None:
         srl_acl_entries: List[ACLEntry] = []
         for term in terms:
@@ -234,14 +246,22 @@ class NokiaSRLinux(openconfig.OpenConfig):
                     rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
                     srl_acl_entries.append(rule)
         desc = "_".join(hdr_comments)[:255] if hdr_comments else ""
+
+        # Accomodate pre-2024 filter syntax if requested
+        if 'pre2024' in filter_options:
+            key = "ipv4-filter" if address_family == 'inet' else "ipv6-filter"
+        else:
+            key = "acl-filter"
+
         ip_filter = {
-            'ipv4-filter'
-            if address_family == 'inet'
-            else 'ipv6-filter': {
+            key: {
                 '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
-                'description': desc,
-                'entry': srl_acl_entries,
                 'name': filter_name,
+                'description': desc,
+                'statistics-per-entry': 'nostats' not in filter_options,
+                'entry': srl_acl_entries,
             }
         }
+        if 'pre2024' not in filter_options:
+            ip_filter[key]['type'] = "ipv4" if address_family == 'inet' else "ipv6"
         self.acl_sets.append(ip_filter)

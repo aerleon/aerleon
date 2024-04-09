@@ -1,6 +1,6 @@
 [
   {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "description": "The general policy comment.",
       "entry": [
@@ -49,7 +49,9 @@
           "sequence-id": 10
         }
       ],
-      "name": "good-name-v4"
+      "name": "good-name-v4",
+      "statistics-per-entry": true,
+      "type": "ipv4"
     }
   }
 ]

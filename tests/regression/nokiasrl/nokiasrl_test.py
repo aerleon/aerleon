@@ -29,6 +29,13 @@ header {
 }
 """
 
+GOOD_HEADER_NO_STATS = """
+header {
+  comment:: "The general policy comment."
+  target:: nokiasrl good-name-v4 inet nostats
+}
+"""
+
 GOOD_SADDR = """
 term good-term-1 {
   comment:: "Allow source address."
@@ -88,10 +95,12 @@ term good-term-1 {
 GOOD_JSON_SADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -115,10 +124,12 @@ GOOD_JSON_SADDR = """
 GOOD_JSON_V6_SADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -142,10 +153,12 @@ GOOD_JSON_V6_SADDR = """
 GOOD_JSON_DADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -169,10 +182,12 @@ GOOD_JSON_DADDR = """
 GOOD_JSON_V6_DADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -196,10 +211,12 @@ GOOD_JSON_V6_DADDR = """
 GOOD_JSON_SPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -222,10 +239,12 @@ GOOD_JSON_SPORT = """
 GOOD_JSON_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -248,10 +267,12 @@ GOOD_JSON_DPORT = """
 GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -288,10 +309,12 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
 GOOD_JSON_EVERYTHING = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -521,6 +544,15 @@ class NokiaSRLTest(absltest.TestCase):
     def testUdpEstablishedv6(self):
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        print(output)
+
+    @capture.stdout
+    def testNoStats(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_NO_STATS + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
             EXP_INFO,
         )
         output = str(acl)
