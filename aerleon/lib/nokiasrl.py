@@ -60,9 +60,16 @@ ACLEntry = TypedDict(
 )
 Entries = TypedDict(
     "Entries",
-    {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str},
+    {
+        "entry": List[ACLEntry],
+        "description": str,
+        "name": str,
+        "type": str,
+        "_annotate": str,
+        "statistics-per-entry": bool,
+    },
 )
-IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
+IPFilters = TypedDict("IPFilters", {"acl-filter": Entries})
 
 
 # generic error class
@@ -216,32 +223,41 @@ class NokiaSRLinux(openconfig.OpenConfig):
         self.acl_sets: List[IPFilters] = []
 
     def _TranslateTerms(
-        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+        self,
+        terms: List[Term],
+        address_family: str,
+        filter_name: str,
+        hdr_comments: List[str],
+        filter_options: List[str],
     ) -> None:
-        srl_acl_entries: List[ACLEntry] = []
+        srl_acl_entries: Dict[str, List[ACLEntry]] = {'inet': [], 'inet6': []}
+        afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for term in terms:
-            # Handle mixed for each indvidual term as inet and inet6.
-            # inet/inet6 are treated the same.
-            term_address_families = []
-            if address_family == 'mixed':
-                term_address_families = ['inet', 'inet6']
-            else:
-                term_address_families = [address_family]
-            for term_af in term_address_families:
+            for term_af in afs:
                 t = SRLTerm(term, term_af)
                 for rule in t.ConvertToDict():
                     self.total_rule_count += 1
-                    rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
-                    srl_acl_entries.append(rule)
+                    rule['sequence-id'] = (len(srl_acl_entries[term_af]) + 1) * 5
+                    srl_acl_entries[term_af].append(rule)
         desc = "_".join(hdr_comments)[:255] if hdr_comments else ""
-        ip_filter = {
-            'ipv4-filter'
-            if address_family == 'inet'
-            else 'ipv6-filter': {
-                '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
-                'description': desc,
-                'entry': srl_acl_entries,
-                'name': filter_name,
-            }
-        }
-        self.acl_sets.append(ip_filter)
+
+        for af in srl_acl_entries.keys():
+            if srl_acl_entries[af]:
+                # Accomodate pre-2024 filter syntax if requested
+                if 'pre2024' in filter_options:
+                    key = "ipv4-filter" if af == 'inet' else "ipv6-filter"
+                else:
+                    key = "acl-filter"
+
+                ip_filter = {
+                    key: {
+                        '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
+                        'name': filter_name,
+                        'description': desc,
+                        'statistics-per-entry': 'nostats' not in filter_options,
+                        'entry': srl_acl_entries[af],
+                    }
+                }
+                if 'pre2024' not in filter_options:
+                    ip_filter[key]['type'] = "ipv4" if af == 'inet' else "ipv6"
+                self.acl_sets.append(ip_filter)

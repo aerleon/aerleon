@@ -321,12 +321,19 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 if i in filter_options:
                     address_family = i
                     filter_options.remove(i)
-            self._TranslateTerms(terms, address_family, filter_name, header.comment)
+            self._TranslateTerms(
+                terms, address_family, filter_name, header.comment, filter_options
+            )
 
         logging.info('Total rule count of policy %s is: %d', filter_name, self.total_rule_count)
 
     def _TranslateTerms(
-        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+        self,
+        terms: List[Term],
+        address_family: str,
+        filter_name: str,
+        hdr_comments: List[str],
+        filter_options: List[str],
     ) -> None:
         """
         Factor out the translation of terms, such that it can be overridden by subclasses

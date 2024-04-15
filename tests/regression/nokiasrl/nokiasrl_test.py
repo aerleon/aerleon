@@ -29,6 +29,28 @@ header {
 }
 """
 
+GOOD_HEADER_MIXED = """
+header {
+  comment:: "GOOD_HEADER_MIXED comment."
+  target:: nokiasrl good-name-mixed mixed
+}
+"""
+
+
+GOOD_HEADER_NO_STATS = """
+header {
+  comment:: "The general policy comment."
+  target:: nokiasrl good-name-v4 inet nostats
+}
+"""
+
+GOOD_HEADER_PRE2024 = """
+header {
+  comment:: "The general policy comment."
+  target:: nokiasrl good-name-mixed mixed pre2024
+}
+"""
+
 GOOD_SADDR = """
 term good-term-1 {
   comment:: "Allow source address."
@@ -88,10 +110,12 @@ term good-term-1 {
 GOOD_JSON_SADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -115,10 +139,12 @@ GOOD_JSON_SADDR = """
 GOOD_JSON_V6_SADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -142,10 +168,12 @@ GOOD_JSON_V6_SADDR = """
 GOOD_JSON_DADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -169,10 +197,12 @@ GOOD_JSON_DADDR = """
 GOOD_JSON_V6_DADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -196,10 +226,12 @@ GOOD_JSON_V6_DADDR = """
 GOOD_JSON_SPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -222,10 +254,12 @@ GOOD_JSON_SPORT = """
 GOOD_JSON_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -248,10 +282,12 @@ GOOD_JSON_DPORT = """
 GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -276,52 +312,6 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
             "protocol": 6,
             "source-port": { "range": { "start": 1024, "end": 65535 } },
             "destination-port": { "range": { "start": 1024, "end": 65535 } }
-          },
-          "sequence-id": 10
-        }
-      ]
-    }
-}
-]
-"""
-
-GOOD_JSON_EVERYTHING = """
-[
-{
-    "ipv4-filter": {
-      "_annotate": "$Id:$ $Date:$ $Revision:$",
-      "name": "good-name-v4",
-      "description": "The general policy comment.",
-      "entry": [
-        {
-          "action": {
-            "drop": {
-             "log": true
-            }
-          },
-          "description": "good-term-1",
-          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
-          "match": {
-            "protocol": 17,
-            "destination-ip": { "prefix": "10.2.3.4/32" },
-            "destination-port": { "value": 53 },
-            "source-ip": { "prefix": "10.2.3.4/32" }
-          },
-          "sequence-id": 5
-        },
-        {
-          "action": {
-            "drop": {
-             "log": true
-            }
-          },
-          "description": "good-term-1",
-          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
-          "match": {
-            "protocol": 6,
-            "destination-ip": { "prefix": "10.2.3.4/32" },
-            "destination-port": { "value": 53 },
-            "source-ip": { "prefix": "10.2.3.4/32" }
           },
           "sequence-id": 10
         }
@@ -471,10 +461,8 @@ class NokiaSRLTest(absltest.TestCase):
     @capture.stdout
     def testEverything(self):
         acl = nokiasrl.NokiaSRLinux(
-            policy.ParsePolicy(GOOD_HEADER + GOOD_EVERYTHING, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_EVERYTHING, self.naming), EXP_INFO
         )
-        expected = json.loads(GOOD_JSON_EVERYTHING)
-        self.assertEqual(expected, json.loads(str(acl)))
         print(acl)
 
     @capture.stdout
@@ -521,6 +509,24 @@ class NokiaSRLTest(absltest.TestCase):
     def testUdpEstablishedv6(self):
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        print(output)
+
+    @capture.stdout
+    def testNoStats(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_NO_STATS + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        print(output)
+
+    @capture.stdout
+    def testPre2024(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_PRE2024 + GOOD_EVERYTHING, self.naming),
             EXP_INFO,
         )
         output = str(acl)

@@ -6,7 +6,7 @@
 # $Date:$
 # $Revision:$
 # inet
-:OUTPUT DROP
+:OUTPUT DROP [0:0]
 -A OUTPUT -p tcp -j DROP
 -A OUTPUT -p udp -j DROP
 -A OUTPUT -j OUTPUT
