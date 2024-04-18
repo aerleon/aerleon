@@ -1083,15 +1083,15 @@ The Nokia SR Linux header designation has the following format:
 
 ```yaml
 targets:
-    nokiasrl: {section_name} {inet|inet6|mixed} {nostats} {pre2024}
+    nokiasrl: {section_name} {inet|inet6|mixed} {stats} {r24.3}
 ```
 
 * _section_name_: specifies the name of the section all terms in this header apply to.
 * _inet_: specifies that the resulting filter should only render IPv4 addresses.
 * _inet6_: specifies that the resulting filter should only render IPv6 addresses.
 * _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
-* _nostats_: Do not collect stats for ACL entries (default: enable per ACL stats)
-* _pre2024_: Use old format (pre release 24.3.1)
+* _stats_: Collect stats for ACL entries
+* _r24.3_: Use new format (post release 24.3.1)
 
 (Required keywords option and verbatim are not supported)
 
