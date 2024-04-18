@@ -244,7 +244,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
         for af in srl_acl_entries.keys():
             if srl_acl_entries[af]:
                 # Accomodate pre-2024 filter syntaxblac if requested
-                if 'post2024' in filter_options:
+                if 'r24.3' in filter_options:
                     key = "acl-filter"
                 else:
                     key = "ipv4-filter" if af == 'inet' else "ipv6-filter"
@@ -257,8 +257,8 @@ class NokiaSRLinux(openconfig.OpenConfig):
                         'entry': srl_acl_entries[af],
                     }
                 }
-                if 'filterstats' in filter_options:
+                if 'stats' in filter_options:
                     ip_filter[key]['statistics-per-entry'] = True
-                if 'post2024' in filter_options:
+                if 'r24.3' in filter_options:
                     ip_filter[key]['type'] = "ipv4" if af == 'inet' else "ipv6"
                 self.acl_sets.append(ip_filter)

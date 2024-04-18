@@ -25,14 +25,14 @@ from tests.regression_utils import capture
 GOOD_HEADER = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-v4 inet
+  target:: nokiasrl good-name-v4 inet r24.3
 }
 """
 
 GOOD_HEADER_MIXED = """
 header {
   comment:: "GOOD_HEADER_MIXED comment."
-  target:: nokiasrl good-name-mixed mixed
+  target:: nokiasrl good-name-mixed mixed r24.3
 }
 """
 
@@ -40,14 +40,14 @@ header {
 GOOD_HEADER_STATS = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-v4 inet filterstats
+  target:: nokiasrl good-name-v4 inet stats r24.3
 }
 """
 
 GOOD_HEADER_PRE2024 = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-mixed mixed pre2024
+  target:: nokiasrl good-name-mixed mixed
 }
 """
 
@@ -110,10 +110,11 @@ term good-term-1 {
 GOOD_JSON_SADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
       "entry": [
         {
           "action": {
@@ -137,10 +138,11 @@ GOOD_JSON_SADDR = """
 GOOD_JSON_V6_SADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
       "entry": [
         {
           "action": {
@@ -164,10 +166,11 @@ GOOD_JSON_V6_SADDR = """
 GOOD_JSON_DADDR = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
       "entry": [
         {
           "action": {
@@ -191,10 +194,11 @@ GOOD_JSON_DADDR = """
 GOOD_JSON_V6_DADDR = """
 [
 {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v6",
       "description": "The general policy comment.",
+      "type": "ipv6",
       "entry": [
         {
           "action": {
@@ -218,10 +222,11 @@ GOOD_JSON_V6_DADDR = """
 GOOD_JSON_SPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
       "entry": [
         {
           "action": {
@@ -244,10 +249,11 @@ GOOD_JSON_SPORT = """
 GOOD_JSON_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
       "entry": [
         {
           "action": {
@@ -270,10 +276,11 @@ GOOD_JSON_DPORT = """
 GOOD_JSON_MULTI_PROTO_DPORT = """
 [
 {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "name": "good-name-v4",
       "description": "The general policy comment.",
+      "type": "ipv4",
       "entry": [
         {
           "action": {
@@ -376,7 +383,7 @@ term udp-established-term-1 {
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-v6 inet6
+  target:: nokiasrl good-name-v6 inet6 r24.3
 }
 """
 

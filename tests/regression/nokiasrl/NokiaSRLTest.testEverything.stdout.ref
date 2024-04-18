@@ -1,6 +1,6 @@
 [
   {
-    "ipv4-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "description": "GOOD_HEADER_MIXED comment.",
       "entry": [
@@ -49,11 +49,12 @@
           "sequence-id": 10
         }
       ],
-      "name": "good-name-mixed"
+      "name": "good-name-mixed",
+      "type": "ipv4"
     }
   },
   {
-    "ipv6-filter": {
+    "acl-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
       "description": "GOOD_HEADER_MIXED comment.",
       "entry": [
@@ -102,7 +103,8 @@
           "sequence-id": 10
         }
       ],
-      "name": "good-name-mixed"
+      "name": "good-name-mixed",
+      "type": "ipv6"
     }
   }
 ]
