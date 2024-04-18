@@ -25,19 +25,19 @@ from tests.regression_utils import capture
 GOOD_HEADER = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-v4 inet r24.3
+  target:: nokiasrl good-name-v4 inet r24.3 stats
 }
 """
 
 GOOD_HEADER_MIXED = """
 header {
   comment:: "GOOD_HEADER_MIXED comment."
-  target:: nokiasrl good-name-mixed mixed r24.3
+  target:: nokiasrl good-name-mixed mixed r24.3 stats
 }
 """
 
 
-GOOD_HEADER_STATS = """
+GOOD_HEADER_NO_STATS = """
 header {
   comment:: "The general policy comment."
   target:: nokiasrl good-name-v4 inet stats r24.3
@@ -47,7 +47,7 @@ header {
 GOOD_HEADER_PRE2024 = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-mixed mixed
+  target:: nokiasrl good-name-mixed mixed stats
 }
 """
 
