@@ -49,8 +49,7 @@
           "sequence-id": 10
         }
       ],
-      "name": "good-name-mixed",
-      "statistics-per-entry": true
+      "name": "good-name-mixed"
     }
   },
   {
@@ -103,8 +102,7 @@
           "sequence-id": 10
         }
       ],
-      "name": "good-name-mixed",
-      "statistics-per-entry": true
+      "name": "good-name-mixed"
     }
   }
 ]
