@@ -92,6 +92,8 @@ jobs:
     steps:
       - name: Download artifacts directories # goes to current working directory
         uses: actions/download-artifact@v3
+      - name: Remove signature # pypi will not ignore the signatures anymore and does not support them.
+        run: rm -f built-packages/aerleon-*.sigstore
       - name: publish
         uses: pypa/gh-action-pypi-publish@v1.8.14
         with:
