@@ -19,6 +19,7 @@
         }
       ],
       "name": "good-name-v4",
+      "statistics-per-entry": true,
       "type": "ipv4"
     }
   }

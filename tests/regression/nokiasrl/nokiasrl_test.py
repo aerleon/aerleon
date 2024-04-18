@@ -115,6 +115,7 @@ GOOD_JSON_SADDR = """
       "name": "good-name-v4",
       "description": "The general policy comment.",
       "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -143,6 +144,7 @@ GOOD_JSON_V6_SADDR = """
       "name": "good-name-v6",
       "description": "The general policy comment.",
       "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -171,6 +173,7 @@ GOOD_JSON_DADDR = """
       "name": "good-name-v4",
       "description": "The general policy comment.",
       "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -199,6 +202,7 @@ GOOD_JSON_V6_DADDR = """
       "name": "good-name-v6",
       "description": "The general policy comment.",
       "type": "ipv6",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -227,6 +231,7 @@ GOOD_JSON_SPORT = """
       "name": "good-name-v4",
       "description": "The general policy comment.",
       "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -254,6 +259,7 @@ GOOD_JSON_DPORT = """
       "name": "good-name-v4",
       "description": "The general policy comment.",
       "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -281,6 +287,7 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
       "name": "good-name-v4",
       "description": "The general policy comment.",
       "type": "ipv4",
+      "statistics-per-entry": true,
       "entry": [
         {
           "action": {
@@ -383,7 +390,7 @@ term udp-established-term-1 {
 GOOD_HEADER_INET6 = """
 header {
   comment:: "The general policy comment."
-  target:: nokiasrl good-name-v6 inet6 r24.3
+  target:: nokiasrl good-name-v6 inet6 r24.3 stats
 }
 """
 
@@ -508,9 +515,9 @@ class NokiaSRLTest(absltest.TestCase):
         print(output)
 
     @capture.stdout
-    def testStats(self):
+    def testNoStats(self):
         acl = nokiasrl.NokiaSRLinux(
-            policy.ParsePolicy(GOOD_HEADER_STATS + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
+            policy.ParsePolicy(GOOD_HEADER_NO_STATS + GOOD_UDP_ESTABLISHED_TERM_1, self.naming),
             EXP_INFO,
         )
         output = str(acl)

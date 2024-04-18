@@ -50,6 +50,7 @@
         }
       ],
       "name": "good-name-mixed",
+      "statistics-per-entry": true,
       "type": "ipv4"
     }
   },
@@ -104,6 +105,7 @@
         }
       ],
       "name": "good-name-mixed",
+      "statistics-per-entry": true,
       "type": "ipv6"
     }
   }
