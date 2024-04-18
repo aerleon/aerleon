@@ -243,7 +243,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
         for af in srl_acl_entries.keys():
             if srl_acl_entries[af]:
-                # Accomodate pre-2024 filter syntaxblac if requested
+                # r24.3 changed the syntax for filters. For r24.3 or higher use the option `r24.3`.
                 if 'r24.3' in filter_options:
                     key = "acl-filter"
                 else:
