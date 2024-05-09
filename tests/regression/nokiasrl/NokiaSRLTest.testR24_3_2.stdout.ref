@@ -1,0 +1,130 @@
+[
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "R24.3.2 and beyond release syntax",
+      "entry": [
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "ipv4": {
+              "destination-ip": {
+                "prefix": "10.2.3.4/32"
+              },
+              "protocol": 17,
+              "source-ip": {
+                "prefix": "10.2.3.4/32"
+              }
+            },
+            "transport": {
+              "destination-port": {
+                "value": 53
+              }
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "ipv4": {
+              "destination-ip": {
+                "prefix": "10.2.3.4/32"
+              },
+              "protocol": 6,
+              "source-ip": {
+                "prefix": "10.2.3.4/32"
+              }
+            },
+            "transport": {
+              "destination-port": {
+                "value": 53
+              }
+            }
+          },
+          "sequence-id": 10
+        }
+      ],
+      "name": "good-name-mixed",
+      "statistics-per-entry": true,
+      "type": "ipv4"
+    }
+  },
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "R24.3.2 and beyond release syntax",
+      "entry": [
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "ipv6": {
+              "destination-ip": {
+                "prefix": "2001:4860:8000::5/128"
+              },
+              "next-header": 17,
+              "source-ip": {
+                "prefix": "2001:4860:8000::5/128"
+              }
+            },
+            "transport": {
+              "destination-port": {
+                "value": 53
+              }
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "ipv6": {
+              "destination-ip": {
+                "prefix": "2001:4860:8000::5/128"
+              },
+              "next-header": 6,
+              "source-ip": {
+                "prefix": "2001:4860:8000::5/128"
+              }
+            },
+            "transport": {
+              "destination-port": {
+                "value": 53
+              }
+            }
+          },
+          "sequence-id": 10
+        }
+      ],
+      "name": "good-name-mixed",
+      "statistics-per-entry": true,
+      "type": "ipv6"
+    }
+  }
+]
+
+

@@ -51,6 +51,13 @@ header {
 }
 """
 
+GOOD_HEADER_R24_3_2 = """
+header {
+  comment:: "R24.3.2 and beyond release syntax"
+  target:: nokiasrl good-name-mixed mixed stats r24.3.2
+}
+"""
+
 GOOD_SADDR = """
 term good-term-1 {
   comment:: "Allow source address."
@@ -527,6 +534,15 @@ class NokiaSRLTest(absltest.TestCase):
     def testPre2024(self):
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_PRE2024 + GOOD_EVERYTHING, self.naming),
+            EXP_INFO,
+        )
+        output = str(acl)
+        print(output)
+
+    @capture.stdout
+    def testR24_3_2(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_R24_3_2 + GOOD_EVERYTHING, self.naming),
             EXP_INFO,
         )
         output = str(acl)

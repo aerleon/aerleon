@@ -120,9 +120,7 @@ class Term(aclgenerator.Term):
         This function permits inheritance."""
         return {'detail-mode': 'BUILTIN', 'builtin-detail': "TCP_ESTABLISHED"}
 
-    def ConvertToDict(
-        self,
-    ) -> List[ACLEntry]:
+    def ConvertToDict(self, filter_options: List[str]) -> List[ACLEntry]:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -174,28 +172,28 @@ class Term(aclgenerator.Term):
             self.SetComments(self.term.comment)
 
         # Options
-        self.SetOptions(family)
+        self.SetOptions(family, filter_options)
 
         # Source Addresses
         for saddr in saddrs:
             if saddr != 'any':
-                self.SetSourceAddress(family, str(saddr))
+                self.SetSourceAddress(family, str(saddr), filter_options)
 
             # Destination Addresses
             for daddr in daddrs:
                 if daddr != 'any':
-                    self.SetDestAddress(family, str(daddr))
+                    self.SetDestAddress(family, str(daddr), filter_options)
 
                 # Source Port
                 for start, end in sports:
                     # 'any' starts and ends with zero.
                     if not start == end == 0:
-                        self.SetSourcePorts(start, end)
+                        self.SetSourcePorts(start, end, filter_options)
 
                     # Destination Port
                     for start, end in dports:
                         if not start == end == 0:
-                            self.SetDestPorts(start, end)
+                            self.SetDestPorts(start, end, filter_options)
 
                         # Protocol
                         for proto in protos:
@@ -207,9 +205,9 @@ class Term(aclgenerator.Term):
                                         raise OcFirewallError(
                                             'Protocol %s unknown. Use an integer.', proto
                                         )
-                                    self.SetProtocol(family, proto_num)
+                                    self.SetProtocol(family, proto_num, filter_options)
                             else:
-                                self.SetProtocol(family, proto)
+                                self.SetProtocol(family, proto, filter_options)
 
                             # This is the business end of ace explosion.
                             # A dict is a reference type, so deepcopy is actually required.
@@ -229,7 +227,7 @@ class Term(aclgenerator.Term):
     def SetComments(self, comments: List[str]) -> None:
         pass
 
-    def SetOptions(self, family: str) -> None:
+    def SetOptions(self, family: str, filter_options: List[str]) -> None:
         # options, 'family' unused
         if self.term.option:
             if 'tcp-established' in self.term.option:
@@ -239,13 +237,13 @@ class Term(aclgenerator.Term):
                     )
                 self.term_dict['transport']['config'].update(self._tcp_established())
 
-    def SetSourceAddress(self, family: str, saddr: str) -> None:
+    def SetSourceAddress(self, family: str, saddr: str, filter_options: List[str]) -> None:
         self.term_dict[family]['config']['source-address'] = saddr
 
-    def SetDestAddress(self, family: str, daddr: str) -> None:
+    def SetDestAddress(self, family: str, daddr: str, filter_options: List[str]) -> None:
         self.term_dict[family]['config']['destination-address'] = daddr
 
-    def SetSourcePorts(self, start: int, end: int) -> None:
+    def SetSourcePorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
             self.term_dict['transport']['config']['source-port'] = start
         else:
@@ -254,7 +252,7 @@ class Term(aclgenerator.Term):
                 end,
             )
 
-    def SetDestPorts(self, start: int, end: int) -> None:
+    def SetDestPorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
             self.term_dict['transport']['config']['destination-port'] = start
         else:
@@ -263,7 +261,7 @@ class Term(aclgenerator.Term):
                 end,
             )
 
-    def SetProtocol(self, family: str, protocol: int) -> None:
+    def SetProtocol(self, family: str, protocol: int, filter_options: List[str]) -> None:
         self.term_dict[family]['config']['protocol'] = protocol
 
 
@@ -350,7 +348,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
                 term_address_families = [address_family]
             for term_af in term_address_families:
                 t = self._TERM(term, term_af)
-                for rule in t.ConvertToDict():
+                for rule in t.ConvertToDict(filter_options):
                     self.total_rule_count += 1
                     rule['sequence-id'] = self.total_rule_count * 5
                     oc_acl_entries.append(rule)
