@@ -120,7 +120,7 @@ class SRLTerm(openconfig.Term):
         self.term_dict['_annotate_description'] = "_".join(comments)[:255]
 
     # Handles syntax changes in release 24.3.2 and beyond
-    def _field(self,key,filter_options: List[str]):
+    def _field(self, key, filter_options: List[str]):
         if R24_3_2 in filter_options:
             if key not in self.term_dict['match']:
                 self.term_dict['match'][key] = {}
@@ -132,20 +132,20 @@ class SRLTerm(openconfig.Term):
         opts = [str(x) for x in self.term.option]
         self.term_dict['match'] = {}
         if ('fragments' in opts) or ('is-fragment' in opts):
-            self._field('ipv4',filter_options)['fragment'] = True
+            self._field('ipv4', filter_options)['fragment'] = True
         if 'first-fragment' in opts:
-            self._field('ipv4',filter_options)['first-fragment'] = True
+            self._field('ipv4', filter_options)['first-fragment'] = True
 
         if 'initial' in opts or 'tcp-initial' in opts:
-            self._field('transport',filter_options)['tcp-flags'] = "syn"
+            self._field('transport', filter_options)['tcp-flags'] = "syn"
         if 'rst' in opts:
-            _f = self._field('transport',filter_options)
+            _f = self._field('transport', filter_options)
             _f['tcp-flags'] = "syn&rst" if 'tcp-flags' in _f else "rst"
         if 'not-syn-ack' in opts:
-            self._field('transport',filter_options)['tcp-flags'] = "!(syn&ack)"
+            self._field('transport', filter_options)['tcp-flags'] = "!(syn&ack)"
 
         def _tcp_established():
-            self._field('transport',filter_options)['tcp-flags'] = "ack|rst"
+            self._field('transport', filter_options)['tcp-flags'] = "ack|rst"
 
         if 'tcp-established' in opts:
             if not self.term.protocol or self.term.protocol == ['tcp']:
@@ -159,7 +159,7 @@ class SRLTerm(openconfig.Term):
                 if self.term.protocol == ['tcp']:
                     _tcp_established()
                 elif self.term.protocol == ['udp']:
-                    self.SetProtocol(family=family, protocol="udp",filter_options=filter_options)
+                    self.SetProtocol(family=family, protocol="udp", filter_options=filter_options)
                     if not self.term.destination_port:
                         self.SetDestPorts(1024, 65535, filter_options)
                 else:  # Could produce 2 rules if [tcp,udp]
@@ -172,33 +172,35 @@ class SRLTerm(openconfig.Term):
                 )
 
         if 'tcp-flags' in self.term_dict['match'] or (
-            R24_3_2 in filter_options and 'transport' in self.term_dict['match'] and 'tcp-flags' in self.term_dict['match']['transport']
+            R24_3_2 in filter_options
+            and 'transport' in self.term_dict['match']
+            and 'tcp-flags' in self.term_dict['match']['transport']
         ):
-            self.SetProtocol(family=family, protocol="tcp",filter_options=filter_options)
+            self.SetProtocol(family=family, protocol="tcp", filter_options=filter_options)
 
     def SetSourceAddress(self, family: str, saddr: str, filter_options: List[str]) -> None:
-        self._field(family,filter_options)['source-ip'] = {'prefix': saddr}
+        self._field(family, filter_options)['source-ip'] = {'prefix': saddr}
 
     def SetDestAddress(self, family: str, daddr: str, filter_options: List[str]) -> None:
-        self._field(family,filter_options)['destination-ip'] = {'prefix': daddr}
+        self._field(family, filter_options)['destination-ip'] = {'prefix': daddr}
 
     def SetSourcePorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
             val = {'value': start}
         else:
             val = {'range': {'start': start, 'end': end}}
-        self._field('transport',filter_options)['source-port'] = val
+        self._field('transport', filter_options)['source-port'] = val
 
     def SetDestPorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
             val = {'value': start}
         else:
             val = {'range': {'start': start, 'end': end}}
-        self._field('transport',filter_options)['destination-port'] = val
+        self._field('transport', filter_options)['destination-port'] = val
 
     def SetProtocol(self, family: str, protocol: int, filter_options: List[str]) -> None:
         field_name = "protocol" if family == "ipv4" else "next-header"
-        self._field(family,filter_options)[field_name] = protocol
+        self._field(family, filter_options)[field_name] = protocol
 
 
 class NokiaSRLinux(openconfig.OpenConfig):
@@ -257,7 +259,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
         for af in srl_acl_entries.keys():
             if srl_acl_entries[af]:
                 # r24.3 changed the syntax for filters. For r24.3 or higher use the option `r24.3`.
-                if 'r24.3' in filter_options or 'r24.3.2' in filter_options:
+                if 'r24.3' in filter_options or R24_3_2 in filter_options:
                     key = "acl-filter"
                 else:
                     key = "ipv4-filter" if af == 'inet' else "ipv6-filter"
@@ -272,6 +274,6 @@ class NokiaSRLinux(openconfig.OpenConfig):
                 }
                 if 'stats' in filter_options:
                     ip_filter[key]['statistics-per-entry'] = True
-                if 'r24.3' in filter_options or 'r24.3.2' in filter_options:
+                if 'r24.3' in filter_options or R24_3_2 in filter_options:
                     ip_filter[key]['type'] = "ipv4" if af == 'inet' else "ipv6"
                 self.acl_sets.append(ip_filter)
