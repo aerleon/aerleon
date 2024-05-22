@@ -260,9 +260,9 @@ class CiscoNXTest(absltest.TestCase):
         acl = cisconx.CiscoNX(pol, EXP_INFO)
         expected = 'ip access-list test-filter'
         self.assertIn(expected, str(acl), '[%s]' % str(acl))
-        expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 22'
+        expected = ' permit tcp 10.1.1.0/24 any eq 22'
         self.assertIn(expected, str(acl), str(acl))
-        expected = ' permit tcp 10.1.1.0 0.0.0.255 any eq 6537'
+        expected = ' permit tcp 10.1.1.0/24 any eq 6537'
         self.assertIn(expected, str(acl), str(acl))
 
         print(acl)

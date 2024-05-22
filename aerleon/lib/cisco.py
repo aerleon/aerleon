@@ -682,9 +682,11 @@ class Term(aclgenerator.Term):
         if isinstance(addr, nacaddr.IPv4) or isinstance(addr, ipaddress.IPv4Network):
             addr = cast(self.IPV4_ADDRESS, addr)
             if addr.num_addresses > 1:
-                if self.platform == 'arista':
+                if self.platform in ('arista', 'cisconx'):
                     return addr.with_prefixlen
                 return '%s %s' % (addr.network_address, addr.hostmask)
+            if addr.num_addresses == 1 and self.platform == 'cisconx':
+                return '%s' % (addr.with_prefixlen)
             return 'host %s' % (addr.network_address)
         if isinstance(addr, nacaddr.IPv6) or isinstance(addr, ipaddress.IPv6Network):
             addr = cast(self.IPV6_ADDRESS, addr)
