@@ -368,7 +368,7 @@ class Term(aclgenerator.Term):
                                     )
                                 )
 
-        if self._POSTJUMP_FORMAT:
+        if self._POSTJUMP_FORMAT and self.chained_terms:
             ret_str.append(
                 self._POSTJUMP_FORMAT.substitute(filter=self.filter, term=self.term_name)
             )

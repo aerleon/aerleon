@@ -5,16 +5,21 @@
       "description": "The general policy comment.",
       "entry": [
         {
-          "_annotate_description": "Allow TCP 53 dest.",
           "action": {
             "accept": {}
           },
-          "description": "good-term-1",
+          "description": "udp-established-term-1",
           "match": {
             "destination-port": {
-              "value": 53
+              "range": {
+                "end": 65535,
+                "start": 1024
+              }
             },
-            "protocol": 6
+            "protocol": 17,
+            "source-port": {
+              "value": 53
+            }
           },
           "sequence-id": 5
         }

@@ -30,6 +30,8 @@ if sys.version_info < (3, 8):
 else:
     from typing import TypedDict
 
+R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
+
 IPPrefix = TypedDict("IPPrefix", {"prefix": str})
 PortRange = TypedDict("PortRange", {"start": int, "end": int})
 Port = TypedDict("Port", {"value": int, "range": PortRange})
@@ -60,9 +62,16 @@ ACLEntry = TypedDict(
 )
 Entries = TypedDict(
     "Entries",
-    {"entry": List[ACLEntry], "description": str, "name": str, "_annotate": str},
+    {
+        "entry": List[ACLEntry],
+        "description": str,
+        "name": str,
+        "type": str,
+        "_annotate": str,
+        "statistics-per-entry": bool,
+    },
 )
-IPFilters = TypedDict("IPFilters", {"ipv4-filter": Entries, "ipv6-filter": Entries})
+IPFilters = TypedDict("IPFilters", {"acl-filter": Entries})
 
 
 # generic error class
@@ -110,26 +119,33 @@ class SRLTerm(openconfig.Term):
     def SetComments(self, comments: List[str]) -> None:
         self.term_dict['_annotate_description'] = "_".join(comments)[:255]
 
-    def SetOptions(self, family: str) -> None:
+    # Handles syntax changes in release 24.3.2 and beyond
+    def _field(self, key, filter_options: List[str]):
+        if R24_3_2 in filter_options:
+            if key not in self.term_dict['match']:
+                self.term_dict['match'][key] = {}
+            return self.term_dict['match'][key]
+        return self.term_dict['match']
+
+    def SetOptions(self, family: str, filter_options: List[str]) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
         self.term_dict['match'] = {}
         if ('fragments' in opts) or ('is-fragment' in opts):
-            self.term_dict['match']['fragment'] = True
+            self._field('ipv4', filter_options)['fragment'] = True
         if 'first-fragment' in opts:
-            self.term_dict['match']['first-fragment'] = True
+            self._field('ipv4', filter_options)['first-fragment'] = True
 
         if 'initial' in opts or 'tcp-initial' in opts:
-            self.term_dict['match']['tcp-flags'] = "syn"
+            self._field('transport', filter_options)['tcp-flags'] = "syn"
         if 'rst' in opts:
-            self.term_dict['match']['tcp-flags'] = (
-                "syn&rst" if 'tcp-flags' in self.term_dict['match'] else "rst"
-            )
+            _f = self._field('transport', filter_options)
+            _f['tcp-flags'] = "syn&rst" if 'tcp-flags' in _f else "rst"
         if 'not-syn-ack' in opts:
-            self.term_dict['match']['tcp-flags'] = "!(syn&ack)"
+            self._field('transport', filter_options)['tcp-flags'] = "!(syn&ack)"
 
         def _tcp_established():
-            self.term_dict['match']['tcp-flags'] = "ack|rst"
+            self._field('transport', filter_options)['tcp-flags'] = "ack|rst"
 
         if 'tcp-established' in opts:
             if not self.term.protocol or self.term.protocol == ['tcp']:
@@ -143,9 +159,9 @@ class SRLTerm(openconfig.Term):
                 if self.term.protocol == ['tcp']:
                     _tcp_established()
                 elif self.term.protocol == ['udp']:
-                    self.SetProtocol(family=family, protocol="udp")
+                    self.SetProtocol(family=family, protocol="udp", filter_options=filter_options)
                     if not self.term.destination_port:
-                        self.SetDestPorts(1024, 65535)
+                        self.SetDestPorts(1024, 65535, filter_options)
                 else:  # Could produce 2 rules if [tcp,udp]
                     raise EstablishedWithNonTcpUdpError(
                         f'established can only be used with tcp or udp protocol in term {self.term.name}'
@@ -155,30 +171,36 @@ class SRLTerm(openconfig.Term):
                     f'must specify a protocol for "established" in term {self.term.name}'
                 )
 
-        if 'tcp-flags' in self.term_dict['match']:
-            self.SetProtocol(family=family, protocol="tcp")
+        if 'tcp-flags' in self.term_dict['match'] or (
+            R24_3_2 in filter_options
+            and 'transport' in self.term_dict['match']
+            and 'tcp-flags' in self.term_dict['match']['transport']
+        ):
+            self.SetProtocol(family=family, protocol="tcp", filter_options=filter_options)
 
-    def SetSourceAddress(self, family: str, saddr: str) -> None:
-        self.term_dict['match']['source-ip'] = {'prefix': saddr}
+    def SetSourceAddress(self, family: str, saddr: str, filter_options: List[str]) -> None:
+        self._field(family, filter_options)['source-ip'] = {'prefix': saddr}
 
-    def SetDestAddress(self, family: str, daddr: str) -> None:
-        self.term_dict['match']['destination-ip'] = {'prefix': daddr}
+    def SetDestAddress(self, family: str, daddr: str, filter_options: List[str]) -> None:
+        self._field(family, filter_options)['destination-ip'] = {'prefix': daddr}
 
-    def SetSourcePorts(self, start: int, end: int) -> None:
+    def SetSourcePorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
-            self.term_dict['match']['source-port'] = {'value': start}
+            val = {'value': start}
         else:
-            self.term_dict['match']['source-port'] = {'range': {'start': start, 'end': end}}
+            val = {'range': {'start': start, 'end': end}}
+        self._field('transport', filter_options)['source-port'] = val
 
-    def SetDestPorts(self, start: int, end: int) -> None:
+    def SetDestPorts(self, start: int, end: int, filter_options: List[str]) -> None:
         if start == end:
-            self.term_dict['match']['destination-port'] = {'value': start}
+            val = {'value': start}
         else:
-            self.term_dict['match']['destination-port'] = {'range': {'start': start, 'end': end}}
+            val = {'range': {'start': start, 'end': end}}
+        self._field('transport', filter_options)['destination-port'] = val
 
-    def SetProtocol(self, family: str, protocol: int) -> None:
+    def SetProtocol(self, family: str, protocol: int, filter_options: List[str]) -> None:
         field_name = "protocol" if family == "ipv4" else "next-header"
-        self.term_dict['match'][field_name] = protocol
+        self._field(family, filter_options)[field_name] = protocol
 
 
 class NokiaSRLinux(openconfig.OpenConfig):
@@ -216,32 +238,42 @@ class NokiaSRLinux(openconfig.OpenConfig):
         self.acl_sets: List[IPFilters] = []
 
     def _TranslateTerms(
-        self, terms: List[Term], address_family: str, filter_name: str, hdr_comments: List[str]
+        self,
+        terms: List[Term],
+        address_family: str,
+        filter_name: str,
+        hdr_comments: List[str],
+        filter_options: List[str],
     ) -> None:
-        srl_acl_entries: List[ACLEntry] = []
+        srl_acl_entries: Dict[str, List[ACLEntry]] = {'inet': [], 'inet6': []}
+        afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for term in terms:
-            # Handle mixed for each indvidual term as inet and inet6.
-            # inet/inet6 are treated the same.
-            term_address_families = []
-            if address_family == 'mixed':
-                term_address_families = ['inet', 'inet6']
-            else:
-                term_address_families = [address_family]
-            for term_af in term_address_families:
+            for term_af in afs:
                 t = SRLTerm(term, term_af)
-                for rule in t.ConvertToDict():
+                for rule in t.ConvertToDict(filter_options):
                     self.total_rule_count += 1
-                    rule['sequence-id'] = (len(srl_acl_entries) + 1) * 5
-                    srl_acl_entries.append(rule)
+                    rule['sequence-id'] = (len(srl_acl_entries[term_af]) + 1) * 5
+                    srl_acl_entries[term_af].append(rule)
         desc = "_".join(hdr_comments)[:255] if hdr_comments else ""
-        ip_filter = {
-            'ipv4-filter'
-            if address_family == 'inet'
-            else 'ipv6-filter': {
-                '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
-                'description': desc,
-                'entry': srl_acl_entries,
-                'name': filter_name,
-            }
-        }
-        self.acl_sets.append(ip_filter)
+
+        for af in srl_acl_entries.keys():
+            if srl_acl_entries[af]:
+                # r24.3 changed the syntax for filters. For r24.3 or higher use the option `r24.3`.
+                if 'r24.3' in filter_options or R24_3_2 in filter_options:
+                    key = "acl-filter"
+                else:
+                    key = "ipv4-filter" if af == 'inet' else "ipv6-filter"
+
+                ip_filter = {
+                    key: {
+                        '_annotate': " ".join(aclgenerator.AddRepositoryTags()),
+                        'name': filter_name,
+                        'description': desc,
+                        'entry': srl_acl_entries[af],
+                    }
+                }
+                if 'stats' in filter_options:
+                    ip_filter[key]['statistics-per-entry'] = True
+                if 'r24.3' in filter_options or R24_3_2 in filter_options:
+                    ip_filter[key]['type'] = "ipv4" if af == 'inet' else "ipv6"
+                self.acl_sets.append(ip_filter)

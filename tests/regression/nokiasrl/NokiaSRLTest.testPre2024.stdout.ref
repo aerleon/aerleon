@@ -1,8 +1,8 @@
 [
   {
-    "acl-filter": {
+    "ipv4-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
-      "description": "GOOD_HEADER_MIXED comment.",
+      "description": "The general policy comment.",
       "entry": [
         {
           "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
@@ -50,14 +50,13 @@
         }
       ],
       "name": "good-name-mixed",
-      "statistics-per-entry": true,
-      "type": "ipv4"
+      "statistics-per-entry": true
     }
   },
   {
-    "acl-filter": {
+    "ipv6-filter": {
       "_annotate": "$Id:$ $Date:$ $Revision:$",
-      "description": "GOOD_HEADER_MIXED comment.",
+      "description": "The general policy comment.",
       "entry": [
         {
           "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging.",
@@ -105,8 +104,7 @@
         }
       ],
       "name": "good-name-mixed",
-      "statistics-per-entry": true,
-      "type": "ipv6"
+      "statistics-per-entry": true
     }
   }
 ]
