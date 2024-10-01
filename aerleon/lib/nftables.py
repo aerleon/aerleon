@@ -264,13 +264,13 @@ class Term(aclgenerator.Term):
                 ip_protocol.remove('icmpv6')
             if ip_protocol:
                 # Multi-protocol and zero-ports.
-                if len(ip_protocol) > 1 and not (src_ports and dst_ports):
+                if len(ip_protocol) > 1 and not (src_ports or dst_ports):
                     statement_lines.append(
                         'ip protocol' + Add(self.CreateAnonymousSet(ip_protocol))
                     )
                 else:
                     for proto in ip_protocol:
-                        if src_ports and dst_ports:
+                        if src_ports or dst_ports:
                             statement_lines.append(PortStatement(proto, src_p, dst_p))
                         else:
                             statement_lines.append('ip protocol' + Add(proto))
@@ -292,7 +292,7 @@ class Term(aclgenerator.Term):
                 # we use meta l4proto here to walk down the headers until real transport
                 # protocol is found. This allows us to use Sets here too.
                 # https://wiki.nftables.org/wiki-nftables/index.php/Matching_packet_headers
-                if len(ip6_protocol) > 1 and not (src_ports and dst_ports):
+                if len(ip6_protocol) > 1 and not (src_ports or dst_ports):
                     statement_lines.append(
                         'meta l4proto' + Add(self.CreateAnonymousSet(ip6_protocol))
                     )
