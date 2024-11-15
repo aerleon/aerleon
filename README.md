@@ -7,7 +7,6 @@
 Generate firewall configs for multiple firewall platforms from a single platform-agnostic configuration language through a command line tool and Python API.
 
 Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the following major additions:
-
 - YAML policy and network definition files and [pol2yaml, a converter from Capirca policy DSL to YAML](https://github.com/aerleon/pol2yaml).
 - Network definitions with FQDN data.
 - New firewall platforms can be added through plugins.
@@ -16,57 +15,67 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - A detailed regression test suite.
 - Many bug fixes and performance enhancements.
 
-## Install
-
+### Prerequisites
 Aerleon requires Python 3.8 or higher.
 
+### Installation Steps
+You can install Aerleon using one of the following package managers:
+
+#### Option 1: pip (Python Package Index)
+Install Aerleon using `pip`:
 ```bash
 pip install aerleon
 ```
 
-To install via [`brew`](https://brew.sh):
-
+#### Option 2: Homebrew (macOS/Linux)
+Install Aerleon using Homebrew:
 ```bash
 brew install aerleon
 ```
 
-## Overview
+### Overview
+Aerleon provides a command line tool and a Python API to generate configs for multiple firewall platforms from a single platform-agnostic configuration language. Supported platforms include Cisco, Juniper, Palo Alto Networks, and [many others](https://aerleon.readthedocs.io/en/latest/#core-supported-generators).
 
-Aerleon provides a command line tool and a Python API that will generate configs for multiple firewall platforms from a single platform-agnostic configuration language. It can generate configs for Cisco, Juniper, Palo Alto Networks and [many other firewall vendors](https://aerleon.readthedocs.io/en/latest/#core-supported-generators).
+A [getting started guide](https://aerleon.readthedocs.io/en/latest/getting_started/) is available to walk through the basics of using Aerleon.
 
-A [getting started guide](https://aerleon.readthedocs.io/en/latest/getting_started/) walking through the basics of using Aerleon is available on the docs website.
+### Documentation
+Full documentation can be found at [https://aerleon.readthedocs.io/en/latest/](https://aerleon.readthedocs.io/en/latest/).
 
-## Documentation
+### Contributing
+Contributions are welcome. Please review the [contributing guidelines](https://aerleon.readthedocs.io/en/latest/contributing/) and [code of conduct](https://github.com/aerleon/aerleon/blob/main/CODE_OF_CONDUCT.md).
 
-Documentation can be found at [https://aerleon.readthedocs.io/en/latest/](https://aerleon.readthedocs.io/en/latest/).
+### Contact
+#### Official Communication Channels
+- Issues: [GitHub Issues](https://github.com/aerleon/aerleon/issues).
+- Discussions: [GitHub Discussions](https://github.com/aerleon/aerleon/discussions).
+- Community Chat: [Slack Server](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw).
 
-## Contributing
+#### Maintainers
+- Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
+- Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
 
-Contributions are welcome. Please review the [contributing guidelines](https://aerleon.readthedocs.io/en/latest/contributing/) and [code of conduct](https://github.com/aerleon/aerleon/blob/main/CODE_OF_CONDUCT.md) for this project.
+### Version History
+Refer to the [changelog](https://github.com/aerleon/aerleon/releases) for version updates.
 
-## Contact
-
-Official channels for communicating issues is via [Github Issues](https://github.com/aerleon/aerleon/issues).
-
-General discussions can be had either in [Github Discussions](https://github.com/aerleon/aerleon/discussions) or in our [Slack Server](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw).
-
-### Contact Maintainers
-
-You can always reach out to us on  [Slack](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw).
-You many also reach out to us via e-mail.
-
-Rob Ankeny ([ankenyr@gmail.com](mailto:ankenyr@gmail.com))
-
-Jason Benterou ([jason.benterou@gmail.com](mailto:jason.benterou@gmail.com))
-
-## Resources
-
-- [Brief Overview (4 slides):](https://docs.google.com/present/embed?id=dhtc9k26_13cz9fphfb&autoStart=true&loop=true&size=1)
-- [Nanog49; Enterprise QoS](http://www.nanog.org/meetings/nanog49/presentations/Tuesday/Chung-EnterpriseQoS-final.pdf)
+### Resources
+- [Getting Started Guide](https://aerleon.readthedocs.io/en/latest/getting_started/)
 - [Blog Post: Safe ACL Change through Model-based Analysis](https://tech.ebayinc.com/engineering/safe-acl-change-through-model-based-analysis/)
 - [Aerleon Slack](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw)
-- [#aerleon at NetworkToCode Slack](https://app.slack.com/client/T09LQ7E9E/C04L56TMMFZ)
 
+### Credits
+Files and code included in this project from Capirca are copyright Google and
+are included under the terms of the Apache License, Version 2.0. You may obtain
+a copy of the License at
+
+  <http://www.apache.org/licenses/LICENSE-2.0>
+
+Contributors who wish to modify files bearing a copyright notice are obligated
+by the terms of the Apache License, Version 2.0 to include at the top of the
+file a prominent notice stating as much. Copyright notices must not be removed
+from files in this repository.
+
+This README file and other documentation files may contain phrases and sections that are copyright Google.
+This file and other documentation files are modified from the original by the Aerleon Project Team.
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -93,18 +102,3 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
-## Credit
-
-Files and code included in this project from Capirca are copyright Google and
-are included under the terms of the Apache License, Version 2.0. You may obtain
-a copy of the License at
-
-  <http://www.apache.org/licenses/LICENSE-2.0>
-
-Contributors who wish to modify files bearing a copyright notice are obligated
-by the terms of the Apache License, Version 2.0 to include at the top of the
-file a prominent notice stating as much. Copyright notices must not be removed
-from files in this repository.
-
-This README file and other documentation files may contain phrases and sections that are copyright Google.
-This file and other documentation files are modified from the original by the Aerleon Project Team.
