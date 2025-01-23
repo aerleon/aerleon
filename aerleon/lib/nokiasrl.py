@@ -91,6 +91,10 @@ class EstablishedWithNonTcpUdpError(Error):
     pass
 
 
+class UnsupportedLogging(Error):
+    pass
+
+
 class SRLTerm(openconfig.Term):
     """Creates the term for the SR Linux ACL."""
 
@@ -100,11 +104,22 @@ class SRLTerm(openconfig.Term):
         # Put name in description field
         self.term_dict['description'] = name
 
-    def SetAction(self) -> None:
+    def SetAction(self, filter_options: List[str]) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
-        if self.term.logging:
-            self.term_dict['action']['log'] = True
-        self.term_dict['action'] = {action: {}}
+        if R24_3_2 in filter_options:
+            if self.term.logging:
+                self.term_dict['action']['log'] = True
+            self.term_dict['action'] = {action: {}}
+        else:
+            log = {}
+            if self.term.logging:
+                if action == 'drop':
+                    log = {"log": True}
+            else:
+                raise UnsupportedLogging(
+                    f'logging can only be used with deny in term {self.term.name}'
+                )
+            self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
         self.term_dict['_annotate_description'] = "_".join(comments)[:255]
