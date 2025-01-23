@@ -143,7 +143,7 @@ class Term(aclgenerator.Term):
         self.SetName(self.term.name)
 
         # Action
-        self.SetAction()
+        self.SetAction(filter_options)
 
         # Ballot fatigue handling for 'any'.
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
