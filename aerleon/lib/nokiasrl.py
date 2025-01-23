@@ -115,10 +115,10 @@ class SRLTerm(openconfig.Term):
             if self.term.logging:
                 if action == 'drop':
                     log = {"log": True}
-            else:
-                raise UnsupportedLogging(
-                    f'logging can only be used with deny in term {self.term.name}'
-                )
+                else:
+                    raise UnsupportedLogging(
+                        f'logging can only be used with deny in term {self.term.name}'
+                    )
             self.term_dict['action'] = {action: log}
 
     def SetComments(self, comments: List[str]) -> None:
