@@ -1,5 +1,5 @@
 default_language_version:
-    python: python3.10
+    python: python3.11
 exclude: '\.ref$'
 repos:
   # - repo: https://github.com/python/black.git
@@ -15,7 +15,8 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-      - id: check-executables-have-shebangs
+      # https://github.com/docker/for-mac/issues/5029
+      # - id: check-executables-have-shebangs
       - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
