@@ -107,9 +107,9 @@ class SRLTerm(openconfig.Term):
     def SetAction(self, filter_options: List[str]) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         if R24_3_2 in filter_options:
+            self.term_dict['action'] = {action: {}}
             if self.term.logging:
                 self.term_dict['action']['log'] = True
-            self.term_dict['action'] = {action: {}}
         else:
             log = {}
             if self.term.logging:
