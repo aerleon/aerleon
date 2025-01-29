@@ -11,7 +11,7 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@session(python=["3.8", "3.9", "3.10"])
+@session(python=["3.9", "3.10", "3.11"])
 def test(session):
     """Runs pytest"""
     session.run_always("poetry", "install", external=True)
