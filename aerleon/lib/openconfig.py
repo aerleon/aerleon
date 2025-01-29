@@ -143,7 +143,7 @@ class Term(aclgenerator.Term):
         self.SetName(self.term.name)
 
         # Action
-        self.SetAction()
+        self.SetAction(filter_options)
 
         # Ballot fatigue handling for 'any'.
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
@@ -218,7 +218,7 @@ class Term(aclgenerator.Term):
     def SetName(self, name: str) -> None:
         pass
 
-    def SetAction(self) -> None:
+    def SetAction(self, filter_options: List[str]) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         self.term_dict['actions'] = {}
         self.term_dict['actions']['config'] = {}
