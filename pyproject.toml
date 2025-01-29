@@ -13,9 +13,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Security",
     "Topic :: System :: Networking :: Firewalls"
 ]
@@ -27,7 +27,7 @@ include = [
 packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 PyYAML = "^6.0"
 ply = "^3.11"
 absl-py = "^1.2.0"
