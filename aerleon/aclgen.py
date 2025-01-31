@@ -213,6 +213,7 @@ def RenderFile(
                 optimize=optimize,
                 base_dir=base_directory,
                 shade_check=shade_check,
+                filename=input_file.name
             )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', input_file, e)
@@ -222,7 +223,6 @@ def RenderFile(
             'Error parsing policy file %s:\n%s%s'
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
-
     platforms = set()
     for header in pol.headers:
         platforms.update(header.platforms)
@@ -443,32 +443,26 @@ def Run(
     with_errors = False
     logging.info('finding policies...')
     if policy_file:
-        # render just one file
-        logging.info('rendering one file')
-        RenderFile(
-            base_directory,
-            pathlib.Path(policy_file),
-            pathlib.Path(output_directory),
-            definitions,
-            exp_info,
-            optimize,
-            shade_check,
-            write_files,
-        )
-    elif max_renderers == 1:
-        # If only one process, run it sequentially
+        policies = [pathlib.Path(policy_file)]
+    else:
         policies = DescendDirectory(base_directory, ignore_directories)
-        for pol in policies:
-            RenderFile(
-                base_directory,
-                pol,
-                pathlib.Path(output_directory),
-                definitions,
-                exp_info,
-                optimize,
-                shade_check,
-                write_files,
-            )
+    if max_renderers == 1 or policy_file:
+        # If one renderer or single file, run sequentially
+        try:
+            for pol in policies:
+                RenderFile(
+                    base_directory,
+                    pol,
+                    pathlib.Path(output_directory),
+                    definitions,
+                    exp_info,
+                    optimize,
+                    shade_check,
+                    write_files,
+                )
+        except (ACLParserError, ACLGeneratorError) as e:
+            with_errors = True
+            logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
@@ -538,19 +532,22 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-
-    Run(
-        configs['base_directory'],
-        configs['definitions_directory'],
-        configs['policy_file'],
-        configs['output_directory'],
-        configs['exp_info'],
-        configs['max_renderers'],
-        configs['ignore_directories'],
-        configs['optimize'],
-        configs['shade_check'],
-        context,
-    )
+    try:
+        Run(
+            configs['base_directory'],
+            configs['definitions_directory'],
+            configs['policy_file'],
+            configs['output_directory'],
+            configs['exp_info'],
+            configs['max_renderers'],
+            configs['ignore_directories'],
+            configs['optimize'],
+            configs['shade_check'],
+            context,
+        )
+    except Exception as e:
+        logging.error(f"Unhandled exception: {e}", exc_info=True)
+        sys.exit(1)
 
 
 def EntryPoint():
