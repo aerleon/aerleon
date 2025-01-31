@@ -1789,852 +1789,793 @@ class Target:
         return not self.__eq__(other)
 
 
-# Lexing/Parsing starts here
-tokens = (
-    'ACTION',
-    'ADDR',
-    'ADDREXCLUDE',
-    'RESTRICT_ADDRESS_FAMILY',
-    'COMMENT',
-    'COUNTER',
-    'DADDR',
-    'DADDREXCLUDE',
-    'DINTERFACE',
-    'DPFX',
-    'EDPFX',
-    'DPORT',
-    'DQUOTEDSTRING',
-    'DSCP',
-    'DSCP_EXCEPT',
-    'DSCP_MATCH',
-    'DSCP_RANGE',
-    'DSCP_SET',
-    'DTAG',
-    'DZONE',
-    'ENCAPSULATE',
-    'ESCAPEDSTRING',
-    'ETHER_TYPE',
-    'EXPIRATION',
-    'FILTER_TERM',
-    'FLEXIBLE_MATCH_RANGE',
-    'FORWARDING_CLASS',
-    'FORWARDING_CLASS_EXCEPT',
-    'FRAGMENT_OFFSET',
-    'HOP_LIMIT',
-    'APPLY_GROUPS',
-    'APPLY_GROUPS_EXCEPT',
-    'HEADER',
-    'HEX',
-    'ICMP_TYPE',
-    'ICMP_CODE',
-    'INTEGER',
-    'LOGGING',
-    'LOG_LIMIT',
-    'LOG_NAME',
-    'LOSS_PRIORITY',
-    'LPAREN',
-    'LSQUARE',
-    'NEXT_IP',
-    'OPTION',
-    'OWNER',
-    'PACKET_LEN',
-    'PLATFORM',
-    'PLATFORMEXCLUDE',
-    'POLICER',
-    'PORT',
-    'PORT_MIRROR',
-    'PRECEDENCE',
-    'PRIORITY',
-    'PROTOCOL',
-    'PROTOCOL_EXCEPT',
-    'QOS',
-    'RPAREN',
-    'RSQUARE',
-    'PAN_APPLICATION',
-    'ROUTING_INSTANCE',
-    'SADDR',
-    'SADDREXCLUDE',
-    'SINTERFACE',
-    'SPFX',
-    'ESPFX',
-    'SPORT',
-    'SZONE',
-    'STAG',
-    'STRING',
-    'TARGET',
-    'TARGET_RESOURCES',
-    'TARGET_SERVICE_ACCOUNTS',
-    'TERM',
-    'TIMEOUT',
-    'TRAFFIC_CLASS_COUNT',
-    'TRAFFIC_TYPE',
-    'TTL',
-    'VERBATIM',
-    'VPN',
-)
-
-literals = r':{},-/'
-t_ignore = ' \t'
-t_LSQUARE = r'\['
-t_RSQUARE = r'\]'
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-
-reserved = {
-    'action': 'ACTION',
-    'address': 'ADDR',
-    'address-exclude': 'ADDREXCLUDE',
-    'restrict-address-family': 'RESTRICT_ADDRESS_FAMILY',
-    'comment': 'COMMENT',
-    'counter': 'COUNTER',
-    'destination-address': 'DADDR',
-    'destination-exclude': 'DADDREXCLUDE',
-    'destination-interface': 'DINTERFACE',
-    'destination-prefix': 'DPFX',
-    'destination-prefix-except': 'EDPFX',
-    'destination-port': 'DPORT',
-    'destination-tag': 'DTAG',
-    'destination-zone': 'DZONE',
-    'dscp-except': 'DSCP_EXCEPT',
-    'dscp-match': 'DSCP_MATCH',
-    'dscp-set': 'DSCP_SET',
-    'encapsulate': 'ENCAPSULATE',
-    'ether-type': 'ETHER_TYPE',
-    'expiration': 'EXPIRATION',
-    'filter-term': 'FILTER_TERM',
-    'flexible-match-range': 'FLEXIBLE_MATCH_RANGE',
-    'forwarding-class': 'FORWARDING_CLASS',
-    'forwarding-class-except': 'FORWARDING_CLASS_EXCEPT',
-    'fragment-offset': 'FRAGMENT_OFFSET',
-    'hex': 'HEX',
-    'hop-limit': 'HOP_LIMIT',
-    'apply-groups': 'APPLY_GROUPS',
-    'apply-groups-except': 'APPLY_GROUPS_EXCEPT',
-    'header': 'HEADER',
-    'icmp-type': 'ICMP_TYPE',
-    'icmp-code': 'ICMP_CODE',
-    'logging': 'LOGGING',
-    'log-limit': 'LOG_LIMIT',
-    'log_name': 'LOG_NAME',
-    'loss-priority': 'LOSS_PRIORITY',
-    'next-ip': 'NEXT_IP',
-    'option': 'OPTION',
-    'owner': 'OWNER',
-    'packet-length': 'PACKET_LEN',
-    'platform': 'PLATFORM',
-    'platform-exclude': 'PLATFORMEXCLUDE',
-    'policer': 'POLICER',
-    'port': 'PORT',
-    'port-mirror': 'PORT_MIRROR',
-    'precedence': 'PRECEDENCE',
-    'priority': 'PRIORITY',
-    'protocol': 'PROTOCOL',
-    'protocol-except': 'PROTOCOL_EXCEPT',
-    'qos': 'QOS',
-    'pan-application': 'PAN_APPLICATION',
-    'routing-instance': 'ROUTING_INSTANCE',
-    'source-address': 'SADDR',
-    'source-exclude': 'SADDREXCLUDE',
-    'source-interface': 'SINTERFACE',
-    'source-prefix': 'SPFX',
-    'source-prefix-except': 'ESPFX',
-    'source-port': 'SPORT',
-    'source-tag': 'STAG',
-    'source-zone': 'SZONE',
-    'target': 'TARGET',
-    'target-resources': 'TARGET_RESOURCES',
-    'target-service-accounts': 'TARGET_SERVICE_ACCOUNTS',
-    'term': 'TERM',
-    'timeout': 'TIMEOUT',
-    'traffic-class-count': 'TRAFFIC_CLASS_COUNT',
-    'traffic-type': 'TRAFFIC_TYPE',
-    'ttl': 'TTL',
-    'verbatim': 'VERBATIM',
-    'vpn': 'VPN',
-}
-
-# disable linting warnings for lexx/yacc code
-# pylint: disable=unused-argument,invalid-name,g-short-docstring-punctuation
-# pylint: disable=g-docstring-quotes,g-short-docstring-space
-# pylint: disable=g-space-before-docstring-summary,g-doc-args
-# pylint: disable=g-no-space-after-docstring-summary
-# pylint: disable=g-docstring-missing-newline
-
-
-def t_IGNORE_COMMENT(t):
-    r'\#.*'
-    pass
-
-
-def t_ESCAPEDSTRING(t):
-    r'"([^"\\]*(?:\\"[^"\\]*)+)"'
-    t.lexer.lineno += str(t.value).count('\n')
-    return t
-
-
-def t_DQUOTEDSTRING(t: LexToken) -> LexToken:
-    r'"[^"]*?"'
-    t.lexer.lineno += str(t.value).count('\n')
-    return t
-
-
-def t_newline(t: LexToken) -> None:
-    r'\n+'
-    t.lexer.lineno += len(t.value)
-
-
-def t_error(t):
-    print("Illegal character '%s' on line %s" % (t.value[0], t.lineno))
-    t.lexer.skip(1)
-
-
-def t_DSCP_RANGE(t):
-    # pylint: disable=line-too-long
-    r'\b((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))([-]{1})((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))\b'
-    t.type = reserved.get(t.value, 'DSCP_RANGE')
-    return t
-
-
-def t_DSCP(t):
-    # we need to handle the '-' as part of the word, not as a boundary
-    r'\b((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))(?![\w-])\b'
-    t.type = reserved.get(t.value, 'DSCP')
-    return t
-
-
-def t_HEX(t):
-    r'0x[a-fA-F0-9]+'
-    return t
-
-
-def t_INTEGER(t: LexToken) -> LexToken:
-    r'\d+'
-    return t
-
-
-def t_STRING(t: LexToken) -> LexToken:
-    r'\w+([-_+.@/]\w*)*'
-    # we have an identifier; let's check if it's a keyword or just a string.
-    t.type = reserved.get(t.value, 'STRING')
-    return t
-
-
-###
-## parser starts here
-###
-def p_target(p: YaccProduction) -> None:
-    """target : target header terms
-    |"""
-    if len(p) > 1:
-        if type(p[1]) is Policy:
-            p[1].AddFilter(p[2], p[3])
-            p[0] = p[1]
-        else:
-            p[0] = Policy(p[2], p[3])
-
-
-def p_header(p: YaccProduction) -> None:
-    """header : HEADER '{' header_spec '}'"""
-    p[0] = p[3]
-
-
-def p_header_spec(p: YaccProduction) -> None:
-    """header_spec : header_spec target_spec
-    | header_spec comment_spec
-    | header_spec apply_groups_spec
-    | header_spec apply_groups_except_spec
-    |"""
-    if len(p) > 1:
-        if type(p[1]) == Header:
-            p[1].AddObject(p[2])
-            p[0] = p[1]
-        else:
-            p[0] = Header()
-            p[0].AddObject(p[2])
-
-
-# we may want to change this at some point if we want to be clever with things
-# like being able to set a default input/output policy for iptables policies.
-def p_target_spec(p: YaccProduction) -> None:
-    """target_spec : TARGET ':' ':' strings_or_ints"""
-    p[0] = Target(p[4])
-
-
-def p_terms(p: YaccProduction) -> None:
-    """terms : terms TERM STRING '{' term_spec '}'
-    |"""
-    if len(p) > 1:
-        p[5].name = p[3]
-        if type(p[1]) == list:
-            p[1].append(p[5])
-            p[0] = p[1]
-        else:
-            p[0] = [p[5]]
-
-
-def p_term_spec(p: YaccProduction) -> None:
-    """term_spec : term_spec action_spec
-    | term_spec addr_spec
-    | term_spec restrict_address_family_spec
-    | term_spec comment_spec
-    | term_spec counter_spec
-    | term_spec traffic_class_count_spec
-    | term_spec dscp_set_spec
-    | term_spec dscp_match_spec
-    | term_spec dscp_except_spec
-    | term_spec encapsulate_spec
-    | term_spec ether_type_spec
-    | term_spec exclude_spec
-    | term_spec expiration_spec
-    | term_spec filter_term_spec
-    | term_spec flexible_match_range_spec
-    | term_spec forwarding_class_spec
-    | term_spec forwarding_class_except_spec
-    | term_spec fragment_offset_spec
-    | term_spec hop_limit_spec
-    | term_spec icmp_type_spec
-    | term_spec icmp_code_spec
-    | term_spec interface_spec
-    | term_spec logging_spec
-    | term_spec log_limit_spec
-    | term_spec log_name_spec
-    | term_spec losspriority_spec
-    | term_spec next_ip_spec
-    | term_spec option_spec
-    | term_spec owner_spec
-    | term_spec packet_length_spec
-    | term_spec platform_spec
-    | term_spec policer_spec
-    | term_spec port_spec
-    | term_spec port_mirror_spec
-    | term_spec precedence_spec
-    | term_spec priority_spec
-    | term_spec prefix_list_spec
-    | term_spec protocol_spec
-    | term_spec qos_spec
-    | term_spec pan_application_spec
-    | term_spec routinginstance_spec
-    | term_spec term_zone_spec
-    | term_spec tag_list_spec
-    | term_spec target_resources_spec
-    | term_spec target_service_accounts_spec
-    | term_spec timeout_spec
-    | term_spec ttl_spec
-    | term_spec traffic_type_spec
-    | term_spec verbatim_spec
-    | term_spec vpn_spec
-    |"""
-    if len(p) > 1:
-        if type(p[1]) == Term:
-            p[1].AddObject(p[2])
-            p[0] = p[1]
-        else:
-            p[0] = Term(p[2])
-
-
-def p_restrict_address_family_spec(p):
-    """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' STRING"""
-    p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[4])
-
-
-def p_routinginstance_spec(p: YaccProduction) -> None:
-    """routinginstance_spec : ROUTING_INSTANCE ':' ':' STRING"""
-    p[0] = VarType(VarType.ROUTING_INSTANCE, p[4])
-
-
-def p_losspriority_spec(p: YaccProduction) -> None:
-    """losspriority_spec :  LOSS_PRIORITY ':' ':' STRING"""
-    p[0] = VarType(VarType.LOSS_PRIORITY, p[4])
-
-
-def p_precedence_spec(p: YaccProduction) -> None:
-    """precedence_spec : PRECEDENCE ':' ':' one_or_more_ints"""
-    p[0] = VarType(VarType.PRECEDENCE, p[4])
-
-
-def p_flexible_match_range_spec(p):
-    """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE ':' ':' flex_match_key_values"""
-    p[0] = []
-    for kv in p[4]:
-        p[0].append(VarType(VarType.FLEXIBLE_MATCH_RANGE, kv))
-
-
-def p_flex_match_key_values(p):
-    """flex_match_key_values : flex_match_key_values STRING HEX
-    | flex_match_key_values STRING INTEGER
-    | flex_match_key_values STRING STRING
-    | STRING HEX
-    | STRING INTEGER
-    | STRING STRING
-    |"""
-    if len(p) < 1:
-        return
-
-    if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
-        raise FlexibleMatchError('%s is not a valid attribute' % p[1])
-    if p[1] == 'match-start':
-        if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
-            raise FlexibleMatchError('%s value is not valid' % p[1])
-    # per Juniper, max bit length is 32
-    elif p[1] == 'bit-length':
-        if int(p[2]) not in list(range(33)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
-    # per Juniper, max bit offset is 7
-    elif p[1] == 'bit-offset':
-        if int(p[2]) not in list(range(8)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
-    # per Juniper, offset can be up to 256 bytes
-    elif p[1] == 'byte-offset':
-        if int(p[2]) not in list(range(256)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
-
-    if type(p[0]) == type([]):
-        p[0].append([p.slice[1:]])
-    else:
-        p[0] = [[i.value for i in p.slice[1:]]]
-
-
-def p_forwarding_class_spec(p: YaccProduction) -> None:
-    """forwarding_class_spec : FORWARDING_CLASS ':' ':' one_or_more_strings"""
-    p[0] = []
-    for fclass in p[4]:
-        p[0].append(VarType(VarType.FORWARDING_CLASS, fclass))
-
-
-def p_forwarding_class_except_spec(p):
-    """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT ':' ':' one_or_more_strings"""
-    p[0] = []
-    for fclass in p[4]:
-        p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
-
-
-def p_next_ip_spec(p: YaccProduction) -> None:
-    """next_ip_spec : NEXT_IP ':' ':' STRING"""
-    p[0] = VarType(VarType.NEXT_IP, p[4])
-
-
-def p_encapsulate_spec(p: YaccProduction) -> None:
-    """encapsulate_spec : ENCAPSULATE ':' ':' STRING"""
-    p[0] = VarType(VarType.ENCAPSULATE, p[4])
-
-
-def p_port_mirror_spec(p: YaccProduction) -> None:
-    """port_mirror_spec : PORT_MIRROR ':' ':' STRING"""
-    p[0] = VarType(VarType.PORT_MIRROR, p[4])
-
-
-def p_icmp_type_spec(p: YaccProduction) -> None:
-    """icmp_type_spec : ICMP_TYPE ':' ':' one_or_more_strings"""
-    p[0] = VarType(VarType.ICMP_TYPE, p[4])
-
-
-def p_icmp_code_spec(p: YaccProduction) -> None:
-    """icmp_code_spec : ICMP_CODE ':' ':' one_or_more_ints"""
-    p[0] = VarType(VarType.ICMP_CODE, p[4])
-
-
-def p_priority_spec(p):
-    """priority_spec : PRIORITY ':' ':' INTEGER"""
-    p[0] = VarType(VarType.PRIORITY, p[4])
-
-
-def p_packet_length_spec(p):
-    """packet_length_spec : PACKET_LEN ':' ':' INTEGER
-    | PACKET_LEN ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]))
-    else:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]) + '-' + str(p[6]))
-
-
-def p_fragment_offset_spec(p):
-    """fragment_offset_spec : FRAGMENT_OFFSET ':' ':' INTEGER
-    | FRAGMENT_OFFSET ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]))
-    else:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
-
-
-def p_hop_limit_spec(p: YaccProduction) -> None:
-    """hop_limit_spec : HOP_LIMIT ':' ':' INTEGER
-    | HOP_LIMIT ':' ':' INTEGER '-' INTEGER"""
-    if len(p) == 5:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]))
-    else:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]) + '-' + str(p[6]))
-
-
-def p_one_or_more_dscps(p):
-    """one_or_more_dscps : one_or_more_dscps DSCP_RANGE
-    | one_or_more_dscps DSCP
-    | one_or_more_dscps INTEGER
-    | DSCP_RANGE
-    | DSCP
-    | INTEGER"""
-    if len(p) > 1:
-        if type(p[1]) is list:
-            p[1].append(p[2])
-            p[0] = p[1]
-        else:
-            p[0] = [p[1]]
-
-
-def p_dscp_set_spec(p):
-    """dscp_set_spec : DSCP_SET ':' ':' DSCP
-    | DSCP_SET ':' ':' INTEGER"""
-    p[0] = VarType(VarType.DSCP_SET, p[4])
-
-
-def p_dscp_match_spec(p):
-    """dscp_match_spec : DSCP_MATCH ':' ':' one_or_more_dscps"""
-    p[0] = []
-    for dscp in p[4]:
-        p[0].append(VarType(VarType.DSCP_MATCH, dscp))
-
-
-def p_dscp_except_spec(p):
-    """dscp_except_spec : DSCP_EXCEPT ':' ':' one_or_more_dscps"""
-    p[0] = []
-    for dscp in p[4]:
-        p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
-
-
-def p_exclude_spec(p: YaccProduction) -> None:
-    """exclude_spec : SADDREXCLUDE ':' ':' one_or_more_strings
-    | DADDREXCLUDE ':' ':' one_or_more_strings
-    | ADDREXCLUDE ':' ':' one_or_more_strings
-    | PROTOCOL_EXCEPT ':' ':' one_or_more_strings"""
-
-    p[0] = []
-    for ex in p[4]:
-        if p[1].find('source-exclude') >= 0:
-            p[0].append(VarType(VarType.SADDREXCLUDE, ex))
-        elif p[1].find('destination-exclude') >= 0:
-            p[0].append(VarType(VarType.DADDREXCLUDE, ex))
-        elif p[1].find('address-exclude') >= 0:
-            p[0].append(VarType(VarType.ADDREXCLUDE, ex))
-        elif p[1].find('protocol-except') >= 0:
-            p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
-
-
-def p_prefix_list_spec(p: YaccProduction) -> None:
-    """prefix_list_spec : DPFX ':' ':' one_or_more_strings
-    | EDPFX ':' ':' one_or_more_strings
-    | SPFX ':' ':' one_or_more_strings
-    | ESPFX ':' ':' one_or_more_strings"""
-    p[0] = []
-    for pfx in p[4]:
-        if p[1].find('source-prefix-except') >= 0:
-            p[0].append(VarType(VarType.ESPFX, pfx))
-        elif p[1].find('source-prefix') >= 0:
-            p[0].append(VarType(VarType.SPFX, pfx))
-        elif p[1].find('destination-prefix-except') >= 0:
-            p[0].append(VarType(VarType.EDPFX, pfx))
-        elif p[1].find('destination-prefix') >= 0:
-            p[0].append(VarType(VarType.DPFX, pfx))
-
-
-def p_addr_spec(p: YaccProduction) -> None:
-    """addr_spec : SADDR ':' ':' one_or_more_strings
-    | DADDR ':' ':' one_or_more_strings
-    | ADDR  ':' ':' one_or_more_strings"""
-    p[0] = []
-    for addr in p[4]:
-        if p[1].find('source-address') >= 0:
-            p[0].append(VarType(VarType.SADDRESS, addr))
-        elif p[1].find('destination-address') >= 0:
-            p[0].append(VarType(VarType.DADDRESS, addr))
-        else:
-            p[0].append(VarType(VarType.ADDRESS, addr))
-
-
-def p_port_spec(p: YaccProduction) -> None:
-    """port_spec : SPORT ':' ':' one_or_more_strings
-    | DPORT ':' ':' one_or_more_strings
-    | PORT ':' ':' one_or_more_strings"""
-    p[0] = []
-    for port in p[4]:
-        if p[1].find('source-port') >= 0:
-            p[0].append(VarType(VarType.SPORT, port))
-        elif p[1].find('destination-port') >= 0:
-            p[0].append(VarType(VarType.DPORT, port))
-        else:
-            p[0].append(VarType(VarType.PORT, port))
-
-
-def p_protocol_spec(p: YaccProduction) -> None:
-    """protocol_spec : PROTOCOL ':' ':' strings_or_ints"""
-    p[0] = []
-    for proto in p[4]:
-        p[0].append(VarType(VarType.PROTOCOL, proto))
-
-
-def p_tag_list_spec(p: YaccProduction) -> None:
-    """tag_list_spec : DTAG ':' ':' one_or_more_strings
-    | STAG ':' ':' one_or_more_strings"""
-    p[0] = []
-    for tag in p[4]:
-        if p[1].find('source-tag') >= 0:
-            p[0].append(VarType(VarType.STAG, tag))
-        elif p[1].find('destination-tag') >= 0:
-            p[0].append(VarType(VarType.DTAG, tag))
-
-
-def p_target_resources_spec(p: YaccProduction) -> None:
-    """target_resources_spec : TARGET_RESOURCES ':' ':' one_or_more_tuples"""
-    p[0] = []
-    for target_resource in p[4]:
-        p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
-
-
-def p_target_service_accounts_spec(p: YaccProduction) -> None:
-    """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' one_or_more_strings"""
-    p[0] = []
-    for service_account in p[4]:
-        p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
-
-
-def p_ether_type_spec(p: YaccProduction) -> None:
-    """ether_type_spec : ETHER_TYPE ':' ':' one_or_more_strings"""
-    p[0] = []
-    for proto in p[4]:
-        p[0].append(VarType(VarType.ETHER_TYPE, proto))
-
-
-def p_traffic_type_spec(p: YaccProduction) -> None:
-    """traffic_type_spec : TRAFFIC_TYPE ':' ':' one_or_more_strings"""
-    p[0] = []
-    for proto in p[4]:
-        p[0].append(VarType(VarType.TRAFFIC_TYPE, proto))
-
-
-def p_policer_spec(p):
-    """policer_spec : POLICER ':' ':' STRING"""
-    p[0] = VarType(VarType.POLICER, p[4])
-
-
-def p_logging_spec(p: YaccProduction) -> None:
-    """logging_spec : LOGGING ':' ':' STRING"""
-    p[0] = VarType(VarType.LOGGING, p[4])
-
-
-def p_log_limit_spec(p: YaccProduction) -> None:
-    """log_limit_spec : LOG_LIMIT ':' ':' INTEGER '/' STRING"""
-    p[0] = VarType(VarType.LOG_LIMIT, (p[4], p[6]))
-
-
-def p_log_name_spec(p: YaccProduction) -> None:
-    """log_name_spec : LOG_NAME ':' ':' DQUOTEDSTRING"""
-    p[0] = VarType(VarType.LOG_NAME, p[4])
-
-
-def p_option_spec(p: YaccProduction) -> None:
-    """option_spec : OPTION ':' ':' one_or_more_strings"""
-    p[0] = []
-    for opt in p[4]:
-        p[0].append(VarType(VarType.OPTION, opt))
-
-
-def p_action_spec(p: YaccProduction) -> None:
-    """action_spec : ACTION ':' ':' STRING"""
-    p[0] = VarType(VarType.ACTION, p[4])
-
-
-def p_counter_spec(p: YaccProduction) -> None:
-    """counter_spec : COUNTER ':' ':' STRING"""
-    p[0] = VarType(VarType.COUNTER, p[4])
-
-
-def p_traffic_class_count_spec(p):
-    """traffic_class_count_spec : TRAFFIC_CLASS_COUNT ':' ':' STRING"""
-    p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[4])
-
-
-def p_expiration_spec(p):
-    """expiration_spec : EXPIRATION ':' ':' INTEGER '-' INTEGER '-' INTEGER"""
-    p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[4]), int(p[6]), int(p[8])))
-
-
-def p_comment_spec(p: YaccProduction) -> None:
-    """comment_spec : COMMENT ':' ':' DQUOTEDSTRING"""
-    p[0] = VarType(VarType.COMMENT, p[4])
-
-
-def p_owner_spec(p):
-    """owner_spec : OWNER ':' ':' STRING"""
-    p[0] = VarType(VarType.OWNER, p[4])
-
-
-def p_verbatim_spec(p: YaccProduction) -> None:
-    """verbatim_spec : VERBATIM ':' ':' STRING DQUOTEDSTRING
-    | VERBATIM ':' ':' STRING ESCAPEDSTRING"""
-    p[0] = VarType(VarType.VERBATIM, [p[4], p[5].strip('"').replace('\\"', '"')])
-
-
-def p_term_zone_spec(p: YaccProduction) -> None:
-    """term_zone_spec : SZONE ':' ':' one_or_more_strings
-    | DZONE ':' ':' one_or_more_strings"""
-    p[0] = []
-    for zone in p[4]:
-        if p[1].find('source-zone') >= 0:
-            p[0].append(VarType(VarType.SZONE, zone))
-        elif p[1].find('destination-zone') >= 0:
-            p[0].append(VarType(VarType.DZONE, zone))
-
-
-def p_vpn_spec(p: YaccProduction) -> None:
-    """vpn_spec : VPN ':' ':' STRING STRING
-    | VPN ':' ':' STRING"""
-    if len(p) == 6:
-        p[0] = VarType(VarType.VPN, [p[4], p[5]])
-    else:
-        p[0] = VarType(VarType.VPN, [p[4], ''])
-
-
-def p_qos_spec(p: YaccProduction) -> None:
-    """qos_spec : QOS ':' ':' STRING"""
-    p[0] = VarType(VarType.QOS, p[4])
-
-
-def p_pan_application_spec(p):
-    """pan_application_spec : PAN_APPLICATION ':' ':' one_or_more_strings"""
-    p[0] = []
-    for apps in p[4]:
-        p[0].append(VarType(VarType.PAN_APPLICATION, apps))
-
-
-def p_interface_spec(p: YaccProduction) -> None:
-    """interface_spec : SINTERFACE ':' ':' STRING
-    | DINTERFACE ':' ':' STRING"""
-    if p[1].find('source-interface') >= 0:
-        p[0] = VarType(VarType.SINTERFACE, p[4])
-    elif p[1].find('destination-interface') >= 0:
-        p[0] = VarType(VarType.DINTERFACE, p[4])
-
-
-def p_platform_spec(p):
-    """platform_spec : PLATFORM ':' ':' one_or_more_strings
-    | PLATFORMEXCLUDE ':' ':' one_or_more_strings"""
-    p[0] = []
-    for platform in p[4]:
-        if p[1].find('platform-exclude') >= 0:
-            p[0].append(VarType(VarType.PLATFORMEXCLUDE, platform))
-        elif p[1].find('platform') >= 0:
-            p[0].append(VarType(VarType.PLATFORM, platform))
-
-
-def p_apply_groups_spec(p):
-    """apply_groups_spec : APPLY_GROUPS ':' ':' one_or_more_strings"""
-    p[0] = []
-    for group in p[4]:
-        p[0].append(VarType(VarType.APPLY_GROUPS, group))
-
-
-def p_apply_groups_except_spec(p):
-    """apply_groups_except_spec : APPLY_GROUPS_EXCEPT ':' ':' one_or_more_strings"""
-    p[0] = []
-    for group_except in p[4]:
-        p[0].append(VarType(VarType.APPLY_GROUPS_EXCEPT, group_except))
-
-
-def p_timeout_spec(p):
-    """timeout_spec : TIMEOUT ':' ':' INTEGER"""
-    p[0] = VarType(VarType.TIMEOUT, p[4])
-
-
-def p_ttl_spec(p: YaccProduction) -> None:
-    """ttl_spec : TTL ':' ':' INTEGER"""
-    p[0] = VarType(VarType.TTL, p[4])
-
-
-def p_filter_term_spec(p):
-    """filter_term_spec : FILTER_TERM ':' ':' STRING"""
-    p[0] = VarType(VarType.FILTER_TERM, p[4])
-
-
-def p_one_or_more_strings(p: YaccProduction) -> None:
-    """one_or_more_strings : one_or_more_strings STRING
-    | STRING
-    |"""
-    if len(p) > 1:
-        if type(p[1]) == type([]):
-            p[1].append(p[2])
-            p[0] = p[1]
-        else:
-            p[0] = [p[1]]
-
-
-def p_one_or_more_tuples(p: YaccProduction) -> None:
-    """one_or_more_tuples : LSQUARE one_or_more_tuples RSQUARE
-    | one_or_more_tuples ',' one_tuple
-    | one_or_more_tuples one_tuple
-    | one_tuple
-    |"""
-
-    if len(p) > 1:
-        if p[1] == '[':
-            p[0] = p[2]
-        elif type(p[1]) == type([]):
-            if p[2] == ',':
-                p[1].append(p[3])
+class AerleonLexxer(object):
+    tokens = (
+        'ACTION',
+        'ADDR',
+        'ADDREXCLUDE',
+        'RESTRICT_ADDRESS_FAMILY',
+        'COMMENT',
+        'COUNTER',
+        'DADDR',
+        'DADDREXCLUDE',
+        'DINTERFACE',
+        'DPFX',
+        'EDPFX',
+        'DPORT',
+        'DQUOTEDSTRING',
+        'DSCP',
+        'DSCP_EXCEPT',
+        'DSCP_MATCH',
+        'DSCP_RANGE',
+        'DSCP_SET',
+        'DTAG',
+        'DZONE',
+        'ENCAPSULATE',
+        'ESCAPEDSTRING',
+        'ETHER_TYPE',
+        'EXPIRATION',
+        'FILTER_TERM',
+        'FLEXIBLE_MATCH_RANGE',
+        'FORWARDING_CLASS',
+        'FORWARDING_CLASS_EXCEPT',
+        'FRAGMENT_OFFSET',
+        'HOP_LIMIT',
+        'APPLY_GROUPS',
+        'APPLY_GROUPS_EXCEPT',
+        'HEADER',
+        'HEX',
+        'ICMP_TYPE',
+        'ICMP_CODE',
+        'INTEGER',
+        'LOGGING',
+        'LOG_LIMIT',
+        'LOG_NAME',
+        'LOSS_PRIORITY',
+        'LPAREN',
+        'LSQUARE',
+        'NEXT_IP',
+        'OPTION',
+        'OWNER',
+        'PACKET_LEN',
+        'PLATFORM',
+        'PLATFORMEXCLUDE',
+        'POLICER',
+        'PORT',
+        'PORT_MIRROR',
+        'PRECEDENCE',
+        'PRIORITY',
+        'PROTOCOL',
+        'PROTOCOL_EXCEPT',
+        'QOS',
+        'RPAREN',
+        'RSQUARE',
+        'PAN_APPLICATION',
+        'ROUTING_INSTANCE',
+        'SADDR',
+        'SADDREXCLUDE',
+        'SINTERFACE',
+        'SPFX',
+        'ESPFX',
+        'SPORT',
+        'SZONE',
+        'STAG',
+        'STRING',
+        'TARGET',
+        'TARGET_RESOURCES',
+        'TARGET_SERVICE_ACCOUNTS',
+        'TERM',
+        'TIMEOUT',
+        'TRAFFIC_CLASS_COUNT',
+        'TRAFFIC_TYPE',
+        'TTL',
+        'VERBATIM',
+        'VPN',
+    )
+
+    literals = r':{},-/'
+    t_ignore = ' \t'
+    t_LSQUARE = r'\['
+    t_RSQUARE = r'\]'
+    t_LPAREN = r'\('
+    t_RPAREN = r'\)'
+
+    reserved = {
+        'action': 'ACTION',
+        'address': 'ADDR',
+        'address-exclude': 'ADDREXCLUDE',
+        'restrict-address-family': 'RESTRICT_ADDRESS_FAMILY',
+        'comment': 'COMMENT',
+        'counter': 'COUNTER',
+        'destination-address': 'DADDR',
+        'destination-exclude': 'DADDREXCLUDE',
+        'destination-interface': 'DINTERFACE',
+        'destination-prefix': 'DPFX',
+        'destination-prefix-except': 'EDPFX',
+        'destination-port': 'DPORT',
+        'destination-tag': 'DTAG',
+        'destination-zone': 'DZONE',
+        'dscp-except': 'DSCP_EXCEPT',
+        'dscp-match': 'DSCP_MATCH',
+        'dscp-set': 'DSCP_SET',
+        'encapsulate': 'ENCAPSULATE',
+        'ether-type': 'ETHER_TYPE',
+        'expiration': 'EXPIRATION',
+        'filter-term': 'FILTER_TERM',
+        'flexible-match-range': 'FLEXIBLE_MATCH_RANGE',
+        'forwarding-class': 'FORWARDING_CLASS',
+        'forwarding-class-except': 'FORWARDING_CLASS_EXCEPT',
+        'fragment-offset': 'FRAGMENT_OFFSET',
+        'hex': 'HEX',
+        'hop-limit': 'HOP_LIMIT',
+        'apply-groups': 'APPLY_GROUPS',
+        'apply-groups-except': 'APPLY_GROUPS_EXCEPT',
+        'header': 'HEADER',
+        'icmp-type': 'ICMP_TYPE',
+        'icmp-code': 'ICMP_CODE',
+        'logging': 'LOGGING',
+        'log-limit': 'LOG_LIMIT',
+        'log_name': 'LOG_NAME',
+        'loss-priority': 'LOSS_PRIORITY',
+        'next-ip': 'NEXT_IP',
+        'option': 'OPTION',
+        'owner': 'OWNER',
+        'packet-length': 'PACKET_LEN',
+        'platform': 'PLATFORM',
+        'platform-exclude': 'PLATFORMEXCLUDE',
+        'policer': 'POLICER',
+        'port': 'PORT',
+        'port-mirror': 'PORT_MIRROR',
+        'precedence': 'PRECEDENCE',
+        'priority': 'PRIORITY',
+        'protocol': 'PROTOCOL',
+        'protocol-except': 'PROTOCOL_EXCEPT',
+        'qos': 'QOS',
+        'pan-application': 'PAN_APPLICATION',
+        'routing-instance': 'ROUTING_INSTANCE',
+        'source-address': 'SADDR',
+        'source-exclude': 'SADDREXCLUDE',
+        'source-interface': 'SINTERFACE',
+        'source-prefix': 'SPFX',
+        'source-prefix-except': 'ESPFX',
+        'source-port': 'SPORT',
+        'source-tag': 'STAG',
+        'source-zone': 'SZONE',
+        'target': 'TARGET',
+        'target-resources': 'TARGET_RESOURCES',
+        'target-service-accounts': 'TARGET_SERVICE_ACCOUNTS',
+        'term': 'TERM',
+        'timeout': 'TIMEOUT',
+        'traffic-class-count': 'TRAFFIC_CLASS_COUNT',
+        'traffic-type': 'TRAFFIC_TYPE',
+        'ttl': 'TTL',
+        'verbatim': 'VERBATIM',
+        'vpn': 'VPN',
+    }
+
+    # disable linting warnings for lexx/yacc code
+    # pylint: disable=unused-argument,invalid-name,g-short-docstring-punctuation
+    # pylint: disable=g-docstring-quotes,g-short-docstring-space
+    # pylint: disable=g-space-before-docstring-summary,g-doc-args
+    # pylint: disable=g-no-space-after-docstring-summary
+    # pylint: disable=g-docstring-missing-newline
+
+    def t_IGNORE_COMMENT(self, t):
+        r'\#.*'
+        pass
+
+    def t_ESCAPEDSTRING(self, t):
+        r'"([^"\\]*(?:\\"[^"\\]*)+)"'
+        t.lexer.lineno += str(t.value).count('\n')
+        return t
+
+    def t_DQUOTEDSTRING(self, t: LexToken) -> LexToken:
+        r'"[^"]*?"'
+        t.lexer.lineno += str(t.value).count('\n')
+        return t
+
+    def t_newline(self, t: LexToken) -> None:
+        r'\n+'
+        t.lexer.lineno += len(t.value)
+
+    def t_error(self, t):
+        print("Illegal character '%s' on line %s" % (t.value[0], t.lineno))
+        t.lexer.skip(1)
+
+    def t_DSCP_RANGE(self, t):
+        # pylint: disable=line-too-long
+        r'\b((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))([-]{1})((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))\b'
+        t.type = self.reserved.get(t.value, 'DSCP_RANGE')
+        return t
+
+    def t_DSCP(self, t):
+        # we need to handle the '-' as part of the word, not as a boundary
+        r'\b((b[0-1]{6})|(af[1-4]{1}[1-3]{1})|(be)|(ef)|(cs[0-7]{1}))(?![\w-])\b'
+        t.type = self.reserved.get(t.value, 'DSCP')
+        return t
+
+    def t_HEX(self, t):
+        r'0x[a-fA-F0-9]+'
+        return t
+
+    def t_INTEGER(self, t: LexToken) -> LexToken:
+        r'\d+'
+        return t
+
+    def t_STRING(self, t: LexToken) -> LexToken:
+        r'\w+([-_+.@/]\w*)*'
+        # we have an identifier; let's check if it's a keyword or just a string.
+        t.type = self.reserved.get(t.value, 'STRING')
+        return t
+
+    def build(self, **kwargs):
+        self.lexer = lex.lex(module=self, **kwargs)
+
+    def input(self, data):
+        self.lexer.input(data)
+
+    def token(self):
+        return self.lexer.token()
+
+
+class AerleonParser(object):
+
+    tokens = AerleonLexxer.tokens
+
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.parser = yacc.yacc(module=self, debug=False, write_tables=False)
+
+    def parse(self, data):
+        self.lexer.input(data)
+        return self.parser.parse(lexer=self.lexer)
+
+    def p_target(self, p: YaccProduction) -> None:
+        """target : target header terms
+        |"""
+        if len(p) > 1:
+            if type(p[1]) is Policy:
+                p[1].AddFilter(p[2], p[3])
+                p[0] = p[1]
             else:
+                p[0] = Policy(p[2], p[3])
+
+    def p_header(self, p: YaccProduction) -> None:
+        """header : HEADER '{' header_spec '}'"""
+        p[0] = p[3]
+
+    def p_header_spec(self, p: YaccProduction) -> None:
+        """header_spec : header_spec target_spec
+        | header_spec comment_spec
+        | header_spec apply_groups_spec
+        | header_spec apply_groups_except_spec
+        |"""
+        if len(p) > 1:
+            if type(p[1]) == Header:
+                p[1].AddObject(p[2])
+                p[0] = p[1]
+            else:
+                p[0] = Header()
+                p[0].AddObject(p[2])
+
+    # we may want to change this at some point if we want to be clever with things
+    # like being able to set a default input/output policy for iptables policies.
+    def p_target_spec(self, p: YaccProduction) -> None:
+        """target_spec : TARGET ':' ':' strings_or_ints"""
+        p[0] = Target(p[4])
+
+    def p_terms(self, p: YaccProduction) -> None:
+        """terms : terms TERM STRING '{' term_spec '}'
+        |"""
+        if len(p) > 1:
+            p[5].name = p[3]
+            if type(p[1]) == list:
+                p[1].append(p[5])
+                p[0] = p[1]
+            else:
+                p[0] = [p[5]]
+
+    def p_term_spec(self, p: YaccProduction) -> None:
+        """term_spec : term_spec action_spec
+        | term_spec addr_spec
+        | term_spec restrict_address_family_spec
+        | term_spec comment_spec
+        | term_spec counter_spec
+        | term_spec traffic_class_count_spec
+        | term_spec dscp_set_spec
+        | term_spec dscp_match_spec
+        | term_spec dscp_except_spec
+        | term_spec encapsulate_spec
+        | term_spec ether_type_spec
+        | term_spec exclude_spec
+        | term_spec expiration_spec
+        | term_spec filter_term_spec
+        | term_spec flexible_match_range_spec
+        | term_spec forwarding_class_spec
+        | term_spec forwarding_class_except_spec
+        | term_spec fragment_offset_spec
+        | term_spec hop_limit_spec
+        | term_spec icmp_type_spec
+        | term_spec icmp_code_spec
+        | term_spec interface_spec
+        | term_spec logging_spec
+        | term_spec log_limit_spec
+        | term_spec log_name_spec
+        | term_spec losspriority_spec
+        | term_spec next_ip_spec
+        | term_spec option_spec
+        | term_spec owner_spec
+        | term_spec packet_length_spec
+        | term_spec platform_spec
+        | term_spec policer_spec
+        | term_spec port_spec
+        | term_spec port_mirror_spec
+        | term_spec precedence_spec
+        | term_spec priority_spec
+        | term_spec prefix_list_spec
+        | term_spec protocol_spec
+        | term_spec qos_spec
+        | term_spec pan_application_spec
+        | term_spec routinginstance_spec
+        | term_spec term_zone_spec
+        | term_spec tag_list_spec
+        | term_spec target_resources_spec
+        | term_spec target_service_accounts_spec
+        | term_spec timeout_spec
+        | term_spec ttl_spec
+        | term_spec traffic_type_spec
+        | term_spec verbatim_spec
+        | term_spec vpn_spec
+        |"""
+        if len(p) > 1:
+            if type(p[1]) == Term:
+                p[1].AddObject(p[2])
+                p[0] = p[1]
+            else:
+                p[0] = Term(p[2])
+
+    def p_restrict_address_family_spec(self, p):
+        """restrict_address_family_spec : RESTRICT_ADDRESS_FAMILY ':' ':' STRING"""
+        p[0] = VarType(VarType.RESTRICT_ADDRESS_FAMILY, p[4])
+
+    def p_routinginstance_spec(self, p: YaccProduction) -> None:
+        """routinginstance_spec : ROUTING_INSTANCE ':' ':' STRING"""
+        p[0] = VarType(VarType.ROUTING_INSTANCE, p[4])
+
+    def p_losspriority_spec(self, p: YaccProduction) -> None:
+        """losspriority_spec :  LOSS_PRIORITY ':' ':' STRING"""
+        p[0] = VarType(VarType.LOSS_PRIORITY, p[4])
+
+    def p_precedence_spec(self, p: YaccProduction) -> None:
+        """precedence_spec : PRECEDENCE ':' ':' one_or_more_ints"""
+        p[0] = VarType(VarType.PRECEDENCE, p[4])
+
+    def p_flexible_match_range_spec(self, p):
+        """flexible_match_range_spec : FLEXIBLE_MATCH_RANGE ':' ':' flex_match_key_values"""
+        p[0] = []
+        for kv in p[4]:
+            p[0].append(VarType(VarType.FLEXIBLE_MATCH_RANGE, kv))
+
+    def p_flex_match_key_values(self, p):
+        """flex_match_key_values : flex_match_key_values STRING HEX
+        | flex_match_key_values STRING INTEGER
+        | flex_match_key_values STRING STRING
+        | STRING HEX
+        | STRING INTEGER
+        | STRING STRING
+        |"""
+        if len(p) < 1:
+            return
+
+        if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
+            raise FlexibleMatchError('%s is not a valid attribute' % p[1])
+        if p[1] == 'match-start':
+            if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
+                raise FlexibleMatchError('%s value is not valid' % p[1])
+        # per Juniper, max bit length is 32
+        elif p[1] == 'bit-length':
+            if int(p[2]) not in list(range(33)):
+                raise FlexibleMatchError('%s value is not valid' % p[1])
+        # per Juniper, max bit offset is 7
+        elif p[1] == 'bit-offset':
+            if int(p[2]) not in list(range(8)):
+                raise FlexibleMatchError('%s value is not valid' % p[1])
+        # per Juniper, offset can be up to 256 bytes
+        elif p[1] == 'byte-offset':
+            if int(p[2]) not in list(range(256)):
+                raise FlexibleMatchError('%s value is not valid' % p[1])
+
+        if type(p[0]) == type([]):
+            p[0].append([p.slice[1:]])
+        else:
+            p[0] = [[i.value for i in p.slice[1:]]]
+
+    def p_forwarding_class_spec(self, p: YaccProduction) -> None:
+        """forwarding_class_spec : FORWARDING_CLASS ':' ':' one_or_more_strings"""
+        p[0] = []
+        for fclass in p[4]:
+            p[0].append(VarType(VarType.FORWARDING_CLASS, fclass))
+
+    def p_forwarding_class_except_spec(self, p):
+        """forwarding_class_except_spec : FORWARDING_CLASS_EXCEPT ':' ':' one_or_more_strings"""
+        p[0] = []
+        for fclass in p[4]:
+            p[0].append(VarType(VarType.FORWARDING_CLASS_EXCEPT, fclass))
+
+    def p_next_ip_spec(self, p: YaccProduction) -> None:
+        """next_ip_spec : NEXT_IP ':' ':' STRING"""
+        p[0] = VarType(VarType.NEXT_IP, p[4])
+
+    def p_encapsulate_spec(self, p: YaccProduction) -> None:
+        """encapsulate_spec : ENCAPSULATE ':' ':' STRING"""
+        p[0] = VarType(VarType.ENCAPSULATE, p[4])
+
+    def p_port_mirror_spec(self, p: YaccProduction) -> None:
+        """port_mirror_spec : PORT_MIRROR ':' ':' STRING"""
+        p[0] = VarType(VarType.PORT_MIRROR, p[4])
+
+    def p_icmp_type_spec(self, p: YaccProduction) -> None:
+        """icmp_type_spec : ICMP_TYPE ':' ':' one_or_more_strings"""
+        p[0] = VarType(VarType.ICMP_TYPE, p[4])
+
+    def p_icmp_code_spec(self, p: YaccProduction) -> None:
+        """icmp_code_spec : ICMP_CODE ':' ':' one_or_more_ints"""
+        p[0] = VarType(VarType.ICMP_CODE, p[4])
+
+    def p_priority_spec(self, p):
+        """priority_spec : PRIORITY ':' ':' INTEGER"""
+        p[0] = VarType(VarType.PRIORITY, p[4])
+
+    def p_packet_length_spec(self, p):
+        """packet_length_spec : PACKET_LEN ':' ':' INTEGER
+        | PACKET_LEN ':' ':' INTEGER '-' INTEGER"""
+        if len(p) == 5:
+            p[0] = VarType(VarType.PACKET_LEN, str(p[4]))
+        else:
+            p[0] = VarType(VarType.PACKET_LEN, str(p[4]) + '-' + str(p[6]))
+
+    def p_fragment_offset_spec(self, p):
+        """fragment_offset_spec : FRAGMENT_OFFSET ':' ':' INTEGER
+        | FRAGMENT_OFFSET ':' ':' INTEGER '-' INTEGER"""
+        if len(p) == 5:
+            p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]))
+        else:
+            p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
+
+    def p_hop_limit_spec(self, p: YaccProduction) -> None:
+        """hop_limit_spec : HOP_LIMIT ':' ':' INTEGER
+        | HOP_LIMIT ':' ':' INTEGER '-' INTEGER"""
+        if len(p) == 5:
+            p[0] = VarType(VarType.HOP_LIMIT, str(p[4]))
+        else:
+            p[0] = VarType(VarType.HOP_LIMIT, str(p[4]) + '-' + str(p[6]))
+
+    def p_one_or_more_dscps(self, p):
+        """one_or_more_dscps : one_or_more_dscps DSCP_RANGE
+        | one_or_more_dscps DSCP
+        | one_or_more_dscps INTEGER
+        | DSCP_RANGE
+        | DSCP
+        | INTEGER"""
+        if len(p) > 1:
+            if type(p[1]) is list:
                 p[1].append(p[2])
-            p[0] = p[1]
+                p[0] = p[1]
+            else:
+                p[0] = [p[1]]
+
+    def p_dscp_set_spec(self, p):
+        """dscp_set_spec : DSCP_SET ':' ':' DSCP
+        | DSCP_SET ':' ':' INTEGER"""
+        p[0] = VarType(VarType.DSCP_SET, p[4])
+
+    def p_dscp_match_spec(self, p):
+        """dscp_match_spec : DSCP_MATCH ':' ':' one_or_more_dscps"""
+        p[0] = []
+        for dscp in p[4]:
+            p[0].append(VarType(VarType.DSCP_MATCH, dscp))
+
+    def p_dscp_except_spec(self, p):
+        """dscp_except_spec : DSCP_EXCEPT ':' ':' one_or_more_dscps"""
+        p[0] = []
+        for dscp in p[4]:
+            p[0].append(VarType(VarType.DSCP_EXCEPT, dscp))
+
+    def p_exclude_spec(self, p: YaccProduction) -> None:
+        """exclude_spec : SADDREXCLUDE ':' ':' one_or_more_strings
+        | DADDREXCLUDE ':' ':' one_or_more_strings
+        | ADDREXCLUDE ':' ':' one_or_more_strings
+        | PROTOCOL_EXCEPT ':' ':' one_or_more_strings"""
+
+        p[0] = []
+        for ex in p[4]:
+            if p[1].find('source-exclude') >= 0:
+                p[0].append(VarType(VarType.SADDREXCLUDE, ex))
+            elif p[1].find('destination-exclude') >= 0:
+                p[0].append(VarType(VarType.DADDREXCLUDE, ex))
+            elif p[1].find('address-exclude') >= 0:
+                p[0].append(VarType(VarType.ADDREXCLUDE, ex))
+            elif p[1].find('protocol-except') >= 0:
+                p[0].append(VarType(VarType.PROTOCOL_EXCEPT, ex))
+
+    def p_prefix_list_spec(self, p: YaccProduction) -> None:
+        """prefix_list_spec : DPFX ':' ':' one_or_more_strings
+        | EDPFX ':' ':' one_or_more_strings
+        | SPFX ':' ':' one_or_more_strings
+        | ESPFX ':' ':' one_or_more_strings"""
+        p[0] = []
+        for pfx in p[4]:
+            if p[1].find('source-prefix-except') >= 0:
+                p[0].append(VarType(VarType.ESPFX, pfx))
+            elif p[1].find('source-prefix') >= 0:
+                p[0].append(VarType(VarType.SPFX, pfx))
+            elif p[1].find('destination-prefix-except') >= 0:
+                p[0].append(VarType(VarType.EDPFX, pfx))
+            elif p[1].find('destination-prefix') >= 0:
+                p[0].append(VarType(VarType.DPFX, pfx))
+
+    def p_addr_spec(self, p: YaccProduction) -> None:
+        """addr_spec : SADDR ':' ':' one_or_more_strings
+        | DADDR ':' ':' one_or_more_strings
+        | ADDR  ':' ':' one_or_more_strings"""
+        p[0] = []
+        for addr in p[4]:
+            if p[1].find('source-address') >= 0:
+                p[0].append(VarType(VarType.SADDRESS, addr))
+            elif p[1].find('destination-address') >= 0:
+                p[0].append(VarType(VarType.DADDRESS, addr))
+            else:
+                p[0].append(VarType(VarType.ADDRESS, addr))
+
+    def p_port_spec(self, p: YaccProduction) -> None:
+        """port_spec : SPORT ':' ':' one_or_more_strings
+        | DPORT ':' ':' one_or_more_strings
+        | PORT ':' ':' one_or_more_strings"""
+        p[0] = []
+        for port in p[4]:
+            if p[1].find('source-port') >= 0:
+                p[0].append(VarType(VarType.SPORT, port))
+            elif p[1].find('destination-port') >= 0:
+                p[0].append(VarType(VarType.DPORT, port))
+            else:
+                p[0].append(VarType(VarType.PORT, port))
+
+    def p_protocol_spec(self, p: YaccProduction) -> None:
+        """protocol_spec : PROTOCOL ':' ':' strings_or_ints"""
+        p[0] = []
+        for proto in p[4]:
+            p[0].append(VarType(VarType.PROTOCOL, proto))
+
+    def p_tag_list_spec(self, p: YaccProduction) -> None:
+        """tag_list_spec : DTAG ':' ':' one_or_more_strings
+        | STAG ':' ':' one_or_more_strings"""
+        p[0] = []
+        for tag in p[4]:
+            if p[1].find('source-tag') >= 0:
+                p[0].append(VarType(VarType.STAG, tag))
+            elif p[1].find('destination-tag') >= 0:
+                p[0].append(VarType(VarType.DTAG, tag))
+
+    def p_target_resources_spec(self, p: YaccProduction) -> None:
+        """target_resources_spec : TARGET_RESOURCES ':' ':' one_or_more_tuples"""
+        p[0] = []
+        for target_resource in p[4]:
+            p[0].append(VarType(VarType.TARGET_RESOURCES, target_resource))
+
+    def p_target_service_accounts_spec(self, p: YaccProduction) -> None:
+        """target_service_accounts_spec : TARGET_SERVICE_ACCOUNTS ':' ':' one_or_more_strings"""
+        p[0] = []
+        for service_account in p[4]:
+            p[0].append(VarType(VarType.TARGET_SERVICE_ACCOUNTS, service_account))
+
+    def p_ether_type_spec(self, p: YaccProduction) -> None:
+        """ether_type_spec : ETHER_TYPE ':' ':' one_or_more_strings"""
+        p[0] = []
+        for proto in p[4]:
+            p[0].append(VarType(VarType.ETHER_TYPE, proto))
+
+    def p_traffic_type_spec(self, p: YaccProduction) -> None:
+        """traffic_type_spec : TRAFFIC_TYPE ':' ':' one_or_more_strings"""
+        p[0] = []
+        for proto in p[4]:
+            p[0].append(VarType(VarType.TRAFFIC_TYPE, proto))
+
+    def p_policer_spec(self, p):
+        """policer_spec : POLICER ':' ':' STRING"""
+        p[0] = VarType(VarType.POLICER, p[4])
+
+    def p_logging_spec(self, p: YaccProduction) -> None:
+        """logging_spec : LOGGING ':' ':' STRING"""
+        p[0] = VarType(VarType.LOGGING, p[4])
+
+    def p_log_limit_spec(self, p: YaccProduction) -> None:
+        """log_limit_spec : LOG_LIMIT ':' ':' INTEGER '/' STRING"""
+        p[0] = VarType(VarType.LOG_LIMIT, (p[4], p[6]))
+
+    def p_log_name_spec(self, p: YaccProduction) -> None:
+        """log_name_spec : LOG_NAME ':' ':' DQUOTEDSTRING"""
+        p[0] = VarType(VarType.LOG_NAME, p[4])
+
+    def p_option_spec(self, p: YaccProduction) -> None:
+        """option_spec : OPTION ':' ':' one_or_more_strings"""
+        p[0] = []
+        for opt in p[4]:
+            p[0].append(VarType(VarType.OPTION, opt))
+
+    def p_action_spec(self, p: YaccProduction) -> None:
+        """action_spec : ACTION ':' ':' STRING"""
+        p[0] = VarType(VarType.ACTION, p[4])
+
+    def p_counter_spec(self, p: YaccProduction) -> None:
+        """counter_spec : COUNTER ':' ':' STRING"""
+        p[0] = VarType(VarType.COUNTER, p[4])
+
+    def p_traffic_class_count_spec(self, p):
+        """traffic_class_count_spec : TRAFFIC_CLASS_COUNT ':' ':' STRING"""
+        p[0] = VarType(VarType.TRAFFIC_CLASS_COUNT, p[4])
+
+    def p_expiration_spec(self, p):
+        """expiration_spec : EXPIRATION ':' ':' INTEGER '-' INTEGER '-' INTEGER"""
+        p[0] = VarType(VarType.EXPIRATION, datetime.date(int(p[4]), int(p[6]), int(p[8])))
+
+    def p_comment_spec(self, p: YaccProduction) -> None:
+        """comment_spec : COMMENT ':' ':' DQUOTEDSTRING"""
+        p[0] = VarType(VarType.COMMENT, p[4])
+
+    def p_owner_spec(self, p):
+        """owner_spec : OWNER ':' ':' STRING"""
+        p[0] = VarType(VarType.OWNER, p[4])
+
+    def p_verbatim_spec(self, p: YaccProduction) -> None:
+        """verbatim_spec : VERBATIM ':' ':' STRING DQUOTEDSTRING
+        | VERBATIM ':' ':' STRING ESCAPEDSTRING"""
+        p[0] = VarType(VarType.VERBATIM, [p[4], p[5].strip('"').replace('\\"', '"')])
+
+    def p_term_zone_spec(self, p: YaccProduction) -> None:
+        """term_zone_spec : SZONE ':' ':' one_or_more_strings
+        | DZONE ':' ':' one_or_more_strings"""
+        p[0] = []
+        for zone in p[4]:
+            if p[1].find('source-zone') >= 0:
+                p[0].append(VarType(VarType.SZONE, zone))
+            elif p[1].find('destination-zone') >= 0:
+                p[0].append(VarType(VarType.DZONE, zone))
+
+    def p_vpn_spec(self, p: YaccProduction) -> None:
+        """vpn_spec : VPN ':' ':' STRING STRING
+        | VPN ':' ':' STRING"""
+        if len(p) == 6:
+            p[0] = VarType(VarType.VPN, [p[4], p[5]])
         else:
-            p[0] = [p[1]]
+            p[0] = VarType(VarType.VPN, [p[4], ''])
 
+    def p_qos_spec(self, p: YaccProduction) -> None:
+        """qos_spec : QOS ':' ':' STRING"""
+        p[0] = VarType(VarType.QOS, p[4])
 
-def p_one_tuple(p: YaccProduction) -> None:
-    """one_tuple : LPAREN STRING ',' STRING RPAREN
-    |"""
-    p[0] = (p[2], p[4])
+    def p_pan_application_spec(self, p):
+        """pan_application_spec : PAN_APPLICATION ':' ':' one_or_more_strings"""
+        p[0] = []
+        for apps in p[4]:
+            p[0].append(VarType(VarType.PAN_APPLICATION, apps))
 
+    def p_interface_spec(self, p: YaccProduction) -> None:
+        """interface_spec : SINTERFACE ':' ':' STRING
+        | DINTERFACE ':' ':' STRING"""
+        if p[1].find('source-interface') >= 0:
+            p[0] = VarType(VarType.SINTERFACE, p[4])
+        elif p[1].find('destination-interface') >= 0:
+            p[0] = VarType(VarType.DINTERFACE, p[4])
 
-def p_one_or_more_ints(p: YaccProduction) -> None:
-    """one_or_more_ints : one_or_more_ints INTEGER
-    | INTEGER
-    |"""
-    if len(p) > 1:
-        if type(p[1]) == type([]):
-            p[1].append(int(p[2]))
-            p[0] = p[1]
+    def p_platform_spec(self, p):
+        """platform_spec : PLATFORM ':' ':' one_or_more_strings
+        | PLATFORMEXCLUDE ':' ':' one_or_more_strings"""
+        p[0] = []
+        for platform in p[4]:
+            if p[1].find('platform-exclude') >= 0:
+                p[0].append(VarType(VarType.PLATFORMEXCLUDE, platform))
+            elif p[1].find('platform') >= 0:
+                p[0].append(VarType(VarType.PLATFORM, platform))
+
+    def p_apply_groups_spec(self, p):
+        """apply_groups_spec : APPLY_GROUPS ':' ':' one_or_more_strings"""
+        p[0] = []
+        for group in p[4]:
+            p[0].append(VarType(VarType.APPLY_GROUPS, group))
+
+    def p_apply_groups_except_spec(self, p):
+        """apply_groups_except_spec : APPLY_GROUPS_EXCEPT ':' ':' one_or_more_strings"""
+        p[0] = []
+        for group_except in p[4]:
+            p[0].append(VarType(VarType.APPLY_GROUPS_EXCEPT, group_except))
+
+    def p_timeout_spec(self, p):
+        """timeout_spec : TIMEOUT ':' ':' INTEGER"""
+        p[0] = VarType(VarType.TIMEOUT, p[4])
+
+    def p_ttl_spec(self, p: YaccProduction) -> None:
+        """ttl_spec : TTL ':' ':' INTEGER"""
+        p[0] = VarType(VarType.TTL, p[4])
+
+    def p_filter_term_spec(self, p):
+        """filter_term_spec : FILTER_TERM ':' ':' STRING"""
+        p[0] = VarType(VarType.FILTER_TERM, p[4])
+
+    def p_one_or_more_strings(self, p: YaccProduction) -> None:
+        """one_or_more_strings : one_or_more_strings STRING
+        | STRING
+        |"""
+        if len(p) > 1:
+            if type(p[1]) == type([]):
+                p[1].append(p[2])
+                p[0] = p[1]
+            else:
+                p[0] = [p[1]]
+
+    def p_one_or_more_tuples(self, p: YaccProduction) -> None:
+        """one_or_more_tuples : LSQUARE one_or_more_tuples RSQUARE
+        | one_or_more_tuples ',' one_tuple
+        | one_or_more_tuples one_tuple
+        | one_tuple
+        |"""
+
+        if len(p) > 1:
+            if p[1] == '[':
+                p[0] = p[2]
+            elif type(p[1]) == type([]):
+                if p[2] == ',':
+                    p[1].append(p[3])
+                else:
+                    p[1].append(p[2])
+                p[0] = p[1]
+            else:
+                p[0] = [p[1]]
+
+    def p_one_tuple(self, p: YaccProduction) -> None:
+        """one_tuple : LPAREN STRING ',' STRING RPAREN
+        |"""
+        p[0] = (p[2], p[4])
+
+    def p_one_or_more_ints(self, p: YaccProduction) -> None:
+        """one_or_more_ints : one_or_more_ints INTEGER
+        | INTEGER
+        |"""
+        if len(p) > 1:
+            if type(p[1]) == type([]):
+                p[1].append(int(p[2]))
+                p[0] = p[1]
+            else:
+                p[0] = [int(p[1])]
+
+    def p_strings_or_ints(self, p: YaccProduction) -> None:
+        """strings_or_ints : strings_or_ints STRING
+        | strings_or_ints INTEGER
+        | STRING
+        | INTEGER
+        |"""
+        if len(p) > 1:
+            if type(p[1]) is list:
+                p[1].append(p[2])
+                p[0] = p[1]
+            else:
+                p[0] = [p[1]]
+
+    def p_error(self, p: LexToken):
+        """."""
+        next_token = self.lexer.token()
+        if next_token is None:
+            use_token = 'EOF'
         else:
-            p[0] = [int(p[1])]
+            use_token = repr(next_token.value)
 
-
-def p_strings_or_ints(p: YaccProduction) -> None:
-    """strings_or_ints : strings_or_ints STRING
-    | strings_or_ints INTEGER
-    | STRING
-    | INTEGER
-    |"""
-    if len(p) > 1:
-        if type(p[1]) is list:
-            p[1].append(p[2])
-            p[0] = p[1]
+        if p:
+            raise SyntaxError(
+                ' ERROR on "%s" (type %s, line %d, Next %s)'
+                % (p.value, p.type, p.lineno, use_token)
+            )
         else:
-            p[0] = [p[1]]
+            raise SyntaxError(' ERROR you likely have unablanaced "{"\'s')
 
-
-def p_error(p: LexToken):
-    """."""
-    global parser
-    next_token = parser.token()
-    if next_token is None:
-        use_token = 'EOF'
-    else:
-        use_token = repr(next_token.value)
-
-    if p:
-        raise ParseError(
-            ' ERROR on "%s" (type %s, line %d, Next %s)' % (p.value, p.type, p.lineno, use_token)
-        )
-    else:
-        raise ParseError(' ERROR you likely have unablanaced "{"\'s')
-
-
-parser = yacc.yacc(write_tables=False, debug=0, errorlog=yacc.NullLogger())
 
 # pylint: enable=unused-argument,invalid-name,g-short-docstring-punctuation
 # pylint: enable=g-docstring-quotes,g-short-docstring-space
@@ -2772,12 +2713,12 @@ def ParsePolicy(
             globals()['DEFINITIONS'] = naming.Naming(DEFAULT_DEFINITIONS)
         globals()['_OPTIMIZE'] = optimize
         globals()['_SHADE_CHECK'] = shade_check
-
-        lexer = lex.lex()
-
         preprocessed_data = '\n'.join(_Preprocess(data, base_dir=base_dir))
-        global parser
-        policy = parser.parse(preprocessed_data, lexer=lexer)
+        lexx = AerleonLexxer()
+        lexx.build()
+        parser = AerleonParser(lexx)
+
+        policy = parser.parse(preprocessed_data)
         policy.filename = filename
         return policy
 
