@@ -2019,7 +2019,6 @@ class AerleonLexxer(object):
 
 
 class AerleonParser(object):
-
     tokens = AerleonLexxer.tokens
 
     def __init__(self, lexer):
