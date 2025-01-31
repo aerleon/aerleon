@@ -223,6 +223,7 @@ def RenderFile(
             'Error parsing policy file %s:\n%s%s'
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
+
     platforms = set()
     for header in pol.headers:
         platforms.update(header.platforms)
