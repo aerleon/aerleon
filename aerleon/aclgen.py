@@ -213,7 +213,6 @@ def RenderFile(
                 optimize=optimize,
                 base_dir=base_directory,
                 shade_check=shade_check,
-                filename=input_file.name
             )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', input_file, e)
