@@ -442,33 +442,26 @@ def Run(
 
     with_errors = False
     logging.info('finding policies...')
-    if policy_file:
-        # render just one file
-        logging.info('rendering one file')
-        RenderFile(
-            base_directory,
-            pathlib.Path(policy_file),
-            pathlib.Path(output_directory),
-            definitions,
-            exp_info,
-            optimize,
-            shade_check,
-            write_files,
-        )
-    elif max_renderers == 1:
-        # If only one process, run it sequentially
-        policies = DescendDirectory(base_directory, ignore_directories)
-        for pol in policies:
-            RenderFile(
-                base_directory,
-                pol,
-                pathlib.Path(output_directory),
-                definitions,
-                exp_info,
-                optimize,
-                shade_check,
-                write_files,
-            )
+    if max_renderers == 1 or policy_file:
+        if policy_file:
+            policies = [pathlib.Path(policy_file)]
+        else:
+            policies = DescendDirectory(base_directory, ignore_directories)
+        try:
+            for pol in policies:
+                RenderFile(
+                    base_directory,
+                    pol,
+                    pathlib.Path(output_directory),
+                    definitions,
+                    exp_info,
+                    optimize,
+                    shade_check,
+                    write_files,
+                )
+        except (ACLParserError, ACLGeneratorError) as e:
+            with_errors = True
+            logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
@@ -538,7 +531,6 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-
     Run(
         configs['base_directory'],
         configs['definitions_directory'],
