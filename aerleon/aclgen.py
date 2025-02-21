@@ -531,22 +531,18 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-    try:
-        Run(
-            configs['base_directory'],
-            configs['definitions_directory'],
-            configs['policy_file'],
-            configs['output_directory'],
-            configs['exp_info'],
-            configs['max_renderers'],
-            configs['ignore_directories'],
-            configs['optimize'],
-            configs['shade_check'],
-            context,
-        )
-    except Exception as e:
-        logging.error(f"Unhandled exception: {e}", exc_info=True)
-        sys.exit(1)
+    Run(
+        configs['base_directory'],
+        configs['definitions_directory'],
+        configs['policy_file'],
+        configs['output_directory'],
+        configs['exp_info'],
+        configs['max_renderers'],
+        configs['ignore_directories'],
+        configs['optimize'],
+        configs['shade_check'],
+        context,
+    )
 
 
 def EntryPoint():
