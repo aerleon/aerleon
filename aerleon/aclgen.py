@@ -442,12 +442,11 @@ def Run(
 
     with_errors = False
     logging.info('finding policies...')
-    if policy_file:
-        policies = [pathlib.Path(policy_file)]
-    else:
-        policies = DescendDirectory(base_directory, ignore_directories)
     if max_renderers == 1 or policy_file:
-        # If one renderer or single file, run sequentially
+        if policy_file:
+            policies = [pathlib.Path(policy_file)]
+        else:
+            policies = DescendDirectory(base_directory, ignore_directories)
         try:
             for pol in policies:
                 RenderFile(
