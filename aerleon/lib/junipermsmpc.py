@@ -17,7 +17,7 @@
 
 from typing import Dict, List, Set, Tuple
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, juniper, nacaddr, policy
 

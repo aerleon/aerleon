@@ -5,7 +5,7 @@ import sys
 import typing
 from dataclasses import dataclass, field
 
-from absl import logging
+import logging
 
 from aerleon.lib.policy import (
     FLEXIBLE_MATCH_RANGE_ATTRIBUTES,

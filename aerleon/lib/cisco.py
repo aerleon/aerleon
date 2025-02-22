@@ -19,7 +19,7 @@
 import ipaddress
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, summarizer
 from aerleon.lib.nacaddr import IPv4, IPv6

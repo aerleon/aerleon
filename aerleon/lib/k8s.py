@@ -26,7 +26,7 @@ import sys
 from typing import Dict, Set, Tuple
 
 import yaml
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Policy, Term

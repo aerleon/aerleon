@@ -17,7 +17,7 @@
 
 from unittest import mock
 
-from absl import logging
+import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, policy

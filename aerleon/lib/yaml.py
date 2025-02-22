@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from unittest.mock import MagicMock
 
 import yaml
-from absl import logging
+import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy

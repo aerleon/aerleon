@@ -26,7 +26,7 @@ import sys
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, policy
 

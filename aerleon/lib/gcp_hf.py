@@ -10,7 +10,7 @@ import re
 import sys
 from typing import Dict, List, Set, Tuple, Union
 
-from absl import logging
+import logging
 
 from aerleon.lib import gcp, nacaddr, policy
 

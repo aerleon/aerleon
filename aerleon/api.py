@@ -198,7 +198,7 @@ import pathlib
 import sys
 import typing
 
-from absl import logging
+import logging
 
 from aerleon.aclgen import (
     ACLGeneratorError,

@@ -12,7 +12,7 @@ import json
 import sys
 from typing import Dict, List, Set, Tuple
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, policy
 

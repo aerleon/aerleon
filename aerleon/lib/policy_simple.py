@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Set, Type, Union
 
-from absl import logging
+import logging
 
 
 class Field:

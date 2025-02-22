@@ -21,7 +21,7 @@ import xml.etree.ElementTree as etree
 from typing import Dict, List, Optional, Set, Tuple, Union
 from xml.dom import minidom
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 from aerleon.lib.policy import Policy, Term

@@ -24,7 +24,7 @@ import pathlib
 import sys
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
-from absl import logging
+import logging
 from ply import lex, yacc
 from ply.lex import LexToken
 from ply.yacc import YaccProduction

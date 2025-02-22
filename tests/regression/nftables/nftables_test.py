@@ -14,7 +14,7 @@
 # limitations under the License.
 """Unittest for Nftables rendering module."""
 
-from absl import logging
+import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, nftables, policy

@@ -16,12 +16,16 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
+import logging
+import logging.config
+import logging.handlers
 import multiprocessing
 import pathlib
 import sys
+from multiprocessing import Event, Process, Queue, current_process
 from typing import Iterator, List, Tuple
 
-from absl import app, flags, logging
+from absl import app, flags
 
 from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
@@ -29,6 +33,8 @@ from aerleon.utils import config
 FLAGS = flags.FLAGS
 WriteList = List[Tuple[pathlib.Path, str]]
 
+LOG_FORMAT = '%(asctime)s.%(msecs)03d - %(process)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 def SetupFlags():
     """Read in configuration from CLI flags."""
@@ -138,6 +144,7 @@ def RenderFile(
     optimize: bool,
     shade_check: bool,
     write_files: WriteList,
+    queue: Queue = None,
 ):
     """Render a single file.
 
@@ -151,7 +158,28 @@ def RenderFile(
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded
       write_files: a list of file tuples, (output_file, acl_text), to write
+      queue: Queue used to send logs back when in multiprocessing.
     """
+    if queue:
+        config_worker = {
+            'version': 1,
+            'formatters': {
+                'default': {
+                    'format': LOG_FORMAT,
+                    'datefmt': DATE_FORMAT
+                }
+            },
+            'handlers': {
+                'queue': {
+                    'class': 'logging.handlers.QueueHandler',
+                    'queue': queue,
+                    'formatter': 'default'
+                }
+            },
+            'root': {'handlers': ['queue'], 'level': 'DEBUG'},
+        }
+        logging.config.dictConfig(config_worker)
+        
     output_relative = input_file.relative_to(base_directory).parent.parent
     output_directory = output_directory / output_relative
 
@@ -457,13 +485,14 @@ def Run(
                     exp_info,
                     optimize,
                     shade_check,
-                    write_files,
+                    write_files
                 )
         except (ACLParserError, ACLGeneratorError) as e:
             with_errors = True
             logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
         # render all files in parallel
+        q = multiprocessing.Manager().Queue()
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
         results: List[multiprocessing.pool.AsyncResult] = []
@@ -480,11 +509,35 @@ def Run(
                         optimize,
                         shade_check,
                         write_files,
+                        q
                     ),
                 )
             )
+        stop_event = Event()
+        def listener_process(q, stop_event):
+            config_listener = {
+                'version': 1,
+                'handlers': {
+                    'console': {
+                        'class': 'logging.StreamHandler',
+                        'level': 'INFO',
+                    },
+                },
+                'root': {'handlers': ['console'], 'level': 'DEBUG'},
+            }
+            logging.config.dictConfig(config_listener)
+            listener = logging.handlers.QueueListener(q, LogHandler())
+            listener.start()
+            stop_event.wait()
+
+        lp = Process(
+            target=listener_process, name='listener', args=(q, stop_event)
+        )
+        lp.start()
         pool.close()
         pool.join()
+        stop_event.set()
+        lp.join()
 
         for result in results:
             try:
@@ -503,6 +556,23 @@ def Run(
         logging.info('done.')
 
 
+class LogHandler:
+    cache = set([])
+    def handle(self, record):
+        if record.name == "root":
+            logger = logging.getLogger()
+        else:
+            logger = logging.getLogger(record.name)
+        if logger.isEnabledFor(record.levelno):
+            record.processName = '%s (for %s)' % (current_process().name, record.processName)
+            if record.msg in self.cache:
+                print(f"cache hit for {record.msg}")
+                pass
+            else:
+                self.cache.add(record.msg)
+                logger.handle(record)
+
+
 def main(argv):
     del argv  # Unused.
 
@@ -514,11 +584,29 @@ def main(argv):
         configs.update(absl_flags)
     except config.ConfigFileError as e:
         exit(f"Error: {e}")
-
-    if configs['verbose']:
-        logging.set_verbosity(logging.INFO)
+    
+    log_level = 'INFO'
     if configs['debug']:
-        logging.set_verbosity(logging.DEBUG)
+        log_level = 'DEBUG'
+    config_listener = {
+        'version': 1,
+        # 'disable_existing_loggers': True,
+        'formatters': {
+            'default': {
+                'format': LOG_FORMAT,
+                'datefmt': DATE_FORMAT
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': log_level,
+                'formatter': 'default'
+            },
+        },
+        'root': {'handlers': ['console'], 'level': log_level},
+    }
+    logging.config.dictConfig(config_listener)
     logging.debug(
         'binary: %s\noptimize: %d\nbase_directory: %s\n'
         'policy_file: %s\nrendered_acl_directory: %s',

@@ -20,7 +20,7 @@ import re
 from string import Template  # pylint: disable=g-importing-member
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6

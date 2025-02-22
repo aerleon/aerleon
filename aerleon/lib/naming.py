@@ -51,7 +51,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
 import yaml
-from absl import logging
+import logging
 from yaml import YAMLError
 
 from aerleon.lib import nacaddr
