@@ -53,7 +53,7 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import entry_points, version
 
-from absl import logging
+import logging
 
 from aerleon.lib import plugin
 from aerleon.lib.aclgenerator import ACLGenerator
