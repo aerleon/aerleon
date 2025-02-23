@@ -91,6 +91,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://hachyderm.io/@nemith"><img src="https://avatars.githubusercontent.com/u/349360?v=4?s=100" width="100px;" alt="Brandon Bennett"/><br /><sub><b>Brandon Bennett</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=nemith" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/btriller"><img src="https://avatars.githubusercontent.com/u/851727?v=4?s=100" width="100px;" alt="Bastian Triller"/><br /><sub><b>Bastian Triller</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=btriller" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/XioNoX"><img src="https://avatars.githubusercontent.com/u/688817?v=4?s=100" width="100px;" alt="Arzhel Younsi"/><br /><sub><b>Arzhel Younsi</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=XioNoX" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ProtonBruno"><img src="https://avatars.githubusercontent.com/u/105855897?v=4?s=100" width="100px;" alt="ProtonBruno"/><br /><sub><b>ProtonBruno</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=ProtonBruno" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
