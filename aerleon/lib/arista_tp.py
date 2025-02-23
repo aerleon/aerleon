@@ -16,10 +16,9 @@
 """Arista traffic-policy generator."""
 
 import copy
+import logging
 import re
 from typing import Dict, List, Set, Tuple, Union
-
-import logging
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv4, IPv6

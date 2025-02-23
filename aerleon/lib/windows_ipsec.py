@@ -16,11 +16,11 @@
 """Windows IP security policy generator."""
 
 
+import logging
+
 # pylint: disable=g-importing-member
 from string import Template
 from typing import Dict, List, Set, Tuple, Union
-
-import logging
 
 from aerleon.lib import aclgenerator, windows
 from aerleon.lib.nacaddr import IPv4, IPv6

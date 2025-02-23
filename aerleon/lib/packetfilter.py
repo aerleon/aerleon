@@ -18,9 +18,8 @@
 
 import collections
 import copy
-from typing import Dict, List, Optional, Set, Tuple, Union, cast
-
 import logging
+from typing import Dict, List, Optional, Set, Tuple, Union, cast
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6

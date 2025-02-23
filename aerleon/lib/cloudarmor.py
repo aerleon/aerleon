@@ -9,10 +9,9 @@ https://cloud.google.com/armor/docs/
 
 import copy
 import json
+import logging
 import sys
 from typing import Dict, List, Set, Tuple
-
-import logging
 
 from aerleon.lib import aclgenerator, policy
 

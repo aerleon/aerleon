@@ -17,9 +17,8 @@
 """Cisco generator."""
 
 import ipaddress
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
-
 import logging
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, summarizer
 from aerleon.lib.nacaddr import IPv4, IPv6

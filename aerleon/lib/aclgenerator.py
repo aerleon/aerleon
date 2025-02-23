@@ -19,11 +19,10 @@
 import copy
 import datetime
 import hashlib
+import logging
 import re
 import string
 from typing import Dict, List, Set, Tuple, Union
-
-import logging
 
 from aerleon.lib import policy
 

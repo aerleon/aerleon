@@ -16,9 +16,8 @@
 
 """Juniper JCL generator."""
 
-from typing import Dict, List, Set, Tuple, Union
-
 import logging
+from typing import Dict, List, Set, Tuple, Union
 
 from aerleon.lib import aclgenerator, nacaddr, policy, summarizer
 

@@ -15,9 +15,9 @@
 
 """Unit tests for policy.py library."""
 
+import logging
 from unittest import mock
 
-import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, policy

@@ -17,10 +17,9 @@
 """Cisco ASA renderer."""
 
 import ipaddress
+import logging
 import re
 from typing import Any, Dict, List, Set, Tuple, Union, cast
-
-import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 from aerleon.lib.nacaddr import IPv4, IPv6

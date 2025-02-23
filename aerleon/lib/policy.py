@@ -19,12 +19,12 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import os
 import pathlib
 import sys
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
-import logging
 from ply import lex, yacc
 from ply.lex import LexToken
 from ply.yacc import YaccProduction

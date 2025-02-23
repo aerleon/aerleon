@@ -22,11 +22,10 @@ http://ops.openconfig.net/branches/models/master/openconfig-acl.html
 
 import copy
 import json
+import logging
 import sys
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
-
-import logging
 
 from aerleon.lib import aclgenerator, policy
 
