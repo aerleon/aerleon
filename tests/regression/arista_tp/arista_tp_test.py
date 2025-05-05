@@ -18,6 +18,7 @@
 import datetime
 import re
 from unittest import mock
+from unittest.mock import call
 
 from absl.testing import absltest
 
@@ -1002,9 +1003,9 @@ class AristaTpTest(absltest.TestCase):
         )
         output = str(atp)
         self.assertNotIn("match", output, output)
-        mock_warn.has_calls(
-            "WARNING: term %s has no valid match criteria and " "will not be rendered.",
-            "missing-match",
+        call_message = "WARNING: term %s has no valid match criteria and will not be rendered."
+        mock_warn.assert_has_calls(
+            [call(call_message, "missing-match"), call(call_message, "ipv6-missing-match")]
         )
         print(output)
 
