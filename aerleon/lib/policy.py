@@ -249,10 +249,11 @@ class Policy:
 
     def _NeedsAddressBook(self) -> bool:
         """Returns True if the policy uses a generator needing an addressbook."""
+        addressbook_platforms = set(['srx', 'fortigate'])
         for header in self.headers:
             if not header:
                 continue
-            if 'srx' in header.platforms:
+            if any(addressbook_platforms.intersection(header.platforms)):
                 return True
             for target in header.target:
                 opts = header.FilterOptions(target.platform)
