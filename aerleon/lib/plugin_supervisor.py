@@ -124,7 +124,8 @@ BUILTIN_GENERATORS: list[Tuple] = [
     ('paloalto',             'aerleon.lib.paloaltofw',           'PaloAltoFW'),
     ('cloudarmor',           'aerleon.lib.cloudarmor',           'CloudArmor'),
     ('k8s',                  'aerleon.lib.k8s',                  'K8s'),
-    ('fortigate',            'aerleon.lib.fortigate',            'Fortigate')
+    ('fortigate',            'aerleon.lib.fortigate',            'Fortigate'),
+    ('proxmox',              'aerleon.lib.proxmox',              'Proxmox'),
     # fmt: on
 ]
 
