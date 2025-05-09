@@ -63,7 +63,7 @@ class Term(aclgenerator.Term):
 
         # proxmox firewall only supports one protocol per rule
         for protocol in self.term.protocol:
-            options = [ self.direction, self.term.action[0], "-proto %s" % protocol ]
+            options = [ self.direction, self._ACTIONS[self.term.action[0]], "-proto %s" % protocol ]
             # proxmox firewall supports multiple sources/destinations per rule
             if self.term.destination_address:
                 options.append("-dest %s" % ','.join(map(to_network_addr, self.term.destination_address)))
