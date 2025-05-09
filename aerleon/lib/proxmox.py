@@ -65,6 +65,8 @@ class Term(aclgenerator.Term):
         for protocol in self.term.protocol:
             options = [ self.direction, self._ACTIONS[self.term.action[0]], "-proto %s" % protocol ]
             # proxmox firewall supports multiple sources/destinations per rule
+            if self.term.source_interface:
+                options.append("-iface %s" % self.term.source_interface)
             if self.term.destination_address:
                 options.append("-dest %s" % ','.join(map(to_network_addr, self.term.destination_address)))
             if self.term.source_address:
@@ -110,11 +112,9 @@ class Proxmox(aclgenerator.ACLGenerator):
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """ returns the list of DSL + YAML supplementary tokens supported (proxmox-firewall specific) """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
-        # TODO fixme, can use in_interface or out_interface for this
-        # TODO native logging can also be used
         supported_tokens |= {
-            'network_interface',
-            'logging',
+            # proxmox firewall only supports setting the source interface
+            'source_interface',
         }
         supported_sub_tokens |= {
         }
