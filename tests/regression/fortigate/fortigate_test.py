@@ -599,7 +599,6 @@ class FortigateYAMLTest(FortigateTest):
 
     @parameterized.parameters(FortigateTest.bad_headers_test_parameters)
     def testBadAddressFamilyCombos(self, address_family_one: str, address_family_two: str):
-
         input_pol = f"""\
                 filters:
                   - header:

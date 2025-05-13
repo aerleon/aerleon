@@ -327,7 +327,6 @@ class Term(aclgenerator.Term):
             )
             comment = comment[:1023]
         if comment:
-
             output.append(f'        set comments "{comment}"')
         return '\n'.join(output)
 
