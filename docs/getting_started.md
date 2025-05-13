@@ -72,8 +72,8 @@ Above we have defined a couple of networks and services.
 * `WEB_SERVERS` and `MAIL_SERVERS` are both two IP hosts and include a comment about those IPs.
 * `ALL_SERVERS` is a composite of both `WEB_SERVERS` and `MAIL_SERVERS`.
 * `HTTP` is defined as port 80 over TCP while `HTTPS` is port 443 over TCP.
-* `WEB` is a composit of both `HTTP` and `HTTPS`.
-* `HIGH_PORTS` is a port range of of 1024 to 65535 over both TCP and UDP.
+* `WEB` is a composite of both `HTTP` and `HTTPS`.
+* `HIGH_PORTS` is a port range of 1024 to 65535 over both TCP and UDP.
 
 Take the YAML above and insert it into a file in the `defs` directory.
 ??? "Bash command"
