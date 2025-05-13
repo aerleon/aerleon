@@ -470,6 +470,42 @@ targets:
 
 ***
 
+## Fortigate
+
+### Header Format
+
+The Fortigate header designation has the following format:
+
+```yaml
+targets:
+    fortigate: [filter name] [source interface] [destination interface] {inet, inet6, mixed}
+```
+
+* _filter name_: Defines the name of the fortinet filter.
+* _source interface_: Defines the source interface
+* _destination_interface_: Defines the destination interface
+* _address_family: Address family to use, valid inputs are `inet`, `inet6`, or `mixed`. (default: `mixed`)
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+
+### Option
+
+* _all_: Enables `set logtraffic all` in term.
+* _start_: Enabled `set logtraffic-start` in term.
+
+
+***
+
 ## GCE
 
 ### Header Format

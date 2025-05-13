@@ -1,202 +1,14 @@
-from typing import Any, DefaultDict, Dict, List, Set, Tuple, Union
 from collections import defaultdict
-from absl import logging
-from uuid import UUID, uuid5
+from dataclasses import dataclass
+from typing import Any, Dict, List, Set, Tuple
+
 from aerleon.lib import aclgenerator, nacaddr, policy
-"""
 
-Example header
-header {
-  target:: fortigate test-filter 
-}
-========
-config firewall policy
-edit 0
-set srcintf port1
-set dstintf port1
-set schedule always
-set service NTP
-set srcaddr all
-set dstaddr all
-end
-When configuring srcaddr it needs dstaddr or internet-service
+FORTIGATE_SERVICES_ALL = '"ALL"'
+FORTIGATE_ADDRESS_ALL = '"all"'
+FORTIGATE_ADDRESS_NONE = '"none"'
+FORTIGATE_SCHEDULE_ALWAYS = '"always"'
 
-default action is deny
-
-Settings available in terms
-status                       Enable or disable this policy.
-name                         Policy name.
-uuid                         Universally Unique Identifier (UUID; automatically assigned but can be manually reset).
-*srcintf                      Incoming (ingress) interface. REQUIRED
-*dstintf                      Outgoing (egress) interface. REQUIRED
-action                       Policy action (accept/deny/ipsec).
-srcaddr                      Source IPv4 address and address group names.
-dstaddr                      Destination IPv4 address and address group names.
-srcaddr6                     Source IPv6 address name and address group names.
-dstaddr6                     Destination IPv6 address name and address group names.
-service                      Service and service group names. REQUIRED
-logtraffic                   Enable or disable logging. Log all sessions or security profile sessions.
-logtraffic-start             Record logs when a session starts.
-comments                     Comment.
-*schedule                     Schedule name. REQUIRED
-srcaddr-negate               When enabled srcaddr specifies what the source address must NOT be.
-srcaddr6-negate              When enabled srcaddr6 specifies what the source address must NOT be.
-dstaddr-negate               When enabled dstaddr specifies what the destination address must NOT be.
-dstaddr6-negate              When enabled dstaddr6 specifies what the destination address must NOT be.
-
-
-=======
-Cannot use plain IPs it seems, we must create address and service objects
-
-for ipv6 it is usually just a 6 on the end of the name for configs
-for example:
-address                          Configure IPv4 addresses.
-address6                         Configure IPv6 firewall addresses.
-addrgrp                          Configure IPv4 address groups.
-addrgrp6
-
-    BUILT IN SERVICES
-    AFS3	custom
-    AH	custom
-    ALL	custom
-    ALL_ICMP	custom
-    ALL_ICMP6	custom
-    ALL_TCP	custom
-    ALL_UDP	custom
-    AOL	custom
-    BGP	custom
-    CVSPSERVER	custom
-    DCE-RPC	custom
-    DHCP	custom
-    DHCP6	custom
-    DNS	custom
-    ESP	custom
-    FINGER	custom
-    FTP	custom
-    FTP_GET	custom
-    FTP_PUT	custom
-    GOPHER	custom
-    GRE	custom
-    GTP	custom
-    H323	custom
-    HTTP	custom
-    HTTPS	custom
-    IKE	custom
-    IMAP	custom
-    IMAPS	custom
-    INFO_ADDRESS	custom
-    INFO_REQUEST	custom
-    IRC	custom
-    Internet-Locator-Service	custom
-    KERBEROS	custom
-    L2TP	custom
-    LDAP	custom
-    LDAP_UDP	custom
-    MGCP	custom
-    MMS	custom
-    MS-SQL	custom
-    MYSQL	custom
-    NFS	custom
-    NNTP	custom
-    NONE	custom
-    NTP	custom
-    NetMeeting	custom
-    ONC-RPC	custom
-    OSPF    custom
-    PC-Anywhere	custom
-    PING	custom
-    PING6	custom
-    POP3	custom
-    POP3S	custom
-    PPTP	custom
-    QUAKE	custom
-    RADIUS	custom
-    RADIUS-OLD	custom
-    RAUDIO	custom
-    RDP	custom
-    REXEC	custom
-    RIP	custom
-    RLOGIN	custom
-    RSH	custom
-    RTSP	custom
-    SAMBA	custom
-    SCCP	custom
-    SIP	custom
-    SIP-MSNmessenger	custom
-    SMB	custom
-    SMTP	custom
-    SMTPS	custom
-    SNMP	custom
-    SOCKS	custom
-    SQUID	custom
-    SSH	custom
-    SYSLOG	custom
-    TALK	custom
-    TELNET	custom
-    TFTP	custom
-    TIMESTAMP	custom
-    TRACEROUTE	custom
-    UUCP	custom
-    VDOLIVE	custom
-    VNC	custom
-    WAIS	custom
-    WINFRAME	custom
-    WINS	custom
-    X-WINDOWS	custom
-    Email Access	group
-    Exchange Server	group
-    Web Access	group
-    Windows AD	group
-
-custom services
-   edit "ALL_UDP"
-        set uuid ed6e3f88-2718-51f0-cf6d-d6c86c70ace5
-        set category "General"
-        set udp-portrange 1-65535
-    next
-    edit "ALL_ICMP"
-        set uuid ed6e41a4-2718-51f0-4ce5-5685b8df33fa
-        set category "General"
-        set protocol ICMP
-        unset icmptype
-    next
-    edit "ALL_ICMP6"
-        set uuid ed6e4406-2718-51f0-169e-0a85ad443a18
-        set category "General"
-        set protocol ICMP6
-        unset icmptype
-    next
-    edit "GRE"
-        set uuid ed6e4622-2718-51f0-f643-43e7d7a45dfd
-        set category "Tunneling"
-        set protocol IP
-        set protocol-number 47
-
-    For UUIDs it would be good to use UUID5 which is based on a namespace and a name
-    so we could use the name of the service and a namespace for the UUID
-"""
-
-INVARIANT_NAMESPACE = UUID("1661033d-c604-4db2-b9ec-b495a154ad95")
-class Term(aclgenerator.Term):
-    def __init__(self, term: policy.Term, source_iface: str, destination_iface: str):
-        super().__init__(term)
-        self.term = term
-        self.source_iface = source_iface
-        self.destination_iface = destination_iface
-        
-    def __str__(self):
-        """Return string representation of Fortigate term."""
-        output = []
-        output.append(f'    edit 0')
-        output.append(f'        set srcintf {self.source_iface}')
-        output.append(f'        set dstintf {self.destination_iface}')
-        output.append(f'        set srcaddr {" ".join(set([i.token for i in self.term.source_address]))}')
-        output.append(f'        set dstaddr {" ".join(set([i.token for i in self.term.destination_address]))}')
-        output.append(f'        set schedule always')
-        output.append(f'        set service FTP')
-        output.append(f'        set action {self.term.action[0]}')
-        output.append(f'    next')
-        return '\n'.join(output)
 
 class FortigateDefaultDictionary(defaultdict):
     def __init__(self, object_constructor, key_attribute_name):
@@ -210,8 +22,8 @@ class FortigateDefaultDictionary(defaultdict):
             key_attribute_name: The string name of the attribute in the object
                                 that should be populated with the dictionary key.
         """
-        super().__init__(None) # Initialize defaultdict without a default_factory
-                               # We handle creation in __missing__
+        super().__init__(None)  # Initialize defaultdict without a default_factory
+        # We handle creation in __missing__
         if not callable(object_constructor):
             raise TypeError("object_constructor must be callable")
         self.object_constructor = object_constructor
@@ -221,50 +33,289 @@ class FortigateDefaultDictionary(defaultdict):
         """
         Called when a key is not found. Creates the object using the key.
         """
-        # Check if the key is already set (might happen in recursive scenarios)
-        # Usually not necessary for simple cases but adds robustness.
-        if key in self:
-            return self[key]
-
-        # Create the new object, passing the key as a keyword argument
-        # corresponding to the specified attribute name.
         kwargs = {self.key_attribute_name: key}
         value = self.object_constructor(**kwargs)
-
-        # Store the newly created object in the dictionary for this key
         self[key] = value
-
-        # Return the newly created object
         return value
-        
-class FortigateAddressGroup():
-    def __init__(self, name: str):
-        self.name = name
-        self.ips = set([])
 
-    def addIP(self, ip: nacaddr.IP):
-        self.ips.add(ip)
+
+@dataclass(order=True, unsafe_hash=True)
+class FortigateObjectGroup:
+    name: str
+
+
+class FortigateIcmpService(FortigateObjectGroup):
+    def __init__(self, name: str, icmp_types: List[int]):
+        self.name = f'{name}-icmp'
+        self.icmp_types = [str(i) for i in icmp_types]
+
+    def __str__(self) -> str:
+        """Return string representation of Fortigate service."""
+        output = []
+        output.append(f'    edit {self.name}')
+        output.append(f'        set protocol ICMP')
+        output.append(f'        set icmptype {" ".join(self.icmp_types)}')
+        output.append(f'    next')
+        return '\n'.join(output)
+
+
+class FortigateIPService(FortigateObjectGroup):
+    def __init__(
+        self,
+        name: str,
+        source_port: List[Tuple[int, int]],
+        destination_port: List[Tuple[int, int]],
+        protocols: list[str],
+    ):
+        self.name = name
+        # Adding a suffix to the name to avoid conflicts with term names
+        self.tcp_port_range = None
+        self.udp_port_range = None
+        for proto in protocols:
+            if proto == 'tcp':
+                self.tcp_port_range = generate_fortinet_service_string(
+                    source_port, destination_port
+                )
+            elif proto == 'udp':
+                self.udp_port_range = generate_fortinet_service_string(
+                    source_port, destination_port
+                )
+            elif proto == 'icmp':
+                # ICMP is supported in FortigateIcmpService
+                pass
+            else:
+                raise ValueError(f"Unsupported protocol: {proto}")
+
+    def __str__(self) -> str:
+        """Return string representation of Fortigate service."""
+        output = []
+        output.append(f'    edit {self.name}')
+        if self.tcp_port_range:
+            output.append(f'        set tcp-portrange {self.tcp_port_range}')
+        if self.udp_port_range:
+            output.append(f'        set udp-portrange {self.udp_port_range}')
+        output.append('    next')
+        return '\n'.join(output)
+
+
+class FortinetAddress(FortigateObjectGroup):
+    def __init__(self, name: str, ip: nacaddr.IP):
+        """
+        Initializes the FortinetAddress object.
+        Args:
+            name: The name of the address.
+            ip: The IP address object.
+        """
+        self.name = name
+        self.ip = ip
 
     def __str__(self) -> str:
         """Return string representation of Fortigate address."""
         output = []
-        # create addresses
-        output.append(f'config firewall address')
-
-        for index, ip in enumerate(self.ips):
-            output.append(f'    edit {self.name}_{index}')
-            output.append(f'        set uuid {uuid5(INVARIANT_NAMESPACE, self.name+str(ip))}')
-            output.append(f'        set type ipmask')
-            output.append(f'        set subnet {str(ip)}')
-            output.append('    next')
-        output.append('end')
-        output.append(f'config firewall addrgrp')
         output.append(f'    edit {self.name}')
-        output.append(f'        set uuid {uuid5(INVARIANT_NAMESPACE, self.name)}')
-        address_names = ' '.join([self.name+f'_{i}' for i in range(len(self.ips))])
-        output.append(f'        set member {address_names}')
-        
+        if self.ip.version == 6:
+            output.append(f'        set type ipprefix')
+            output.append(f'        set ip6 {str(self.ip)}')
+        else:
+            output.append(f'        set type ipmask')
+            output.append(
+                f'        set subnet {str(self.ip.network_address)} {str(self.ip.netmask)}'
+            )
+        output.append('    next')
         return '\n'.join(output)
+
+
+class FortigateAddressGroup(FortigateObjectGroup):
+    def __init__(self, name: str):
+        """
+        Initializes the FortigateAddressGroup object.
+        Args:
+            name: The name of the address group.
+        """
+        self.name = name
+        self._cached_fortigate_addrs: List[FortinetAddress] = []
+        self._ips = set([])
+        self._is_dirty = True
+
+    def addIP(self, ip: nacaddr.IP) -> None:
+        """Add an IP address to the group."""
+        if ip not in self._ips:
+            self._ips.add(ip)
+            self._is_dirty = True
+
+    @property
+    def fortigate_addrs(self) -> Set[FortinetAddress]:
+        if self._is_dirty or not self._cached_fortigate_addrs:
+            self._cached_fortigate_addrs = []
+            sorted_ips = sorted(list(self._ips))
+            for i, ip_obj in enumerate(sorted_ips):
+                address_object_name = f"{self.name}_{i}"
+                self._cached_fortigate_addrs.append(
+                    FortinetAddress(name=address_object_name, ip=ip_obj)
+                )
+            self._is_dirty = False
+        return self._cached_fortigate_addrs
+
+    def __contains__(self, item: Any) -> bool:
+        """Check if an item is in the address group."""
+        return item in self._ips
+
+    def __str__(self) -> str:
+        """Return string representation of Fortigate address."""
+        output = []
+        current_fortigate_addrs = self.fortigate_addrs
+        if not current_fortigate_addrs:  # Don't render empty groups
+            return ""
+        output.append(f'    edit {self.name}')
+        member_names = [f'"{addr.name}"' for addr in current_fortigate_addrs]
+        output.append(f'        set member {" ".join(member_names)}')
+        output.append(f'    next')
+        return '\n'.join(output)
+
+    def __len__(self):
+        return len(self._ips)
+
+    def __iter__(self):
+        return iter(self.fortigate_addrs)
+
+
+class Term(aclgenerator.Term):
+    def __init__(
+        self,
+        term: policy.Term,
+        source_iface: str,
+        destination_iface: str,
+        addressgroups: FortigateDefaultDictionary,
+        addressgroups_v6: FortigateDefaultDictionary,
+        address_family: str,
+    ):
+        """
+        Initializes the Term object.
+        Args:
+            term: The term object from the policy.
+            source_iface: The source interface for the term.
+            destination_iface: The destination interface for the term.
+        """
+        super().__init__(term)
+        self.term = term
+        self.source_iface = source_iface
+        self.destination_iface = destination_iface
+        self.address_family = address_family
+
+        self.address_groups = addressgroups
+        self.address_groups_v6 = addressgroups_v6
+        self.services = []
+
+        self._TranslateAddresses(term.source_address)
+        self._TranslateAddresses(term.destination_address)
+
+        if term.destination_port or term.source_port:
+            service = FortigateIPService(
+                term.name, term.source_port, term.destination_port, term.protocol
+            )
+            self.services.append(service)
+        if term.icmp_type:
+            service = FortigateIcmpService(
+                term.name, self.NormalizeIcmpTypes(term.icmp_type, term.protocol, 4)
+            )
+            self.services.append(service)
+        if self.term.logging:
+            self.logtraffic = 'disabled'
+            self.logtraffic_start = 'disabled'
+            if 'all' in self.term.option:
+                self.logtraffic = 'log_traffic_mode_all'
+            if 'start' in self.term.option:
+                self.logtraffic_start = 'log_traffic_start_session'
+
+    def _TranslateAddresses(self, addrs: List[nacaddr.IP]) -> None:
+        for addr in addrs:
+            if addr.version == 4:
+                if self.address_family == 'inet6':
+                    continue
+                self.address_groups[addr.token].addIP(addr)
+            elif addr.version == 6:
+                if self.address_family == 'inet':
+                    continue
+                self.address_groups_v6[addr.token].addIP(addr)
+            else:
+                raise ValueError(f"Unsupported address version: {addr.version}")
+
+    def __str__(self):
+        """Return string representation of Fortigate term."""
+        output = []
+        output.append(f'        set name "{self.term.name}"')
+        output.append(f'        set srcintf "{self.source_iface}"')
+        output.append(f'        set dstintf "{self.destination_iface}"')
+        if self.term.action[0] != 'deny':
+            output.append(f'        set action {self.term.action[0]}')
+        source_tokens_v4 = set()
+        source_tokens_v6 = set()
+
+        for i in self.term.source_address:
+            if i.version == 4:
+                source_tokens_v4.add(f'"{i.token}"')
+            elif i.version == 6:
+                source_tokens_v6.add(f'"{i.token}"')
+        destination_tokens_v4 = set()
+        destination_tokens_v6 = set()
+        for i in self.term.destination_address:
+            if i.version == 4:
+                destination_tokens_v4.add(f'"{i.token}"')
+            elif i.version == 6:
+                destination_tokens_v6.add(f'"{i.token}"')
+        source_tokens_v4 = sorted(source_tokens_v4)
+        source_tokens_v6 = sorted(source_tokens_v6)
+        destination_tokens_v4 = sorted(destination_tokens_v4)
+        destination_tokens_v6 = sorted(destination_tokens_v6)
+
+        v4_addrs_present = bool(source_tokens_v4 or destination_tokens_v4)
+        v6_addrs_present = bool(source_tokens_v6 or destination_tokens_v6)
+
+        generate_ipv4 = False
+        if self.address_family == 'inet':
+            generate_ipv4 = True
+        elif self.address_family == 'mixed':
+            if v4_addrs_present or not v6_addrs_present:
+                generate_ipv4 = True
+        generate_ipv6 = False
+        if self.address_family == 'inet6':
+            generate_ipv6 = True
+        elif self.address_family == 'mixed':
+            if v6_addrs_present or not v4_addrs_present:
+                generate_ipv6 = True
+        src_default_action = FORTIGATE_ADDRESS_ALL
+        if any(self.term.source_address):
+            src_default_action = FORTIGATE_ADDRESS_NONE
+        dst_default_action = FORTIGATE_ADDRESS_ALL
+        if any(self.term.destination_address):
+            dst_default_action = FORTIGATE_ADDRESS_NONE
+        if generate_ipv4:
+            src_v4_to_set = " ".join(source_tokens_v4) if source_tokens_v4 else src_default_action
+            dst_v4_to_set = (
+                " ".join(destination_tokens_v4) if destination_tokens_v4 else dst_default_action
+            )
+            output.append(f'        set srcaddr {src_v4_to_set}')
+            output.append(f'        set dstaddr {dst_v4_to_set}')
+        if generate_ipv6:
+            src_v6_to_set = " ".join(source_tokens_v6) if source_tokens_v6 else src_default_action
+            dst_v6_to_set = (
+                " ".join(destination_tokens_v6) if destination_tokens_v6 else dst_default_action
+            )
+            output.append(f'        set srcaddr6 {src_v6_to_set}')
+            output.append(f'        set dstaddr6 {dst_v6_to_set}')
+        output.append(f'        set schedule {FORTIGATE_SCHEDULE_ALWAYS}')
+        services = [f'"{service.name}"' for service in self.services]
+        if not services:
+            services = [FORTIGATE_SERVICES_ALL]
+        output.append(f'        set service {" ".join(services)}')
+        if self.term.logging:
+            if self.logtraffic == 'log_traffic_mode_all':
+                output.append(f'        set logtraffic all')
+            if self.logtraffic_start == 'log_traffic_start_session':
+                output.append(f'        set logtraffic-start enable')
+
+        return '\n'.join(output)
+
 
 class Fortigate(aclgenerator.ACLGenerator):
     """Fortigate ACL generator."""
@@ -272,13 +323,19 @@ class Fortigate(aclgenerator.ACLGenerator):
     _PLATFORM = 'fortigate'
     SUFFIX = '.fgacl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
-    address_groups = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
-    terms = []
 
     def __init__(self, name, description):
+        """Initialize Fortigate ACL generator.
+        Args:
+          name: Name of the ACL.
+          description: Description of the ACL.
+        """
+        self.services = []
+        self.terms = []
+        self.term_names = set()
+        self.address_groups = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
+        self.address_groups_v6 = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
         super().__init__(name, description)
-
-
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
@@ -286,65 +343,131 @@ class Fortigate(aclgenerator.ACLGenerator):
         Returns:
           tuple containing both supported tokens and sub tokens
         """
-        print('Building tokens for Fortigate')
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
+        supported_tokens.remove('stateless_reply')
+        supported_tokens.remove('source_address_exclude')
+        supported_tokens.remove('destination_address_exclude')
         supported_sub_tokens['action'] = {'accept', 'deny'}
+        supported_sub_tokens['option'] = {'all', 'start'}
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         for header, terms in pol.filters:
             options = header.FilterOptions(self._PLATFORM)
             if len(options) < 3:
-                logging.warning('Fortigate requires at least 3 options')
-                continue
-            header_name = options[0]
+                raise ValueError(
+                    'Fortigate requires that at least platform, source and destination interfaces be specified, found: {options}'
+                )
             source_iface = options[1]
             destination_iface = options[2]
+            af = self._SUPPORTED_AF.intersection(options[3:])
+            if len(af) > 1:
+                raise ValueError(
+                    f"Only one address family is supported (inet, inet6, mixed) but found: {', '.join(af)}"
+                )
+            if not af:
+                af = 'mixed'
+            else:
+                af = next(iter(af))
+
             for term in terms:
-                self._TranslateAddresses(term.source_address)
-                self._TranslateAddresses(term.destination_address) 
-                self._TranslateAddresses(term.source_address_exclude)
-                self._TranslateAddresses(term.destination_address_exclude)
-                # self._TranslateServices(term.sou)
-                
-                fortigate_term = Term(term, source_iface, destination_iface)
+                fortigate_term = Term(
+                    term,
+                    source_iface,
+                    destination_iface,
+                    self.address_groups,
+                    self.address_groups_v6,
+                    af,
+                )
+                self.services.extend(fortigate_term.services)
+                if term.name in self.term_names:
+                    raise ValueError(f"Duplicate term name '{term.name}'")
+                self.term_names.add(term.name)
                 self.terms.append(fortigate_term)
-        pass
-    def _TranslateAddresses(self, addrs: List[nacaddr.IP]) -> None:
-        for addr in addrs:
-            self.address_groups[addr.token].ips.add(addr)
         pass
 
     def __str__(self) -> str:
         """Return string representation of Fortigate ACL."""
         output = []
+        if self.address_groups.values():
+            output.append('config firewall address')
+            for group in sorted(self.address_groups):
+                for addr in sorted(self.address_groups[group].fortigate_addrs):
+                    output.append(str(addr))
+            output.append('end')
+            output.append('config firewall addrgrp')
+            for addr_group in sorted(self.address_groups.values()):
+                output.append(str(addr_group))
+            output.append('end')
+        if self.address_groups_v6.values():
+            output.append('config firewall address6')
+            for group in sorted(self.address_groups_v6):
+                for addr in sorted(self.address_groups_v6[group].fortigate_addrs):
+                    output.append(str(addr))
+            output.append('end')
+            output.append('config firewall addrgrp6')
+            for addr_group in sorted(self.address_groups_v6.values()):
+                output.append(str(addr_group))
+            output.append('end')
+        if self.services:
+            output.append('config firewall service custom')
+            for service in sorted(self.services):
+                output.append(str(service))
+            output.append('end')
         output.append(f'config firewall policy')
-        for addr_group in self.address_groups.values():
-            output.append(str(addr_group))
-        output.append('end')
+        counter = 1
         for term in self.terms:
+            output.append(f'    edit {counter}')
             output.append(str(term))
+            counter += 1
+            output.append('    next')
         output.append('end')
         return '\n'.join(output)
 
 
-class FortigateService():
-    def __init__(self, name: str, protocol: str, port: int):
-        self.name = name
-        self.protocol = protocol
-        self.port = port
+def format_fortinet_port_range(low: int, high: int) -> str:
+    """Formats a single port range according to Fortinet syntax."""
+    if not (1 <= low <= 65535 and 1 <= high <= 65535):
+        raise ValueError(f"Ports must be between 1 and 65535. Got: low={low}, high={high}")
+    if low > high:
+        raise ValueError(f"Low port cannot be greater than high port. Got: low={low}, high={high}")
+    if low == high:
+        return str(low)
+    else:
+        return f"{low}-{high}"
 
-    def __str__(self) -> str:
-        """Return string representation of Fortigate service."""
-        output = []
-        output.append(f'config firewall service custom')
-        output.append(f'edit {self.name}')
-        output.append(f'set protocol {self.protocol}')
-        output.append(f'set tcp-portrange {self.port}')
-        output.append('next')
-        return '\n'.join(output)
-    
 
-class FortigateAddress():
-    pass
+def generate_fortinet_service_string(
+    source_ranges: List[Tuple[int, int]], destination_ranges: List[Tuple[int, int]]
+) -> str:
+    """
+    Generates a Fortinet service port range string by combining destination and source ranges.
 
+    Args:
+        destination_ranges: A list of tuples, where each tuple is (low_port, high_port)
+                            for destination ports.
+        source_ranges: A list of tuples, where each tuple is (low_port, high_port)
+                    for source ports.
+
+    Returns:
+        A space-separated string suitable for Fortinet's [tcp|udp]-portrange commands.
+        Example: "80:80-90 80:100 120-121:80-90 120-121:100"
+    """
+    if not destination_ranges:
+        return ""  # Or raise an error, depending on desired behavior
+    output_parts = []
+
+    for dst_low, dst_high in destination_ranges:
+        dest_str = format_fortinet_port_range(dst_low, dst_high)
+        if not source_ranges:
+            # If no source ranges are specified, only list destination ranges
+            # (Fortinet defaults source to 1-65535)
+            output_parts.append(dest_str)
+        else:
+            # If source ranges ARE specified, combine each dest with each source
+            for src_low, src_high in source_ranges:
+                src_str = format_fortinet_port_range(src_low, src_high)
+                # Combine using the colon separator
+                output_parts.append(f"{dest_str}:{src_str}")
+
+    return " ".join(output_parts)

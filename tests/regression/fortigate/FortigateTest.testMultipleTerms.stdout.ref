@@ -1,0 +1,65 @@
+config firewall address
+    edit BAR_0
+        set type ipmask
+        set subnet 10.1.1.3 255.255.255.255
+    next
+    edit BAR_1
+        set type ipmask
+        set subnet 10.1.1.4 255.255.255.255
+    next
+    edit FOO_0
+        set type ipmask
+        set subnet 10.1.1.1 255.255.255.255
+    next
+    edit FOO_1
+        set type ipmask
+        set subnet 10.1.1.2 255.255.255.255
+    next
+    edit GOO_0
+        set type ipmask
+        set subnet 10.1.1.9 255.255.255.255
+    next
+end
+config firewall addrgrp
+    edit BAR
+        set member "BAR_0" "BAR_1"
+    next
+    edit FOO
+        set member "FOO_0" "FOO_1"
+    next
+    edit GOO
+        set member "GOO_0"
+    next
+end
+config firewall service custom
+    edit good-term-1
+        set tcp-portrange 53:80
+        set udp-portrange 53:80
+    next
+    edit good-term-2
+        set tcp-portrange 53:80
+        set udp-portrange 53:80
+    next
+end
+config firewall policy
+    edit 1
+        set name "good-term-1"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr "FOO" "GOO"
+        set dstaddr "BAR"
+        set schedule "always"
+        set service "good-term-1"
+    next
+    edit 2
+        set name "good-term-2"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr "FOO" "GOO"
+        set dstaddr "BAR"
+        set schedule "always"
+        set service "good-term-2"
+    next
+end
