@@ -399,7 +399,7 @@ class FortigateTest(parameterized.TestCase):
         pol = policy.ParsePolicy(INET6_HEADER + V6_TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
-    
+
     @capture.stdout
     def testInetFiltersV6(self):
         pol = policy.ParsePolicy(INET_HEADER + MIXED_AF_TERM, self.naming)
@@ -532,6 +532,7 @@ class FortigateTest(parameterized.TestCase):
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
 
+
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
 ):
@@ -579,7 +580,7 @@ class FortigateYAMLTest(FortigateTest):
             COMMENT_TERM_1=YAML_COMMENT_TERM_1,
             OWNER_TERM=YAML_OWNER_TERM,
             LONG_COMMENT_TERM=YAML_LONG_COMMENT_TERM,
-            OWNER_COMMENT_TERM=YAML_OWNER_COMMENT_TERM
+            OWNER_COMMENT_TERM=YAML_OWNER_COMMENT_TERM,
         )
         self.fixture_patcher.start()
 
