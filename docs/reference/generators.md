@@ -500,8 +500,8 @@ targets:
 
 ### Option
 
-* _all_: Enables `set logtraffic all` in term.
-* _start_: Enabled `set logtraffic-start` in term.
+* _log_traffic_mode_all_: Enables `set logtraffic all` in term.
+* _log_traffic_start_session_: Enabled `set logtraffic-start` in term.
 
 
 ***

@@ -2,6 +2,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set, Tuple
 
+from absl import logging
+
 from aerleon.lib import aclgenerator, nacaddr, policy
 
 FORTIGATE_SERVICES_ALL = '"ALL"'
@@ -222,9 +224,9 @@ class Term(aclgenerator.Term):
         if self.term.logging:
             self.logtraffic = 'disabled'
             self.logtraffic_start = 'disabled'
-            if 'all' in self.term.option:
+            if 'log_traffic_mode_all' in self.term.option:
                 self.logtraffic = 'log_traffic_mode_all'
-            if 'start' in self.term.option:
+            if 'log_traffic_start_session' in self.term.option:
                 self.logtraffic_start = 'log_traffic_start_session'
 
     def _TranslateAddresses(self, addrs: List[nacaddr.IP]) -> None:
@@ -313,7 +315,20 @@ class Term(aclgenerator.Term):
                 output.append(f'        set logtraffic all')
             if self.logtraffic_start == 'log_traffic_start_session':
                 output.append(f'        set logtraffic-start enable')
+        comment = []
+        if self.term.owner:
+            comment.append(f'Owner: {self.term.owner}')
+        if self.term.comment:
+            comment.append(' '.join(self.term.comment))
+        comment = '\n'.join(comment)
+        if len(comment) >= 1023:
+            logging.warning(
+                f"Fortigate comment cannot be longer than 1023 characters, length was {len(comment)}, truncating comment."
+            )
+            comment = comment[:1023]
+        if comment:
 
+            output.append(f'        set comments "{comment}"')
         return '\n'.join(output)
 
 
@@ -348,7 +363,7 @@ class Fortigate(aclgenerator.ACLGenerator):
         supported_tokens.remove('source_address_exclude')
         supported_tokens.remove('destination_address_exclude')
         supported_sub_tokens['action'] = {'accept', 'deny'}
-        supported_sub_tokens['option'] = {'all', 'start'}
+        supported_sub_tokens['option'] = {'log_traffic_mode_all', 'log_traffic_start_session'}
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:

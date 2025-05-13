@@ -211,7 +211,74 @@ YAML_DENY_RULE = """
     destination-address: FOO
     action: deny
 """
-
+COMMENT_TERM_1 = """
+term good-term-1 {
+  comment:: "This term tests a basic comment."
+  action:: accept
+}
+"""
+YAML_COMMENT_TERM_1 = """
+  - name: good-term-1
+    comment: This term tests a basic comment.
+    action: accept
+"""
+OWNER_TERM = """
+term good-term-1 {
+  owner:: foo@invariant.tech
+  action:: accept
+}
+"""
+YAML_OWNER_TERM = """
+  - name: good-term-1
+    owner: "foo@invariant.tech"
+    action: accept
+"""
+LONG_COMMENT_TERM = """
+term good-term-1 {
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "This comment is over 1023 characters in length."
+  comment:: "We should not see this"
+  action:: accept
+}
+"""
+YAML_LONG_COMMENT_TERM = """
+  - name: good-term-1
+    comment: This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. This comment is over 1023 characters in length. We should not see this
+    action: accept
+"""
+OWNER_COMMENT_TERM = """
+term good-term-1 {
+  comment:: "The owner is foo at invariant."
+  owner:: foo@invariant.tech
+  action:: accept
+}
+"""
+YAML_OWNER_COMMENT_TERM = """
+  - name: good-term-1
+    comment: The owner is foo at invariant.
+    owner: "foo@invariant.tech"
+    action: accept
+"""
 EXP_INFO = 2
 
 
@@ -332,13 +399,15 @@ class FortigateTest(parameterized.TestCase):
         pol = policy.ParsePolicy(INET6_HEADER + V6_TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
-
+    
+    @capture.stdout
     def testInetFiltersV6(self):
         pol = policy.ParsePolicy(INET_HEADER + MIXED_AF_TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
         self.assertNotIn('MIXED_IP_1', str(acl))
         print(acl)
 
+    @capture.stdout
     def testInet6FiltersV4(self):
         pol = policy.ParsePolicy(INET6_HEADER + MIXED_AF_TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
@@ -346,9 +415,13 @@ class FortigateTest(parameterized.TestCase):
         print(acl)
 
     logging_test_parameters = [
-        ("All", "all", "set logtraffic all"),
-        ("Start", "start", "set logtraffic-start enable"),
-        ("All_Start", "all start", "set logtraffic all\n        set logtraffic-start enable"),
+        ("All", "log_traffic_mode_all", "set logtraffic all"),
+        ("Start", "log_traffic_start_session", "set logtraffic-start enable"),
+        (
+            "All_Start",
+            "log_traffic_mode_all log_traffic_start_session",
+            "set logtraffic all\n        set logtraffic-start enable",
+        ),
     ]
 
     @parameterized.named_parameters(logging_test_parameters)
@@ -412,9 +485,6 @@ class FortigateTest(parameterized.TestCase):
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
 
-    def testPortsWithICMPOnlyProtocol(self):
-        pass
-
     bad_headers_test_parameters = [
         ("inet", "inet6"),
         ("inet6", "mixed"),
@@ -437,6 +507,30 @@ class FortigateTest(parameterized.TestCase):
         with self.assertRaises(ValueError):
             fortigate.Fortigate(pol, EXP_INFO)
 
+    @capture.stdout
+    def testComment(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + COMMENT_TERM_1, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
+    @capture.stdout
+    def testOwner(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + OWNER_TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
+    @capture.stdout
+    def testLongCommentTruncated(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + LONG_COMMENT_TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+        self.assertNotIn("We should not see this", str(acl))
+
+    @capture.stdout
+    def testOwnerAndComment(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + OWNER_COMMENT_TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
@@ -482,6 +576,10 @@ class FortigateYAMLTest(FortigateTest):
             EXPIRED_TERM=YAML_EXPIRED_TERM,
             DENY_RULE=YAML_DENY_RULE,
             HEADER_BAD_NUMBER_OF_INTERFACES=YAML_HEADER_BAD_NUMBER_OF_INTERFACES,
+            COMMENT_TERM_1=YAML_COMMENT_TERM_1,
+            OWNER_TERM=YAML_OWNER_TERM,
+            LONG_COMMENT_TERM=YAML_LONG_COMMENT_TERM,
+            OWNER_COMMENT_TERM=YAML_OWNER_COMMENT_TERM
         )
         self.fixture_patcher.start()
 
