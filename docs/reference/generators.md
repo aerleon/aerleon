@@ -488,7 +488,7 @@ targets:
 
 ### Term Format
 
-* for common keys see the [common](#common) section above.
+* For common keys, see section [common](#common) above.
 
 
 ### Sub Tokens
