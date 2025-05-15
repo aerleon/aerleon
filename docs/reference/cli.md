@@ -168,7 +168,7 @@ Usage: pol2yaml [--base_directory DIRECTORY] [-c|--config_file FILE] [--definiti
 Examples:
 
 * Recursively convert all .pol and .inc files in base_directory.
-  Original files are left in place. Each YAML files is placed in the same
+  Original files are left in place. Each YAML file is placed in the same
   directory as the original file. Run sanity_check after (-s).
 
     npx pol2yaml -s --base_directory policies/
