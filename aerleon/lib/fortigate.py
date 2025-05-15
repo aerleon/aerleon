@@ -13,6 +13,7 @@ FORTIGATE_SCHEDULE_ALWAYS = '"always"'
 SUPPORTED_ACTIONS = {'accept', 'deny'}
 FORTIGATE_COMMENT_LIMIT = 1023
 
+
 class FortigateDefaultDictionary(defaultdict):
     def __init__(self, object_constructor, key_attribute_name):
         """
