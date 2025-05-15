@@ -481,7 +481,7 @@ targets:
     fortigate: [filter name] [source interface] [destination interface] {inet, inet6, mixed}
 ```
 
-* _filter name_: Defines the name of the fortinet filter.
+* _filter name_: Defines the name of the Fortinet filter.
 * _source interface_: Defines the source interface
 * _destination_interface_: Defines the destination interface
 * _address_family: Address family to use, valid inputs are `inet`, `inet6`, or `mixed`. (default: `mixed`)
