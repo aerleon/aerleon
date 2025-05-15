@@ -11,7 +11,7 @@ from tests.regression_utils import capture
 GOOD_HEADER_1 = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate test-filter port1 port2
+  target:: fortigate port1 port2
 }
 """
 YAML_GOOD_HEADER_1 = """
@@ -19,14 +19,14 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: test-filter port1 port2
+      fortigate: port1 port2
   terms:
 """
 
 INET_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate test-filter port1 port2 inet
+  target:: fortigate port1 port2 inet
   }
 """
 YAML_INET_HEADER = """
@@ -34,13 +34,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: test-filter port1 port2 inet
+      fortigate: port1 port2 inet
   terms:
 """
 INET6_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate test-filter port1 port2 inet6
+  target:: fortigate port1 port2 inet6
   }
 """
 YAML_INET6_HEADER = """
@@ -48,13 +48,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: test-filter port1 port2 inet6
+      fortigate: port1 port2 inet6
   terms:
 """
 MIXED_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate test-filter port1 port2 mixed
+  target:: fortigate port1 port2 mixed
   }
 """
 YAML_MIXED_HEADER = """
@@ -62,13 +62,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: test-filter port1 port2 mixed
+      fortigate: port1 port2 mixed
   terms:
 """
 HEADER_BAD_NUMBER_OF_INTERFACES = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate test-filter port1
+  target:: fortigate port1
   }
 """
 YAML_HEADER_BAD_NUMBER_OF_INTERFACES = """
@@ -76,7 +76,7 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: test-filter port1
+      fortigate: port1
   terms:
 """
 GOOD_TERM_1 = """
@@ -386,7 +386,7 @@ class FortigateTest(parameterized.TestCase):
         self.assertIn('set dstaddr "all"', str(acl))
         print(acl)
 
-    @capture.stdout
+    # @capture.stdout
     def testInet(self):
         pol = policy.ParsePolicy(INET_HEADER + GOOD_TERM_1, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)

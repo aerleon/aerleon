@@ -10,7 +10,8 @@ FORTIGATE_SERVICES_ALL = '"ALL"'
 FORTIGATE_ADDRESS_ALL = '"all"'
 FORTIGATE_ADDRESS_NONE = '"none"'
 FORTIGATE_SCHEDULE_ALWAYS = '"always"'
-
+SUPPORTED_ACTIONS = {'accept', 'deny'}
+FORTIGATE_COMMENT_LIMIT = 1023
 
 class FortigateDefaultDictionary(defaultdict):
     def __init__(self, object_constructor, key_attribute_name):
@@ -146,7 +147,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
             self._is_dirty = True
 
     @property
-    def fortigate_addrs(self) -> Set[FortinetAddress]:
+    def fortigate_addrs(self) -> List[FortinetAddress]:
         if self._is_dirty or not self._cached_fortigate_addrs:
             self._cached_fortigate_addrs = []
             sorted_ips = sorted(list(self._ips))
@@ -185,8 +186,8 @@ class Term(aclgenerator.Term):
     def __init__(
         self,
         term: policy.Term,
-        source_iface: str,
-        destination_iface: str,
+        source_interface: str,
+        destination_interface: str,
         addressgroups: FortigateDefaultDictionary,
         addressgroups_v6: FortigateDefaultDictionary,
         address_family: str,
@@ -195,13 +196,21 @@ class Term(aclgenerator.Term):
         Initializes the Term object.
         Args:
             term: The term object from the policy.
-            source_iface: The source interface for the term.
-            destination_iface: The destination interface for the term.
+            source_interface: The source interface for the term.
+            destination_interface: The destination interface for the term.
         """
         super().__init__(term)
         self.term = term
-        self.source_iface = source_iface
-        self.destination_iface = destination_iface
+
+        # Validate self.term.action
+        if not isinstance(self.term.action, list):
+            raise TypeError("term.action must be a list.")
+        if len(self.term.action) != 1:
+            raise ValueError("term.action must contain exactly one element.")
+        if self.term.action[0] not in SUPPORTED_ACTIONS:
+            raise ValueError("term.action must contain only 'accept' or 'deny'.")
+        self.source_interface = source_interface
+        self.destination_interface = destination_interface
         self.address_family = address_family
 
         self.address_groups = addressgroups
@@ -246,8 +255,8 @@ class Term(aclgenerator.Term):
         """Return string representation of Fortigate term."""
         output = []
         output.append(f'        set name "{self.term.name}"')
-        output.append(f'        set srcintf "{self.source_iface}"')
-        output.append(f'        set dstintf "{self.destination_iface}"')
+        output.append(f'        set srcintf "{self.source_interface}"')
+        output.append(f'        set dstintf "{self.destination_interface}"')
         if self.term.action[0] != 'deny':
             output.append(f'        set action {self.term.action[0]}')
         source_tokens_v4 = set()
@@ -321,11 +330,11 @@ class Term(aclgenerator.Term):
         if self.term.comment:
             comment.append(' '.join(self.term.comment))
         comment = '\n'.join(comment)
-        if len(comment) >= 1023:
+        if len(comment) >= FORTIGATE_COMMENT_LIMIT:
             logging.warning(
-                f"Fortigate comment cannot be longer than 1023 characters, length was {len(comment)}, truncating comment."
+                f"Fortigate comment cannot be longer than {FORTIGATE_COMMENT_LIMIT} characters, length was {len(comment)}, truncating comment."
             )
-            comment = comment[:1023]
+            comment = comment[:FORTIGATE_COMMENT_LIMIT]
         if comment:
             output.append(f'        set comments "{comment}"')
         return '\n'.join(output)
@@ -361,20 +370,20 @@ class Fortigate(aclgenerator.ACLGenerator):
         supported_tokens.remove('stateless_reply')
         supported_tokens.remove('source_address_exclude')
         supported_tokens.remove('destination_address_exclude')
-        supported_sub_tokens['action'] = {'accept', 'deny'}
+        supported_sub_tokens['action'] = SUPPORTED_ACTIONS
         supported_sub_tokens['option'] = {'log_traffic_mode_all', 'log_traffic_start_session'}
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         for header, terms in pol.filters:
             options = header.FilterOptions(self._PLATFORM)
-            if len(options) < 3:
+            if len(options) < 2:
                 raise ValueError(
-                    'Fortigate requires that at least platform, source and destination interfaces be specified, found: {options}'
+                    f'Fortigate requires that at least platform, source and destination interfaces be specified, found: {options}'
                 )
-            source_iface = options[1]
-            destination_iface = options[2]
-            af = self._SUPPORTED_AF.intersection(options[3:])
+            source_interface = options[0]
+            destination_interface = options[1]
+            af = self._SUPPORTED_AF.intersection(options[2:])
             if len(af) > 1:
                 raise ValueError(
                     f"Only one address family is supported (inet, inet6, mixed) but found: {', '.join(af)}"
@@ -387,8 +396,8 @@ class Fortigate(aclgenerator.ACLGenerator):
             for term in terms:
                 fortigate_term = Term(
                     term,
-                    source_iface,
-                    destination_iface,
+                    source_interface,
+                    destination_interface,
                     self.address_groups,
                     self.address_groups_v6,
                     af,
@@ -467,8 +476,6 @@ def generate_fortinet_service_string(
         A space-separated string suitable for Fortinet's [tcp|udp]-portrange commands.
         Example: "80:80-90 80:100 120-121:80-90 120-121:100"
     """
-    if not destination_ranges:
-        return ""  # Or raise an error, depending on desired behavior
     output_parts = []
 
     for dst_low, dst_high in destination_ranges:

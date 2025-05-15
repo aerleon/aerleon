@@ -54,6 +54,7 @@ _OPTIMIZE = True
 _SHADE_CHECK = False
 _MAX_TTL = 255
 _MIN_TTL = 0
+ADDRESSBOOK_PLATFORMS = frozenset(['srx', 'fortigate'])
 
 
 class Error(Exception):
@@ -249,11 +250,10 @@ class Policy:
 
     def _NeedsAddressBook(self) -> bool:
         """Returns True if the policy uses a generator needing an addressbook."""
-        addressbook_platforms = set(['srx', 'fortigate'])
         for header in self.headers:
             if not header:
                 continue
-            if any(addressbook_platforms.intersection(header.platforms)):
+            if any(ADDRESSBOOK_PLATFORMS.intersection(header.platforms)):
                 return True
             for target in header.target:
                 opts = header.FilterOptions(target.platform)
