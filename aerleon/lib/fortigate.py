@@ -481,7 +481,6 @@ def generate_fortinet_service_string(
             # If source ranges ARE specified, combine each dest with each source
             for src_low, src_high in source_ranges:
                 src_str = format_fortinet_port_range(src_low, src_high)
-                # Combine using the colon separator
                 output_parts.append(f"{dest_str}:{src_str}")
 
     return " ".join(output_parts)
