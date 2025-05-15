@@ -1,0 +1,26 @@
+config firewall address
+    edit FOO_0
+        set type ipmask
+        set subnet 10.1.1.1 255.255.255.255
+    next
+    edit FOO_1
+        set type ipmask
+        set subnet 10.1.1.2 255.255.255.255
+    next
+end
+config firewall addrgrp
+    edit FOO
+        set member "FOO_0" "FOO_1"
+    next
+end
+config firewall policy
+    edit 1
+        set name "deny-foo"
+        set srcintf "port1"
+        set dstintf "port2"
+        set srcaddr "FOO"
+        set dstaddr "FOO"
+        set schedule "always"
+        set service "ALL"
+    next
+end
