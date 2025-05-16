@@ -1,6 +1,6 @@
 import math
 from abc import abstractmethod, ABCMeta
-from typing import Tuple, Set, Dict, Union, List
+from typing import Tuple, Set, Dict, Union, List, MutableMapping
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv6, IPv4
@@ -16,8 +16,42 @@ class UnsupportedFilterOptionError(Error):
     pass
 
 ### helper classes ###
+class ProxmoxConfigDataClass:
+    def __init__(self):
+        self._store = dict()
+
+    def __getitem__(self, item):
+        return self._store[item]
+
+    def __setitem__(self, key, value):
+        self._store[key] = value
+
+    def __delitem__(self, key):
+        del self._store[key]
+
+    def keys(self):
+        return self._store.keys()
+
+    def flatten(self, item):
+        if isinstance(item, dict):
+            return {k: self.flatten(v) for k, v in item.items()}
+        elif isinstance(item, list) or isinstance(item, set):
+            return ",".join([self.flatten(i) for i in item])
+        elif not isinstance(item, str):
+            return str(item)
+        else:
+            return item
+
+    def __str__(self):
+        flattened_store = self.flatten(self._store)
+        lines = []
+        for k,v in flattened_store.items():
+            lines.append(f'{k}: {v}')
+        return "\n".join(lines)
+
+
 class AbstractOption(metaclass=ABCMeta):
-    def __init__(self, config: dict, *args, **kwargs):
+    def __init__(self, config: MutableMapping, *args, **kwargs):
         self.config_ref = config
 
     def __repr__(self):
@@ -76,6 +110,9 @@ class AbstractValueOption(AbstractOption, metaclass=ABCMeta):
         elif self.tokenValidationTemplateMethod(token) and self.key_ingested:
             self.any_value_ingested, got_token = True, True
             self.configInsertTemplateMethod(token)
+        else:
+            # reset so that we don't accept values after other tokens
+            self.key_ingested, self.any_value_ingested = False, False
         return got_token
 
     def complete(self) -> bool:
@@ -295,7 +332,7 @@ class Proxmox(aclgenerator.ACLGenerator):
                     "direction " + filter_direction + " not supported for zone type " + filter_zone,
                 )
 
-            filter_config = dict()
+            filter_config = ProxmoxConfigDataClass()
             available_zone_options = self._BY_ZONE[filter_zone]['supported_options'](filter_config)
             for t in self.filter_options[2:]:
                 ingested_options = []
@@ -325,7 +362,9 @@ class Proxmox(aclgenerator.ACLGenerator):
     def __str__(self):
         target = []
         for header, zone, direction, filter_config, terms in self.proxmox_policies:
+            target.append('[OPTIONS]')
             target.append(str(filter_config))
+            target.append('[RULES]')
             for term in terms:
                 term_str = str(term)
                 if term_str:
