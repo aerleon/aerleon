@@ -1,9 +1,9 @@
 import math
 from abc import abstractmethod, ABCMeta
-from typing import Tuple, Set, Dict, Union, List, MutableMapping
+from typing import Tuple, Set, Dict, Union, List, MutableMapping, Type
 
 from aerleon.lib import aclgenerator, policy
-from aerleon.lib.nacaddr import IPv6, IPv4
+from aerleon.lib.nacaddr import IPv6, IPv4, ExcludeAddrs
 from aerleon.lib.policy import Policy
 
 
@@ -198,6 +198,16 @@ class Term(aclgenerator.Term):
         self.term = term
         self.direction = direction
 
+    @staticmethod
+    def has_mixed_af(addresses: List[Union[IPv4,IPv6]]):
+        has_v4 = any(map(lambda a: isinstance(a, IPv4), addresses))
+        has_v6 = any(map(lambda a: isinstance(a, IPv6), addresses))
+        return has_v4 and has_v6
+
+    @staticmethod
+    def filter_for_af(af: Union[Type[IPv4],Type[IPv6]], addresses: List[Union[IPv4,IPv6]]):
+        return list(filter(lambda a: isinstance(a, af), addresses))
+
     def __str__(self) -> str:
         """ returns the proxmox-firewall string representation of the term """
         ret_str = []
@@ -205,23 +215,46 @@ class Term(aclgenerator.Term):
         def to_network_addr(i: Union[IPv6, IPv4]):
             return str(i.with_prefixlen)
 
+        address_families = [IPv4, IPv6]
+        all_addresses = self.term.source_address + self.term.destination_address
+        if not self.has_mixed_af(all_addresses) and all_addresses: # single-AF term
+            address_families = [type(all_addresses[0])]
+
         # proxmox firewall only supports one protocol per rule
         for protocol in self.term.protocol:
-            options = [self.direction, self.ACTIONS_MAP[self.term.action[0]], "-proto %s" % protocol]
-            # proxmox firewall supports multiple sources/destinations per rule
-            if self.term.source_interface:
-                options.append("-iface %s" % self.term.source_interface)
-            if self.term.destination_address:
-                options.append("-dest %s" % ','.join(map(to_network_addr, self.term.destination_address)))
-            if self.term.source_address:
-                options.append("-source %s" % ','.join(map(to_network_addr, self.term.source_address)))
-            if self.term.source_port:
-                options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.source_port)))
-            if self.term.destination_port:
-                options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
-            if self.term.comment:
-                options.append("# %s" % ' '.join(self.term.comment))
-            ret_str.append(' '.join(options))
+            # proxmox firewall does not support mixed AFs in filters
+            for af in address_families:
+                source_address = self.filter_for_af(af, self.term.source_address)
+                destination_address = self.filter_for_af(af, self.term.destination_address)
+
+                options = [self.direction, self.ACTIONS_MAP[self.term.action[0]], "-proto %s" % protocol]
+                # proxmox firewall supports multiple sources/destinations per rule
+                if self.term.source_interface:
+                    options.append("-iface %s" % self.term.source_interface)
+                # we cannot use address tokens since IPsets are defined in separate files (at cluster
+                # or at host level) and we're only outputting one file at a time, which may not be
+                # cluster/host firewall configuration.
+                if destination_address:
+                    destination_address_with_exclude = destination_address
+                    if self.term.destination_address_exclude:
+                        destination_address_with_exclude = ExcludeAddrs(
+                            destination_address, self.term.destination_address_exclude
+                        )
+                    options.append("-dest %s" % ','.join(map(to_network_addr, destination_address_with_exclude)))
+                if source_address:
+                    source_address_with_exclude = source_address
+                    if self.term.source_address_exclude:
+                        source_address_with_exclude = ExcludeAddrs(
+                            source_address, self.term.source_address_exclude
+                        )
+                    options.append("-source %s" % ','.join(map(to_network_addr, source_address_with_exclude)))
+                if self.term.source_port:
+                    options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.source_port)))
+                if self.term.destination_port:
+                    options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
+                if self.term.comment:
+                    options.append("# %s" % ' '.join(self.term.comment))
+                ret_str.append(' '.join(options))
 
         return '\n'.join(ret_str)
 
