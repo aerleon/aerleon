@@ -36,5 +36,6 @@ config firewall policy
         set dstaddr "BAR"
         set schedule "always"
         set service "good-mixed-term"
+        set logtraffic disable
     next
 end

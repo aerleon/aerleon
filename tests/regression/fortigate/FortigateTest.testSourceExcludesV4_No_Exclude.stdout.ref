@@ -1,25 +1,26 @@
 config firewall address
-    edit FOO_0
+    edit V4_A_0
         set type ipmask
-        set subnet 10.1.1.1 255.255.255.255
+        set subnet 1.1.1.1 255.255.255.255
     next
-    edit FOO_1
+    edit V4_A_1
         set type ipmask
-        set subnet 10.1.1.2 255.255.255.255
+        set subnet 1.1.1.2 255.255.255.255
     next
 end
 config firewall addrgrp
-    edit FOO
-        set member "FOO_0" "FOO_1"
+    edit V4_A
+        set member "V4_A_0" "V4_A_1"
     next
 end
 config firewall policy
     edit 1
-        set name "deny-foo"
+        set name "good-term-1"
         set srcintf "port1"
         set dstintf "port2"
-        set srcaddr "FOO"
-        set dstaddr "FOO"
+        set action accept
+        set srcaddr "V4_A"
+        set dstaddr "all"
         set schedule "always"
         set service "ALL"
         set logtraffic disable

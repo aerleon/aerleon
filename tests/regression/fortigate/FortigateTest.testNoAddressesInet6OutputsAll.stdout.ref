@@ -13,5 +13,6 @@ config firewall policy
         set dstaddr6 "all"
         set schedule "always"
         set service "good-term-1"
+        set logtraffic disable
     next
 end

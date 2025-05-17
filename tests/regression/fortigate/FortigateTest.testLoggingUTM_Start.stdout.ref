@@ -1,8 +1,3 @@
-config firewall service custom
-    edit good-term-1
-        set tcp-portrange 53:80
-    next
-end
 config firewall policy
     edit 1
         set name "good-term-1"
@@ -14,7 +9,7 @@ config firewall policy
         set srcaddr6 "all"
         set dstaddr6 "all"
         set schedule "always"
-        set service "good-term-1"
-        set logtraffic disable
+        set service "ALL"
+        set logtraffic-start enable
     next
 end

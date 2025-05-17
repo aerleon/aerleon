@@ -34,5 +34,6 @@ config firewall policy
         set dstaddr "BAR"
         set schedule "always"
         set service "ALL"
+        set logtraffic disable
     next
 end

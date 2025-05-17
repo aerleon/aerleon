@@ -51,6 +51,7 @@ config firewall policy
         set dstaddr "BAR"
         set schedule "always"
         set service "good-term-1"
+        set logtraffic disable
     next
     edit 2
         set name "good-term-2"
@@ -61,5 +62,6 @@ config firewall policy
         set dstaddr "BAR"
         set schedule "always"
         set service "good-term-2"
+        set logtraffic disable
     next
 end

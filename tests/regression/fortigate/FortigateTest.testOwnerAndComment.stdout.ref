@@ -10,6 +10,7 @@ config firewall policy
         set dstaddr6 "all"
         set schedule "always"
         set service "ALL"
+        set logtraffic disable
         set comments "Owner: foo@invariant.tech
 The owner is foo at invariant."
     next
