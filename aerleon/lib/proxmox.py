@@ -4,7 +4,7 @@ from typing import Tuple, Set, Dict, Union, List, MutableMapping, Type
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv6, IPv4, ExcludeAddrs
-from aerleon.lib.policy import Policy
+from aerleon.lib.policy import Policy, PROTOS_WITH_PORTS
 
 
 ### error classes ###
@@ -179,6 +179,103 @@ class ProxmoxPort:
         return self.str_representation
 
 
+class ProxmoxIcmp:
+    # proxmox firewall only supports a subset of ICMP code/types
+    ICMPv4_MAP = {
+        None: { None: 'any' },
+        'echo-reply': { None: 'echo-reply'},
+        'unreachable': {
+            None: 'destination-unreachable',
+            0: 'network-unreachable',
+            1: 'host-unreachable',
+            2: 'protocol-unreachable',
+            3: 'port-unreachable',
+            4: 'fragmentation-needed',
+            5: 'source-route-failed',
+            6: 'network-unknown',
+            7: 'host-unknown',
+            9: 'network-prohibited',
+            10: 'host-prohibited',
+            11: 'TOS-network-unreachable',
+            12: 'TOS-host-unreachable',
+            13: 'communication-prohibited',
+            14: 'host-precedence-violation',
+            15: 'precedence-cutoff',
+        },
+        'source-quench': { None: 'source-quench' },
+        'redirect': {
+            None: 'redirect',
+            0: 'network-redirect',
+            1: 'host-redirect',
+            2: 'TOS-network-redirect',
+            3: 'TOS-host-redirect',
+        },
+        'echo-request': { None: 'echo-request' },
+        'router-advertisement': { None: 'router-advertisement' },
+        'router-solicitation': { None: 'router-solicitation' },
+        'time-excedeed': {
+            None: 'time-excedeed',
+            0: 'ttl-zero-during-transit',
+            1: 'ttl-zero-during-reassembly',
+        },
+        'parameter-problem': {
+            None: 'parameter-problem',
+            0: 'ip-header-bad',
+            1: 'required-option-missing',
+        },
+        'timestamp-request': { None: 'timestamp-request' },
+        'timestamp-reply': { None: 'timestamp-reply' },
+        'mask-request': { None: 'address-mask-request' },
+        'mask-reply': { None: 'address-mask-reply' },
+    }
+    ICMPv6_MAP = {
+        None: { None: 'any' },
+        'destination-unreachable': {
+            None: 'destination-unreachable',
+            0: 'no-route',
+            1: 'communication-prohibited',
+            2: 'beyond-scope',
+            3: 'address-unreachable',
+            4: 'port-unreachable',
+            5: 'failed-policy',
+            6: 'reject-route',
+        },
+        'packet-too-big': { None: 'packet-too-big' },
+        'time-exceeded': {
+            None: 'time-exceeded',
+            0: 'ttl-zero-during-transit',
+            1: 'ttl-zero-during-reassembly',
+        },
+        'parameter-problem': {
+            None: 'parameter-problem',
+            0: 'bad-header',
+            1: 'unknown-header-type',
+            2: 'unknown-option',
+        },
+        'echo-request': { None: 'echo-request' },
+        'echo-reply': { None: 'echo-reply' },
+        'router-solicit': { None: 'router-solicitation' },
+        'router-advertisement': { None: 'router-advertisement' },
+        'neighbor-solicit': { None: 'neighbour-solicitation' },
+        'neighbor-advertisement': { None: 'neighbour-advertisement' },
+        'redirect-message': { None: 'redirect' },
+    }
+    ICMP_MAP = {
+        'icmp': ICMPv4_MAP,
+        'icmpv6': ICMPv6_MAP,
+        'icmp6': ICMPv6_MAP,
+    }
+    ICMP_PROTOS = ['icmp', 'icmp6', 'icmpv6']
+
+    def __init__(self, icmp_proto: str, icmp_type: Union[str,None] = None, icmp_code: Union[int,None] = None):
+        self.icmp_proto = icmp_proto
+        self.type = icmp_type
+        self.code = icmp_code
+
+    def __str__(self):
+        return self.ICMP_MAP[self.icmp_proto][self.type][self.code]
+
+
 ### implementation ###
 class Term(aclgenerator.Term):
     """
@@ -220,41 +317,48 @@ class Term(aclgenerator.Term):
         if not self.has_mixed_af(all_addresses) and all_addresses: # single-AF term
             address_families = [type(all_addresses[0])]
 
+        icmp_type = self.term.icmp_type if self.term.icmp_type else [None]
+        icmp_code = self.term.icmp_code if self.term.icmp_code else [None]
+
         # proxmox firewall only supports one protocol per rule
         for protocol in self.term.protocol:
             # proxmox firewall does not support mixed AFs in filters
             for af in address_families:
-                source_address = self.filter_for_af(af, self.term.source_address)
-                destination_address = self.filter_for_af(af, self.term.destination_address)
+                for icmp in icmp_type:
+                    for code in icmp_code:
+                        source_address = self.filter_for_af(af, self.term.source_address)
+                        destination_address = self.filter_for_af(af, self.term.destination_address)
 
-                options = [self.direction, self.ACTIONS_MAP[self.term.action[0]], "-proto %s" % protocol]
-                # proxmox firewall supports multiple sources/destinations per rule
-                if self.term.source_interface:
-                    options.append("-iface %s" % self.term.source_interface)
-                # we cannot use address tokens since IPsets are defined in separate files (at cluster
-                # or at host level) and we're only outputting one file at a time, which may not be
-                # cluster/host firewall configuration.
-                if destination_address:
-                    destination_address_with_exclude = destination_address
-                    if self.term.destination_address_exclude:
-                        destination_address_with_exclude = ExcludeAddrs(
-                            destination_address, self.term.destination_address_exclude
-                        )
-                    options.append("-dest %s" % ','.join(map(to_network_addr, destination_address_with_exclude)))
-                if source_address:
-                    source_address_with_exclude = source_address
-                    if self.term.source_address_exclude:
-                        source_address_with_exclude = ExcludeAddrs(
-                            source_address, self.term.source_address_exclude
-                        )
-                    options.append("-source %s" % ','.join(map(to_network_addr, source_address_with_exclude)))
-                if self.term.source_port:
-                    options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.source_port)))
-                if self.term.destination_port:
-                    options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
-                if self.term.comment:
-                    options.append("# %s" % ' '.join(self.term.comment))
-                ret_str.append(' '.join(options))
+                        options = [self.direction, self.ACTIONS_MAP[self.term.action[0]], "-proto %s" % protocol]
+                        # proxmox firewall supports multiple sources/destinations per rule
+                        if self.term.source_interface:
+                            options.append("-iface %s" % self.term.source_interface)
+                        # we cannot use address tokens since IPsets are defined in separate files (at cluster
+                        # or at host level) and we're only outputting one file at a time, which may not be
+                        # cluster/host firewall configuration.
+                        if destination_address:
+                            destination_address_with_exclude = destination_address
+                            if self.term.destination_address_exclude:
+                                destination_address_with_exclude = ExcludeAddrs(
+                                    destination_address, self.term.destination_address_exclude
+                                )
+                            options.append("-dest %s" % ','.join(map(to_network_addr, destination_address_with_exclude)))
+                        if source_address:
+                            source_address_with_exclude = source_address
+                            if self.term.source_address_exclude:
+                                source_address_with_exclude = ExcludeAddrs(
+                                    source_address, self.term.source_address_exclude
+                                )
+                            options.append("-source %s" % ','.join(map(to_network_addr, source_address_with_exclude)))
+                        if self.term.source_port and protocol in PROTOS_WITH_PORTS:
+                            options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.source_port)))
+                        if self.term.destination_port and protocol in PROTOS_WITH_PORTS:
+                            options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
+                        if protocol in ProxmoxIcmp.ICMP_PROTOS:
+                            options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp, code)))
+                        if self.term.comment:
+                            options.append("# %s" % ' '.join(self.term.comment))
+                        ret_str.append(' '.join(options))
 
         return '\n'.join(ret_str)
 
@@ -341,6 +445,8 @@ class Proxmox(aclgenerator.ACLGenerator):
         supported_tokens |= {
             # proxmox firewall only supports setting the source interface
             'source_interface',
+            # proxmox firewall supports icmp type + icmp code
+            'icmp_code',
         }
         supported_sub_tokens |= {
         }
