@@ -343,6 +343,8 @@ class Term(aclgenerator.Term):
         all_addresses = self.term.source_address + self.term.destination_address
         if not self.has_mixed_af(all_addresses) and all_addresses:  # single-AF term
             address_families = [type(all_addresses[0])]
+        elif not all_addresses:  # no source and no destination
+            address_families = [IPv6]  # doesn't matter which one but there should be only one
 
         icmp_types = self.term.icmp_type if self.term.icmp_type else [None]
         icmp_codes = self.term.icmp_code if self.term.icmp_code else [None]
