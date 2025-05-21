@@ -450,7 +450,7 @@ class Proxmox(aclgenerator.ACLGenerator):
 
     # aerleon class props
     _PLATFORM = 'proxmox'
-    SUFFIX = '.fw'
+    SUFFIX = '.prxmxfw'
     _TERM = Term
     _LOG_LEVELS = list(_TERM.LOG_LEVELS_MAP_OPTIONS.values())
     # own class props
