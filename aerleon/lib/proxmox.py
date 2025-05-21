@@ -320,75 +320,120 @@ class Term(aclgenerator.Term):
     def filter_for_af(af: Union[Type[IPv4],Type[IPv6]], addresses: List[Union[IPv4,IPv6]]):
         return list(filter(lambda a: isinstance(a, af), addresses))
 
+    @staticmethod
+    def _ComputeAddresses(addresses, exclude_addresses):
+        addresses_with_exclude = addresses
+        if exclude_addresses:
+            addresses_with_exclude = ExcludeAddrs(
+                addresses, exclude_addresses
+            )
+        return addresses_with_exclude
+
     def __str__(self) -> str:
         """ returns the proxmox-firewall string representation of the term """
         ret_str = []
-
-        def to_network_addr(i: Union[IPv6, IPv4]):
-            return str(i.with_prefixlen)
-
         address_families = [IPv4, IPv6]
         all_addresses = self.term.source_address + self.term.destination_address
         if not self.has_mixed_af(all_addresses) and all_addresses: # single-AF term
             address_families = [type(all_addresses[0])]
 
-        icmp_type = self.term.icmp_type if self.term.icmp_type else [None]
-        icmp_code = self.term.icmp_code if self.term.icmp_code else [None]
+        icmp_types = self.term.icmp_type if self.term.icmp_type else [None]
+        icmp_codes = self.term.icmp_code if self.term.icmp_code else [None]
 
         # proxmox firewall only supports one protocol per rule
         for protocol in self.term.protocol:
             # proxmox firewall does not support mixed AFs in filters
             for af in address_families:
-                for icmp in icmp_type:
-                    for code in icmp_code:
-                        source_address = self.filter_for_af(af, self.term.source_address)
-                        destination_address = self.filter_for_af(af, self.term.destination_address)
-
-                        options = [self.direction, self.ACTIONS_MAP[self.term.action[0]], "-proto %s" % protocol]
-                        # proxmox firewall supports multiple sources/destinations per rule
-                        if self.term.source_interface:
-                            options.append("-iface %s" % self.term.source_interface)
-                        # we cannot use address tokens since IPsets are defined in separate files (at cluster
-                        # or at host level) and we're only outputting one file at a time, which may not be
-                        # cluster/host firewall configuration.
-                        if destination_address:
-                            destination_address_with_exclude = destination_address
-                            if self.term.destination_address_exclude:
-                                destination_address_with_exclude = ExcludeAddrs(
-                                    destination_address, self.term.destination_address_exclude
-                                )
-                            options.append("-dest %s" % ','.join(map(to_network_addr, destination_address_with_exclude)))
-                        if source_address:
-                            source_address_with_exclude = source_address
-                            if self.term.source_address_exclude:
-                                source_address_with_exclude = ExcludeAddrs(
-                                    source_address, self.term.source_address_exclude
-                                )
-                            options.append("-source %s" % ','.join(map(to_network_addr, source_address_with_exclude)))
-                        if self.term.source_port and protocol in PROTOS_WITH_PORTS:
-                            options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.source_port)))
-                        if self.term.destination_port and protocol in PROTOS_WITH_PORTS:
-                            options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
-                        if protocol in ProxmoxIcmp.ICMP_PROTOS:
-                            options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp, code)))
-                        if self.term.logging:
-                            logging = 'true'
-                            log_option = next(map(
-                                lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
-                                self.term.option or [None]
-                            ))
-                            log = log_option or logging
-                            options.append('-log %s' % self._LOG_LEVELS_MAP[log])
-                        if self.term.comment:
-                            options.append("# %s" % ' '.join(self.term.comment))
-                        ret_str.append(' '.join(options))
+                for icmp_type in icmp_types:
+                    for icmp_code in icmp_codes:
+                        source = self._ComputeAddresses(
+                            self.filter_for_af(af, self.term.source_address),
+                            self.term.source_address_exclude
+                        )
+                        dest = self._ComputeAddresses(
+                            self.filter_for_af(af, self.term.destination_address),
+                            self.term.destination_address_exclude
+                        )
+                        ret_str.append(
+                            self._Format(
+                                protocol,
+                                self.direction,
+                                self.ACTIONS_MAP[self.term.action[0]],
+                                source,
+                                dest,
+                                icmp_code,
+                                icmp_type,
+                                self.term.source_interface,
+                                self.term.source_port,
+                                self.term.destination_port,
+                                self.term.comment,
+                                self.term.logging,
+                                self.term.option
+                            )
+                        )
 
         return '\n'.join(ret_str)
+
+    def _Format(
+            self,
+            protocol: str,
+            direction: str,
+            action: str,
+            source_addresses: List[Union[IPv4, IPv6]],
+            destination_addresses: List[Union[IPv4, IPv6]],
+            icmp_code: Union[str, None],
+            icmp_type: Union[str, None],
+            source_interface: str,
+            source_ports: List[Union[Tuple[int, int], int]],
+            destination_ports: List[Union[Tuple[int, int], int]],
+            comment: List[str],
+            logging: List[str],
+            term_options: List[str]
+    ):
+        def to_network_addr(i: Union[IPv6, IPv4]):
+            return str(i.with_prefixlen)
+
+        options = [direction, action, "-proto %s" % protocol]
+
+        # proxmox firewall supports multiple sources/destinations per rule
+        if source_interface:
+            options.append("-iface %s" % source_interface)
+
+        # we cannot use address tokens since IPsets are defined in separate files (at cluster
+        # or at host level) and we're only outputting one file at a time, which may not be
+        # cluster/host firewall configuration.
+        if destination_addresses:
+            options.append("-dest %s" % ','.join(map(to_network_addr, destination_addresses)))
+
+        if source_addresses:
+            options.append("-source %s" % ','.join(map(to_network_addr, source_addresses)))
+
+        if source_ports and protocol in PROTOS_WITH_PORTS:
+            options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), source_ports)))
+
+        if destination_ports and protocol in PROTOS_WITH_PORTS:
+            options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), destination_ports)))
+
+        if protocol in ProxmoxIcmp.ICMP_PROTOS:
+            options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp_type, icmp_code)))
+
+        if logging:
+            logging_key = 'true'
+            log_option = next(map(
+                lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
+                term_options or [None]
+            ))
+            log = log_option or logging_key
+            options.append('-log %s' % self._LOG_LEVELS_MAP[log])
+
+        if comment:
+            options.append("# %s" % ' '.join(comment))
+
+        return ' '.join(options)
 
 
 class Proxmox(aclgenerator.ACLGenerator):
     """Proxmox firewall policy object"""
-
     # aerleon class props
     _PLATFORM = 'proxmox'
     SUFFIX = '.fw'
@@ -473,7 +518,6 @@ class Proxmox(aclgenerator.ACLGenerator):
             'option': set(self._TERM.LOG_LEVELS_MAP_OPTIONS.keys())
         })
         return supported_tokens, supported_sub_tokens
-
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         for header, terms in pol.filters:
