@@ -314,6 +314,15 @@ class Term(aclgenerator.Term):
         'true': 'warn',
         'disable': 'nolog',
     }
+    # Proxmox uses slightly different names for certain IP protocols
+    # since it depends on Debian's netbase package for /etc/protocols
+    # (other distributions use different /etc/protocols files)
+    PROXMOX_PROTO_MAP = {
+        'icmpv6': 'ipv6-icmp',
+        'icmp6': 'ipv6-icmp',
+        'ipip': 'ipencap',
+        'fragment': 'ipv6-frag',
+    }
 
     def __init__(self, term: policy.Term, direction: str):
         self.term = term
@@ -402,7 +411,7 @@ class Term(aclgenerator.Term):
         def to_network_addr(i: Union[IPv6, IPv4]):
             return str(i.with_prefixlen)
 
-        options = [direction, action, "-proto %s" % protocol]
+        options = [direction, action, "-proto %s" % self.PROXMOX_PROTO_MAP.get(protocol, protocol)]
 
         # proxmox firewall supports multiple sources/destinations per rule
         if source_interface:
