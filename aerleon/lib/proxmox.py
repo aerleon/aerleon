@@ -20,6 +20,7 @@ class UnsupportedFilterOptionError(Error):
 class ProxmoxConfigDataClass:
     def __init__(self):
         self._store = dict()
+        self._store['enable'] = '1'
 
     def __getitem__(self, item):
         return self._store[item]
