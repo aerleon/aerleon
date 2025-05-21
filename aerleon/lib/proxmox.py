@@ -290,6 +290,21 @@ class Term(aclgenerator.Term):
         'deny': 'DROP',
         'reject': 'REJECT',
     }
+    LOG_LEVELS_MAP_OPTIONS = {
+        'log_nolog': 'nolog',
+        'log_emergency': 'emerg',
+        'log_alert': 'alert',
+        'log_critical': 'crit',
+        'log_error': 'err',
+        'log_warning': 'warn',
+        'log_notice': 'notice',
+        'log_info': 'info',
+        'log_debug': 'debug',
+    }
+    _LOG_LEVELS_MAP = LOG_LEVELS_MAP_OPTIONS | {
+        'true': 'warn',
+        'disable': 'nolog',
+    }
 
     def __init__(self, term: policy.Term, direction: str):
         self.term = term
@@ -356,6 +371,14 @@ class Term(aclgenerator.Term):
                             options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), self.term.destination_port)))
                         if protocol in ProxmoxIcmp.ICMP_PROTOS:
                             options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp, code)))
+                        if self.term.logging:
+                            logging = 'true'
+                            log_option = next(map(
+                                lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
+                                self.term.option or [None]
+                            ))
+                            log = log_option or logging
+                            options.append('-log %s' % self._LOG_LEVELS_MAP[log])
                         if self.term.comment:
                             options.append("# %s" % ' '.join(self.term.comment))
                         ret_str.append(' '.join(options))
@@ -370,10 +393,8 @@ class Proxmox(aclgenerator.ACLGenerator):
     _PLATFORM = 'proxmox'
     SUFFIX = '.fw'
     _TERM = Term
+    _LOG_LEVELS = list(_TERM.LOG_LEVELS_MAP_OPTIONS.values())
     # own class props
-    _LOG_LEVELS = [
-        "alert", "crit", "debug", "emerg", "error", "info", "nolog", "notice", "warning"
-    ]
     _NF_CONNTRACK_HELPERS = [ "amanda", "ftp", "irc", "netbios-ns", "pptp", "sane", "sip", "snmp", "tftp" ]
     _BY_ZONE = {
         "cluster": {
@@ -448,8 +469,9 @@ class Proxmox(aclgenerator.ACLGenerator):
             # proxmox firewall supports icmp type + icmp code
             'icmp_code',
         }
-        supported_sub_tokens |= {
-        }
+        supported_sub_tokens.update({
+            'option': set(self._TERM.LOG_LEVELS_MAP_OPTIONS.keys())
+        })
         return supported_tokens, supported_sub_tokens
 
 
