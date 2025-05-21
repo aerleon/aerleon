@@ -15,6 +15,7 @@ class Error(aclgenerator.Error):
 class UnsupportedFilterOptionError(Error):
     pass
 
+
 ### helper classes ###
 class ProxmoxConfigDataClass:
     def __init__(self):
@@ -45,7 +46,7 @@ class ProxmoxConfigDataClass:
     def __str__(self):
         flattened_store = self.flatten(self._store)
         lines = []
-        for k,v in flattened_store.items():
+        for k, v in flattened_store.items():
             lines.append(f'{k}: {v}')
         return "\n".join(lines)
 
@@ -82,7 +83,7 @@ class BooleanKeywordOption(AbstractOption):
     def ingest(self, token: str) -> bool:
         got_token = False
         if token == self.key:
-            self.config_ref[self.key] = "1" # perl
+            self.config_ref[self.key] = "1"  # perl
             got_token = True
         return got_token
 
@@ -117,8 +118,9 @@ class AbstractValueOption(AbstractOption, metaclass=ABCMeta):
 
     def complete(self) -> bool:
         return (
-                (self.key_ingested, self.any_value_ingested) == (False, False)
-                or self.key_ingested and self.any_value_ingested
+            (self.key_ingested, self.any_value_ingested) == (False, False)
+            or self.key_ingested
+            and self.any_value_ingested
         )
 
 
@@ -182,8 +184,8 @@ class ProxmoxPort:
 class ProxmoxIcmp:
     # proxmox firewall only supports a subset of ICMP code/types
     ICMPv4_MAP = {
-        None: { None: 'any' },
-        'echo-reply': { None: 'echo-reply'},
+        None: {None: 'any'},
+        'echo-reply': {None: 'echo-reply'},
         'unreachable': {
             None: 'destination-unreachable',
             0: 'network-unreachable',
@@ -202,7 +204,7 @@ class ProxmoxIcmp:
             14: 'host-precedence-violation',
             15: 'precedence-cutoff',
         },
-        'source-quench': { None: 'source-quench' },
+        'source-quench': {None: 'source-quench'},
         'redirect': {
             None: 'redirect',
             0: 'network-redirect',
@@ -210,9 +212,9 @@ class ProxmoxIcmp:
             2: 'TOS-network-redirect',
             3: 'TOS-host-redirect',
         },
-        'echo-request': { None: 'echo-request' },
-        'router-advertisement': { None: 'router-advertisement' },
-        'router-solicitation': { None: 'router-solicitation' },
+        'echo-request': {None: 'echo-request'},
+        'router-advertisement': {None: 'router-advertisement'},
+        'router-solicitation': {None: 'router-solicitation'},
         'time-excedeed': {
             None: 'time-excedeed',
             0: 'ttl-zero-during-transit',
@@ -223,13 +225,13 @@ class ProxmoxIcmp:
             0: 'ip-header-bad',
             1: 'required-option-missing',
         },
-        'timestamp-request': { None: 'timestamp-request' },
-        'timestamp-reply': { None: 'timestamp-reply' },
-        'mask-request': { None: 'address-mask-request' },
-        'mask-reply': { None: 'address-mask-reply' },
+        'timestamp-request': {None: 'timestamp-request'},
+        'timestamp-reply': {None: 'timestamp-reply'},
+        'mask-request': {None: 'address-mask-request'},
+        'mask-reply': {None: 'address-mask-reply'},
     }
     ICMPv6_MAP = {
-        None: { None: 'any' },
+        None: {None: 'any'},
         'destination-unreachable': {
             None: 'destination-unreachable',
             0: 'no-route',
@@ -240,7 +242,7 @@ class ProxmoxIcmp:
             5: 'failed-policy',
             6: 'reject-route',
         },
-        'packet-too-big': { None: 'packet-too-big' },
+        'packet-too-big': {None: 'packet-too-big'},
         'time-exceeded': {
             None: 'time-exceeded',
             0: 'ttl-zero-during-transit',
@@ -252,13 +254,13 @@ class ProxmoxIcmp:
             1: 'unknown-header-type',
             2: 'unknown-option',
         },
-        'echo-request': { None: 'echo-request' },
-        'echo-reply': { None: 'echo-reply' },
-        'router-solicit': { None: 'router-solicitation' },
-        'router-advertisement': { None: 'router-advertisement' },
-        'neighbor-solicit': { None: 'neighbour-solicitation' },
-        'neighbor-advertisement': { None: 'neighbour-advertisement' },
-        'redirect-message': { None: 'redirect' },
+        'echo-request': {None: 'echo-request'},
+        'echo-reply': {None: 'echo-reply'},
+        'router-solicit': {None: 'router-solicitation'},
+        'router-advertisement': {None: 'router-advertisement'},
+        'neighbor-solicit': {None: 'neighbour-solicitation'},
+        'neighbor-advertisement': {None: 'neighbour-advertisement'},
+        'redirect-message': {None: 'redirect'},
     }
     ICMP_MAP = {
         'icmp': ICMPv4_MAP,
@@ -267,7 +269,12 @@ class ProxmoxIcmp:
     }
     ICMP_PROTOS = ['icmp', 'icmp6', 'icmpv6']
 
-    def __init__(self, icmp_proto: str, icmp_type: Union[str,None] = None, icmp_code: Union[int,None] = None):
+    def __init__(
+        self,
+        icmp_proto: str,
+        icmp_type: Union[str, None] = None,
+        icmp_code: Union[int, None] = None,
+    ):
         self.icmp_proto = icmp_proto
         self.type = icmp_type
         self.code = icmp_code
@@ -284,7 +291,8 @@ class Term(aclgenerator.Term):
     direction is IN, OUT, FORWARD (regardless of zone type, zone
     constraints should be handled by the client class)
     """
-    GOOD_DIRECTIONS = [ 'IN', 'OUT', 'FORWARD' ]
+
+    GOOD_DIRECTIONS = ['IN', 'OUT', 'FORWARD']
     ACTIONS_MAP = {
         'accept': 'ACCEPT',
         'deny': 'DROP',
@@ -311,30 +319,28 @@ class Term(aclgenerator.Term):
         self.direction = direction
 
     @staticmethod
-    def has_mixed_af(addresses: List[Union[IPv4,IPv6]]):
+    def has_mixed_af(addresses: List[Union[IPv4, IPv6]]):
         has_v4 = any(map(lambda a: isinstance(a, IPv4), addresses))
         has_v6 = any(map(lambda a: isinstance(a, IPv6), addresses))
         return has_v4 and has_v6
 
     @staticmethod
-    def filter_for_af(af: Union[Type[IPv4],Type[IPv6]], addresses: List[Union[IPv4,IPv6]]):
+    def filter_for_af(af: Union[Type[IPv4], Type[IPv6]], addresses: List[Union[IPv4, IPv6]]):
         return list(filter(lambda a: isinstance(a, af), addresses))
 
     @staticmethod
     def _ComputeAddresses(addresses, exclude_addresses):
         addresses_with_exclude = addresses
         if exclude_addresses:
-            addresses_with_exclude = ExcludeAddrs(
-                addresses, exclude_addresses
-            )
+            addresses_with_exclude = ExcludeAddrs(addresses, exclude_addresses)
         return addresses_with_exclude
 
     def __str__(self) -> str:
-        """ returns the proxmox-firewall string representation of the term """
+        """returns the proxmox-firewall string representation of the term"""
         ret_str = []
         address_families = [IPv4, IPv6]
         all_addresses = self.term.source_address + self.term.destination_address
-        if not self.has_mixed_af(all_addresses) and all_addresses: # single-AF term
+        if not self.has_mixed_af(all_addresses) and all_addresses:  # single-AF term
             address_families = [type(all_addresses[0])]
 
         icmp_types = self.term.icmp_type if self.term.icmp_type else [None]
@@ -348,11 +354,11 @@ class Term(aclgenerator.Term):
                     for icmp_code in icmp_codes:
                         source = self._ComputeAddresses(
                             self.filter_for_af(af, self.term.source_address),
-                            self.term.source_address_exclude
+                            self.term.source_address_exclude,
                         )
                         dest = self._ComputeAddresses(
                             self.filter_for_af(af, self.term.destination_address),
-                            self.term.destination_address_exclude
+                            self.term.destination_address_exclude,
                         )
                         ret_str.append(
                             self._Format(
@@ -368,27 +374,27 @@ class Term(aclgenerator.Term):
                                 self.term.destination_port,
                                 self.term.comment,
                                 self.term.logging,
-                                self.term.option
+                                self.term.option,
                             )
                         )
 
         return '\n'.join(ret_str)
 
     def _Format(
-            self,
-            protocol: str,
-            direction: str,
-            action: str,
-            source_addresses: List[Union[IPv4, IPv6]],
-            destination_addresses: List[Union[IPv4, IPv6]],
-            icmp_code: Union[str, None],
-            icmp_type: Union[str, None],
-            source_interface: str,
-            source_ports: List[Union[Tuple[int, int], int]],
-            destination_ports: List[Union[Tuple[int, int], int]],
-            comment: List[str],
-            logging: List[str],
-            term_options: List[str]
+        self,
+        protocol: str,
+        direction: str,
+        action: str,
+        source_addresses: List[Union[IPv4, IPv6]],
+        destination_addresses: List[Union[IPv4, IPv6]],
+        icmp_code: Union[str, None],
+        icmp_type: Union[str, None],
+        source_interface: str,
+        source_ports: List[Union[Tuple[int, int], int]],
+        destination_ports: List[Union[Tuple[int, int], int]],
+        comment: List[str],
+        logging: List[str],
+        term_options: List[str],
     ):
         def to_network_addr(i: Union[IPv6, IPv4]):
             return str(i.with_prefixlen)
@@ -409,20 +415,26 @@ class Term(aclgenerator.Term):
             options.append("-source %s" % ','.join(map(to_network_addr, source_addresses)))
 
         if source_ports and protocol in PROTOS_WITH_PORTS:
-            options.append("-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), source_ports)))
+            options.append(
+                "-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), source_ports))
+            )
 
         if destination_ports and protocol in PROTOS_WITH_PORTS:
-            options.append("-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), destination_ports)))
+            options.append(
+                "-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), destination_ports))
+            )
 
         if protocol in ProxmoxIcmp.ICMP_PROTOS:
             options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp_type, icmp_code)))
 
         if logging:
             logging_key = 'true'
-            log_option = next(map(
-                lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
-                term_options or [None]
-            ))
+            log_option = next(
+                map(
+                    lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
+                    term_options or [None],
+                )
+            )
             log = log_option or logging_key
             options.append('-log %s' % self._LOG_LEVELS_MAP[log])
 
@@ -434,17 +446,28 @@ class Term(aclgenerator.Term):
 
 class Proxmox(aclgenerator.ACLGenerator):
     """Proxmox firewall policy object"""
+
     # aerleon class props
     _PLATFORM = 'proxmox'
     SUFFIX = '.fw'
     _TERM = Term
     _LOG_LEVELS = list(_TERM.LOG_LEVELS_MAP_OPTIONS.values())
     # own class props
-    _NF_CONNTRACK_HELPERS = [ "amanda", "ftp", "irc", "netbios-ns", "pptp", "sane", "sip", "snmp", "tftp" ]
+    _NF_CONNTRACK_HELPERS = [
+        "amanda",
+        "ftp",
+        "irc",
+        "netbios-ns",
+        "pptp",
+        "sane",
+        "sip",
+        "snmp",
+        "tftp",
+    ]
     _BY_ZONE = {
         "cluster": {
             "supported_directions": _TERM.GOOD_DIRECTIONS,
-            "supported_options": lambda config : [
+            "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 BooleanKeywordOption('ebtables', config),
                 ValueOption(config, policy_forward=list(Proxmox._TERM.ACTIONS_MAP.values())),
@@ -454,7 +477,7 @@ class Proxmox(aclgenerator.ACLGenerator):
         },
         "host": {
             "supported_directions": _TERM.GOOD_DIRECTIONS,
-            "supported_options": lambda config : [
+            "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 ValueOption(config, log_level_forward=Proxmox._LOG_LEVELS),
                 ValueOption(config, log_level_in=Proxmox._LOG_LEVELS),
@@ -477,8 +500,8 @@ class Proxmox(aclgenerator.ACLGenerator):
             ],
         },
         "vm": {
-            "supported_directions": [ "IN", "OUT" ],
-            "supported_options": lambda config : [
+            "supported_directions": ["IN", "OUT"],
+            "supported_options": lambda config: [
                 BooleanKeywordOption('dhcp', config),
                 BooleanKeywordOption('enable', config),
                 BooleanKeywordOption('ipfilter', config),
@@ -492,13 +515,13 @@ class Proxmox(aclgenerator.ACLGenerator):
             ],
         },
         "vnet": {
-            "supported_directions": [ "FORWARD" ],
-            "supported_options": lambda config : [
+            "supported_directions": ["FORWARD"],
+            "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 ValueOption(config, log_level_forward=Proxmox._LOG_LEVELS),
                 ValueOption(config, policy_forward=list(Proxmox._TERM.ACTIONS_MAP.values())),
             ],
-        }
+        },
     }
 
     def __init__(self, pol: Policy, exp_info: int):
@@ -506,7 +529,7 @@ class Proxmox(aclgenerator.ACLGenerator):
         super().__init__(pol, exp_info)
 
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
-        """ returns the list of DSL + YAML supplementary tokens supported (proxmox-firewall specific) """
+        """returns the list of DSL + YAML supplementary tokens supported (proxmox-firewall specific)"""
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens |= {
             # proxmox firewall only supports setting the source interface
@@ -514,9 +537,7 @@ class Proxmox(aclgenerator.ACLGenerator):
             # proxmox firewall supports icmp type + icmp code
             'icmp_code',
         }
-        supported_sub_tokens.update({
-            'option': set(self._TERM.LOG_LEVELS_MAP_OPTIONS.keys())
-        })
+        supported_sub_tokens.update({'option': set(self._TERM.LOG_LEVELS_MAP_OPTIONS.keys())})
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
@@ -524,7 +545,9 @@ class Proxmox(aclgenerator.ACLGenerator):
             self.filter_options = header.FilterOptions(self._PLATFORM)
 
             if len(self.filter_options) < 2:
-                raise UnsupportedFilterOptionError("missing options, zone and direction are mandatory")
+                raise UnsupportedFilterOptionError(
+                    "missing options, zone and direction are mandatory"
+                )
 
             filter_zone = self.filter_options[0]
             filter_direction = self.filter_options[1]
@@ -534,7 +557,10 @@ class Proxmox(aclgenerator.ACLGenerator):
 
             if filter_direction not in self._BY_ZONE[filter_zone]["supported_directions"]:
                 raise UnsupportedFilterOptionError(
-                    "direction " + filter_direction + " not supported for zone type " + filter_zone,
+                    "direction "
+                    + filter_direction
+                    + " not supported for zone type "
+                    + filter_zone,
                 )
 
             filter_config = ProxmoxConfigDataClass()
@@ -548,8 +574,7 @@ class Proxmox(aclgenerator.ACLGenerator):
             incomplete_options = list(filter(lambda o: not o.complete(), available_zone_options))
             if incomplete_options:
                 raise UnsupportedFilterOptionError(
-                    "missing or incorrect value for filter option(s) %s",
-                    incomplete_options
+                    "missing or incorrect value for filter option(s) %s", incomplete_options
                 )
 
             new_terms = []
