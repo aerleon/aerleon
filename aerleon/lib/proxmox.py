@@ -215,8 +215,8 @@ class ProxmoxIcmp:
         'echo-request': {None: 'echo-request'},
         'router-advertisement': {None: 'router-advertisement'},
         'router-solicitation': {None: 'router-solicitation'},
-        'time-excedeed': {
-            None: 'time-excedeed',
+        'time-exceeded': {
+            None: 'time-exceeded',
             0: 'ttl-zero-during-transit',
             1: 'ttl-zero-during-reassembly',
         },
