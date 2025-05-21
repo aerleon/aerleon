@@ -1,10 +1,10 @@
 import math
-from abc import abstractmethod, ABCMeta
-from typing import Tuple, Set, Dict, Union, List, MutableMapping, Type
+from abc import ABCMeta, abstractmethod
+from typing import Dict, List, MutableMapping, Set, Tuple, Type, Union
 
 from aerleon.lib import aclgenerator, policy
-from aerleon.lib.nacaddr import IPv6, IPv4, ExcludeAddrs
-from aerleon.lib.policy import Policy, PROTOS_WITH_PORTS
+from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
+from aerleon.lib.policy import PROTOS_WITH_PORTS, Policy
 
 
 ### error classes ###
