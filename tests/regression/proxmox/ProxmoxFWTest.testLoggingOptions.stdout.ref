@@ -1,0 +1,5 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN DROP -source 10.0.0.1/32 -log info # log activity from SOME_HOST with info loglevel
+
