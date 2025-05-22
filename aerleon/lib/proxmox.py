@@ -1,6 +1,6 @@
 import math
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, MutableMapping, Self, Set, Tuple, Type, Union
+from typing import Dict, List, MutableMapping, Set, Tuple, Type, Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
@@ -57,7 +57,7 @@ class ProxmoxConfigDataClass:
     def _merge_list(list_a: list, list_b: list) -> list:
         return list(set(list_a + list_b))
 
-    def merge(self, other: Self) -> Self:
+    def merge(self, other):
         self_keys = list(self.keys())
         other_keys = list(other.keys())
         ret = dict()
