@@ -1,16 +1,23 @@
-
 """ Unittest for proxmox rendering module. """
 
 from absl.testing import absltest
-from aerleon.lib import proxmox, policy, naming
-from aerleon.lib.proxmox import UnsupportedFilterOptionError
-from tests.regression_utils import capture
+
+from aerleon.lib import naming, policy, proxmox
 from aerleon.lib import yaml as yaml_frontend
+from aerleon.lib.proxmox import UnsupportedFilterOptionError, ZoneMismatchError
+from tests.regression_utils import capture
 
 GOOD_HEADER_1 = """
 header {
   comment:: "test acl with comment"
   target:: proxmox vm IN
+}
+"""
+
+GOOD_HEADER_2 = """
+header {
+  comment:: "test acl for host zone"
+  target:: proxmox host IN
 }
 """
 
@@ -35,8 +42,18 @@ term good-term-1 {
 }
 """
 
+EXPIRED_TERM_1 = """
+term expired-term-1 {
+  expiration:: 2000-1-1
+  protocol:: tcp
+  destination-port:: NTP
+  action:: deny
+}
+"""
+
 
 EXP_INFO = 2
+
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
@@ -56,10 +73,18 @@ class ProxmoxFWTest(absltest.TestCase):
         super().setUp()
         self.naming = naming.Naming()
         self.naming._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('NTP = 123/tcp 123/udp', 'services')
 
     def testBadZoneName(self):
         pol = policy.ParsePolicy(BAD_HEADER_1 + GOOD_TERM_1, self.naming)
         with self.assertRaises(UnsupportedFilterOptionError):
+            proxmox.Proxmox(pol, EXP_INFO)
+
+    def testMultipleZonesBadMixup(self):
+        pol = policy.ParsePolicy(
+            GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_HEADER_2 + GOOD_TERM_1, self.naming
+        )
+        with self.assertRaises(ZoneMismatchError):
             proxmox.Proxmox(pol, EXP_INFO)
 
     def testBadDirection(self):
@@ -70,11 +95,18 @@ class ProxmoxFWTest(absltest.TestCase):
     @capture.stdout
     def testComment(self):
         output = proxmox.Proxmox(
-            policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming),
-            EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )
+        self.assertRegex(str(output), "# some comment", "did not output comment")
         print(output)
 
+    @capture.stdout
+    def testExpiredNotPrinted(self):
+        output = proxmox.Proxmox(
+            policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + EXPIRED_TERM_1, self.naming), EXP_INFO
+        )
+        self.assertNotIn('expired-term', str(output))
+        print(output)
 
 
 if __name__ == '__main__':
