@@ -387,9 +387,10 @@ class Term(aclgenerator.Term):
 
         icmp_types = self.term.icmp_type if self.term.icmp_type else [None]
         icmp_codes = self.term.icmp_code if self.term.icmp_code else [None]
+        term_protocol = self.term.protocol if self.term.protocol else [None]
 
         # proxmox firewall only supports one protocol per rule
-        for protocol in self.term.protocol:
+        for protocol in term_protocol:
             # proxmox firewall does not support mixed AFs in filters
             for af in address_families:
                 for icmp_type in icmp_types:
@@ -424,7 +425,7 @@ class Term(aclgenerator.Term):
 
     def _Format(
         self,
-        protocol: str,
+        protocol: Union[str, None],
         direction: str,
         action: str,
         source_addresses: List[Union[IPv4, IPv6]],
@@ -441,7 +442,10 @@ class Term(aclgenerator.Term):
         def to_network_addr(i: Union[IPv6, IPv4]):
             return str(i.with_prefixlen)
 
-        options = [direction, action, "-proto %s" % self.PROXMOX_PROTO_MAP.get(protocol, protocol)]
+        options = [direction, action]
+
+        if protocol:
+            options.append("-proto %s" % self.PROXMOX_PROTO_MAP.get(protocol, protocol))
 
         # proxmox firewall supports multiple sources/destinations per rule
         if source_interface:
