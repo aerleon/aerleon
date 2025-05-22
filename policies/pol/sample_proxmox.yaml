@@ -1,7 +1,7 @@
 filters:
   - header:
       comment: |
-        sample proxmox VM policy
+        sample proxmox VM policy IN part
       targets:
         proxmox: vm IN policy_in REJECT policy_out ACCEPT log_level_in err
     terms:
@@ -28,3 +28,15 @@ filters:
         logging: true
         option: log_info
         action: deny
+  - header:
+      comment: |
+        sample proxmox VM policy OUT part
+      targets:
+        proxmox: vm OUT
+    terms:
+      - name: allow-from-priv
+        comment: "allow tcp and udp from private IP addresses"
+        source-address: RFC1918
+        destination-address: ANY
+        protocol: udp tcp
+        action: accept
