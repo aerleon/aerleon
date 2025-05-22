@@ -1,0 +1,5 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN ACCEPT -iface b2b0 -source 0.0.0.0/0
+
