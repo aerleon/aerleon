@@ -1,6 +1,6 @@
 import math
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, MutableMapping, Set, Tuple, Type, Union
+from typing import Dict, List, MutableMapping, Self, Set, Tuple, Type, Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
@@ -16,10 +16,16 @@ class UnsupportedFilterOptionError(Error):
     pass
 
 
+class ZoneMismatchError(Error):
+    pass
+
+
 ### helper classes ###
 class ProxmoxConfigDataClass:
-    def __init__(self):
-        self._store = dict()
+    def __init__(self, *args, **kwargs):
+        self._store: Dict[str, Union[str, List[str]]] = dict()
+        self._store.update(*args)
+        self._store.update(**kwargs)
         self._store['enable'] = '1'
 
     def __getitem__(self, item):
@@ -30,6 +36,9 @@ class ProxmoxConfigDataClass:
 
     def __delitem__(self, key):
         del self._store[key]
+
+    def __add__(self, other):
+        return self.merge(other)
 
     def keys(self):
         return self._store.keys()
@@ -43,6 +52,27 @@ class ProxmoxConfigDataClass:
             return str(item)
         else:
             return item
+
+    @staticmethod
+    def _merge_list(list_a: list, list_b: list) -> list:
+        return list(set(list_a + list_b))
+
+    def merge(self, other: Self) -> Self:
+        self_keys = list(self.keys())
+        other_keys = list(other.keys())
+        ret = dict()
+        for k in self_keys + other_keys:
+            if k in self_keys and k in other_keys:
+                if isinstance(self[k], list) and isinstance(other[k], list):
+                    ret[k] = self._merge_list(self[k], other[k])
+                else:
+                    ret[k] = other[k]
+            elif k in self_keys:
+                ret[k] = self[k]
+            elif k in other_keys:
+                ret[k] = other[k]
+        self._store = ret
+        return self
 
     def __str__(self):
         flattened_store = self.flatten(self._store)
@@ -553,6 +583,8 @@ class Proxmox(aclgenerator.ACLGenerator):
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
+        filter_zones = []
+        global_policy_config = ProxmoxConfigDataClass()
         for header, terms in pol.filters:
             self.filter_options = header.FilterOptions(self._PLATFORM)
 
@@ -566,6 +598,10 @@ class Proxmox(aclgenerator.ACLGenerator):
 
             if filter_zone not in self._BY_ZONE.keys():
                 raise UnsupportedFilterOptionError("unknown zone")
+
+            if filter_zones and filter_zone not in filter_zones:
+                raise ZoneMismatchError("cannot mix zone types in one policy")
+            filter_zones.append(filter_zone)
 
             if filter_direction not in self._BY_ZONE[filter_zone]["supported_directions"]:
                 raise UnsupportedFilterOptionError(
@@ -588,7 +624,7 @@ class Proxmox(aclgenerator.ACLGenerator):
                 raise UnsupportedFilterOptionError(
                     "missing or incorrect value for filter option(s) %s", incomplete_options
                 )
-
+            global_policy_config += filter_config  # merge, will stay set to the same ref
             new_terms = []
             for term in terms:
                 new_terms.append(
@@ -598,17 +634,21 @@ class Proxmox(aclgenerator.ACLGenerator):
                     )
                 )
             self.proxmox_policies.append(
-                (header, filter_zone, filter_direction, filter_config, new_terms)
+                (header, filter_zone, filter_direction, global_policy_config, new_terms)
             )
 
     def __str__(self):
-        target = []
+        target: List[str] = []
+        terms_str: List[str] = []
+        global_policy_config = ''
         for header, zone, direction, filter_config, terms in self.proxmox_policies:
-            target.append('[OPTIONS]')
-            target.append(str(filter_config))
-            target.append('[RULES]')
+            global_policy_config = filter_config  # only one (merged) config for the whole zone
             for term in terms:
                 term_str = str(term)
                 if term_str:
-                    target.append(term_str)
+                    terms_str.append(term_str)
+        target.append('[OPTIONS]')
+        target.append(str(global_policy_config))
+        target.append('[RULES]')
+        target.append('\n'.join(terms_str))
         return '\n'.join(target) + '\n'
