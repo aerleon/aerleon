@@ -335,13 +335,13 @@ class Term(aclgenerator.Term):
         'log_alert': 'alert',
         'log_critical': 'crit',
         'log_error': 'err',
-        'log_warning': 'warn',
+        'log_warning': 'warning',
         'log_notice': 'notice',
         'log_info': 'info',
         'log_debug': 'debug',
     }
     _LOG_LEVELS_MAP = LOG_LEVELS_MAP_OPTIONS | {
-        'true': 'warn',
+        'true': 'warning',
         'disable': 'nolog',
     }
     # Proxmox uses slightly different names for certain IP protocols
