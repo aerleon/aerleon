@@ -13,26 +13,6 @@ config firewall addrgrp
         set member "V4_A_0" "V4_A_1"
     next
 end
-config firewall address6
-    edit V6_X_0
-        set type ipprefix
-        set ip6 2001:db8::1/128
-    next
-    edit V6_X_1
-        set type ipprefix
-        set ip6 2001:db8::2/128
-    next
-end
-config firewall addrgrp6
-    edit V6_X
-        set member "V6_X_0" "V6_X_1"
-    next
-    edit good-term-1-source
-        set member "none"
-        set exclude enable
-        set exclude-member "V6_X"
-    next
-end
 config firewall policy
     edit 1
         set name "good-term-1"
@@ -41,8 +21,6 @@ config firewall policy
         set action accept
         set srcaddr "V4_A"
         set dstaddr "all"
-        set srcaddr6 "good-term-1-source"
-        set dstaddr6 "all"
         set schedule "always"
         set service "ALL"
         set logtraffic disable

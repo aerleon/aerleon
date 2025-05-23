@@ -8,37 +8,16 @@ config firewall addrgrp
     edit MIXED_P
         set member "MIXED_P_0"
     next
-    edit good-term-1-source
-        set member "none"
-        set exclude enable
-        set exclude-member "MIXED_P"
-    next
 end
 config firewall address6
     edit MIXED_P_0
         set type ipprefix
         set ip6 2001:db8::1/128
     next
-    edit V6_X_0
-        set type ipprefix
-        set ip6 2001:db8::1/128
-    next
-    edit V6_X_1
-        set type ipprefix
-        set ip6 2001:db8::2/128
-    next
 end
 config firewall addrgrp6
     edit MIXED_P
         set member "MIXED_P_0"
-    next
-    edit V6_X
-        set member "V6_X_0" "V6_X_1"
-    next
-    edit good-term-1-source
-        set member "V6_X"
-        set exclude enable
-        set exclude-member "MIXED_P"
     next
 end
 config firewall policy
@@ -47,10 +26,10 @@ config firewall policy
         set srcintf "port1"
         set dstintf "port2"
         set action accept
-        set srcaddr "good-term-1-source"
-        set dstaddr "all"
-        set srcaddr6 "good-term-1-source"
-        set dstaddr6 "all"
+        set srcaddr "all"
+        set dstaddr "MIXED_P"
+        set srcaddr6 "all"
+        set dstaddr6 "MIXED_P"
         set schedule "always"
         set service "ALL"
         set logtraffic disable

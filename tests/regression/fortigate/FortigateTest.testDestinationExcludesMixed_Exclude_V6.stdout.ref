@@ -8,11 +8,6 @@ config firewall addrgrp
     edit MIXED_P
         set member "MIXED_P_0"
     next
-    edit good-term-1-source
-        set member "none"
-        set exclude enable
-        set exclude-member "MIXED_P"
-    next
 end
 config firewall address6
     edit MIXED_P_0
@@ -35,10 +30,10 @@ config firewall addrgrp6
     edit V6_X
         set member "V6_X_0" "V6_X_1"
     next
-    edit good-term-1-source
-        set member "V6_X"
+    edit good-term-1-destination
+        set member "MIXED_P"
         set exclude enable
-        set exclude-member "MIXED_P"
+        set exclude-member "V6_X"
     next
 end
 config firewall policy
@@ -47,10 +42,10 @@ config firewall policy
         set srcintf "port1"
         set dstintf "port2"
         set action accept
-        set srcaddr "good-term-1-source"
-        set dstaddr "all"
-        set srcaddr6 "good-term-1-source"
-        set dstaddr6 "all"
+        set srcaddr "all"
+        set dstaddr "MIXED_P"
+        set srcaddr6 "all"
+        set dstaddr6 "good-term-1-destination"
         set schedule "always"
         set service "ALL"
         set logtraffic disable

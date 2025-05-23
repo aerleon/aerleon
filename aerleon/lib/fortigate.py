@@ -6,9 +6,9 @@ from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
 
-FORTIGATE_SERVICES_ALL = '"ALL"'
-FORTIGATE_ADDRESS_ALL = '"all"'
-FORTIGATE_ADDRESS_NONE = '"none"'
+FORTIGATE_SERVICES_ALL = 'ALL'
+FORTIGATE_ADDRESS_ALL = 'all'
+FORTIGATE_ADDRESS_NONE = 'none'
 FORTIGATE_SCHEDULE_ALWAYS = '"always"'
 SUPPORTED_ACTIONS = {'accept', 'deny'}
 FORTIGATE_COMMENT_LIMIT = 1023
@@ -130,6 +130,7 @@ class FortinetAddress(FortigateObjectGroup):
         output.append('    next')
         return '\n'.join(output)
 
+
 class FortigateExcludeGroup(FortigateObjectGroup):
     def __init__(self, name: str, members: List[str], exclude: List[str]):
         """
@@ -146,6 +147,7 @@ class FortigateExcludeGroup(FortigateObjectGroup):
             self._exclude_cfg_list = [FORTIGATE_ADDRESS_NONE]
         else:
             self._exclude_cfg_list = [f'"{e}"' for e in sorted(list(set(exclude)))]
+
     def __str__(self):
         output = []
         output.append(f'    edit {self.name}')
@@ -154,6 +156,7 @@ class FortigateExcludeGroup(FortigateObjectGroup):
         output.append(f'        set exclude-member {" ".join(self._exclude_cfg_list)}')
         output.append(f'    next')
         return '\n'.join(output)
+
 
 class FortigateAddressGroup(FortigateObjectGroup):
     def __init__(self, name: str):
@@ -236,8 +239,6 @@ class Term(aclgenerator.Term):
             raise ValueError("term.action must contain exactly one element.")
         if self.term.action[0] not in SUPPORTED_ACTIONS:
             raise ValueError("term.action must contain only 'accept' or 'deny'.")
-        
-
 
         self.source_interface = source_interface
         self.destination_interface = destination_interface
@@ -252,10 +253,16 @@ class Term(aclgenerator.Term):
         self._TranslateAddresses(term.source_address_exclude)
         self._TranslateAddresses(term.destination_address_exclude)
         if term.source_address_exclude:
-            self._TranslateExcludes(term.name+'-source', term.source_address, term.source_address_exclude)
+            self._TranslateExcludes(
+                self.term.name + '-source', term.source_address, term.source_address_exclude
+            )
         if term.destination_address_exclude:
-            self._TranslateExcludes(term.name+'-destination', term.destination_address, term.destination_address_exclude)
-       
+            self._TranslateExcludes(
+                self.term.name + '-destination',
+                term.destination_address,
+                term.destination_address_exclude,
+            )
+
         if term.destination_port or term.source_port:
             service = FortigateIPService(
                 term.name, term.source_port, term.destination_port, term.protocol
@@ -276,30 +283,44 @@ class Term(aclgenerator.Term):
                 raise ValueError(
                     "Multiple logtraffic values cannot be used together. "
                     f"Valid values are: {', '.join(FORTIGATE_LOG_TRAFFIC_VALUES)}"
-    )
+                )
             # logtraffic options.
             if 'log_traffic_mode_all' in self.term.option:
                 self.logtraffic = 'log_traffic_mode_all'
             elif 'log_traffic_mode_disable' in self.term.option:
                 self.logtraffic = 'log_traffic_mode_disable'
-            
+
             # logtraffic-start options.
             if 'log_traffic_start_session' in self.term.option:
                 self.logtraffic_start = 'log_traffic_start_session'
-    
-    def _TranslateExcludes(self, name: str, addrs: List[nacaddr.IP], excludes: List[nacaddr.IP]) -> None:
+
+    def _TranslateExcludes(
+        self, base_name: str, addrs: List[nacaddr.IP], excludes: List[nacaddr.IP]
+    ) -> None:
         member_tokens_v4 = [i.token for i in addrs if i.version == 4]
         member_tokens_v6 = [i.token for i in addrs if i.version == 6]
         exclude_tokens_v4 = [i.token for i in excludes if i.version == 4]
         exclude_tokens_v6 = [i.token for i in excludes if i.version == 6]
-        if member_tokens_v4 or exclude_tokens_v4:
-            exclude_addrgrp_v4 = FortigateExcludeGroup(name, member_tokens_v4, exclude_tokens_v4)
-            self.address_groups[name] = exclude_addrgrp_v4
-        if member_tokens_v6 or exclude_tokens_v6:
 
-            exclude_addrgrp_v6 = FortigateExcludeGroup(name, member_tokens_v6, exclude_tokens_v6)
-            self.address_groups_v6[name] = exclude_addrgrp_v6
+        # Default members to "all" if addrs is empty but excludes exist
+        effective_members_v4 = member_tokens_v4 if member_tokens_v4 else [FORTIGATE_ADDRESS_NONE]
+        effective_members_v6 = member_tokens_v6 if member_tokens_v6 else [FORTIGATE_ADDRESS_NONE]
+
+        if exclude_tokens_v4:  # Only create if there are actual v4 excludes
+            v4_exclude_group_name = f"{base_name}"  # Differentiated name
+            exclude_addrgrp_v4 = FortigateExcludeGroup(
+                v4_exclude_group_name, effective_members_v4, exclude_tokens_v4
+            )
+            self.address_groups[v4_exclude_group_name] = exclude_addrgrp_v4
+        if exclude_tokens_v6:  # Only create if there are actual v6 excludes
+            v6_exclude_group_name = f"{base_name}"  # Differentiated name
+            exclude_addrgrp_v6 = FortigateExcludeGroup(
+                v6_exclude_group_name, effective_members_v6, exclude_tokens_v6
+            )
+            self.address_groups_v6[v6_exclude_group_name] = exclude_addrgrp_v6
+
     def _TranslateAddresses(self, addrs: List[nacaddr.IP]) -> None:
+        """Inserts tokens into versioned addressbook and sets their members to the IPs."""
         for addr in addrs:
             if addr.version == 4:
                 if self.address_family == 'inet6':
@@ -335,74 +356,146 @@ class Term(aclgenerator.Term):
                 destination_tokens_v4.add(f'"{i.token}"')
             elif i.version == 6:
                 destination_tokens_v6.add(f'"{i.token}"')
-        
+
         # Sorting tokens
         source_tokens_v4 = sorted(source_tokens_v4)
         source_tokens_v6 = sorted(source_tokens_v6)
         destination_tokens_v4 = sorted(destination_tokens_v4)
         destination_tokens_v6 = sorted(destination_tokens_v6)
 
-        # Determine if v4 or v6 is present
-        v4_addrs_present = bool(source_tokens_v4 or destination_tokens_v4)
-        v6_addrs_present = bool(source_tokens_v6 or destination_tokens_v6)
+        has_v4_source_elements = bool(
+            source_tokens_v4 or any(ex.version == 4 for ex in self.term.source_address_exclude)
+        )
+        has_v6_source_elements = bool(
+            source_tokens_v6 or any(ex.version == 6 for ex in self.term.source_address_exclude)
+        )
+        has_v4_destination_elements = bool(
+            destination_tokens_v4
+            or any(ex.version == 4 for ex in self.term.destination_address_exclude)
+        )
+        has_v6_destination_elements = bool(
+            destination_tokens_v6
+            or any(ex.version == 6 for ex in self.term.destination_address_exclude)
+        )
 
-        # Determine if we need to generate v4 or v6 or not.
-        generate_ipv4 = False
+        generate_ipv4_policy = False
+        generate_ipv6_policy = False
+
         if self.address_family == 'inet':
-            generate_ipv4 = True
+            generate_ipv4_policy = True
+        elif self.address_family == 'inet6':
+            generate_ipv6_policy = True
         elif self.address_family == 'mixed':
-            if v4_addrs_present or not v6_addrs_present:
-                generate_ipv4 = True
-        generate_ipv6 = False
-        if self.address_family == 'inet6':
-            generate_ipv6 = True
-        elif self.address_family == 'mixed':
-            if v6_addrs_present or not v4_addrs_present:
-                generate_ipv6 = True
-        
-        # Set the source/destination default action based on presence or absence of addresses.
-        src_default_action = FORTIGATE_ADDRESS_ALL
-        if any(self.term.source_address):
-            src_default_action = FORTIGATE_ADDRESS_NONE
-        dst_default_action = FORTIGATE_ADDRESS_ALL
-        if any(self.term.destination_address):
-            dst_default_action = FORTIGATE_ADDRESS_NONE
+            # If there are any v4 elements (source or dest, include or exclude)
+            # OR if there are no v6 elements at all (meaning v4 is the only option or it's truly 'any/any')
+            if (has_v4_source_elements or has_v4_destination_elements) or not (
+                has_v6_source_elements or has_v6_destination_elements
+            ):
+                generate_ipv4_policy = True
+
+            # If there are any v6 elements (source or dest, include or exclude)
+            # OR if there are no v4 elements at all
+            if (has_v6_source_elements or has_v6_destination_elements) or not (
+                has_v4_source_elements or has_v4_destination_elements
+            ):
+                generate_ipv6_policy = True
+
+            # If both are true but one side has no elements, turn off the other.
+            # e.g. if only v6 exclude exists, don't generate an empty/all v4 rule.
+            if generate_ipv4_policy and generate_ipv6_policy:
+                if not (has_v4_source_elements or has_v4_destination_elements):
+                    generate_ipv4_policy = False
+                if not (has_v6_source_elements or has_v6_destination_elements):
+                    generate_ipv6_policy = False
+
+            # If mixed and absolutely no address specifications (includes or excludes)
+            # default to generating for both (Fortigate 'all'/'all')
+            if not (
+                has_v4_source_elements
+                or has_v4_destination_elements
+                or has_v6_source_elements
+                or has_v6_destination_elements
+            ):
+                generate_ipv4_policy = True
+                generate_ipv6_policy = True
+
+        # Default actions
+        src_v4_effective_val = FORTIGATE_ADDRESS_ALL
+        if not has_v4_source_elements and self.term.source_address:
+            src_v4_effective_val = FORTIGATE_ADDRESS_NONE
+
+        dst_v4_effective_val = FORTIGATE_ADDRESS_ALL
+        if not has_v4_destination_elements and self.term.destination_address:
+            dst_v4_effective_val = FORTIGATE_ADDRESS_NONE
+
+        src_v6_effective_val = FORTIGATE_ADDRESS_ALL
+        if not has_v6_source_elements and self.term.source_address:
+            src_v6_effective_val = FORTIGATE_ADDRESS_NONE
+
+        dst_v6_effective_val = FORTIGATE_ADDRESS_ALL
+        if not has_v6_destination_elements and self.term.destination_address:
+            dst_v6_effective_val = FORTIGATE_ADDRESS_NONE
 
         # Generate IPv4 address groups from tokens or use default action if empty
-        if generate_ipv4:
-            if self.term.source_address_exclude:
-                src_v4_to_set = f'"{self.term.name}-source"'
+        if generate_ipv4_policy:
+            # Check if there's a v4-specific source exclude group
+            source_v4_exclude_exists = any(
+                ex.version == 4 for ex in self.term.source_address_exclude
+            )
+            if source_v4_exclude_exists:
+                # Ensure the _TranslateExcludes created a V4 group for this term.
+                # The name needs to be consistently generated.
+                src_v4_to_set = f'"{self.term.name}-source"'  # Assumes _TranslateExcludes uses this name for the v4 version
+            elif source_tokens_v4:
+                src_v4_to_set = " ".join(source_tokens_v4)
             else:
-                src_v4_to_set = " ".join(source_tokens_v4) if source_tokens_v4 else src_default_action
-            if self.term.destination_address_exclude:
+                src_v4_to_set = f'"{src_v4_effective_val}"'  # Use effective default (all or none)
+
+            destination_v4_exclude_exists = any(
+                ex.version == 4 for ex in self.term.destination_address_exclude
+            )
+            if destination_v4_exclude_exists:
                 dst_v4_to_set = f'"{self.term.name}-destination"'
+            elif destination_tokens_v4:
+                dst_v4_to_set = " ".join(destination_tokens_v4)
             else:
-                dst_v4_to_set = (
-                    " ".join(destination_tokens_v4) if destination_tokens_v4 else dst_default_action
-                )
+                dst_v4_to_set = f'"{dst_v4_effective_val}"'
+
             output.append(f'        set srcaddr {src_v4_to_set}')
             output.append(f'        set dstaddr {dst_v4_to_set}')
 
-        # Generate IPv6 address groups from tokens or use default action if empty
-        if generate_ipv6:
-            if self.term.source_address_exclude:
-                src_v6_to_set = f'"{self.term.name}-source"'
-            else:
-                src_v6_to_set = " ".join(source_tokens_v6) if source_tokens_v6 else src_default_action
-            if self.term.destination_address_exclude:
-                dst_v6_to_set = f'"{self.term.name}-destination"'
-            else:
-                dst_v6_to_set = (
-                    " ".join(destination_tokens_v6) if destination_tokens_v6 else dst_default_action
+        # Generate IPv6 address groups
+        if generate_ipv6_policy:
+            source_v6_exclude_exists = any(
+                ex.version == 6 for ex in self.term.source_address_exclude
+            )
+            if source_v6_exclude_exists:
+                src_v6_to_set = (
+                    f'"{self.term.name}-source"'  # This name might need adjustment if it clashes
                 )
+            elif source_tokens_v6:
+                src_v6_to_set = " ".join(source_tokens_v6)
+            else:
+                src_v6_to_set = f'"{src_v6_effective_val}"'
+
+            destination_v6_exclude_exists = any(
+                ex.version == 6 for ex in self.term.destination_address_exclude
+            )
+            if destination_v6_exclude_exists:
+                dst_v6_to_set = f'"{self.term.name}-destination"'
+            elif destination_tokens_v6:
+                dst_v6_to_set = " ".join(destination_tokens_v6)
+            else:
+                dst_v6_to_set = f'"{dst_v6_effective_val}"'
+
             output.append(f'        set srcaddr6 {src_v6_to_set}')
             output.append(f'        set dstaddr6 {dst_v6_to_set}')
         output.append(f'        set schedule {FORTIGATE_SCHEDULE_ALWAYS}')
         services = [f'"{service.name}"' for service in self.services]
         if not services:
-            services = [FORTIGATE_SERVICES_ALL]
-        output.append(f'        set service {" ".join(services)}')
-        
+            services = [f'"{FORTIGATE_SERVICES_ALL}"']
+        output.append(f'        set service {"".join(services)}')
+
         # Multiple logging types are available, check if logging is true and then print relevant log statements.
         if self.term.logging:
             if self.logtraffic == 'log_traffic_mode_all':
@@ -460,7 +553,9 @@ class Fortigate(aclgenerator.ACLGenerator):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens.remove('stateless_reply')
         supported_sub_tokens['action'] = SUPPORTED_ACTIONS
-        supported_sub_tokens['option'] = FORTIGATE_LOG_TRAFFIC_VALUES | FORTIGATE_LOG_TRAFFIC_START_VALUES
+        supported_sub_tokens['option'] = (
+            FORTIGATE_LOG_TRAFFIC_VALUES | FORTIGATE_LOG_TRAFFIC_START_VALUES
+        )
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:

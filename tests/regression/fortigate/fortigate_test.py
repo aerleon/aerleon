@@ -389,40 +389,15 @@ class FortigateTest(parameterized.TestCase):
         self.naming._ParseLine('V6_X = 2001:db8::1/128 2001:db8::2/128', 'networks')
         self.naming._ParseLine('V6_Y = 2001:db8::2/128 2001:db8::3/128', 'networks')
         # Superset of V6_X
-        self.naming._ParseLine('V6_Z = 2001:db8::1/128 2001:db8::2/128 2001:db8::3/128 2001:db8::4/128', 'networks')
+        self.naming._ParseLine(
+            'V6_Z = 2001:db8::1/128 2001:db8::2/128 2001:db8::3/128 2001:db8::4/128', 'networks'
+        )
 
         # Mixed Definitions for general source/destination testing
         # Contains V4_A's first IP and V6_X's first IP
         self.naming._ParseLine('MIXED_P = 1.1.1.1/32 2001:db8::1/128', 'networks')
         # Different IPs from MIXED_P for exclusion testing
         self.naming._ParseLine('MIXED_Q = 1.1.1.3/32 2001:db8::3/128', 'networks')
-
-        # Empty Definition
-        # EMPTY_DEF =
-
-        # "Any" Definition (can be used for source or destination)
-        # self.naming._ParseLine('NET_ANY_DEF = 0.0.0.0/0 ::/0', 'networks')
-
-        # Definitions more specific to scenarios 28-42 for clarity,
-        # some might be identical to above for consistency.
-        # Source v4 addresses (same as V4_A)
-        # self.naming._ParseLine('V4_S_A = 1.1.1.1/32 1.1.1.2/32', 'networks')
-        # Source v4 exclude (subset of V4_S_A)
-        # self.naming._ParseLine('V4_S_B_EXCL = 1.1.1.2/32', 'networks')
-        # Source v6 addresses (same as V6_X)
-        # self.naming._ParseLine('V6_S_X = 2001:db8::1/128 2001:db8::2/128', 'networks')
-        # Mixed v4/v6 source (same as MIXED_P)
-        # self.naming._ParseLine('MIXED_S_P = 1.1.1.1/32 2001:db8::1/128', 'networks')
-        # Destination v4 addresses
-        # self.naming._ParseLine('V4_D_C = 2.2.2.1/32 2.2.2.2/32', 'networks')
-        # Destination v4 exclude (subset of V4_D_C)
-        # self.naming._ParseLine('V4_D_D_EXCL = 2.2.2.2/32', 'networks')
-        # Destination v6 addresses
-        # self.naming._ParseLine('V6_D_Y = 2001:db8:cafe::1/128 2001:db8:cafe::2/128', 'networks')
-        # Mixed v4/v6 destination
-        # self.naming._ParseLine('MIXED_D_Q = 2.2.2.1/32 2001:db8:cafe::1/128', 'networks')
-
-
 
     @capture.stdout
     def testNoAddressesInet6OutputsAll(self):
@@ -613,39 +588,47 @@ class FortigateTest(parameterized.TestCase):
 
     exclude_test_parameters = [
         # V4 tests
-        ("V4_No_Exclude", "V4_A", "", "", ""),
-        ("V4_Exclude", "V4_A", "V4_B", "", ""),
-        # IPv6 still gets printed in addressbook here but not used
-        ("V4_Exclude_V6", "V4_A", "V6_X", "", ""),
-        ("V4_Exclude_Mixed", "V4_A", "MIXED_P", "", ""),
-        ("V4_Exclude_Superset", "V4_A", "V4_C", "", ""),
-        # This is an error
-        # ("Empty_Exclude_V4", "", "V4_A", "", ""),
-
-        #V6 tests
-        ("V6_No_Exclude", "V6_X", "", "", ""),
-        ("V6_Exclude", "V6_X", "V6_Y", "", ""),
-        ("V6_Exclude_V4", "V6_X", "V4_A", "", ""),
-        ("V6_Exclude_Mixed", "V6_X", "MIXED_P", "", ""),
-        ("V6_Exclude_Superset", "V6_X", "V6_Z", "", ""),
-        # ("Empty_Exclude_V6", "", "V6_X", "", ""),
-
-        #Mixed tests
-        ("Mixed_No_Exclude", "MIXED_P", "", "", ""),
-        ("Mixed_Exclude_V4", "MIXED_P", "V4_A", "", ""),
-        ("Mixed_Exclude_V6", "MIXED_P", "V6_X", "", ""),
-        ("Mixed_Exclude_Mixed", "MIXED_P", "MIXED_Q", "", ""),
-        # ("Empty_Exclude_Mixed", "", "MIXED_P", "", ""),
+        ("V4_No_Exclude", "V4_A", ""),
+        ("V4_Exclude", "V4_A", "V4_B"),
+        ("V4_Exclude_V6", "V4_A", "V6_X"),
+        ("V4_Exclude_Mixed", "V4_A", "MIXED_P"),
+        ("V4_Exclude_Superset", "V4_A", "V4_C"),
+        # #V6 tests
+        ("V6_No_Exclude", "V6_X", ""),
+        ("V6_Exclude", "V6_X", "V6_Y"),
+        ("V6_Exclude_V4", "V6_X", "V4_A"),
+        ("V6_Exclude_Mixed", "V6_X", "MIXED_P"),
+        ("V6_Exclude_Superset", "V6_X", "V6_Z"),
+        # #Mixed tests
+        ("Mixed_No_Exclude", "MIXED_P", ""),
+        ("Mixed_Exclude_V4", "MIXED_P", "V4_A"),
+        ("Mixed_Exclude_V6", "MIXED_P", "V6_X"),
+        ("Mixed_Exclude_Mixed", "MIXED_P", "MIXED_Q"),
     ]
+
     @parameterized.named_parameters(exclude_test_parameters)
     @capture.stdout
-    def testSourceExcludes(self, source, source_exclude, destination, destination_exclude):
+    def testSourceExcludes(self, source, source_exclude):
         source_text = ""
         if source:
             source_text = f"source-address:: {source}"
         source_exclude_text = ""
         if source_exclude:
             source_exclude_text = f"source-exclude:: {source_exclude}"
+        TERM = f"""
+        term good-term-1 {{
+            {source_text}
+            {source_exclude_text}
+            action:: accept
+        }}
+        """
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
+    @parameterized.named_parameters(exclude_test_parameters)
+    @capture.stdout
+    def testDestinationExcludes(self, destination, destination_exclude):
         destination_text = ""
         if destination:
             destination_text = f"destination-address:: {destination}"
@@ -654,21 +637,11 @@ class FortigateTest(parameterized.TestCase):
             destination_exclude_text = f"destination-exclude:: {destination_exclude}"
         TERM = f"""
         term good-term-1 {{
-            {source_text}
-            {source_exclude_text}
             {destination_text}
             {destination_exclude_text}
             action:: accept
         }}
         """
-        # input = GOOD_HEADER_1 + TERM
-        # lines = [line.strip() for line in input.splitlines()]
-        # non_blank_lines = [line for line in lines if line] # Filter out empty strings
-        # # Join them back if needed
-        # result_string = "\n".join(non_blank_lines)
-
-        # print(result_string)
-        # print("==========")
         pol = policy.ParsePolicy(GOOD_HEADER_1 + TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
@@ -728,12 +701,18 @@ class FortigateYAMLTest(FortigateTest):
         self.fixture_patcher.start()
 
     @parameterized.named_parameters(FortigateTest.logging_test_parameters)
-    def testLogging(self, logging_str, expected):
+    def testLogging(self, logging_enabled: bool, logging_options: str, expected: str):
+        options = ""
+        if logging_options:
+            options = f"option: {logging_options}"
+        logging = ""
+        if logging_enabled:
+            logging = f"logging: {logging_enabled}"
         LOGGING_TERM = f"""
         - name: good-term-1
           action: accept
-          logging: true
-          option: {logging_str}
+          {logging}
+          {options}
         """
         pol = policy.ParsePolicy(GOOD_HEADER_1 + LOGGING_TERM, self.naming)
         acl = fortigate.Fortigate(pol, EXP_INFO)
@@ -756,3 +735,56 @@ class FortigateYAMLTest(FortigateTest):
         pol = policy.ParsePolicy(input_pol, self.naming)
         with self.assertRaises(ValueError):
             fortigate.Fortigate(pol, EXP_INFO)
+
+    @parameterized.named_parameters(FortigateTest.exclude_test_parameters)
+    @capture.stdout
+    def testSourceExcludes(self, source, source_exclude):
+        source_text = ""
+        if source:
+            source_text = f"source-address: {source}"
+        source_exclude_text = ""
+        if source_exclude:
+            source_exclude_text = f"source-exclude: {source_exclude}"
+        input_pol = f"""\
+                filters:
+                  - header:
+                      comment: this is a test acl
+                      targets:
+                        fortigate: port1 port2
+                    terms:
+                      - name: good-term-1
+                        {source_text}
+                        {source_exclude_text}
+                        action: accept
+        """
+        input_pol = textwrap.dedent(input_pol)
+        pol = policy.ParsePolicy(input_pol, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
+    @parameterized.named_parameters(FortigateTest.exclude_test_parameters)
+    @capture.stdout
+    def testDestinationExcludes(self, destination, destination_exclude):
+        destination_text = ""
+        if destination:
+            destination_text = f"destination-address: {destination}"
+        destination_exclude_text = ""
+        if destination_exclude:
+            destination_exclude_text = f"destination-exclude: {destination_exclude}"
+        input_pol = f"""\
+                filters:
+                  - header:
+                      comment: this is a test acl
+                      targets:
+                        fortigate: port1 port2
+                    terms:
+                      - name: good-term-1
+                        {destination_text}
+                        {destination_exclude_text}
+                        action: accept
+        """
+        input_pol = textwrap.dedent(input_pol)
+
+        pol = policy.ParsePolicy(input_pol, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)

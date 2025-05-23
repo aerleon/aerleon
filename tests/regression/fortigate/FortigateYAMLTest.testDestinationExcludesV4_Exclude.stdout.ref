@@ -7,30 +7,22 @@ config firewall address
         set type ipmask
         set subnet 1.1.1.2 255.255.255.255
     next
+    edit V4_B_0
+        set type ipmask
+        set subnet 1.1.1.2 255.255.255.254
+    next
 end
 config firewall addrgrp
     edit V4_A
         set member "V4_A_0" "V4_A_1"
     next
-end
-config firewall address6
-    edit V6_X_0
-        set type ipprefix
-        set ip6 2001:db8::1/128
+    edit V4_B
+        set member "V4_B_0"
     next
-    edit V6_X_1
-        set type ipprefix
-        set ip6 2001:db8::2/128
-    next
-end
-config firewall addrgrp6
-    edit V6_X
-        set member "V6_X_0" "V6_X_1"
-    next
-    edit good-term-1-source
-        set member "none"
+    edit good-term-1-destination
+        set member "V4_A"
         set exclude enable
-        set exclude-member "V6_X"
+        set exclude-member "V4_B"
     next
 end
 config firewall policy
@@ -39,10 +31,8 @@ config firewall policy
         set srcintf "port1"
         set dstintf "port2"
         set action accept
-        set srcaddr "V4_A"
-        set dstaddr "all"
-        set srcaddr6 "good-term-1-source"
-        set dstaddr6 "all"
+        set srcaddr "all"
+        set dstaddr "good-term-1-destination"
         set schedule "always"
         set service "ALL"
         set logtraffic disable

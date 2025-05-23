@@ -1,8 +1,4 @@
 config firewall address
-    edit MIXED_P_0
-        set type ipmask
-        set subnet 1.1.1.1 255.255.255.255
-    next
     edit V4_A_0
         set type ipmask
         set subnet 1.1.1.1 255.255.255.255
@@ -11,29 +7,22 @@ config firewall address
         set type ipmask
         set subnet 1.1.1.2 255.255.255.255
     next
+    edit V4_B_0
+        set type ipmask
+        set subnet 1.1.1.2 255.255.255.254
+    next
 end
 config firewall addrgrp
-    edit MIXED_P
-        set member "MIXED_P_0"
-    next
     edit V4_A
         set member "V4_A_0" "V4_A_1"
     next
+    edit V4_B
+        set member "V4_B_0"
+    next
     edit good-term-1-source
-        set member "MIXED_P"
+        set member "V4_A"
         set exclude enable
-        set exclude-member "V4_A"
-    next
-end
-config firewall address6
-    edit MIXED_P_0
-        set type ipprefix
-        set ip6 2001:db8::1/128
-    next
-end
-config firewall addrgrp6
-    edit MIXED_P
-        set member "MIXED_P_0"
+        set exclude-member "V4_B"
     next
 end
 config firewall policy
@@ -44,8 +33,6 @@ config firewall policy
         set action accept
         set srcaddr "good-term-1-source"
         set dstaddr "all"
-        set srcaddr6 "MIXED_P"
-        set dstaddr6 "all"
         set schedule "always"
         set service "ALL"
         set logtraffic disable
