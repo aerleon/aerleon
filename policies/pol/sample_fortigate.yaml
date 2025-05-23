@@ -6,7 +6,7 @@ filters:
         fortigate: port1 port2
     terms:
       - name: accept-to-public-dns
-        source-address:: RFC1918
+        source-address: RFC1918
         destination-address: GOOGLE_PUBLIC_DNS_ANYCAST
         destination-port: DNS
         protocol: udp
