@@ -79,6 +79,34 @@ filters:
       fortigate: port1
   terms:
 """
+LOCAL_POLICY = """
+header {
+  comment:: "this is a test acl"
+  target:: fortigate port1 local-in-policy inet
+}
+"""
+YAML_LOCAL_POLICY = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      fortigate: port1 local-in-policy inet
+  terms:
+"""
+LOCAL_POLICY_V6 = """
+header {
+  comment:: "this is a test acl"
+  target:: fortigate port1 local-in-policy inet6
+}
+"""
+YAML_LOCAL_POLICY_V6 = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      fortigate: port1 local-in-policy inet6
+  terms:
+"""
 GOOD_TERM_1 = """
 term good-term-1 {
   source-address:: FOO GOO
@@ -646,6 +674,18 @@ class FortigateTest(parameterized.TestCase):
         acl = fortigate.Fortigate(pol, EXP_INFO)
         print(acl)
 
+    @capture.stdout
+    def testLocalInPolicy(self):
+        pol = policy.ParsePolicy(LOCAL_POLICY + MIXED_AF_TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
+    @capture.stdout
+    def testLocalInPolicyV6(self):
+        pol = policy.ParsePolicy(LOCAL_POLICY_V6 + MIXED_AF_TERM, self.naming)
+        acl = fortigate.Fortigate(pol, EXP_INFO)
+        print(acl)
+
 
 def _YamlParsePolicy(
     data, definitions=None, optimize=True, base_dir='', shade_check=False, filename=''
@@ -697,6 +737,8 @@ class FortigateYAMLTest(FortigateTest):
             OWNER_COMMENT_TERM=YAML_OWNER_COMMENT_TERM,
             SOURCE_EXCLUDE_TERM=YAML_SOURCE_EXCLUDE_TERM,
             DESTINATION_EXCLUDE_TERM=YAML_DESTINATION_EXCLUDE_TERM,
+            LOCAL_POLICY=YAML_LOCAL_POLICY,
+            LOCAL_POLICY_V6=YAML_LOCAL_POLICY_V6,
         )
         self.fixture_patcher.start()
 

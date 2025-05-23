@@ -1,0 +1,28 @@
+config firewall address6
+    edit MIXED_IP_0
+        set type ipprefix
+        set ip6 2001:db8::2/128
+    next
+end
+config firewall addrgrp6
+    edit MIXED_IP
+        set member "MIXED_IP_0"
+    next
+end
+config firewall service custom
+    edit good-mixed-term
+        set tcp-portrange 53:80
+        set udp-portrange 53:80
+    next
+end
+config firewall local-in-policy6
+    edit 1
+        set name "good-mixed-term"
+        set intf "port1"
+        set action accept
+        set srcaddr "MIXED_IP"
+        set dstaddr "none"
+        set schedule "always"
+        set service "good-mixed-term"
+    next
+end

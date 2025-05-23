@@ -19,7 +19,7 @@ FORTIGATE_LOG_TRAFFIC_START_VALUES = {'log_traffic_start_session'}
 class FortigateDefaultDictionary(defaultdict):
     def __init__(self, object_constructor, key_attribute_name):
         """
-        Initializes the KeyAwareDefaultDict.
+        Initializes the FortigateDefaultDictionary.
 
         Args:
             object_constructor: The class (or function) to call to create a new object.
@@ -142,11 +142,11 @@ class FortigateExcludeGroup(FortigateObjectGroup):
         if not members:
             self._members_cfg_list = [FORTIGATE_ADDRESS_NONE]
         else:
-            self._members_cfg_list = [f'"{m}"' for m in sorted(list(set(members)))]
+            self._members_cfg_list = [f'"{m}"' for m in sorted(set(members))]
         if not exclude:
             self._exclude_cfg_list = [FORTIGATE_ADDRESS_NONE]
         else:
-            self._exclude_cfg_list = [f'"{e}"' for e in sorted(list(set(exclude)))]
+            self._exclude_cfg_list = [f'"{e}"' for e in sorted(set(exclude))]
 
     def __str__(self):
         output = []
@@ -167,7 +167,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
         """
         self.name = name
         self._cached_fortigate_addrs: List[FortinetAddress] = []
-        self._members = set([])
+        self._members = set()
         self._is_dirty = True
 
     def addMember(self, ip: nacaddr.IP) -> None:
@@ -213,6 +213,11 @@ class FortigateAddressGroup(FortigateObjectGroup):
 
 
 class Term(aclgenerator.Term):
+    SADDR_V4 = 'srcaddr'
+    DADDR_V4 = 'dstaddr'
+    SADDR_V6 = 'srcaddr6'
+    DADDR_V6 = 'dstaddr6'
+
     def __init__(
         self,
         term: policy.Term,
@@ -302,7 +307,7 @@ class Term(aclgenerator.Term):
         exclude_tokens_v4 = [i.token for i in excludes if i.version == 4]
         exclude_tokens_v6 = [i.token for i in excludes if i.version == 6]
 
-        # Default members to "all" if addrs is empty but excludes exist
+        # Default members to "none" if addrs is empty but excludes exist
         effective_members_v4 = member_tokens_v4 if member_tokens_v4 else [FORTIGATE_ADDRESS_NONE]
         effective_members_v6 = member_tokens_v6 if member_tokens_v6 else [FORTIGATE_ADDRESS_NONE]
 
@@ -333,12 +338,28 @@ class Term(aclgenerator.Term):
             else:
                 raise ValueError(f"Unsupported address version: {addr.version}")
 
+    def _SetStrLogging(self, output):
+        if self.term.logging:
+            if self.logtraffic == 'log_traffic_mode_all':
+                output.append(f'        set logtraffic all')
+            elif self.logtraffic == 'log_traffic_mode_disable':
+                output.append(f'        set logtraffic disable')
+            if self.logtraffic_start == 'log_traffic_start_session':
+                output.append(f'        set logtraffic-start enable')
+        else:
+            output.append(f'        set logtraffic disable')
+        return output
+
+    def _SetStrInterfaces(self, output):
+        output.append(f'        set srcintf "{self.source_interface}"')
+        output.append(f'        set dstintf "{self.destination_interface}"')
+        return output
+
     def __str__(self):
         """Return string representation of Fortigate term."""
         output = []
         output.append(f'        set name "{self.term.name}"')
-        output.append(f'        set srcintf "{self.source_interface}"')
-        output.append(f'        set dstintf "{self.destination_interface}"')
+        output = self._SetStrInterfaces(output)
         if self.term.action[0] != 'deny':
             output.append(f'        set action {self.term.action[0]}')
         # Collecting all tokens into bins of src/dst and IP version.
@@ -461,8 +482,8 @@ class Term(aclgenerator.Term):
             else:
                 dst_v4_to_set = f'"{dst_v4_effective_val}"'
 
-            output.append(f'        set srcaddr {src_v4_to_set}')
-            output.append(f'        set dstaddr {dst_v4_to_set}')
+            output.append(f'        set {self.SADDR_V4} {src_v4_to_set}')
+            output.append(f'        set {self.DADDR_V4} {dst_v4_to_set}')
 
         # Generate IPv6 address groups
         if generate_ipv6_policy:
@@ -488,8 +509,8 @@ class Term(aclgenerator.Term):
             else:
                 dst_v6_to_set = f'"{dst_v6_effective_val}"'
 
-            output.append(f'        set srcaddr6 {src_v6_to_set}')
-            output.append(f'        set dstaddr6 {dst_v6_to_set}')
+            output.append(f'        set {self.SADDR_V6} {src_v6_to_set}')
+            output.append(f'        set {self.DADDR_V6} {dst_v6_to_set}')
         output.append(f'        set schedule {FORTIGATE_SCHEDULE_ALWAYS}')
         services = [f'"{service.name}"' for service in self.services]
         if not services:
@@ -497,15 +518,7 @@ class Term(aclgenerator.Term):
         output.append(f'        set service {"".join(services)}')
 
         # Multiple logging types are available, check if logging is true and then print relevant log statements.
-        if self.term.logging:
-            if self.logtraffic == 'log_traffic_mode_all':
-                output.append(f'        set logtraffic all')
-            elif self.logtraffic == 'log_traffic_mode_disable':
-                output.append(f'        set logtraffic disable')
-            if self.logtraffic_start == 'log_traffic_start_session':
-                output.append(f'        set logtraffic-start enable')
-        else:
-            output.append(f'        set logtraffic disable')
+        output = self._SetStrLogging(output)
         # Comments have a limited length. Add Owner to the comment and then join the term comment.
         # If the comment is too long warn the user and truncate.
         comment = []
@@ -524,6 +537,21 @@ class Term(aclgenerator.Term):
         return '\n'.join(output)
 
 
+class LocalInTerm(Term):
+    SADDR_V4 = 'srcaddr'
+    DADDR_V4 = 'dstaddr'
+    SADDR_V6 = 'srcaddr'
+    DADDR_V6 = 'dstaddr'
+
+    def _SetStrLogging(self, output):
+        # No logging for Local in terms.
+        return output
+
+    def _SetStrInterfaces(self, output):
+        output.append(f'        set intf "{self.source_interface}"')
+        return output
+
+
 class Fortigate(aclgenerator.ACLGenerator):
     """Fortigate ACL generator."""
 
@@ -539,6 +567,8 @@ class Fortigate(aclgenerator.ACLGenerator):
         """
         self.services = []
         self.terms = []
+        self.local_in_terms_v4 = []
+        self.local_in_terms_v6 = []
         self.term_names = set()
         self.address_groups = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
         self.address_groups_v6 = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
@@ -572,13 +602,24 @@ class Fortigate(aclgenerator.ACLGenerator):
                 raise ValueError(
                     f"Only one address family is supported (inet, inet6, mixed) but found: {', '.join(af)}"
                 )
-            if not af:
-                af = 'mixed'
-            else:
+            if destination_interface == "local-in-policy":
+                if not af:
+                    raise ValueError(
+                        "Address family must be specified as 'inet' or 'inet6' for local-in-policy."
+                    )
                 af = next(iter(af))
+                if af not in ('inet', 'inet6'):
+                    raise ValueError("Only 'inet' or 'inet6' are supported for local-in-policy.")
+
+            else:
+                if not af:
+                    af = 'mixed'
+                else:
+                    af = next(iter(af))
+            TermClass = LocalInTerm if destination_interface == "local-in-policy" else Term
 
             for term in terms:
-                fortigate_term = Term(
+                fortigate_term = TermClass(
                     term,
                     source_interface,
                     destination_interface,
@@ -587,11 +628,30 @@ class Fortigate(aclgenerator.ACLGenerator):
                     af,
                 )
                 self.services.extend(fortigate_term.services)
-                if term.name in self.term_names:
-                    raise ValueError(f"Duplicate term name '{term.name}'")
                 self.term_names.add(term.name)
-                self.terms.append(fortigate_term)
-        pass
+                if destination_interface == "local-in-policy":
+                    if af == "inet":
+                        self.local_in_terms_v4.append(fortigate_term)
+                    elif af == "inet6":
+                        self.local_in_terms_v6.append(fortigate_term)
+                    else:
+                        raise ValueError(
+                            "local-in-policy must specify 'inet' or 'inet6' as address family."
+                        )
+                else:
+                    self.terms.append(fortigate_term)
+        self._validate_no_duplicate_terms(self.terms)
+        self._validate_no_duplicate_terms(self.local_in_terms_v4)
+        self._validate_no_duplicate_terms(self.local_in_terms_v6)
+
+    def _validate_no_duplicate_terms(self, term_list):
+        seen = set()
+        for term in term_list:
+            if term.term.name in seen:
+                raise ValueError(
+                    f"Duplicate term name '{term.term.name}' found in the same term list."
+                )
+            seen.add(term.term.name)
 
     def __str__(self) -> str:
         """Return string representation of Fortigate ACL."""
@@ -603,6 +663,7 @@ class Fortigate(aclgenerator.ACLGenerator):
             output.append('config firewall address')
             for group_name in sorted(self.address_groups):
                 group = self.address_groups[group_name]
+                # Don't process excludes in addresses
                 if isinstance(group, FortigateAddressGroup):
                     for addr in sorted(self.address_groups[group_name].fortigate_addrs):
                         output.append(str(addr))
@@ -619,6 +680,7 @@ class Fortigate(aclgenerator.ACLGenerator):
             output.append('config firewall address6')
             for group_name in sorted(self.address_groups_v6):
                 group = self.address_groups_v6[group_name]
+                # Don't process excludes in addresses
                 if isinstance(group, FortigateAddressGroup):
                     for addr in sorted(self.address_groups_v6[group_name].fortigate_addrs):
                         output.append(str(addr))
@@ -637,14 +699,33 @@ class Fortigate(aclgenerator.ACLGenerator):
             output.append('end')
 
         # Firewall Policies
-        output.append(f'config firewall policy')
-        counter = 1
-        for term in self.terms:
-            output.append(f'    edit {counter}')
-            output.append(str(term))
-            counter += 1
-            output.append('    next')
-        output.append('end')
+        if self.terms:
+            output.append(f'config firewall policy')
+            counter = 1
+            for term in self.terms:
+                output.append(f'    edit {counter}')
+                output.append(str(term))
+                counter += 1
+                output.append('    next')
+            output.append('end')
+        if self.local_in_terms_v4:
+            output.append(f'config firewall local-in-policy')
+            counter = 1
+            for term in self.local_in_terms_v4:
+                output.append(f'    edit {counter}')
+                output.append(str(term))
+                counter += 1
+                output.append('    next')
+            output.append('end')
+        if self.local_in_terms_v6:
+            output.append(f'config firewall local-in-policy6')
+            counter = 1
+            for term in self.local_in_terms_v6:
+                output.append(f'    edit {counter}')
+                output.append(str(term))
+                counter += 1
+                output.append('    next')
+            output.append('end')
         return '\n'.join(output)
 
 
