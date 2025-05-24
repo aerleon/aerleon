@@ -79,13 +79,9 @@ class FortigateIPService(FortigateObjectGroup):
         self.udp_port_range = None
         for proto in protocols:
             if proto == 'tcp':
-                self.tcp_port_range = generate_fortinet_service_string(
-                    source_port, destination_port
-                )
+                self.tcp_port_range = GenerateFortinetServiceString(source_port, destination_port)
             elif proto == 'udp':
-                self.udp_port_range = generate_fortinet_service_string(
-                    source_port, destination_port
-                )
+                self.udp_port_range = GenerateFortinetServiceString(source_port, destination_port)
             elif proto == 'icmp':
                 # ICMP is supported in FortigateIcmpService
                 pass
@@ -170,7 +166,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
         self._members = set()
         self._is_dirty = True
 
-    def addMember(self, ip: nacaddr.IP) -> None:
+    def AddMember(self, ip: nacaddr.IP) -> None:
         """Add an IP address to the group."""
         if ip not in self._members:
             self._members.add(ip)
@@ -330,11 +326,11 @@ class Term(aclgenerator.Term):
             if addr.version == 4:
                 if self.address_family == 'inet6':
                     continue
-                self.address_groups[addr.token].addMember(addr)
+                self.address_groups[addr.token].AddMember(addr)
             elif addr.version == 6:
                 if self.address_family == 'inet':
                     continue
-                self.address_groups_v6[addr.token].addMember(addr)
+                self.address_groups_v6[addr.token].AddMember(addr)
             else:
                 raise ValueError(f"Unsupported address version: {addr.version}")
 
@@ -640,11 +636,11 @@ class Fortigate(aclgenerator.ACLGenerator):
                         )
                 else:
                     self.terms.append(fortigate_term)
-        self._validate_no_duplicate_terms(self.terms)
-        self._validate_no_duplicate_terms(self.local_in_terms_v4)
-        self._validate_no_duplicate_terms(self.local_in_terms_v6)
+        self._ValidateNoDuplicateTerms(self.terms)
+        self._ValidateNoDuplicateTerms(self.local_in_terms_v4)
+        self._ValidateNoDuplicateTerms(self.local_in_terms_v6)
 
-    def _validate_no_duplicate_terms(self, term_list):
+    def _ValidateNoDuplicateTerms(self, term_list):
         seen = set()
         for term in term_list:
             if term.term.name in seen:
@@ -652,6 +648,18 @@ class Fortigate(aclgenerator.ACLGenerator):
                     f"Duplicate term name '{term.term.name}' found in the same term list."
                 )
             seen.add(term.term.name)
+
+    def _RenderPolicySection(self, output, section_name, terms):
+        if terms:
+            output.append(f'config firewall {section_name}')
+            counter = 1
+            for term in terms:
+                output.append(f'    edit {counter}')
+                output.append(str(term))
+                counter += 1
+                output.append('    next')
+            output.append('end')
+        return output
 
     def __str__(self) -> str:
         """Return string representation of Fortigate ACL."""
@@ -699,37 +707,14 @@ class Fortigate(aclgenerator.ACLGenerator):
             output.append('end')
 
         # Firewall Policies
-        if self.terms:
-            output.append(f'config firewall policy')
-            counter = 1
-            for term in self.terms:
-                output.append(f'    edit {counter}')
-                output.append(str(term))
-                counter += 1
-                output.append('    next')
-            output.append('end')
-        if self.local_in_terms_v4:
-            output.append(f'config firewall local-in-policy')
-            counter = 1
-            for term in self.local_in_terms_v4:
-                output.append(f'    edit {counter}')
-                output.append(str(term))
-                counter += 1
-                output.append('    next')
-            output.append('end')
-        if self.local_in_terms_v6:
-            output.append(f'config firewall local-in-policy6')
-            counter = 1
-            for term in self.local_in_terms_v6:
-                output.append(f'    edit {counter}')
-                output.append(str(term))
-                counter += 1
-                output.append('    next')
-            output.append('end')
+
+        output = self._RenderPolicySection(output, 'policy', self.terms)
+        output = self._RenderPolicySection(output, 'local-in-policy', self.local_in_terms_v4)
+        output = self._RenderPolicySection(output, 'local-in-policy6', self.local_in_terms_v6)
         return '\n'.join(output)
 
 
-def format_fortinet_port_range(low: int, high: int) -> str:
+def FormatFortinetPortRange(low: int, high: int) -> str:
     """Formats a single port range according to Fortinet syntax."""
     if not (1 <= low <= 65535 and 1 <= high <= 65535):
         raise ValueError(f"Ports must be between 1 and 65535. Got: low={low}, high={high}")
@@ -741,7 +726,7 @@ def format_fortinet_port_range(low: int, high: int) -> str:
         return f"{low}-{high}"
 
 
-def generate_fortinet_service_string(
+def GenerateFortinetServiceString(
     source_ranges: List[Tuple[int, int]], destination_ranges: List[Tuple[int, int]]
 ) -> str:
     """
@@ -760,7 +745,7 @@ def generate_fortinet_service_string(
     output_parts = []
 
     for dst_low, dst_high in destination_ranges:
-        dest_str = format_fortinet_port_range(dst_low, dst_high)
+        dest_str = FormatFortinetPortRange(dst_low, dst_high)
         if not source_ranges:
             # If no source ranges are specified, only list destination ranges
             # (Fortinet defaults source to 1-65535)
@@ -768,7 +753,7 @@ def generate_fortinet_service_string(
         else:
             # If source ranges ARE specified, combine each dest with each source
             for src_low, src_high in source_ranges:
-                src_str = format_fortinet_port_range(src_low, src_high)
+                src_str = FormatFortinetPortRange(src_low, src_high)
                 output_parts.append(f"{dest_str}:{src_str}")
 
     return " ".join(output_parts)

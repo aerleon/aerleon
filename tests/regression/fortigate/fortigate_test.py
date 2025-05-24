@@ -392,7 +392,7 @@ class FortigateObjectGroupTest(parameterized.TestCase):
         ([], [(100, 100)], "100"),
     )
     def testGenerateServiceString(self, src, dst, expected):
-        self.assertEqual(expected, fortigate.generate_fortinet_service_string(src, dst))
+        self.assertEqual(expected, fortigate.GenerateFortinetServiceString(src, dst))
 
 
 class FortigateTest(parameterized.TestCase):
