@@ -1,0 +1,48 @@
+config firewall address6
+    edit V6_X_0
+        set type ipprefix
+        set ip6 2001:db8::1/128
+    next
+    edit V6_X_1
+        set type ipprefix
+        set ip6 2001:db8::2/128
+    next
+    edit V6_Z_0
+        set type ipprefix
+        set ip6 2001:db8::1/128
+    next
+    edit V6_Z_1
+        set type ipprefix
+        set ip6 2001:db8::2/127
+    next
+    edit V6_Z_2
+        set type ipprefix
+        set ip6 2001:db8::4/128
+    next
+end
+config firewall addrgrp6
+    edit V6_X
+        set member "V6_X_0" "V6_X_1"
+    next
+    edit V6_Z
+        set member "V6_Z_0" "V6_Z_1" "V6_Z_2"
+    next
+    edit good-term-1-source
+        set member "V6_X"
+        set exclude enable
+        set exclude-member "V6_Z"
+    next
+end
+config firewall policy
+    edit 1
+        set name "good-term-1"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr6 "good-term-1-source"
+        set dstaddr6 "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic disable
+    next
+end

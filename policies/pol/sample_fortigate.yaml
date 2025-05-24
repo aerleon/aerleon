@@ -1,0 +1,26 @@
+filters:
+  - header:
+      comment: |
+        This is a sample fortigate yaml file that 
+      targets:
+        fortigate: port1 port2
+    terms:
+      - name: accept-to-public-dns
+        source-address: RFC1918
+        destination-address: GOOGLE_PUBLIC_DNS_ANYCAST
+        destination-port: DNS
+        protocol: udp
+        action: accept
+      - name: deny-to-internal
+        comment: "Deny access to rfc1918/internal."
+        destination-address: INTERNAL
+        action: deny
+      - name: deny-to-specific_hosts
+        comment: "Deny access to specified public."
+        destination-address: WEB_SERVERS MAIL_SERVERS
+        logging: true
+        option: log_traffic_mode_all log_traffic_start_session
+        action: deny
+      - name: default-permit
+        comment: "Allow what's left."
+        action: accept

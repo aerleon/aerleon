@@ -1,0 +1,40 @@
+config firewall address
+    edit V4_A_0
+        set type ipmask
+        set subnet 1.1.1.1 255.255.255.255
+    next
+    edit V4_A_1
+        set type ipmask
+        set subnet 1.1.1.2 255.255.255.255
+    next
+    edit V4_B_0
+        set type ipmask
+        set subnet 1.1.1.2 255.255.255.254
+    next
+end
+config firewall addrgrp
+    edit V4_A
+        set member "V4_A_0" "V4_A_1"
+    next
+    edit V4_B
+        set member "V4_B_0"
+    next
+    edit good-term-1-destination
+        set member "V4_A"
+        set exclude enable
+        set exclude-member "V4_B"
+    next
+end
+config firewall policy
+    edit 1
+        set name "good-term-1"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "good-term-1-destination"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic disable
+    next
+end

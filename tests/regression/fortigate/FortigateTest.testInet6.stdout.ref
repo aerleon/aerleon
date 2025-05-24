@@ -1,0 +1,37 @@
+config firewall address6
+    edit BAR6_0
+        set type ipprefix
+        set ip6 2001:db8::2/128
+    next
+    edit FOO6_0
+        set type ipprefix
+        set ip6 2001:db8::1/128
+    next
+end
+config firewall addrgrp6
+    edit BAR6
+        set member "BAR6_0"
+    next
+    edit FOO6
+        set member "FOO6_0"
+    next
+end
+config firewall service custom
+    edit good-v6-term
+        set tcp-portrange 53:80
+        set udp-portrange 53:80
+    next
+end
+config firewall policy
+    edit 1
+        set name "good-v6-term"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr6 "FOO6"
+        set dstaddr6 "BAR6"
+        set schedule "always"
+        set service "good-v6-term"
+        set logtraffic disable
+    next
+end
