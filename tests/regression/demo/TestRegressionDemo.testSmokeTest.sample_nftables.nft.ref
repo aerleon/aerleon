@@ -15,7 +15,7 @@ table inet filtering_policies {
         ip saddr { 200.1.1.1/32, 200.1.1.2/32 } ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 53 tcp dport 53 ct state new accept
     }
     chain ssh-deny {
-        ip protocol tcp drop
+        tcp dport { 22, 53 } drop
         tcp dport { 22, 53 } drop
     }
     chain source-address-term {
@@ -73,11 +73,11 @@ table ip filtering_policies {
     }
     chain test-port-snmp {
         comment "Test SNMP port 161 UDP - No addresses"
-        ip protocol udp ct state new accept
+        udp dport 161 ct state new accept
     }
     chain test-src-rdp {
         comment "Test source port RDP 3389/tcp - No addresses"
-        ip protocol tcp ct state new log prefix "test-src-rdp" counter accept
+        tcp sport 3389 ct state new log prefix "test-src-rdp" counter accept
     }
     chain test-combined-port {
         comment "Test src/dest 80 - No addresses"
@@ -85,7 +85,8 @@ table ip filtering_policies {
     }
     chain high-ports {
         comment "Test tcp + udp high ports - No addresses"
-        ip protocol { tcp, udp } ct state new accept
+        tcp dport 1024-65535 ct state new accept
+        udp dport 1024-65535 ct state new accept
     }
     chain root6 {
         comment "This policy expected to test every combination of REQUIRED keywords."
