@@ -6,6 +6,25 @@ from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
 from aerleon.lib.policy import PROTOS_WITH_PORTS, Policy
 
+### constants ###
+LOG_LEVELS_MAP_OPTIONS = {
+    'log_nolog': 'nolog',
+    'log_emergency': 'emerg',
+    'log_alert': 'alert',
+    'log_critical': 'crit',
+    'log_error': 'err',
+    'log_warning': 'warning',
+    'log_notice': 'notice',
+    'log_info': 'info',
+    'log_debug': 'debug',
+}
+
+ACTIONS_MAP = {
+    'accept': 'ACCEPT',
+    'deny': 'DROP',
+    'reject': 'REJECT',
+}
+
 
 ### error classes ###
 class Error(aclgenerator.Error):
@@ -323,23 +342,6 @@ class Term(aclgenerator.Term):
     constraints should be handled by the client class)
     """
 
-    GOOD_DIRECTIONS = ['IN', 'OUT', 'FORWARD']
-    ACTIONS_MAP = {
-        'accept': 'ACCEPT',
-        'deny': 'DROP',
-        'reject': 'REJECT',
-    }
-    LOG_LEVELS_MAP_OPTIONS = {
-        'log_nolog': 'nolog',
-        'log_emergency': 'emerg',
-        'log_alert': 'alert',
-        'log_critical': 'crit',
-        'log_error': 'err',
-        'log_warning': 'warning',
-        'log_notice': 'notice',
-        'log_info': 'info',
-        'log_debug': 'debug',
-    }
     _LOG_LEVELS_MAP = LOG_LEVELS_MAP_OPTIONS | {
         'true': 'warning',
         'disable': 'nolog',
@@ -407,7 +409,7 @@ class Term(aclgenerator.Term):
                             self._Format(
                                 protocol,
                                 self.direction,
-                                self.ACTIONS_MAP[self.term.action[0]],
+                                ACTIONS_MAP[self.term.action[0]],
                                 source,
                                 dest,
                                 icmp_code,
@@ -497,9 +499,9 @@ class Proxmox(aclgenerator.ACLGenerator):
     # aerleon class props
     _PLATFORM = 'proxmox'
     SUFFIX = '.prxmxfw'
-    _TERM = Term
-    _LOG_LEVELS = list(_TERM.LOG_LEVELS_MAP_OPTIONS.values())
+    _LOG_LEVELS = list(LOG_LEVELS_MAP_OPTIONS.values())
     # own class props
+    _GOOD_DIRECTIONS = ['IN', 'OUT', 'FORWARD']
     _NF_CONNTRACK_HELPERS = [
         "amanda",
         "ftp",
@@ -513,17 +515,17 @@ class Proxmox(aclgenerator.ACLGenerator):
     ]
     _BY_ZONE = {
         "cluster": {
-            "supported_directions": _TERM.GOOD_DIRECTIONS,
+            "supported_directions": _GOOD_DIRECTIONS,
             "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 BooleanKeywordOption('ebtables', config),
-                ValueOption(config, policy_forward=list(Proxmox._TERM.ACTIONS_MAP.values())),
-                ValueOption(config, policy_in=list(Proxmox._TERM.ACTIONS_MAP.values())),
-                ValueOption(config, policy_out=list(Proxmox._TERM.ACTIONS_MAP.values())),
+                ValueOption(config, policy_forward=list(ACTIONS_MAP.values())),
+                ValueOption(config, policy_in=list(ACTIONS_MAP.values())),
+                ValueOption(config, policy_out=list(ACTIONS_MAP.values())),
             ],
         },
         "host": {
-            "supported_directions": _TERM.GOOD_DIRECTIONS,
+            "supported_directions": _GOOD_DIRECTIONS,
             "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 ValueOption(config, log_level_forward=Proxmox._LOG_LEVELS),
@@ -556,8 +558,8 @@ class Proxmox(aclgenerator.ACLGenerator):
                 ValueOption(config, log_level_out=Proxmox._LOG_LEVELS),
                 BooleanKeywordOption('macfilter', config),
                 BooleanKeywordOption('ndp', config),
-                ValueOption(config, policy_in=list(Proxmox._TERM.ACTIONS_MAP.values())),
-                ValueOption(config, policy_out=list(Proxmox._TERM.ACTIONS_MAP.values())),
+                ValueOption(config, policy_in=list(ACTIONS_MAP.values())),
+                ValueOption(config, policy_out=list(ACTIONS_MAP.values())),
                 BooleanKeywordOption('radv', config),
             ],
         },
@@ -566,7 +568,7 @@ class Proxmox(aclgenerator.ACLGenerator):
             "supported_options": lambda config: [
                 BooleanKeywordOption('enable', config),
                 ValueOption(config, log_level_forward=Proxmox._LOG_LEVELS),
-                ValueOption(config, policy_forward=list(Proxmox._TERM.ACTIONS_MAP.values())),
+                ValueOption(config, policy_forward=list(ACTIONS_MAP.values())),
             ],
         },
     }
@@ -584,7 +586,7 @@ class Proxmox(aclgenerator.ACLGenerator):
             # proxmox firewall supports icmp type + icmp code
             'icmp_code',
         }
-        supported_sub_tokens.update({'option': set(self._TERM.LOG_LEVELS_MAP_OPTIONS.keys())})
+        supported_sub_tokens.update({'option': set(LOG_LEVELS_MAP_OPTIONS.keys())})
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
