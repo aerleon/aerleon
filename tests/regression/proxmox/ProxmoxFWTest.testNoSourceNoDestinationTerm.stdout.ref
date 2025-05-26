@@ -1,0 +1,8 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN DROP -proto l2tp # term with no source/destination addr
+IN DROP -proto ipencap # term with no source/destination addr
+IN DROP -proto gre # term with no source/destination addr
+IN DROP -proto esp # term with no source/destination addr
+
