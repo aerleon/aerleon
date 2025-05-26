@@ -1,0 +1,11 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN DROP -proto tcp -sport 666,1926,26000 -log warning
+IN DROP -proto udp -sport 666,1926,26000 -log warning
+
+[OPTIONS]
+enable: 1
+[RULES]
+IN DROP -proto tcp -dport 8000-8800 -log warning
+
