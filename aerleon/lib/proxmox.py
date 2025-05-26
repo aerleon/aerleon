@@ -192,6 +192,7 @@ class MultiValueOption(ValueOption):
         if self.getKey() not in self.config_ref.keys():
             self.config_ref[self.getKey()] = []
         self.config_ref[self.getKey()].append(token)
+        self.config_ref[self.getKey()].sort()
 
 
 class NumberValueOption(AbstractValueOption):
