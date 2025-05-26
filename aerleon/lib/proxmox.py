@@ -87,7 +87,7 @@ class AbstractOption(metaclass=ABCMeta):
         self.config_ref = config
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.getKey())
+        return f"{self.__class__.__name__}({self.getKey()})"
 
     @abstractmethod
     def ingest(self, token: str) -> bool:
@@ -199,7 +199,7 @@ class ProxmoxPort:
         if port[0] == port[1]:
             return str(port[0])
         else:
-            return '%d-%d' % port
+            return f"{port[0]}-{port[1]}"
 
     def __init__(self, port: Union[Tuple[int, int], int]):
         self.str_representation = ''
@@ -445,33 +445,31 @@ class Term(aclgenerator.Term):
         options = [direction, action]
 
         if protocol:
-            options.append("-proto %s" % self.PROXMOX_PROTO_MAP.get(protocol, protocol))
+            options.append(f"-proto {self.PROXMOX_PROTO_MAP.get(protocol, protocol)}")
 
         # proxmox firewall supports multiple sources/destinations per rule
         if source_interface:
-            options.append("-iface %s" % source_interface)
+            options.append(f"-iface {source_interface}")
 
         # we cannot use address tokens since IPsets are defined in separate files (at cluster
         # or at host level) and we're only outputting one file at a time, which may not be
         # cluster/host firewall configuration.
         if destination_addresses:
-            options.append("-dest %s" % ','.join(map(to_network_addr, destination_addresses)))
+            options.append(f"-dest {','.join(map(to_network_addr, destination_addresses))}")
 
         if source_addresses:
-            options.append("-source %s" % ','.join(map(to_network_addr, source_addresses)))
+            options.append(f"-source {','.join(map(to_network_addr, source_addresses))}")
 
         if source_ports and protocol in PROTOS_WITH_PORTS:
-            options.append(
-                "-sport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), source_ports))
-            )
+            options.append(f"-sport {','.join(map(lambda p: str(ProxmoxPort(p)), source_ports))}")
 
         if destination_ports and protocol in PROTOS_WITH_PORTS:
             options.append(
-                "-dport %s" % ','.join(map(lambda p: str(ProxmoxPort(p)), destination_ports))
+                f"-dport {','.join(map(lambda p: str(ProxmoxPort(p)), destination_ports))}"
             )
 
         if protocol in ProxmoxIcmp.ICMP_PROTOS:
-            options.append('-icmp-type %s' % str(ProxmoxIcmp(protocol, icmp_type, icmp_code)))
+            options.append(f"-icmp-type {ProxmoxIcmp(protocol, icmp_type, icmp_code)}")
 
         if logging:
             logging_key = 'true'
@@ -482,10 +480,10 @@ class Term(aclgenerator.Term):
                 )
             )
             log = log_option or logging_key
-            options.append('-log %s' % self._LOG_LEVELS_MAP[log])
+            options.append(f"-log {self._LOG_LEVELS_MAP[log]}")
 
         if comment:
-            options.append("# %s" % ' '.join(comment))
+            options.append(f"# {' '.join(comment)}")
 
         return ' '.join(options)
 
@@ -622,11 +620,11 @@ class Proxmox(aclgenerator.ACLGenerator):
                 for o in available_zone_options:
                     ingested_options.append(o.ingest(t))
                 if not any(ingested_options):
-                    raise UnsupportedFilterOptionError("incorrect filter option directive %s" % t)
+                    raise UnsupportedFilterOptionError(f"incorrect filter option directive {t}")
             incomplete_options = list(filter(lambda o: not o.complete(), available_zone_options))
             if incomplete_options:
                 raise UnsupportedFilterOptionError(
-                    "missing or incorrect value for filter option(s) %s", incomplete_options
+                    f"missing or incorrect value for filter option(s) {incomplete_options}"
                 )
             global_policy_config += filter_config  # merge, will stay set to the same ref
             new_terms = []
