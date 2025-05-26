@@ -55,7 +55,7 @@ class ProxmoxConfigDataClass:
 
     @staticmethod
     def _merge_list(list_a: list, list_b: list) -> list:
-        return list(set(list_a + list_b))
+        return sorted(list(set(list_a + list_b)))
 
     def merge(self, other):
         self_keys = list(self.keys())
@@ -472,20 +472,23 @@ class Term(aclgenerator.Term):
             options.append(f"-icmp-type {ProxmoxIcmp(protocol, icmp_type, icmp_code)}")
 
         if logging:
-            logging_key = 'true'
-            log_option = next(
-                map(
-                    lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
-                    term_options or [None],
-                )
-            )
-            log = log_option or logging_key
+            log = self._GetLoggingLevel(term_options)
             options.append(f"-log {self._LOG_LEVELS_MAP[log]}")
 
         if comment:
             options.append(f"# {' '.join(comment)}")
 
         return ' '.join(options)
+
+    def _GetLoggingLevel(self, term_options) -> str:
+        logging_key = 'true'
+        log_option = next(
+            map(
+                lambda o: o if o in self._LOG_LEVELS_MAP.keys() else None,
+                term_options or [None],
+            )
+        )
+        return log_option or logging_key
 
 
 class Proxmox(aclgenerator.ACLGenerator):
