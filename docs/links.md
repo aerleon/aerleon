@@ -3,7 +3,7 @@
 Please open a PR to add external references to Aerleon or Capirca!
 ## Slack Channels
 
-- [Aerleon Official Slack Channel](https://join.slack.com/t/aerleon/shared_invite/zt-1ngckm6oj-cK7yj63A~JgqjixEui2Vhw)
+- [Aerleon Official Slack Channel](https://join.slack.com/t/aerleon/shared_invite/zt-36bhtgnol-lgqyOS_WR0~ecPgLozXz9Q)
 - [Aerleon Slack at Network to Code](https://networktocode.slack.com/)
 
 ## External References
