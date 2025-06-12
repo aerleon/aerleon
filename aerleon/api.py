@@ -193,12 +193,11 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 
 """
 import copy
+import logging
 import multiprocessing
 import pathlib
 import sys
 import typing
-
-from absl import logging
 
 from aerleon.aclgen import (
     ACLGeneratorError,

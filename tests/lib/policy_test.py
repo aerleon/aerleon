@@ -15,9 +15,9 @@
 
 """Unit tests for policy.py library."""
 
+import logging
 from unittest import mock
 
-from absl import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, policy
@@ -654,11 +654,11 @@ class PolicyTest(parameterized.TestCase):
 
     def testBadPol(self):
         pol = HEADER + BAD_TERM_1
-        self.assertRaises(policy.ParseError, policy.ParsePolicy, pol, self.naming)
+        self.assertRaises(SyntaxError, policy.ParsePolicy, pol, self.naming)
 
     def testMissingHeader(self):
         pol = GOOD_TERM_1 + GOOD_TERM_2
-        self.assertRaises(policy.ParseError, policy.ParsePolicy, pol, self.naming)
+        self.assertRaises(SyntaxError, policy.ParsePolicy, pol, self.naming)
 
     def testService(self):
         pol = HEADER + GOOD_TERM_1 + GOOD_TERM_3
@@ -677,7 +677,7 @@ class PolicyTest(parameterized.TestCase):
 
     def testInvalidKeyword(self):
         pol = HEADER + BAD_TERM_2
-        self.assertRaises(policy.ParseError, policy.ParsePolicy, pol, self.naming)
+        self.assertRaises(SyntaxError, policy.ParsePolicy, pol, self.naming)
 
     def testNumericProtocol(self):
         pol = HEADER + GOOD_TERM_4
@@ -1021,7 +1021,7 @@ class PolicyTest(parameterized.TestCase):
     def testErrorLineNumber(self):
         pol = HEADER + GOOD_TERM_13 + BAD_TERM_8
         self.assertRaisesRegex(
-            policy.ParseError,
+            SyntaxError,
             r'ERROR on "akshun" \(type STRING, line 1',
             policy.ParsePolicy,
             pol,
