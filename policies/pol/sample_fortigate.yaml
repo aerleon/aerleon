@@ -3,7 +3,7 @@ filters:
       comment: |
         This is a sample fortigate yaml file that 
       targets:
-        fortigate: port1 port2
+        fortigate: from-zone port1 to-zone port2
     terms:
       - name: accept-to-public-dns
         source-address: RFC1918

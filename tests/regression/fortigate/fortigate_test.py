@@ -11,7 +11,7 @@ from tests.regression_utils import capture
 GOOD_HEADER_1 = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 port2
+  target:: fortigate from-zone port1 to-zone port2
 }
 """
 YAML_GOOD_HEADER_1 = """
@@ -19,14 +19,14 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 port2
+      fortigate: from-zone port1 to-zone port2
   terms:
 """
 
 INET_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 port2 inet
+  target:: fortigate from-zone port1 to-zone port2 inet
   }
 """
 YAML_INET_HEADER = """
@@ -34,13 +34,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 port2 inet
+      fortigate: from-zone port1 to-zone port2 inet
   terms:
 """
 INET6_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 port2 inet6
+  target:: fortigate from-zone port1 to-zone port2 inet6
   }
 """
 YAML_INET6_HEADER = """
@@ -48,13 +48,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 port2 inet6
+      fortigate: from-zone port1 to-zone port2 inet6
   terms:
 """
 MIXED_HEADER = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 port2 mixed
+  target:: fortigate from-zone port1 to-zone port2 mixed
   }
 """
 YAML_MIXED_HEADER = """
@@ -62,13 +62,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 port2 mixed
+      fortigate: from-zone port1 to-zone port2 mixed
   terms:
 """
 HEADER_BAD_NUMBER_OF_INTERFACES = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1
+  target:: fortigate from-zone port1
   }
 """
 YAML_HEADER_BAD_NUMBER_OF_INTERFACES = """
@@ -76,13 +76,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1
+      fortigate: from-zone port1
   terms:
 """
 LOCAL_POLICY = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 local-in-policy inet
+  target:: fortigate from-zone port1 to-zone local-in-policy inet
 }
 """
 YAML_LOCAL_POLICY = """
@@ -90,13 +90,13 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 local-in-policy inet
+      fortigate: from-zone port1 to-zone local-in-policy inet
   terms:
 """
 LOCAL_POLICY_V6 = """
 header {
   comment:: "this is a test acl"
-  target:: fortigate port1 local-in-policy inet6
+  target:: fortigate from-zone port1 to-zone local-in-policy inet6
 }
 """
 YAML_LOCAL_POLICY_V6 = """
@@ -104,7 +104,7 @@ filters:
 - header:
     comment: this is a test acl
     targets:
-      fortigate: port1 local-in-policy inet6
+      fortigate: from-zone port1 to-zone local-in-policy inet6
   terms:
 """
 GOOD_TERM_1 = """
@@ -577,7 +577,7 @@ class FortigateTest(parameterized.TestCase):
     def testBadAddressFamilyCombos(self, address_family_one: str, address_family_two: str):
         HEADER = f"""\
         header {{
-            target:: fortigate test-filter port1 port2 {address_family_one} {address_family_two}
+            target:: fortigate from-zone port1 to-zone port2 {address_family_one} {address_family_two}
         }}
         """
         pol = policy.ParsePolicy(HEADER + GOOD_TERM_1, self.naming)
@@ -768,7 +768,7 @@ class FortigateYAMLTest(FortigateTest):
                   - header:
                       comment: sample arista traffic policy
                       targets:
-                        fortigate: test-filter port1 port2 {address_family_one} {address_family_two}
+                        fortigate: from-zone port1 to-zone port2 {address_family_one} {address_family_two}
                     terms:
                       - name: accept-all
                         action: accept
@@ -792,7 +792,7 @@ class FortigateYAMLTest(FortigateTest):
                   - header:
                       comment: this is a test acl
                       targets:
-                        fortigate: port1 port2
+                        fortigate: from-zone port1 to-zone port2
                     terms:
                       - name: good-term-1
                         {source_text}
@@ -818,7 +818,7 @@ class FortigateYAMLTest(FortigateTest):
                   - header:
                       comment: this is a test acl
                       targets:
-                        fortigate: port1 port2
+                        fortigate: from-zone port1 to-zone port2
                     terms:
                       - name: good-term-1
                         {destination_text}

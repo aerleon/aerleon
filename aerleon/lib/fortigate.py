@@ -1,10 +1,17 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, MutableMapping, Set, Tuple
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
+from aerleon.lib.proxmox import BooleanKeywordOption
+from aerleon.utils.options import (
+    AbstractOption,
+    ArbitraryValueOption,
+    ProcessOptions,
+    ValueOption,
+)
 
 FORTIGATE_SERVICES_ALL = 'ALL'
 FORTIGATE_ADDRESS_ALL = 'all'
@@ -570,6 +577,16 @@ class Fortigate(aclgenerator.ACLGenerator):
         self.address_groups_v6 = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
         super().__init__(name, description)
 
+    @staticmethod
+    def _SupportedOptions(config: MutableMapping) -> list[AbstractOption]:
+        return [
+            ArbitraryValueOption("from-zone", config),
+            ArbitraryValueOption("to-zone", config),
+            BooleanKeywordOption("mixed", config),
+            BooleanKeywordOption("inet6", config),
+            BooleanKeywordOption("inet", config),
+        ]
+
     def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
         """Build supported tokens for platform.
 
@@ -586,14 +603,21 @@ class Fortigate(aclgenerator.ACLGenerator):
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         for header, terms in pol.filters:
-            options = header.FilterOptions(self._PLATFORM)
-            if len(options) < 2:
+            filter_options = header.FilterOptions(self._PLATFORM)
+
+            filter_config = ProcessOptions(
+                self._SupportedOptions,
+                filter_options,
+            )
+
+            if "from-zone" not in filter_config or "to-zone" not in filter_config:
                 raise ValueError(
-                    f'Fortigate requires that at least source and destination interfaces be specified, found: {options}'
+                    f'Fortigate requires that at least from-zone and to-zone interfaces/zone names be specified, found: {filter_options}'
                 )
-            source_interface = options[0]
-            destination_interface = options[1]
-            af = self._SUPPORTED_AF.intersection(options[2:])
+            source_interface = filter_config["from-zone"]
+            destination_interface = filter_config["to-zone"]
+
+            af = self._SUPPORTED_AF.intersection(filter_config.keys())
             if len(af) > 1:
                 raise ValueError(
                     f"Only one address family is supported (inet, inet6, mixed) but found: {', '.join(af)}"
