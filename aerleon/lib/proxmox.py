@@ -1,10 +1,16 @@
 import math
-from abc import ABCMeta, abstractmethod
 from typing import Dict, List, MutableMapping, Set, Tuple, Type, Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
 from aerleon.lib.policy import PROTOS_WITH_PORTS, Policy
+from aerleon.utils.options import BooleanKeywordOption as _BooleanKeywordOption
+from aerleon.utils.options import (
+    MultiValueOption,
+    NumberValueOption,
+    ProcessOptions,
+    ValueOption,
+)
 
 ### constants ###
 LOG_LEVELS_MAP_OPTIONS = {
@@ -40,12 +46,18 @@ class ZoneMismatchError(Error):
 
 
 ### helper classes ###
-class ProxmoxConfigDataClass:
+class ProxmoxConfigDataClass(MutableMapping):
     def __init__(self, *args, **kwargs):
         self._store: Dict[str, Union[str, List[str]]] = dict()
         self._store.update(*args)
         self._store.update(**kwargs)
         self._store['enable'] = '1'
+
+    def __len__(self):
+        return len(self._store)
+
+    def __iter__(self):
+        return iter(self._store)
 
     def __getitem__(self, item):
         return self._store[item]
@@ -99,114 +111,6 @@ class ProxmoxConfigDataClass:
         for k, v in flattened_store.items():
             lines.append(f'{k}: {v}')
         return "\n".join(lines)
-
-
-class AbstractOption(metaclass=ABCMeta):
-    def __init__(self, config: MutableMapping, *args, **kwargs):
-        self.config_ref = config
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.getKey()})"
-
-    @abstractmethod
-    def ingest(self, token: str) -> bool:
-        # should return true if token is ingested
-        pass
-
-    @abstractmethod
-    def complete(self) -> bool:
-        pass
-
-    @abstractmethod
-    def getKey(self) -> str:
-        pass
-
-
-class BooleanKeywordOption(AbstractOption):
-    def __init__(self, key: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key = key
-
-    def getKey(self) -> str:
-        return self.key
-
-    def ingest(self, token: str) -> bool:
-        got_token = False
-        if token == self.key:
-            self.config_ref[self.key] = "1"  # perl
-            got_token = True
-        return got_token
-
-    def complete(self) -> bool:
-        return True
-
-
-class AbstractValueOption(AbstractOption, metaclass=ABCMeta):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key_ingested = False
-        self.any_value_ingested = False
-
-    @abstractmethod
-    def tokenValidationTemplateMethod(self, token: str) -> bool:
-        pass
-
-    def configInsertTemplateMethod(self, token: str):
-        self.config_ref[self.getKey()] = token
-
-    def ingest(self, token: str) -> bool:
-        got_token = False
-        if token == self.getKey():
-            self.key_ingested, got_token = True, True
-        elif self.tokenValidationTemplateMethod(token) and self.key_ingested:
-            self.any_value_ingested, got_token = True, True
-            self.configInsertTemplateMethod(token)
-        else:
-            # reset so that we don't accept values after other tokens
-            self.key_ingested, self.any_value_ingested = False, False
-        return got_token
-
-    def complete(self) -> bool:
-        return (
-            (self.key_ingested, self.any_value_ingested) == (False, False)
-            or self.key_ingested
-            and self.any_value_ingested
-        )
-
-
-class ValueOption(AbstractValueOption):
-    def __init__(self, *args, **kwargs: List[str]):
-        super().__init__(*args, **kwargs)
-        self.key = list(kwargs.keys())[0]
-        self.values = kwargs[self.key]
-
-    def getKey(self) -> str:
-        return self.key
-
-    def tokenValidationTemplateMethod(self, token: str) -> bool:
-        return token in self.values
-
-
-class MultiValueOption(ValueOption):
-    def configInsertTemplateMethod(self, token: str):
-        if self.getKey() not in self.config_ref.keys():
-            self.config_ref[self.getKey()] = []
-        self.config_ref[self.getKey()].append(token)
-        self.config_ref[self.getKey()].sort()
-
-
-class NumberValueOption(AbstractValueOption):
-    def __init__(self, key: str, lower: float, upper: float, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.key = key
-        self.lower = lower
-        self.upper = upper
-
-    def getKey(self) -> str:
-        return self.key
-
-    def tokenValidationTemplateMethod(self, token: str) -> bool:
-        return token.isdecimal() and self.lower <= float(token) <= self.upper
 
 
 class ProxmoxPort:
@@ -332,6 +236,10 @@ class ProxmoxIcmp:
 
     def __str__(self):
         return self.ICMP_MAP[self.icmp_proto][self.type][self.code]
+
+
+def BooleanKeywordOption(*args, **kwargs):
+    return _BooleanKeywordOption(*args, **kwargs).withTrueValue("1")
 
 
 ### implementation ###
@@ -619,20 +527,12 @@ class Proxmox(aclgenerator.ACLGenerator):
                     + filter_zone,
                 )
 
-            filter_config = ProxmoxConfigDataClass()
-            available_zone_options = self._BY_ZONE[filter_zone]['supported_options'](filter_config)
-            for t in self.filter_options[2:]:
-                ingested_options = []
-                for o in available_zone_options:
-                    ingested_options.append(o.ingest(t))
-                if not any(ingested_options):
-                    raise UnsupportedFilterOptionError(f"incorrect filter option directive {t}")
-            incomplete_options = list(filter(lambda o: not o.complete(), available_zone_options))
-            if incomplete_options:
-                raise UnsupportedFilterOptionError(
-                    f"missing or incorrect value for filter option(s) {incomplete_options}"
-                )
-            global_policy_config += filter_config  # merge, will stay set to the same ref
+            global_policy_config += ProcessOptions(
+                self._BY_ZONE[filter_zone]['supported_options'],
+                self.filter_options[2:],
+                ProxmoxConfigDataClass(),
+            )  # merge, will stay set to the same ref
+
             new_terms = []
             for term in terms:
                 new_terms.append(
