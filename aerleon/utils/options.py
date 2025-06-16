@@ -40,7 +40,7 @@ class BooleanKeywordOption(AbstractOption):
     def ingest(self, token: str) -> bool:
         got_token = False
         if token == self.key:
-            self.config_ref[self.key] = self.true_value  # perl
+            self.config_ref[self.key] = self.true_value
             got_token = True
         return got_token
 
