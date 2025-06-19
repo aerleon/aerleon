@@ -2,7 +2,7 @@ name: Release
 on:
   release:
     types:
-      - published
+      - created
 jobs:
   build:
     name: Build and sign artifacts
