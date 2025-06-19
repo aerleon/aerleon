@@ -15,11 +15,11 @@
 
 """Tests for discontinuous subnet mask summarizer."""
 
+import logging
 import os
 import random
 import time
 
-from absl import logging
 from absl.testing import absltest
 
 from aerleon.lib import nacaddr, summarizer

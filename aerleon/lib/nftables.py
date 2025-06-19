@@ -17,9 +17,8 @@
 
 import collections
 import copy
+import logging
 from typing import DefaultDict, Dict, List, Set, Tuple, Union
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
 

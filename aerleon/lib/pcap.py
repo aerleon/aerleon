@@ -29,9 +29,8 @@ Stolen liberally from packetfilter.py.
 """
 
 
+import logging
 from typing import Dict, List, Set, Tuple, Union
-
-from absl import logging
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.nacaddr import IPv4, IPv6

@@ -1,11 +1,10 @@
 """Builds Policy objects from a plain Python object representation."""
 
 import enum
+import logging
 import sys
 import typing
 from dataclasses import dataclass, field
-
-from absl import logging
 
 from aerleon.lib.policy import (
     FLEXIBLE_MATCH_RANGE_ATTRIBUTES,

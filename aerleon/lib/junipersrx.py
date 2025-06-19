@@ -21,9 +21,8 @@
 import collections
 import copy
 import itertools
+import logging
 from typing import Dict, List, Set, Tuple, Union
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 

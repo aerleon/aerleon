@@ -15,9 +15,8 @@
 #
 """Juniper MS-MPC  generator for Aerleon."""
 
+import logging
 from typing import Dict, List, Set, Tuple
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, juniper, nacaddr, policy
 

@@ -16,14 +16,20 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
+import logging
+import logging.config
+import logging.handlers
 import multiprocessing
 import pathlib
 import sys
+from multiprocessing import Event, Process, Queue, current_process
 from typing import Iterator, List, Tuple
 
-from absl import app, flags, logging
+from absl import app, flags
 
-from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
+from aerleon.lib import aclgenerator
+from aerleon.lib import logging as aerleon_logger
+from aerleon.lib import naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
@@ -138,6 +144,7 @@ def RenderFile(
     optimize: bool,
     shade_check: bool,
     write_files: WriteList,
+    queue: Queue = None,
 ):
     """Render a single file.
 
@@ -151,7 +158,11 @@ def RenderFile(
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded
       write_files: a list of file tuples, (output_file, acl_text), to write
+      queue: Queue used to send logs back when in multiprocessing.
     """
+    if queue:
+        logging.config.dictConfig(aerleon_logger.get_worker_config(queue))
+
     output_relative = input_file.relative_to(base_directory).parent.parent
     output_directory = output_directory / output_relative
 
@@ -464,6 +475,7 @@ def Run(
             logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
         # render all files in parallel
+        q = multiprocessing.Manager().Queue()
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
         results: List[multiprocessing.pool.AsyncResult] = []
@@ -480,11 +492,34 @@ def Run(
                         optimize,
                         shade_check,
                         write_files,
+                        q,
                     ),
                 )
             )
+        stop_event = Event()
+
+        def listener_process(q, stop_event):
+            config_listener = {
+                'version': 1,
+                'handlers': {
+                    'console': {
+                        'class': 'logging.StreamHandler',
+                        'level': 'INFO',
+                    },
+                },
+                'root': {'handlers': ['console'], 'level': 'DEBUG'},
+            }
+            logging.config.dictConfig(config_listener)
+            listener = logging.handlers.QueueListener(q, aerleon_logger.LogHandler())
+            listener.start()
+            stop_event.wait()
+
+        lp = Process(target=listener_process, name='listener', args=(q, stop_event))
+        lp.start()
         pool.close()
         pool.join()
+        stop_event.set()
+        lp.join()
 
         for result in results:
             try:
@@ -515,10 +550,11 @@ def main(argv):
     except config.ConfigFileError as e:
         exit(f"Error: {e}")
 
-    if configs['verbose']:
-        logging.set_verbosity(logging.INFO)
+    log_level = 'INFO'
     if configs['debug']:
-        logging.set_verbosity(logging.DEBUG)
+        log_level = 'DEBUG'
+
+    logging.config.dictConfig(aerleon_logger.get_root_config(log_level))
     logging.debug(
         'binary: %s\noptimize: %d\nbase_directory: %s\n'
         'policy_file: %s\nrendered_acl_directory: %s',
@@ -531,22 +567,18 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-    try:
-        Run(
-            configs['base_directory'],
-            configs['definitions_directory'],
-            configs['policy_file'],
-            configs['output_directory'],
-            configs['exp_info'],
-            configs['max_renderers'],
-            configs['ignore_directories'],
-            configs['optimize'],
-            configs['shade_check'],
-            context,
-        )
-    except Exception as e:
-        logging.error(f"Unhandled exception: {e}", exc_info=True)
-        sys.exit(1)
+    Run(
+        configs['base_directory'],
+        configs['definitions_directory'],
+        configs['policy_file'],
+        configs['output_directory'],
+        configs['exp_info'],
+        configs['max_renderers'],
+        configs['ignore_directories'],
+        configs['optimize'],
+        configs['shade_check'],
+        context,
+    )
 
 
 def EntryPoint():

@@ -18,8 +18,7 @@
 """nsxt generator."""
 
 import json
-
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator
 

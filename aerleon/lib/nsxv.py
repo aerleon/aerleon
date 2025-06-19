@@ -16,11 +16,10 @@
 
 """Nsxv generator."""
 
+import logging
 import re
 import xml
 from typing import Dict, List, Set, Tuple
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
 
