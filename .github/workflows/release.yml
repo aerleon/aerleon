@@ -65,7 +65,7 @@ jobs:
           echo "hashes=$(sha256sum ./dist/* | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Upload built packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: built-packages
           path: ./dist/
@@ -91,7 +91,7 @@ jobs:
     permissions: {}
     steps:
       - name: Download artifacts directories # goes to current working directory
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Remove signature # pypi will not ignore the signatures anymore and does not support them.
         run: rm -f built-packages/aerleon-*.sigstore
       - name: publish
