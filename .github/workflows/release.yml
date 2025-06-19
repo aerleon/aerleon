@@ -82,8 +82,7 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       provenance-name: provenance-sigstore-${{ github.event.release.tag_name }}.intoto.jsonl
-      subject-paths: ./dist/*
-      subject-digest-algorithm: sha256
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
       upload-assets: true
   release-pypi:
     needs: [build, generate-provenance]
