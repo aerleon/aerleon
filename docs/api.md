@@ -1,4 +1,4 @@
-# Aerleon Python API
+# Aerleon Generate API
 
 The Generate API provides the full policy-to-ACL capabilities of the aclgen command line tool. It accepts as input plain Python dictionaries and lists.
 

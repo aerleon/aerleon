@@ -69,7 +69,8 @@ nav:
     - Naming: reference/naming.md
     - AclCheck: aclcheck.md
   - API:
-    - API Reference: api.md
+    - Generate API: api.md
+    - AclCheck API: aclcheck_api.md
   - Reference:
     - Generators: reference/generators.md
     - Generator Development: reference/generator_patterns.md
