@@ -45,11 +45,11 @@ pre-commit = {version = "^2.20.0"}
 pytest = {version = "^7.1.3"}
 pyperf = {version = "^2.4.1"}
 psutil = {version = "^5.9.2"}
-mkdocs = "1.3.1"
-mkdocs-material = "8.3.9"
-mkdocstrings = "0.19"
-mkdocstrings-python = "0.7.1"
-mkdocs-version-annotations = "1.0.0"
+mkdocstrings-python = "^1.16.12"
+mkdocstrings = "^0.29.1"
+mkdocs-version-annotations = "^1.0.0"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.6.14"
 sigstore = "^1.0.0"
 isort = "^5.11.4"
 

@@ -14,7 +14,7 @@ mkdir /path/to/definitions/directory
 
 **Create a definition YAML file**
 
-```
+```yaml
 cat > /path/to/definitions/directory/definitions.yaml
 networks:
   INTERNAL:
@@ -69,14 +69,14 @@ services:
 
 **Create a Naming object**
 
-```
+```python
 from aerleon.lib import naming
 defs = naming.Naming('/path/to/definitions/directory')
 ```
 
 **Access Definitions From the Naming Object**
 
-```
+```python
 defs.GetNet('INTERNAL')
 defs.GetService('MAIL')
 defs.GetServiceByProto('DNS','udp')
