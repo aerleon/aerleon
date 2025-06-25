@@ -2,7 +2,7 @@
 
 ## Introduction
 
-AclCheck is a tool within Aerleon that allows you to check where hosts, ports, and protocols are matched in an Aerleon policy. It helps you understand how a given policy will affect traffic by simulating traffic flows and reporting which terms in the policy would match that traffic. This is useful for verifying policy correctness, troubleshooting connectivity issues, and understanding the impact of policy changes.
+AclCheck is a tool bundled with Aerleon that can check which terms in an Aerleon policy would match a specific packet and what action or actions would be taken by the generated ACL. This is useful for verifying policy correctness, troubleshooting connectivity issues, and understanding the impact of policy changes.
 
 ## Command-Line Usage
 
@@ -10,10 +10,10 @@ The `aclcheck` command-line tool provides a way to quickly test traffic scenario
 
 ### Basic Example
 
-To check if traffic from `192.168.1.10` to `10.0.0.1` on TCP port `80` is allowed by a policy defined in `my_policy.pol`:
+To check if traffic from `192.168.1.10` to `10.0.0.1` on TCP port `80` is allowed by a policy defined in `my_policy.yaml`:
 
 ```bash
-aclcheck --policy-file ./policies/pol/my_policy.pol --source 192.168.1.10 --destination 10.0.0.1 --protocol tcp --dport 80
+aclcheck --policy-file ./policies/pol/my_policy.yaml --source 192.168.1.10 --destination 10.0.0.1 --protocol tcp --dport 80
 ```
 
 The output will show the terms in the policy that match the specified traffic and the action (e.g., `accept`, `deny`, `next`) taken by those terms.
@@ -37,7 +37,7 @@ The `aclcheck` tool accepts the following arguments:
 Here's an example demonstrating the use of several options:
 
 ```bash
-aclcheck --policy-file ./policies/pol/sample_cisco_lab.pol \
+aclcheck --policy-file ./policies/pol/sample_cisco_lab.yaml \
          --definitions-directory ./def \
          --source 10.1.1.1 \
          --destination 172.16.1.5 \
@@ -46,11 +46,11 @@ aclcheck --policy-file ./policies/pol/sample_cisco_lab.pol \
          --sport 12345
 ```
 
-This command will check the `sample_cisco_lab.pol` policy, using definitions from the `./def` directory, for traffic from `10.1.1.1` (source port `12345`) to `172.16.1.5` (destination port `53`) using the UDP protocol. The output will indicate which terms in the policy match this traffic.
+This command will check the `sample_cisco_lab.yaml` policy, using definitions from the `./def` directory, for traffic from `10.1.1.1` (source port `12345`) to `172.16.1.5` (destination port `53`) using the UDP protocol. The output will indicate which terms in the policy match this traffic and what action or actions are taken.
 
 ## API Usage
 
-Aerleon also provides a Python API for `AclCheck` functionality, allowing for programmatic integration into other tools or automation workflows.
+Aerleon includes a Python interface for `AclCheck`, allowing for programmatic integration into other tools or automation workflows.
 
 ### Example
 
@@ -61,7 +61,8 @@ from aerleon import api
 from aerleon.lib import naming
 
 # Define the policy as a Python dictionary
-# This structure is the YAML policy file format - you could use yaml.safe_load to convert from YAML.
+# This structure is the YAML policy file format.
+# You could call yaml.safe_load to load your YAML policy into this format.
 example_policy = {
     "filename": "my_api_policy_check",
     "filters": [
@@ -93,7 +94,8 @@ example_policy = {
 }
 
 # Define network and service names
-# This is typically loaded from definition files but can be constructed in code.
+# This structure is the YAML definition file format.
+# You could call yaml.safe_load to load your YAML definitions into this format.
 definitions_data = {
     "networks": {
         "INTERNAL_NETWORK": {
@@ -110,17 +112,18 @@ definitions_data = {
 
 # Create a Naming object and parse the definitions
 defs = naming.Naming()
-defs.ParseDefinitionsObject(definitions_data, "") # Second arg is filename context
+defs.ParseDefinitionsObject(definitions_data, "definitions_data")
+# The second argument is used for debugging / error messages only
 
-# Perform the AclCheck
+# Define the target packet
 source_ip = "192.168.1.50"
 destination_ip = "10.0.0.10"
 protocol = "tcp"
 destination_port = "80"
-source_port = "49152" # Ephemeral port
+source_port = "49152"
 
 try:
-    # Use AclCheck.FromPolicyDict via the api.AclCheck wrapper
+    # Perform the AclCheck API call
     summary = api.AclCheck(
         input_policy=example_policy,
         definitions=defs,
@@ -131,7 +134,9 @@ try:
         proto=protocol,
     )
 
-    # Print the summary
+    # Example: loop over the output and print to stdout
+    # A more common behavior would be to inspect the `summary` object
+    # directly to confirm whether the final action is 'accept' or 'deny'
     if summary:
         for filter_name, terms in summary.items():
             print(f"  Filter: {filter_name}")
@@ -163,16 +168,19 @@ The output dictionary from `Summarize()` is structured as:
 {
     "filter_name_1": {
         "term_name_1": {
-            "possibles": ["reason1", "reason2"], # List of reasons if it's a possible match
-            "message": "  term: term_name_1 (possible match)\n    action if ['reason1', 'reason2']"
+            "possibles": ["packet-length", "tcp-est"], # List of reasons if it's a possible match
+            "message": "  term: term_name_1 (possible match)\n    action if ['packet-length', 'tcp-est']"
         },
         "term_name_2": {
             "possibles": [],
-            "message": "  term: term_name_2\n    action"
+            "message": "  term: term_name_2\n    accept"
         }
     },
     # ... more filters
 }
 ```
 
-This allows you to programmatically determine the outcome of specific traffic flows through your defined policies.
+To programmatically determine the outcome of specific traffic flows through your defined policies, use a process like this:
+
+1. If only one term matched the traffic, split the 'message' field by newline and examine the final action (e.g. "accept" above).
+2. If there is a conditional match, collect all distinct possible outcomes and present the conditional basis (e.g. deny if ['packet-length']).
