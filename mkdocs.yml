@@ -67,6 +67,7 @@ nav:
     - Command Line Usage: reference/cli.md
     - Policy Files: reference/yaml_reference.md
     - Naming: reference/naming.md
+    - AclCheck: aclcheck.md
   - API:
     - API Reference: api.md
   - Reference:

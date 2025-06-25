@@ -1,0 +1,180 @@
+# AclCheck
+
+## Introduction
+
+AclCheck is a tool within Aerleon that allows you to check where hosts, ports, and protocols are matched in an Aerleon policy. It helps you understand how a given policy will affect traffic by simulating traffic flows and reporting which terms in the policy would match that traffic. This is useful for verifying policy correctness, troubleshooting connectivity issues, and understanding the impact of policy changes.
+
+## Command-Line Usage
+
+The `aclcheck` command-line tool provides a way to quickly test traffic scenarios against a policy file.
+
+### Basic Example
+
+To check if traffic from `192.168.1.10` to `10.0.0.1` on TCP port `80` is allowed by a policy defined in `my_policy.pol`:
+
+```bash
+aclcheck --policy-file ./policies/pol/my_policy.pol --source 192.168.1.10 --destination 10.0.0.1 --protocol tcp --dport 80
+```
+
+The output will show the terms in the policy that match the specified traffic and the action (e.g., `accept`, `deny`, `next`) taken by those terms.
+
+### Command-Line Arguments
+
+The `aclcheck` tool accepts the following arguments:
+
+*   `-p, --policy-file, --policy_file POL`: (Required) The policy file to examine.
+*   `--definitions-directory, --definitions_directory DIR`: The directory where network and service definition files can be found. Defaults to `./def`.
+*   `--base-directory, --base_directory DIR`: The base directory to use when resolving policy include paths. Defaults to `./policies`.
+*   `--config-file, --config_file FILE`: Change the location searched for the configuration YAML file (`aerleon.yml`).
+*   `-d, --destination IP`: Destination IP address. Defaults to `200.1.1.1`.
+*   `-s, --source IP`: Source IP address. Defaults to `any`.
+*   `--proto, --protocol PROTO`: Protocol (e.g., `tcp`, `udp`, `icmp`). Defaults to `any`.
+*   `--dport, --destination-port PORT`: Destination port. Defaults to `80`.
+*   `--sport, --source-port PORT`: Source port. Defaults to `1025`.
+
+### Detailed Example
+
+Here's an example demonstrating the use of several options:
+
+```bash
+aclcheck --policy-file ./policies/pol/sample_cisco_lab.pol \
+         --definitions-directory ./def \
+         --source 10.1.1.1 \
+         --destination 172.16.1.5 \
+         --protocol udp \
+         --dport 53 \
+         --sport 12345
+```
+
+This command will check the `sample_cisco_lab.pol` policy, using definitions from the `./def` directory, for traffic from `10.1.1.1` (source port `12345`) to `172.16.1.5` (destination port `53`) using the UDP protocol. The output will indicate which terms in the policy match this traffic.
+
+## API Usage
+
+Aerleon also provides a Python API for `AclCheck` functionality, allowing for programmatic integration into other tools or automation workflows.
+
+### Example
+
+The following Python code demonstrates how to use the `AclCheck` API:
+
+```python
+from aerleon import api
+from aerleon.lib import naming
+
+# Define the policy as a Python dictionary
+# This structure mirrors the YAML policy file format.
+example_policy = {
+    "filename": "my_api_policy_check", # Used for context, not for file output in AclCheck
+    "filters": [
+        {
+            "header": {
+                "targets": {
+                    "cisco": "test-filter" # Target is needed for policy parsing
+                },
+                "kvs": {
+                    "comment": "Sample filter for AclCheck API demo"
+                },
+            },
+            "terms": [
+                {
+                    "name": "allow-web-traffic",
+                    "source-address": "INTERNAL_NETWORK",
+                    "destination-address": "WEB_SERVERS",
+                    "destination-port": "HTTP",
+                    "protocol": "tcp",
+                    "action": "accept"
+                },
+                {
+                    "name": "deny-all-else",
+                    "action": "deny"
+                }
+            ],
+        }
+    ],
+}
+
+# Define network and service names
+# This is typically loaded from definition files but can be constructed in code.
+definitions_data = {
+    "networks": {
+        "INTERNAL_NETWORK": {
+            "values": [ {"address": "192.168.1.0/24"} ]
+        },
+        "WEB_SERVERS": {
+            "values": [ {"address": "10.0.0.10/32"}, {"address": "10.0.0.11/32"} ]
+        }
+    },
+    "services": {
+        "HTTP": {
+            "values": [ {"protocol": "tcp", "port": "80"} ]
+        }
+    }
+}
+
+# Create a Naming object and parse the definitions
+defs = naming.Naming()
+defs.ParseDefinitionsObject(definitions_data, "") # Second arg is filename context
+
+# Perform the AclCheck
+source_ip = "192.168.1.50"
+destination_ip = "10.0.0.10"
+protocol = "tcp"
+destination_port = "80"
+source_port = "49152" # Ephemeral port
+
+try:
+    # Use AclCheck.FromPolicyDict via the api.AclCheck wrapper
+    summary = api.AclCheck(
+        input_policy=example_policy,
+        definitions=defs,
+        src=source_ip,
+        dst=destination_ip,
+        sport=source_port,
+        dport=destination_port,
+        proto=protocol,
+    )
+
+    # Print the summary
+    if summary:
+        for filter_name, terms in summary.items():
+            print(f"  Filter: {filter_name}")
+            for term_name, match_details in terms.items():
+                print(match_details['message'])
+    else:
+        print(f"No matching terms found for traffic from {source_ip}:{source_port} to {destination_ip}:{destination_port} ({protocol}).")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+```
+
+### Policy and Definitions Structure
+
+*   **`input_policy` (dict):** This dictionary represents the Aerleon policy.
+    *   `filename`: A string identifier for the policy (primarily for context in logs/errors).
+    *   `filters`: A list of filter dictionaries. Each filter dictionary must contain:
+        *   `header`: A dictionary defining the filter's targets (e.g., `{"cisco": "filter_name"}`). At least one target must be specified for the policy to be parsed correctly, even though `AclCheck` itself is platform-agnostic. It can also contain other header options like `kvs` for comments.
+        *   `terms`: A list of term dictionaries. Each term defines specific match criteria (like `source-address`, `destination-port`, `protocol`) and an `action` (e.g., `accept`, `deny`).
+*   **`definitions` (aerleon.lib.naming.Naming):** This object holds the definitions for all named entities (like IP addresses, networks, services/ports) referenced in the policy.
+    *   You can populate it by calling `ParseDefinitionsObject` with a dictionary structured similarly to how `NETWORK.net` and `SERVICES.svc` files are formatted, or by loading actual definition files.
+    *   The `networks` key holds network definitions, and the `services` key holds service (port/protocol) definitions.
+
+The `api.AclCheck` function processes this input and returns a summary dictionary. The `Summarize()` method (called internally by `api.AclCheck`) formats the results, indicating which terms were matched and whether the match was exact or "possible" (e.g., due to options like `tcp-established` which depend on connection state not simulated by `AclCheck`).
+The output dictionary from `Summarize()` is structured as:
+
+```
+{
+    "filter_name_1": {
+        "term_name_1": {
+            "possibles": ["reason1", "reason2"], # List of reasons if it's a possible match
+            "message": "  term: term_name_1 (possible match)\n    action if ['reason1', 'reason2']"
+        },
+        "term_name_2": {
+            "possibles": [],
+            "message": "  term: term_name_2\n    action"
+        }
+    },
+    # ... more filters
+}
+```
+
+This allows you to programmatically determine the outcome of specific traffic flows through your defined policies.
