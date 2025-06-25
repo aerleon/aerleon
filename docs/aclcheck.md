@@ -61,14 +61,14 @@ from aerleon import api
 from aerleon.lib import naming
 
 # Define the policy as a Python dictionary
-# This structure mirrors the YAML policy file format.
+# This structure is the YAML policy file format - you could use yaml.safe_load to convert from YAML.
 example_policy = {
-    "filename": "my_api_policy_check", # Used for context, not for file output in AclCheck
+    "filename": "my_api_policy_check",
     "filters": [
         {
             "header": {
                 "targets": {
-                    "cisco": "test-filter" # Target is needed for policy parsing
+                    "cisco": "test-filter"
                 },
                 "kvs": {
                     "comment": "Sample filter for AclCheck API demo"
@@ -104,9 +104,7 @@ definitions_data = {
         }
     },
     "services": {
-        "HTTP": {
-            "values": [ {"protocol": "tcp", "port": "80"} ]
-        }
+        "HTTP": [ {"protocol": "tcp", "port": "80"} ]
     }
 }
 
