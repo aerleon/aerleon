@@ -164,11 +164,11 @@ except Exception as e:
 The `api.AclCheck` function processes this input and returns a summary dictionary. The `Summarize()` method (called internally by `api.AclCheck`) formats the results, indicating which terms were matched and whether the match was exact or "possible" (e.g., due to options like `tcp-established` which depend on connection state not simulated by `AclCheck`).
 The output dictionary from `Summarize()` is structured as:
 
-```
+```json
 {
     "filter_name_1": {
         "term_name_1": {
-            "possibles": ["packet-length", "tcp-est"], # List of reasons if it's a possible match
+            "possibles": ["packet-length", "tcp-est"],
             "message": "  term: term_name_1 (possible match)\n    action if ['packet-length', 'tcp-est']"
         },
         "term_name_2": {
@@ -176,7 +176,6 @@ The output dictionary from `Summarize()` is structured as:
             "message": "  term: term_name_2\n    accept"
         }
     },
-    # ... more filters
 }
 ```
 
