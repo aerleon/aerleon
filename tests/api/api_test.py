@@ -306,9 +306,7 @@ class ApiTest(absltest.TestCase):
             "filters": [
                 {
                     "header": {
-                        "targets": {
-                            "cisco": "test-filter"  # Target is needed for policy parsing
-                        },
+                        "targets": {"cisco": "test-filter"},  # Target is needed for policy parsing
                         "kvs": {"comment": "Sample filter for AclCheck API demo"},
                     },
                     "terms": [
@@ -383,7 +381,6 @@ class ApiTest(absltest.TestCase):
         self.assertIn("Filter: test-filter", test_output)
         self.assertIn("term: allow-web-traffic", test_output)
         self.assertIn("accept", test_output)
-
 
         # Example of what the summary object itself would look like for direct assertion
         expected_summary_structure = {
