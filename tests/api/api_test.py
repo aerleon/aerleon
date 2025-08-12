@@ -297,6 +297,62 @@ class ApiTest(absltest.TestCase):
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' permit ip any host 200.1.2.4', str(acl)))
 
+    def testGenerateWithTermInclude(self):
+        """Verify that term-level includes work with the `includes` parameter."""
+        # Main policy with an include directive in its terms list
+        main_policy: PolicyDict = {
+            "filename": "policy_with_term_include",
+            "filters": [
+                {
+                    "header": {"targets": {"cisco": "filter-with-include"}},
+                    "terms": [
+                        {"name": "term-before-include", "source-address": "NET1", "action": "accept"},
+                        {"include": "common_terms"},
+                        {"name": "term-after-include", "source-address": "NET2", "action": "accept"},
+                    ],
+                }
+            ],
+        }
+
+        # The dictionary that will be "included"
+        included_terms_policy = {
+            "terms": [
+                {
+                    "name": "included-term-1",
+                    "destination-address": "MAIL",
+                    "action": "accept",
+                },
+                {
+                    "name": "included-term-2",
+                    "destination-address": "NET2",
+                    "action": "deny",
+                },
+            ]
+        }
+
+        # The `includes` dictionary mapping the include name to the policy dict
+        includes_dict = {"common_terms": included_terms_policy}
+
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(NETWORKS_1, "")
+
+        # Generate the ACL, providing the `includes` dictionary
+        configs = api.Generate([main_policy], definitions, includes=includes_dict)
+        acl = configs["policy_with_term_include.acl"]
+
+        # Verify that terms from the main policy and the included policy are present
+        self.assertIn("term-before-include", acl)
+        self.assertIn("permit ip 10.0.0.0 0.255.255.255 any", acl)
+
+        self.assertIn("included-term-1", acl)
+        self.assertIn("permit ip any 49.1.1.0 0.0.0.255", acl)
+
+        self.assertIn("included-term-2", acl)
+        self.assertIn("deny ip any 10.2.0.0 0.0.255.255", acl)
+
+        self.assertIn("term-after-include", acl)
+        self.assertIn("permit ip 10.2.0.0 0.0.255.255 any", acl)
+
     def test_aclcheck_api_documentation_example(self):
         test_output = []
         # Define the policy as a Python dictionary

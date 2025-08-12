@@ -522,7 +522,7 @@ Include stack:
         )
         self.assertEqual(
             str(user_message),
-            """Policy include source include_1.pol must end in ".yaml". File=include_1.yaml, Line=3.
+            """Policy include source include_1.pol must end in ".yaml" or ".yml". File=include_1.yaml, Line=3.
 Include stack:
 > File='policy_with_include.yaml', Line=10 (Top Level)
 > File='include_1.yaml', Line=3""",  # noqa: E501
@@ -545,7 +545,7 @@ Include stack:
         )
         self.assertEqual(
             str(user_message),
-            """Policy include source include_1.pol must end in ".yaml". File=policy_with_include.yaml, Line=3.""",  # noqa: E501
+            """Policy include source include_1.pol must end in ".yaml" or ".yml". File=policy_with_include.yaml, Line=3.""",  # noqa: E501
         )
 
     def testIncludeInvalidPath(self):

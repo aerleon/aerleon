@@ -2717,7 +2717,7 @@ def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> List[str]:
     return rval
 
 
-def _SubpathOf(parent: str, subpath: Union[str, pathlib.PosixPath]) -> bool:
+def _SubpathOf(parent: str, subpath: Union[str, pathlib.Path]) -> bool:
     return str(pathlib.Path(subpath).resolve()).startswith(str(pathlib.Path(parent).resolve()))
 
 

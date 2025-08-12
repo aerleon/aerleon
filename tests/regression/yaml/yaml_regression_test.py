@@ -181,7 +181,7 @@ filters:
 
 
 @mock.patch.object(yaml_frontend.logging, "warning")
-@mock.patch.object(yaml_frontend, "_LoadIncludeFile")
+@mock.patch('aerleon.lib.yaml.open', new_callable=mock.mock_open)
 class YAMLPolicyTermTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
@@ -192,8 +192,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
     # Positive tests from policy_test.py #
     ######################################
     @capture.stdout
-    def testGoodPol(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodPol(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-1
           protocol: icmp
           action: accept
@@ -225,8 +225,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_called_once_with('PROD_NETWORK')
 
     @capture.stdout
-    def testService(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testService(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-1
           protocol: icmp
           action: accept
@@ -257,8 +257,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
 
     @capture.stdout
-    def testNumericProtocol(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testNumericProtocol(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-4
           protocol: 1
           action: accept
@@ -275,8 +275,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].protocol[0]), '1')
 
     @capture.stdout
-    def testHopLimitSingle(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testHopLimitSingle(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-v6-1
           hop-limit: 5
           action: accept
@@ -293,8 +293,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].hop_limit[0]), '5')
 
     @capture.stdout
-    def testHopLimitRange(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testHopLimitRange(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-v6-2
           hop-limit: 5-7
           action: accept
@@ -312,8 +312,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].hop_limit[2]), '7')
 
     @capture.stdout
-    def testMinimumTerm(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testMinimumTerm(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-5
           action: accept
         """
@@ -331,8 +331,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].action[0]), 'accept')
 
     @capture.stdout
-    def testMinimumTerm2(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testMinimumTerm2(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-9
           comment: |
             first comment
@@ -352,8 +352,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].comment[1]), 'second comment')
 
     @capture.stdout
-    def testLogNameTerm(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testLogNameTerm(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-37
           protocol: icmp
           log-name: my special prefix
@@ -371,8 +371,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].log_name), 'my special prefix')
 
     @capture.stdout
-    def testPortCollapsing(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testPortCollapsing(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-6
           protocol: tcp
           destination-port: MYSQL HIGH_PORTS
@@ -396,8 +396,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testPortCollapsing2(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testPortCollapsing2(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-8
           protocol: tcp udp
           destination-port: DNS
@@ -420,8 +420,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testTermEquality(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testTermEquality(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-19
           source-port: HTTP MYSQL
           destination-address: PROD_EXTERNAL_SUPER PROD_NETWORK
@@ -512,8 +512,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodDestAddrExcludes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodDestAddrExcludes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-7
           protocol: tcp
           destination-address: PROD_NETWORK
@@ -539,8 +539,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodSrcAddrExcludes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodSrcAddrExcludes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-26
           protocol: tcp
           source-address: PROD_NETWORK
@@ -566,8 +566,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodAddrExcludes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodAddrExcludes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-27
           protocol: tcp
           address: PROD_NETWORK
@@ -593,8 +593,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodAddrExcludesFlatten(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodAddrExcludesFlatten(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-27
           protocol: tcp
           address: PROD_NETWORK
@@ -638,8 +638,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodAddrExcludesFlattenMultiple(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodAddrExcludesFlattenMultiple(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-27
           protocol: tcp
           address: PROD_NETWORK
@@ -673,8 +673,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testGoodAddrExcludesFlattenAll(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGoodAddrExcludesFlattenAll(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-27
           protocol: tcp
           address: PROD_NETWORK
@@ -705,8 +705,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testLogging(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testLogging(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-10
           logging: true
           action: accept
@@ -723,8 +723,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(str(terms[0].logging[0]), 'true')
 
     @capture.stdout
-    def testICMPTypes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testICMPTypes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-10
           protocol: icmp
           icmp-type: echo-reply echo-request unreachable
@@ -742,8 +742,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].icmp_type[0], 'echo-reply')
 
     @capture.stdout
-    def testICMPTypesSorting(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testICMPTypesSorting(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-11
           protocol: icmp
           icmp-type: unreachable echo-request echo-reply
@@ -761,8 +761,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertIn(expected, str(pol))
 
     @capture.stdout
-    def testICMPCodesSorting(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testICMPCodesSorting(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-11
           icmp-type: unreachable
           icmp-code: 15 4 9 1
@@ -778,8 +778,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertIn('icmp_code: [1, 4, 9, 15]', str(pol))
 
     @capture.stdout
-    def testReservedWordTermName(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testReservedWordTermName(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: qos-good-term-12
           action: accept
           qos: af4
@@ -797,8 +797,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].name, 'qos-good-term-12')
 
     @capture.stdout
-    def testMultiPortLines(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testMultiPortLines(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-13
           source-port: GOOGLE_PUBLIC SNMP
           protocol: udp
@@ -821,8 +821,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testSourcePrefixList(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testSourcePrefixList(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-14
           source-prefix: foo_prefix_list
           action: accept
@@ -839,8 +839,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].source_prefix, ['foo_prefix_list'])
 
     @capture.stdout
-    def testDestinationPrefixList(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testDestinationPrefixList(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-15
           destination-prefix: bar_prefix_list baz_prefix_list
           action: accept
@@ -857,8 +857,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].destination_prefix, ['bar_prefix_list', 'baz_prefix_list'])
 
     @capture.stdout
-    def testSourcePrefixListExcept(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testSourcePrefixListExcept(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-38
           source-prefix-except: foo_prefix_list
           action: accept
@@ -875,8 +875,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].source_prefix_except, ['foo_prefix_list'])
 
     @capture.stdout
-    def testDestinationPrefixListExcept(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testDestinationPrefixListExcept(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-39
           destination-prefix-except: bar_prefix_list baz_prefix_list
           action: accept
@@ -895,8 +895,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
 
     @capture.stdout
-    def testSourcePrefixListMixed(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testSourcePrefixListMixed(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-38
           source-prefix: foo_prefix_list
           source-prefix-except: foo_prefix_list_except
@@ -915,8 +915,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].source_prefix_except, ['foo_prefix_list_except'])
 
     @capture.stdout
-    def testDestinationPrefixListMixed(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testDestinationPrefixListMixed(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-39
           destination-prefix: bar_prefix_list
           destination-prefix-except: bar_prefix_list_except
@@ -935,8 +935,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].destination_prefix_except, ['bar_prefix_list_except'])
 
     @capture.stdout
-    def testEtherTypes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testEtherTypes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-16
           ether-type: arp ipv4 vlan
           action: accept
@@ -955,8 +955,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].ether_type[2], 'vlan')
 
     @capture.stdout
-    def testTrafficTypes(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testTrafficTypes(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-17
           traffic-type: broadcast unknown-unicast multicast
           action: accept
@@ -975,8 +975,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].traffic_type[2], 'multicast')
 
     @capture.stdout
-    def testVerbatimTerm(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testVerbatimTerm(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-18
           comment: test verbatim output
           verbatim:
@@ -998,8 +998,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].verbatim[1][1], 'mary had another lamb')
 
     @capture.stdout
-    def testIntegerFilterName(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testIntegerFilterName(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-0
           protocol: icmp
           action: accept
@@ -1016,8 +1016,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(pol.headers[0].target[0].options[0], '50')
 
     @capture.stdout
-    def testPrecedence(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testPrecedence(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: precedence-term
           protocol: icmp
           precedence: 1
@@ -1035,8 +1035,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].precedence, [1])
 
     @capture.stdout
-    def testLossPriority(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testLossPriority(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: loss-priority-term
           source-port: SSH
           protocol: tcp
@@ -1057,8 +1057,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
-    def testRoutingInstance(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testRoutingInstance(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: routing-instance-term
           source-port: SSH
           protocol: tcp
@@ -1079,8 +1079,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
-    def testSourceInterface(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testSourceInterface(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: source-interface-term
           source-port: SSH
           protocol: tcp
@@ -1102,8 +1102,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetServiceByProto.assert_called_once_with('SSH', 'tcp')
 
     @capture.stdout
-    def testVpnConfigWithoutPairPolicy(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testVpnConfigWithoutPairPolicy(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-30
           protocol: tcp
           action: accept
@@ -1122,8 +1122,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual('', pol.filters[0][1][0].vpn[1])
 
     @capture.stdout
-    def testVpnConfigWithPairPolicy(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testVpnConfigWithPairPolicy(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-31
           protocol: tcp
           action: accept
@@ -1143,8 +1143,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual('policy-11', pol.filters[0][1][0].vpn[1])
 
     @capture.stdout
-    def testForwardingClassPolicy(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testForwardingClassPolicy(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-32
           forwarding-class: fritzy
           action: accept
@@ -1159,8 +1159,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(['fritzy'], pol.filters[0][1][0].forwarding_class)
 
     @capture.stdout
-    def testMultipleForwardingClassPolicy(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testMultipleForwardingClassPolicy(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-36
           forwarding-class: flashy fritzy
           action: accept
@@ -1175,8 +1175,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(['flashy', 'fritzy'], pol.filters[0][1][0].forwarding_class)
 
     @capture.stdout
-    def testForwardingClassEqual(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testForwardingClassEqual(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-32
           forwarding-class: fritzy
           action: accept
@@ -1197,8 +1197,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertNotEqual(terms[0], terms[1])
 
     @capture.stdout
-    def testTagSupportAndNetworkHeaderParsing(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testTagSupportAndNetworkHeaderParsing(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-34
           source-tag: src-tag
           destination-tag: dest-tag
@@ -1219,8 +1219,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(terms[0].destination_tag, ['dest-tag'])
 
     @capture.stdout
-    def testNextIP(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testNextIP(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-35
           source-address: PROD_NETWORK
           next-ip: NEXT_IP
@@ -1242,8 +1242,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetNetAddr.assert_has_calls([mock.call('PROD_NETWORK'), mock.call('NEXT_IP')])
 
     @capture.stdout
-    def testTermAddressByteLength(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testTermAddressByteLength(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-2
           protocol: tcp
           source-address: PROD_NETWORK
@@ -1269,8 +1269,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(10, term.AddressesByteLength())
 
     @capture.stdout
-    def testEncapsulate(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testEncapsulate(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-46
           protocol: icmp tcp udp gre esp ah sctp
           encapsulate: stuff_and_things
@@ -1285,8 +1285,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertIn('encapsulate: stuff_and_things', str(pol))
 
     @capture.stdout
-    def testPortMirror(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testPortMirror(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-47
           protocol: icmp tcp udp gre esp ah sctp
           port-mirror: true
@@ -1301,8 +1301,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertIn('port_mirror: true', str(pol))
 
     @capture.stdout
-    def testSrxGLobalZone(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testSrxGLobalZone(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-48
           protocol: icmp
           source-zone: zone1 zone2
@@ -1323,8 +1323,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertIn(expected_destination, str(pol))
 
     @capture.stdout
-    def testLogLimit(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testLogLimit(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-44
           logging: syslog
           log-limit: 999/day
@@ -1341,8 +1341,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual((u'999', u'day'), term.log_limit)
 
     @capture.stdout
-    def testTargetServiceAccount(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testTargetServiceAccount(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: good-term-45
           source-address: ANY
           action: accept
@@ -1359,8 +1359,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertEqual(['acct1@blah.com'], term.target_service_accounts)
 
     @capture.stdout
-    def testParsePolicyMultipleTargetResources(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testParsePolicyMultipleTargetResources(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: target-resource-term
           action: deny
           target-resources:
@@ -1391,23 +1391,23 @@ class YAMLPolicyTermTest(absltest.TestCase):
     # Negative tests from policy_test.py #
     ######################################
 
-    def testBadTermName(self, mock_open_include, _mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadTermName(self, mock_open, _mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term -name
           action: deny
         """
         self.assertTermRaises(TypeError)
 
-    def testBadKeyName(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadKeyName(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-2
           prootocol: tcp
           action: accept
         """
         self.assertTermWarns(mock_warn, regex="Unexpected term keyword")
 
-    def testBadPortProtocol(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadPortProtocol(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-3
           protocol: tcp
           source-port: SNMP
@@ -1416,31 +1416,31 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.naming.GetServiceByProto('SNMP', 'tcp').AndReturn([])
         self.assertTermRaises(policy.TermPortProtocolError)
 
-    def testBadPortProtocol2(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadPortProtocol2(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-4
           source-port: SNMP
           action: accept
         """
         self.assertTermRaises(policy.TermPortProtocolError)
 
-    def testBadLogging(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadLogging(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-6
           logging: unvalidloggingoption
           action: accept
         """
         self.assertTermRaises(policy.InvalidTermLoggingError)
 
-    def testBadAction(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadAction(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-7
           action: discard
         """
         self.assertTermRaises(policy.InvalidTermActionError)
 
-    def testBadProtocolEtherTypes(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadProtocolEtherTypes(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-9
           ether-type: arp
           protocol: udp
@@ -1448,8 +1448,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.TermProtocolEtherTypeError)
 
-    def testVerbatimMixed(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testVerbatimMixed(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-10
           verbatim:
             cisco: mary had a little lamb
@@ -1457,8 +1457,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.ParseError)
 
-    def testBadICMPTypes(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadICMPTypes(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-12
           protocol: icmp
           icmp-type: echo-foo packet-too-beaucoups
@@ -1466,8 +1466,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.TermInvalidIcmpType)
 
-    def testBadICMPCodes(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadICMPCodes(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-13
           protocol: icmp
           icmp-type: unreachable
@@ -1476,8 +1476,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.ICMPCodeError)
 
-    def testBadICMPCodes2(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testBadICMPCodes2(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-14
           protocol: icmp
           icmp-type: unreachable redirect
@@ -1486,16 +1486,16 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.ICMPCodeError)
 
-    def testInvalidTTL(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testInvalidTTL(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-15
           ttl: 300
           action: accept
         """
         self.assertTermRaises(policy.InvalidTermTTLValue)
 
-    def testGREandTCPUDPError(self, mock_open_include, mock_warn):
-        mock_open_include.return_value = """terms:
+    def testGREandTCPUDPError(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
         - name: bad-term-16
           destination-port: FOO
           protocol: tcp udp gre
@@ -1523,7 +1523,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         self.assertRegex(mock_warn.call_args[0][0], regex)
 
 
-@mock.patch.object(yaml_frontend, "_LoadIncludeFile")
+@mock.patch('aerleon.lib.yaml.open', new_callable=mock.mock_open)
 class YAMLRepresentationsTest(absltest.TestCase):
     """Ensure that equivalent representations produce identical policy models."""
 
@@ -1532,16 +1532,16 @@ class YAMLRepresentationsTest(absltest.TestCase):
         self.naming = mock.create_autospec(naming.Naming)
         self.base_dir = ""
 
-    def assertEqualPolicyModel(self, mock_open_include, term_list, other_term_list):
-        mock_open_include.return_value = term_list
+    def assertEqualPolicyModel(self, mock_open, term_list, other_term_list):
+        mock_open.return_value.read.return_value = term_list
         policy = yaml_frontend.ParsePolicy(
             YAML_POLICY_WITH_INCLUDE,
             filename="policy_test.pol.yaml",
             base_dir=self.base_dir,
             definitions=self.naming,
         )
-        mock_open_include.reset_mock()
-        mock_open_include.return_value = other_term_list
+        mock_open.reset_mock()
+        mock_open.return_value.read.return_value = other_term_list
         other_policy = yaml_frontend.ParsePolicy(
             YAML_POLICY_WITH_INCLUDE,
             filename="policy_test.pol.yaml",
@@ -1550,7 +1550,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
         )
         self.assertEqual(policy, other_policy)
 
-    def testWordLists(self, mock_open_include):
+    def testWordLists(self, mock_open):
         src_addr_strlist = """terms:
         - name: source-addr-term
           source-addr: RESTRICTED BOGON 83.0.0.0/24
@@ -1566,7 +1566,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, src_addr_strlist, src_addr_list)
+        self.assertEqualPolicyModel(mock_open, src_addr_strlist, src_addr_list)
         src_addr_single = """terms:
         - name: source-addr-term
           source-addr: 83.0.0.0/24
@@ -1580,9 +1580,9 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, src_addr_single, src_addr_single_list)
+        self.assertEqualPolicyModel(mock_open, src_addr_single, src_addr_single_list)
 
-    def testYearMonthDay(self, mock_open_include):
+    def testYearMonthDay(self, mock_open):
         expiration_date = """terms:
         - name: expiration-term
           expiration: 2020-01-01
@@ -1595,9 +1595,9 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, expiration_date, expiration_str)
+        self.assertEqualPolicyModel(mock_open, expiration_date, expiration_str)
 
-    def testIntegerLists(self, mock_open_include):
+    def testIntegerLists(self, mock_open):
         precedence_strlist = """terms:
         - name: precedence-term
           precedence: 100 50
@@ -1612,7 +1612,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, precedence_strlist, precedence_list)
+        self.assertEqualPolicyModel(mock_open, precedence_strlist, precedence_list)
         single_int = """terms:
         - name: precedence-term
           precedence: 100
@@ -1632,10 +1632,10 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, single_int, single_str)
-        self.assertEqualPolicyModel(mock_open_include, single_int, single_list)
+        self.assertEqualPolicyModel(mock_open, single_int, single_str)
+        self.assertEqualPolicyModel(mock_open, single_int, single_list)
 
-    def testProtocol(self, mock_open_include):
+    def testProtocol(self, mock_open):
         protocol_mixed_list = """terms:
         - name: protocol-term
           protocol:
@@ -1650,7 +1650,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: 22 80 tcp 50
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, protocol_mixed_list, protocol_mixed_str)
+        self.assertEqualPolicyModel(mock_open, protocol_mixed_list, protocol_mixed_str)
         single_int = """terms:
         - name: protocol-term
           protocol: 22
@@ -1673,11 +1673,11 @@ class YAMLRepresentationsTest(absltest.TestCase):
           - "22"
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_list)
-        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_str)
-        self.assertEqualPolicyModel(mock_open_include, single_int, single_int_list_str)
+        self.assertEqualPolicyModel(mock_open, single_int, single_int_list)
+        self.assertEqualPolicyModel(mock_open, single_int, single_int_str)
+        self.assertEqualPolicyModel(mock_open, single_int, single_int_list_str)
 
-    def testIntegerRanges(self, mock_open_include):
+    def testIntegerRanges(self, mock_open):
         hop_limit_single_int = """terms:
         - name: hop-limit-term
           hop-limit: 8
@@ -1691,7 +1691,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           action: deny
         """
         self.assertEqualPolicyModel(
-            mock_open_include, hop_limit_single_int, hop_limit_single_int_str
+            mock_open, hop_limit_single_int, hop_limit_single_int_str
         )
         hop_limit_range_nospace = """terms:
         - name: hop-limit-term
@@ -1706,10 +1706,10 @@ class YAMLRepresentationsTest(absltest.TestCase):
           action: deny
         """
         self.assertEqualPolicyModel(
-            mock_open_include, hop_limit_range_nospace, hop_limit_range_spaces
+            mock_open, hop_limit_range_nospace, hop_limit_range_spaces
         )
 
-    def testLogging(self, mock_open_include):
+    def testLogging(self, mock_open):
         logging_bool_lower = """terms:
         - name: logging-term
           logging: "true"
@@ -1722,9 +1722,9 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, logging_bool_lower, logging_bool_bool)
+        self.assertEqualPolicyModel(mock_open, logging_bool_lower, logging_bool_bool)
 
-    def testLogLimit(self, mock_open_include):
+    def testLogLimit(self, mock_open):
         log_limit_nospace = """terms:
         - name: log-limit-term
           log-limit: 1000/day
@@ -1737,9 +1737,9 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, log_limit_nospace, log_limit_spaces)
+        self.assertEqualPolicyModel(mock_open, log_limit_nospace, log_limit_spaces)
 
-    def testFlexMatchRange(self, mock_open_include):
+    def testFlexMatchRange(self, mock_open):
         flexmatch_normal = """terms:
         - name: flexible-match-range-term
           flexible-match-range:
@@ -1758,9 +1758,9 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, flexmatch_normal, flexmatch_str)
+        self.assertEqualPolicyModel(mock_open, flexmatch_normal, flexmatch_str)
 
-    def testTuples(self, mock_open_include):
+    def testTuples(self, mock_open):
         tuple_inline_list = """terms:
         - name: target-resources-term
           target-resources: ["(proj1,vpc1)","(proj2,vpc2)"]
@@ -1783,8 +1783,8 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, tuple_inline_list, tuple_splay_list)
-        self.assertEqualPolicyModel(mock_open_include, tuple_inline_list, tuple_splay_list_noparen)
+        self.assertEqualPolicyModel(mock_open, tuple_inline_list, tuple_splay_list)
+        self.assertEqualPolicyModel(mock_open, tuple_inline_list, tuple_splay_list_noparen)
 
         tuple_single_str = """terms:
         - name: target-resources-term
@@ -1805,8 +1805,8 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(mock_open_include, tuple_single_str, tuple_single_inline_list)
-        self.assertEqualPolicyModel(mock_open_include, tuple_single_str, tuple_single_splay_list)
+        self.assertEqualPolicyModel(mock_open, tuple_single_str, tuple_single_inline_list)
+        self.assertEqualPolicyModel(mock_open, tuple_single_str, tuple_single_splay_list)
 
 
 if __name__ == '__main__':

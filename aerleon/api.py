@@ -38,7 +38,7 @@ have a single filter, which must have a "header" section and a "terms" list. The
 "header" instructs Aerleon to produce Cisco ACL output. The "terms" list defines
 the access control behavior we want for this filter.
 
-```
+```python
 cisco_example_policy = {
     "filename": "cisco_example_policy",
     "filters": [
@@ -80,7 +80,7 @@ Now the network names used in this example have to be defined. The naming defini
 constructed as follows. In this example we are dynamically selecting between two sets of IP
 addresses for the mail server.
 
-```
+```python
 mail_server_ips_set0 = ["200.1.1.4/32","200.1.1.5/32"]
 mail_server_ips_set1 = ["200.1.2.4/32","200.1.2.5/32"]
 
@@ -122,7 +122,7 @@ Now to call the Generate method. We need to first construct a Naming object
 and load the network definitions, then pass that to Generate along with the
 policy object.
 
-```
+```python
 definitions = naming.Naming()
 definitions.ParseDefinitionsObject(networks, "")
 configs = api.Generate([cisco_example_policy], definitions)
@@ -184,6 +184,23 @@ ip access-list extended test-filter
 exit
 ```
 
+## Using `include` with the Generate API
+
+To support `include` directives with the Generate API, specify the optional `include_path` argument.
+
+```python
+configs = api.Generate([cisco_example_policy], definitions, include_path='/path/to/includes/')
+```
+
+When following includes, paths are resolved relative to the `include_path` directory. The python relative_to check is performed to ensure that only files within the `include_path` directory can be accessed, preventing arbitrary file access.
+
+Alternatively, you can specify a fixed list of includable files using the `include_files` argument:
+
+```python
+configs = api.Generate([cisco_example_policy], definitions, include_files={
+    'deny_bogons': deny_bogons_terms
+})
+```
 
 ## Aerleon "AclCheck" API
 
@@ -214,6 +231,7 @@ from aerleon.lib import (
     plugin_supervisor,
     policy,
     policy_builder,
+    yaml,
 )
 
 
@@ -224,6 +242,8 @@ def Generate(
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
+    include_path: pathlib.Path = None,
+    includes: "dict[str, policy_builder.PolicyDict]" = None,
 ) -> "dict[str, str]":
     """Generate ACLs from policies.
 
@@ -251,12 +271,20 @@ def Generate(
         with an expiration date less than this number of weeks in the future.
         Default value is 2.
 
+      include_path: Optional, a pathlib.Path to a directory to search for included
+        YAML policies.
+
+      includes: Optional, a dictionary mapping include names to policy dictionaries.
+        This is used for programmatically-defined includes.
+
     Returns:
       A dictionary mapping generated file names to their contents. Users should take
       care to use different file names for each given policy to avoid file name collisions.
       If option output_directory is used the generated files will be written to that output
       directory and no data will be returned to the caller.
     """
+    if include_path and includes:
+        raise TypeError("include_path and includes are mutually exclusive.")
 
     context = multiprocessing.get_context()
     return _Generate(
@@ -266,7 +294,9 @@ def Generate(
         output_directory,
         optimize,
         shade_check,
-        exp_info=expiration_weeks,
+        expiration_weeks,
+        include_path,
+        includes,
     )
 
 
@@ -278,6 +308,8 @@ def _Generate(
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
+    include_path: pathlib.Path = None,
+    includes: "dict[str, policy_builder.PolicyDict]" = None,
     max_renderers: int = 1,
 ) -> "dict[str, str]":
     # thead-safe list for storing files to write
@@ -297,6 +329,8 @@ def _Generate(
                 optimize,
                 shade_check,
                 exp_info,
+                include_path,
+                includes,
             )
     else:
         pool = context.Pool(processes=max_renderers)
@@ -313,6 +347,8 @@ def _Generate(
                     optimize,
                     shade_check,
                     exp_info,
+                    include_path,
+                    includes,
                 ),
             )
             async_results.append(async_result)
@@ -337,15 +373,45 @@ def _GenerateACL(
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: dict,
-    output_directory: pathlib.Path = None,
+    output_directory: typing.Optional[pathlib.Path] = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
+    include_path: pathlib.Path = None,
+    includes: "dict[str, policy_builder.PolicyDict]" = None,
 ):
     filename = input_policy.get("filename")
+
+    processed_policy = input_policy
+    if include_path or includes:
+
+        def _add_debug_info(data, filename):
+            if isinstance(data, dict):
+                data['__filename__'] = filename
+                data['__line__'] = 1
+                for value in data.values():
+                    _add_debug_info(value, filename)
+            elif isinstance(data, list):
+                for item in data:
+                    _add_debug_info(item, filename)
+
+        policy_copy = copy.deepcopy(input_policy)
+        _add_debug_info(policy_copy, filename)
+
+        if include_path:
+            preprocessor = yaml.YAMLPolicyPreprocessor(str(include_path))
+            processed_policy = preprocessor(filename, policy_copy)
+        elif includes:
+            preprocessor = yaml.GenerateAPIPolicyPreprocessor(includes)
+            processed_policy = preprocessor(filename, policy_copy)
+
+    if not processed_policy:
+        logging.warning('Policy %s is empty after processing includes, skipping.', filename)
+        return
+
     try:
         policy_obj = policy.FromBuilder(
-            policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
+            policy_builder.PolicyBuilder(processed_policy, definitions, optimize, shade_check)
         )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', filename, e)
