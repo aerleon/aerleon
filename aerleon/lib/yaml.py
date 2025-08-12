@@ -416,7 +416,7 @@ class YAMLPolicyPreprocessor:
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> Tuple[Optional[PolicyDict], str | pathlib.Path]:
+    ) -> Tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
         """Load, parse, and validate an include file path."""
         if not suffix_is_yaml(relative_path):
             raise ValueError(
@@ -448,6 +448,6 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> Tuple[Optional[PolicyDict], str | pathlib.Path]:
+    ) -> Tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
         return self.includes.get(relative_path), relative_path
