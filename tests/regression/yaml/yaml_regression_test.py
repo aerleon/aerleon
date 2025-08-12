@@ -1690,9 +1690,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(
-            mock_open, hop_limit_single_int, hop_limit_single_int_str
-        )
+        self.assertEqualPolicyModel(mock_open, hop_limit_single_int, hop_limit_single_int_str)
         hop_limit_range_nospace = """terms:
         - name: hop-limit-term
           hop-limit: 8-20
@@ -1705,9 +1703,7 @@ class YAMLRepresentationsTest(absltest.TestCase):
           protocol: icmp
           action: deny
         """
-        self.assertEqualPolicyModel(
-            mock_open, hop_limit_range_nospace, hop_limit_range_spaces
-        )
+        self.assertEqualPolicyModel(mock_open, hop_limit_range_nospace, hop_limit_range_spaces)
 
     def testLogging(self, mock_open):
         logging_bool_lower = """terms:

@@ -168,7 +168,9 @@ class YAMLPolicyPreprocessor:
 
     def __call__(
         self, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]]:
+    ) -> Optional[
+        Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]
+    ]:
         """Process includes and validate the file data as a PolicyDict.
 
         Args:
@@ -188,7 +190,9 @@ class YAMLPolicyPreprocessor:
 
     def _preprocess_inner(
         self, depth: int, debug_stack: list, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]]:
+    ) -> Optional[
+        Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]
+    ]:
         # Empty files are ignored with a warning
         if policy_dict is None or not policy_dict:
             logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
@@ -290,7 +294,11 @@ class YAMLPolicyPreprocessor:
                     )
                 )
 
-            if 'terms' not in filter_item or not filter_item['terms'] or not isinstance(filter_item['terms'], list):
+            if (
+                'terms' not in filter_item
+                or not filter_item['terms']
+                or not isinstance(filter_item['terms'], list)
+            ):
                 raise PolicyTypeError(
                     UserMessage(
                         "Filter must contain a terms section.",
@@ -356,11 +364,17 @@ class YAMLPolicyPreprocessor:
                         raise PolicyTypeError(
                             UserMessage(
                                 "Unable to read file as YAML.",
-                                filename=str(pathlib.Path(self.base_dir).joinpath(term_item['include'])),
+                                filename=str(
+                                    pathlib.Path(self.base_dir).joinpath(term_item['include'])
+                                ),
                                 include_chain=new_stack,
                             )
                         ) from yaml_error
-                    if not include_data or 'terms' not in include_data or not include_data['terms']:
+                    if (
+                        not include_data
+                        or 'terms' not in include_data
+                        or not include_data['terms']
+                    ):
                         logging.warning(
                             UserMessage(
                                 "Ignoring empty policy include source.",

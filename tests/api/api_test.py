@@ -306,9 +306,17 @@ class ApiTest(absltest.TestCase):
                 {
                     "header": {"targets": {"cisco": "filter-with-include"}},
                     "terms": [
-                        {"name": "term-before-include", "source-address": "NET1", "action": "accept"},
+                        {
+                            "name": "term-before-include",
+                            "source-address": "NET1",
+                            "action": "accept",
+                        },
                         {"include": "common_terms"},
-                        {"name": "term-after-include", "source-address": "NET2", "action": "accept"},
+                        {
+                            "name": "term-after-include",
+                            "source-address": "NET2",
+                            "action": "accept",
+                        },
                     ],
                 }
             ],
