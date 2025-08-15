@@ -1,0 +1,67 @@
+{
+  "set": {
+    "acl": {
+      "test-filter": {
+        "type": "ipv4",
+        "rule": {
+          "10": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "Allow HTTP from multiple clients to multiple servers",
+            "match": {
+              "ip": {
+                "protocol": "tcp",
+                "source-ip": "10.0.1.0/24",
+                "dest-ip": "192.168.1.10/32",
+                "dest-port": "80"
+              }
+            }
+          },
+          "20": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "Allow HTTP from multiple clients to multiple servers",
+            "match": {
+              "ip": {
+                "protocol": "tcp",
+                "source-ip": "10.0.1.0/24",
+                "dest-ip": "192.168.1.20/32",
+                "dest-port": "80"
+              }
+            }
+          },
+          "30": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "Allow HTTP from multiple clients to multiple servers",
+            "match": {
+              "ip": {
+                "protocol": "tcp",
+                "source-ip": "10.0.2.0/24",
+                "dest-ip": "192.168.1.10/32",
+                "dest-port": "80"
+              }
+            }
+          },
+          "40": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "Allow HTTP from multiple clients to multiple servers",
+            "match": {
+              "ip": {
+                "protocol": "tcp",
+                "source-ip": "10.0.2.0/24",
+                "dest-ip": "192.168.1.20/32",
+                "dest-port": "80"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

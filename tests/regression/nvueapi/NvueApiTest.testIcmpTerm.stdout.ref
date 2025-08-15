@@ -1,0 +1,23 @@
+{
+  "set": {
+    "acl": {
+      "test-filter": {
+        "type": "ipv4",
+        "rule": {
+          "10": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "ICMP echo-request",
+            "match": {
+              "ip": {
+                "protocol": "icmp",
+                "icmp-type": "echo-request"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

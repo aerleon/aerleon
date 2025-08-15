@@ -1,0 +1,18 @@
+{
+  "set": {
+    "acl": {
+      "test-filter": {
+        "type": "ipv4",
+        "rule": {
+          "10": {
+            "action": {
+              "permit": {},
+              "log": {}
+            },
+            "remark": "Log all traffic"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "set": {
+    "acl": {
+      "test-filter": {
+        "type": "ipv4",
+        "rule": {
+          "10": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "DNS access from corp.",
+            "match": {
+              "ip": {
+                "protocol": "udp",
+                "source-ip": "10.2.3.4/32",
+                "dest-port": "53"
+              }
+            }
+          },
+          "20": {
+            "action": {
+              "permit": {}
+            },
+            "remark": "DNS access from corp.",
+            "match": {
+              "ip": {
+                "protocol": "tcp",
+                "source-ip": "10.2.3.4/32",
+                "dest-port": "53"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
