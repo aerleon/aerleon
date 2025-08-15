@@ -819,7 +819,7 @@ class Naming:
 
         self.ParseDefinitionsObject(file_data, file_name)
 
-    def ParseDefinitionsObject(self, file_data: Dict[str, str], file_name: str) -> None:
+    def ParseDefinitionsObject(self, file_data: Dict[str, Any], file_name: str) -> None:
         """Load network and service definitions from a Python object.
 
         Arguments:
