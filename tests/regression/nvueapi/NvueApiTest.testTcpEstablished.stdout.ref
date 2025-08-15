@@ -1,22 +1,20 @@
 {
-  "set": {
-    "acl": {
-      "test-filter": {
-        "type": "ipv4",
-        "rule": {
-          "10": {
-            "action": {
-              "permit": {}
+  "acl": {
+    "test-filter": {
+      "type": "ipv4",
+      "rule": {
+        "10": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "Allow established TCP connections",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "dest-port": "80"
             },
-            "remark": "Allow established TCP connections",
-            "match": {
-              "ip": {
-                "protocol": "tcp",
-                "dest-port": "80"
-              },
-              "tcp": {
-                "state": "established"
-              }
+            "tcp": {
+              "state": "established"
             }
           }
         }

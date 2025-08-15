@@ -1,20 +1,18 @@
 {
-  "set": {
-    "acl": {
-      "test-filter-v6": {
-        "type": "ipv6",
-        "rule": {
-          "10": {
-            "action": {
-              "permit": {}
-            },
-            "remark": "Allow IPv6 traffic.",
-            "match": {
-              "ip": {
-                "protocol": "tcp",
-                "source-ip": "2001:4860:8000::5/128",
-                "dest-port": "80"
-              }
+  "acl": {
+    "test-filter-v6": {
+      "type": "ipv6",
+      "rule": {
+        "10": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "Allow IPv6 traffic.",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "source-ip": "2001:4860:8000::5/128",
+              "dest-port": "80"
             }
           }
         }

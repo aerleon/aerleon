@@ -137,7 +137,6 @@ SUPPORTED_TOKENS = {
     'protocol',
     'source_address',
     'source_port',
-    'translated', #TODO(kyleomalley): This probably isn't needed for nvueapi
 }
 
 SUPPORTED_SUB_TOKENS = {
@@ -173,12 +172,11 @@ class NvueApiTest(absltest.TestCase):
         # Verify it's valid JSON
         config = json.loads(output)
         
-        # Check basic structure (updated for NVUE 'set:' format)
-        self.assertIn('set', config)
-        self.assertIn('acl', config['set'])
-        self.assertIn('test-filter', config['set']['acl'])
+        # Check basic structure
+        self.assertIn('acl', config)
+        self.assertIn('test-filter', config['acl'])
         
-        acl_config = config['set']['acl']['test-filter']
+        acl_config = config['acl']['test-filter']
         self.assertEqual(acl_config['type'], 'ipv4')
         self.assertIn('rule', acl_config)
         
@@ -212,7 +210,7 @@ class NvueApiTest(absltest.TestCase):
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        rules = config['set']['acl']['test-filter']['rule']
+        rules = config['acl']['test-filter']['rule']
         
         # Should have 4 rules now (DNS TCP+UDP, HTTP, DENY = 4 total)
         self.assertEqual(len(rules), 4)
@@ -237,7 +235,7 @@ class NvueApiTest(absltest.TestCase):
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        acl_config = config['set']['acl']['test-filter-v6']
+        acl_config = config['acl']['test-filter-v6']
         
         self.assertEqual(acl_config['type'], 'ipv6')
         
@@ -288,7 +286,7 @@ term allow-mac {
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        acl_config = config['set']['acl']['test-filter']
+        acl_config = config['acl']['test-filter']
         
         self.assertEqual(acl_config['type'], 'ipv4')
         
@@ -312,7 +310,7 @@ term allow-mac {
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        acl_config = config['set']['acl']['test-filter-v6']
+        acl_config = config['acl']['test-filter-v6']
         
         self.assertEqual(acl_config['type'], 'ipv6')
         
@@ -349,7 +347,7 @@ term allow-web-multi {
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        rules = config['set']['acl']['test-filter']['rule']
+        rules = config['acl']['test-filter']['rule']
         
         # Should have 4 rules (2 clients × 2 servers = 4 combinations)
         self.assertEqual(len(rules), 4)
@@ -377,7 +375,7 @@ term allow-web-multi {
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        acl_config = config['set']['acl']['test-filter']
+        acl_config = config['acl']['test-filter']
         
         self.assertEqual(acl_config['type'], 'ipv4')
         
@@ -398,7 +396,7 @@ term allow-web-multi {
         output = str(nvueapi.NvueApi(pol, EXP_INFO))
         
         config = json.loads(output)
-        acl_config = config['set']['acl']['test-filter']
+        acl_config = config['acl']['test-filter']
         
         self.assertEqual(acl_config['type'], 'ipv4')
         

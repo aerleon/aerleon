@@ -18,7 +18,7 @@ Generates ACL configurations for NVIDIA Cumulus Linux switches using the
 NVUE (NVIDIA User Experience) REST API JSON format.
 
 More information about NVUE:
-https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-55/System-Configuration/NVIDIA-User-Experience-NVUE/
+https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-514/System-Configuration/NVIDIA-User-Experience-NVUE/
 """
 
 import json
@@ -266,10 +266,10 @@ class NvueApi(aclgenerator.ACLGenerator):
 
     _PLATFORM = 'nvueapi'
     _DEFAULT_PROTOCOL = 'ip'
-    _SUFFIX = '.json'
+    SUFFIX = '.json'
     SUPPORTED_AF = set(['inet', 'inet6'])
     SUPPORTED_TARGETS = frozenset(['nvueapi'])
-    WARN_IF_UNSUPPORTED = frozenset([])
+    WARN_IF_UNSUPPORTED = frozenset(['translated', 'stateless_reply', 'counter', 'policer'])
 
     def __init__(self, policy_obj: policy.Policy, exp_info: int) -> None:
         """Initialize NVUE API generator.
@@ -391,11 +391,9 @@ class NvueApi(aclgenerator.ACLGenerator):
         for _, policy_config in self.nvue_policies:
             acl_config.update(policy_config['acl'])
 
-        # Wrap in NVUE 'set:' structure to match actual device format
+        # Return ACL configuration directly without 'set:' wrapper
         nvue_config = {
-            'set': {
-                'acl': acl_config
-            }
+            'acl': acl_config
         }
 
         return json.dumps(nvue_config, indent=2)
@@ -410,20 +408,23 @@ class NvueApi(aclgenerator.ACLGenerator):
             'comment',
             'destination_address',
             'destination_port',
-            'icmp_type',     # Now supported for IPv4 and IPv6
-            'logging',       # NVUE supports logging as 'log' action
+            'icmp_type',
+            'logging',
             'name',
             'option',        # For TCP established state
             'protocol',
             'source_address',
             'source_port',
-            'translated',    # obj attribute, not token
         }
 
         # Remove unsupported tokens
         supported_tokens -= {
             'verbatim',      # NVUE doesn't support verbatim rules
             'icmp_code',     # Not implemented yet
+            'destination_address_exclude',  # NVUE doesn't support address exclusion
+            'source_address_exclude',       # NVUE doesn't support address exclusion
+            'stateless_reply',  # Not implementing stateless reply functionality
+            'translated',    # Not implementing NAT functionality
         }
 
         # NVUE-specific sub-tokens

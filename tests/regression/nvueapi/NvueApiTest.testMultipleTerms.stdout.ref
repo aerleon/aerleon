@@ -1,54 +1,52 @@
 {
-  "set": {
-    "acl": {
-      "test-filter": {
-        "type": "ipv4",
-        "rule": {
-          "10": {
-            "action": {
-              "permit": {}
-            },
-            "remark": "DNS access from corp.",
-            "match": {
-              "ip": {
-                "protocol": "udp",
-                "source-ip": "10.2.3.4/32",
-                "dest-port": "53"
-              }
-            }
+  "acl": {
+    "test-filter": {
+      "type": "ipv4",
+      "rule": {
+        "10": {
+          "action": {
+            "permit": {}
           },
-          "20": {
-            "action": {
-              "permit": {}
-            },
-            "remark": "DNS access from corp.",
-            "match": {
-              "ip": {
-                "protocol": "tcp",
-                "source-ip": "10.2.3.4/32",
-                "dest-port": "53"
-              }
+          "remark": "DNS access from corp.",
+          "match": {
+            "ip": {
+              "protocol": "udp",
+              "source-ip": "10.2.3.4/32",
+              "dest-port": "53"
             }
-          },
-          "30": {
-            "action": {
-              "permit": {}
-            },
-            "remark": "HTTP access from corp.",
-            "match": {
-              "ip": {
-                "protocol": "tcp",
-                "source-ip": "10.2.3.4/32",
-                "dest-port": "80"
-              }
-            }
-          },
-          "40": {
-            "action": {
-              "deny": {}
-            },
-            "remark": "Default deny rule."
           }
+        },
+        "20": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "DNS access from corp.",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "source-ip": "10.2.3.4/32",
+              "dest-port": "53"
+            }
+          }
+        },
+        "30": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "HTTP access from corp.",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "source-ip": "10.2.3.4/32",
+              "dest-port": "80"
+            }
+          }
+        },
+        "40": {
+          "action": {
+            "deny": {}
+          },
+          "remark": "Default deny rule."
         }
       }
     }

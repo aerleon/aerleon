@@ -1,19 +1,17 @@
 {
-  "set": {
-    "acl": {
-      "test-filter-v6": {
-        "type": "ipv6",
-        "rule": {
-          "10": {
-            "action": {
-              "permit": {}
-            },
-            "remark": "ICMPv6 echo-request",
-            "match": {
-              "ip": {
-                "protocol": "icmpv6",
-                "icmpv6-type": "echo-request"
-              }
+  "acl": {
+    "test-filter-v6": {
+      "type": "ipv6",
+      "rule": {
+        "10": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "ICMPv6 echo-request",
+          "match": {
+            "ip": {
+              "protocol": "icmpv6",
+              "icmpv6-type": "echo-request"
             }
           }
         }
