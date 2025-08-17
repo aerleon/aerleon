@@ -124,8 +124,7 @@ class Term(aclgenerator.Term):
             source_addrs, dest_addrs, protocols, dest_ports, source_ports, icmp_types
         ):
             rule_dict = self._CreateSingleRule(
-                src_addr, dst_addr, protocol,
-                dest_port, source_port, icmp_type
+                src_addr, dst_addr, protocol, dest_port, source_port, icmp_type
             )
             if rule_dict:  # Only add non-empty rules
                 rules.append(rule_dict)
@@ -134,10 +133,10 @@ class Term(aclgenerator.Term):
 
     def _GetFilteredAddresses(self, addresses) -> List[str]:
         """Get addresses filtered by address family.
-        
+
         Args:
             addresses: List of address objects to filter
-            
+
         Returns:
             List of address strings matching the current address family
         """
@@ -154,7 +153,7 @@ class Term(aclgenerator.Term):
 
     def _GetProtocols(self) -> List[Optional[str]]:
         """Get protocol list, translating Aerleon protocol names to NVUE format.
-        
+
         Returns:
             List of protocol names in NVUE format, or [None] if no protocols specified
         """
@@ -164,10 +163,10 @@ class Term(aclgenerator.Term):
 
     def _GetPorts(self, port_list) -> List[Optional[str]]:
         """Get port list in NVUE format (porta:portz).
-        
+
         Args:
             port_list: List of port ranges from the policy term
-            
+
         Returns:
             List of port strings in NVUE format, or [None] if no ports specified
         """
@@ -185,7 +184,7 @@ class Term(aclgenerator.Term):
 
     def _GetIcmpTypes(self) -> List[Optional[str]]:
         """Get ICMP type list, converting from Aerleon format to iptables format.
-        
+
         Returns:
             List of ICMP type strings in iptables format, or [None] if no ICMP types specified
         """
@@ -194,19 +193,25 @@ class Term(aclgenerator.Term):
 
         return [_ICMP_TYPE_TABLE.get(icmp_type, icmp_type) for icmp_type in self.term.icmp_type]
 
-    def _CreateSingleRule(self, src_addr: Optional[str], dst_addr: Optional[str], 
-                         protocol: Optional[str], dest_port: Optional[str], 
-                         source_port: Optional[str], icmp_type: Optional[str]) -> Dict:
+    def _CreateSingleRule(
+        self,
+        src_addr: Optional[str],
+        dst_addr: Optional[str],
+        protocol: Optional[str],
+        dest_port: Optional[str],
+        source_port: Optional[str],
+        icmp_type: Optional[str],
+    ) -> Dict:
         """Create a single NVUE rule from the given parameters.
-        
+
         Args:
             src_addr: Source IP address/network
-            dst_addr: Destination IP address/network  
+            dst_addr: Destination IP address/network
             protocol: Protocol name
             dest_port: Destination port or port range
             source_port: Source port or port range
             icmp_type: ICMP type name
-            
+
         Returns:
             Dictionary representing a single NVUE rule
         """
@@ -214,21 +219,21 @@ class Term(aclgenerator.Term):
 
         # Set action - NVUE uses object format with empty dict values
         action_dict = {}
-        
+
         # Handle primary action
         if self.term.action:
             action = self.term.action[0]
             nvue_action = _ACTION_TABLE.get(action, action)
             action_dict[nvue_action] = {}
-        
+
         # Add logging if specified
         if self.term.logging:
             action_dict['log'] = {}
-        
+
         # If no actions specified, default to permit
         if not action_dict:
             action_dict['permit'] = {}
-            
+
         rule_dict['action'] = action_dict
 
         # Set remark/comment
@@ -276,7 +281,7 @@ class Term(aclgenerator.Term):
         # Add IP match conditions if any exist
         if ip_dict:
             match_dict['ip'] = ip_dict
-            
+
         # Add TCP conditions if any exist (at same level as ip)
         if tcp_dict:
             match_dict['tcp'] = tcp_dict
@@ -334,11 +339,13 @@ class NvueApi(aclgenerator.ACLGenerator):
             elif 'mac' in filter_options:
                 raise UnsupportedNvueFilterError(
                     'NVUE MAC ACLs are not supported by Aerleon. '
-                    'Aerleon only supports IP-based access control.')
+                    'Aerleon only supports IP-based access control.'
+                )
             elif 'mixed' in filter_options:
                 raise UnsupportedNvueFilterError(
                     'NVUE does not support mixed address family ACLs. '
-                    'Use separate ipv4 and ipv6 ACLs instead.')
+                    'Use separate ipv4 and ipv6 ACLs instead.'
+                )
             else:
                 self.address_family = 'ipv4'
 
@@ -349,11 +356,18 @@ class NvueApi(aclgenerator.ACLGenerator):
             for term in terms:
                 if term.expiration:
                     if term.expiration <= exp_info:
-                        logging.info('INFO: Term %s in policy %s expires '
-                                   'in less than two weeks.', term.name, filter_name)
+                        logging.info(
+                            'INFO: Term %s in policy %s expires ' 'in less than two weeks.',
+                            term.name,
+                            filter_name,
+                        )
                     if term.expiration <= exp_info:
-                        logging.warning('WARNING: Term %s in policy %s is expired and '
-                                      'will not be rendered.', term.name, filter_name)
+                        logging.warning(
+                            'WARNING: Term %s in policy %s is expired and '
+                            'will not be rendered.',
+                            term.name,
+                            filter_name,
+                        )
                         continue
 
                 # Handle address family filtering
@@ -378,23 +392,16 @@ class NvueApi(aclgenerator.ACLGenerator):
                         rule_number += 10
 
             # Create the full ACL structure
-            acl_config = {
-                'acl': {
-                    filter_name: {
-                        'type': self.address_family,
-                        'rule': acl_rules
-                    }
-                }
-            }
+            acl_config = {'acl': {filter_name: {'type': self.address_family, 'rule': acl_rules}}}
 
             self.nvue_policies.append((filter_name, acl_config))
 
     def _HasIPv4(self, term: policy.Term) -> bool:
         """Check if term has IPv4 addresses.
-        
+
         Args:
             term: Policy term to check
-            
+
         Returns:
             True if term has IPv4 addresses or no addresses, False otherwise
         """
@@ -407,10 +414,10 @@ class NvueApi(aclgenerator.ACLGenerator):
 
     def _HasIPv6(self, term: policy.Term) -> bool:
         """Check if term has IPv6 addresses.
-        
+
         Args:
             term: Policy term to check
-            
+
         Returns:
             True if term has IPv6 addresses or no addresses, False otherwise
         """
@@ -433,15 +440,13 @@ class NvueApi(aclgenerator.ACLGenerator):
             acl_config.update(policy_config['acl'])
 
         # Return ACL configuration directly without 'set:' wrapper
-        nvue_config = {
-            'acl': acl_config
-        }
+        nvue_config = {'acl': acl_config}
 
         return json.dumps(nvue_config, indent=2)
 
     def _BuildTokens(self):
         """Build supported tokens for the NVUE platform.
-        
+
         Returns:
             Tuple of (supported_tokens, supported_sub_tokens) sets
         """
@@ -456,7 +461,7 @@ class NvueApi(aclgenerator.ACLGenerator):
             'icmp_type',
             'logging',
             'name',
-            'option',        # For TCP established state
+            'option',  # For TCP established state
             'protocol',
             'source_address',
             'source_port',
@@ -464,12 +469,12 @@ class NvueApi(aclgenerator.ACLGenerator):
 
         # Remove unsupported tokens
         supported_tokens -= {
-            'verbatim',      # NVUE doesn't support verbatim rules
-            'icmp_code',     # Not implemented yet
+            'verbatim',  # NVUE doesn't support verbatim rules
+            'icmp_code',  # Not implemented yet
             'destination_address_exclude',  # NVUE doesn't support address exclusion
-            'source_address_exclude',       # NVUE doesn't support address exclusion
+            'source_address_exclude',  # NVUE doesn't support address exclusion
             'stateless_reply',  # Not implementing stateless reply functionality
-            'translated',    # Not implementing NAT functionality
+            'translated',  # Not implementing NAT functionality
         }
 
         # NVUE-specific sub-tokens
