@@ -140,7 +140,7 @@ SUPPORTED_TOKENS = {
 }
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny', 'reject', 'next'},
+    'action': {'accept', 'deny', 'reject'},
 }
 
 # Print a info message when a term is set to expire in that many weeks.

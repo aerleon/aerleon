@@ -21,8 +21,9 @@ More information about NVUE:
 https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-514/System-Configuration/NVIDIA-User-Experience-NVUE/
 """
 
+import itertools
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 try:
     from absl import logging
@@ -35,7 +36,6 @@ _ACTION_TABLE = {
     'accept': 'permit',
     'deny': 'deny',
     'reject': 'deny',
-    'next': 'permit',  # NVUE doesn't have explicit 'next', treat as permit
 }
 
 _PROTO_TABLE = {
@@ -48,6 +48,13 @@ _PROTO_TABLE = {
     'gre': 'gre',
     'ipv6-icmp': 'icmpv6',
     'sctp': 'sctp',
+}
+
+_ICMP_TYPE_TABLE = {
+    'echo-reply': 'echo-reply',
+    'echo-request': 'echo-request',
+    'unreachable': 'destination-unreachable',
+    'time-exceeded': 'time-exceeded',
 }
 
 
@@ -112,24 +119,28 @@ class Term(aclgenerator.Term):
         source_ports = self._GetPorts(self.term.source_port)
         icmp_types = self._GetIcmpTypes()
 
-        # Generate cartesian product of all combinations
-        for src_addr in source_addrs:
-            for dst_addr in dest_addrs:
-                for protocol in protocols:
-                    for dest_port in dest_ports:
-                        for source_port in source_ports:
-                            for icmp_type in icmp_types:
-                                rule_dict = self._CreateSingleRule(
-                                    src_addr, dst_addr, protocol,
-                                    dest_port, source_port, icmp_type
-                                )
-                                if rule_dict:  # Only add non-empty rules
-                                    rules.append(rule_dict)
+        # Generate cartesian product of all combinations using itertools
+        for src_addr, dst_addr, protocol, dest_port, source_port, icmp_type in itertools.product(
+            source_addrs, dest_addrs, protocols, dest_ports, source_ports, icmp_types
+        ):
+            rule_dict = self._CreateSingleRule(
+                src_addr, dst_addr, protocol,
+                dest_port, source_port, icmp_type
+            )
+            if rule_dict:  # Only add non-empty rules
+                rules.append(rule_dict)
 
         return rules
 
-    def _GetFilteredAddresses(self, addresses):
-        """Get addresses filtered by address family."""
+    def _GetFilteredAddresses(self, addresses) -> List[str]:
+        """Get addresses filtered by address family.
+        
+        Args:
+            addresses: List of address objects to filter
+            
+        Returns:
+            List of address strings matching the current address family
+        """
         if not addresses:
             return []
 
@@ -141,14 +152,25 @@ class Term(aclgenerator.Term):
                 filtered.append(str(addr))
         return filtered
 
-    def _GetProtocols(self):
-        """Get protocol list."""
+    def _GetProtocols(self) -> List[Optional[str]]:
+        """Get protocol list, translating Aerleon protocol names to NVUE format.
+        
+        Returns:
+            List of protocol names in NVUE format, or [None] if no protocols specified
+        """
         if not self.term.protocol:
             return [None]
         return [_PROTO_TABLE.get(p, p) for p in self.term.protocol]
 
-    def _GetPorts(self, port_list):
-        """Get port list in NVUE format (porta:portz)."""
+    def _GetPorts(self, port_list) -> List[Optional[str]]:
+        """Get port list in NVUE format (porta:portz).
+        
+        Args:
+            port_list: List of port ranges from the policy term
+            
+        Returns:
+            List of port strings in NVUE format, or [None] if no ports specified
+        """
         if not port_list:
             return [None]
 
@@ -161,28 +183,33 @@ class Term(aclgenerator.Term):
                 ports.append(f"{port_range[0]}:{port_range[1]}")
         return ports
 
-    def _GetIcmpTypes(self):
-        """Get ICMP type list."""
+    def _GetIcmpTypes(self) -> List[Optional[str]]:
+        """Get ICMP type list, converting from Aerleon format to iptables format.
+        
+        Returns:
+            List of ICMP type strings in iptables format, or [None] if no ICMP types specified
+        """
         if not self.term.icmp_type:
             return [None]
 
-        icmp_types = []
-        for icmp_type in self.term.icmp_type:
-            # Convert from Aerleon format to iptables format if needed
-            if icmp_type == 'echo-reply':
-                icmp_types.append('echo-reply')
-            elif icmp_type == 'echo-request':
-                icmp_types.append('echo-request')
-            elif icmp_type == 'unreachable':
-                icmp_types.append('destination-unreachable')
-            elif icmp_type == 'time-exceeded':
-                icmp_types.append('time-exceeded')
-            else:
-                icmp_types.append(icmp_type)  # Use as-is for other types
-        return icmp_types
+        return [_ICMP_TYPE_TABLE.get(icmp_type, icmp_type) for icmp_type in self.term.icmp_type]
 
-    def _CreateSingleRule(self, src_addr, dst_addr, protocol, dest_port, source_port, icmp_type):
-        """Create a single NVUE rule."""
+    def _CreateSingleRule(self, src_addr: Optional[str], dst_addr: Optional[str], 
+                         protocol: Optional[str], dest_port: Optional[str], 
+                         source_port: Optional[str], icmp_type: Optional[str]) -> Dict:
+        """Create a single NVUE rule from the given parameters.
+        
+        Args:
+            src_addr: Source IP address/network
+            dst_addr: Destination IP address/network  
+            protocol: Protocol name
+            dest_port: Destination port or port range
+            source_port: Source port or port range
+            icmp_type: ICMP type name
+            
+        Returns:
+            Dictionary representing a single NVUE rule
+        """
         rule_dict = {}
 
         # Set action - NVUE uses object format with empty dict values
@@ -363,7 +390,14 @@ class NvueApi(aclgenerator.ACLGenerator):
             self.nvue_policies.append((filter_name, acl_config))
 
     def _HasIPv4(self, term: policy.Term) -> bool:
-        """Check if term has IPv4 addresses."""
+        """Check if term has IPv4 addresses.
+        
+        Args:
+            term: Policy term to check
+            
+        Returns:
+            True if term has IPv4 addresses or no addresses, False otherwise
+        """
         for addr_list in [term.source_address, term.destination_address]:
             if addr_list:
                 for addr in addr_list:
@@ -372,7 +406,14 @@ class NvueApi(aclgenerator.ACLGenerator):
         return True  # Allow terms without addresses
 
     def _HasIPv6(self, term: policy.Term) -> bool:
-        """Check if term has IPv6 addresses."""
+        """Check if term has IPv6 addresses.
+        
+        Args:
+            term: Policy term to check
+            
+        Returns:
+            True if term has IPv6 addresses or no addresses, False otherwise
+        """
         for addr_list in [term.source_address, term.destination_address]:
             if addr_list:
                 for addr in addr_list:
@@ -399,7 +440,11 @@ class NvueApi(aclgenerator.ACLGenerator):
         return json.dumps(nvue_config, indent=2)
 
     def _BuildTokens(self):
-        """Build supported tokens for the platform."""
+        """Build supported tokens for the NVUE platform.
+        
+        Returns:
+            Tuple of (supported_tokens, supported_sub_tokens) sets
+        """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         # Add NVUE-specific tokens
@@ -429,7 +474,7 @@ class NvueApi(aclgenerator.ACLGenerator):
 
         # NVUE-specific sub-tokens
         supported_sub_tokens = {
-            'action': {'accept', 'deny', 'reject', 'next'},
+            'action': {'accept', 'deny', 'reject'},
         }
 
         return supported_tokens, supported_sub_tokens
