@@ -39,6 +39,7 @@ Plug-in authors may observe that this module exposes its internal state
 directly on the module for transparency. These names should be treated as
 undocumented and subject to change.
 """
+
 from __future__ import annotations
 
 import importlib.util
