@@ -93,6 +93,8 @@ jobs:
         uses: actions/download-artifact@v4
       - name: Remove signature # pypi will not ignore the signatures anymore and does not support them.
         run: rm -f built-packages/aerleon-*.sigstore
+      - name: Remove signature json
+        run: rm -f built-packages/aerleon-*.sigstore.json
       - name: publish
         uses: pypa/gh-action-pypi-publish@v1.8.14
         with:
