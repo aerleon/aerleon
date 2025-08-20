@@ -39,6 +39,7 @@ Plug-in authors may observe that this module exposes its internal state
 directly on the module for transparency. These names should be treated as
 undocumented and subject to change.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -119,6 +120,7 @@ BUILTIN_GENERATORS: list[Tuple] = [
     ('ciscoxr',              'aerleon.lib.ciscoxr',              'CiscoXR'),
     ('nftables',             'aerleon.lib.nftables',             'Nftables'),
     ('nokiasrl',             'aerleon.lib.nokiasrl',             'NokiaSRLinux'),
+    ('nvueapi',              'aerleon.lib.nvueapi',              'NvueApi'),
     ('gce',                  'aerleon.lib.gce',                  'GCE'),
     ('gcp_hf',               'aerleon.lib.gcp_hf',               'HierarchicalFirewall'),
     ('paloalto',             'aerleon.lib.paloaltofw',           'PaloAltoFW'),
