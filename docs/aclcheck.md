@@ -71,9 +71,7 @@ example_policy = {
                 "targets": {
                     "cisco": "test-filter"
                 },
-                "kvs": {
-                    "comment": "Sample filter for AclCheck API demo"
-                },
+                "comment": "Sample filter for AclCheck API demo"
             },
             "terms": [
                 {
@@ -155,7 +153,7 @@ except Exception as e:
 *   **`input_policy` (dict):** This dictionary represents the Aerleon policy.
     *   `filename`: A string identifier for the policy (primarily for context in logs/errors).
     *   `filters`: A list of filter dictionaries. Each filter dictionary must contain:
-        *   `header`: A dictionary defining the filter's targets (e.g., `{"cisco": "filter_name"}`). At least one target must be specified for the policy to be parsed correctly, even though `AclCheck` itself is platform-agnostic. It can also contain other header options like `kvs` for comments.
+        *   `header`: A dictionary defining the filter's targets (e.g., `{"cisco": "filter_name"}`). At least one target must be specified for the policy to be parsed correctly, even though `AclCheck` itself is platform-agnostic. It can also contain other header options like `comment`.
         *   `terms`: A list of term dictionaries. Each term defines specific match criteria (like `source-address`, `destination-port`, `protocol`) and an `action` (e.g., `accept`, `deny`).
 *   **`definitions` (aerleon.lib.naming.Naming):** This object holds the definitions for all named entities (like IP addresses, networks, services/ports) referenced in the policy.
     *   You can populate it by calling `ParseDefinitionsObject` with a dictionary structured similarly to how `NETWORK.net` and `SERVICES.svc` files are formatted, or by loading actual definition files.
