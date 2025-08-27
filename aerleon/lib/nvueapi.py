@@ -298,7 +298,7 @@ class NvueApi(aclgenerator.ACLGenerator):
 
     _PLATFORM = 'nvueapi'
     _DEFAULT_PROTOCOL = 'ip'
-    SUFFIX = '_nvueapi.json'
+    SUFFIX = '.nvueapi.json'
     SUPPORTED_AF = set(['inet', 'inet6'])
     SUPPORTED_TARGETS = frozenset(['nvueapi'])
     WARN_IF_UNSUPPORTED = frozenset(['translated', 'stateless_reply', 'counter', 'policer'])
