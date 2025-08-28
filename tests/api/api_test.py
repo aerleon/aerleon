@@ -1,3 +1,4 @@
+import logging
 import re
 
 from absl.testing import absltest
@@ -16,9 +17,7 @@ GOOD_POLICY_1: PolicyDict = {
                 "targets": {
                     "cisco": "test-filter"
                 },
-                "kvs": {
-                    "comment": "Sample comment"
-                },
+                "comment": "Sample comment",
             },
             "terms": [
                 {
@@ -205,8 +204,18 @@ class ApiTest(absltest.TestCase):
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
 
-        configs = api.Generate([GOOD_POLICY_1], definitions)
-        acl = configs["raw_policy_all_builtin.acl"]
+        with self.assertLogs(level=logging.WARNING) as generate_logs:
+            logging.warning("__SENTINEL__")
+
+            configs = api.Generate([GOOD_POLICY_1], definitions)
+            acl = configs["raw_policy_all_builtin.acl"]
+
+        # Verify there were no (unexpected) log messages
+        self.assertEqual(
+            [r for r in generate_logs.records if r.getMessage() != "__SENTINEL__"],
+            [],
+            msg="Unexpected log messages",
+        )
 
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' deny ip any 10.2.0.0 0.0.255.255', str(acl)))
@@ -216,11 +225,21 @@ class ApiTest(absltest.TestCase):
         definitions.ParseDefinitionsObject(SERVICES_1, "blah")
         definitions.ParseDefinitionsObject(NETWORKS_1, "blah")
 
-        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
-        self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+        with self.assertLogs(level=logging.WARNING) as aclcheck_logs:
+            logging.warning("__SENTINEL__")
 
-        configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.5')
-        self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
+            self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.5')
+            self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+
+        # Verify there were no (unexpected) log messages
+        self.assertEqual(
+            [r for r in aclcheck_logs.records if r.getMessage() != "__SENTINEL__"],
+            [],
+            msg="Unexpected log messages",
+        )
 
     @capture.stdout
     def testDocsExample(self):
@@ -265,7 +284,7 @@ class ApiTest(absltest.TestCase):
                 {
                     "header": {
                         "targets": {"cisco": "test-filter"},
-                        "kvs": {"comment": "Sample comment"},
+                        "comment": "Sample comment",
                     },
                     "terms": [
                         {
@@ -290,9 +309,19 @@ class ApiTest(absltest.TestCase):
 
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(networks, "")
-        configs = api.Generate([cisco_example_policy], definitions)
-        acl = configs["cisco_example_policy.acl"]
-        print(acl)
+        with self.assertLogs(level=logging.WARNING) as generate_logs:
+            logging.warning("__SENTINEL__")
+
+            configs = api.Generate([cisco_example_policy], definitions)
+            acl = configs["cisco_example_policy.acl"]
+            print(acl)
+
+            # Verify there were no (unexpected) log messages
+            self.assertEqual(
+                [r for r in generate_logs.records if r.getMessage() != "__SENTINEL__"],
+                [],
+                msg="Unexpected log messages",
+            )
 
         self.assertTrue(re.search(' deny-to-reserved', str(acl)))
         self.assertTrue(re.search(' permit ip any host 200.1.2.4', str(acl)))
@@ -371,7 +400,7 @@ class ApiTest(absltest.TestCase):
                 {
                     "header": {
                         "targets": {"cisco": "test-filter"},  # Target is needed for policy parsing
-                        "kvs": {"comment": "Sample filter for AclCheck API demo"},
+                        "comment": "Sample filter for AclCheck API demo",
                     },
                     "terms": [
                         {
@@ -412,16 +441,19 @@ class ApiTest(absltest.TestCase):
         source_port = "49152"  # Ephemeral port
 
         try:
-            # Use AclCheck.FromPolicyDict via the api.AclCheck wrapper
-            summary = api.AclCheck(
-                input_policy=example_policy,
-                definitions=defs,
-                src=source_ip,
-                dst=destination_ip,
-                sport=source_port,
-                dport=destination_port,
-                proto=protocol,
-            )
+            with self.assertLogs(level=logging.WARNING) as aclcheck_logs:
+                logging.warning("__SENTINEL__")
+
+                # Use AclCheck.FromPolicyDict via the api.AclCheck wrapper
+                summary = api.AclCheck(
+                    input_policy=example_policy,
+                    definitions=defs,
+                    src=source_ip,
+                    dst=destination_ip,
+                    sport=source_port,
+                    dport=destination_port,
+                    proto=protocol,
+                )
 
             # Print the summary
             if summary:
@@ -441,6 +473,13 @@ class ApiTest(absltest.TestCase):
         test_output = "\n".join(test_output)
 
         # Assertions on the captured output
+        # Verify there were no (unexpected) log messages
+        self.assertEqual(
+            [r for r in aclcheck_logs.records if r.getMessage() != "__SENTINEL__"],
+            [],
+            msg="Unexpected log messages",
+        )
+
         # Verify that the correct filter and term are identified
         self.assertIn("Filter: test-filter", test_output)
         self.assertIn("term: allow-web-traffic", test_output)
