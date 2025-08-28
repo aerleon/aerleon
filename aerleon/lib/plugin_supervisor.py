@@ -70,7 +70,7 @@ class _PluginSupervisor:
     def __init__(self) -> None:
         self.is_setup = False
 
-    def Start(self, config: PluginSupervisorConfiguration = None) -> None:
+    def Start(self, config: Optional[PluginSupervisorConfiguration] = None) -> None:
         setup = _PluginSetup(config)
         self.plugins, self.generators = setup.plugins, setup.generators
         self.is_setup = True
@@ -160,9 +160,9 @@ class PluginSupervisorConfiguration:
     """
 
     disable_discovery: bool = False
-    disable_plugin: list[str] = None
-    disable_builtin: list[str] = None
-    include_path: list[list[str]] = None
+    disable_plugin: Optional[list[str]] = None
+    disable_builtin: Optional[list[str]] = None
+    include_path: Optional[list[list[str]]] = None
 
 
 class _PluginSetup:
@@ -179,11 +179,11 @@ class _PluginSetup:
     """
 
     disable_discovery: bool = False
-    disable_plugin: list[str] = None
-    disable_builtin: list[str] = None
-    include_path: list[list[str]] = None
+    disable_plugin: Optional[list[str]] = None
+    disable_builtin: Optional[list[str]] = None
+    include_path: Optional[list[list[str]]] = None
 
-    def __init__(self, config: PluginSupervisorConfiguration = None) -> None:
+    def __init__(self, config: Optional[PluginSupervisorConfiguration] = None) -> None:
         """Initialize self.generators, self.plugins."""
 
         self.generators = {}

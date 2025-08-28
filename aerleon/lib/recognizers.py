@@ -23,6 +23,7 @@ import enum
 import re
 import typing
 from dataclasses import dataclass
+from typing import Optional
 
 if typing.TYPE_CHECKING:
     from aerleon.lib.policy_builder import (
@@ -37,12 +38,12 @@ if typing.TYPE_CHECKING:
 @dataclass
 class RecognizerContext:
     policy: RawPolicy
-    filter: RawFilter = None
-    header: RawFilterHeader = None
-    target: RawTarget = None
-    term: RawTerm = None
-    keyword: str = None
-    value: str = None
+    filter: Optional[RawFilter] = None
+    header: Optional[RawFilterHeader] = None
+    target: Optional[RawTarget] = None
+    term: Optional[RawTerm] = None
+    keyword: Optional[str] = None
+    value: Optional[str] = None
 
 
 @dataclass
@@ -55,13 +56,13 @@ class RecognizerKeywordResult:
 class RecognizerValueResult:
     recognized: bool
     securityCritical: bool = False
-    valueKV: dict = None
+    valueKV: Optional[dict] = None
 
 
 @dataclass
 class RecognizerOptionResult:
     securityCritical: bool
-    valueKV: dict = None
+    valueKV: Optional[dict] = None
 
 
 class TValue(enum.Enum):

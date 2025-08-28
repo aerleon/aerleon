@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, MutableMapping, Set, Tuple, Type, Union
+from typing import Dict, List, MutableMapping, Optional, Set, Tuple, Type, Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
@@ -227,8 +227,8 @@ class ProxmoxIcmp:
     def __init__(
         self,
         icmp_proto: str,
-        icmp_type: Union[str, None] = None,
-        icmp_code: Union[int, None] = None,
+        icmp_type: Optional[str] = None,
+        icmp_code: Optional[int] = None,
     ):
         self.icmp_proto = icmp_proto
         self.type = icmp_type
@@ -336,13 +336,13 @@ class Term(aclgenerator.Term):
 
     def _Format(
         self,
-        protocol: Union[str, None],
+        protocol: Optional[str],
         direction: str,
         action: str,
         source_addresses: List[Union[IPv4, IPv6]],
         destination_addresses: List[Union[IPv4, IPv6]],
-        icmp_code: Union[str, None],
-        icmp_type: Union[str, None],
+        icmp_code: Optional[str],
+        icmp_type: Optional[str],
         source_interface: str,
         source_ports: List[Union[Tuple[int, int], int]],
         destination_ports: List[Union[Tuple[int, int], int]],

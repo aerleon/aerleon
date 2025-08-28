@@ -425,7 +425,7 @@ class Term(aclgenerator.Term):
         term_remark: bool = True,
         platform: str = 'cisco',
         verbose: bool = True,
-        filter_type: str = None,
+        filter_type: Optional[str] = None,
     ) -> None:
         self.term = term
         self.proto_int = proto_int

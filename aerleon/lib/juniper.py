@@ -16,7 +16,7 @@
 
 """Juniper JCL generator."""
 
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from absl import logging
 
@@ -197,9 +197,9 @@ class Term(aclgenerator.Term):
         term_type: str,
         enable_dsmo: bool,
         noverbose: bool,
-        filter_direction: str = None,
-        interface_type: str = None,
-        filter_type: str = None,
+        filter_direction: Optional[str] = None,
+        interface_type: Optional[str] = None,
+        filter_type: Optional[str] = None,
     ):
         super().__init__(term)
         self.term = term
