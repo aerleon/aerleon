@@ -22,19 +22,13 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 
 import copy
 import re
-import sys
-from typing import Dict, Set, Tuple
+from typing import TypedDict
 
 import yaml
 from absl import logging
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Policy, Term
-
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
 
 
 class Error(aclgenerator.Error):
@@ -49,26 +43,62 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
-MatchExpression = TypedDict(
-    "MatchExpression", {"key": str, "operator": str, "values": "list[str]"}
-)
+class MatchExpression(TypedDict):
+    key: str
+    operator: str
+    values: 'list[str]'
+
+
 LabelSelector = TypedDict(
-    "PodSelector", {"matchLabels": Dict[str, str], "matchExpression": MatchExpression}
+    "PodSelector", {"matchLabels": dict[str, str], "matchExpression": MatchExpression}
 )
-IPBlock = TypedDict("IPBlock", {"cidr": str, "exceot": "list[str]"})
-PolicyPeer = TypedDict(
-    "PolicyPeer",
-    {"podSelector": LabelSelector, "namespaceSelector": LabelSelector, "ipBlock": IPBlock},
-)
-PolicyPort = TypedDict("PolicyPort", {"protocol": str, "port": int, "endPort": int})
-Egress = TypedDict("Egress", {"ports": "list[PolicyPort]", "to": "list[PolicyPeer]"})
+
+
+class IPBlock(TypedDict):
+    cidr: str
+    exceot: 'list[str]'
+
+
+class PolicyPeer(TypedDict):
+    podSelector: LabelSelector
+    namespaceSelector: LabelSelector
+    ipBlock: IPBlock
+
+
+class PolicyPort(TypedDict):
+    protocol: str
+    port: int
+    endPort: int
+
+
+class Egress(TypedDict):
+    ports: 'list[PolicyPort]'
+    to: 'list[PolicyPeer]'
+
+
 Ingress = TypedDict("Ingress", {"ports": "list[PolicyPort]", "from": "list[PolicyPeer]"})
-Spec = TypedDict("Spec", {'podSelector': LabelSelector, 'policyTypes': "list[str]"})
-Annotations = TypedDict("Annotations", {"comment": str, "owner": str})
-Metadata = TypedDict("Metadata", {"name": str, "annotations": Annotations})
-NetworkPolicy = TypedDict(
-    "NetworkPolicy", {"apiVersion": str, "kind": str, "metadata": Metadata, "spec": Spec}
-)
+
+
+class Spec(TypedDict):
+    podSelector: LabelSelector
+    policyTypes: 'list[str]'
+
+
+class Annotations(TypedDict):
+    comment: str
+    owner: str
+
+
+class Metadata(TypedDict):
+    name: str
+    annotations: Annotations
+
+
+class NetworkPolicy(TypedDict):
+    apiVersion: str
+    kind: str
+    metadata: Metadata
+    spec: Spec
 
 
 def IsDefaultDeny(term: Term) -> bool:
@@ -311,11 +341,11 @@ class K8s(aclgenerator.ACLGenerator):
     _RESOURCE_KIND = 'NetworkPolicyList'
     _PLATFORM = 'k8s'
     SUFFIX = '.yml'
-    _SUPPORTED_AF = frozenset(('mixed'))
+    _SUPPORTED_AF = frozenset('mixed')
     _GOOD_DIRECTION = ['INGRESS', 'EGRESS']
     _OPTIONAL_SUPPORTED_KEYWORDS = frozenset(['expiration'])
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:

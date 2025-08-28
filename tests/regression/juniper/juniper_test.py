@@ -1502,9 +1502,9 @@ class JuniperTest(parameterized.TestCase):
         )
         output = str(jcl)
         for result in expected:
-            self.assertIn(result, output, 'expected "%s" in %s' % (result, output))
+            self.assertIn(result, output, f'expected "{result}" in {output}')
         for result in unexpected:
-            self.assertNotIn(result, output, 'unexpected "%s" in %s' % (result, output))
+            self.assertNotIn(result, output, f'unexpected "{result}" in {output}')
 
         print(output)
 

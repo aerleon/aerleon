@@ -273,7 +273,7 @@ class Nsxt(aclgenerator.ACLGenerator):
     _DEFAULT_PROTOCOL = 'ip'
     SUFFIX = '.nsxt'
 
-    _OPTIONAL_SUPPORTED_KEYWORDS = set(['expiration', 'logging'])
+    _OPTIONAL_SUPPORTED_KEYWORDS = {'expiration', 'logging'}
     _FILTER_OPTIONS_DICT = {}
 
     def _TranslatePolicy(self, pol, exp_info):

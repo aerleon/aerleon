@@ -25,17 +25,11 @@ import copy
 import ipaddress
 import json
 import re
-import sys
-from typing import Dict, List, Set, Tuple, Union
+from typing import TypedDict, Union
 
 from absl import logging
 
 from aerleon.lib import gcp, nacaddr, policy
-
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
 
 
 class Error(gcp.Error):
@@ -50,25 +44,28 @@ class ExceededAttributeCountError(Error):
     """Raised when the total attribute count of a policy is above the maximum."""
 
 
-LogConfig = TypedDict("LogConfig", {"enable": bool})
-L4Matcher = TypedDict("L4Matcher", {"IPProtocol": str, "ports": "list[str]"})
-FirewallRule = TypedDict(
-    "FirewallRule",
-    {
-        "name": str,
-        "description": str,
-        "network": str,
-        "priority": int,
-        "sourceRanges": "list[str]",
-        "destinationRanges": "list[str]",
-        "sourceTags": "list[str]",
-        "targetTags": "list[str]",
-        "allowed": "list[L4Matcher]",
-        "denied": "list[L4Matcher]",
-        "direction": str,  # Actually Enum
-        "logConfig": LogConfig,
-    },
-)
+class LogConfig(TypedDict):
+    enable: bool
+
+
+class L4Matcher(TypedDict):
+    IPProtocol: str
+    ports: 'list[str]'
+
+
+class FirewallRule(TypedDict):
+    name: str
+    description: str
+    network: str
+    priority: int
+    sourceRanges: 'list[str]'
+    destinationRanges: 'list[str]'
+    sourceTags: 'list[str]'
+    targetTags: 'list[str]'
+    allowed: 'list[L4Matcher]'
+    denied: 'list[L4Matcher]'
+    direction: str  # Actually Enum
+    logConfig: LogConfig
 
 
 def IsDefaultDeny(term: policy.Term) -> bool:
@@ -220,7 +217,7 @@ class Term(gcp.Term):
             if self.term.destination_tag:
                 raise GceFirewallError('GCE Egress rule cannot have destination tag.')
 
-    def ConvertToDict(self) -> List[FirewallRule]:
+    def ConvertToDict(self) -> list[FirewallRule]:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -242,7 +239,7 @@ class Term(gcp.Term):
         }
         if self.term.network:
             term_dict['network'] = self.term.network
-            term_dict['name'] = '%s-%s' % (self.term.network.split('/')[-1], term_dict['name'])
+            term_dict['name'] = '{}-{}'.format(self.term.network.split('/')[-1], term_dict['name'])
         # Identify if this is inet6 processing for a term under a mixed policy.
         mixed_policy_inet6_term = False
         if self.policy_inet_version == 'mixed' and self.inet_version == 'inet6':
@@ -447,9 +444,9 @@ class GCE(gcp.GCP):
     # is rendered (which can add proto and a counter).
     _TERM_MAX_LENGTH = 53
     _GOOD_DIRECTION = ['INGRESS', 'EGRESS']
-    _OPTIONAL_SUPPORTED_KEYWORDS = set(['expiration', 'destination_tag', 'source_tag'])
+    _OPTIONAL_SUPPORTED_KEYWORDS = {'expiration', 'destination_tag', 'source_tag'}
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -588,7 +585,7 @@ class GCE(gcp.GCP):
         return out
 
 
-def GetAttributeCount(dict_term: Dict[str, Union[List, str]]) -> int:
+def GetAttributeCount(dict_term: dict[str, Union[list, str]]) -> int:
     """Calculate the attribute count of a term in its dictionary form.
 
     The attribute count of a rule is the sum of the number of ports, protocols, IP

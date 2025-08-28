@@ -47,7 +47,6 @@ import pathlib
 import sys
 from dataclasses import dataclass
 from importlib import import_module
-from typing import List, Optional, Tuple
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points, version
@@ -64,13 +63,13 @@ __all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", "SystemMetadata"
 
 class _PluginSupervisor:
     is_setup: bool
-    plugins: list[Tuple]
+    plugins: list[tuple]
     generators: dict
 
     def __init__(self) -> None:
         self.is_setup = False
 
-    def Start(self, config: Optional[PluginSupervisorConfiguration] = None) -> None:
+    def Start(self, config: PluginSupervisorConfiguration | None = None) -> None:
         setup = _PluginSetup(config)
         self.plugins, self.generators = setup.plugins, setup.generators
         self.is_setup = True
@@ -91,7 +90,7 @@ SYSTEM_METADATA: SystemMetadata = SystemMetadata(engine_version=version("aerleon
 __doc_BUILTIN_PLUGINS__ = (
     """Built-in plugins included with this project. These will always be loaded.""",
 )
-BUILTIN_GENERATORS: list[Tuple] = [
+BUILTIN_GENERATORS: list[tuple] = [
     # fmt: off
     #Target                  Module                              Constructor
     ('juniper',              'aerleon.lib.juniper',              'Juniper'),
@@ -160,9 +159,9 @@ class PluginSupervisorConfiguration:
     """
 
     disable_discovery: bool = False
-    disable_plugin: Optional[list[str]] = None
-    disable_builtin: Optional[list[str]] = None
-    include_path: Optional[list[list[str]]] = None
+    disable_plugin: list[str] | None = None
+    disable_builtin: list[str] | None = None
+    include_path: list[list[str]] | None = None
 
 
 class _PluginSetup:
@@ -179,11 +178,11 @@ class _PluginSetup:
     """
 
     disable_discovery: bool = False
-    disable_plugin: Optional[list[str]] = None
-    disable_builtin: Optional[list[str]] = None
-    include_path: Optional[list[list[str]]] = None
+    disable_plugin: list[str] | None = None
+    disable_builtin: list[str] | None = None
+    include_path: list[list[str]] | None = None
 
-    def __init__(self, config: Optional[PluginSupervisorConfiguration] = None) -> None:
+    def __init__(self, config: PluginSupervisorConfiguration | None = None) -> None:
         """Initialize self.generators, self.plugins."""
 
         self.generators = {}
@@ -288,8 +287,8 @@ class _PluginSetup:
         return loaded_plugins
 
     def _CollectBuiltinGenerators(
-        self, builtin_generators: List[Tuple[str, str, str]]
-    ) -> List[Tuple[str, ACLGenerator]]:
+        self, builtin_generators: list[tuple[str, str, str]]
+    ) -> list[tuple[str, ACLGenerator]]:
         """Import built-in modules by name."""
         loaded_generators = []
         for target, module_name, class_or_func in builtin_generators:

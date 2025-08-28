@@ -24,8 +24,6 @@ inline comments but preservers line-level comments. Fields expected to have
 
 from __future__ import annotations
 
-from typing import List, Optional, Set, Type, Union
-
 from absl import logging
 
 
@@ -43,7 +41,7 @@ class Field:
                 f = k
                 break
         indent = len(f) + 5
-        return '%s::%s' % (f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
+        return '{}::{}'.format(f, self.ValueStr().replace('\n', '\n' + ' ' * indent))
 
     def __eq__(self, o: Target) -> bool:
         if not isinstance(o, self.__class__):
@@ -76,7 +74,7 @@ class NamingField(Field):
         super().__init__(value)
         self.value = self.ParseString(value)
 
-    def ParseString(self, value: str) -> Set[str]:
+    def ParseString(self, value: str) -> set[str]:
         """Split and validate a string value into individual names."""
         parts = set(value.split())
         for p in parts:
@@ -426,7 +424,7 @@ class Block:
             raise TypeError('%s not subclass of Field.' % field)
         self.fields.append(field)
 
-    def FieldsWithType(self, f_type: Type[Comment]) -> List[Comment]:
+    def FieldsWithType(self, f_type: type[Comment]) -> list[Comment]:
         if not issubclass(f_type, Field):
             raise TypeError('%s not subclass of Field.' % f_type)
         return [x for x in self.fields if isinstance(x, f_type)]
@@ -440,7 +438,7 @@ class Block:
     def Name(self) -> str:
         return ''
 
-    def __eq__(self, o: Union[Header, Term]) -> bool:
+    def __eq__(self, o: Header | Term) -> bool:
         if not isinstance(o, self.__class__):
             return False
         if len(self.fields) != len(o.fields):
@@ -614,7 +612,7 @@ class Include:
     def __str__(self):
         return '#include %s' % self.identifier
 
-    def __eq__(self, o: "Include") -> bool:
+    def __eq__(self, o: Include) -> bool:
         if not isinstance(o, self.__class__):
             return False
         return self.identifier == o.identifier
@@ -626,7 +624,7 @@ class Include:
 class Policy:
     """An ordered list of headers, terms, comments, blank lines and includes."""
 
-    def __init__(self, identifier: Optional[str]) -> None:
+    def __init__(self, identifier: str | None) -> None:
         self.identifier = identifier
         self.members = []
 

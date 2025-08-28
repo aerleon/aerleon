@@ -17,7 +17,7 @@
 
 import collections
 import copy
-from typing import DefaultDict, Dict, List, Set, Tuple, Union
+from typing import DefaultDict, Union
 
 from absl import logging
 
@@ -53,7 +53,7 @@ def Add(statement: str) -> str:
         return statement
 
 
-def ChainFormat(kind: str, name: str, ruleset: List[str]) -> str:
+def ChainFormat(kind: str, name: str, ruleset: list[str]) -> str:
     """Builds a chain in NFtables configuration format.
 
     Args:
@@ -67,7 +67,7 @@ def ChainFormat(kind: str, name: str, ruleset: List[str]) -> str:
     header_sp = 4
     content_sp = 8
     chain_output = []
-    chain_output.append(TabSpacer(header_sp, '%s %s {' % (kind, name)))
+    chain_output.append(TabSpacer(header_sp, f'{kind} {name} {{'))
     for line in ruleset:
         chain_output.append(TabSpacer(content_sp, line))
     chain_output.append(TabSpacer(header_sp, '}'))
@@ -122,7 +122,7 @@ class Term(aclgenerator.Term):
         self.hook = nf_hook
         self.verbose = verbose
 
-    def MapICMPtypes(self, af: SyntaxWarning, term_icmp_types: List[str]) -> List[str]:
+    def MapICMPtypes(self, af: SyntaxWarning, term_icmp_types: list[str]) -> list[str]:
         """Normalize certain ICMP_TYPES for NFTables rendering.
 
         If we encounter certain keyword values in policy.Term.ICMP_TYPE keywords,
@@ -176,7 +176,7 @@ class Term(aclgenerator.Term):
                     term_icmp_types[term_icmp_types.index(item)] = ICMP_TYPE_REMAP[6].get(item)
         return term_icmp_types
 
-    def CreateAnonymousSet(self, data: List[str]) -> str:
+    def CreateAnonymousSet(self, data: list[str]) -> str:
         """Build a nftables anonymous set from some elements.
 
         Anonymous are formatted using curly braces then some data. These sets are
@@ -198,7 +198,7 @@ class Term(aclgenerator.Term):
             return nfset
         if len(data) > 1:
             nfset = ', '.join(data)
-            return '{{ {0} }}'.format(nfset)
+            return f'{{ {nfset} }}'
 
     def PortsAndProtocols(self, address_family, protocol, src_ports, dst_ports, icmp_type):
         """Handling protocol specific NFTable statements.
@@ -215,17 +215,17 @@ class Term(aclgenerator.Term):
 
         """
 
-        def PortStatement(protocol: List[str], source: str, destination: str) -> List[str]:
+        def PortStatement(protocol: list[str], source: str, destination: str) -> list[str]:
             """NFT port statement. Returns empty if no ports defined."""
             ports_list = []
 
             # SOURCE PORTS.
             if source:
-                ports_list.append('%s sport %s' % (protocol, self.CreateAnonymousSet(source)))
+                ports_list.append(f'{protocol} sport {self.CreateAnonymousSet(source)}')
 
             # DESTINATION PORTS.
             if destination:
-                ports_list.append('%s dport %s' % (protocol, self.CreateAnonymousSet(destination)))
+                ports_list.append(f'{protocol} dport {self.CreateAnonymousSet(destination)}')
 
             # Normalize ports into single nft statement.
             if ports_list:
@@ -353,8 +353,8 @@ class Term(aclgenerator.Term):
             return ''
 
     def GroupExpressions(
-        self, address_expr: List[str], pp_expr: List[str], options: str, verdict: str
-    ) -> List[str]:
+        self, address_expr: list[str], pp_expr: list[str], options: str, verdict: str
+    ) -> list[str]:
         """Combines all expressions with a verdict (decision).
 
         The inputs are already pre-sanitized by RulesetGenerator. NFTables processes
@@ -391,15 +391,15 @@ class Term(aclgenerator.Term):
                 statement.append(pstat + Add(options) + Add(verdict))
         else:
             # If no addresses or ports & protocol. Verdict only statement.
-            statement.append((Add(options) + verdict))
+            statement.append(Add(options) + verdict)
         return statement
 
     def _AddrStatement(
         self,
         address_family: str,
-        src_addr: List[Union[nacaddr.IPv4, nacaddr.IPv6]],
-        dst_addr: List[Union[nacaddr.IPv4, nacaddr.IPv6]],
-    ) -> List[str]:
+        src_addr: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
+        dst_addr: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
+    ) -> list[str]:
         """Builds an NFTables address statement.
 
         Args:
@@ -459,7 +459,7 @@ class Term(aclgenerator.Term):
                     )
         return address_statement
 
-    def RulesetGenerator(self, term: policy.Term) -> List[str]:
+    def RulesetGenerator(self, term: policy.Term) -> list[str]:
         """Generate string rules of a given Term.
 
         Rules are constructed from Terms() and are contained within chains.
@@ -506,8 +506,8 @@ class Term(aclgenerator.Term):
         return term_ruleset
 
     def _AddressClassifier(
-        self, address_to_classify: List[Union[nacaddr.IPv4, nacaddr.IPv6]]
-    ) -> DefaultDict[str, List[Union[nacaddr.IPv4, nacaddr.IPv6]]]:
+        self, address_to_classify: list[Union[nacaddr.IPv4, nacaddr.IPv6]]
+    ) -> DefaultDict[str, list[Union[nacaddr.IPv4, nacaddr.IPv6]]]:
         """Organizes network addresses according to IP family in a dict.
 
         Args:
@@ -524,7 +524,7 @@ class Term(aclgenerator.Term):
                 addresses['ip6'].append(str(addr))
         return addresses
 
-    def _Group(self, group: List[Tuple[int, int]]) -> str:
+    def _Group(self, group: list[tuple[int, int]]) -> str:
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -584,7 +584,7 @@ class Nftables(aclgenerator.ACLGenerator):
     # In Nftables 'inet' contains both IPv4 and IPv6 addresses and rules.
     NF_TABLE_AF_MAP = {'inet': 'ip', 'inet6': 'ip6', 'mixed': 'inet'}
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """NFTables generator list of supported tokens and sub tokens.
 
         Returns:
@@ -713,7 +713,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 )
             )
 
-    def _ProcessHeader(self, header_options: List[str]) -> Tuple[str, str, int, str, bool]:
+    def _ProcessHeader(self, header_options: list[str]) -> tuple[str, str, int, str, bool]:
         """Aerleon policy header processing.
 
         Args:
@@ -768,7 +768,7 @@ class Nftables(aclgenerator.ACLGenerator):
         return netfilter_family, netfilter_hook, netfilter_priority, policy_default_action, verbose
 
     def _ConfigurationDictionary(
-        self, nft_pol: List[Union[policy.Header, str, int, bool, DefaultDict]]
+        self, nft_pol: list[Union[policy.Header, str, int, bool, DefaultDict]]
     ) -> DefaultDict[str, Union[str, DefaultDict]]:
         """NFTables configuration object.
 

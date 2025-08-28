@@ -9,7 +9,7 @@ from aerleon.utils import iputils
 
 file_directory = pathlib.Path(__file__).parent.absolute()
 exclude_address_testcases = []
-with open(str(file_directory) + "/address_exclude_test_cases.txt", 'r') as f:
+with open(str(file_directory) + "/address_exclude_test_cases.txt") as f:
     for line in f:
         ipstr, exstrs, restrs = line.strip().split(' ')
         ip = nacaddr.IP(ipstr)

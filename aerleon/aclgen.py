@@ -19,7 +19,7 @@ import copy
 import multiprocessing
 import pathlib
 import sys
-from typing import Iterator, List, Tuple
+from collections.abc import Iterator
 
 from absl import app, flags, logging
 
@@ -27,7 +27,7 @@ from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
-WriteList = List[Tuple[pathlib.Path, str]]
+WriteList = list[tuple[pathlib.Path, str]]
 
 
 def SetupFlags():
@@ -191,7 +191,7 @@ def RenderFile(
         with open(input_file) as f:
             conf = f.read()
             logging.debug('opened and read %s', input_file)
-    except IOError as e:
+    except OSError as e:
         logging.warning('bad file: \n%s', e)
         raise
 
@@ -260,9 +260,7 @@ def RenderFile(
                 RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError(
-                'Error generating target ACL for %s:\n%s' % (input_file, e)
-            ) from e
+            raise ACLGeneratorError(f'Error generating target ACL for {input_file}:\n{e}') from e
 
 
 def RenderACL(
@@ -270,7 +268,7 @@ def RenderACL(
     acl_suffix: str,
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
-    write_files: List[Tuple[pathlib.Path, str]],
+    write_files: list[tuple[pathlib.Path, str]],
     binary: bool = False,
 ):
     """Write the ACL string out to file if appropriate.
@@ -311,7 +309,7 @@ def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
     try:
         with open(file_name, readmode) as f:
             conf: str = str(f.read())
-    except IOError:
+    except OSError:
         return True
     if not binary:
         p4_id = '$I d:'.replace(' ', '')
@@ -327,7 +325,7 @@ def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
     return conf != new_text
 
 
-def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[pathlib.Path]:
+def DescendDirectory(input_dirname: str, ignore_directories: list[str]) -> list[pathlib.Path]:
     """Descend from input_dirname looking for policy files to render.
 
     Args:
@@ -339,7 +337,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
     """
     input_dir = pathlib.Path(input_dirname)
 
-    policy_files: List[pathlib.Path] = []
+    policy_files: list[pathlib.Path] = []
     policy_directories: Iterator[pathlib.Path] = filter(
         lambda path: path.is_dir(), input_dir.glob('**/pol')
     )
@@ -395,7 +393,7 @@ def _WriteFile(output_file: pathlib.Path, file_contents: str):
         with open(output_file, 'w') as output:
             logging.info('writing file: %s', output_file)
             output.write(file_contents)
-    except IOError:
+    except OSError:
         logging.warning('error while writing file: %s', output_file)
         raise
 
@@ -407,7 +405,7 @@ def Run(
     output_directory: str,
     exp_info: int,
     max_renderers: int,
-    ignore_directories: List[str],
+    ignore_directories: list[str],
     optimize: bool,
     shade_check: bool,
     context: multiprocessing.context.BaseContext,
@@ -466,7 +464,7 @@ def Run(
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
-        results: List[multiprocessing.pool.AsyncResult] = []
+        results: list[multiprocessing.pool.AsyncResult] = []
         for pol in policies:
             results.append(
                 pool.apply_async(

@@ -175,11 +175,9 @@ class Demo(aclgenerator.ACLGenerator):
     _PLATFORM = 'demo'
     _SUFFIX = '.demo'
 
-    _OPTIONAL_SUPPORTED_KEYWORDS = set(
-        [
-            'expiration',
-        ]
-    )
+    _OPTIONAL_SUPPORTED_KEYWORDS = {
+        'expiration',
+    }
 
     def _TranslatePolicy(self, pol, exp_info):
         self.demo_policies = []

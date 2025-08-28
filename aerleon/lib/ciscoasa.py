@@ -18,7 +18,7 @@
 
 import ipaddress
 import re
-from typing import Any, Dict, List, Set, Tuple, Union, cast
+from typing import Union, cast
 
 from absl import logging
 
@@ -76,12 +76,12 @@ class Term(cisco.ExtendedTerm):
             ret_str.append('remark not rendered due to protocol/AF mismatch.')
             return '\n'.join(ret_str)
 
-        ret_str.append('access-list %s remark %s' % (self.filter_name, self.term.name))
+        ret_str.append(f'access-list {self.filter_name} remark {self.term.name}')
         if self.term.owner:
             self.term.comment.append('Owner: %s' % self.term.owner)
         for comment in self.term.comment:
             for line in comment.split('\n'):
-                ret_str.append('access-list %s remark %s' % (self.filter_name, str(line)[:100]))
+                ret_str.append(f'access-list {self.filter_name} remark {str(line)[:100]}')
 
         # Term verbatim output - this will skip over normal term creation
         # code by returning early.  Warnings provided in policy.py.
@@ -202,12 +202,12 @@ class Term(cisco.ExtendedTerm):
         action: str,
         proto: str,
         saddr: Union[str, IPv4, IPv6],
-        sport: Union[Tuple[()], Tuple[int, int]],
+        sport: Union[tuple[()], tuple[int, int]],
         daddr: Union[str, IPv4, IPv6],
-        dport: Union[Tuple[()], Tuple[int, int]],
+        dport: Union[tuple[()], tuple[int, int]],
         icmp_type: str,
-        option: List[str],
-    ) -> List[str]:
+        option: list[str],
+    ) -> list[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
         Args:
@@ -228,13 +228,13 @@ class Term(cisco.ExtendedTerm):
         if isinstance(saddr, nacaddr.IPv4) or isinstance(saddr, ipaddress.IPv4Network):
             saddr = cast(self.IPV4_ADDRESS, saddr)
             if saddr.num_addresses > 1:
-                saddr = '%s %s' % (saddr.network_address, saddr.netmask)
+                saddr = f'{saddr.network_address} {saddr.netmask}'
             else:
                 saddr = 'host %s' % (saddr.network_address)
         if isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
             daddr = cast(self.IPV4_ADDRESS, daddr)
             if daddr.num_addresses > 1:
-                daddr = '%s %s' % (daddr.network_address, daddr.netmask)
+                daddr = f'{daddr.network_address} {daddr.netmask}'
             else:
                 daddr = 'host %s' % (daddr.network_address)
         if isinstance(saddr, summarizer.DSMNet):
@@ -246,13 +246,13 @@ class Term(cisco.ExtendedTerm):
         if isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
             saddr = cast(self.IPV6_ADDRESS, saddr)
             if saddr.num_addresses > 1:
-                saddr = '%s/%s' % (saddr.network_address, saddr.prefixlen)
+                saddr = f'{saddr.network_address}/{saddr.prefixlen}'
             else:
                 saddr = 'host %s' % (saddr.network_address)
         if isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
             daddr = cast(self.IPV6_ADDRESS, daddr)
             if daddr.num_addresses > 1:
-                daddr = '%s/%s' % (daddr.network_address, daddr.prefixlen)
+                daddr = f'{daddr.network_address}/{daddr.prefixlen}'
             else:
                 daddr = 'host %s' % (daddr.network_address)
 
@@ -260,7 +260,7 @@ class Term(cisco.ExtendedTerm):
         if not sport:
             sport = ''
         elif sport[0] != sport[1]:
-            sport = ' range %s %s' % (
+            sport = ' range {} {}'.format(
                 cisco.PortMap.GetProtocol(sport[0], proto),
                 cisco.PortMap.GetProtocol(sport[1], proto),
             )
@@ -270,7 +270,7 @@ class Term(cisco.ExtendedTerm):
         if not dport:
             dport = ''
         elif dport[0] != dport[1]:
-            dport = ' range %s %s' % (
+            dport = ' range {} {}'.format(
                 cisco.PortMap.GetProtocol(dport[0], proto),
                 cisco.PortMap.GetProtocol(dport[1], proto),
             )
@@ -317,7 +317,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
     _DEFAULT_PROTOCOL = 'ip'
     SUFFIX = '.asa'
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -363,7 +363,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
             # add a header comment if one exists
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    target.append('access-list %s remark %s' % (filter_name, line))
+                    target.append(f'access-list {filter_name} remark {line}')
 
             # now add the terms
             for term in terms:

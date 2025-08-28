@@ -19,22 +19,27 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 
 """
 
-import sys
-from typing import Dict, List, Set, Tuple
+from typing import TypedDict
 
 from aerleon.lib import aclgenerator, openconfig
 from aerleon.lib.policy import Term
 
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
-
 R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
 
-IPPrefix = TypedDict("IPPrefix", {"prefix": str})
-PortRange = TypedDict("PortRange", {"start": int, "end": int})
-Port = TypedDict("Port", {"value": int, "range": PortRange})
+
+class IPPrefix(TypedDict):
+    prefix: str
+
+
+class PortRange(TypedDict):
+    start: int
+    end: int
+
+
+class Port(TypedDict):
+    value: int
+    range: PortRange
+
 
 Match = TypedDict(
     "Match",
@@ -49,7 +54,13 @@ Match = TypedDict(
         "destination-port": Port,
     },
 )
-Action = TypedDict("Action", {"accept": None, "drop": None})
+
+
+class Action(TypedDict):
+    accept: None
+    drop: None
+
+
 ACLEntry = TypedDict(
     "ACLEntry",
     {
@@ -63,7 +74,7 @@ ACLEntry = TypedDict(
 Entries = TypedDict(
     "Entries",
     {
-        "entry": List[ACLEntry],
+        "entry": list[ACLEntry],
         "description": str,
         "name": str,
         "type": str,
@@ -104,7 +115,7 @@ class SRLTerm(openconfig.Term):
         # Put name in description field
         self.term_dict['description'] = name
 
-    def SetAction(self, filter_options: List[str]) -> None:
+    def SetAction(self, filter_options: list[str]) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         if R24_3_2 in filter_options:
             self.term_dict['action'] = {action: {}}
@@ -121,18 +132,18 @@ class SRLTerm(openconfig.Term):
                     )
             self.term_dict['action'] = {action: log}
 
-    def SetComments(self, comments: List[str]) -> None:
+    def SetComments(self, comments: list[str]) -> None:
         self.term_dict['_annotate_description'] = "_".join(comments)[:255]
 
     # Handles syntax changes in release 24.3.2 and beyond
-    def _field(self, key, filter_options: List[str]):
+    def _field(self, key, filter_options: list[str]):
         if R24_3_2 in filter_options:
             if key not in self.term_dict['match']:
                 self.term_dict['match'][key] = {}
             return self.term_dict['match'][key]
         return self.term_dict['match']
 
-    def SetOptions(self, family: str, filter_options: List[str]) -> None:
+    def SetOptions(self, family: str, filter_options: list[str]) -> None:
         # Handle various options
         opts = [str(x) for x in self.term.option]
         self.term_dict['match'] = {}
@@ -183,27 +194,27 @@ class SRLTerm(openconfig.Term):
         ):
             self.SetProtocol(family=family, protocol="tcp", filter_options=filter_options)
 
-    def SetSourceAddress(self, family: str, saddr: str, filter_options: List[str]) -> None:
+    def SetSourceAddress(self, family: str, saddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['source-ip'] = {'prefix': saddr}
 
-    def SetDestAddress(self, family: str, daddr: str, filter_options: List[str]) -> None:
+    def SetDestAddress(self, family: str, daddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['destination-ip'] = {'prefix': daddr}
 
-    def SetSourcePorts(self, start: int, end: int, filter_options: List[str]) -> None:
+    def SetSourcePorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
             val = {'value': start}
         else:
             val = {'range': {'start': start, 'end': end}}
         self._field('transport', filter_options)['source-port'] = val
 
-    def SetDestPorts(self, start: int, end: int, filter_options: List[str]) -> None:
+    def SetDestPorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
             val = {'value': start}
         else:
             val = {'range': {'start': start, 'end': end}}
         self._field('transport', filter_options)['destination-port'] = val
 
-    def SetProtocol(self, family: str, protocol: int, filter_options: List[str]) -> None:
+    def SetProtocol(self, family: str, protocol: int, filter_options: list[str]) -> None:
         field_name = "protocol" if family == "ipv4" else "next-header"
         self._field(family, filter_options)[field_name] = protocol
 
@@ -214,7 +225,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
     _PLATFORM = 'nokiasrl'
     SUFFIX = '.srl_acl'
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -240,17 +251,17 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
     def _InitACLSet(self) -> None:
         """Initialize self.acl_sets with proper Typing"""
-        self.acl_sets: List[IPFilters] = []
+        self.acl_sets: list[IPFilters] = []
 
     def _TranslateTerms(
         self,
-        terms: List[Term],
+        terms: list[Term],
         address_family: str,
         filter_name: str,
-        hdr_comments: List[str],
-        filter_options: List[str],
+        hdr_comments: list[str],
+        filter_options: list[str],
     ) -> None:
-        srl_acl_entries: Dict[str, List[ACLEntry]] = {'inet': [], 'inet6': []}
+        srl_acl_entries: dict[str, list[ACLEntry]] = {'inet': [], 'inet6': []}
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for term in terms:
             for term_af in afs:

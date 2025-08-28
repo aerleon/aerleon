@@ -15,7 +15,7 @@
 #
 """CiscoNX generator."""
 
-from typing import List, Optional
+from typing import Optional
 
 from aerleon.lib import aclgenerator, cisco
 
@@ -41,15 +41,15 @@ class CiscoNX(cisco.Cisco):
     _PROTO_INT = False
 
     def _RepositoryTagsHelper(
-        self, target: Optional[List[str]] = None, filter_type: str = '', filter_name: str = ''
-    ) -> List[str]:
+        self, target: Optional[list[str]] = None, filter_type: str = '', filter_name: str = ''
+    ) -> list[str]:
         if target is None:
             target = []
         target.extend(aclgenerator.AddRepositoryTags(' remark ', rid=False, wrap=True))
         return target
 
     # CiscoNX omits the "extended" access-list argument.
-    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> list[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -74,6 +74,6 @@ class CiscoNX(cisco.Cisco):
             target.append('ipv6 access-list %s' % filter_name)
         else:
             raise UnsupportedNXosAccessListError(
-                'access list type %s not supported by %s' % (filter_type, self._PLATFORM)
+                f'access list type {filter_type} not supported by {self._PLATFORM}'
             )
         return target

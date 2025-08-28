@@ -22,7 +22,7 @@ performace of iptables firewall.
 """
 
 import string
-from typing import Any, List, Tuple, Union
+from typing import Any, Union
 
 from aerleon.lib import iptables, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -53,15 +53,15 @@ class Term(iptables.Term):
 
     def _CalculateAddresses(
         self,
-        src_addr_list: List[Union[IPv4, IPv6]],
-        src_addr_exclude_list: List[Union[IPv4, IPv6]],
-        dst_addr_list: List[Union[IPv4, IPv6]],
-        dst_addr_exclude_list: List[Union[IPv4, IPv6]],
-    ) -> Tuple[
-        List[Union[IPv4, IPv6]],
-        List[Union[IPv4, IPv6]],
-        List[Union[IPv4, IPv6]],
-        List[Union[IPv4, IPv6]],
+        src_addr_list: list[Union[IPv4, IPv6]],
+        src_addr_exclude_list: list[Union[IPv4, IPv6]],
+        dst_addr_list: list[Union[IPv4, IPv6]],
+        dst_addr_exclude_list: list[Union[IPv4, IPv6]],
+    ) -> tuple[
+        list[Union[IPv4, IPv6]],
+        list[Union[IPv4, IPv6]],
+        list[Union[IPv4, IPv6]],
+        list[Union[IPv4, IPv6]],
     ]:
         """Calculates source and destination address list for a term.
 
@@ -103,11 +103,11 @@ class Term(iptables.Term):
 
     def _CalculateAddrList(
         self,
-        addr_list: List[Union[IPv4, IPv6]],
-        addr_exclude_list: List[Any],
+        addr_list: list[Union[IPv4, IPv6]],
+        addr_exclude_list: list[Any],
         target_af: int,
         direction: str,
-    ) -> List[Union[IPv4, IPv6]]:
+    ) -> list[Union[IPv4, IPv6]]:
         """Calculates and stores address list for target AF and direction.
 
         Args:
@@ -136,7 +136,7 @@ class Term(iptables.Term):
             addr_list = [self._all_ips]
         return addr_list
 
-    def _GenerateAddressStatement(self, src_addr: IPv4, dst_addr: IPv4) -> Tuple[str, str]:
+    def _GenerateAddressStatement(self, src_addr: IPv4, dst_addr: IPv4) -> tuple[str, str]:
         """Returns the address section of an individual iptables rule.
 
         See _CalculateAddresses documentation. Three cases are possible here,
@@ -180,7 +180,7 @@ class Term(iptables.Term):
         if len(term_name) + len(suffix) + 1 > self._SET_MAX_LENGTH:
             set_name_max_lenth = self._SET_MAX_LENGTH - len(suffix) - 1
             term_name = term_name[:set_name_max_lenth]
-        return '%s-%s' % (term_name, suffix)
+        return f'{term_name}-{suffix}'
 
 
 class Ipset(iptables.Iptables):
@@ -207,7 +207,7 @@ class Ipset(iptables.Iptables):
         output.append(iptables_output)
         return '\n'.join(output)
 
-    def _GenerateSetConfig(self, term: Term) -> List[str]:
+    def _GenerateSetConfig(self, term: Term) -> list[str]:
         """Generates set configuration for supplied term.
 
         Args:
@@ -232,5 +232,5 @@ class Ipset(iptables.Iptables):
                 % (c_str, set_name, self._SET_TYPE, term.af, set_hashsize, set_maxelem)
             )
             for address in addr_list:
-                output.append('%s %s %s' % (a_str, set_name, address))
+                output.append(f'{a_str} {set_name} {address}')
         return output

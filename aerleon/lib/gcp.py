@@ -7,7 +7,6 @@ Base class for GCP firewalling products.
 
 import json
 import re
-from typing import List
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Term
@@ -37,7 +36,7 @@ class Term(aclgenerator.Term):
     # 'all' is needed for the dedault deny, it should not be used in a pol file.
     _ALLOW_PROTO_NAME = frozenset(['tcp', 'udp', 'icmp', 'esp', 'ah', 'ipip', 'sctp', 'all'])
 
-    def _GetPorts(self) -> List[str]:
+    def _GetPorts(self) -> list[str]:
         """Return a port or port range in string format."""
         ports = []
         for start, end in self.term.destination_port:
@@ -167,4 +166,4 @@ def GetIpv6TermName(term_name: str) -> str:
       string: The IPv6 requivalent term name.
     """
 
-    return '%s-%s' % (term_name, 'v6')
+    return '{}-{}'.format(term_name, 'v6')

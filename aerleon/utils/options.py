@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, List, MutableMapping, Optional
+from collections.abc import MutableMapping
+from typing import Any, Callable, Optional
 
 
 class AbstractOption(metaclass=ABCMeta):
@@ -85,7 +86,7 @@ class AbstractValueOption(AbstractOption, metaclass=ABCMeta):
 
 
 class ValueOption(AbstractValueOption):
-    def __init__(self, *args, **kwargs: List[str]):
+    def __init__(self, *args, **kwargs: list[str]):
         super().__init__(*args, **kwargs)
         self.key = list(kwargs.keys())[0]
         self.values = kwargs[self.key]
@@ -139,8 +140,8 @@ class OptionError(Exception):
 
 
 def ProcessOptions(
-    options_lambda: Callable[[MutableMapping], List[AbstractOption]],
-    tokens: List[str],
+    options_lambda: Callable[[MutableMapping], list[AbstractOption]],
+    tokens: list[str],
     with_config: Optional[MutableMapping] = None,
 ):
     if with_config is None:

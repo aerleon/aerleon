@@ -96,10 +96,10 @@ class Policy:
         self.defs = naming.Naming(defs_data)
         self.filter = []
         try:
-            self.data = open(filename, 'r').readlines()
-        except IOError as error_info:
+            self.data = open(filename).readlines()
+        except OSError as error_info:
             info = str(filename) + ' cannot be opened'
-            raise FileOpenError('%s\n%s' % (info, error_info))
+            raise FileOpenError(f'{info}\n{error_info}')
 
         indent = 0
         in_header = False

@@ -16,7 +16,7 @@
 
 """Aruba generator."""
 
-from typing import Dict, List, Set, Tuple, Union
+from typing import Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -82,7 +82,7 @@ class Term(aclgenerator.Term):
         if self.term.verbatim:
             for next_verbatim in self.term.verbatim:
                 if next_verbatim[0] == self._PLATFORM and next_verbatim[1]:
-                    ret_str.append('%s%s' % (self._IDENT, next_verbatim[1]))
+                    ret_str.append(f'{self._IDENT}{next_verbatim[1]}')
 
             return '\n'.join(t for t in ret_str if t)
         if self.verbose:
@@ -93,7 +93,7 @@ class Term(aclgenerator.Term):
 
             if comments:
                 for line in aclgenerator.WrapWords(comments, self._COMMENT_LINE_LENGTH):
-                    ret_str.append('%s%s %s' % (self._IDENT, _COMMENT_MARKER, line))
+                    ret_str.append(f'{self._IDENT}{_COMMENT_MARKER} {line}')
 
         src_addr_token = ''
         dst_addr_token = ''
@@ -106,8 +106,8 @@ class Term(aclgenerator.Term):
                 if not src_addr:
                     return ''
 
-                src_netdest_id = '%s%s' % (self.term.name.lower(), self._SRC_NETDEST_SUF)
-                src_addr_token = '%s %s' % (self._ALIAS_STR, src_netdest_id)
+                src_netdest_id = f'{self.term.name.lower()}{self._SRC_NETDEST_SUF}'
+                src_addr_token = f'{self._ALIAS_STR} {src_netdest_id}'
                 netdestinations.append(self._GenerateNetdest(src_netdest_id, src_addr, term_af))
 
             else:
@@ -121,8 +121,8 @@ class Term(aclgenerator.Term):
                 if not dst_addr:
                     return ''
 
-                dst_netdest_id = '%s%s' % (self.term.name.lower(), self._DST_NETDEST_SUF)
-                dst_addr_token = '%s %s' % (self._ALIAS_STR, dst_netdest_id)
+                dst_netdest_id = f'{self.term.name.lower()}{self._DST_NETDEST_SUF}'
+                dst_addr_token = f'{self._ALIAS_STR} {dst_netdest_id}'
                 netdestinations.append(self._GenerateNetdest(dst_netdest_id, dst_addr, term_af))
             else:
                 dst_addr_token = self._ANY_STR
@@ -170,10 +170,10 @@ class Term(aclgenerator.Term):
         # Aruba does not use IP version identifier for IPv4.
         addr_family = '6' if af == 6 else ''
 
-        ret_str.append('%s %s' % (self._NET_DEST_STR + addr_family, addr_netdestid))
+        ret_str.append(f'{self._NET_DEST_STR + addr_family} {addr_netdestid}')
 
         for address in addresses:
-            ret_str.append('%s%s' % (self._IDENT, self._GenerateNetworkOrHostTokens(address)))
+            ret_str.append(f'{self._IDENT}{self._GenerateNetworkOrHostTokens(address)}')
 
         ret_str.append('%s\n' % _TERMINATOR_MARKER)
 
@@ -189,14 +189,14 @@ class Term(aclgenerator.Term):
           Aruba ACLs.
         """
         if address.num_addresses == 1:
-            return '%s %s' % (self._HOST_STRING, address.network_address)
+            return f'{self._HOST_STRING} {address.network_address}'
 
         if address.version == 6:
-            return '%s %s/%s' % (self._NETWORK_STRING, address.network_address, address.prefixlen)
+            return f'{self._NETWORK_STRING} {address.network_address}/{address.prefixlen}'
 
-        return '%s %s %s' % (self._NETWORK_STRING, address.network_address, address.netmask)
+        return f'{self._NETWORK_STRING} {address.network_address} {address.netmask}'
 
-    def _GeneratePortTokens(self, protocols: List[str], ports: List[Tuple[int, int]]) -> List[str]:
+    def _GeneratePortTokens(self, protocols: list[str], ports: list[tuple[int, int]]) -> list[str]:
         """Generates string tokens for ports.
 
         Args:
@@ -232,7 +232,7 @@ class Aruba(aclgenerator.ACLGenerator):
 
     _ACL_LINE_HEADER = 'ip access-list session'
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -300,7 +300,7 @@ class Aruba(aclgenerator.ACLGenerator):
                 netdestinations.extend(term.netdestinations)
 
             target.extend(netdestinations)
-            target.append('%s %s' % (self._ACL_LINE_HEADER, filter_name))
+            target.append(f'{self._ACL_LINE_HEADER} {filter_name}')
             target.extend(term_strings)
             target.extend(_TERMINATOR_MARKER)
 

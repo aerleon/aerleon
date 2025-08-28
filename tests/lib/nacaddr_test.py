@@ -29,21 +29,21 @@ class NacaddrUnitTest(absltest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.addr1 = nacaddr.IPv4(u'10.0.0.0/8', 'The 10 block')
+        self.addr1 = nacaddr.IPv4('10.0.0.0/8', 'The 10 block')
         self.addr2 = nacaddr.IPv6(
             'DEAD:BEEF:BABE:FACE:DEAF:FEED:C0DE:F001/64', 'An IPv6 Address', strict=False
         )
 
     def testCollapsing(self):
-        ip1 = nacaddr.IPv4(u'1.1.0.0/24', 'foo')
-        ip2 = nacaddr.IPv4(u'1.1.1.0/24', 'foo')
-        ip3 = nacaddr.IPv4(u'1.1.2.0/24', 'baz')
-        ip4 = nacaddr.IPv4(u'1.1.3.0/24')
-        ip5 = nacaddr.IPv4(u'1.1.4.0/24')
+        ip1 = nacaddr.IPv4('1.1.0.0/24', 'foo')
+        ip2 = nacaddr.IPv4('1.1.1.0/24', 'foo')
+        ip3 = nacaddr.IPv4('1.1.2.0/24', 'baz')
+        ip4 = nacaddr.IPv4('1.1.3.0/24')
+        ip5 = nacaddr.IPv4('1.1.4.0/24')
 
         # stored in no particular order b/c we want CollapseAddr to call [].sort
         # and we want that sort to call nacaddr.IP.__cmp__() on our array members
-        ip6 = nacaddr.IPv4(u'1.1.0.0/22')
+        ip6 = nacaddr.IPv4('1.1.0.0/22')
 
         # check that addreses are subsumed properlly.
         collapsed = nacaddr.CollapseAddrList([ip1, ip2, ip3, ip4, ip5, ip6])
@@ -51,19 +51,19 @@ class NacaddrUnitTest(absltest.TestCase):
         # test that the comments are collapsed properlly, and that comments aren't
         # added to addresses that have no comments.
         self.assertListEqual([collapsed[0].text, collapsed[1].text], ['foo, baz', ''])
-        self.assertListEqual(collapsed, [nacaddr.IPv4(u'1.1.0.0/22'), nacaddr.IPv4(u'1.1.4.0/24')])
+        self.assertListEqual(collapsed, [nacaddr.IPv4('1.1.0.0/22'), nacaddr.IPv4('1.1.4.0/24')])
 
         # test that two addresses are supernet'ed properlly
         collapsed = nacaddr.CollapseAddrList([ip1, ip2])
         self.assertEqual(len(collapsed), 1)
         self.assertEqual(collapsed[0].text, 'foo')
-        self.assertListEqual(collapsed, [nacaddr.IPv4(u'1.1.0.0/23')])
+        self.assertListEqual(collapsed, [nacaddr.IPv4('1.1.0.0/23')])
 
-        ip_same1 = ip_same2 = nacaddr.IPv4(u'1.1.1.1/32')
+        ip_same1 = ip_same2 = nacaddr.IPv4('1.1.1.1/32')
         self.assertListEqual(nacaddr.CollapseAddrList([ip_same1, ip_same2]), [ip_same1])
-        ip1 = nacaddr.IPv6(u'::2001:1/100', strict=False)
-        ip2 = nacaddr.IPv6(u'::2002:1/120', strict=False)
-        ip3 = nacaddr.IPv6(u'::2001:1/96', strict=False)
+        ip1 = nacaddr.IPv6('::2001:1/100', strict=False)
+        ip2 = nacaddr.IPv6('::2002:1/120', strict=False)
+        ip3 = nacaddr.IPv6('::2001:1/96', strict=False)
         # test that ipv6 addresses are subsumed properlly.
         collapsed = nacaddr.CollapseAddrList([ip1, ip2, ip3])
         self.assertListEqual(collapsed, [ip3])
