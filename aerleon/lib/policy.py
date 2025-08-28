@@ -2745,7 +2745,7 @@ def ParseFile(filename, definitions=None, optimize=True, base_dir='', shade_chec
 
 def ParsePolicy(
     data: str,
-    definitions: naming.Naming = None,
+    definitions: Optional[naming.Naming] = None,
     optimize: bool = True,
     base_dir: str = '',
     shade_check: bool = False,

@@ -3,6 +3,7 @@
 """A module to handle merging file configurations with CLI configs for Aerleon."""
 
 import pathlib
+from typing import Optional
 
 import yaml
 
@@ -29,7 +30,7 @@ class ConfigFileError(Exception):
 
 
 def load_config(
-    config_file: "str | pathlib.Path | list[str | pathlib.Path]" = None,
+    config_file: Optional["str | pathlib.Path | list[str | pathlib.Path]"] = None,
     apply_defaults: bool = True,
 ) -> dict:
     """Load Aerleon configuration file(s).

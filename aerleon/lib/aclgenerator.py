@@ -21,7 +21,7 @@ import datetime
 import hashlib
 import re
 import string
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from absl import logging
 
@@ -500,7 +500,7 @@ class ACLGenerator:
         term_name: str,
         abbreviate: bool = False,
         truncate: bool = False,
-        override_max_length: int = None,
+        override_max_length: Optional[int] = None,
     ):
         """Return a term name which is equal or shorter than _TERM_MAX_LENGTH.
 
@@ -539,7 +539,7 @@ class ACLGenerator:
             'disabled.' % (new_term, term_name, override_max_length, len(new_term))
         )
 
-    def HexDigest(self, name: str, truncation_length: int = None):
+    def HexDigest(self, name: str, truncation_length: Optional[int] = None):
         """Return a hexadecimal digest of the name object.
 
         Args:

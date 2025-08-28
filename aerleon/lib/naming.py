@@ -48,7 +48,7 @@ DNS = 53/tcp
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 from absl import logging
@@ -135,8 +135,8 @@ class UserMessage:
         message: str,
         *,
         filename: str,
-        line: int = None,
-        include_chain: List[Tuple[str, int]] = None,
+        line: Optional[int] = None,
+        include_chain: Optional[List[Tuple[str, int]]] = None,
     ):
         self.message = message
         self.filename = filename
@@ -205,7 +205,10 @@ class Naming:
     """
 
     def __init__(
-        self, naming_dir: str = None, naming_file: str = None, naming_type: str = None
+        self,
+        naming_dir: Optional[str] = None,
+        naming_file: Optional[str] = None,
+        naming_type: Optional[str] = None,
     ) -> None:
         """Set the default values for a new Naming object.
 

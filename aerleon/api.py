@@ -214,6 +214,7 @@ import multiprocessing
 import pathlib
 import sys
 import typing
+from typing import Optional
 
 from absl import logging
 
@@ -238,12 +239,12 @@ from aerleon.lib import (
 def Generate(
     policies: "list[policy_builder.PolicyDict]",
     definitions: naming.Naming,
-    output_directory: pathlib.Path = None,
+    output_directory: Optional[pathlib.Path] = None,
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
-    include_path: pathlib.Path = None,
-    includes: "dict[str, policy_builder.PolicyDict]" = None,
+    include_path: Optional[pathlib.Path] = None,
+    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
 ) -> "dict[str, str]":
     """Generate ACLs from policies.
 
@@ -304,12 +305,12 @@ def _Generate(
     policies: "list[policy_builder.PolicyDict]",
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
-    output_directory: pathlib.Path = None,
+    output_directory: Optional[pathlib.Path] = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: pathlib.Path = None,
-    includes: "dict[str, policy_builder.PolicyDict]" = None,
+    include_path: Optional[pathlib.Path] = None,
+    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
     max_renderers: int = 1,
 ) -> "dict[str, str]":
     # thead-safe list for storing files to write
@@ -373,12 +374,12 @@ def _GenerateACL(
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: dict,
-    output_directory: typing.Optional[pathlib.Path] = None,
+    output_directory: Optional[pathlib.Path] = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: pathlib.Path = None,
-    includes: "dict[str, policy_builder.PolicyDict]" = None,
+    include_path: Optional[pathlib.Path] = None,
+    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
 ):
     filename = input_policy.get("filename")
 
@@ -474,11 +475,11 @@ def _GenerateACL(
 def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
-    src: str = None,
-    dst: str = None,
-    sport: str = None,
-    dport: str = None,
-    proto: str = None,
+    src: Optional[str] = None,
+    dst: Optional[str] = None,
+    sport: Optional[str] = None,
+    dport: Optional[str] = None,
+    proto: Optional[str] = None,
 ):
     filename = input_policy.get("filename")
     try:

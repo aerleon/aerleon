@@ -18,7 +18,7 @@
 
 import re
 import xml
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from absl import logging
 
@@ -110,7 +110,9 @@ class NsxvDuplicateTermError(Error):
 class Term(aclgenerator.Term):
     """Creates a  single ACL Term for Nsxv."""
 
-    def __init__(self, term: policy.Term, filter_type: str, applied_to: str = None, af: int = 4):
+    def __init__(
+        self, term: policy.Term, filter_type: str, applied_to: Optional[str] = None, af: int = 4
+    ):
         self.term = term
         # Our caller should have already verified the address family.
         assert af in (4, 6)

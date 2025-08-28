@@ -17,7 +17,7 @@
 
 import copy
 import re
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from absl import logging
 
@@ -151,7 +151,7 @@ class Term(aclgenerator.Term):
     }
 
     def __init__(
-        self, term: policy.Term, term_type: str, noverbose: bool, filter_type: str = None
+        self, term: policy.Term, term_type: str, noverbose: bool, filter_type: Optional[str] = None
     ) -> None:
         super().__init__(term)
         self.term = term
