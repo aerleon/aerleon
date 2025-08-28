@@ -94,6 +94,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ProtonBruno"><img src="https://avatars.githubusercontent.com/u/105855897?v=4?s=100" width="100px;" alt="ProtonBruno"/><br /><sub><b>ProtonBruno</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=ProtonBruno" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/loulecrivain"><img src="https://avatars.githubusercontent.com/u/43913579?v=4?s=100" width="100px;" alt="Lou Lecrivain"/><br /><sub><b>Lou Lecrivain</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=loulecrivain" title="Code">💻</a> <a href="https://github.com/aerleon/aerleon/commits?author=loulecrivain" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kyleomalley"><img src="https://avatars.githubusercontent.com/u/706840?v=4?s=100" width="100px;" alt="kyleomalley"/><br /><sub><b>kyleomalley</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=kyleomalley" title="Code">💻</a> <a href="https://github.com/aerleon/aerleon/commits?author=kyleomalley" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
