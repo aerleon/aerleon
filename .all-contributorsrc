@@ -73,6 +73,16 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "ABruihler",
+      "name": "ABruihler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6530276?v=4",
+      "profile": "https://github.com/ABruihler",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
