@@ -47,9 +47,7 @@ cisco_example_policy = {
                 "targets": {
                     "cisco": "test-filter"
                 },
-                "kvs": {
-                    "comment": "Sample comment"
-                },
+                "comment": "Sample comment",
             },
             "terms": [
                 {

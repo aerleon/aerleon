@@ -68,12 +68,8 @@ example_policy = {
     "filters": [
         {
             "header": {
-                "targets": {
-                    "cisco": "test-filter"
-                },
-                "kvs": {
-                    "comment": "Sample filter for AclCheck API demo"
-                },
+                "targets": {"cisco": "test-filter"},
+                "comment": "Sample filter for AclCheck API demo",
             },
             "terms": [
                 {
@@ -82,12 +78,9 @@ example_policy = {
                     "destination-address": "WEB_SERVERS",
                     "destination-port": "HTTP",
                     "protocol": "tcp",
-                    "action": "accept"
+                    "action": "accept",
                 },
-                {
-                    "name": "deny-all-else",
-                    "action": "deny"
-                }
+                {"name": "deny-all-else", "action": "deny"},
             ],
         }
     ],
@@ -98,16 +91,10 @@ example_policy = {
 # You could call yaml.safe_load to load your YAML definitions into this format.
 definitions_data = {
     "networks": {
-        "INTERNAL_NETWORK": {
-            "values": [ {"address": "192.168.1.0/24"} ]
-        },
-        "WEB_SERVERS": {
-            "values": [ {"address": "10.0.0.10/32"}, {"address": "10.0.0.11/32"} ]
-        }
+        "INTERNAL_NETWORK": {"values": [{"address": "192.168.1.0/24"}]},
+        "WEB_SERVERS": {"values": [{"address": "10.0.0.10/32"}, {"address": "10.0.0.11/32"}]},
     },
-    "services": {
-        "HTTP": [ {"protocol": "tcp", "port": "80"} ]
-    }
+    "services": {"HTTP": [{"protocol": "tcp", "port": "80"}]},
 }
 
 # Create a Naming object and parse the definitions
@@ -143,7 +130,9 @@ try:
             for term_name, match_details in terms.items():
                 print(match_details['message'])
     else:
-        print(f"No matching terms found for traffic from {source_ip}:{source_port} to {destination_ip}:{destination_port} ({protocol}).")
+        print(
+            f"No matching terms found for traffic from {source_ip}:{source_port} to {destination_ip}:{destination_port} ({protocol})."
+        )
 
 except Exception as e:
     print(f"An error occurred: {e}")
@@ -155,7 +144,7 @@ except Exception as e:
 *   **`input_policy` (dict):** This dictionary represents the Aerleon policy.
     *   `filename`: A string identifier for the policy (primarily for context in logs/errors).
     *   `filters`: A list of filter dictionaries. Each filter dictionary must contain:
-        *   `header`: A dictionary defining the filter's targets (e.g., `{"cisco": "filter_name"}`). At least one target must be specified for the policy to be parsed correctly, even though `AclCheck` itself is platform-agnostic. It can also contain other header options like `kvs` for comments.
+        *   `header`: A dictionary defining the filter's targets (e.g., `{"cisco": "filter_name"}`). At least one target must be specified for the policy to be parsed correctly, even though `AclCheck` itself is platform-agnostic. It can also contain other header options like `comment`.
         *   `terms`: A list of term dictionaries. Each term defines specific match criteria (like `source-address`, `destination-port`, `protocol`) and an `action` (e.g., `accept`, `deny`).
 *   **`definitions` (aerleon.lib.naming.Naming):** This object holds the definitions for all named entities (like IP addresses, networks, services/ports) referenced in the policy.
     *   You can populate it by calling `ParseDefinitionsObject` with a dictionary structured similarly to how `NETWORK.net` and `SERVICES.svc` files are formatted, or by loading actual definition files.
