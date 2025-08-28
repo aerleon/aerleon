@@ -18,7 +18,7 @@ import collections
 import copy
 import re
 import xml.etree.ElementTree as etree
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Union
 from xml.dom import minidom
 
 from absl import logging

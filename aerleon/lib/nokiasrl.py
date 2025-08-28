@@ -19,13 +19,10 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 
 """
 
-import sys
-from typing import Dict, List, Set, Tuple
+from typing import TypedDict
 
 from aerleon.lib import aclgenerator, openconfig
 from aerleon.lib.policy import Term
-
-from typing import TypedDict
 
 R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
 

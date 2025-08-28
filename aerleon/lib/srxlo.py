@@ -21,8 +21,6 @@ uses the same syntax as regular Juniper stateless ACLs, with minor
 differences. This subclass effects those differences.
 """
 
-from typing import Dict, List, Set, Tuple
-
 from aerleon.lib import juniper
 
 

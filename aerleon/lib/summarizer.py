@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import collections
-from typing import List, Tuple, Union
 
 from aerleon.lib import nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6

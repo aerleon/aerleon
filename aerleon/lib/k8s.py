@@ -22,16 +22,13 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 
 import copy
 import re
-import sys
-from typing import Dict, Set, Tuple
+from typing import TypedDict
 
 import yaml
 from absl import logging
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Policy, Term
-
-from typing import TypedDict
 
 
 class Error(aclgenerator.Error):

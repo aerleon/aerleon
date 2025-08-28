@@ -16,8 +16,6 @@
 
 """Arista generator."""
 
-from typing import List
-
 from aerleon.lib import cisco
 
 

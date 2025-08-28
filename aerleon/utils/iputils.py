@@ -3,8 +3,8 @@
 """A module of utilities to work with IP addresses in a faster way."""
 
 import ipaddress
-from typing import Union
 from collections.abc import Iterator
+from typing import Union
 
 
 def exclude_address(

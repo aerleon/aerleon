@@ -25,14 +25,11 @@ import copy
 import ipaddress
 import json
 import re
-import sys
-from typing import Dict, List, Set, Tuple, Union
+from typing import TypedDict, Union
 
 from absl import logging
 
 from aerleon.lib import gcp, nacaddr, policy
-
-from typing import TypedDict
 
 
 class Error(gcp.Error):

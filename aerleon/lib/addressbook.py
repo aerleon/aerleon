@@ -2,7 +2,7 @@ import collections
 import heapq
 import ipaddress
 import itertools
-from typing import List, Union
+from typing import Union
 
 from aerleon.lib.fqdn import FQDN
 from aerleon.lib.nacaddr import IPv4, IPv6

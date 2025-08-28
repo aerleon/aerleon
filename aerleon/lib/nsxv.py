@@ -18,7 +18,7 @@
 
 import re
 import xml
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from absl import logging
 

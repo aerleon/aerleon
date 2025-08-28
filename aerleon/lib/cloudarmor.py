@@ -9,14 +9,11 @@ https://cloud.google.com/armor/docs/
 
 import copy
 import json
-import sys
-from typing import Dict, List, Set, Tuple
+from typing import TypedDict
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, policy
-
-from typing import TypedDict
 
 
 # Generic error class

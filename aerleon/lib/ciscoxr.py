@@ -17,8 +17,6 @@
 """Cisco IOS-XR filter renderer."""
 from __future__ import annotations
 
-from typing import Dict, List, Set, Tuple
-
 from aerleon.lib import cisco
 from aerleon.lib.policy import Term
 

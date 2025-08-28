@@ -7,7 +7,6 @@ Base class for GCP firewalling products.
 
 import json
 import re
-from typing import List
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Term

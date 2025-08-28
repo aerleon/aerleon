@@ -16,7 +16,7 @@
 
 """Aruba generator."""
 
-from typing import Dict, List, Set, Tuple, Union
+from typing import Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv4, IPv6

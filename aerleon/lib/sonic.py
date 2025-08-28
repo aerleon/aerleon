@@ -1,7 +1,5 @@
 """SONiC generator."""
 
-from typing import Dict
-
 from aerleon.lib import openconfig
 
 

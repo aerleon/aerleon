@@ -47,7 +47,6 @@ import pathlib
 import sys
 from dataclasses import dataclass
 from importlib import import_module
-from typing import List, Optional, Tuple
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points, version

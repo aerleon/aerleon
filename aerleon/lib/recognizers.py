@@ -23,7 +23,6 @@ import enum
 import re
 import typing
 from dataclasses import dataclass
-from typing import Optional
 
 if typing.TYPE_CHECKING:
     from aerleon.lib.policy_builder import (

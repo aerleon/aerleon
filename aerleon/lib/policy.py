@@ -22,7 +22,7 @@ import datetime
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 from absl import logging
 from ply import lex, yacc

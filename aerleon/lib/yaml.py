@@ -1,7 +1,7 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 from unittest.mock import MagicMock
 
 import yaml

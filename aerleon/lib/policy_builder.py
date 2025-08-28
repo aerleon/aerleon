@@ -4,6 +4,7 @@ import enum
 import sys
 import typing
 from dataclasses import dataclass, field
+from typing import Annotated, TypedDict
 
 from absl import logging
 
@@ -28,10 +29,6 @@ from aerleon.lib.recognizers import (
     TUnion,
     TValue,
 )
-
-from typing import TypedDict
-
-from typing import Annotated
 
 if sys.version_info < (3, 10):
     from typing_extensions import TypeAlias

@@ -22,7 +22,7 @@ performace of iptables firewall.
 """
 
 import string
-from typing import Any, List, Tuple, Union
+from typing import Any, Union
 
 from aerleon.lib import iptables, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6

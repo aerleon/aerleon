@@ -19,7 +19,6 @@ import copy
 import multiprocessing
 import pathlib
 import sys
-from typing import List, Tuple
 from collections.abc import Iterator
 
 from absl import app, flags, logging
