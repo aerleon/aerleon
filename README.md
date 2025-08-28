@@ -96,6 +96,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ABruihler"><img src="https://avatars.githubusercontent.com/u/6530276?v=4?s=100" width="100px;" alt="ABruihler"/><br /><sub><b>ABruihler</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=ABruihler" title="Code">💻</a> <a href="https://github.com/aerleon/aerleon/commits?author=ABruihler" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kyleomalley"><img src="https://avatars.githubusercontent.com/u/706840?v=4?s=100" width="100px;" alt="kyleomalley"/><br /><sub><b>kyleomalley</b></sub></a><br /><a href="https://github.com/aerleon/aerleon/commits?author=kyleomalley" title="Code">💻</a> <a href="https://github.com/aerleon/aerleon/commits?author=kyleomalley" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

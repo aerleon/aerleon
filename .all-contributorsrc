@@ -83,6 +83,16 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "kyleomalley",
+      "name": "kyleomalley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/706840?v=4",
+      "profile": "https://github.com/kyleomalley",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
