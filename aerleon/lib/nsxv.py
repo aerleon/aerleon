@@ -173,7 +173,9 @@ class Term(aclgenerator.Term):
                 self.term.name,
             )
 
-        name = '{}{}{}'.format(_XML_TABLE.get('nameStart'), self.term.name, _XML_TABLE.get('nameEnd'))
+        name = '{}{}{}'.format(
+            _XML_TABLE.get('nameStart'), self.term.name, _XML_TABLE.get('nameEnd')
+        )
 
         notes = ''
         if self.term.comment:
@@ -495,8 +497,8 @@ class Nsxv(aclgenerator.ACLGenerator):
     SUFFIX = '.nsx'
 
     _OPTIONAL_SUPPORTED_KEYWORDS = {
-            'expiration',
-            'logging',
+        'expiration',
+        'logging',
     }
     _FILTER_OPTIONS_DICT = {}
 

@@ -31,9 +31,13 @@ class UnsupportedFilterTypeError(Error):
 
 class RuleMatchConfig(TypedDict):
     srcIpRanges: 'list[str]'
+
+
 class RuleMatch(TypedDict):
     config: RuleMatchConfig
     versionedExpr: str
+
+
 class PolicyRule(TypedDict):
     action: str
     description: str

@@ -198,7 +198,9 @@ class Term:
             and protocols != [self.PROTO_MAP['icmpv6']]
         ):
             raise UnsupportedFilterError(
-                '{} {}'.format('icmp-types specified for non-icmp protocols in term: ', self.term.name)
+                '{} {}'.format(
+                    'icmp-types specified for non-icmp protocols in term: ', self.term.name
+                )
             )
         # make sure we have a numeric address family (4 or 6)
         af = self.NormalizeAddressFamily(af)

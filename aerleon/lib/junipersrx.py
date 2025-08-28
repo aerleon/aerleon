@@ -419,9 +419,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     'be specified per header "%s"' % ' '.join(filter_options)
                 )
             else:
-                address_book_type = {
-                    self._ZONE_ADDR_BOOK, self._GLOBAL_ADDR_BOOK
-                }.intersection(extra_options)
+                address_book_type = {self._ZONE_ADDR_BOOK, self._GLOBAL_ADDR_BOOK}.intersection(
+                    extra_options
+                )
                 if not address_book_type:
                     address_book_type = {self._GLOBAL_ADDR_BOOK}
                 self.addr_book_type.update(address_book_type)

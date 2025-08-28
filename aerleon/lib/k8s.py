@@ -47,33 +47,53 @@ class MatchExpression(TypedDict):
     key: str
     operator: str
     values: 'list[str]'
+
+
 LabelSelector = TypedDict(
     "PodSelector", {"matchLabels": dict[str, str], "matchExpression": MatchExpression}
 )
+
+
 class IPBlock(TypedDict):
     cidr: str
     exceot: 'list[str]'
+
+
 class PolicyPeer(TypedDict):
     podSelector: LabelSelector
     namespaceSelector: LabelSelector
     ipBlock: IPBlock
+
+
 class PolicyPort(TypedDict):
     protocol: str
     port: int
     endPort: int
+
+
 class Egress(TypedDict):
     ports: 'list[PolicyPort]'
     to: 'list[PolicyPeer]'
+
+
 Ingress = TypedDict("Ingress", {"ports": "list[PolicyPort]", "from": "list[PolicyPeer]"})
+
+
 class Spec(TypedDict):
     podSelector: LabelSelector
     policyTypes: 'list[str]'
+
+
 class Annotations(TypedDict):
     comment: str
     owner: str
+
+
 class Metadata(TypedDict):
     name: str
     annotations: Annotations
+
+
 class NetworkPolicy(TypedDict):
     apiVersion: str
     kind: str

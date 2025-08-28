@@ -26,14 +26,20 @@ from aerleon.lib.policy import Term
 
 R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
 
+
 class IPPrefix(TypedDict):
     prefix: str
+
+
 class PortRange(TypedDict):
     start: int
     end: int
+
+
 class Port(TypedDict):
     value: int
     range: PortRange
+
 
 Match = TypedDict(
     "Match",
@@ -48,9 +54,13 @@ Match = TypedDict(
         "destination-port": Port,
     },
 )
+
+
 class Action(TypedDict):
     accept: None
     drop: None
+
+
 ACLEntry = TypedDict(
     "ACLEntry",
     {

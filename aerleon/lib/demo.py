@@ -176,7 +176,7 @@ class Demo(aclgenerator.ACLGenerator):
     _SUFFIX = '.demo'
 
     _OPTIONAL_SUPPORTED_KEYWORDS = {
-            'expiration',
+        'expiration',
     }
 
     def _TranslatePolicy(self, pol, exp_info):

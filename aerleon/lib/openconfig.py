@@ -60,24 +60,39 @@ TransportConfig = TypedDict(
         "builtin-detail": str,
     },
 )
+
+
 class Transport(TypedDict):
     transport: TransportConfig
+
+
 IPConfig = TypedDict(
     "IPConfig", {"source-address": str, "destination-address": str, "protocol": int}
 )
+
+
 class IP(TypedDict):
     config: IPConfig
+
+
 ActionConfig = TypedDict("ActionConfig", {"forwarding-action": str})
+
+
 class Action(TypedDict):
     config: ActionConfig
+
+
 ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport},
 )
 aclEntries = TypedDict("aclEntries", {"acl-entry": list[ACLEntry]})
+
+
 class ACLSetConfig(TypedDict):
     name: str
     type: str
+
 
 ACLSet = TypedDict(
     "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}

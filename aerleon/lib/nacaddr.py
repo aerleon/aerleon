@@ -59,9 +59,7 @@ def IP(
 
 # TODO(robankeny) remove once at 3.7
 @staticmethod
-def _is_subnet_of(
-    a: IPv4 | IPv6, b: IPv4 | IPv6
-) -> bool:  # pylint: disable=invalid-name
+def _is_subnet_of(a: IPv4 | IPv6, b: IPv4 | IPv6) -> bool:  # pylint: disable=invalid-name
     try:
         # Always false if one is v4 and the other is v6.
         if a.version != b.version:
@@ -311,8 +309,7 @@ def _SafeToMerge(
     address: IPv4 | IPv6,
     merge_target: IPv4 | IPv6,
     check_addresses: (
-        dict[ipaddress.IPv4Address, list[IPv4]] |
-        dict[ipaddress.IPv6Address, list[IPv6]]
+        dict[ipaddress.IPv4Address, list[IPv4]] | dict[ipaddress.IPv6Address, list[IPv6]]
     ),
 ) -> bool:
     """Determine if it's safe to merge address into merge target.
@@ -339,8 +336,7 @@ def _SafeToMerge(
 def _CollapseAddrListInternal(
     addresses: list[IPv4 | IPv6],
     complements_by_network: (
-        dict[ipaddress.IPv4Address, list[IPv4]] |
-        dict[ipaddress.IPv6Address, list[IPv6]]
+        dict[ipaddress.IPv4Address, list[IPv4]] | dict[ipaddress.IPv6Address, list[IPv6]]
     ),
 ) -> list[IPv4 | IPv6]:
     """Collapses consecutive netblocks until reaching a fixed point.
@@ -450,9 +446,7 @@ def SortAddrList(addresses: list[IPv6 | IPv4]) -> list[IPv6 | IPv4]:
     return sorted(addresses, key=ipaddress.get_mixed_type_key)
 
 
-def RemoveAddressFromList(
-    superset: list[IPv4 | IPv6], exclude: IPv4 | IPv6
-) -> list[IPv6 | IPv4]:
+def RemoveAddressFromList(superset: list[IPv4 | IPv6], exclude: IPv4 | IPv6) -> list[IPv6 | IPv4]:
     """Remove a single address from a list of addresses.
 
     Args:

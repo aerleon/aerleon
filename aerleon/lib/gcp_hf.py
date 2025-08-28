@@ -48,11 +48,17 @@ class ApiVersionSyntaxMap:
 class L4Matcher(TypedDict):
     IPProtocol: str
     ports: 'list[str]'
+
+
 class MatchConfig(TypedDict):
     destIpRanges: 'list[str]'
     srcIpRanges: 'list[str]'
     layer4Configs: 'list[L4Matcher]'
+
+
 RuleMatch = TypedDict("PropertyMap", {"config": MatchConfig, "versionedExpr": str})
+
+
 class OrganizationalPolicyRule(TypedDict):
     action: str
     match: RuleMatch
@@ -61,6 +67,8 @@ class OrganizationalPolicyRule(TypedDict):
     direction: str
     enableLogging: bool
     targetResources: 'list[str]'
+
+
 class OrganizationPolicy(TypedDict):
     displayName: str
     type: str

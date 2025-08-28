@@ -46,9 +46,13 @@ class ExceededAttributeCountError(Error):
 
 class LogConfig(TypedDict):
     enable: bool
+
+
 class L4Matcher(TypedDict):
     IPProtocol: str
     ports: 'list[str]'
+
+
 class FirewallRule(TypedDict):
     name: str
     description: str

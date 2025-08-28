@@ -466,9 +466,7 @@ def _GenerateACL(
                 EmitACL(str(acl_obj), acl_obj.SUFFIX, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError(
-                f'Error generating target ACL for {filename}:\n{e}'
-            ) from e
+            raise ACLGeneratorError(f'Error generating target ACL for {filename}:\n{e}') from e
 
 
 def AclCheck(

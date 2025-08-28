@@ -1072,9 +1072,7 @@ class Term:
             if mutate:
                 self.address = self.flattened_addr
 
-    def GetAddressOfVersion(
-        self, addr_type: str, af: int | None = None
-    ) -> list[IPv4 | IPv6]:
+    def GetAddressOfVersion(self, addr_type: str, af: int | None = None) -> list[IPv4 | IPv6]:
         """Returns addresses of the appropriate Address Family.
 
         Args:
@@ -1397,9 +1395,7 @@ class Term:
 
         if self.ttl:
             if not _MIN_TTL <= self.ttl <= _MAX_TTL:
-                raise InvalidTermTTLValue(
-                    f'Term {self.name} contains invalid TTL: {self.ttl}'
-                )
+                raise InvalidTermTTLValue(f'Term {self.name} contains invalid TTL: {self.ttl}')
         for proto in self.protocol:
             if proto.isnumeric():
                 if int(proto) < 0 or 255 < int(proto):

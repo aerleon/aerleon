@@ -713,13 +713,17 @@ class Term(aclgenerator.Term):
                 count += 2
             if count >= max_ports:
                 count = 0
-                portstrings.append('-m multiport --{}ports {}'.format(direction, ','.join(norm_ports)))
+                portstrings.append(
+                    '-m multiport --{}ports {}'.format(direction, ','.join(norm_ports))
+                )
                 norm_ports = []
         if norm_ports:
             if len(norm_ports) == 1:
                 portstrings.append(f'--{direction}port {norm_ports[0]}')
             else:
-                portstrings.append('-m multiport --{}ports {}'.format(direction, ','.join(norm_ports)))
+                portstrings.append(
+                    '-m multiport --{}ports {}'.format(direction, ','.join(norm_ports))
+                )
         return portstrings
 
     def _SetDefaultAction(self) -> None:

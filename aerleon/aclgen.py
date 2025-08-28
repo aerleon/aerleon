@@ -260,9 +260,7 @@ def RenderFile(
                 RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError(
-                f'Error generating target ACL for {input_file}:\n{e}'
-            ) from e
+            raise ACLGeneratorError(f'Error generating target ACL for {input_file}:\n{e}') from e
 
 
 def RenderACL(

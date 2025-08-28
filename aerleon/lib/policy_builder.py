@@ -51,9 +51,11 @@ if typing.TYPE_CHECKING:
 
 WordList: TypeAlias = "str | list[str]"
 
+
 class VPNValue(TypedDict):
     name: str
     policy: 'NotRequired[str]'
+
 
 PolicyTerm = TypedDict(
     'PolicyTerm',
@@ -129,8 +131,10 @@ PolicyTerm = TypedDict(
     total=False,
 )
 
+
 class PolicyInclude(TypedDict):
     include: str
+
 
 PolicyFilterHeader = TypedDict(
     'PolicyFilterHeader',
@@ -143,9 +147,11 @@ PolicyFilterHeader = TypedDict(
     total=False,
 )
 
+
 class PolicyFilter(TypedDict):
     header: PolicyFilterHeader
     terms: 'list[PolicyTerm | PolicyInclude]'
+
 
 class PolicyDict(TypedDict):
     filters: 'list[PolicyFilter]'

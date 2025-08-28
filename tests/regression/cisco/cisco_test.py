@@ -500,7 +500,9 @@ class CiscoTest(absltest.TestCase):
         self.assertIn('access-list 50 remark numbered standard', str(acl), str(acl))
         self.assertIn('access-list 50 remark standard-term-1', str(acl), str(acl))
         self.assertIn('access-list 50 remark {}Id:{}'.format('$', '$'), str(acl), str(acl))
-        self.assertNotIn('access-list 50 remark {}Revision:{}'.format('$', '$'), str(acl), str(acl))
+        self.assertNotIn(
+            'access-list 50 remark {}Revision:{}'.format('$', '$'), str(acl), str(acl)
+        )
         print(acl)
 
     @capture.stdout
@@ -609,8 +611,12 @@ class CiscoTest(absltest.TestCase):
         acl = cisco.Cisco(pol, EXP_INFO)
 
         self.assertIn('\n'.join(ip_grp), str(acl), '{} {}'.format('\n'.join(ip_grp), str(acl)))
-        self.assertIn('\n'.join(port_grp1), str(acl), '{} {}'.format('\n'.join(port_grp1), str(acl)))
-        self.assertIn('\n'.join(port_grp2), str(acl), '{} {}'.format('\n'.join(port_grp2), str(acl)))
+        self.assertIn(
+            '\n'.join(port_grp1), str(acl), '{} {}'.format('\n'.join(port_grp1), str(acl))
+        )
+        self.assertIn(
+            '\n'.join(port_grp2), str(acl), '{} {}'.format('\n'.join(port_grp2), str(acl))
+        )
 
         # Object-group terms should use the object groups created.
         self.assertIn(
