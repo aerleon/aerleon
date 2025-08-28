@@ -65,7 +65,7 @@ def load_config(
             config = pathlib.Path(config)
 
         try:
-            with open(config, 'r') as f:
+            with open(config) as f:
                 data = yaml.safe_load(f)
 
                 if not data or not isinstance(data, dict):

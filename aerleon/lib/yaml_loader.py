@@ -15,7 +15,7 @@ def SpanSafeYamlLoader(*, filename):
 
     class PluginYamlLoader(SafeLoader):
         def construct_mapping(self, node, deep=False):
-            mapping = super(PluginYamlLoader, self).construct_mapping(node, deep=deep)
+            mapping = super().construct_mapping(node, deep=deep)
             # Add 1 so line numbering starts at 1
             # TODO(jb) look at cases where line number does not match up, e.g. filter['__line__']
             mapping['__line__'] = node.start_mark.line + 1

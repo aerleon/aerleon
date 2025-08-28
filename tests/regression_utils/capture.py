@@ -127,19 +127,19 @@ def files(filenames):
                 file_base = ".".join([func.__qualname__, filename])
                 file_ref = ".".join([file_base, "ref"])
                 try:
-                    with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
+                    with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                         self.assertEqual(
                             ref_file.read(),
                             _collapse_mock_writes(inner_mocks, filename),
                         )
-                except IOError:
+                except OSError:
                     try:
                         with open(
                             os.path.join(_testdir(func), ".".join([file_base, "actual"])),
                             "w",
                         ) as actual:
                             actual.write(_collapse_mock_writes(inner_mocks, filename))
-                    except IOError:
+                    except OSError:
                         # In this case the actual content was not written, but this is not critical.
                         # The user does not need to be warned here.
                         pass
@@ -156,7 +156,7 @@ def files(filenames):
                             "w",
                         ) as actual:
                             actual.write(_collapse_mock_writes(inner_mocks, filename))
-                    except IOError:
+                    except OSError:
                         # In this case the actual content was not written, but this is not critical.
                         # The user does not need to be warned here.
                         pass
@@ -180,16 +180,16 @@ def stdout(func):
             file_base = ".".join([base_name, "stdout"])
             file_ref = ".".join([file_base, "ref"])
             try:
-                with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
+                with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                     self.assertEqual(ref_file.read(), mock_stdout.getvalue())
-            except IOError:
+            except OSError:
                 try:
                     with open(
                         os.path.join(_testdir(func), ".".join([file_base, "actual"])),
                         "w",
                     ) as actual:
                         actual.write(mock_stdout.getvalue())
-                except IOError:
+                except OSError:
                     # In this case the actual content was not written, but this is not critical.
                     # The user does not need to be warned here.
                     pass
@@ -206,7 +206,7 @@ def stdout(func):
                         "w",
                     ) as actual:
                         actual.write(mock_stdout.getvalue())
-                except IOError:
+                except OSError:
                     # In this case the actual content was not written, but this is not critical.
                     # The user does not need to be warned here.
                     pass
@@ -225,16 +225,16 @@ def stderr(func):
             file_base = ".".join([func.__qualname__, "stderr"])
             file_ref = ".".join([file_base, "ref"])
             try:
-                with open(os.path.join(_testdir(func), file_ref), "r") as ref_file:
+                with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                     self.assertEqual(ref_file.read(), mock_stderr.getvalue())
-            except IOError:
+            except OSError:
                 try:
                     with open(
                         os.path.join(_testdir(func), ".".join([file_base, "actual"])),
                         "w",
                     ) as actual:
                         actual.write(mock_stderr.getvalue())
-                except IOError:
+                except OSError:
                     # In this case the actual content was not written, but this is not critical.
                     # The user does not need to be warned here.
                     pass
@@ -251,7 +251,7 @@ def stderr(func):
                         "w",
                     ) as actual:
                         actual.write(mock_stderr.getvalue())
-                except IOError:
+                except OSError:
                     # In this case the actual content was not written, but this is not critical.
                     # The user does not need to be warned here.
                     pass

@@ -208,7 +208,7 @@ class Term(aclgenerator.Term):
         family_keywords = self._TERM_TYPE.get(self.term_type)
 
         term_block.append(
-            [TERM_INDENT, "match %s %s" % (self.term.name, family_keywords["addr_fam"]), False]
+            [TERM_INDENT, "match {} {}".format(self.term.name, family_keywords["addr_fam"]), False]
         )
 
         term_af = self.AF_MAP.get(self.term_type)
@@ -411,7 +411,7 @@ class Term(aclgenerator.Term):
 
         return port_str
 
-    def _processICMP(self, term: policy.Term) -> Tuple[str, str]:
+    def _processICMP(self, term: policy.Term) -> tuple[str, str]:
         icmp_types = [""]
         icmp_code_str = ""
         icmp_type_str = " type "
@@ -434,7 +434,7 @@ class Term(aclgenerator.Term):
 
         return icmp_type_str, icmp_code_str
 
-    def _processProtocol(self, term_type: str, term: policy.Term, flags: List[str]) -> str:
+    def _processProtocol(self, term_type: str, term: policy.Term, flags: list[str]) -> str:
         anet_proto_map = {
             "inet": {
                 # <1-255> protocol  values(s) or range(s) of protocol  values
@@ -490,7 +490,7 @@ class Term(aclgenerator.Term):
 
         return protocol_str
 
-    def _processProtocolExcept(self, term_type: str, term: policy.Term, flags: List[str]) -> str:
+    def _processProtocolExcept(self, term_type: str, term: policy.Term, flags: list[str]) -> str:
         # EOS does not have a protocol-except keyword. it does, however, support
         # lists of protocol-ids. given a term this function will generate the
         # appropriate list of protocol-id's which *will* be permited. within the
@@ -527,8 +527,8 @@ class Term(aclgenerator.Term):
         return protocol_str
 
     def _processTermOptions(
-        self, term: policy.Term, options: List[str]
-    ) -> Tuple[List[str], List[str]]:
+        self, term: policy.Term, options: list[str]
+    ) -> tuple[list[str], list[str]]:
         flags = []
         misc_options = []
 
@@ -561,7 +561,7 @@ class Term(aclgenerator.Term):
 
         return flags, misc_options
 
-    def _Group(self, group: List[Union[str, Tuple[int, int]]], lc: bool = True) -> str:
+    def _Group(self, group: list[Union[str, tuple[int, int]]], lc: bool = True) -> str:
         """If 1 item return it, else return [item1 item2].
 
         Args:
@@ -624,7 +624,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
     SUFFIX = ".atp"
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """returns: tuple of supported tokens and sub tokens."""
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
@@ -673,8 +673,8 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         return supported_tokens, supported_sub_tokens
 
     def _MinimizePrefixes(
-        self, include: List[Union[IPv4, IPv6]], exclude: List[Union[IPv4, IPv6]]
-    ) -> Union[Tuple[List[IPv4], List[IPv4]], Tuple[List[IPv6], List[IPv6]]]:
+        self, include: list[Union[IPv4, IPv6]], exclude: list[Union[IPv4, IPv6]]
+    ) -> Union[tuple[list[IPv4], list[IPv4]], tuple[list[IPv6], list[IPv6]]]:
         """Calculate a minimal set of prefixes for match conditions.
 
         Args:
@@ -711,8 +711,8 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         self,
         direction: str,
         name: str,
-        pfxs: List[Union[IPv4, IPv6]],
-        ex_pfxs: List[Union[IPv4, IPv6]],
+        pfxs: list[Union[IPv4, IPv6]],
+        ex_pfxs: list[Union[IPv4, IPv6]],
         af: str,
     ) -> str:
         field_list = ""

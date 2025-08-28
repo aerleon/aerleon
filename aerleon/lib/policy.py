@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 DEFINITIONS = None
 DEFAULT_DEFINITIONS = './def'
-ACTIONS = set(('accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst'))
+ACTIONS = {'accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst'}
 PROTOS_WITH_PORTS = frozenset(('tcp', 'udp', 'udplite', 'sctp'))
 FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
     'byte-offset',
@@ -49,7 +49,7 @@ FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
     'flexible-range-name',
 }
 FLEXIBLE_MATCH_START_OPTIONS = {'layer-3', 'layer-4', 'payload'}
-_LOGGING = set(('true', 'True', 'syslog', 'local', 'disable', 'log-both'))
+_LOGGING = {'true', 'True', 'syslog', 'local', 'disable', 'log-both'}
 _OPTIMIZE = True
 _SHADE_CHECK = False
 _MAX_TTL = 255
@@ -146,8 +146,8 @@ class InvalidNumericProtoValue(Error):
 
 
 def TranslatePorts(
-    ports: List[str], protocols: List[str], term_name: str
-) -> List[Tuple[int, int]]:
+    ports: list[str], protocols: list[str], term_name: str
+) -> list[tuple[int, int]]:
     """Return all ports of all protocols requested.
 
     Args:
@@ -188,7 +188,7 @@ def TranslatePorts(
 class Policy:
     """The policy object contains everything found in a given policy file."""
 
-    def __init__(self, header: Header, terms: Optional[List[Term]]) -> None:
+    def __init__(self, header: Header, terms: list[Term] | None) -> None:
         """Initiator for the Policy object.
 
         Args:
@@ -206,14 +206,14 @@ class Policy:
         self.filename = ''
         self.AddFilter(header, terms)
 
-    def AddFilter(self, header: Header, terms: Optional[List[Term]]) -> None:
+    def AddFilter(self, header: Header, terms: list[Term] | None) -> None:
         """Add another header & filter."""
         self.filters.append((header, terms))
         self._TranslateTerms(terms)
         if _SHADE_CHECK:
             self._DetectShading(terms)
 
-    def _TranslateTerms(self, terms: Optional[List[Term]]) -> None:
+    def _TranslateTerms(self, terms: list[Term] | None) -> None:
         """."""
         if not terms:
             raise NoTermsError('no terms found')
@@ -262,7 +262,7 @@ class Policy:
         return False
 
     @property
-    def headers(self) -> List[Header]:
+    def headers(self) -> list[Header]:
         """Returns the headers from each of the configured filters.
 
         Returns:
@@ -270,7 +270,7 @@ class Policy:
         """
         return [x[0] for x in self.filters]
 
-    def _DetectShading(self, terms: List[Term]) -> None:
+    def _DetectShading(self, terms: list[Term]) -> None:
         """Finds terms which are shaded (impossible to reach).
 
         Iterate through each term, looking at each prior term. If a prior term
@@ -305,7 +305,7 @@ class Policy:
 
     def __str__(self) -> str:
         def tuple_str(tup):
-            return '%s:%s' % (tup[0], tup[1])
+            return f'{tup[0]}:{tup[1]}'
 
         return 'Policy: {%s}' % ', '.join(map(tuple_str, self.filters))
 
@@ -423,7 +423,7 @@ class Term:
     _IPV4_BYTE_SIZE = 1
     _IPV6_BYTE_SIZE = 4
 
-    def __init__(self, obj: Union[VarType, List[VarType]]) -> None:
+    def __init__(self, obj: VarType | list[VarType]) -> None:
         self.name = None
 
         self.action = []
@@ -789,7 +789,7 @@ class Term:
         if self.logging:
             ret_str.append('  logging: %s' % self.logging)
         if self.log_limit:
-            ret_str.append('  log_limit: %s/%s' % (self.log_limit[0], self.log_limit[1]))
+            ret_str.append(f'  log_limit: {self.log_limit[0]}/{self.log_limit[1]}')
         if self.log_name:
             ret_str.append('  log_name: %s' % self.log_name)
         if self.priority:
@@ -815,7 +815,7 @@ class Term:
         if self.vpn:
             vpn_name, pair_policy = self.vpn
             if pair_policy:
-                ret_str.append('  vpn: name = %s, pair_policy = %s' % (vpn_name, pair_policy))
+                ret_str.append(f'  vpn: name = {vpn_name}, pair_policy = {pair_policy}')
             else:
                 ret_str.append('  vpn: name = %s' % vpn_name)
         if self.source_zone:
@@ -988,7 +988,7 @@ class Term:
     def __ne__(self, other: Term) -> bool:
         return not self.__eq__(other)
 
-    def _SortAddressesByFamily(self, addr_type: str) -> List[Union[IPv4, IPv6]]:
+    def _SortAddressesByFamily(self, addr_type: str) -> list[IPv4 | IPv6]:
         """Provide the term address field to sort.
 
         Method will sort v4 and then concatenate sorted v6 addresses. This will
@@ -1009,7 +1009,7 @@ class Term:
         # Concatenate
         return sort_v4 + sort_v6
 
-    def AddressesByteLength(self, address_family: Tuple[int, int] = (4, 6)) -> int:
+    def AddressesByteLength(self, address_family: tuple[int, int] = (4, 6)) -> int:
         """Returns the byte length of all IP addresses in the term.
 
         This is used in the srx generator due to a address size limitation.
@@ -1073,8 +1073,8 @@ class Term:
                 self.address = self.flattened_addr
 
     def GetAddressOfVersion(
-        self, addr_type: str, af: Optional[int] = None
-    ) -> List[Union[IPv4, IPv6]]:
+        self, addr_type: str, af: int | None = None
+    ) -> list[IPv4 | IPv6]:
         """Returns addresses of the appropriate Address Family.
 
         Args:
@@ -1091,7 +1091,7 @@ class Term:
 
         return [x for x in getattr(self, addr_type) if x.version == af]
 
-    def AddObject(self, obj: Union[VarType, List[VarType]]) -> None:
+    def AddObject(self, obj: VarType | list[VarType]) -> None:
         """Add an object of unknown type to this term.
 
         Args:
@@ -1398,7 +1398,7 @@ class Term:
         if self.ttl:
             if not _MIN_TTL <= self.ttl <= _MAX_TTL:
                 raise InvalidTermTTLValue(
-                    'Term %s contains invalid TTL: %s' % (self.name, self.ttl)
+                    f'Term {self.name} contains invalid TTL: {self.ttl}'
                 )
         for proto in self.protocol:
             if proto.isnumeric():
@@ -1453,7 +1453,7 @@ class Term:
         if self.destination_port:
             self.destination_port = self.CollapsePortList(self.destination_port)
 
-    def CollapsePortList(self, ports: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def CollapsePortList(self, ports: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """Given a list of ports, Collapse to the smallest required.
 
         Args:
@@ -1482,7 +1482,7 @@ class Term:
                 ret_ports.append(port)
         return ret_ports
 
-    def CheckProtocolIsContained(self, superset: List[str], subset: List[str]) -> bool:
+    def CheckProtocolIsContained(self, superset: list[str], subset: list[str]) -> bool:
         """Check if the given list of protocols is wholly contained.
 
         Args:
@@ -1504,8 +1504,8 @@ class Term:
 
     def CheckPortIsContained(
         self,
-        superset: List[Tuple[int, int]],
-        subset: List[Tuple[int, int]],
+        superset: list[tuple[int, int]],
+        subset: list[tuple[int, int]],
     ) -> bool:
         """Check if the given list of ports is wholly contained.
 
@@ -1532,7 +1532,7 @@ class Term:
         return True
 
     def CheckAddressIsContained(
-        self, superset: Optional[List[IPv4.IPv6]], subset: Optional[List[IPv4, IPv6]]
+        self, superset: list[IPv4.IPv6] | None, subset: list[IPv4, IPv6] | None
     ) -> bool:
         """Check if subset is wholey contained by superset.
 
@@ -1664,7 +1664,7 @@ class Header:
         self.apply_groups = []
         self.apply_groups_except = []
 
-    def AddObject(self, obj: Union[Target, VarType]) -> None:
+    def AddObject(self, obj: Target | VarType) -> None:
         """Add and object to the Header.
 
         Args:
@@ -1688,11 +1688,11 @@ class Header:
             raise RuntimeError('Unable to add object from header.')
 
     @property
-    def platforms(self) -> List[str]:
+    def platforms(self) -> list[str]:
         """The platform targets of this particular header."""
         return [x.platform for x in self.target]
 
-    def FilterOptions(self, platform: str) -> List[str]:
+    def FilterOptions(self, platform: str) -> list[str]:
         """Given a platform return the options.
 
         Args:
@@ -1723,7 +1723,7 @@ class Header:
                 if target.options:
                     if platform in ['srx', 'paloalto']:
                         if len(target.options) >= 3:
-                            return '%s>%s' % (target.options[1], target.options[3])
+                            return f'{target.options[1]}>{target.options[3]}'
                         else:
                             return None
                     else:
@@ -1731,7 +1731,7 @@ class Header:
         return None
 
     def __str__(self) -> str:
-        return 'Target[%s], Comments [%s], Apply groups: [%s], except: [%s]' % (
+        return 'Target[{}], Comments [{}], Apply groups: [{}], except: [{}]'.format(
             ', '.join(map(str, self.target)),
             ', '.join(self.comment),
             ', '.join(self.apply_groups),
@@ -1773,7 +1773,7 @@ class Header:
 class Target:
     """The type of acl to be rendered from this policy file."""
 
-    def __init__(self, target: List[str]) -> None:
+    def __init__(self, target: list[str]) -> None:
         self.platform = target[0]
         self.options = target[1:]
 
@@ -1985,7 +1985,7 @@ def t_newline(t: LexToken) -> None:
 
 
 def t_error(t):
-    print("Illegal character '%s' on line %s" % (t.value[0], t.lineno))
+    print(f"Illegal character '{t.value[0]}' on line {t.lineno}")
     t.lexer.skip(1)
 
 
@@ -2660,16 +2660,16 @@ def _ReadFile(filename):
     logging.debug('ReadFile(%s)', filename)
     if os.path.exists(filename):
         try:
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 data = f.read()
             return data
-        except IOError:
+        except OSError:
             raise FileReadError('Unable to open or read file %s' % filename)
     else:
         raise FileNotFoundError('Unable to open policy file %s' % filename)
 
 
-def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> List[str]:
+def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> list[str]:
     """Search input for include statements and import specified include file.
 
     Search input for include statements and if found, import specified file
@@ -2717,7 +2717,7 @@ def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> List[str]:
     return rval
 
 
-def _SubpathOf(parent: str, subpath: Union[str, pathlib.Path]) -> bool:
+def _SubpathOf(parent: str, subpath: str | pathlib.Path) -> bool:
     return str(pathlib.Path(subpath).resolve()).startswith(str(pathlib.Path(parent).resolve()))
 
 
@@ -2745,7 +2745,7 @@ def ParseFile(filename, definitions=None, optimize=True, base_dir='', shade_chec
 
 def ParsePolicy(
     data: str,
-    definitions: Optional[naming.Naming] = None,
+    definitions: naming.Naming | None = None,
     optimize: bool = True,
     base_dir: str = '',
     shade_check: bool = False,
@@ -2804,8 +2804,8 @@ if __name__ == '__main__':
     ret = 0
     if len(sys.argv) > 1:
         try:
-            ret = ParsePolicy(open(sys.argv[1], 'r').read(), filename=sys.argv[1])
-        except IOError:
+            ret = ParsePolicy(open(sys.argv[1]).read(), filename=sys.argv[1])
+        except OSError:
             print('ERROR: \'%s\' either does not exist or is not readable' % (sys.argv[1]))
             ret = 1
     else:

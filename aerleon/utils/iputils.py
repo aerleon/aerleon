@@ -3,7 +3,8 @@
 """A module of utilities to work with IP addresses in a faster way."""
 
 import ipaddress
-from typing import Iterator, Union
+from typing import Union
+from collections.abc import Iterator
 
 
 def exclude_address(
@@ -41,7 +42,7 @@ def exclude_address(
     if (
         not base_net._version == exclude_net._version
     ):  # pylint disable=protected-access # pytype: disable=attribute-error
-        raise TypeError('%s and %s are not of the same version' % (base_net, exclude_net))
+        raise TypeError(f'{base_net} and {exclude_net} are not of the same version')
 
     if not exclude_net.subnet_of(base_net):  # pytype: disable=attribute-error
         raise ValueError()
@@ -60,19 +61,15 @@ def exclude_address(
     if include_range[0] == exclude_range[0]:
         result_start = address_class(exclude_range[1] + 1)
         result_end = address_class(include_range[1])
-        for address in ipaddress.summarize_address_range(result_start, result_end):
-            yield address
+        yield from ipaddress.summarize_address_range(result_start, result_end)
     elif include_range[1] == exclude_range[1]:
         result_start = address_class(include_range[0])
         result_end = address_class(exclude_range[0] - 1)
-        for address in ipaddress.summarize_address_range(result_start, result_end):
-            yield address
+        yield from ipaddress.summarize_address_range(result_start, result_end)
     else:
         first_section_start = address_class(include_range[0])
         first_section_end = address_class(exclude_range[0] - 1)
         second_section_start = address_class(exclude_range[1] + 1)
         second_section_end = address_class(include_range[1])
-        for address in ipaddress.summarize_address_range(first_section_start, first_section_end):
-            yield address
-        for address in ipaddress.summarize_address_range(second_section_start, second_section_end):
-            yield address
+        yield from ipaddress.summarize_address_range(first_section_start, first_section_end)
+        yield from ipaddress.summarize_address_range(second_section_start, second_section_end)

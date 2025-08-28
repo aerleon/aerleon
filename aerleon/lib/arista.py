@@ -43,7 +43,7 @@ class Arista(cisco.Cisco):
     _PROTO_INT = False
 
     # Arista omits the "extended" access-list argument.
-    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> List[str]:
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> list[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -74,6 +74,6 @@ class Arista(cisco.Cisco):
             target.append('ipv6 access-list %s' % filter_name)
         else:
             raise UnsupportedEosAccessListError(
-                'access list type %s not supported by %s' % (filter_type, self._PLATFORM)
+                f'access list type {filter_type} not supported by {self._PLATFORM}'
             )
         return target

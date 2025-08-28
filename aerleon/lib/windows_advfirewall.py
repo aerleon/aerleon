@@ -54,8 +54,8 @@ class Term(windows.Term):
     }
 
     def _HandleIcmpTypes(
-        self, icmp_types: List[str], protocols: List[str]
-    ) -> Tuple[List[str], List[str]]:
+        self, icmp_types: list[str], protocols: list[str]
+    ) -> tuple[list[str], list[str]]:
         # advfirewall actually puts this in the protocol spec, eg.:
         # icmpv4 | icmpv6 | icmpv4:type,code | icmpv6:type,code
         types = ['']
@@ -69,7 +69,7 @@ class Term(windows.Term):
             if types:
                 protocols = []
                 for typ in types:
-                    protocols.append('%s:%s,any' % (icmp_prefix, typ))
+                    protocols.append(f'{icmp_prefix}:{typ},any')
                 types = ['']
 
         # fixup for icmp v4
@@ -80,19 +80,19 @@ class Term(windows.Term):
         return (types, protocols)
 
     def _HandlePorts(
-        self, src_ports: List[Tuple[int, int]], dst_ports: List[Tuple[int, int]]
-    ) -> Tuple[List[str], List[str]]:
+        self, src_ports: list[tuple[int, int]], dst_ports: list[tuple[int, int]]
+    ) -> tuple[list[str], list[str]]:
         return ([self._ComposePortString(src_ports)], [self._ComposePortString(dst_ports)])
 
     def _CartesianProduct(
         self,
-        src_addr: List[Union[IPv4, IPv6]],
-        dst_addr: List[Union[IPv4, IPv6]],
-        protocol: List[str],
-        unused_icmp_types: List[str],
-        src_port: List[str],
-        dst_port: List[str],
-        ret_str: List[str],
+        src_addr: list[Union[IPv4, IPv6]],
+        dst_addr: list[Union[IPv4, IPv6]],
+        protocol: list[str],
+        unused_icmp_types: list[str],
+        src_port: list[str],
+        dst_port: list[str],
+        ret_str: list[str],
     ) -> None:
         # At least advfirewall supports port ranges, unlike windows ipsec,
         # so the src and dst port lists will always be one element long.
@@ -151,7 +151,7 @@ class Term(windows.Term):
             name=self.term_name, atoms=' '.join(atoms)
         )
 
-    def _ComposePortString(self, ports: List[Tuple[int, int]]) -> str:
+    def _ComposePortString(self, ports: list[tuple[int, int]]) -> str:
         """Convert the list of ports tuples into a multiport range string."""
         if not ports:
             return ''

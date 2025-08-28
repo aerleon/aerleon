@@ -39,7 +39,6 @@ Examples:
   $ cgrep.py -p 22 tcp
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
 import logging
@@ -326,13 +325,13 @@ def print_diff(ip, common, diff1, diff2):
     """
     logging.info('IP: %s', ip)
     if common:
-        common = ['  {0}'.format(elem) for elem in common]
+        common = [f'  {elem}' for elem in common]
         logging.info('\n'.join(common))
     if diff1:
-        diff = ['+ {0}'.format(elem) for elem in diff1]
+        diff = [f'+ {elem}' for elem in diff1]
         logging.info('\n'.join(diff))
     if diff2:
-        diff = ['- {0}'.format(elem) for elem in diff2]
+        diff = [f'- {elem}' for elem in diff2]
         logging.info('\n'.join(diff))
 
 
@@ -377,7 +376,7 @@ def get_ip_parents(ip, db):
         prefix_and_nets = get_nets_and_highest_prefix(ip, v, db)
         if nested:
             for n in nested:
-                results.append(('%s -> %s' % (n, v), prefix_and_nets))
+                results.append((f'{n} -> {v}', prefix_and_nets))
         else:
             results.append((v, prefix_and_nets))
     # sort the results by prefix length descending
@@ -475,9 +474,9 @@ def compare_ip_token(options, db):
     for ip in options.ip:
         rval = db.GetIpParents(ip)
         if token in rval:
-            results = '%s is in %s' % (ip, token)
+            results = f'{ip} is in {token}'
         else:
-            results = '%s is _not_ in %s' % (ip, token)
+            results = f'{ip} is _not_ in {token}'
     return results
 
 

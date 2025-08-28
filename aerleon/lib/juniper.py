@@ -314,7 +314,7 @@ class Term(aclgenerator.Term):
             term_prefix = ''
 
         # term name
-        config.Append('%s term %s {' % (term_prefix, self.term.name))
+        config.Append(f'{term_prefix} term {self.term.name} {{')
 
         # The "filter" keyword is not compatible with from or then
         if self.term.filter_term:
@@ -586,7 +586,7 @@ class Term(aclgenerator.Term):
             if self.term.flexible_match_range:
                 config.Append('flexible-match-range {')
                 for fm_opt in self.term.flexible_match_range:
-                    config.Append('%s %s;' % (fm_opt[0], fm_opt[1]))
+                    config.Append(f'{fm_opt[0]} {fm_opt[1]};')
                 config.Append('}')
 
             config.Append('}')  # end from { ... }
@@ -730,7 +730,7 @@ class Term(aclgenerator.Term):
         return str(config)
 
     @staticmethod
-    def NextIpCheck(next_ip: List[Union[nacaddr.IPv4, nacaddr.IPv6]], term_name: str):
+    def NextIpCheck(next_ip: list[Union[nacaddr.IPv4, nacaddr.IPv6]], term_name: str):
         if len(next_ip) > 1:
             raise JuniperNextIpError(
                 'The following term has more ' 'than one next IP value: %s' % term_name
@@ -753,8 +753,8 @@ class Term(aclgenerator.Term):
 
     def _MinimizePrefixes(
         self,
-        include: List[Union[nacaddr.IPv4, nacaddr.IPv6]],
-        exclude: List[Union[nacaddr.IPv4, nacaddr.IPv6]],
+        include: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
+        exclude: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
     ):
         """Calculate a minimal set of prefixes for Juniper match conditions.
 
@@ -884,7 +884,7 @@ class Term(aclgenerator.Term):
             logging.warning('Ignoring non IPv4 or IPv6 address: %s', addr)
         return rval
 
-    def _Group(self, group: List[str], lc: bool = True):
+    def _Group(self, group: list[str], lc: bool = True):
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -897,7 +897,7 @@ class Term(aclgenerator.Term):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: List[str], lc: bool = True):
+        def _FormattedGroup(el: list[str], lc: bool = True):
             """Return the actual formatting of an individual element.
 
             Args:
@@ -944,7 +944,7 @@ class Juniper(aclgenerator.ACLGenerator):
     _TERM = Term
     SUFFIX = '.jcl'
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:

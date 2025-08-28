@@ -124,7 +124,7 @@ class WindowsIPSecTest(absltest.TestCase):
     def assertTrue(self, strings, result, term):
         for string in strings:
             fullstring = 'netsh ipsec static add %s' % (string)
-            super().assertIn(fullstring, result, 'did not find "%s" for %s' % (fullstring, term))
+            super().assertIn(fullstring, result, f'did not find "{fullstring}" for {term}')
 
     @capture.stdout
     def testPolicy(self):

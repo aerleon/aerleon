@@ -168,11 +168,11 @@ term good-term-5 {
 """
 
 GOOD_TERM_6 = """
-term good-term-6 {
+term good-term-6 {{
   comment:: "Some text describing what this block does,
              possibly including newines, blank lines,
              and extra-long comments (over 255 characters)
-             %(long_line)s
+             {long_line}
 
              All these cause problems if passed verbatim to iptables.
              "
@@ -180,10 +180,10 @@ term good-term-6 {
   protocol:: tcp
   action:: accept
 
-}
-""" % {
-    'long_line': '-' * 260
-}
+}}
+""".format(
+    long_line='-' * 260
+)
 
 
 GOOD_TERM_7 = """
@@ -1044,7 +1044,7 @@ class AclCheckTest(absltest.TestCase):
         acl = iptables.Iptables(pol, EXP_INFO)
         result = str(acl)
         self.assertIn(
-            '%s %s' % ('--tcp-flags ACK,FIN,RST,SYN RST', '--dport 1024:65535 -j ACCEPT'),
+            '{} {}'.format('--tcp-flags ACK,FIN,RST,SYN RST', '--dport 1024:65535 -j ACCEPT'),
             result,
             'No rule matching packets with RST bit only.\n' + result,
         )
@@ -1599,16 +1599,16 @@ YAML_GOOD_TERM_6 = """
         Some text describing what this block does,
         possibly including newines, blank lines,
         and extra-long comments (over 255 characters)
-        %(long_line)s
+        {long_line}
 
         All these cause problems if passed verbatim to iptables.
                
     protocol: tcp
     action: accept
 
-""" % {
-    'long_line': '-' * 260
-}
+""".format(
+    long_line='-' * 260
+)
 
 
 YAML_GOOD_TERM_7 = """

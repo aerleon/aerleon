@@ -29,15 +29,9 @@ from aerleon.lib.recognizers import (
     TValue,
 )
 
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
+from typing import TypedDict
 
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated
-else:
-    from typing import Annotated
+from typing import Annotated
 
 if sys.version_info < (3, 10):
     from typing_extensions import TypeAlias
@@ -60,7 +54,9 @@ if typing.TYPE_CHECKING:
 
 WordList: TypeAlias = "str | list[str]"
 
-VPNValue = TypedDict('VPNValue', {"name": str, "policy": "NotRequired[str]"})
+class VPNValue(TypedDict):
+    name: str
+    policy: 'NotRequired[str]'
 
 PolicyTerm = TypedDict(
     'PolicyTerm',
@@ -136,7 +132,8 @@ PolicyTerm = TypedDict(
     total=False,
 )
 
-PolicyInclude = TypedDict('PolicyInclude', {"include": str})
+class PolicyInclude(TypedDict):
+    include: str
 
 PolicyFilterHeader = TypedDict(
     'PolicyFilterHeader',
@@ -149,11 +146,12 @@ PolicyFilterHeader = TypedDict(
     total=False,
 )
 
-PolicyFilter = TypedDict(
-    'PolicyFilter', {"header": PolicyFilterHeader, "terms": "list[PolicyTerm | PolicyInclude]"}
-)
+class PolicyFilter(TypedDict):
+    header: PolicyFilterHeader
+    terms: 'list[PolicyTerm | PolicyInclude]'
 
-PolicyDict = TypedDict('PolicyDict', {"filters": "list[PolicyFilter]"})
+class PolicyDict(TypedDict):
+    filters: 'list[PolicyFilter]'
 
 
 RawTarget = Annotated[
@@ -174,8 +172,8 @@ class RawFilterHeader:
         kvs: A mapping containing any other key/value pairs in the header.
     """
 
-    targets: typing.Dict[str, RawTarget]
-    kvs: typing.Dict[str, typing.Any] = field(default_factory=dict)
+    targets: dict[str, RawTarget]
+    kvs: dict[str, typing.Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -188,7 +186,7 @@ class RawTerm:
     """
 
     name: str
-    kvs: typing.Dict[str, typing.Any] = field(default_factory=dict)
+    kvs: dict[str, typing.Any] = field(default_factory=dict)
 
 
 @dataclass

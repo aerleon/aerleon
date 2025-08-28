@@ -101,7 +101,7 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
     Raises:
         PolicyTypeError: The policy file provided is not valid.
     """
-    with open(pathlib.Path(base_dir).joinpath(filename), 'r') as file:
+    with open(pathlib.Path(base_dir).joinpath(filename)) as file:
         try:
             policy_dict = yaml.load(file, Loader=SpanSafeYamlLoader(filename=filename))
         except YAMLError as yaml_error:
@@ -169,7 +169,7 @@ class YAMLPolicyPreprocessor:
     def __call__(
         self, filename: str, policy_dict: Optional[PolicyDict]
     ) -> Optional[
-        Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]
+        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
     ]:
         """Process includes and validate the file data as a PolicyDict.
 
@@ -191,7 +191,7 @@ class YAMLPolicyPreprocessor:
     def _preprocess_inner(
         self, depth: int, debug_stack: list, filename: str, policy_dict: Optional[PolicyDict]
     ) -> Optional[
-        Dict[str, List[Dict[str, Union[Dict[str, Dict[str, str]], List[Dict[str, str]]]]]]
+        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
     ]:
         # Empty files are ignored with a warning
         if policy_dict is None or not policy_dict:
@@ -430,7 +430,7 @@ class YAMLPolicyPreprocessor:
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> Tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
+    ) -> tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
         """Load, parse, and validate an include file path."""
         if not suffix_is_yaml(relative_path):
             raise ValueError(
@@ -442,7 +442,7 @@ class YAMLPolicyPreprocessor:
                 f"Include file cannot be loaded from outside the base directory. File={include_path} base_directory={self.base_dir}"
             )
 
-        with open(include_path, 'r') as include_file:
+        with open(include_path) as include_file:
             include_data = yaml.load(
                 include_file.read(), Loader=SpanSafeYamlLoader(filename=str(include_path))
             )
@@ -452,7 +452,7 @@ class YAMLPolicyPreprocessor:
 class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
     """A YAMLPolicyPreprocessor that sources includes from a dictionary."""
 
-    def __init__(self, includes: Dict[str, PolicyDict]):
+    def __init__(self, includes: dict[str, PolicyDict]):
         """
         Args:
             includes: A read-only mapping from include name to file_dict.
@@ -462,6 +462,6 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> Tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
+    ) -> tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
         return self.includes.get(relative_path), relative_path

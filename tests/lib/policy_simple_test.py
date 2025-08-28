@@ -95,7 +95,7 @@ class FieldTest(absltest.TestCase):
         f = policy_simple.NamingField('RFC1918 CORP_INTERNAL RFC1918')
         f.Append('RFC1918')
         f.Append('CORP_INTERNAL RFC1918')
-        self.assertEqual(set(['RFC1918', 'CORP_INTERNAL']), f.value)
+        self.assertEqual({'RFC1918', 'CORP_INTERNAL'}, f.value)
 
     def testNamingFieldStr(self):
         f = policy_simple.NamingField(' '.join(str(x) for x in range(25)))

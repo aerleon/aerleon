@@ -38,12 +38,12 @@ if typing.TYPE_CHECKING:
 @dataclass
 class RecognizerContext:
     policy: RawPolicy
-    filter: Optional[RawFilter] = None
-    header: Optional[RawFilterHeader] = None
-    target: Optional[RawTarget] = None
-    term: Optional[RawTerm] = None
-    keyword: Optional[str] = None
-    value: Optional[str] = None
+    filter: RawFilter | None = None
+    header: RawFilterHeader | None = None
+    target: RawTarget | None = None
+    term: RawTerm | None = None
+    keyword: str | None = None
+    value: str | None = None
 
 
 @dataclass
@@ -56,13 +56,13 @@ class RecognizerKeywordResult:
 class RecognizerValueResult:
     recognized: bool
     securityCritical: bool = False
-    valueKV: Optional[dict] = None
+    valueKV: dict | None = None
 
 
 @dataclass
 class RecognizerOptionResult:
     securityCritical: bool
-    valueKV: Optional[dict] = None
+    valueKV: dict | None = None
 
 
 class TValue(enum.Enum):
@@ -225,7 +225,7 @@ class TUnion(TComposition):
         of: A list of allowed types. The input must match one of these types.
     """
 
-    of: "list[TValue | TComposition]"
+    of: list[TValue | TComposition]
 
     def Recognize(self, value):
         """Match and parse the input value using the list of sub-recognizers given in the 'of'
@@ -257,10 +257,10 @@ class TList(TComposition):
         collapsible: Whether a list with a single item can be given directly.
     """
 
-    of: "TValue | TComposition"
+    of: TValue | TComposition
     collapsible: bool = False
 
-    def Recognize(self, value: str) -> typing.List[str]:
+    def Recognize(self, value: str) -> list[str]:
         """Match and parse the input value using the recognizer given in the 'of' class attribute.
 
         Arguments:
@@ -303,7 +303,7 @@ class TList(TComposition):
         if (
             isinstance(value, str)
             and isinstance(self.of, TUnion)
-            and all((_isSpaceFreeValue(value_type) for value_type in self.of.of))
+            and all(_isSpaceFreeValue(value_type) for value_type in self.of.of)
         ):
             return list(map(self.of.Recognize, value.split()))
 
@@ -344,9 +344,9 @@ class TSection(TComposition):
             any value recognized by the given recognizer.
     """
 
-    of: "list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]"
+    of: list[tuple[str | TValue | TUnion, TValue | TComposition]]
 
-    def Recognize(self, value: dict) -> typing.Dict[str, typing.List[str]]:
+    def Recognize(self, value: dict) -> dict[str, list[str]]:
         """Match and parse the input value using the list of rules given in the 'of' class attribute.
         See class docstring for more details on how to specify the rules list.
 

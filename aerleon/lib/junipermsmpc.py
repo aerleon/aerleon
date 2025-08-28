@@ -378,7 +378,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         self.applications = {}
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -408,7 +408,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _BuildPort(self, ports: List[Tuple[int, int]]):
+    def _BuildPort(self, ports: list[tuple[int, int]]):
         """Transform specified ports into list and ranges.
 
         Args:
@@ -422,7 +422,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             if p[0] == p[1]:
                 port_list.append(str(p[0]))
             else:
-                port_list.append('%s-%s' % (str(p[0]), str(p[1])))
+                port_list.append(f'{str(p[0])}-{str(p[1])}')
         return port_list
 
     def _GenerateApplications(self, filter_name: str):
@@ -459,10 +459,10 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                             if proto == 'icmp':
                                 target.append('application-protocol %s;' % proto)
                             target.append('protocol %s;' % proto)
-                            target.append('%s-type %s;' % (proto, str(code)))
+                            target.append(f'{proto}-type {str(code)};')
                             if app['icmp-code']:
                                 target.append(
-                                    '%s-code %s;' % (proto, self._Group(app['icmp-code']))
+                                    '{}-code {};'.format(proto, self._Group(app['icmp-code']))
                                 )
                             if int(timeout):
                                 target.append('inactivity-timeout %s;' % int(timeout))
@@ -582,7 +582,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                         term.name,
                     )
                     continue
-                if set(['established', 'tcp-established']).intersection(term.option):
+                if {'established', 'tcp-established'}.intersection(term.option):
                     logging.warning(
                         'Skipping established term %s because MSMPC is stateful.', term.name
                     )
@@ -654,7 +654,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_direction, new_terms, apply_groups)
             )
 
-    def _Group(self, group: List[str], lc: bool = True):
+    def _Group(self, group: list[str], lc: bool = True):
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -667,7 +667,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: List[str], lc: bool = True):
+        def _FormattedGroup(el: list[str], lc: bool = True):
             """Return the actual formatting of an individual element.
 
             Args:

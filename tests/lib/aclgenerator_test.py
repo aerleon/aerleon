@@ -213,21 +213,21 @@ class ACLGeneratorTest(absltest.TestCase):
 
         # Include all tags.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$'), '%sDate:%s' % ('$', '$'), '%sRevision:%s' % ('$', '$')],
+            ['{}Id:{}'.format('$', '$'), '{}Date:{}'.format('$', '$'), '{}Revision:{}'.format('$', '$')],
             aclgenerator.AddRepositoryTags(),
         )
         # Remove the revision tag.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$'), '%sDate:%s' % ('$', '$')],
+            ['{}Id:{}'.format('$', '$'), '{}Date:{}'.format('$', '$')],
             aclgenerator.AddRepositoryTags(revision=False),
         )
         # Only include the Id: tag.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$')], aclgenerator.AddRepositoryTags(date=False, revision=False)
+            ['{}Id:{}'.format('$', '$')], aclgenerator.AddRepositoryTags(date=False, revision=False)
         )
         # Wrap the Date: tag.
         self.assertListEqual(
-            ['"%sDate:%s"' % ('$', '$')],
+            ['"{}Date:{}"'.format('$', '$')],
             aclgenerator.AddRepositoryTags(revision=False, rid=False, wrap=True),
         )
 

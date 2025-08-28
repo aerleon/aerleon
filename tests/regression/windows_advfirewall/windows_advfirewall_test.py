@@ -268,7 +268,7 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             super().assertIn(
                 fullstring,
                 result,
-                'did not find "%s" for %s\nGot:\n%s' % (fullstring, term, result),
+                f'did not find "{fullstring}" for {term}\nGot:\n{result}',
             )
 
     @capture.stdout

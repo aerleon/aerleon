@@ -76,8 +76,8 @@ class ServiceMap:
     def get_service_name(
         self,
         term_name: str,
-        src_ports: Tuple[str],
-        ports: Union[Tuple[str, str], Tuple[str]],
+        src_ports: tuple[str],
+        ports: Union[tuple[str, str], tuple[str]],
         protocol: str,
         prefix: Optional[str] = None,
     ) -> str:
@@ -87,7 +87,7 @@ class ServiceMap:
 
         if prefix is None:
             prefix = "service-"
-        service_name = "%s%s-%s" % (prefix, term_name, protocol)
+        service_name = f"{prefix}{term_name}-{protocol}"
 
         if len(service_name) > 63:
             raise PaloAltoFWNameTooLongError(
@@ -130,7 +130,7 @@ class Rule:
     @staticmethod
     def TermToOptions(
         from_zone: str, to_zone: str, term: Term, service_map: ServiceMap
-    ) -> Tuple[Dict[str, Union[List[str], str]], Optional[Term]]:
+    ) -> tuple[dict[str, Union[list[str], str]], Optional[Term]]:
         """Convert term to Palo Alto security rule options."""
         options = {}
         options["from_zone"] = [from_zone]
@@ -267,7 +267,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
     _PLATFORM = "paloalto"
     SUFFIX = ".xml"
-    _SUPPORTED_AF = set(("inet", "inet6", "mixed"))
+    _SUPPORTED_AF = {"inet", "inet6", "mixed"}
     _AF_MAP = {"inet": (4,), "inet6": (6,), "mixed": (4, 6)}
     _TERM_MAX_LENGTH = 63
     _APPLICATION_NAME_MAX_LENGTH = 31
@@ -342,7 +342,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         self.service_map = ServiceMap()
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -815,7 +815,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
 
             self.pafw_policies.append((header, ruleset, filter_options))
 
-    def _SortAddressBookNumCheck(self, item: str) -> Tuple[str, int]:
+    def _SortAddressBookNumCheck(self, item: str) -> tuple[str, int]:
         """Used to give a natural order to the list of acl entries.
 
         Args:
@@ -848,7 +848,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             if i[0] == i[1]:
                 port_list.append(str(i[0]))
             else:
-                port_list.append("%s-%s" % (str(i[0]), str(i[1])))
+                port_list.append(f"{str(i[0])}-{str(i[1])}")
         return port_list
 
     def __str__(self) -> str:

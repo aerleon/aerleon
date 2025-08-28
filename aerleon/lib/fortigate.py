@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, MutableMapping, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
+from collections.abc import MutableMapping
 
 from absl import logging
 
@@ -58,7 +59,7 @@ class FortigateObjectGroup:
 
 
 class FortigateIcmpService(FortigateObjectGroup):
-    def __init__(self, name: str, icmp_types: List[int]):
+    def __init__(self, name: str, icmp_types: list[int]):
         self.name = f'{name}-icmp'
         self.icmp_types = [str(i) for i in icmp_types]
 
@@ -76,8 +77,8 @@ class FortigateIPService(FortigateObjectGroup):
     def __init__(
         self,
         name: str,
-        source_port: List[Tuple[int, int]],
-        destination_port: List[Tuple[int, int]],
+        source_port: list[tuple[int, int]],
+        destination_port: list[tuple[int, int]],
         protocols: list[str],
     ):
         self.name = name
@@ -135,7 +136,7 @@ class FortinetAddress(FortigateObjectGroup):
 
 
 class FortigateExcludeGroup(FortigateObjectGroup):
-    def __init__(self, name: str, members: List[str], exclude: List[str]):
+    def __init__(self, name: str, members: list[str], exclude: list[str]):
         """
         Initializes the FortigateExcludeGroup object.
         Args:
@@ -169,7 +170,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
             name: The name of the address group.
         """
         self.name = name
-        self._cached_fortigate_addrs: List[FortinetAddress] = []
+        self._cached_fortigate_addrs: list[FortinetAddress] = []
         self._members = set()
         self._is_dirty = True
 
@@ -180,7 +181,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
             self._is_dirty = True
 
     @property
-    def fortigate_addrs(self) -> List[FortinetAddress]:
+    def fortigate_addrs(self) -> list[FortinetAddress]:
         if self._is_dirty or not self._cached_fortigate_addrs:
             self._cached_fortigate_addrs = []
             sorted_ips = sorted(list(self._members))
@@ -303,7 +304,7 @@ class Term(aclgenerator.Term):
                 self.logtraffic_start = 'log_traffic_start_session'
 
     def _TranslateExcludes(
-        self, base_name: str, addrs: List[nacaddr.IP], excludes: List[nacaddr.IP]
+        self, base_name: str, addrs: list[nacaddr.IP], excludes: list[nacaddr.IP]
     ) -> None:
         member_tokens_v4 = [i.token for i in addrs if i.version == 4]
         member_tokens_v6 = [i.token for i in addrs if i.version == 6]
@@ -327,7 +328,7 @@ class Term(aclgenerator.Term):
             )
             self.address_groups_v6[v6_exclude_group_name] = exclude_addrgrp_v6
 
-    def _TranslateAddresses(self, addrs: List[nacaddr.IP]) -> None:
+    def _TranslateAddresses(self, addrs: list[nacaddr.IP]) -> None:
         """Inserts tokens into versioned addressbook and sets their members to the IPs."""
         for addr in addrs:
             if addr.version == 4:
@@ -587,7 +588,7 @@ class Fortigate(aclgenerator.ACLGenerator):
             BooleanKeywordOption("inet", config),
         ]
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -751,7 +752,7 @@ def FormatFortinetPortRange(low: int, high: int) -> str:
 
 
 def GenerateFortinetServiceString(
-    source_ranges: List[Tuple[int, int]], destination_ranges: List[Tuple[int, int]]
+    source_ranges: list[tuple[int, int]], destination_ranges: list[tuple[int, int]]
 ) -> str:
     """
     Generates a Fortinet service port range string by combining destination and source ranges.

@@ -419,7 +419,7 @@ def _GenerateACL(
         return
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
-            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+            f'Error parsing policy {filename}:\n{sys.exc_info()[0]}{sys.exc_info()[1]}'
         ) from e
 
     platforms = set()
@@ -432,7 +432,7 @@ def _GenerateACL(
     def EmitACL(
         acl_text: str,
         acl_suffix: str,
-        write_files: typing.List[typing.Tuple[pathlib.Path, str]],
+        write_files: list[tuple[pathlib.Path, str]],
         binary: bool = False,
     ):
         if output_directory:
@@ -468,7 +468,7 @@ def _GenerateACL(
 
         except aclgenerator.Error as e:
             raise ACLGeneratorError(
-                'Error generating target ACL for %s:\n%s' % (filename, e)
+                f'Error generating target ACL for {filename}:\n{e}'
             ) from e
 
 
@@ -489,5 +489,5 @@ def AclCheck(
         return check.Summarize()
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
-            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+            f'Error parsing policy {filename}:\n{sys.exc_info()[0]}{sys.exc_info()[1]}'
         ) from e

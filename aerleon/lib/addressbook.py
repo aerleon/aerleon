@@ -13,7 +13,7 @@ class Addressbook:
         self._fqdn_addressbook = collections.OrderedDict()
         self._ip_addressbook = collections.OrderedDict()
 
-    def GetZoneNames(self) -> List:
+    def GetZoneNames(self) -> list:
         """Get each zone name contained within the address book.
 
         Returns:
@@ -74,7 +74,7 @@ class Addressbook:
         """
         return [i for i in self._fqdn_addressbook[zone]]
 
-    def AddFQDNs(self, zone: str, fqdn_list: List[FQDN], suffix=''):
+    def AddFQDNs(self, zone: str, fqdn_list: list[FQDN], suffix=''):
         """Adds a list of FQDNs to the addressbook.
         Args:
           zone: The zone in which to add the FQDNs.
@@ -97,7 +97,7 @@ class Addressbook:
         """
         return self._ip_addressbook[zone][name]
 
-    def AddAddresses(self, zone: str, address_list: List[Union[IPv4, IPv6]]):
+    def AddAddresses(self, zone: str, address_list: list[Union[IPv4, IPv6]]):
         """Create the address book configuration entries.
 
         Args:
@@ -112,7 +112,7 @@ class Addressbook:
         when new networks are added.
         """
 
-        def _drop_subnets(address_list: List[Union[IPv4, IPv6]]):
+        def _drop_subnets(address_list: list[Union[IPv4, IPv6]]):
             """Remove any network contained by another network in this list.
 
             Args:

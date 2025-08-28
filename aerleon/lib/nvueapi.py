@@ -92,7 +92,7 @@ class Term(aclgenerator.Term):
         # which handles the cartesian product of multiple addresses
         raise NotImplementedError("Use GenerateRules() method instead")
 
-    def GenerateRules(self) -> List[Dict]:
+    def GenerateRules(self) -> list[dict]:
         """Generate NVUE rules handling multiple addresses.
 
         Since NVUE only supports single CIDR prefixes per rule (like iptables),
@@ -131,7 +131,7 @@ class Term(aclgenerator.Term):
 
         return rules
 
-    def _GetFilteredAddresses(self, addresses) -> List[str]:
+    def _GetFilteredAddresses(self, addresses) -> list[str]:
         """Get addresses filtered by address family.
 
         Args:
@@ -151,7 +151,7 @@ class Term(aclgenerator.Term):
                 filtered.append(str(addr))
         return filtered
 
-    def _GetProtocols(self) -> List[Optional[str]]:
+    def _GetProtocols(self) -> list[Optional[str]]:
         """Get protocol list, translating Aerleon protocol names to NVUE format.
 
         Returns:
@@ -161,7 +161,7 @@ class Term(aclgenerator.Term):
             return [None]
         return [_PROTO_TABLE.get(p, p) for p in self.term.protocol]
 
-    def _GetPorts(self, port_list) -> List[Optional[str]]:
+    def _GetPorts(self, port_list) -> list[Optional[str]]:
         """Get port list in NVUE format (porta:portz).
 
         Args:
@@ -182,7 +182,7 @@ class Term(aclgenerator.Term):
                 ports.append(f"{port_range[0]}:{port_range[1]}")
         return ports
 
-    def _GetIcmpTypes(self) -> List[Optional[str]]:
+    def _GetIcmpTypes(self) -> list[Optional[str]]:
         """Get ICMP type list, converting from Aerleon format to iptables format.
 
         Returns:
@@ -201,7 +201,7 @@ class Term(aclgenerator.Term):
         dest_port: Optional[str],
         source_port: Optional[str],
         icmp_type: Optional[str],
-    ) -> Dict:
+    ) -> dict:
         """Create a single NVUE rule from the given parameters.
 
         Args:
@@ -299,7 +299,7 @@ class NvueApi(aclgenerator.ACLGenerator):
     _PLATFORM = 'nvueapi'
     _DEFAULT_PROTOCOL = 'ip'
     SUFFIX = '.nvueapi.json'
-    SUPPORTED_AF = set(['inet', 'inet6'])
+    SUPPORTED_AF = {'inet', 'inet6'}
     SUPPORTED_TARGETS = frozenset(['nvueapi'])
     WARN_IF_UNSUPPORTED = frozenset(['translated', 'stateless_reply', 'counter', 'policer'])
 

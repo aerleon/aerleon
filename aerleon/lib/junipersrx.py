@@ -32,7 +32,7 @@ FQDNSUFFIX = '_FQDN'
 
 
 def JunipersrxList(name, data):
-    return '%s [ %s ];' % (name, ' '.join(data))
+    return '{} [ {} ];'.format(name, ' '.join(data))
 
 
 class Error(aclgenerator.Error):
@@ -77,7 +77,7 @@ class IndentList(list):
         super().__init__(*args, **kwargs)
 
     def IndentAppend(self, size, data):
-        self.append('%s%s' % (self._indent * size, data))
+        self.append(f'{self._indent * size}{data}')
 
 
 class Term(aclgenerator.Term):
@@ -232,7 +232,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(ret_str)
 
-    def _Group(self, group: List[str]):
+    def _Group(self, group: list[str]):
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -244,7 +244,7 @@ class Term(aclgenerator.Term):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: List[str]):
+        def _FormattedGroup(el: list[str]):
             """Return the actual formatting of an individual element.
 
             Args:
@@ -283,13 +283,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
     _PLATFORM = 'srx'
     SUFFIX = '.srx'
-    _SUPPORTED_AF = set(('inet', 'inet6', 'mixed'))
+    _SUPPORTED_AF = {'inet', 'inet6', 'mixed'}
     _ZONE_ADDR_BOOK = 'address-book-zone'
     _GLOBAL_ADDR_BOOK = 'address-book-global'
-    _ADDRESSBOOK_TYPES = set((_ZONE_ADDR_BOOK, _GLOBAL_ADDR_BOOK))
+    _ADDRESSBOOK_TYPES = {_ZONE_ADDR_BOOK, _GLOBAL_ADDR_BOOK}
     _EXPRESSPATH = 'expresspath'
     _NOVERBOSE = 'noverbose'
-    _SUPPORTED_TARGET_OPTIONS = set((_ZONE_ADDR_BOOK, _GLOBAL_ADDR_BOOK, _EXPRESSPATH, _NOVERBOSE))
+    _SUPPORTED_TARGET_OPTIONS = {_ZONE_ADDR_BOOK, _GLOBAL_ADDR_BOOK, _EXPRESSPATH, _NOVERBOSE}
 
     _AF_MAP = {'inet': (4,), 'inet6': (6,), 'mixed': (4, 6)}
     _AF_ICMP_MAP = {'icmp': 'inet', 'icmpv6': 'inet6'}
@@ -311,7 +311,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         self.addr_book_type = set()
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -419,9 +419,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     'be specified per header "%s"' % ' '.join(filter_options)
                 )
             else:
-                address_book_type = set(
-                    [self._ZONE_ADDR_BOOK, self._GLOBAL_ADDR_BOOK]
-                ).intersection(extra_options)
+                address_book_type = {
+                    self._ZONE_ADDR_BOOK, self._GLOBAL_ADDR_BOOK
+                }.intersection(extra_options)
                 if not address_book_type:
                     address_book_type = {self._GLOBAL_ADDR_BOOK}
                 self.addr_book_type.update(address_book_type)
@@ -480,7 +480,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         self.to_zone,
                     )
                     continue
-                if set(['established', 'tcp-established']).intersection(term.option):
+                if {'established', 'tcp-established'}.intersection(term.option):
                     logging.warning(
                         'Skipping established term %s because SRX is stateful.', term.name
                     )
@@ -621,7 +621,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
             self.srx_policies.append((header, new_terms, filter_options))
 
-    def _FixLargePolices(self, terms: List[policy.Term], address_family: str):
+    def _FixLargePolices(self, terms: list[policy.Term], address_family: str):
         """Loops over all terms finding terms exceeding SRXs policy limit.
 
         Args:
@@ -633,7 +633,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         general/address-address-sets-limitations.html
         """
 
-        def Chunks(addresses: List[Union[nacaddr.IPv4, nacaddr.IPv6]]):
+        def Chunks(addresses: list[Union[nacaddr.IPv4, nacaddr.IPv6]]):
             """Splits a list of IP addresses into smaller lists based on byte size."""
             return_list = [[]]
             counter = 0
@@ -683,7 +683,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildPort(self, ports: List[Tuple[int, int]]):
+    def _BuildPort(self, ports: list[tuple[int, int]]):
         """Transform specified ports into list and ranges.
 
         Args:
@@ -697,7 +697,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             if i[0] == i[1]:
                 port_list.append(str(i[0]))
             else:
-                port_list.append('%s-%s' % (str(i[0]), str(i[1])))
+                port_list.append(f'{str(i[0])}-{str(i[1])}')
         return port_list
 
     def _GenerateAddresses(self, token: str, ips, fqdns):

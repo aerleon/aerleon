@@ -617,18 +617,18 @@ class YAMLPolicyTermTest(absltest.TestCase):
 
         expected = sorted(
             [
-                nacaddr.IPv4(u'10.0.0.0/11'),
-                nacaddr.IPv4(u'10.32.0.0/12'),
-                nacaddr.IPv4(u'10.48.0.0/13'),
-                nacaddr.IPv4(u'10.56.0.0/14'),
-                nacaddr.IPv4(u'10.60.0.0/15'),
-                nacaddr.IPv4(u'10.64.0.0/10'),
-                nacaddr.IPv4(u'10.130.0.0/15'),
-                nacaddr.IPv4(u'10.132.0.0/14'),
-                nacaddr.IPv4(u'10.136.0.0/13'),
-                nacaddr.IPv4(u'10.144.0.0/12'),
-                nacaddr.IPv4(u'10.160.0.0/11'),
-                nacaddr.IPv4(u'10.192.0.0/10'),
+                nacaddr.IPv4('10.0.0.0/11'),
+                nacaddr.IPv4('10.32.0.0/12'),
+                nacaddr.IPv4('10.48.0.0/13'),
+                nacaddr.IPv4('10.56.0.0/14'),
+                nacaddr.IPv4('10.60.0.0/15'),
+                nacaddr.IPv4('10.64.0.0/10'),
+                nacaddr.IPv4('10.130.0.0/15'),
+                nacaddr.IPv4('10.132.0.0/14'),
+                nacaddr.IPv4('10.136.0.0/13'),
+                nacaddr.IPv4('10.144.0.0/12'),
+                nacaddr.IPv4('10.160.0.0/11'),
+                nacaddr.IPv4('10.192.0.0/10'),
             ]
         )
         self.assertEqual(sorted(terms[0].address), expected)
@@ -1338,7 +1338,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
         print(pol)
         term = pol.filters[0][1][0]
-        self.assertEqual((u'999', u'day'), term.log_limit)
+        self.assertEqual(('999', 'day'), term.log_limit)
 
     @capture.stdout
     def testTargetServiceAccount(self, mock_open, _mock_warn):

@@ -1,5 +1,6 @@
 import math
-from typing import Dict, List, MutableMapping, Optional, Set, Tuple, Type, Union
+from typing import Dict, List, Optional, Set, Tuple, Type, Union
+from collections.abc import MutableMapping
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
@@ -48,7 +49,7 @@ class ZoneMismatchError(Error):
 ### helper classes ###
 class ProxmoxConfigDataClass(MutableMapping):
     def __init__(self, *args, **kwargs):
-        self._store: Dict[str, Union[str, List[str]]] = dict()
+        self._store: dict[str, Union[str, list[str]]] = dict()
         self._store.update(*args)
         self._store.update(**kwargs)
         self._store['enable'] = '1'
@@ -125,7 +126,7 @@ class ProxmoxPort:
         else:
             return f"{port[0]}-{port[1]}"
 
-    def __init__(self, port: Union[Tuple[int, int], int]):
+    def __init__(self, port: Union[tuple[int, int], int]):
         self.str_representation = ''
         if isinstance(port, int):
             self.str_representation = self._singlePortFmt(port)
@@ -270,13 +271,13 @@ class Term(aclgenerator.Term):
         self.direction = direction
 
     @staticmethod
-    def has_mixed_af(addresses: List[Union[IPv4, IPv6]]):
+    def has_mixed_af(addresses: list[Union[IPv4, IPv6]]):
         has_v4 = any(map(lambda a: isinstance(a, IPv4), addresses))
         has_v6 = any(map(lambda a: isinstance(a, IPv6), addresses))
         return has_v4 and has_v6
 
     @staticmethod
-    def filter_for_af(af: Union[Type[IPv4], Type[IPv6]], addresses: List[Union[IPv4, IPv6]]):
+    def filter_for_af(af: Union[type[IPv4], type[IPv6]], addresses: list[Union[IPv4, IPv6]]):
         return list(filter(lambda a: isinstance(a, af), addresses))
 
     @staticmethod
@@ -339,16 +340,16 @@ class Term(aclgenerator.Term):
         protocol: Optional[str],
         direction: str,
         action: str,
-        source_addresses: List[Union[IPv4, IPv6]],
-        destination_addresses: List[Union[IPv4, IPv6]],
+        source_addresses: list[Union[IPv4, IPv6]],
+        destination_addresses: list[Union[IPv4, IPv6]],
         icmp_code: Optional[str],
         icmp_type: Optional[str],
         source_interface: str,
-        source_ports: List[Union[Tuple[int, int], int]],
-        destination_ports: List[Union[Tuple[int, int], int]],
-        comment: List[str],
-        logging: List[str],
-        term_options: List[str],
+        source_ports: list[Union[tuple[int, int], int]],
+        destination_ports: list[Union[tuple[int, int], int]],
+        comment: list[str],
+        logging: list[str],
+        term_options: list[str],
     ):
         def to_network_addr(i: Union[IPv6, IPv4]):
             return str(i.with_prefixlen)
@@ -486,7 +487,7 @@ class Proxmox(aclgenerator.ACLGenerator):
         self.proxmox_policies = []
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """returns the list of DSL + YAML supplementary tokens supported (proxmox-firewall specific)"""
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens |= {
@@ -546,8 +547,8 @@ class Proxmox(aclgenerator.ACLGenerator):
             )
 
     def __str__(self):
-        target: List[str] = []
-        terms_str: List[str] = []
+        target: list[str] = []
+        terms_str: list[str] = []
         global_policy_config = ''
         for header, zone, direction, filter_config, terms in self.proxmox_policies:
             global_policy_config = filter_config  # only one (merged) config for the whole zone

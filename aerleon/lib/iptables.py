@@ -114,7 +114,7 @@ class Term(aclgenerator.Term):
             self._all_ips = nacaddr.IPv4('0.0.0.0/0')
             self._action_table['reject'] = '-j REJECT --reject-with ' 'icmp-host-prohibited'
         if self.chained_terms:
-            self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
+            self.term_name = f'{self.filter[:1]}_{self.term.name}'
         else:
             self.term_name = self.filter
 
@@ -181,7 +181,7 @@ class Term(aclgenerator.Term):
         # skip the rule.  In other cases, we blow up (raise an exception)
         # to ensure that this is not considered valid configuration.
         if self.term.source_prefix or self.term.destination_prefix:
-            if str(self.term.action[0]) not in set(['accept', 'next']):
+            if str(self.term.action[0]) not in {'accept', 'next'}:
                 raise UnsupportedFilterError(
                     '%s %s %s %s %s %s %s %s'
                     % (
@@ -377,34 +377,34 @@ class Term(aclgenerator.Term):
 
     def _CalculateAddresses(
         self,
-        term_saddr: List[Union[IPv4, IPv6]],
-        exclude_saddr: List[Union[IPv4, IPv6]],
-        term_daddr: List[Union[IPv4, IPv6]],
-        exclude_daddr: List[Union[IPv4, IPv6]],
+        term_saddr: list[Union[IPv4, IPv6]],
+        exclude_saddr: list[Union[IPv4, IPv6]],
+        term_daddr: list[Union[IPv4, IPv6]],
+        exclude_daddr: list[Union[IPv4, IPv6]],
     ) -> Union[
-        Tuple[
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
+        tuple[
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
         ],
-        Tuple[
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
+        tuple[
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
         ],
-        Tuple[
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
+        tuple[
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
         ],
-        Tuple[
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
-            List[Union[IPv4, IPv6]],
+        tuple[
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
+            list[Union[IPv4, IPv6]],
         ],
     ]:
         """Calculate source and destination address list for a term.
@@ -485,19 +485,19 @@ class Term(aclgenerator.Term):
         self,
         protocol: str,
         saddr: Union[IPv6, IPv4, str],
-        sport: Union[List[Tuple[int, int]], str],
+        sport: Union[list[tuple[int, int]], str],
         daddr: Union[IPv6, IPv4, str],
-        dport: Union[List[Tuple[int, int]], str],
-        options: Union[str, List[str]],
-        tcp_flags: Union[str, List[str]],
+        dport: Union[list[tuple[int, int]], str],
+        options: Union[str, list[str]],
+        tcp_flags: Union[str, list[str]],
         icmp_type: Union[int, str],
         code: Union[int, str],
-        track_flags: Union[Tuple[List[str], List[str]], str],
+        track_flags: Union[tuple[list[str], list[str]], str],
         sint: str,
         dint: str,
         log_hits: Union[str, bool],
         action: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Compose one iteration of the term parts into a string.
 
         Args:
@@ -577,7 +577,7 @@ class Term(aclgenerator.Term):
         if tcp_flags or (track_flags and track_flags[0]):
             check_fields = ','.join(sorted(set(tcp_flags + track_flags[0])))
             set_fields = ','.join(sorted(set(tcp_flags + track_flags[1])))
-            flags = '--tcp-flags %s %s' % (check_fields, set_fields)
+            flags = f'--tcp-flags {check_fields} {set_fields}'
         else:
             flags = ''
 
@@ -642,7 +642,7 @@ class Term(aclgenerator.Term):
 
     def _GenerateAddressStatement(
         self, saddr: Union[IPv6, IPv4], daddr: Union[IPv6, IPv4]
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Return the address section of an individual iptables rule.
 
         Args:
@@ -667,8 +667,8 @@ class Term(aclgenerator.Term):
         return (src, dst)
 
     def _GeneratePortStatement(
-        self, ports: List[Tuple[int, int]], source: bool = False, dest: bool = False
-    ) -> List[str]:
+        self, ports: list[tuple[int, int]], source: bool = False, dest: bool = False
+    ) -> list[str]:
         """Return the 'port' section of an individual iptables rule.
 
         Args:
@@ -713,13 +713,13 @@ class Term(aclgenerator.Term):
                 count += 2
             if count >= max_ports:
                 count = 0
-                portstrings.append('-m multiport --%sports %s' % (direction, ','.join(norm_ports)))
+                portstrings.append('-m multiport --{}ports {}'.format(direction, ','.join(norm_ports)))
                 norm_ports = []
         if norm_ports:
             if len(norm_ports) == 1:
-                portstrings.append('--%sport %s' % (direction, norm_ports[0]))
+                portstrings.append(f'--{direction}port {norm_ports[0]}')
             else:
-                portstrings.append('-m multiport --%sports %s' % (direction, ','.join(norm_ports)))
+                portstrings.append('-m multiport --{}ports {}'.format(direction, ','.join(norm_ports)))
         return portstrings
 
     def _SetDefaultAction(self) -> None:
@@ -748,7 +748,7 @@ class Iptables(aclgenerator.ACLGenerator):
         self.iptables_policies = []
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -940,14 +940,14 @@ class Iptables(aclgenerator.ACLGenerator):
 
     def __str__(self) -> str:
         target = []
-        pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
+        pretty_platform = f'{self._PLATFORM[0].upper()}{self._PLATFORM[1:]}'
 
         if self._RENDER_PREFIX:
             target.append(self._RENDER_PREFIX)
 
         for header, filter_name, filter_type, default_action, terms in self.iptables_policies:
             # Add comments for this filter
-            target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
+            target.append(f'# {pretty_platform} {header.FilterName(self._PLATFORM)} Policy')
 
             # reformat long text comments, if needed
             comments = aclgenerator.WrapWords(header.comment, 70)

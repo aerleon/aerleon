@@ -115,8 +115,8 @@ class Term:
     #  mapping.
     ALWAYS_PROTO_NUM = ['ipip']
     # provide flipped key/value dicts
-    PROTO_MAP_BY_NUMBER = dict([(v, k) for (k, v) in PROTO_MAP.items()])
-    AF_MAP_BY_NUMBER = dict([(v, k) for (k, v) in AF_MAP.items()])
+    PROTO_MAP_BY_NUMBER = {v: k for (k, v) in PROTO_MAP.items()}
+    AF_MAP_BY_NUMBER = {v: k for (k, v) in AF_MAP.items()}
 
     NO_AF_LOG_ADDR = string.Template(
         'Term $term will not be rendered, as it has'
@@ -171,8 +171,8 @@ class Term:
         return af
 
     def NormalizeIcmpTypes(
-        self, icmp_types: List[str], protocols: List[str], af: int
-    ) -> List[int]:
+        self, icmp_types: list[str], protocols: list[str], af: int
+    ) -> list[int]:
         """Return verified list of appropriate icmp-types.
 
         Args:
@@ -198,7 +198,7 @@ class Term:
             and protocols != [self.PROTO_MAP['icmpv6']]
         ):
             raise UnsupportedFilterError(
-                '%s %s' % ('icmp-types specified for non-icmp protocols in term: ', self.term.name)
+                '{} {}'.format('icmp-types specified for non-icmp protocols in term: ', self.term.name)
             )
         # make sure we have a numeric address family (4 or 6)
         af = self.NormalizeAddressFamily(af)
@@ -360,7 +360,7 @@ class ACLGenerator:
         """Translate policy contents to platform specific data structures."""
         raise Error('%s does not implement _TranslatePolicies()' % self._PLATFORM)
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Provide a default for supported tokens and sub tokens.
 
         Returns:
@@ -413,7 +413,7 @@ class ACLGenerator:
         }
         return supported_tokens, supported_sub_tokens
 
-    def _GetSupportedTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _GetSupportedTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build our supported tokens and sub tokens.
 
         Returns:
@@ -459,7 +459,7 @@ class ACLGenerator:
         if term.protocol:
             protocols = set(term.protocol)
         else:
-            protocols = set((self._DEFAULT_PROTOCOL,))
+            protocols = {self._DEFAULT_PROTOCOL}
 
         # Check that the address family matches the protocols.
         if af not in self._SUPPORTED_AF:
@@ -479,7 +479,7 @@ class ACLGenerator:
         # Many renders expect high ports for terms with the established option.
         for opt in [str(x) for x in term.option]:
             if opt.find('established') == 0:
-                unstateful_protocols = protocols.difference(set(('tcp', 'udp')))
+                unstateful_protocols = protocols.difference({'tcp', 'udp'})
                 if not unstateful_protocols:
                     # TCP/UDP: add in high ports then collapse to eliminate overlaps.
                     mod = copy.deepcopy(term)
@@ -489,7 +489,7 @@ class ACLGenerator:
                 elif not all_protocols_stateful:
                     errmsg = 'Established option supplied with inappropriate protocol(s)'
                     raise EstablishedError(
-                        '%s %s %s %s' % (errmsg, unstateful_protocols, 'in term', term.name)
+                        '{} {} {} {}'.format(errmsg, unstateful_protocols, 'in term', term.name)
                     )
                 break
 
@@ -556,7 +556,7 @@ class ACLGenerator:
         name_bytes = name.encode('UTF-8')
         return hashlib.sha256(name_bytes).hexdigest()[:truncation_length]
 
-    def _FilteredTerms(self, header: policy.Header, terms: List[policy.Term], exp_info: int):
+    def _FilteredTerms(self, header: policy.Header, terms: list[policy.Term], exp_info: int):
         new_terms = []
         filter_name = header.FilterName(self._PLATFORM)
         current_date = datetime.datetime.utcnow().date()
@@ -589,8 +589,8 @@ class ACLGenerator:
 
 
 def ProtocolNameToNumber(
-    protocols: List[str], proto_to_num: List[str], name_to_num_map: Dict[str, int]
-) -> List[Union[str, int]]:
+    protocols: list[str], proto_to_num: list[str], name_to_num_map: dict[str, int]
+) -> list[Union[str, int]]:
     """Convert a protocol name to a numeric value.
 
     Args:
@@ -618,7 +618,7 @@ def AddRepositoryTags(
     date: bool = True,
     revision: bool = True,
     wrap: bool = False,
-) -> List[str]:
+) -> list[str]:
     """Add repository tagging into the output.
 
     Args:
@@ -635,19 +635,19 @@ def AddRepositoryTags(
 
     # Format print the '$' into the RCS tags in order prevent the tags from
     # being interpolated here.
-    p4_id = '%s%sId:%s%s' % (wrapper, '$', '$', wrapper)
-    p4_date = '%s%sDate:%s%s' % (wrapper, '$', '$', wrapper)
-    p4_revision = '%s%sRevision:%s%s' % (wrapper, '$', '$', wrapper)
+    p4_id = '{}{}Id:{}{}'.format(wrapper, '$', '$', wrapper)
+    p4_date = '{}{}Date:{}{}'.format(wrapper, '$', '$', wrapper)
+    p4_revision = '{}{}Revision:{}{}'.format(wrapper, '$', '$', wrapper)
     if rid:
-        tags.append('%s%s' % (prefix, p4_id))
+        tags.append(f'{prefix}{p4_id}')
     if date:
-        tags.append('%s%s' % (prefix, p4_date))
+        tags.append(f'{prefix}{p4_date}')
     if revision:
-        tags.append('%s%s' % (prefix, p4_revision))
+        tags.append(f'{prefix}{p4_revision}')
     return tags
 
 
-def WrapWords(textlist: List[str], size: int, joiner: str = '\n'):
+def WrapWords(textlist: list[str], size: int, joiner: str = '\n'):
     r"""Insert breaks into the listed strings at specified width.
 
     Args:

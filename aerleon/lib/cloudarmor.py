@@ -16,10 +16,7 @@ from absl import logging
 
 from aerleon.lib import aclgenerator, policy
 
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
+from typing import TypedDict
 
 
 # Generic error class
@@ -35,12 +32,17 @@ class UnsupportedFilterTypeError(Error):
     """Raised when unsupported filter type (i.e address family) is specified."""
 
 
-RuleMatchConfig = TypedDict("RuleMatchConfig", {"srcIpRanges": "list[str]"})
-RuleMatch = TypedDict("RuleMatch", {"config": RuleMatchConfig, "versionedExpr": str})
-PolicyRule = TypedDict(
-    "PolicyRule",
-    {"action": str, "description": str, "match": RuleMatch, "preview": bool, "priority": int},
-)
+class RuleMatchConfig(TypedDict):
+    srcIpRanges: 'list[str]'
+class RuleMatch(TypedDict):
+    config: RuleMatchConfig
+    versionedExpr: str
+class PolicyRule(TypedDict):
+    action: str
+    description: str
+    match: RuleMatch
+    preview: bool
+    priority: int
 
 
 class Term(aclgenerator.Term):
@@ -64,7 +66,7 @@ class Term(aclgenerator.Term):
     def __str__(self) -> str:
         return ''
 
-    def ConvertToDict(self, priority_index: int) -> List[PolicyRule]:
+    def ConvertToDict(self, priority_index: int) -> list[PolicyRule]:
         """Converts term to dictionary representation of CloudArmor's JSON format.
 
         Takes all of the attributes associated with a term (match, action, etc) and
@@ -167,7 +169,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
 
     _PLATFORM = 'cloudarmor'
     SUFFIX = '.gca'
-    _SUPPORTED_AF = set(('inet', 'inet6', 'mixed'))
+    _SUPPORTED_AF = {'inet', 'inet6', 'mixed'}
 
     # Maximum number of rules that a CloudArmor policy can contain
     _MAX_RULES_PER_POLICY = 200
@@ -178,7 +180,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
     # Maps indiviudal filter options to their index positions in the POL header
     _FILTER_OPTIONS_MAP = {'filter_type': 0}
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:

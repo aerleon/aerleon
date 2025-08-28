@@ -30,10 +30,7 @@ from absl import logging
 
 from aerleon.lib import aclgenerator, policy
 
-if sys.version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict
+from typing import TypedDict
 
 
 class Error(aclgenerator.Error):
@@ -66,19 +63,24 @@ TransportConfig = TypedDict(
         "builtin-detail": str,
     },
 )
-Transport = TypedDict("Transport", {"transport": TransportConfig})
+class Transport(TypedDict):
+    transport: TransportConfig
 IPConfig = TypedDict(
     "IPConfig", {"source-address": str, "destination-address": str, "protocol": int}
 )
-IP = TypedDict("IP", {"config": IPConfig})
+class IP(TypedDict):
+    config: IPConfig
 ActionConfig = TypedDict("ActionConfig", {"forwarding-action": str})
-Action = TypedDict("Action", {"config": ActionConfig})
+class Action(TypedDict):
+    config: ActionConfig
 ACLEntry = TypedDict(
     "ACLEntry",
     {"sequence-id": int, "actions": Action, "ipv4": IP, "ipv6": IP, "transport": Transport},
 )
-aclEntries = TypedDict("aclEntries", {"acl-entry": List[ACLEntry]})
-ACLSetConfig = TypedDict("ACLSetConfig", {"name": str, "type": str})
+aclEntries = TypedDict("aclEntries", {"acl-entry": list[ACLEntry]})
+class ACLSetConfig(TypedDict):
+    name: str
+    type: str
 
 ACLSet = TypedDict(
     "ACLSet", {"acl-entries": aclEntries, "config": ACLSetConfig, "name": str, "type": str}
@@ -113,14 +115,14 @@ class Term(aclgenerator.Term):
         rules = self.ConvertToDict()
         json.dumps(rules, indent=2)
 
-    def _tcp_established(self) -> Dict[str, str]:
+    def _tcp_established(self) -> dict[str, str]:
         """Return's openconfig TCP_ESTABLISHED configuration.
 
         Other vendors (eg. SONiC) have slighly different implementations,
         This function permits inheritance."""
         return {'detail-mode': 'BUILTIN', 'builtin-detail': "TCP_ESTABLISHED"}
 
-    def ConvertToDict(self, filter_options: List[str]) -> List[ACLEntry]:
+    def ConvertToDict(self, filter_options: list[str]) -> list[ACLEntry]:
         """Convert term to a dictionary.
 
         This is used to get a dictionary describing this term which can be
@@ -218,16 +220,16 @@ class Term(aclgenerator.Term):
     def SetName(self, name: str) -> None:
         pass
 
-    def SetAction(self, filter_options: List[str]) -> None:
+    def SetAction(self, filter_options: list[str]) -> None:
         action = self.ACTION_MAP[self.term.action[0]]
         self.term_dict['actions'] = {}
         self.term_dict['actions']['config'] = {}
         self.term_dict['actions']['config']['forwarding-action'] = action
 
-    def SetComments(self, comments: List[str]) -> None:
+    def SetComments(self, comments: list[str]) -> None:
         pass
 
-    def SetOptions(self, family: str, filter_options: List[str]) -> None:
+    def SetOptions(self, family: str, filter_options: list[str]) -> None:
         # options, 'family' unused
         if self.term.option:
             if 'tcp-established' in self.term.option:
@@ -237,13 +239,13 @@ class Term(aclgenerator.Term):
                     )
                 self.term_dict['transport']['config'].update(self._tcp_established())
 
-    def SetSourceAddress(self, family: str, saddr: str, filter_options: List[str]) -> None:
+    def SetSourceAddress(self, family: str, saddr: str, filter_options: list[str]) -> None:
         self.term_dict[family]['config']['source-address'] = saddr
 
-    def SetDestAddress(self, family: str, daddr: str, filter_options: List[str]) -> None:
+    def SetDestAddress(self, family: str, daddr: str, filter_options: list[str]) -> None:
         self.term_dict[family]['config']['destination-address'] = daddr
 
-    def SetSourcePorts(self, start: int, end: int, filter_options: List[str]) -> None:
+    def SetSourcePorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
             self.term_dict['transport']['config']['source-port'] = start
         else:
@@ -252,7 +254,7 @@ class Term(aclgenerator.Term):
                 end,
             )
 
-    def SetDestPorts(self, start: int, end: int, filter_options: List[str]) -> None:
+    def SetDestPorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
             self.term_dict['transport']['config']['destination-port'] = start
         else:
@@ -261,7 +263,7 @@ class Term(aclgenerator.Term):
                 end,
             )
 
-    def SetProtocol(self, family: str, protocol: int, filter_options: List[str]) -> None:
+    def SetProtocol(self, family: str, protocol: int, filter_options: list[str]) -> None:
         self.term_dict[family]['config']['protocol'] = protocol
 
 
@@ -274,7 +276,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
     FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
     _TERM = Term
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -300,7 +302,7 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
     def _InitACLSet(self) -> None:
         """Initialize self.acl_sets with proper Typing"""
-        self.acl_sets: List[ACLSet] = []
+        self.acl_sets: list[ACLSet] = []
 
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.total_rule_count = 0
@@ -327,16 +329,16 @@ class OpenConfig(aclgenerator.ACLGenerator):
 
     def _TranslateTerms(
         self,
-        terms: List[Term],
+        terms: list[Term],
         address_family: str,
         filter_name: str,
-        hdr_comments: List[str],
-        filter_options: List[str],
+        hdr_comments: list[str],
+        filter_options: list[str],
     ) -> None:
         """
         Factor out the translation of terms, such that it can be overridden by subclasses
         """
-        oc_acl_entries: List[ACLEntry] = []
+        oc_acl_entries: list[ACLEntry] = []
 
         for term in terms:
             # Handle mixed for each indvidual term as inet and inet6.

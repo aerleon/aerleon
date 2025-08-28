@@ -39,8 +39,8 @@ class Term(juniper.Term):
         ]
 
     def NormalizeIcmpTypes(
-        self, icmp_types: List[str], protocols: List[str], af: str
-    ) -> List[int]:
+        self, icmp_types: list[str], protocols: list[str], af: str
+    ) -> list[int]:
         protocols = ['icmpv6' if x == 'icmp6' else x for x in protocols]
         return super().NormalizeIcmpTypes(icmp_types, protocols, af)
 
@@ -52,7 +52,7 @@ class SRXlo(juniper.Juniper):
     SUFFIX = '.jsl'
     _TERM = Term
 
-    def _BuildTokens(self) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
