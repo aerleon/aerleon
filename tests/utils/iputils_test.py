@@ -25,7 +25,6 @@ with open(str(file_directory) + "/address_exclude_test_cases.txt") as f:
 
 
 class TestIPUtils:
-    @pytest.mark.unit
     @pytest.mark.parametrize("ip,exclude,expected", exclude_address_testcases)
     def test_exclude_address(self, ip, exclude, expected):
         result = iputils.exclude_address(ip, exclude)
