@@ -95,7 +95,7 @@ jobs:
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
         with:
-          version: "23.7.0"
+          version: "24.10.0"
       #----------------------------------------------
       # run isort
       #----------------------------------------------
