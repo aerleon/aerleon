@@ -561,7 +561,7 @@ class ACLGenerator:
     def _FilteredTerms(self, header: policy.Header, terms: list[policy.Term], exp_info: int):
         new_terms = []
         filter_name = header.FilterName(self._PLATFORM)
-        current_date = datetime.datetime.utcnow().date()
+        current_date = datetime.datetime.now(datetime.timezone.utc).date()
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for term in terms:

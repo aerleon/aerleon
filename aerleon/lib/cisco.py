@@ -495,9 +495,11 @@ class Term(aclgenerator.Term):
             protocol = ['hbh']
         elif self.proto_int:
             protocol = [
-                proto
-                if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
-                else self.PROTO_MAP.get(proto)
+                (
+                    proto
+                    if proto in self.ALLOWED_PROTO_STRINGS or proto.isnumeric()
+                    else self.PROTO_MAP.get(proto)
+                )
                 for proto in self.term.protocol
             ]
         else:

@@ -1,4 +1,4 @@
-""" Aerleon API
+"""Aerleon API
 
 This module accepts plain Python dictionaries and lists as input.
 It allows users to use Aerleon's functionality without having to
@@ -207,6 +207,7 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 
 
 """
+
 import copy
 import multiprocessing
 import pathlib

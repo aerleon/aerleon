@@ -1,4 +1,4 @@
-""" Define nox sessions for Aerleon """
+"""Define nox sessions for Aerleon"""
 
 import os
 from datetime import datetime
@@ -11,14 +11,14 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@session(python=["3.9", "3.10", "3.11"])
+@session(python=["3.9", "3.10", "3.11", "3.12", "3.13"])
 def test(session):
     """Runs pytest"""
     session.run_always("poetry", "install", external=True)
     session.run("pytest", "--durations=20")
 
 
-@session(python="3.10")
+@session(python="3.13")
 def coverage(session):
     """Runs pytest and generates the code coverage report"""
     session.run_always("poetry", "install", external=True)
@@ -28,7 +28,7 @@ def coverage(session):
     session.run("coverage", "xml")
 
 
-@session(python="3.10")
+@session(python="3.13")
 def benchmark(session):
     """Runs pyperf and produces a report"""
     session.run_always("poetry", "install", external=True)
@@ -79,7 +79,7 @@ def benchmark(session):
         inner()
 
 
-@session(python="3.10")
+@session(python="3.13")
 def benchmark_tuned(session):
     """Runs pyperf with system tuning on and produces a report"""
     session.notify('benchmark', ['__benchmark_tune'])
