@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Parses the generic policy files and return a policy object for acl rendering.
-"""
+"""Parses the generic policy files and return a policy object for acl rendering."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-""" Define nox sessions for Aerleon """
+"""Define nox sessions for Aerleon"""
 
 import os
 from datetime import datetime

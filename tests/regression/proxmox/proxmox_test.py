@@ -1,4 +1,4 @@
-""" Unittest for proxmox rendering module. """
+"""Unittest for proxmox rendering module."""
 
 from absl.testing import absltest
 

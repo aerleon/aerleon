@@ -1,4 +1,5 @@
 """Regressopn test for Fortigate module."""
+
 import textwrap
 from unittest import mock
 
