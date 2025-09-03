@@ -45,6 +45,24 @@ term good-term-1 {
 }
 """
 
+GOOD_SADDR_EXCLUDE = """
+term good-term-1 {
+  comment:: "exclude source address."
+  source-address:: NETWORK
+  source-exclude:: NETWORK_SUBNETWORK
+  action:: accept
+}
+"""
+
+GOOD_DADDR_EXCLUDE = """
+term good-term-1 {
+  comment:: "exclude destination address."
+  destination-address:: NETWORK
+  destination-exclude:: NETWORK_SUBNETWORK
+  action:: accept
+}
+"""
+
 GOOD_SPORT = """
 term good-term-1 {
   comment:: "Allow TCP 53 source."
@@ -468,6 +486,8 @@ class OpenConfigTest(absltest.TestCase):
         super().setUp()
         self.naming = naming.Naming()
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('NETWORK = 10.5.0.0/16', 'networks')
+        self.naming._ParseLine('NETWORK_SUBNETWORK = 10.5.16.0/24', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         self.naming._ParseLine('HTTP = 80/tcp', 'services')
         self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp', 'services')
@@ -489,6 +509,24 @@ class OpenConfigTest(absltest.TestCase):
         )
         expected = json.loads(GOOD_JSON_DADDR)
         self.assertEqual(expected, json.loads(str(acl)))
+        print(acl)
+
+    @capture.stdout
+    def testSaddrExclude(self):
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SADDR_EXCLUDE, self.naming), EXP_INFO
+        )
+        # expected = json.loads(GOOD_JSON_SADDR_EXCLUDE)  # TODO check this
+        # self.assertEqual(expected, json.loads(str(acl)))
+        print(acl)
+
+    @capture.stdout
+    def testDaddrExclude(self):
+        acl = openconfig.OpenConfig(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_DADDR_EXCLUDE, self.naming), EXP_INFO
+        )
+        # expected = json.loads(GOOD_JSON_DADDR_EXCLUDE)  # TODO check this
+        # self.assertEqual(expected, json.loads(str(acl)))
         print(acl)
 
     @capture.stdout
