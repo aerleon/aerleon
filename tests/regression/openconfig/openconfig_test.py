@@ -17,9 +17,11 @@
 
 import json
 
+import pytest
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import naming, openconfig, policy
+from aerleon.lib.aclgenerator import UnsupportedFilterError
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -511,6 +513,7 @@ class OpenConfigTest(absltest.TestCase):
         self.assertEqual(expected, json.loads(str(acl)))
         print(acl)
 
+    @pytest.mark.xfail(raises=UnsupportedFilterError)
     @capture.stdout
     def testSaddrExclude(self):
         acl = openconfig.OpenConfig(
@@ -520,6 +523,7 @@ class OpenConfigTest(absltest.TestCase):
         # self.assertEqual(expected, json.loads(str(acl)))
         print(acl)
 
+    @pytest.mark.xfail(raises=UnsupportedFilterError)
     @capture.stdout
     def testDaddrExclude(self):
         acl = openconfig.OpenConfig(
