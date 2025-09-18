@@ -385,8 +385,9 @@ def _CollapseAddrListInternal(
                 and prev_addr.prefixlen == addr.prefixlen
                 and
                 # It's faster to compare integers than IP objects
-                prev_addr.broadcast_address._ip + 1 == addr.network_address._ip
-                and  # pylint disable=protected-access
+                prev_addr.broadcast_address._ip + 1
+                == addr.network_address._ip  # pylint disable=protected-access
+                and
                 # Generating Supernet is relatively intensive compared to doing bit
                 # operations
                 (prev_addr.netmask._ip << 1) & prev_addr.network_address._ip

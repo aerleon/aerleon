@@ -16,6 +16,7 @@ and extract normalized data from within.
 
 This class uses recognizers to parse, validate and normalize all built-in fields in the Policy.
 """
+
 from __future__ import annotations
 
 import datetime
