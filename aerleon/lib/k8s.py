@@ -394,7 +394,7 @@ class K8s(aclgenerator.ACLGenerator):
                     term.name += '-e'
                 term.name = self.FixTermLength(term.name)
                 if term.name in term_names:
-                    raise K8sNetworkPolicyError('Duplicate term name %s' % term.name)
+                    raise K8sNetworkPolicyError(f'Duplicate term name {term.name}')
                 term_names.add(term.name)
 
                 term.direction = direction

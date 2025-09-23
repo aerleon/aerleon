@@ -363,7 +363,7 @@ class ProxmoxFWTest(absltest.TestCase):
         acl = proxmox.Proxmox(pol, EXP_INFO)
         output = str(acl)
         for t in ['redirect', 'router-advertisement', 'mask-request', 'mask-reply']:
-            self.assertIn('-icmp-type %s' % proxmox.ProxmoxIcmp.ICMPv4_MAP[t][None], output)
+            self.assertIn(f'-icmp-type {proxmox.ProxmoxIcmp.ICMPv4_MAP[t][None]}', output)
         print(output)
 
     @capture.stdout

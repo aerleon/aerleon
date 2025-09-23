@@ -217,7 +217,7 @@ class AristaTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_4, self.naming)
         acl = arista.Arista(pol, EXP_INFO)
         expected = 'remark this is a test standard acl'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = 'remark good-term-4'
         self.assertIn(expected, str(acl), str(acl))
         expected = 'test-filter remark'
@@ -282,7 +282,7 @@ class AristaTest(absltest.TestCase):
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)
         expected = 'ip access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit tcp 10.1.1.0/24 any eq ssh'
         self.assertIn(expected, str(acl), str(acl))
         expected = ' permit tcp 10.1.1.0/24 any eq 6537'
@@ -297,7 +297,7 @@ class AristaTest(absltest.TestCase):
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)
         expected = 'ipv6 access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit tcp 2620:1::/64 any eq ssh'
         self.assertIn(expected, str(acl), str(acl))
 
@@ -309,7 +309,7 @@ class AristaTest(absltest.TestCase):
         acl = arista.Arista(pol, EXP_INFO)
         print(acl)
         expected = 'ip access-list standard test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit 10.1.1.0/24\n'
         self.assertIn(expected, str(acl), str(acl))
 

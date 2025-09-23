@@ -152,7 +152,7 @@ class Term(aclgenerator.Term):
 
         if self.verbose:
             if self.term.owner:
-                self.term.comment.append('Owner: %s' % self.term.owner)
+                self.term.comment.append(f'Owner: {self.term.owner}')
             # reformat long comments, if needed
             #
             # iptables allows individual comments up to 256 chars.
@@ -195,7 +195,7 @@ class Term(aclgenerator.Term):
                         'iptables output.',
                     )
                 )
-            return '# skipped %s due to source or destination prefix rule' % self.term.name
+            return f'# skipped {self.term.name} due to source or destination prefix rule'
 
         # protocol
         if self.term.protocol:
@@ -294,11 +294,11 @@ class Term(aclgenerator.Term):
         if self.term.packet_length:
             # Policy format is "#-#", but iptables format is "#:#"
             self.options.append(
-                '-m length --length %s' % self.term.packet_length.replace('-', ':')
+                f"-m length --length {self.term.packet_length.replace('-', ':')}"
             )
         if self.term.fragment_offset:
             self.options.append(
-                '-m u32 --u32 4&0x1FFF=%s' % self.term.fragment_offset.replace('-', ':')
+                f"-m u32 --u32 4&0x1FFF={self.term.fragment_offset.replace('-', ':')}"
             )
         icmp_code = ['']
         if self.term.icmp_code:
@@ -524,11 +524,11 @@ class Term(aclgenerator.Term):
 
         source_int = ''
         if sint:
-            source_int = '-i %s' % sint
+            source_int = f'-i {sint}'
 
         destination_int = ''
         if dint:
-            destination_int = '-o %s' % dint
+            destination_int = f'-o {dint}'
 
         log_jump = ''
         if log_hits:
@@ -544,7 +544,7 @@ class Term(aclgenerator.Term):
         proto = self._PROTO_TABLE.get(str(protocol))
         # Don't drop protocol if we don't recognize it
         if protocol and not proto:
-            proto = '-p %s' % str(protocol)
+            proto = f'-p {protocol!s}'
 
         if protocol == 'hopopt':
             proto = ''
@@ -585,9 +585,9 @@ class Term(aclgenerator.Term):
         if not icmp_type:
             icmp = ''
         elif str(protocol) == 'icmpv6':
-            icmp = '-m icmp6 --icmpv6-type %s' % icmp_type
+            icmp = f'-m icmp6 --icmpv6-type {icmp_type}'
         else:
-            icmp = '--icmp-type %s' % icmp_type
+            icmp = f'--icmp-type {icmp_type}'
         if code:
             icmp += r'/%d' % code
 
@@ -714,7 +714,7 @@ class Term(aclgenerator.Term):
             if count >= max_ports:
                 count = 0
                 portstrings.append(
-                    '-m multiport --{}ports {}'.format(direction, ','.join(norm_ports))
+                    f"-m multiport --{direction}ports {','.join(norm_ports)}"
                 )
                 norm_ports = []
         if norm_ports:
@@ -722,7 +722,7 @@ class Term(aclgenerator.Term):
                 portstrings.append(f'--{direction}port {norm_ports[0]}')
             else:
                 portstrings.append(
-                    '-m multiport --{}ports {}'.format(direction, ','.join(norm_ports))
+                    f"-m multiport --{direction}ports {','.join(norm_ports)}"
                 )
         return portstrings
 
@@ -895,12 +895,12 @@ class Iptables(aclgenerator.ACLGenerator):
                 )
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
-                        'You have a duplicate term: %s' % term.name
+                        f'You have a duplicate term: {term.name}'
                     )
                 term_names.add(term.name)
                 if not term.logging and term.log_limit:
                     raise LimitButNoLogError(
-                        'Term %s: Cannoy use log-limit without logging' % term.name
+                        f'Term {term.name}: Cannoy use log-limit without logging'
                     )
                 if not chained_terms:
                     term.name = filter_name
@@ -957,7 +957,7 @@ class Iptables(aclgenerator.ACLGenerator):
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append('# %s' % line)
+                    target.append(f'# {line}')
                 target.append('#')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags('# '))

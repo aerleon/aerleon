@@ -445,7 +445,7 @@ class Naming:
         data = query.split('#')  # Get the token keyword and remove any comment
         service_name = data[0].split()[0]  # strip and cast from list to string
         if service_name not in self.services:
-            raise UndefinedServiceError('\nNo such service: %s' % query)
+            raise UndefinedServiceError(f'\nNo such service: {query}')
 
         already_done.add(service_name)
 
@@ -678,7 +678,7 @@ class Naming:
                         self._ParseFile(file, def_type)
 
             except OSError as error_info:
-                raise NoDefinitionsError('%s' % error_info)
+                raise NoDefinitionsError(f'{error_info}')
 
     def _ParseFile(self, file_handle: list[str], def_type: str) -> None:
         for line in file_handle:
@@ -729,7 +729,7 @@ class Naming:
 
         if definition_type not in ['services', 'networks']:
             raise UnexpectedDefinitionTypeError(
-                '{} {}'.format('Received an unexpected definition type:', definition_type)
+                f'Received an unexpected definition type: {definition_type}'
             )
         line = line.strip()
         if not line or line.startswith('#'):  # Skip comments and blanks.
@@ -752,7 +752,7 @@ class Naming:
                 for port in line_parts[1].strip().split():
                     if not self.port_re.match(port):
                         raise NamingSyntaxError(
-                            '{}: {}'.format('The following line has a syntax error', line)
+                            f'The following line has a syntax error: {line}'
                         )
                 if self.current_symbol in self.services:
                     raise NamespaceCollisionError(

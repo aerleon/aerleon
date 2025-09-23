@@ -32,7 +32,7 @@ FQDNSUFFIX = '_FQDN'
 
 
 def JunipersrxList(name, data):
-    return '{} [ {} ];'.format(name, ' '.join(data))
+    return f"{name} [ {' '.join(data)} ];"
 
 
 class Error(aclgenerator.Error):
@@ -123,7 +123,7 @@ class Term(aclgenerator.Term):
         # COMMENTS
         comment_max_width = 68
         if self.term.owner and self.verbose:
-            self.term.comment.append('Owner: %s' % self.term.owner)
+            self.term.comment.append(f'Owner: {self.term.owner}')
         comments = aclgenerator.WrapWords(self.term.comment, comment_max_width)
         if comments and comments[0] and self.verbose:
             ret_str.IndentAppend(3, '/*')
@@ -199,9 +199,9 @@ class Term(aclgenerator.Term):
             if str(action) == 'accept' and self.term.vpn:
                 ret_str.IndentAppend(5, self.ACTIONS.get(str(action)) + ' {')
                 ret_str.IndentAppend(6, 'tunnel {')
-                ret_str.IndentAppend(7, 'ipsec-vpn %s;' % self.term.vpn[0])
+                ret_str.IndentAppend(7, f'ipsec-vpn {self.term.vpn[0]};')
                 if self.term.vpn[1]:
-                    ret_str.IndentAppend(7, 'pair-policy %s;' % self.term.vpn[1])
+                    ret_str.IndentAppend(7, f'pair-policy {self.term.vpn[1]};')
 
                 ret_str.IndentAppend(6, '}')
                 ret_str.IndentAppend(5, '}')
@@ -487,7 +487,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     continue
                 term.name = self.FixTermLength(term.name)
                 if term.name in term_dup_check:
-                    raise SRXDuplicateTermError('You have a duplicate term: %s' % term.name)
+                    raise SRXDuplicateTermError(f'You have a duplicate term: {term.name}')
                 term_dup_check.add(term.name)
 
                 # SRX address books leverage network token names for IPs.
@@ -612,7 +612,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         and new_application_set != application_set
                     ):
                         raise ConflictingApplicationSetsError(
-                            'Application set %s has a conflicting entry' % term.name
+                            f'Application set {term.name} has a conflicting entry'
                         )
 
                 if new_application_set:
@@ -838,13 +838,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                                     # SRX does not like proto vrrp
                                     if proto == 'vrrp':
                                         proto = '112'
-                                    chunks.append(' protocol %s' % proto)
+                                    chunks.append(f' protocol {proto}')
                                 if sport:
-                                    chunks.append(' source-port %s' % sport)
+                                    chunks.append(f' source-port {sport}')
                                 if dport:
-                                    chunks.append(' destination-port %s' % dport)
+                                    chunks.append(f' destination-port {dport}')
                                 if app['timeout']:
-                                    chunks.append(' inactivity-timeout %d' % int(app['timeout']))
+                                    chunks.append(f" inactivity-timeout {int(app['timeout'])}")
                                 if chunks:
                                     apps_set_list.IndentAppend(
                                         2, 'application ' + app['name'] + '-app%d;' % i

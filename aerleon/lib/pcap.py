@@ -234,8 +234,8 @@ class Term(aclgenerator.Term):
         if not condition_list:
             return ''
 
-        op = ' %s ' % (operator)
-        res = '(%s)' % (op.join(condition_list))
+        op = f' {operator} '
+        res = f'({op.join(condition_list)})'
         return res
 
     def _GenerateAddrStatement(
@@ -244,13 +244,13 @@ class Term(aclgenerator.Term):
         addrlist = []
         for d in addrs:
             if d != 'any' and str(d) != '::/0':
-                addrlist.append('dst net %s' % (d))
+                addrlist.append(f'dst net {d}')
 
         excludes = []
         if exclude_addrs:
             for d in exclude_addrs:
                 if d != 'any' and str(d) != '::/0':
-                    excludes.append('not dst net %s' % (d))
+                    excludes.append(f'not dst net {d}')
                 else:
                     # excluding 'any' doesn't really make sense ...
                     return ''
@@ -429,7 +429,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
             for term in terms:
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
-                        'You have a duplicate term: %s' % term.name
+                        f'You have a duplicate term: {term.name}'
                     )
 
                 if not term:

@@ -138,7 +138,7 @@ class Term:
                     str(p) for p in self.PROTO_MAP_BY_NUMBER
                 ]:
                     raise UnsupportedFilterError(
-                        'Protocol(s) %s are not supported.' % str(term.protocol)
+                        f'Protocol(s) {term.protocol!s} are not supported.'
                     )
 
             term.protocol = ProtocolNameToNumber(
@@ -166,7 +166,7 @@ class Term:
             af = self.AF_MAP[af]
         else:
             raise UnsupportedAFError(
-                'Address family %s is not supported, ' 'term %s.' % (af, self.term.name)
+                f'Address family {af} is not supported, term {self.term.name}.'
             )
         return af
 
@@ -360,7 +360,7 @@ class ACLGenerator:
     def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         # pylint: disable=unused-argument
         """Translate policy contents to platform specific data structures."""
-        raise Error('%s does not implement _TranslatePolicies()' % self._PLATFORM)
+        raise Error(f'{self._PLATFORM} does not implement _TranslatePolicies()')
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Provide a default for supported tokens and sub tokens.
@@ -491,7 +491,7 @@ class ACLGenerator:
                 elif not all_protocols_stateful:
                     errmsg = 'Established option supplied with inappropriate protocol(s)'
                     raise EstablishedError(
-                        '{} {} {} {}'.format(errmsg, unstateful_protocols, 'in term', term.name)
+                        f'{errmsg} {unstateful_protocols} in term {term.name}'
                     )
                 break
 
@@ -635,9 +635,9 @@ def AddRepositoryTags(
     tags = []
     wrapper = '"' if wrap else ''
 
-    p4_id = '{}$Id:${}'.format(wrapper, wrapper)
-    p4_date = '{}$Date:${}'.format(wrapper, wrapper)
-    p4_revision = '{}$Revision:${}'.format(wrapper, wrapper)
+    p4_id = f'{wrapper}$Id:${wrapper}'
+    p4_date = f'{wrapper}$Date:${wrapper}'
+    p4_revision = f'{wrapper}$Revision:${wrapper}'
     if rid:
         tags.append(f'{prefix}{p4_id}')
     if date:

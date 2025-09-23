@@ -41,11 +41,11 @@ class CiscoXR(cisco.Cisco):
         """
         target = []
         if filter_type == 'inet6':
-            target.append('no ipv6 access-list %s' % filter_name)
-            target.append('ipv6 access-list %s' % filter_name)
+            target.append(f'no ipv6 access-list {filter_name}')
+            target.append(f'ipv6 access-list {filter_name}')
         else:
-            target.append('no ipv4 access-list %s' % filter_name)
-            target.append('ipv4 access-list %s' % filter_name)
+            target.append(f'no ipv4 access-list {filter_name}')
+            target.append(f'ipv4 access-list {filter_name}')
         return target
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:

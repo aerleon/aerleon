@@ -758,7 +758,7 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
         print(pol)
         icmp_types = ['echo-reply', 'echo-request', 'unreachable']
-        expected = 'icmp_type: %s' % icmp_types
+        expected = f'icmp_type: {icmp_types}'
         self.assertIn(expected, str(pol))
 
     @capture.stdout
@@ -1318,8 +1318,8 @@ class YAMLPolicyTermTest(absltest.TestCase):
         )
         print(pol)
         zones = ['zone1', 'zone2']
-        expected_source = 'source_zone: %s' % zones
-        expected_destination = 'destination_zone: %s' % zones
+        expected_source = f'source_zone: {zones}'
+        expected_destination = f'destination_zone: {zones}'
         self.assertIn(expected_source, str(pol))
         self.assertIn(expected_destination, str(pol))
 

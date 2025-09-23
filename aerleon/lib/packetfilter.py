@@ -127,13 +127,13 @@ class Term(aclgenerator.Term):
         self._SetDefaultAction()
 
         # Create a new term
-        ret_str.append('\n# term %s' % self.term.name)
+        ret_str.append(f'\n# term {self.term.name}')
 
         comments = aclgenerator.WrapWords(self.term.comment, 80)
         # append comments to output
         if comments and comments[0]:
             for line in comments:
-                ret_str.append('# %s' % str(line))
+                ret_str.append(f'# {line!s}')
 
         if str(self.term.action[0]) not in self._ACTION_TABLE:
             raise aclgenerator.UnsupportedFilterError(
@@ -312,14 +312,14 @@ class Term(aclgenerator.Term):
         stateful: bool,
     ) -> list[str]:
         """Format the string which will become a single PF entry."""
-        line = ['%s' % self._ACTION_TABLE.get(action)]
+        line = [f'{self._ACTION_TABLE.get(action)}']
 
         if direction:
             line.append(direction)
 
         quick = self._QUICK_TABLE.get(action)
         if quick:
-            line.append('%s' % quick)
+            line.append(f'{quick}')
 
         if log:
             logaction = self._LOG_TABLE.get(direction)
@@ -329,7 +329,7 @@ class Term(aclgenerator.Term):
                 line.append('log')
 
         if interface:
-            line.append('on %s' % interface)
+            line.append(f'on {interface}')
 
         if af != 'mixed':
             line.append(af)
@@ -337,17 +337,17 @@ class Term(aclgenerator.Term):
         if proto:
             line.append(self._GenerateProtoStatement(proto))
 
-        line.append('from %s' % src_addr)
+        line.append(f'from {src_addr}')
         if src_port:
-            line.append('port %s' % src_port)
+            line.append(f'port {src_port}')
 
-        line.append('to %s' % dst_addr)
+        line.append(f'to {dst_addr}')
         if dst_port:
-            line.append('port %s' % dst_port)
+            line.append(f'port {dst_port}')
 
         if tcp_flags_set and tcp_flags_check:
             line.append('flags')
-            line.append('{}/{}'.format(''.join(tcp_flags_set), ''.join(tcp_flags_check)))
+            line.append(f"{''.join(tcp_flags_set)}/{''.join(tcp_flags_check)}")
 
         if 'icmp' in proto and icmp_types:
             type_strs = [str(icmp_type) for icmp_type in icmp_types]
@@ -395,7 +395,7 @@ class Term(aclgenerator.Term):
                 addr = cast(nacaddr.IPType, addr)
                 parent_token_set.add(addr.parent_token)
             for token in parent_token_set:
-                addresses.add('<%s>' % token[:31])
+                addresses.add(f'<{token[:31]}>')
         else:
             addresses.add('any')
         if exclude_addrs != ['any']:
@@ -404,7 +404,7 @@ class Term(aclgenerator.Term):
                 addr = cast(nacaddr.IPType, addr)
                 parent_token_set.add(addr.parent_token)
             for token in parent_token_set:
-                addresses.add('!<%s>' % token[:31])
+                addresses.add(f'!<{token[:31]}>')
         return '{ %s }' % ', '.join(sorted(addresses))
 
     def _GeneratePortStatement(self, ports: list[tuple[int, int]]) -> str:
@@ -521,7 +521,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
             for term in terms:
                 term.name = self.FixTermLength(term.name)
                 if term.name in term_names:
-                    raise DuplicateTermError('You have a duplicate term: %s' % term.name)
+                    raise DuplicateTermError(f'You have a duplicate term: {term.name}')
                 term_names.add(term.name)
 
                 for source_addr in term.source_address:
@@ -617,7 +617,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append('# %s' % line)
+                    target.append(f'# {line}')
                 target.append('#')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags('# '))

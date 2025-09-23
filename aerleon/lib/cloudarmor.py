@@ -115,7 +115,7 @@ class Term(aclgenerator.Term):
             ) + self.term.GetAddressOfVersion('source_address', 6)
         else:
             raise UnsupportedFilterTypeError(
-                "'%s' is not a valid filter type" % self.address_family
+                f"'{self.address_family}' is not a valid filter type"
             )
 
         term_dict['match'] = {
@@ -241,7 +241,7 @@ class CloudArmor(aclgenerator.ACLGenerator):
                 filter_type = filter_options[self._FILTER_OPTIONS_MAP['filter_type']]
                 if filter_type not in self._SUPPORTED_AF:
                     raise UnsupportedFilterTypeError(
-                        "'%s' is not a valid filter type" % filter_type
+                        f"'{filter_type}' is not a valid filter type"
                     )
 
             counter = 1

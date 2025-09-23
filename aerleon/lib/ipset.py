@@ -164,12 +164,12 @@ class Term(iptables.Term):
         if src_addr and dst_addr:
             if src_addr == self._all_ips:
                 if 'src' in self.addr_sets:
-                    src_addr_stmt = '-m set --match-set %s src' % self.addr_sets['src'][0]
+                    src_addr_stmt = f"-m set --match-set {self.addr_sets['src'][0]} src"
             else:
                 src_addr_stmt = '-s %s/%d' % (src_addr.network_address, src_addr.prefixlen)
             if dst_addr == self._all_ips:
                 if 'dst' in self.addr_sets:
-                    dst_addr_stmt = '-m set --match-set %s dst' % self.addr_sets['dst'][0]
+                    dst_addr_stmt = f"-m set --match-set {self.addr_sets['dst'][0]} dst"
             else:
                 dst_addr_stmt = '-d %s/%d' % (dst_addr.network_address, dst_addr.prefixlen)
         return (src_addr_stmt, dst_addr_stmt)

@@ -64,7 +64,7 @@ class IntegerField(Field):
         try:
             _ = int(value)
         except ValueError:
-            raise ValueError('Invalid integer field: "%s"' % str(self))
+            raise ValueError(f'Invalid integer field: "{self!s}"')
 
 
 class NamingField(Field):
@@ -85,7 +85,7 @@ class NamingField(Field):
         """Validate that a string smells like a naming.py name."""
         for c in part:
             if c not in '-_.' and not c.isdigit() and not c.isupper():
-                raise ValueError('Invalid name reference: "%s"' % part)
+                raise ValueError(f'Invalid name reference: "{part}"')
 
     def Append(self, value: str) -> None:
         """Split, validate, and add name contained within a string."""
@@ -421,12 +421,12 @@ class Block:
 
     def AddField(self, field) -> None:
         if not issubclass(type(field), Field):
-            raise TypeError('%s not subclass of Field.' % field)
+            raise TypeError(f'{field} not subclass of Field.')
         self.fields.append(field)
 
     def FieldsWithType(self, f_type: type[Comment]) -> list[Comment]:
         if not issubclass(f_type, Field):
-            raise TypeError('%s not subclass of Field.' % f_type)
+            raise TypeError(f'{f_type} not subclass of Field.')
         return [x for x in self.fields if isinstance(x, f_type)]
 
     def Match(self, match_fn):
@@ -476,7 +476,7 @@ class Term(Block):
         """Return a human-readable description of the term."""
         verbatims = self.FieldsWithType(Verbatim)
         if verbatims:
-            return 'Verbatim: %s' % verbatims
+            return f'Verbatim: {verbatims}'
 
         handled = set()
         handled.update(self.FieldsWithType(Comment))
@@ -502,7 +502,7 @@ class Term(Block):
             handled.update(icmp_code)
             for code in icmp_code:
                 all_icmp_code.update(code.value.split())
-            pieces.append('(ICMP code %s)' % ', '.join(sorted(all_icmp_code)))
+            pieces.append(f"(ICMP code {', '.join(sorted(all_icmp_code))})")
 
         icmp_types = self.FieldsWithType(IcmpType)
         all_icmp_types = set()
@@ -510,7 +510,7 @@ class Term(Block):
             handled.update(icmp_types)
             for icmp_type in icmp_types:
                 all_icmp_types.update(icmp_type.value.split())
-            pieces.append('(ICMP types %s)' % ', '.join(sorted(all_icmp_types)))
+            pieces.append(f"(ICMP types {', '.join(sorted(all_icmp_types))})")
 
         sources = self.FieldsWithType(SourceAddress)
         if sources:
@@ -610,7 +610,7 @@ class Include:
         self.identifier = identifier
 
     def __str__(self):
-        return '#include %s' % self.identifier
+        return f'#include {self.identifier}'
 
     def __eq__(self, o: Include) -> bool:
         if not isinstance(o, self.__class__):
@@ -631,7 +631,7 @@ class Policy:
     def AddMember(self, member) -> None:
         m_type = type(member)
         if m_type not in (Include, CommentLine, BlankLine) and not issubclass(m_type, Block):
-            raise TypeError('%s must be a Block, CommentLine, BlankLine,' ' or Include' % m_type)
+            raise TypeError(f'{m_type} must be a Block, CommentLine, BlankLine, or Include')
         self.members.append(member)
 
     def __str__(self) -> str:
@@ -677,7 +677,7 @@ class PolicyParser:
             else:
                 self.ParseTopLevel(line)
         if self.block_in_progress:
-            raise ValueError('Unexpected EOF reading "%s"' % self.block_in_progress)
+            raise ValueError(f'Unexpected EOF reading "{self.block_in_progress}"')
         return self.policy
 
     def ParseTopLevel(self, line: str) -> None:
@@ -697,21 +697,21 @@ class PolicyParser:
         if line.startswith('term '):
             self.ParseTermLine(line)
             return
-        raise ValueError('Unhandled top-level line %s' % line)
+        raise ValueError(f'Unhandled top-level line {line}')
 
     def ParseCommentLine(self, line: str) -> None:
         """Parse a line with a line level comment."""
         if self.block_in_progress:
-            raise ValueError('Found comment line in block: %s' % line)
+            raise ValueError(f'Found comment line in block: {line}')
         self.policy.AddMember(CommentLine(line))
 
     def ParseIncludeLine(self, line: str) -> None:
         """Parse an #include line refering to another file."""
         if self.block_in_progress:
-            raise ValueError('Found include line in block: %s' % line)
+            raise ValueError(f'Found include line in block: {line}')
         line_parts = line.split()
         if len(line_parts) < 2:
-            raise ValueError('Invalid include: %s' % line)
+            raise ValueError(f'Invalid include: {line}')
         inc_ref = line_parts[1]
         if '#' in inc_ref:
             inc_ref, _ = inc_ref.split('#', 1)
@@ -720,13 +720,13 @@ class PolicyParser:
     def ParseHeaderLine(self, line: str) -> None:
         """Parse a line beginning a header block."""
         if self.block_in_progress:
-            raise ValueError('Nested blocks not allowed: %s' % line)
+            raise ValueError(f'Nested blocks not allowed: {line}')
         self.block_in_progress = Header()
 
     def ParseTermLine(self, line: str) -> None:
         """Parse a line beginning a term block."""
         if self.block_in_progress:
-            raise ValueError('Nested blocks not allowed: %s' % line)
+            raise ValueError(f'Nested blocks not allowed: {line}')
         line_parts = line.split()
 
         # Some terms don't have a space after the name
@@ -735,7 +735,7 @@ class PolicyParser:
             line_parts[1] = line_parts[1][:brace_idx]
         else:
             if not line_parts[2].startswith('{'):  # }
-                raise ValueError('Invalid term line: %s' % line)
+                raise ValueError(f'Invalid term line: {line}')
         term_name = line_parts[1]
         self.block_in_progress = Term(term_name)
 
@@ -759,5 +759,5 @@ class PolicyParser:
         name = name.strip().lower()
         f_type = field_map.get(name)
         if not f_type:
-            raise ValueError('Invalid field line: %s' % line)
+            raise ValueError(f'Invalid field line: {line}')
         self.block_in_progress.AddField(f_type(value))

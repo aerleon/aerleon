@@ -93,7 +93,7 @@ class Term(juniper.Term):
         # all comment processing.
         if not self.noverbose:
             if self.term.owner:
-                self.term.comment.append('Owner: %s' % self.term.owner)
+                self.term.comment.append(f'Owner: {self.term.owner}')
             if self.term.comment:
                 ret_str.Append('/*')
                 for comment in self.term.comment:
@@ -240,31 +240,31 @@ class Term(juniper.Term):
                     if source_address:
                         for saddr in source_address:
                             for comment in self._Comment(saddr):
-                                ret_str.Append('%s' % comment)
+                                ret_str.Append(f'{comment}')
                             if saddr.version == 6 and 0 < saddr.prefixlen < 16:
                                 for saddr2 in saddr.subnets(new_prefix=16):
-                                    ret_str.Append('%s;' % saddr2)
+                                    ret_str.Append(f'{saddr2};')
                             else:
                                 if saddr == nacaddr.IPv6('0::0/0'):
                                     saddr = 'any-ipv6'
                                 elif saddr == nacaddr.IPv4('0.0.0.0/0'):
                                     saddr = 'any-ipv4'
-                                ret_str.Append('%s;' % saddr)
+                                ret_str.Append(f'{saddr};')
 
                     # SOURCE ADDRESS EXCLUDE
                     if source_address_exclude:
                         for ex in source_address_exclude:
                             for comment in self._Comment(ex):
-                                ret_str.Append('%s' % comment)
+                                ret_str.Append(f'{comment}')
                             if ex.version == 6 and 0 < ex.prefixlen < 16:
                                 for ex2 in ex.subnets(new_prefix=16):
-                                    ret_str.Append('%s except;' % ex2)
+                                    ret_str.Append(f'{ex2} except;')
                             else:
                                 if ex == nacaddr.IPv6('0::0/0'):
                                     ex = 'any-ipv6'
                                 elif ex == nacaddr.IPv4('0.0.0.0/0'):
                                     ex = 'any-ipv4'
-                                ret_str.Append('%s except;' % ex)
+                                ret_str.Append(f'{ex} except;')
                     ret_str.Append('}')  # source-address {...}
 
                 # DESTINATION ADDRESS
@@ -273,31 +273,31 @@ class Term(juniper.Term):
                     if destination_address:
                         for daddr in destination_address:
                             for comment in self._Comment(daddr):
-                                ret_str.Append('%s' % comment)
+                                ret_str.Append(f'{comment}')
                             if daddr.version == 6 and 0 < daddr.prefixlen < 16:
                                 for daddr2 in daddr.subnets(new_prefix=16):
-                                    ret_str.Append('%s;' % daddr2)
+                                    ret_str.Append(f'{daddr2};')
                             else:
                                 if daddr == nacaddr.IPv6('0::0/0'):
                                     daddr = 'any-ipv6'
                                 elif daddr == nacaddr.IPv4('0.0.0.0/0'):
                                     daddr = 'any-ipv4'
-                                ret_str.Append('%s;' % daddr)
+                                ret_str.Append(f'{daddr};')
 
                     # DESTINATION ADDRESS EXCLUDE
                     if destination_address_exclude:
                         for ex in destination_address_exclude:
                             for comment in self._Comment(ex):
-                                ret_str.Append('%s' % comment)
+                                ret_str.Append(f'{comment}')
                             if ex.version == 6 and 0 < ex.prefixlen < 16:
                                 for ex2 in ex.subnets(new_prefix=16):
-                                    ret_str.Append('%s except;' % ex2)
+                                    ret_str.Append(f'{ex2} except;')
                             else:
                                 if ex == nacaddr.IPv6('0::0/0'):
                                     ex = 'any-ipv6'
                                 elif ex == nacaddr.IPv4('0.0.0.0/0'):
                                     ex = 'any-ipv4'
-                                ret_str.Append('%s except;' % ex)
+                                ret_str.Append(f'{ex} except;')
                     ret_str.Append('}')  # destination-address {...}
 
                 # source prefix <except> list
@@ -455,15 +455,15 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                                 'application ' + app['name'] + '-app%d' % (term_counter + 1) + ' {'
                             )
                             if proto == 'icmp':
-                                target.append('application-protocol %s;' % proto)
-                            target.append('protocol %s;' % proto)
+                                target.append(f'application-protocol {proto};')
+                            target.append(f'protocol {proto};')
                             target.append(f'{proto}-type {str(code)};')
                             if app['icmp-code']:
                                 target.append(
-                                    '{}-code {};'.format(proto, self._Group(app['icmp-code']))
+                                    f"{proto}-code {self._Group(app['icmp-code'])};"
                                 )
                             if int(timeout):
-                                target.append('inactivity-timeout %s;' % int(timeout))
+                                target.append(f'inactivity-timeout {int(timeout)};')
                             target.append('}')  # application {...}
                             term_counter += 1
                 # generate non-ICMP statements
@@ -476,13 +476,13 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                             for dport in app['dport'] or ['']:
                                 chunks = []
                                 if proto:
-                                    chunks.append('protocol %s;' % proto)
+                                    chunks.append(f'protocol {proto};')
                                 if sport and ('udp' in proto or 'tcp' in proto):
-                                    chunks.append('source-port %s;' % sport)
+                                    chunks.append(f'source-port {sport};')
                                 if dport and ('udp' in proto or 'tcp' in proto):
-                                    chunks.append('destination-port %s;' % dport)
+                                    chunks.append(f'destination-port {dport};')
                                 if app['timeout']:
-                                    chunks.append(' inactivity-timeout %d;' % int(app['timeout']))
+                                    chunks.append(f" inactivity-timeout {int(app['timeout'])};")
                                 if chunks:
                                     apps_set_list.append(
                                         'application ' + app['name'] + '-app%d;' % i
@@ -641,7 +641,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                         and new_application_set != application_set
                     ):
                         raise ConflictingApplicationSetsError(
-                            'Application set %s has a conflicting entry' % modified_term_name
+                            f'Application set {modified_term_name} has a conflicting entry'
                         )
 
                 if new_application_set:
@@ -727,7 +727,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             target.Append('services {')
             target.Append('stateful-firewall {')
             target.Append('rule %s {' % filter_name)
-            target.Append('match-direction %s;' % filter_direction)
+            target.Append(f'match-direction {filter_direction};')
             for term in terms:
                 term_str = str(term)
                 if term_str:
@@ -740,7 +740,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
             if apply_groups:
                 target.Append('}')  # filter_name { ... }
                 target.Append('}')  # groups { ... }
-                target.Append('apply-groups %s;' % filter_name)
+                target.Append(f'apply-groups {filter_name};')
         return str(target) + '\n'
 
 

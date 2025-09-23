@@ -225,7 +225,7 @@ class ObjectGroup:
                 port_key = f'{port[0]}-{port[1]}'
                 if port_key not in ports:
                     ports[port_key] = True
-                    ret_str.append('object-group port %s' % port_key)
+                    ret_str.append(f'object-group port {port_key}')
                     if port[0] != port[1]:
                         ret_str.append(' range %d %d' % (port[0], port[1]))
                     else:
@@ -473,7 +473,7 @@ class Term(aclgenerator.Term):
             comments = aclgenerator.WrapWords(comments, _COMMENT_MAX_WIDTH)
             if comments and comments[0]:
                 for comment in comments:
-                    ret_str.append(' remark %s' % str(comment))
+                    ret_str.append(f' remark {comment!s}')
 
         # Term verbatim output - this will skip over normal term creation
         # code by returning early.  Warnings provided in policy.py.
@@ -593,17 +593,17 @@ class Term(aclgenerator.Term):
         ):
             if len(self.term.next_ip) > 1:
                 raise CiscoNextIpError(
-                    'The following term has more than one next IP ' 'value: %s' % self.term.name
+                    f'The following term has more than one next IP value: {self.term.name}'
                 )
             if not isinstance(self.term.next_ip[0], nacaddr.IPv4) and not isinstance(
                 self.term.next_ip[0], nacaddr.IPv6
             ):
                 raise CiscoNextIpError(
-                    'Next IP value must be an IP address. ' 'Invalid term: %s' % self.term.name
+                    f'Next IP value must be an IP address. Invalid term: {self.term.name}'
                 )
             if self.term.next_ip[0].num_addresses > 1:
                 raise CiscoNextIpError(
-                    'The following term has a subnet instead of a ' 'host: %s' % self.term.name
+                    f'The following term has a subnet instead of a host: {self.term.name}'
                 )
             nexthop = self.term.next_ip[0].network_address
             nexthop_protocol = 'ipv4' if nexthop.version == 4 else 'ipv6'
@@ -625,7 +625,7 @@ class Term(aclgenerator.Term):
                     'Extended ACLs cannot specify more than one dscp match value'
                 )
             else:
-                self.options.append('dscp %s' % ' '.join(self.term.dscp_match))
+                self.options.append(f"dscp {' '.join(self.term.dscp_match)}")
 
         # icmp-types
         icmp_types = ['']
@@ -688,13 +688,13 @@ class Term(aclgenerator.Term):
                     return addr.with_prefixlen
                 return f'{addr.network_address} {addr.hostmask}'
             if addr.num_addresses == 1 and self.platform == 'cisconx':
-                return '%s' % (addr.with_prefixlen)
-            return 'host %s' % (addr.network_address)
+                return f'{addr.with_prefixlen}'
+            return f'host {addr.network_address}'
         if isinstance(addr, nacaddr.IPv6) or isinstance(addr, ipaddress.IPv6Network):
             addr = cast(self.IPV6_ADDRESS, addr)
             if addr.num_addresses > 1:
                 return addr.with_prefixlen
-            return 'host %s' % (addr.network_address)
+            return f'host {addr.network_address}'
         return addr
 
     def _FormatPort(self, port: Union[tuple[()], tuple[int, int]], proto: Union[int, str]) -> str:
@@ -717,7 +717,7 @@ class Term(aclgenerator.Term):
 
         if port[0] != port[1]:
             return f'range {port0} {port1}'
-        return 'eq %s' % (port0)
+        return f'eq {port0}'
 
     def _FixOptions(
         self, proto: Union[int, str], option: list[Union[str, Any]]
@@ -945,7 +945,7 @@ class Cisco(aclgenerator.ACLGenerator):
                 new_terms = []
                 for term in terms:
                     if term.name in term_dup_check:
-                        raise CiscoDuplicateTermError('You have a duplicate term: %s' % term.name)
+                        raise CiscoDuplicateTermError(f'You have a duplicate term: {term.name}')
                     term_dup_check.add(term.name)
 
                     term.name = self.FixTermLength(term.name)
@@ -998,7 +998,7 @@ class Cisco(aclgenerator.ACLGenerator):
 
                 # cisco requires different name for the v4 and v6 acls
                 if filter_type == 'mixed' and next_filter == 'inet6':
-                    filter_name = 'ipv6-%s' % filter_name
+                    filter_name = f'ipv6-{filter_name}'
                 self.cisco_policies.append(
                     (header, filter_name, [next_filter], new_terms, obj_target)
                 )
@@ -1023,19 +1023,19 @@ class Cisco(aclgenerator.ACLGenerator):
         target = []
         if filter_type == 'standard':
             if filter_name.isdigit():
-                target.append('no access-list %s' % filter_name)
+                target.append(f'no access-list {filter_name}')
             else:
-                target.append('no ip access-list standard %s' % filter_name)
-                target.append('ip access-list standard %s' % filter_name)
+                target.append(f'no ip access-list standard {filter_name}')
+                target.append(f'ip access-list standard {filter_name}')
         elif filter_type == 'extended':
-            target.append('no ip access-list extended %s' % filter_name)
-            target.append('ip access-list extended %s' % filter_name)
+            target.append(f'no ip access-list extended {filter_name}')
+            target.append(f'ip access-list extended {filter_name}')
         elif filter_type == 'object-group':
-            target.append('no ip access-list extended %s' % filter_name)
-            target.append('ip access-list extended %s' % filter_name)
+            target.append(f'no ip access-list extended {filter_name}')
+            target.append(f'ip access-list extended {filter_name}')
         elif filter_type == 'inet6':
-            target.append('no ipv6 access-list %s' % filter_name)
-            target.append('ipv6 access-list %s' % filter_name)
+            target.append(f'no ipv6 access-list {filter_name}')
+            target.append(f'ipv6 access-list {filter_name}')
         else:
             raise UnsupportedCiscoAccessListError(
                 f'access list type {filter_type} not supported by {self._PLATFORM}'
@@ -1050,7 +1050,7 @@ class Cisco(aclgenerator.ACLGenerator):
         if filter_type == 'standard' and filter_name.isdigit():
             target.extend(
                 aclgenerator.AddRepositoryTags(
-                    'access-list %s remark ' % filter_name, date=False, revision=False
+                    f'access-list {filter_name} remark ', date=False, revision=False
                 )
             )
         else:
@@ -1086,7 +1086,7 @@ class Cisco(aclgenerator.ACLGenerator):
                             ):
                                 target.append(f'access-list {filter_name} remark {line}')
                             else:
-                                target.append(' remark %s' % line)
+                                target.append(f' remark {line}')
 
                 # now add the terms
                 for term in terms:

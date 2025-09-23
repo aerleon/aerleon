@@ -56,7 +56,7 @@ def SetupFlags():
     flags.DEFINE_boolean(
         'optimize',
         None,
-        'Turn on optimization.\nDefault: \'%s\'' % config.defaults['optimize'],
+        f"Turn on optimization.\nDefault: '{config.defaults['optimize']}'",
         short_name='o',
     )
     flags.DEFINE_boolean(
@@ -68,7 +68,7 @@ def SetupFlags():
     flags.DEFINE_boolean(
         'debug',
         None,
-        'Display detailed messages.\nDefault: \'%s\'' % str(config.defaults['debug']).lower(),
+        f"Display detailed messages.\nDefault: '{str(config.defaults['debug']).lower()}'",
     )
     flags.DEFINE_boolean('verbose', None, 'UNUSED. Use --debug instead.')
     flags.DEFINE_list(
@@ -344,7 +344,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: list[str]) -> list[
     for ignored_directory in ignore_directories:
 
         def Filtering(path, ignored=ignored_directory):
-            return not path.match('%s/**/pol' % ignored) and not path.match('%s/pol' % ignored)
+            return not path.match(f'{ignored}/**/pol') and not path.match(f'{ignored}/pol')
 
         policy_directories = filter(Filtering, policy_directories)
 
@@ -358,7 +358,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: list[str]) -> list[
         )
         depth = len(directory.parents) - 1
         logging.warning(
-            '-' * (2 * depth) + '> %s (%d pol files found)' % (directory, len(directory_policies))
+            '-' * (2 * depth) + f'> {directory} ({len(directory_policies)} pol files found)'
         )
         policy_files.extend(filter(lambda path: path.is_file(), directory_policies))
 
@@ -430,7 +430,7 @@ def Run(
     try:
         definitions = naming.Naming(definitions_directory)
     except naming.NoDefinitionsError:
-        err_msg = 'bad definitions directory: %s' % definitions_directory
+        err_msg = f'bad definitions directory: {definitions_directory}'
         logging.fatal(err_msg)
         return  # static type analyzer can't detect that logging.fatal exits program
 

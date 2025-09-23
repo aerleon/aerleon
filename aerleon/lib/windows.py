@@ -336,7 +336,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             for term in terms:
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
-                        'You have a duplicate term: %s' % term.name
+                        f'You have a duplicate term: {term.name}'
                     )
                 term_names.add(term.name)
 
@@ -365,7 +365,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append(': %s' % line)
+                    target.append(f': {line}')
                 target.append(':')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags(': '))

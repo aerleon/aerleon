@@ -89,7 +89,7 @@ class Term(aclgenerator.Term):
             comments = self.term.comment[:]
 
             if self.term.owner:
-                comments.append('Owner: %s' % self.term.owner)
+                comments.append(f'Owner: {self.term.owner}')
 
             if comments:
                 for line in aclgenerator.WrapWords(comments, self._COMMENT_LINE_LENGTH):
@@ -175,7 +175,7 @@ class Term(aclgenerator.Term):
         for address in addresses:
             ret_str.append(f'{self._IDENT}{self._GenerateNetworkOrHostTokens(address)}')
 
-        ret_str.append('%s\n' % _TERMINATOR_MARKER)
+        ret_str.append(f'{_TERMINATOR_MARKER}\n')
 
         return '\n'.join(t for t in ret_str if t)
 
@@ -289,7 +289,7 @@ class Aruba(aclgenerator.ACLGenerator):
     def __str__(self) -> str:
         target = []
 
-        target.extend(aclgenerator.AddRepositoryTags('%s ' % _COMMENT_MARKER))
+        target.extend(aclgenerator.AddRepositoryTags(f'{_COMMENT_MARKER} '))
 
         for filter_name, terms, _ in self.aruba_policies:
             netdestinations = []

@@ -62,7 +62,7 @@ def is_valid_ip(arg):
     try:
         nacaddr.IP(arg)
     except:
-        raise argparse.ArgumentTypeError('%s is an invalid ip address' % arg)
+        raise argparse.ArgumentTypeError(f'{arg} is an invalid ip address')
     return arg
 
 

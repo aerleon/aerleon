@@ -205,11 +205,11 @@ class Demo(aclgenerator.ACLGenerator):
         for header, filter_name, filter_type, interface_specific, terms in self.demo_policies:
             target.append('Header {')
             target.append(' ' * 4 + 'Name: %s {' % filter_name)
-            target.append(' ' * 8 + 'Type: %s ' % filter_type)
+            target.append(' ' * 8 + f'Type: {filter_type} ')
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    target.append(' ' * 8 + 'Comment: %s' % line)
-            target.append(' ' * 8 + 'Family type: %s' % interface_specific)
+                    target.append(' ' * 8 + f'Comment: {line}')
+            target.append(' ' * 8 + f'Family type: {interface_specific}')
             target.append(' ' * 4 + '}')
             for term in terms:
                 target.append(str(term))

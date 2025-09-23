@@ -336,7 +336,7 @@ class Term(aclgenerator.Term):
             # str() trick to circumvent VarType class attr comparison checks.
             if 'disable' not in str(term.logging):
                 # Simple syslogging implementation.
-                options.append('log prefix "%s"' % term.name)
+                options.append(f'log prefix "{term.name}"')
 
         # 'counter' handling.
         # https://wiki.nftables.org/wiki-nftables/index.php/Counters
@@ -480,7 +480,7 @@ class Term(aclgenerator.Term):
         # COMMENT handling.
         if self.verbose:
             for line in self.term.comment:
-                term_ruleset.append('comment "%s"' % line)
+                term_ruleset.append(f'comment "{line}"')
 
         # ADDRESS handling.
         address_list = self._AddrStatement(
@@ -822,7 +822,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 if base_chain_dict[item]['comment']:
                     # Handle multi-line comments
                     for comment in base_chain_dict[item]['comment']:
-                        nft_config.append(TabSpacer(8, 'comment "%s"' % comment))
+                        nft_config.append(TabSpacer(8, f'comment "{comment}"'))
                 nft_config.append(
                     TabSpacer(
                         8,
@@ -838,7 +838,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 nft_config.append(TabSpacer(8, 'ct state established,related accept'))
                 # Reference the child chains with jump.
                 for child_chain in base_chain_dict[item]['rules'][item].keys():
-                    nft_config.append(TabSpacer(8, 'jump %s' % child_chain))
+                    nft_config.append(TabSpacer(8, f'jump {child_chain}'))
                 nft_config.append(TabSpacer(4, '}'))  # chain_end
             nft_config.append('}')  # table_end
 

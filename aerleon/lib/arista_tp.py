@@ -160,7 +160,7 @@ class Term(aclgenerator.Term):
         self.filter_type = filter_type
 
         if term_type not in self._TERM_TYPE:
-            raise ValueError("unknown filter type: %s" % term_type)
+            raise ValueError(f"unknown filter type: {term_type}")
 
     def __str__(self) -> str:
         config = Config()
@@ -208,12 +208,12 @@ class Term(aclgenerator.Term):
         family_keywords = self._TERM_TYPE.get(self.term_type)
 
         term_block.append(
-            [TERM_INDENT, "match {} {}".format(self.term.name, family_keywords["addr_fam"]), False]
+            [TERM_INDENT, f"match {self.term.name} {family_keywords['addr_fam']}", False]
         )
 
         term_af = self.AF_MAP.get(self.term_type)
         if self.term.owner and not self.noverbose:
-            self.term.comment.append("owner: %s" % self.term.owner)
+            self.term.comment.append(f"owner: {self.term.owner}")
         if self.term.comment and not self.noverbose:
             reflowed_comments = aclgenerator.WrapWords(self.term.comment, MAX_COMMENT_LENGTH)
             for line in reflowed_comments:
@@ -257,10 +257,10 @@ class Term(aclgenerator.Term):
                 src_str = "source prefix"
                 if src_addr_ex:
                     # this should correspond to the generated field set
-                    src_str += " field-set src-%s" % self.term.name
+                    src_str += f" field-set src-{self.term.name}"
                 else:
                     for addr in src_addr:
-                        src_str += " %s" % addr
+                        src_str += f" {addr}"
 
                 term_block.append([MATCH_INDENT, src_str, False])
             elif self.term.source_address:
@@ -280,10 +280,10 @@ class Term(aclgenerator.Term):
                 dst_str = "destination prefix"
                 if dst_addr_ex:
                     # this should correspond to the generated field set
-                    dst_str += " field-set dst-%s" % self.term.name
+                    dst_str += f" field-set dst-{self.term.name}"
                 else:
                     for addr in dst_addr:
-                        dst_str += " %s" % addr
+                        dst_str += f" {addr}"
 
                 term_block.append([MATCH_INDENT, dst_str, False])
 
@@ -299,16 +299,16 @@ class Term(aclgenerator.Term):
             if self.term.source_prefix:
                 src_pfx_str = "source prefix field-set"
                 for pfx in self.term.source_prefix:
-                    src_pfx_str += " %s" % pfx
+                    src_pfx_str += f" {pfx}"
 
-                term_block.append([MATCH_INDENT, " %s" % src_pfx_str, False])
+                term_block.append([MATCH_INDENT, f" {src_pfx_str}", False])
 
             if self.term.destination_prefix:
                 dst_pfx_str = "destination prefix field-set"
                 for pfx in self.term.destination_prefix:
-                    dst_pfx_str += " %s" % pfx
+                    dst_pfx_str += f" {pfx}"
 
-                term_block.append([MATCH_INDENT, " %s" % dst_pfx_str, False])
+                term_block.append([MATCH_INDENT, f" {dst_pfx_str}", False])
 
             # PROTOCOL MATCHES
             protocol_str = ""
@@ -342,19 +342,19 @@ class Term(aclgenerator.Term):
             # ADDITIONAL SUPPORTED MATCH OPTIONS ------------------------------
             # packet length
             if self.term.packet_length:
-                term_block.append([MATCH_INDENT, "ip length %s" % self.term.packet_length, False])
+                term_block.append([MATCH_INDENT, f"ip length {self.term.packet_length}", False])
 
             # fragment offset
             if self.term.fragment_offset:
                 term_block.append(
-                    [MATCH_INDENT, "fragment offset %s" % self.term.fragment_offset, False]
+                    [MATCH_INDENT, f"fragment offset {self.term.fragment_offset}", False]
                 )
 
             if self.term.hop_limit:
-                term_block.append([MATCH_INDENT, "ttl %s" % self.term.hop_limit, False])
+                term_block.append([MATCH_INDENT, f"ttl {self.term.hop_limit}", False])
 
             if self.term.ttl:
-                term_block.append([MATCH_INDENT, "ttl %s" % self.term.ttl, False])
+                term_block.append([MATCH_INDENT, f"ttl {self.term.ttl}", False])
 
             if misc_options:
                 for mopt in misc_options:
@@ -371,7 +371,7 @@ class Term(aclgenerator.Term):
         # if accept and no extra actions don't generate an actions statement
         if self.term.action != ["accept"]:
             term_block.append([MATCH_INDENT, "actions", False])
-            term_block.append([ACTION_INDENT, "%s" % current_action, False])
+            term_block.append([ACTION_INDENT, f"{current_action}", False])
         elif self.term.action == ["accept"] and has_extra_actions:
             term_block.append([MATCH_INDENT, "actions", False])
 
@@ -388,7 +388,7 @@ class Term(aclgenerator.Term):
 
                 # counters
             if self.term.counter:
-                term_block.append([ACTION_INDENT, "count %s" % self.term.counter, False])
+                term_block.append([ACTION_INDENT, f"count {self.term.counter}", False])
 
             term_block.append([MATCH_INDENT, "!", False])  # end of actions
         term_block.append([TERM_INDENT, "!", False])  # end of match entry
@@ -403,11 +403,11 @@ class Term(aclgenerator.Term):
 
         # source port generation
         if term.source_port:
-            port_str += " source port %s" % self._Group(term.source_port)
+            port_str += f" source port {self._Group(term.source_port)}"
 
         # destination port
         if term.destination_port:
-            port_str += " destination port %s" % self._Group(term.destination_port)
+            port_str += f" destination port {self._Group(term.destination_port)}"
 
         return port_str
 
@@ -420,7 +420,7 @@ class Term(aclgenerator.Term):
             icmp_types = self.NormalizeIcmpTypes(term.icmp_type, term.protocol, self.term_type)
         if icmp_types != [""]:
             for t in icmp_types:
-                icmp_type_str += "%s," % t
+                icmp_type_str += f"{t},"
 
             if icmp_type_str.endswith(","):
                 icmp_type_str = icmp_type_str[:-1]  # chomp trailing ','
@@ -430,7 +430,7 @@ class Term(aclgenerator.Term):
         if self.term.icmp_code and len(icmp_types) <= 1:
             icmp_codes = self._Group(self.term.icmp_code)
             icmp_codes = re.sub(r" ", ",", icmp_codes)
-            icmp_code_str += " code %s" % icmp_codes
+            icmp_code_str += f" code {icmp_codes}"
 
         return icmp_type_str, icmp_code_str
 
@@ -481,9 +481,9 @@ class Term(aclgenerator.Term):
                     num_prots.append(str(self.PROTO_MAP[p]))
                 except KeyError:
                     num_prots.append(str(p))
-            protocol_str += "protocol %s" % ",".join(num_prots)
+            protocol_str += f"protocol {','.join(num_prots)}"
         else:
-            protocol_str += "protocol %s" % self._Group(prots)
+            protocol_str += f"protocol {self._Group(prots)}"
 
         if prots == ["tcp"] and flags:
             protocol_str += " flags " + " ".join(flags)
@@ -718,11 +718,11 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         field_list = ""
 
         for p in pfxs:
-            field_list += (" " * 6) + "%s\n" % p
+            field_list += (" " * 6) + f"{p}\n"
         for p in ex_pfxs:
-            field_list += (" " * 6) + "except %s\n" % p
+            field_list += (" " * 6) + f"except {p}\n"
 
-        fieldset_hdr = "field-set " + af + " prefix " + direction + "-" + ("%s" % name) + "\n"
+        fieldset_hdr = "field-set " + af + " prefix " + direction + "-" + f"{name}" + "\n"
         field_set = fieldset_hdr + field_list
         return field_set
 
@@ -779,7 +779,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
                     if term.name in term_names:
                         raise aclgenerator.DuplicateTermError(
-                            "multiple terms named: %s" % term.name
+                            f"multiple terms named: {term.name}"
                         )
                     term_names.add(term.name)
 
@@ -831,7 +831,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                         "is-fragment" in term.option or "fragment" in term.option
                     ) and filter_type == "inet6":
                         raise AristaTpFragmentInV6Error(
-                            "the term %s uses is-fragment but " "is a v6 policy." % term.name
+                            f"the term {term.name} uses is-fragment but is a v6 policy."
                         )
 
                     # this should error out more gracefully in mixed configs
@@ -882,7 +882,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
 
                         if src_addr_ex:
                             fs = self._GenPrefixFieldset(
-                                "src", "%s" % term.name, src_addr, src_addr_ex, af_map_txt[ft]
+                                "src", f"{term.name}", src_addr, src_addr_ex, af_map_txt[ft]
                             )
                             policy_field_sets.append(fs)
 
@@ -898,7 +898,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                         if dst_addr_ex:
                             fs = self._GenPrefixFieldset(
                                 "dst",
-                                "%s" % term.name,
+                                f"{term.name}",
                                 term.destination_address,
                                 term.destination_address_exclude,
                                 af_map_txt[ft],
@@ -943,13 +943,13 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                     config.Append("   ", fs)
                     config.Append("   ", "!")
 
-            config.Append("   ", "no traffic-policy %s" % filter_name)
-            config.Append("   ", "traffic-policy %s" % filter_name)
+            config.Append("   ", f"no traffic-policy {filter_name}")
+            config.Append("   ", f"traffic-policy {filter_name}")
 
             # if there are counters, export the list of counters
             if counters:
                 str_counters = " ".join(counters)
-                config.Append("   ", "counter %s" % str_counters)
+                config.Append("   ", f"counter {str_counters}")
 
             for term in terms:
                 term_str = str(term)

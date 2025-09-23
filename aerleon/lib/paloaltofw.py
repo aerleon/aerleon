@@ -91,7 +91,7 @@ class ServiceMap:
 
         if len(service_name) > 63:
             raise PaloAltoFWNameTooLongError(
-                "Service name must be 63 characters max: %s" % service_name
+                f"Service name must be 63 characters max: {service_name}"
             )
 
         for _, service in self.entries.items():
@@ -255,7 +255,7 @@ class Rule:
                 ):
                     options["application"].append(proto_name)
                 elif proto_name in ("ah", "esp"):
-                    ipsec_app_proto = "ipsec-%s" % proto_name
+                    ipsec_app_proto = f"ipsec-{proto_name}"
                     if ipsec_app_proto not in options["application"]:
                         options["application"].append(ipsec_app_proto)
 
@@ -502,7 +502,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     )
                 term.name = self.FixTermLength(term.name)
                 if term.name in term_dup_check:
-                    raise PaloAltoFWDuplicateTermError("You have a duplicate term: %s" % term.name)
+                    raise PaloAltoFWDuplicateTermError(f"You have a duplicate term: {term.name}")
                 term_dup_check.add(term.name)
 
                 services = {"tcp", "udp"} & set(term.protocol)
@@ -725,7 +725,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     # The term contains ICMP types
                     for term_icmp_type_name in term.icmp_type:
                         if icmp_version == "icmp":
-                            icmp_app_name = "icmp-%s" % term_icmp_type_name
+                            icmp_app_name = f"icmp-{term_icmp_type_name}"
                             # This is to abbreviate the Application name where possible.
                             # The limit is defined by _APPLICATION_NAME_MAX_LENGTH = 31.
                             if len(icmp_app_name) > self._APPLICATION_NAME_MAX_LENGTH:
@@ -739,7 +739,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                                 )
                             term_icmp_type = policy.Term.ICMP_TYPE[4][term_icmp_type_name]
                         else:
-                            icmp_app_name = "icmp6-%s" % term_icmp_type_name
+                            icmp_app_name = f"icmp6-{term_icmp_type_name}"
                             # This is to abbreviate the Application name where possible.
                             # The limit is defined by _APPLICATION_NAME_MAX_LENGTH = 31.
                             if len(icmp_app_name) > self._APPLICATION_NAME_MAX_LENGTH:
@@ -778,7 +778,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     if proto_name in self._SUPPORTED_PROTO_NAMES:
                         continue
                     raise PaloAltoFWUnsupportedProtocolError(
-                        "protocol %s is not supported" % proto_name
+                        f"protocol {proto_name} is not supported"
                     )
 
                 if term.icmp_type:

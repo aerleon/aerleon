@@ -166,4 +166,4 @@ def GetIpv6TermName(term_name: str) -> str:
       string: The IPv6 requivalent term name.
     """
 
-    return '{}-{}'.format(term_name, 'v6')
+    return f'{term_name}-v6'

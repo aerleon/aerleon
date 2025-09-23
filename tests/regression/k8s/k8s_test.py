@@ -674,7 +674,7 @@ class K8sTest(parameterized.TestCase):
         for name in INVALID_TERM_NAMES:
             pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_CUSTOM_NAME % name, self.naming)
             self.assertRaisesRegex(
-                k8s.K8sNetworkPolicyError, 'name %s is not valid' % name, k8s.K8s, pol, EXP_INFO
+                k8s.K8sNetworkPolicyError, f'name {name} is not valid', k8s.K8s, pol, EXP_INFO
             )
 
     def testSkipExpiredTerm(self):
