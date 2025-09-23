@@ -161,7 +161,7 @@ class Term(windows.Term):
             if start == end:
                 multiports.append(str(start))
             else:
-                multiports.append('-'.join([str(start), str(end)]))
+                multiports.append(f"{start!s}-{end!s}")
         return ','.join(multiports)
 
 

@@ -86,7 +86,7 @@ class DSMNet:
         return False
 
     def __str__(self) -> str:
-        return ' '.join([self.address, self.netmask])
+        return f"{self.address} {self.netmask}"
 
     def MergeText(self, text: str = '') -> str:
         """Returns self.text joined with optional text.
@@ -101,7 +101,7 @@ class DSMNet:
         """
         if self.text:
             if text and text not in self.text:
-                return ', '.join([self.text, text])
+                return f"{self.text}, {text}"
             return self.text
         else:
             return text
