@@ -635,11 +635,9 @@ def AddRepositoryTags(
     tags = []
     wrapper = '"' if wrap else ''
 
-    # Format print the '$' into the RCS tags in order prevent the tags from
-    # being interpolated here.
-    p4_id = '{}{}Id:{}{}'.format(wrapper, '$', '$', wrapper)
-    p4_date = '{}{}Date:{}{}'.format(wrapper, '$', '$', wrapper)
-    p4_revision = '{}{}Revision:{}{}'.format(wrapper, '$', '$', wrapper)
+    p4_id = '{}$Id:${}'.format(wrapper, wrapper)
+    p4_date = '{}$Date:${}'.format(wrapper, wrapper)
+    p4_revision = '{}$Revision:${}'.format(wrapper, wrapper)
     if rid:
         tags.append(f'{prefix}{p4_id}')
     if date:

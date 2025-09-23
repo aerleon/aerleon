@@ -499,10 +499,8 @@ class CiscoTest(absltest.TestCase):
         )
         self.assertIn('access-list 50 remark numbered standard', str(acl), str(acl))
         self.assertIn('access-list 50 remark standard-term-1', str(acl), str(acl))
-        self.assertIn('access-list 50 remark {}Id:{}'.format('$', '$'), str(acl), str(acl))
-        self.assertNotIn(
-            'access-list 50 remark {}Revision:{}'.format('$', '$'), str(acl), str(acl)
-        )
+        self.assertIn('access-list 50 remark $Id:$', str(acl), str(acl))
+        self.assertNotIn('access-list 50 remark $Revision:$', str(acl), str(acl))
         print(acl)
 
     @capture.stdout

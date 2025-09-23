@@ -221,8 +221,8 @@ class CiscoNXTest(absltest.TestCase):
         self.assertIn(expected, str(acl), str(acl))
         expected = 'test-filter remark'
         self.assertNotIn(expected, str(acl), str(acl))
-        self.assertNotIn(' remark {}Id:{}'.format('$', '$'), str(acl), str(acl))
-        self.assertIn(' remark "{}Revision:{}"'.format('$', '$'), str(acl), str(acl))
+        self.assertNotIn(' remark $Id:$', str(acl), str(acl))
+        self.assertIn(' remark "$Revision:$"', str(acl), str(acl))
         self.assertNotIn(' remark $', str(acl), str(acl))
 
         print(acl)
