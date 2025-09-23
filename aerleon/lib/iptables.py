@@ -961,7 +961,7 @@ class Iptables(aclgenerator.ACLGenerator):
                 target.append('#')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags('# '))
-            target.append('# ' + filter_type)
+            target.append(f"# {filter_type}")
 
             if filter_name in self._GOOD_FILTERS:
                 if default_action:

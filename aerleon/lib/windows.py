@@ -369,7 +369,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
                 target.append(':')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags(': '))
-            target.append(': ' + filter_type)
+            target.append(f": {filter_type}")
 
             if default_action:
                 raise aclgenerator.UnsupportedTargetOptionError(

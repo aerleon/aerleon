@@ -731,7 +731,7 @@ class CiscoTest(absltest.TestCase):
     def testDsmo(self):
         addr_list = list()
         for octet in range(0, 256):
-            net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
+            net = nacaddr.IP(f"192.168.{octet!s}.64/27")
             addr_list.append(str(net))
 
         self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')

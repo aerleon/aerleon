@@ -746,16 +746,16 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-s 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-s 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-s 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -d 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
         print(result)
 
@@ -793,16 +793,16 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-d 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-d 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-d 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -s 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
         print(result)
 
@@ -1044,7 +1044,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn(
             '--tcp-flags ACK,FIN,RST,SYN RST --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching packets with RST bit only.\n' + result,
+            f"No rule matching packets with RST bit only.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'
@@ -1059,7 +1059,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn(
             '-p udp --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching TCP packets with ACK bit.\n' + result,
+            f"No rule matching TCP packets with ACK bit.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'

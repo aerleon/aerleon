@@ -108,7 +108,7 @@ class TermStandard:
                 self.filter_name,
                 self.term.name,
             )
-            self.dscpstring = ' dscp' + self.term.dscp_match
+            self.dscpstring = f" dscp{self.term.dscp_match}"
 
     def __str__(self) -> str:
         ret_str = []
@@ -786,7 +786,7 @@ class Term(aclgenerator.Term):
             ' '.join(option),
         ]
         non_empty_elements = [x for x in all_elements if x]
-        return [' ' + ' '.join(non_empty_elements)]
+        return [f" {' '.join(non_empty_elements)}"]
 
     def _FixConsecutivePorts(self, port_list: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """Takes a list of tuples and expands the tuple if the range is two.

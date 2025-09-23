@@ -98,7 +98,7 @@ class Policy:
         try:
             self.data = open(filename).readlines()
         except OSError as error_info:
-            info = str(filename) + ' cannot be opened'
+            info = f"{filename!s} cannot be opened"
             raise FileOpenError(f'{info}\n{error_info}')
 
         indent = 0

@@ -131,7 +131,7 @@ class Term(aclgenerator.Term):
                 ret_str.IndentAppend(3, line)
             ret_str.IndentAppend(3, '*/')
 
-        ret_str.IndentAppend(3, 'policy ' + self.term.name + ' {')
+        ret_str.IndentAppend(3, f"policy {self.term.name} {{")
         ret_str.IndentAppend(4, 'match {')
         # SOURCE-ADDRESS
         saddrs = {i.parent_token for i in self.term.source_address}
@@ -160,10 +160,10 @@ class Term(aclgenerator.Term):
         else:
             if hasattr(self.term, 'replacement_application_name'):
                 ret_str.IndentAppend(
-                    5, 'application ' + self.term.replacement_application_name + '-app;'
+                    5, f"application {self.term.replacement_application_name}-app;"
                 )
             else:
-                ret_str.IndentAppend(5, 'application ' + self.term.name + '-app;')
+                ret_str.IndentAppend(5, f"application {self.term.name}-app;")
 
         # DSCP MATCH
         if self.term.dscp_match:
@@ -197,7 +197,7 @@ class Term(aclgenerator.Term):
 
             # VPN target can be only specified when ACTION is accept
             if str(action) == 'accept' and self.term.vpn:
-                ret_str.IndentAppend(5, self.ACTIONS.get(str(action)) + ' {')
+                ret_str.IndentAppend(5, f"{self.ACTIONS.get(str(action))} {{")
                 ret_str.IndentAppend(6, 'tunnel {')
                 ret_str.IndentAppend(7, f'ipsec-vpn {self.term.vpn[0]};')
                 if self.term.vpn[1]:
@@ -206,11 +206,11 @@ class Term(aclgenerator.Term):
                 ret_str.IndentAppend(6, '}')
                 ret_str.IndentAppend(5, '}')
             else:
-                ret_str.IndentAppend(5, self.ACTIONS.get(str(action)) + ';')
+                ret_str.IndentAppend(5, f"{self.ACTIONS.get(str(action))};")
 
             # DSCP SET
             if self.term.dscp_set:
-                ret_str.IndentAppend(5, 'dscp ' + self.term.dscp_set + ';')
+                ret_str.IndentAppend(5, f"dscp {self.term.dscp_set};")
 
             # LOGGING
             if self.term.logging:
@@ -265,9 +265,9 @@ class Term(aclgenerator.Term):
                 return '%d-%d' % (el[0], el[1])
 
         if len(group) > 1:
-            rval = '[ ' + ' '.join([_FormattedGroup(x) for x in group]) + ' ];'
+            rval = f"[ {' '.join([_FormattedGroup(x) for x in group])} ];"
         else:
-            rval = _FormattedGroup(group[0]) + ';'
+            rval = f"{_FormattedGroup(group[0])};"
         return rval
 
 
@@ -500,7 +500,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                             nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper())
                         ]
                     # Use the term name as the token & parent_token
-                    new_src_parent_token = term.name.upper() + '_SRC_EXCLUDE'
+                    new_src_parent_token = f"{term.name.upper()}_SRC_EXCLUDE"
                     new_src_token = new_src_parent_token
                     for i in term.source_address_exclude:
                         term.source_address = nacaddr.RemoveAddressFromList(term.source_address, i)
@@ -513,7 +513,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         term.destination_address = [
                             nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper())
                         ]
-                    new_dst_parent_token = term.name.upper() + '_DST_EXCLUDE'
+                    new_dst_parent_token = f"{term.name.upper()}_DST_EXCLUDE"
                     new_dst_token = new_dst_parent_token
                     for i in term.destination_address_exclude:
                         term.destination_address = nacaddr.RemoveAddressFromList(
@@ -659,13 +659,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 counter = 0
                 for chunk in src_chunks:
                     for ip in chunk:
-                        ip.parent_token = 'src_' + term.name + str(counter)
+                        ip.parent_token = f"src_{term.name}{counter!s}"
                     counter += 1
                 dst_chunks = Chunks(term.destination_address)
                 counter = 0
                 for chunk in dst_chunks:
                     for ip in chunk:
-                        ip.parent_token = 'dst_' + term.name + str(counter)
+                        ip.parent_token = f"dst_{term.name}{counter!s}"
                     counter += 1
 
                 src_dst_products = itertools.product(src_chunks, dst_chunks)
@@ -674,7 +674,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     new_term = copy.copy(term)
                     new_term.source_address = src_dst_list[0]
                     new_term.destination_address = src_dst_list[1]
-                    new_term.name = new_term.name + '_' + str(counter)
+                    new_term.name = f"{new_term.name}_{counter!s}"
                     expanded_terms.append(new_term)
                     counter += 1
             else:
@@ -706,7 +706,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         ips = nacaddr.SortAddrList(ips)
         ips = nacaddr.CollapseAddrList(ips)
         for ip in ips:
-            target.IndentAppend(4, 'address ' + token + '_' + str(counter) + ' ' + str(ip) + ';')
+            target.IndentAppend(4, f"address {token}_{counter!s} {ip!s};")
             counter += 1
         for fqdn in fqdns:
             target.IndentAppend(4, f'address {token}_{counter} {{')
@@ -716,13 +716,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
     def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
         target = IndentList(self.INDENT)
-        target.IndentAppend(4, 'address-set ' + group + ' {')
+        target.IndentAppend(4, f"address-set {group} {{")
         counter = 0
         for _ in nacaddr.CollapseAddrList(ips):
-            target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
+            target.IndentAppend(5, f"address {group}_{counter!s};")
             counter += 1
         for _ in fqdns:
-            target.IndentAppend(5, 'address ' + group + '_' + str(counter) + ';')
+            target.IndentAppend(5, f"address {group}_{counter!s};")
             counter += 1
         target.IndentAppend(4, '}')
         return target
@@ -755,7 +755,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(1, 'zones {')
             zones = self.addressbook.GetZoneNames()
             for zone in zones:
-                target.IndentAppend(2, 'security-zone ' + zone + ' {')
+                target.IndentAppend(2, f"security-zone {zone} {{")
                 target.IndentAppend(3, 'replace: address-book {')
                 for _, group, ips, fqdns in self.addressbook.Walk(zone):
                     target.extend(self._GenerateAddresses(group, ips, fqdns))
@@ -788,14 +788,14 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     # we need.
                     num_terms = len(app['protocol']) * len(app['icmp-type'])
                     if num_terms > ICMP_TERM_LIMIT:
-                        target.IndentAppend(1, 'application-set ' + app['name'] + '-app {')
+                        target.IndentAppend(1, f"application-set {app['name']}-app {{")
                         for i in range(num_terms):
                             target.IndentAppend(
-                                2, 'application ' + app['name'] + '-app%d' % (i + 1) + ';'
+                                2, f"application {app['name']}{'-app%d' % (i + 1)};"
                             )
                         target.IndentAppend(1, '}')
                     else:
-                        target.IndentAppend(1, 'application ' + app['name'] + '-app {')
+                        target.IndentAppend(1, f"application {app['name']}-app {{")
 
                     term_counter = 0
                     for i, code in enumerate(app['icmp-type']):
@@ -828,7 +828,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 # generate non-ICMP statements
                 else:
                     i = 1
-                    apps_set_list.IndentAppend(1, 'application-set ' + app['name'] + '-app {')
+                    apps_set_list.IndentAppend(1, f"application-set {app['name']}-app {{")
 
                     for proto in app['protocol'] or ['']:
                         for sport in app['sport'] or ['']:
@@ -847,14 +847,14 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                                     chunks.append(f" inactivity-timeout {int(app['timeout'])}")
                                 if chunks:
                                     apps_set_list.IndentAppend(
-                                        2, 'application ' + app['name'] + '-app%d;' % i
+                                        2, f"application {app['name']}{'-app%d;' % i}"
                                     )
                                     app_list.IndentAppend(
-                                        1, 'application ' + app['name'] + '-app%d {' % i
+                                        1, f"application {app['name']}{'-app%d {' % i}"
                                     )
 
                                     app_list.IndentAppend(
-                                        2, 'term t%d' % i + ''.join(chunks) + ';'
+                                        2, f"{'term t%d' % i}{''.join(chunks)};"
                                     )
                                     app_list.IndentAppend(1, '}')
                                     i += 1
@@ -906,7 +906,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 target.IndentAppend(2, 'global {')
             else:
                 target.IndentAppend(
-                    2, 'from-zone ' + filter_options[1] + ' to-zone ' + filter_options[3] + ' {'
+                    2, f"from-zone {filter_options[1]} to-zone {filter_options[3]} {{"
                 )
 
             # GROUPS

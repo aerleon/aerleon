@@ -217,7 +217,7 @@ class Term(aclgenerator.Term):
         if self.term.comment and not self.noverbose:
             reflowed_comments = aclgenerator.WrapWords(self.term.comment, MAX_COMMENT_LENGTH)
             for line in reflowed_comments:
-                term_block.append([MATCH_INDENT, "!! " + line, False])
+                term_block.append([MATCH_INDENT, f"!! {line}", False])
 
         has_match_criteria = (
             self.term.destination_address
@@ -486,7 +486,7 @@ class Term(aclgenerator.Term):
             protocol_str += f"protocol {self._Group(prots)}"
 
         if prots == ["tcp"] and flags:
-            protocol_str += " flags " + " ".join(flags)
+            protocol_str += f" flags {' '.join(flags)}"
 
         return protocol_str
 
@@ -513,16 +513,16 @@ class Term(aclgenerator.Term):
         for p in except_list:
             if 255 > p > ptr:
                 if (p - 1) == ptr:
-                    ex_str += str(ptr) + ","
+                    ex_str += f"{ptr!s},"
                 else:
-                    ex_str += str(ptr) + "-" + str(p - 1) + ","
+                    ex_str += f"{ptr!s}-{p - 1!s},"
 
                 ptr = p + 1
             elif p == ptr:
                 ptr = p + 1
 
-        ex_str += str(ptr) + "-" + "255"
-        protocol_str = "protocol " + ex_str
+        ex_str += f"{ptr!s}-255"
+        protocol_str = f"protocol {ex_str}"
 
         return protocol_str
 
@@ -718,11 +718,11 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         field_list = ""
 
         for p in pfxs:
-            field_list += (" " * 6) + f"{p}\n"
+            field_list += f"{' ' * 6}{p}\n"
         for p in ex_pfxs:
-            field_list += (" " * 6) + f"except {p}\n"
+            field_list += f"{' ' * 6}except {p}\n"
 
-        fieldset_hdr = "field-set " + af + " prefix " + direction + "-" + f"{name}" + "\n"
+        fieldset_hdr = f"field-set {af} prefix {direction}-{name}\n"
         field_set = fieldset_hdr + field_list
         return field_set
 
@@ -772,10 +772,10 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                     # TODO(sulrich): if term names become unique to address
                     # families, this can be removed.
                     if filter_type == "mixed" and ft == "inet6":
-                        term.name = af_map_txt[ft] + "-" + term.name
+                        term.name = f"{af_map_txt[ft]}-{term.name}"
 
                     if default_term:
-                        term.name = af_map_txt[ft] + "-default-all"
+                        term.name = f"{af_map_txt[ft]}-default-all"
 
                     if term.name in term_names:
                         raise aclgenerator.DuplicateTermError(
@@ -956,4 +956,4 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                 if term_str:
                     config.Append("", term_str, verbatim=True)
 
-        return str(config) + "\n"
+        return f"{config!s}\n"

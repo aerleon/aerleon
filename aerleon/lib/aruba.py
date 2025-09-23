@@ -212,7 +212,7 @@ class Term(aclgenerator.Term):
                 return [str(self._PROTOCOL_MAP[protocol])]
             for start_port, end_port in sorted(ports):
                 ret_ports.append(
-                    f'{protocol.lower()} {start_port}{" " + str(end_port) if start_port != end_port else ""}'
+                    f'{protocol.lower()} {start_port}{f" {end_port!s}" if start_port != end_port else ""}'
                 )
         return ret_ports
 

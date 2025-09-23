@@ -199,7 +199,7 @@ class Term(windows.Term):
 
     def ComposeRule(self, policy: str):
         return self.CMD_PREFIX + self._RULE_FORMAT.substitute(
-            name=self.term_name + '-rule',
+            name=f"{self.term_name}-rule",
             policy=policy,
             filterlist=self.term_name + self._LIST_SUFFIX,
             filteraction=self.term_name + self._ACTION_SUFFIX,
@@ -231,7 +231,7 @@ class WindowsIPSec(windows.WindowsGenerator):
 
     def _HandlePolicyHeader(self, header: Header, target: list[str]) -> None:
         policy_name = header.FilterName(self._PLATFORM) + self._POLICY_SUFFIX
-        target.append(Term.CMD_PREFIX + self._POLICY_FORMAT.substitute(name=policy_name) + '\n')
+        target.append(f"{Term.CMD_PREFIX}{self._POLICY_FORMAT.substitute(name=policy_name)}\n")
 
     def _HandleTermFooter(self, header: Header, term: Term, target: list[str]):
-        target.append(term.ComposeRule(header.FilterName(self._PLATFORM)) + '\n')
+        target.append(f"{term.ComposeRule(header.FilterName(self._PLATFORM))}\n")

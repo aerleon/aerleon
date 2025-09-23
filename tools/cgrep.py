@@ -215,7 +215,7 @@ def main(parser):
         logging.info('Union of %s and %s:\n %s\n', first_name, second_name, union)
         logging.info('Diff of %s and %s:', first_name, second_name)
         for i in results:
-            logging.info(' ' + i)
+            logging.info(f" {i}")
         logging.info('')
         first_obj, sec_obj = options.cmp
         if check_encapsulated('network', first_obj, sec_obj, db):
@@ -236,7 +236,7 @@ def main(parser):
             except naming.UndefinedAddressError:
                 logging.info('%s is an invalid object', obj)
             else:
-                logging.info(token + ':')
+                logging.info(f"{token}:")
                 # convert list of ip objects to strings and sort them
                 sorted_ips = nacaddr.SortAddrList(ips)
                 p([str(x) for x in sorted_ips])
@@ -250,7 +250,7 @@ def main(parser):
         else:
             for result in get_ports(options.svc, db):
                 svc, port = result
-                logging.info(svc + ':')
+                logging.info(f"{svc}:")
                 p(port)
 
     # if -p

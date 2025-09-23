@@ -155,7 +155,7 @@ class Rule:
             x = []
             for tup in ports:
                 if len(tup) > 1 and tup[0] != tup[1]:
-                    x.append(str(tup[0]) + "-" + str(tup[1]))
+                    x.append(f"{tup[0]!s}-{tup[1]!s}")
                 else:
                     x.append(str(tup[0]))
 

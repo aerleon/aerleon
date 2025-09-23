@@ -213,7 +213,7 @@ class Term(gcp.Term):
         term_name = self.term.name
         if mixed_policy_inet6_term:
             term_name = gcp.GetIpv6TermName(term_name)
-        raw_description = term_name + ': ' + ' '.join(self.term.comment)
+        raw_description = f"{term_name}: {' '.join(self.term.comment)}"
         term_dict['description'] = gcp.TruncateString(
             raw_description, self._MAX_TERM_COMMENT_LENGTH
         )

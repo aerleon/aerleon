@@ -98,7 +98,7 @@ class Term(juniper.Term):
                 ret_str.Append('/*')
                 for comment in self.term.comment:
                     for line in comment.split('\n'):
-                        ret_str.Append('** ' + line)
+                        ret_str.Append(f"** {line}")
                 ret_str.Append('*/')
 
         # Term verbatim output - this will skip over normal term creation
@@ -228,7 +228,7 @@ class Term(juniper.Term):
 
             ret_str.Append(
                 '%s term %s%s {'
-                % (term_prefix, self.term.name, '-' + suffix if duplicate_term else '')
+                % (term_prefix, self.term.name, f"-{suffix}" if duplicate_term else '')
             )
 
             # We only need a "from {" clause if there are any conditions to match.
@@ -303,16 +303,16 @@ class Term(juniper.Term):
                 # source prefix <except> list
                 if self.term.source_prefix or self.term.source_prefix_except:
                     for pfx in self.term.source_prefix:
-                        ret_str.Append('source-prefix-list ' + pfx + ';')
+                        ret_str.Append(f"source-prefix-list {pfx};")
                     for epfx in self.term.source_prefix_except:
-                        ret_str.Append('source-prefix-list ' + epfx + ' except;')
+                        ret_str.Append(f"source-prefix-list {epfx} except;")
 
                 # destination prefix <except> list
                 if self.term.destination_prefix or self.term.destination_prefix_except:
                     for pfx in self.term.destination_prefix:
-                        ret_str.Append('destination-prefix-list ' + pfx + ';')
+                        ret_str.Append(f"destination-prefix-list {pfx};")
                     for epfx in self.term.destination_prefix_except:
-                        ret_str.Append('destination-prefix-list ' + epfx + ' except;')
+                        ret_str.Append(f"destination-prefix-list {epfx} except;")
 
                 # APPLICATION
                 if (
@@ -323,7 +323,7 @@ class Term(juniper.Term):
                 ):
                     if hasattr(self.term, 'replacement_application_name'):
                         ret_str.Append(
-                            'application-sets ' + self.term.replacement_application_name + '-app;'
+                            f"application-sets {self.term.replacement_application_name}-app;"
                         )
                     else:
                         ret_str.Append(
@@ -337,7 +337,7 @@ class Term(juniper.Term):
             ret_str.Append('then {')
             # ACTION
             for action in self.term.action:
-                ret_str.Append(self._ACTIONS.get(str(action)) + ';')
+                ret_str.Append(f"{self._ACTIONS.get(str(action))};")
             if self.term.logging and 'disable' not in [x.value for x in self.term.logging]:
                 ret_str.Append('syslog;')
             ret_str.Append('}')  # then {...}
@@ -441,10 +441,10 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     else:
                         timeout = 60
                     num_terms = len(app['protocol']) * len(app['icmp-type'])
-                    apps_set_list.append('application-set ' + app['name'] + '-app {')
+                    apps_set_list.append(f"application-set {app['name']}-app {{")
                     for i in range(num_terms):
                         apps_set_list.append(
-                            'application ' + app['name'] + '-app%d' % (i + 1) + ';'
+                            f"application {app['name']}{'-app%d' % (i + 1)};"
                         )
                     apps_set_list.append('}')  # application-set {...}
 
@@ -452,7 +452,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     for i, code in enumerate(app['icmp-type']):
                         for proto in app['protocol']:
                             target.append(
-                                'application ' + app['name'] + '-app%d' % (term_counter + 1) + ' {'
+                                f"application {app['name']}{'-app%d' % (term_counter + 1)} {{"
                             )
                             if proto == 'icmp':
                                 target.append(f'application-protocol {proto};')
@@ -469,7 +469,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 # generate non-ICMP statements
                 else:
                     i = 1
-                    apps_set_list.append('application-set ' + app['name'] + '-app {')
+                    apps_set_list.append(f"application-set {app['name']}-app {{")
 
                     for proto in app['protocol'] or ['']:
                         for sport in app['sport'] or ['']:
@@ -485,9 +485,9 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                                     chunks.append(f" inactivity-timeout {int(app['timeout'])};")
                                 if chunks:
                                     apps_set_list.append(
-                                        'application ' + app['name'] + '-app%d;' % i
+                                        f"application {app['name']}{'-app%d;' % i}"
                                     )
-                                    app_list.append('application ' + app['name'] + '-app%d {' % i)
+                                    app_list.append(f"application {app['name']}{'-app%d {' % i}")
                                     for chunk in chunks:
                                         app_list.append(chunk)
                                     app_list.append('}')
@@ -690,9 +690,9 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 return '%d-%d' % (el[0], el[1])
 
         if len(group) > 1:
-            rval = '[ ' + ' '.join([_FormattedGroup(x, lc=lc) for x in group]) + ' ];'
+            rval = f"[ {' '.join([_FormattedGroup(x, lc=lc) for x in group])} ];"
         else:
-            rval = _FormattedGroup(group[0], lc=lc) + ';'
+            rval = f"{_FormattedGroup(group[0], lc=lc)};"
         return rval
 
     def __str__(self) -> str:
@@ -719,7 +719,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
 
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    target.Append('** ' + line)
+                    target.Append(f"** {line}")
             target.Append('*/')
 
             if apply_groups:
@@ -741,7 +741,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 target.Append('}')  # filter_name { ... }
                 target.Append('}')  # groups { ... }
                 target.Append(f'apply-groups {filter_name};')
-        return str(target) + '\n'
+        return f"{target!s}\n"
 
 
 class Error(juniper.Error):

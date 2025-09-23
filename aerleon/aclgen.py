@@ -242,7 +242,7 @@ def RenderFile(
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
                     str(acl_obj),
-                    '-accept' + acl_obj.SUFFIX,
+                    f"-accept{acl_obj.SUFFIX}",
                     output_directory,
                     input_file,
                     write_files,
@@ -250,7 +250,7 @@ def RenderFile(
                 acl_obj = generator(copy.deepcopy(pol), exp_info, invert=True)
                 RenderACL(
                     str(acl_obj),
-                    '-deny' + acl_obj.SUFFIX,
+                    f"-deny{acl_obj.SUFFIX}",
                     output_directory,
                     input_file,
                     write_files,
@@ -358,7 +358,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: list[str]) -> list[
         )
         depth = len(directory.parents) - 1
         logging.warning(
-            '-' * (2 * depth) + f'> {directory} ({len(directory_policies)} pol files found)'
+            f"{'-' * (2 * depth)}> {directory} ({len(directory_policies)} pol files found)"
         )
         policy_files.extend(filter(lambda path: path.is_file(), directory_policies))
 

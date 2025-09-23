@@ -306,12 +306,12 @@ class Match:
     def __str__(self):
         text = ''
         if self.possibles:
-            text += 'possible ' + self.action
+            text += f"possible {self.action}"
         else:
             text += self.action
-        text += ' in term ' + self.term + ' of filter ' + self.filter
+        text += f" in term {self.term} of filter {self.filter}"
         if self.possibles:
-            text += ' with factors: ' + str(', '.join(self.possibles))
+            text += f" with factors: {', '.join(self.possibles)!s}"
         return text
 
 

@@ -251,7 +251,7 @@ class Term(aclgenerator.Term):
             config.Append('/*')
             for comment in self.term.comment:
                 for line in comment.split('\n'):
-                    config.Append('** ' + line)
+                    config.Append(f"** {line}")
             config.Append('*/')
 
         # Term verbatim output - this will skip over normal term creation
@@ -279,12 +279,12 @@ class Term(aclgenerator.Term):
                 elif opt.startswith('established'):
                     if self.term.protocol == ['tcp']:
                         if 'tcp-established;' not in from_str:
-                            from_str.append(family_keywords['tcp-est'] + ';')
+                            from_str.append(f"{family_keywords['tcp-est']};")
 
                 # if tcp-established specified, but more than just tcp is included
                 # in the protocols, raise an error
                 elif opt.startswith('tcp-established'):
-                    flag = family_keywords['tcp-est'] + ';'
+                    flag = f"{family_keywords['tcp-est']};"
                     if self.term.protocol == ['tcp']:
                         if flag not in from_str:
                             from_str.append(flag)
@@ -466,18 +466,18 @@ class Term(aclgenerator.Term):
             if self.term.source_prefix or self.term.source_prefix_except:
                 config.Append('source-prefix-list {')
                 for pfx in self.term.source_prefix:
-                    config.Append(pfx + ';')
+                    config.Append(f"{pfx};")
                 for epfx in self.term.source_prefix_except:
-                    config.Append(epfx + ' except;')
+                    config.Append(f"{epfx} except;")
                 config.Append('}')
 
             # destination prefix <except> list
             if self.term.destination_prefix or self.term.destination_prefix_except:
                 config.Append('destination-prefix-list {')
                 for pfx in self.term.destination_prefix:
-                    config.Append(pfx + ';')
+                    config.Append(f"{pfx};")
                 for epfx in self.term.destination_prefix_except:
-                    config.Append(epfx + ' except;')
+                    config.Append(f"{epfx} except;")
                 config.Append('}')
 
             # Only generate ttl if inet, inet6 uses hop-limit instead.
@@ -494,7 +494,7 @@ class Term(aclgenerator.Term):
                     protocol[loc] = 'icmp6'
                 # both are supported on JunOS, but only icmp6 is supported
                 # on SRX loopback stateless filter
-                config.Append(family_keywords['protocol'] + ' ' + self._Group(protocol))
+                config.Append(f"{family_keywords['protocol']} {self._Group(protocol)}")
 
             # protocol
             if self.term.protocol_except:
@@ -504,7 +504,7 @@ class Term(aclgenerator.Term):
                     loc = protocol_except.index('icmpv6')
                     protocol_except[loc] = 'icmp6'
                 config.Append(
-                    family_keywords['protocol-except'] + ' ' + self._Group(protocol_except)
+                    f"{family_keywords['protocol-except']} {self._Group(protocol_except)}"
                 )
 
             # port
@@ -709,12 +709,12 @@ class Term(aclgenerator.Term):
             if self.term.encapsulate:
                 config.Append(f'encapsulate {self.term.encapsulate!s};')
             for action in self.extra_actions:
-                config.Append(action + ';')
+                config.Append(f"{action};")
 
             # If there is a routing-instance defined, skip reject/accept/etc actions.
             if not self.term.routing_instance:
                 for action in self.term.action:
-                    config.Append(self.ACTIONS.get(action) + ';')
+                    config.Append(f"{self.ACTIONS.get(action)};")
 
             # DSCP SET
             if self.term.dscp_set:
@@ -870,11 +870,11 @@ class Term(aclgenerator.Term):
                             new_length_eol = length_eol
 
                         # what line am I gunna output?
-                        line = comment + ' ' + text[:new_length_eol].strip()
+                        line = f"{comment} {text[:new_length_eol].strip()}"
                         # truncate what's left
                         text = text[new_length_eol:]
                         # setup the comment and indentation for the next go-round
-                        comment = ' ' * indentation + '**'
+                        comment = f"{' ' * indentation}**"
 
                         rval.append(line)
 
@@ -922,9 +922,9 @@ class Term(aclgenerator.Term):
                 return '%d-%d' % (el[0], el[1])
 
         if len(group) > 1:
-            rval = '[ ' + ' '.join([_FormattedGroup(x) for x in group]) + ' ];'
+            rval = f"[ {' '.join([_FormattedGroup(x) for x in group])} ];"
         else:
-            rval = _FormattedGroup(group[0]) + ';'
+            rval = f"{_FormattedGroup(group[0])};"
         return rval
 
 
@@ -1137,7 +1137,7 @@ class Juniper(aclgenerator.ACLGenerator):
 
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    config.Append('** ' + line)
+                    config.Append(f"** {line}")
             config.Append('*/')
 
             config.Append('replace: filter %s {' % filter_name)
@@ -1155,4 +1155,4 @@ class Juniper(aclgenerator.ACLGenerator):
             config.Append('}')  # family inet { ... }
             config.Append('}')  # firewall { ... }
 
-        return str(config) + '\n'
+        return f"{config!s}\n"

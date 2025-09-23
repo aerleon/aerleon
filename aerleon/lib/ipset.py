@@ -221,8 +221,8 @@ class Ipset(iptables.Iptables):
         c_str = 'create'
         a_str = 'add'
         if 'exists' in self.filter_options:
-            c_str = c_str + ' -exist'
-            a_str = a_str + ' -exist'
+            c_str = f"{c_str} -exist"
+            a_str = f"{a_str} -exist"
         for direction in sorted(term.addr_sets, reverse=True):
             set_name, addr_list = term.addr_sets[direction]
             set_hashsize = 1 << len(addr_list).bit_length()

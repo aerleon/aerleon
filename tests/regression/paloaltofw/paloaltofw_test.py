@@ -556,11 +556,11 @@ SUPPORTED_SUB_TOKENS = {
 EXP_INFO = 2
 
 PATH_VSYS = "./devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']"
-PATH_RULES = PATH_VSYS + '/rulebase/security/rules'
-PATH_TAG = PATH_VSYS + '/tag'
-PATH_SERVICE = PATH_VSYS + '/service'
-PATH_ADDRESSES = PATH_VSYS + '/address'
-PATH_ADDRESS_GROUP = PATH_VSYS + '/address-group'
+PATH_RULES = f"{PATH_VSYS}/rulebase/security/rules"
+PATH_TAG = f"{PATH_VSYS}/tag"
+PATH_SERVICE = f"{PATH_VSYS}/service"
+PATH_ADDRESSES = f"{PATH_VSYS}/address"
+PATH_ADDRESS_GROUP = f"{PATH_VSYS}/address-group"
 
 
 class PaloAltoFWTest(absltest.TestCase):
@@ -577,7 +577,7 @@ class PaloAltoFWTest(absltest.TestCase):
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming), EXP_INFO
         )
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='good-term-1']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='good-term-1']")
         self.assertIsNotNone(x, output)
 
         print(output)
@@ -617,7 +617,7 @@ class PaloAltoFWTest(absltest.TestCase):
             policy.ParsePolicy(GOOD_HEADER_1 + DEFAULT_TERM_1, self.naming), EXP_INFO
         )
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='default-term-1']/action")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='default-term-1']/action")
         self.assertIsNotNone(x, output)
         self.assertEqual(x.text, 'deny', output)
         print(output)
@@ -627,7 +627,7 @@ class PaloAltoFWTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ICMP_TYPE_TERM_1, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmp']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmp']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -646,7 +646,7 @@ class PaloAltoFWTest(absltest.TestCase):
         )
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmp']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmp']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -658,7 +658,7 @@ class PaloAltoFWTest(absltest.TestCase):
         )
 
         # Check second policy as well.
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmp-2']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmp-2']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -675,7 +675,7 @@ class PaloAltoFWTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_MIXED + ICMPV6_TYPE_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmpv6-types']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmpv6-types']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -695,7 +695,7 @@ class PaloAltoFWTest(absltest.TestCase):
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         x = paloalto.config.find(
-            PATH_RULES + "/entry[@name='test-icmpv6-abbreviation-types']/application"
+            f"{PATH_RULES}/entry[@name='test-icmpv6-abbreviation-types']/application"
         )
         self.assertIsNotNone(x, output)
         members = []
@@ -770,7 +770,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ICMP_ONLY_TERM_1, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmp-only']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmp-only']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -785,7 +785,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_INET6 + ICMPV6_ONLY_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-icmpv6-only']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-icmpv6-only']/application")
         self.assertIsNotNone(x, output)
         members = []
         for node in x:
@@ -806,11 +806,11 @@ term rule-1 {
         )
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='a5f554bb7a8276615edbd5de-test-icmp']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='a5f554bb7a8276615edbd5de-test-icmp']")
         self.assertIsNotNone(x, output)
 
         # Check second policy as well.
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='e7d22ea748e04110eaf0495e-test-icmp']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='e7d22ea748e04110eaf0495e-test-icmp']")
         self.assertIsNotNone(x, output)
         print(output)
 
@@ -827,7 +827,7 @@ term rule-1 {
 
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='good-term-stateless-reply']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='good-term-stateless-reply']")
         self.assertIsNone(x, output)
         print(output)
 
@@ -837,14 +837,14 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + TCP_ESTABLISHED_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='tcp-established']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='tcp-established']")
         self.assertIsNone(x, output)
         print(output)
 
         pol = policy.ParsePolicy(GOOD_HEADER_1 + UDP_ESTABLISHED_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='udp-established-term']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='udp-established-term']")
         self.assertIsNone(x, output)
         print(output)
 
@@ -871,9 +871,9 @@ term rule-1 {
             policy.ParsePolicy(GOOD_HEADER_1 + LOGGING_BOTH_TERM, self.naming), EXP_INFO
         )
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-log-both']/log-start")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-log-both']/log-start")
         self.assertEqual(x, 'yes', output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-log-both']/log-end")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-log-both']/log-end")
         self.assertEqual(x, 'yes', output)
         print(output)
 
@@ -883,9 +883,9 @@ term rule-1 {
             policy.ParsePolicy(GOOD_HEADER_1 + LOGGING_DISABLED, self.naming), EXP_INFO
         )
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-disabled-log']/log-start")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-start")
         self.assertEqual(x, 'no', output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-disabled-log']/log-end")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-end")
         self.assertEqual(x, 'no', output)
         print(output)
 
@@ -904,9 +904,9 @@ term rule-1 {
 
             # we don't have term name so match all elements with attribute
             # name at the entry level
-            x = paloalto.config.findall(PATH_RULES + '/entry[@name]/log-start')
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name]/log-start")
             self.assertEqual(len(x), 0, output)
-            x = paloalto.config.findall(PATH_RULES + '/entry[@name]/log-end')
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name]/log-end")
             self.assertEqual(len(x), 1, output)
             self.assertEqual(x[0].text, 'yes', output)
             print(output)
@@ -916,7 +916,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ACTION_ACCEPT_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-accept-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-accept-action']/action")
         self.assertEqual(x, 'allow', output)
         print(output)
 
@@ -925,7 +925,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ACTION_DENY_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-deny-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-deny-action']/action")
         self.assertEqual(x, 'deny', output)
         print(output)
 
@@ -934,7 +934,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ACTION_REJECT_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-reject-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-reject-action']/action")
         self.assertEqual(x, 'reset-client', output)
         print(output)
 
@@ -943,7 +943,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ACTION_RESET_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-reset-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-reset-action']/action")
         self.assertEqual(x, 'reset-client', output)
         print(output)
 
@@ -964,7 +964,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + PLATFORM_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-accept-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-accept-action']/action")
         self.assertEqual(x, 'allow', output)
         print(output)
 
@@ -973,7 +973,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + OTHER_PLATFORM_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-accept-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-accept-action']/action")
         self.assertIsNone(x, output)
         print(output)
 
@@ -982,7 +982,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + PLATFORM_EXCLUDE_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-accept-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-accept-action']/action")
         self.assertIsNone(x, output)
         print(output)
 
@@ -991,7 +991,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + OTHER_PLATFORM_EXCLUDE_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='test-accept-action']/action")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-accept-action']/action")
         self.assertEqual(x, 'allow', output)
         print(output)
 
@@ -1001,7 +1001,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GRE_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-gre-protocol']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-gre-protocol']/application")
         self.assertIsNotNone(x, output)
         self.assertEqual(len(x), 1, output)
         self.assertEqual(x[0].tag, 'member', output)
@@ -1014,7 +1014,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + AH_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-ah-protocol']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-ah-protocol']/application")
         self.assertIsNotNone(x, output)
         self.assertEqual(len(x), 1, output)
         self.assertEqual(x[0].tag, 'member', output)
@@ -1027,14 +1027,14 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + AH_TCP_MIXED_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        svc = paloalto.config.find(PATH_RULES + "/entry[@name='test-mixed-protocol-1']/service")
+        svc = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-mixed-protocol-1']/service")
         self.assertIsNotNone(svc, output)
         self.assertEqual(len(svc), 1, output)
         self.assertEqual(svc[0].tag, 'member', output)
         self.assertEqual(svc[0].text, 'any-tcp', output)
 
         app = paloalto.config.find(
-            PATH_RULES + "/entry[@name='test-mixed-protocol-1']/application"
+            f"{PATH_RULES}/entry[@name='test-mixed-protocol-1']/application"
         )
         self.assertIsNotNone(app, output)
         self.assertEqual(len(app), 1, output)
@@ -1042,14 +1042,14 @@ term rule-1 {
         self.assertEqual(app[0].text, 'any', output)
 
         # Check second policy as well.
-        svc = paloalto.config.find(PATH_RULES + "/entry[@name='test-mixed-protocol-2']/service")
+        svc = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-mixed-protocol-2']/service")
         self.assertIsNotNone(svc, output)
         self.assertEqual(len(svc), 1, output)
         self.assertEqual(svc[0].tag, 'member', output)
         self.assertEqual(svc[0].text, 'application-default', output)
 
         app = paloalto.config.find(
-            PATH_RULES + "/entry[@name='test-mixed-protocol-2']/application"
+            f"{PATH_RULES}/entry[@name='test-mixed-protocol-2']/application"
         )
         self.assertIsNotNone(app, output)
         self.assertEqual(len(app), 1, output)
@@ -1063,7 +1063,7 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ESP_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='test-esp-protocol']/application")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-esp-protocol']/application")
         self.assertIsNotNone(x, output)
         self.assertEqual(len(x), 1, output)
         self.assertEqual(x[0].tag, 'member', output)
@@ -1076,14 +1076,14 @@ term rule-1 {
         pol = policy.ParsePolicy(GOOD_HEADER_1 + ESP_TCP_MIXED_PROTO_TERM, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        svc = paloalto.config.find(PATH_RULES + "/entry[@name='test-mixed-protocol-1']/service")
+        svc = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-mixed-protocol-1']/service")
         self.assertIsNotNone(svc, output)
         self.assertEqual(len(svc), 1, output)
         self.assertEqual(svc[0].tag, 'member', output)
         self.assertEqual(svc[0].text, 'any-tcp', output)
 
         app = paloalto.config.find(
-            PATH_RULES + "/entry[@name='test-mixed-protocol-1']/application"
+            f"{PATH_RULES}/entry[@name='test-mixed-protocol-1']/application"
         )
         self.assertIsNotNone(app, output)
         self.assertEqual(len(app), 1, output)
@@ -1091,14 +1091,14 @@ term rule-1 {
         self.assertEqual(app[0].text, 'any', output)
 
         # Check second policy as well.
-        svc = paloalto.config.find(PATH_RULES + "/entry[@name='test-mixed-protocol-2']/service")
+        svc = paloalto.config.find(f"{PATH_RULES}/entry[@name='test-mixed-protocol-2']/service")
         self.assertIsNotNone(svc, output)
         self.assertEqual(len(svc), 1, output)
         self.assertEqual(svc[0].tag, 'member', output)
         self.assertEqual(svc[0].text, 'application-default', output)
 
         app = paloalto.config.find(
-            PATH_RULES + "/entry[@name='test-mixed-protocol-2']/application"
+            f"{PATH_RULES}/entry[@name='test-mixed-protocol-2']/application"
         )
         self.assertIsNotNone(app, output)
         self.assertEqual(len(app), 1, output)
@@ -1113,26 +1113,26 @@ term rule-1 {
         output = str(paloalto)
 
         tag = 'trust_untrust_policy-comment-1'
-        x = paloalto.config.find(PATH_TAG + f"/entry[@name='{tag}']/comments")
+        x = paloalto.config.find(f"{PATH_TAG}/entry[@name='{tag}']/comments")
         self.assertIsNotNone(x, output)
         self.assertEqual(x.text, 'comment 1 comment 2', output)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='policy-2']/tag")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='policy-2']/tag")
         self.assertIsNotNone(x, output)
         self.assertEqual(len(x), 1, output)
         self.assertEqual(x[0].tag, 'member', output)
         self.assertEqual(x[0].text, tag, output)
 
         tag = 'trust_dmz_policy-comment-2'
-        x = paloalto.config.find(PATH_TAG + f"/entry[@name='{tag}']/comments")
+        x = paloalto.config.find(f"{PATH_TAG}/entry[@name='{tag}']/comments")
         self.assertIsNotNone(x, output)
         self.assertEqual(x.text, 'comment 3', output)
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='policy-3']/tag")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='policy-3']/tag")
         self.assertIsNotNone(x, output)
         self.assertEqual(len(x), 1, output)
         self.assertEqual(x[0].tag, 'member', output)
         self.assertEqual(x[0].text, tag, output)
 
-        x = paloalto.config.find(PATH_RULES + "/entry[@name='policy-4']/tag")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='policy-4']/tag")
         self.assertIsNone(x, output)
         print(output)
 
@@ -1145,7 +1145,7 @@ term rule-1 {
         pol = policy.ParsePolicy(ZONE_LEN_ERROR % (ZONE_MAX_LEN, 'dmz'), self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='policy']/from/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='policy']/from/member")
         self.assertEqual(x, ZONE_MAX_LEN, output)
 
         pol = policy.ParsePolicy(ZONE_LEN_ERROR % (ZONE_TOO_LONG, 'dmz'), self.naming)
@@ -1162,7 +1162,7 @@ term rule-1 {
         pol = policy.ParsePolicy(ZONE_LEN_ERROR % ('dmz', ZONE_MAX_LEN), self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='policy']/to/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='policy']/to/member")
         self.assertEqual(x, ZONE_MAX_LEN, output)
 
         pol = policy.ParsePolicy(ZONE_LEN_ERROR % ('dmz', ZONE_TOO_LONG), self.naming)
@@ -1218,9 +1218,9 @@ term rule-1 {
         output = str(paloalto)
         print(output)
 
-        x = paloalto.config.findtext(PATH_TAG + f"/entry[@name='{tag}']/comments")
+        x = paloalto.config.findtext(f"{PATH_TAG}/entry[@name='{tag}']/comments")
         self.assertEqual(x, 'C' * MAX_TAG_COMMENTS_LENGTH, output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/description")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/description")
         self.assertEqual(x, 'C' * MAX_RULE_DESCRIPTION_LENGTH, output)
 
         # maximum length + 1
@@ -1237,9 +1237,9 @@ term rule-1 {
             self.assertIn('comments exceeds maximum length', log.output[0])
             self.assertIn('description exceeds maximum length', log.output[1])
 
-        x = paloalto.config.findtext(PATH_TAG + f"/entry[@name='{tag}']/comments")
+        x = paloalto.config.findtext(f"{PATH_TAG}/entry[@name='{tag}']/comments")
         self.assertEqual(x, 'C' * MAX_TAG_COMMENTS_LENGTH, output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/description")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/description")
         self.assertEqual(x, 'C' * MAX_RULE_DESCRIPTION_LENGTH, output)
 
     @capture.stdout
@@ -1262,7 +1262,7 @@ term %s {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.find(PATH_RULES + f"/entry[@name='{term}']")
+        x = paloalto.config.find(f"{PATH_RULES}/entry[@name='{term}']")
         self.assertIsNotNone(x, output)
 
         # maximum length + 1
@@ -1353,7 +1353,7 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/application/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/application/member")
         self.assertEqual(x, 'any', output)
 
         for i, app in enumerate(APPS):
@@ -1361,7 +1361,7 @@ term rule-1 {
             paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
             output = str(paloalto)
             print(output)
-            x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/application/member")
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/application/member")
             apps = {elem.text for elem in x}
             self.assertEqual(APPS[i], apps, output)
 
@@ -1370,7 +1370,7 @@ term rule-1 {
             paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
             output = str(paloalto)
             print(output)
-            x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/application/member")
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/application/member")
             apps = {elem.text for elem in x}
             self.assertEqual(APPS[i], apps, output)
 
@@ -1378,14 +1378,14 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/service/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/service/member")
         self.assertEqual(x, 'application-default', output)
 
         pol = policy.ParsePolicy(POL3 % T1, self.naming)
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/service/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/service/member")
         self.assertEqual(x, 'any-tcp', output)
 
         definitions = naming.Naming()
@@ -1395,7 +1395,7 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findtext(PATH_RULES + "/entry[@name='rule-1']/service/member")
+        x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='rule-1']/service/member")
         self.assertEqual(x, 'service-rule-1-tcp', output)
 
         regex = '^Term rule-1 contains non tcp, udp protocols ' 'with pan-application:'
@@ -1521,7 +1521,7 @@ term rule-1 {
         path = f"/entry[@name='{name}']/protocol/udp/port"
         x = paloalto.config.findtext(PATH_SERVICE + path)
         self.assertEqual(x, "0-65535", output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/service/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/service/member")
         services = {elem.text for elem in x}
         self.assertEqual({"any-tcp", "any-udp"}, services, output)
 
@@ -1544,11 +1544,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1-1']/service/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1-1']/service/member")
         self.assertTrue(len(x) > 0, output)
         services = {elem.text for elem in x}
         self.assertEqual({"any-udp"}, services, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1-2']/application/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1-2']/application/member")
         self.assertTrue(len(x) > 0, output)
         applications = {elem.text for elem in x}
         self.assertEqual({"icmp"}, applications, output)
@@ -1561,11 +1561,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1-1']/service/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1-1']/service/member")
         self.assertTrue(len(x) > 0, output)
         services = {elem.text for elem in x}
         self.assertEqual({"any-udp", "any-tcp"}, services, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1-2']/application/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1-2']/application/member")
         self.assertTrue(len(x) > 0, output)
         applications = {elem.text for elem in x}
         self.assertEqual({"icmp", "gre"}, applications, output)
@@ -1585,7 +1585,7 @@ term rule-1 {
         output = str(paloalto)
         print(output)
         for srcdst in ["source", "destination"]:
-            x = paloalto.config.findall(PATH_RULES + f"/entry[@name='rule-1']/{srcdst}/member")
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/{srcdst}/member")
             self.assertTrue(len(x) == 1, output)
             values = {elem.text for elem in x}
             self.assertEqual({"any"}, values, output)
@@ -1595,13 +1595,13 @@ term rule-1 {
         output = str(paloalto)
         print(output)
         for srcdst in ["source", "destination"]:
-            x = paloalto.config.findall(PATH_RULES + f"/entry[@name='rule-1']/{srcdst}/member")
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/{srcdst}/member")
             self.assertTrue(len(x) == 1, output)
             values = {elem.text for elem in x}
             self.assertEqual({"any-ipv4"}, values, output)
-            x = paloalto.config.find(PATH_RULES + "/entry[@name='rule-1']/negate-source")
+            x = paloalto.config.find(f"{PATH_RULES}/entry[@name='rule-1']/negate-source")
             self.assertIsNone(x, output)
-            x = paloalto.config.find(PATH_RULES + "/entry[@name='rule-1']/negate-destination")
+            x = paloalto.config.find(f"{PATH_RULES}/entry[@name='rule-1']/negate-destination")
             self.assertIsNone(x, output)
 
         pol = policy.ParsePolicy(POL % "inet6", self.naming)
@@ -1609,13 +1609,13 @@ term rule-1 {
         output = str(paloalto)
         print(output)
         for srcdst in ["source", "destination"]:
-            x = paloalto.config.findall(PATH_RULES + f"/entry[@name='rule-1']/{srcdst}/member")
+            x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/{srcdst}/member")
             self.assertTrue(len(x) == 1, output)
             values = {elem.text for elem in x}
             self.assertEqual({"any-ipv4"}, values, output)
-            x = paloalto.config.find(PATH_RULES + "/entry[@name='rule-1']/negate-source")
+            x = paloalto.config.find(f"{PATH_RULES}/entry[@name='rule-1']/negate-source")
             self.assertIsNotNone(x, output)
-            x = paloalto.config.find(PATH_RULES + "/entry[@name='rule-1']/negate-destination")
+            x = paloalto.config.find(f"{PATH_RULES}/entry[@name='rule-1']/negate-destination")
             self.assertIsNotNone(x, output)
 
     @capture.stdout
@@ -1650,11 +1650,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.1.0.0/24"}, addrs, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.2.0.0/24", "10.3.1.0/24", "10.3.2.0/24"}, addrs, output)
@@ -1667,11 +1667,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"2001:db8:0:aa::/64", "2001:db8:0:bb::/64"}, addrs, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"any"}, addrs, output)
@@ -1684,11 +1684,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"any"}, addrs, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual(
@@ -1704,11 +1704,11 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"4000::/3", "6000::/3"}, addrs, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"8000::/3", "a000::/3", "c000::/3", "e000::/3"}, addrs, output)
@@ -1769,39 +1769,39 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET1"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET1']/static/member")
+        x = paloalto.config.findall(f"{PATH_ADDRESS_GROUP}/entry[@name='NET1']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET1_0"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET1_0']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET1_0']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.1.0.0/24"}, addrs, output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET2", "NET3"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET2']/static/member")
+        x = paloalto.config.findall(f"{PATH_ADDRESS_GROUP}/entry[@name='NET2']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET2_0"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET2_0']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET2_0']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.2.0.0/24"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET3']/static/member")
+        x = paloalto.config.findall(f"{PATH_ADDRESS_GROUP}/entry[@name='NET3']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET3_0", "NET3_1"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET3_0']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET3_0']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.3.1.0/24"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET3_1']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET3_1']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"10.3.2.0/24"}, addrs, output)
@@ -1814,19 +1814,19 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/source/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/source/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET5"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET5']/static/member")
+        x = paloalto.config.findall(f"{PATH_ADDRESS_GROUP}/entry[@name='NET5']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_0']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET5_0']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"4000::/3"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_1']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET5_1']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"6000::/3"}, addrs, output)
@@ -1839,19 +1839,19 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.findall(PATH_RULES + "/entry[@name='rule-1']/destination/member")
+        x = paloalto.config.findall(f"{PATH_RULES}/entry[@name='rule-1']/destination/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET5"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESS_GROUP + "/entry[@name='NET5']/static/member")
+        x = paloalto.config.findall(f"{PATH_ADDRESS_GROUP}/entry[@name='NET5']/static/member")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"NET5_0", "NET5_1"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_0']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET5_0']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"4000::/3"}, addrs, output)
-        x = paloalto.config.findall(PATH_ADDRESSES + "/entry[@name='NET5_1']/ip-netmask")
+        x = paloalto.config.findall(f"{PATH_ADDRESSES}/entry[@name='NET5_1']/ip-netmask")
         self.assertTrue(len(x) > 0, output)
         addrs = {elem.text for elem in x}
         self.assertEqual({"6000::/3"}, addrs, output)

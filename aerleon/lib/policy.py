@@ -2240,7 +2240,7 @@ def p_packet_length_spec(p):
     if len(p) == 5:
         p[0] = VarType(VarType.PACKET_LEN, str(p[4]))
     else:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.PACKET_LEN, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_fragment_offset_spec(p):
@@ -2249,7 +2249,7 @@ def p_fragment_offset_spec(p):
     if len(p) == 5:
         p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]))
     else:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.FRAGMENT_OFFSET, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_hop_limit_spec(p: YaccProduction) -> None:
@@ -2258,7 +2258,7 @@ def p_hop_limit_spec(p: YaccProduction) -> None:
     if len(p) == 5:
         p[0] = VarType(VarType.HOP_LIMIT, str(p[4]))
     else:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.HOP_LIMIT, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_one_or_more_dscps(p):

@@ -481,7 +481,7 @@ class Naming:
           service tokens.
         """
         # turn the given port and protocol into a PortProtocolPair object
-        given_ppp = portlib.PPP(query + '/' + proto)
+        given_ppp = portlib.PPP(f"{query}/{proto}")
         base_parents = []
         matches = set()
         # check each service token to see if it's a PPP or a nested group.
@@ -789,7 +789,7 @@ class Naming:
             if not self.current_symbol:
                 break
             if comment:
-                self.unit.items.append(value_piece + ' # ' + comment)
+                self.unit.items.append(f"{value_piece} # {comment}")
             else:
                 self.unit.items.append(value_piece)
                 # token?

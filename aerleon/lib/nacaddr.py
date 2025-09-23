@@ -125,7 +125,7 @@ class IPv4(ipaddress.IPv4Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 
@@ -247,7 +247,7 @@ class IPv6(ipaddress.IPv6Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 
