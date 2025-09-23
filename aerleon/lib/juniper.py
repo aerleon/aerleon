@@ -571,9 +571,7 @@ class Term(aclgenerator.Term):
             # DSCP Except
             if self.term.dscp_except:
                 if self.term_type == 'inet6':
-                    config.Append(
-                        f"traffic-class-except [ {' '.join(self.term.dscp_except)} ];"
-                    )
+                    config.Append(f"traffic-class-except [ {' '.join(self.term.dscp_except)} ];")
                 else:
                     config.Append(f"dscp-except [ {' '.join(self.term.dscp_except)} ];")
 

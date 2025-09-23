@@ -490,9 +490,7 @@ class ACLGenerator:
                     mod.destination_port = mod.CollapsePortList(mod.destination_port)
                 elif not all_protocols_stateful:
                     errmsg = 'Established option supplied with inappropriate protocol(s)'
-                    raise EstablishedError(
-                        f'{errmsg} {unstateful_protocols} in term {term.name}'
-                    )
+                    raise EstablishedError(f'{errmsg} {unstateful_protocols} in term {term.name}')
                 break
 
         return mod

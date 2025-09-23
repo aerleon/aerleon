@@ -443,9 +443,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                     num_terms = len(app['protocol']) * len(app['icmp-type'])
                     apps_set_list.append(f"application-set {app['name']}-app {{")
                     for i in range(num_terms):
-                        apps_set_list.append(
-                            f"application {app['name']}{'-app%d' % (i + 1)};"
-                        )
+                        apps_set_list.append(f"application {app['name']}{'-app%d' % (i + 1)};")
                     apps_set_list.append('}')  # application-set {...}
 
                     term_counter = 0
@@ -459,9 +457,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                             target.append(f'protocol {proto};')
                             target.append(f'{proto}-type {str(code)};')
                             if app['icmp-code']:
-                                target.append(
-                                    f"{proto}-code {self._Group(app['icmp-code'])};"
-                                )
+                                target.append(f"{proto}-code {self._Group(app['icmp-code'])};")
                             if int(timeout):
                                 target.append(f'inactivity-timeout {int(timeout)};')
                             target.append('}')  # application {...}

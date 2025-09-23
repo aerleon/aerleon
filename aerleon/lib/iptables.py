@@ -293,9 +293,7 @@ class Term(aclgenerator.Term):
                 self.options.append(self._KNOWN_OPTIONS_MATCHERS[next_opt])
         if self.term.packet_length:
             # Policy format is "#-#", but iptables format is "#:#"
-            self.options.append(
-                f"-m length --length {self.term.packet_length.replace('-', ':')}"
-            )
+            self.options.append(f"-m length --length {self.term.packet_length.replace('-', ':')}")
         if self.term.fragment_offset:
             self.options.append(
                 f"-m u32 --u32 4&0x1FFF={self.term.fragment_offset.replace('-', ':')}"
@@ -713,17 +711,13 @@ class Term(aclgenerator.Term):
                 count += 2
             if count >= max_ports:
                 count = 0
-                portstrings.append(
-                    f"-m multiport --{direction}ports {','.join(norm_ports)}"
-                )
+                portstrings.append(f"-m multiport --{direction}ports {','.join(norm_ports)}")
                 norm_ports = []
         if norm_ports:
             if len(norm_ports) == 1:
                 portstrings.append(f'--{direction}port {norm_ports[0]}')
             else:
-                portstrings.append(
-                    f"-m multiport --{direction}ports {','.join(norm_ports)}"
-                )
+                portstrings.append(f"-m multiport --{direction}ports {','.join(norm_ports)}")
         return portstrings
 
     def _SetDefaultAction(self) -> None:

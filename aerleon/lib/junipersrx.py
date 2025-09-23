@@ -853,9 +853,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                                         1, f"application {app['name']}{'-app%d {' % i}"
                                     )
 
-                                    app_list.IndentAppend(
-                                        2, f"{'term t%d' % i}{''.join(chunks)};"
-                                    )
+                                    app_list.IndentAppend(2, f"{'term t%d' % i}{''.join(chunks)};")
                                     app_list.IndentAppend(1, '}')
                                     i += 1
                     apps_set_list.IndentAppend(1, '}')

@@ -1312,9 +1312,7 @@ class Term:
                 or self.protocol
                 or self.option
             ):
-                raise ParseError(
-                    f'term "{self.name}" has both verbatim and non-verbatim tokens.'
-                )
+                raise ParseError(f'term "{self.name}" has both verbatim and non-verbatim tokens.')
         else:
             if (
                 not self.action

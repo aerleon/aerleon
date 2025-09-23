@@ -778,9 +778,7 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                         term.name = f"{af_map_txt[ft]}-default-all"
 
                     if term.name in term_names:
-                        raise aclgenerator.DuplicateTermError(
-                            f"multiple terms named: {term.name}"
-                        )
+                        raise aclgenerator.DuplicateTermError(f"multiple terms named: {term.name}")
                     term_names.add(term.name)
 
                     term = self.FixHighPorts(term, af=ft)

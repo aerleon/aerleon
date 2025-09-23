@@ -751,9 +751,7 @@ class Naming:
             if definition_type == DEF_TYPE_SERVICES:
                 for port in line_parts[1].strip().split():
                     if not self.port_re.match(port):
-                        raise NamingSyntaxError(
-                            f'The following line has a syntax error: {line}'
-                        )
+                        raise NamingSyntaxError(f'The following line has a syntax error: {line}')
                 if self.current_symbol in self.services:
                     raise NamespaceCollisionError(
                         '%s %s'
