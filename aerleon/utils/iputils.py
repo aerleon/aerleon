@@ -39,9 +39,7 @@ def exclude_address(
     if not isinstance(exclude_net, ipaddress._BaseNetwork):  # pylint disable=protected-access
         raise TypeError(f'{exclude_net} is not a network object')
 
-    if (
-        not base_net._version == exclude_net._version
-    ):  # pylint disable=protected-access # pytype: disable=attribute-error
+    if base_net.version != exclude_net.version:
         raise TypeError(f'{base_net} and {exclude_net} are not of the same version')
 
     if not exclude_net.subnet_of(base_net):  # pytype: disable=attribute-error
