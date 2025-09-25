@@ -124,8 +124,8 @@ def files(filenames):
 
             failed_assertion = None
             for filename in filenames:
-                file_base = ".".join([func.__qualname__, filename])
-                file_ref = ".".join([file_base, "ref"])
+                file_base = f"{func.__qualname__}.{filename}"
+                file_ref = f"{file_base}.ref"
                 try:
                     with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                         self.assertEqual(
@@ -135,7 +135,7 @@ def files(filenames):
                 except OSError:
                     try:
                         with open(
-                            os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                            os.path.join(_testdir(func), f"{file_base}.actual"),
                             "w",
                         ) as actual:
                             actual.write(_collapse_mock_writes(inner_mocks, filename))
@@ -152,7 +152,7 @@ def files(filenames):
                 except AssertionError as e:
                     try:
                         with open(
-                            os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                            os.path.join(_testdir(func), f"{file_base}.actual"),
                             "w",
                         ) as actual:
                             actual.write(_collapse_mock_writes(inner_mocks, filename))
@@ -177,15 +177,15 @@ def stdout(func):
         with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             retval = func(self, *args, **kwargs)
             base_name = ".".join(func.__qualname__.split(".")[0:-1] + [self._testMethodName])
-            file_base = ".".join([base_name, "stdout"])
-            file_ref = ".".join([file_base, "ref"])
+            file_base = f"{base_name}.stdout"
+            file_ref = f"{file_base}.ref"
             try:
                 with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                     self.assertEqual(ref_file.read(), mock_stdout.getvalue())
             except OSError:
                 try:
                     with open(
-                        os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                        os.path.join(_testdir(func), f"{file_base}.actual"),
                         "w",
                     ) as actual:
                         actual.write(mock_stdout.getvalue())
@@ -202,7 +202,7 @@ def stdout(func):
             except AssertionError as e:
                 try:
                     with open(
-                        os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                        os.path.join(_testdir(func), f"{file_base}.actual"),
                         "w",
                     ) as actual:
                         actual.write(mock_stdout.getvalue())
@@ -222,15 +222,15 @@ def stderr(func):
     def inner(self, *args, **kwargs):
         with mock.patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             retval = func(self, *args, **kwargs)
-            file_base = ".".join([func.__qualname__, "stderr"])
-            file_ref = ".".join([file_base, "ref"])
+            file_base = f"{func.__qualname__}.stderr"
+            file_ref = f"{file_base}.ref"
             try:
                 with open(os.path.join(_testdir(func), file_ref)) as ref_file:
                     self.assertEqual(ref_file.read(), mock_stderr.getvalue())
             except OSError:
                 try:
                     with open(
-                        os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                        os.path.join(_testdir(func), f"{file_base}.actual"),
                         "w",
                     ) as actual:
                         actual.write(mock_stderr.getvalue())
@@ -247,7 +247,7 @@ def stderr(func):
             except AssertionError as e:
                 try:
                     with open(
-                        os.path.join(_testdir(func), ".".join([file_base, "actual"])),
+                        os.path.join(_testdir(func), f"{file_base}.actual"),
                         "w",
                     ) as actual:
                         actual.write(mock_stderr.getvalue())

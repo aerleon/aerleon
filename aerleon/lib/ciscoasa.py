@@ -72,13 +72,13 @@ class Term(cisco.ExtendedTerm):
         if (self.af == 6 and 'icmp' in self.term.protocol) or (
             self.af == 4 and 'icmpv6' in self.term.protocol
         ):
-            ret_str.append('remark Term %s' % self.term.name)
+            ret_str.append(f'remark Term {self.term.name}')
             ret_str.append('remark not rendered due to protocol/AF mismatch.')
             return '\n'.join(ret_str)
 
         ret_str.append(f'access-list {self.filter_name} remark {self.term.name}')
         if self.term.owner:
-            self.term.comment.append('Owner: %s' % self.term.owner)
+            self.term.comment.append(f'Owner: {self.term.owner}')
         for comment in self.term.comment:
             for line in comment.split('\n'):
                 ret_str.append(f'access-list {self.filter_name} remark {str(line)[:100]}')
@@ -230,13 +230,13 @@ class Term(cisco.ExtendedTerm):
             if saddr.num_addresses > 1:
                 saddr = f'{saddr.network_address} {saddr.netmask}'
             else:
-                saddr = 'host %s' % (saddr.network_address)
+                saddr = f'host {saddr.network_address}'
         if isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
             daddr = cast(self.IPV4_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = f'{daddr.network_address} {daddr.netmask}'
             else:
-                daddr = 'host %s' % (daddr.network_address)
+                daddr = f'host {daddr.network_address}'
         if isinstance(saddr, summarizer.DSMNet):
             saddr = '%s %s' % summarizer.ToDottedQuad(saddr, negate=False)
 
@@ -248,13 +248,13 @@ class Term(cisco.ExtendedTerm):
             if saddr.num_addresses > 1:
                 saddr = f'{saddr.network_address}/{saddr.prefixlen}'
             else:
-                saddr = 'host %s' % (saddr.network_address)
+                saddr = f'host {saddr.network_address}'
         if isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
             daddr = cast(self.IPV6_ADDRESS, daddr)
             if daddr.num_addresses > 1:
                 daddr = f'{daddr.network_address}/{daddr.prefixlen}'
             else:
-                daddr = 'host %s' % (daddr.network_address)
+                daddr = f'host {daddr.network_address}'
 
         # fix ports
         if not sport:
@@ -265,7 +265,7 @@ class Term(cisco.ExtendedTerm):
                 cisco.PortMap.GetProtocol(sport[1], proto),
             )
         else:
-            sport = ' eq %s' % (cisco.PortMap.GetProtocol(sport[0], proto))
+            sport = f' eq {cisco.PortMap.GetProtocol(sport[0], proto)}'
 
         if not dport:
             dport = ''
@@ -275,7 +275,7 @@ class Term(cisco.ExtendedTerm):
                 cisco.PortMap.GetProtocol(dport[1], proto),
             )
         else:
-            dport = ' eq %s' % (cisco.PortMap.GetProtocol(dport[0], proto))
+            dport = f' eq {cisco.PortMap.GetProtocol(dport[0], proto)}'
 
         if not option:
             option = ['']
@@ -355,10 +355,10 @@ class CiscoASA(aclgenerator.ACLGenerator):
         target = []
 
         for header, filter_name, terms in self.ciscoasa_policies:
-            target.append('clear configure access-list %s' % filter_name)
+            target.append(f'clear configure access-list {filter_name}')
 
             # add the p4 tags
-            target.extend(aclgenerator.AddRepositoryTags('access-list %s remark ' % filter_name))
+            target.extend(aclgenerator.AddRepositoryTags(f'access-list {filter_name} remark '))
 
             # add a header comment if one exists
             for comment in header.comment:

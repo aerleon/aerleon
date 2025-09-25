@@ -225,13 +225,13 @@ class Policy:
                 term.port = TranslatePorts(term.port, term.protocol, term.name)
                 if not term.port:
                     raise TermPortProtocolError(
-                        'no ports of the correct protocol for term %s' % (term.name)
+                        f'no ports of the correct protocol for term {term.name}'
                     )
             if term.source_port:
                 term.source_port = TranslatePorts(term.source_port, term.protocol, term.name)
                 if not term.source_port:
                     raise TermPortProtocolError(
-                        'no source ports of the correct protocol for term %s' % (term.name)
+                        f'no source ports of the correct protocol for term {term.name}'
                     )
             if term.destination_port:
                 term.destination_port = TranslatePorts(
@@ -239,7 +239,7 @@ class Policy:
                 )
                 if not term.destination_port:
                     raise TermPortProtocolError(
-                        'no destination ports of the correct protocol for term %s' % (term.name)
+                        f'no destination ports of the correct protocol for term {term.name}'
                     )
 
             # If argument is true, we optimize, otherwise just sort addresses
@@ -706,13 +706,13 @@ class Term:
 
     def __str__(self) -> str:
         ret_str = []
-        ret_str.append(' name: %s' % self.name)
+        ret_str.append(f' name: {self.name}')
         if self.address:
-            ret_str.append('  address: %s' % sorted(self.address))
+            ret_str.append(f'  address: {sorted(self.address)}')
         if self.address_exclude:
-            ret_str.append('  address_exclude: %s' % sorted(self.address_exclude))
+            ret_str.append(f'  address_exclude: {sorted(self.address_exclude)}')
         if self.source_address:
-            ret_str.append('  source_address: %s' % self._SortAddressesByFamily('source_address'))
+            ret_str.append(f"  source_address: {self._SortAddressesByFamily('source_address')}")
         if self.source_address_exclude:
             ret_str.append(
                 '  source_address_exclude: %s'
@@ -721,10 +721,10 @@ class Term:
         if self.source_fqdn:
             ret_str.append(f'  source_fqdn: {self.source_fqdn}')
         if self.source_tag:
-            ret_str.append('  source_tag: %s' % self.source_tag)
+            ret_str.append(f'  source_tag: {self.source_tag}')
         if self.destination_address:
             ret_str.append(
-                '  destination_address: %s' % self._SortAddressesByFamily('destination_address')
+                f"  destination_address: {self._SortAddressesByFamily('destination_address')}"
             )
         if self.destination_address_exclude:
             ret_str.append(
@@ -734,93 +734,93 @@ class Term:
         if self.destination_fqdn:
             ret_str.append(f'  destination_fqdn: {self.destination_fqdn}')
         if self.destination_tag:
-            ret_str.append('  destination_tag: %s' % self.destination_tag)
+            ret_str.append(f'  destination_tag: {self.destination_tag}')
         if self.target_resources:
-            ret_str.append('  target_resources: %s' % self.target_resources)
+            ret_str.append(f'  target_resources: {self.target_resources}')
         if self.target_service_accounts:
-            ret_str.append('  target_service_accounts: %s' % self.target_service_accounts)
+            ret_str.append(f'  target_service_accounts: {self.target_service_accounts}')
         if self.source_prefix:
-            ret_str.append('  source_prefix: %s' % self.source_prefix)
+            ret_str.append(f'  source_prefix: {self.source_prefix}')
         if self.source_prefix_except:
-            ret_str.append('  source_prefix_except: %s' % self.source_prefix_except)
+            ret_str.append(f'  source_prefix_except: {self.source_prefix_except}')
         if self.destination_prefix:
-            ret_str.append('  destination_prefix: %s' % self.destination_prefix)
+            ret_str.append(f'  destination_prefix: {self.destination_prefix}')
         if self.destination_prefix_except:
-            ret_str.append('  destination_prefix_except: %s' % self.destination_prefix_except)
+            ret_str.append(f'  destination_prefix_except: {self.destination_prefix_except}')
         if self.filter_term:
-            ret_str.append('  filter_term: %s' % self.filter_term)
+            ret_str.append(f'  filter_term: {self.filter_term}')
         if self.forwarding_class:
-            ret_str.append('  forwarding_class: %s' % self.forwarding_class)
+            ret_str.append(f'  forwarding_class: {self.forwarding_class}')
         if self.forwarding_class_except:
-            ret_str.append('  forwarding_class_except: %s' % self.forwarding_class_except)
+            ret_str.append(f'  forwarding_class_except: {self.forwarding_class_except}')
         if self.icmp_type:
-            ret_str.append('  icmp_type: %s' % sorted(self.icmp_type))
+            ret_str.append(f'  icmp_type: {sorted(self.icmp_type)}')
         if self.icmp_code:
-            ret_str.append('  icmp_code: %s' % sorted(self.icmp_code))
+            ret_str.append(f'  icmp_code: {sorted(self.icmp_code)}')
         if self.next_ip:
-            ret_str.append('  next_ip: %s' % self.next_ip)
+            ret_str.append(f'  next_ip: {self.next_ip}')
         if self.encapsulate:
-            ret_str.append('  encapsulate: %s' % self.encapsulate)
+            ret_str.append(f'  encapsulate: {self.encapsulate}')
         if self.protocol:
-            ret_str.append('  protocol: %s' % sorted(self.protocol))
+            ret_str.append(f'  protocol: {sorted(self.protocol)}')
         if self.protocol_except:
-            ret_str.append('  protocol-except: %s' % self.protocol_except)
+            ret_str.append(f'  protocol-except: {self.protocol_except}')
         if self.owner:
-            ret_str.append('  owner: %s' % self.owner)
+            ret_str.append(f'  owner: {self.owner}')
         if self.port:
-            ret_str.append('  port: %s' % sorted(self.port))
+            ret_str.append(f'  port: {sorted(self.port)}')
         if self.port_mirror:
-            ret_str.append('  port_mirror: %s' % self.port_mirror)
+            ret_str.append(f'  port_mirror: {self.port_mirror}')
         if self.source_port:
-            ret_str.append('  source_port: %s' % sorted(self.source_port))
+            ret_str.append(f'  source_port: {sorted(self.source_port)}')
         if self.destination_port:
-            ret_str.append('  destination_port: %s' % sorted(self.destination_port))
+            ret_str.append(f'  destination_port: {sorted(self.destination_port)}')
         if self.action:
-            ret_str.append('  action: %s' % self.action)
+            ret_str.append(f'  action: {self.action}')
         if self.option:
-            ret_str.append('  option: %s' % self.option)
+            ret_str.append(f'  option: {self.option}')
         if self.flexible_match_range:
-            ret_str.append('  flexible_match_range: %s' % self.flexible_match_range)
+            ret_str.append(f'  flexible_match_range: {self.flexible_match_range}')
         if self.qos:
-            ret_str.append('  qos: %s' % self.qos)
+            ret_str.append(f'  qos: {self.qos}')
         if self.pan_application:
-            ret_str.append('  pan_application: %s' % self.pan_application)
+            ret_str.append(f'  pan_application: {self.pan_application}')
         if self.logging:
-            ret_str.append('  logging: %s' % self.logging)
+            ret_str.append(f'  logging: {self.logging}')
         if self.log_limit:
             ret_str.append(f'  log_limit: {self.log_limit[0]}/{self.log_limit[1]}')
         if self.log_name:
-            ret_str.append('  log_name: %s' % self.log_name)
+            ret_str.append(f'  log_name: {self.log_name}')
         if self.priority:
-            ret_str.append('  priority: %s' % self.priority)
+            ret_str.append(f'  priority: {self.priority}')
         if self.counter:
-            ret_str.append('  counter: %s' % self.counter)
+            ret_str.append(f'  counter: {self.counter}')
         if self.traffic_class_count:
-            ret_str.append('  traffic_class_count: %s' % self.traffic_class_count)
+            ret_str.append(f'  traffic_class_count: {self.traffic_class_count}')
         if self.source_interface:
-            ret_str.append('  source_interface: %s' % self.source_interface)
+            ret_str.append(f'  source_interface: {self.source_interface}')
         if self.destination_interface:
-            ret_str.append('  destination_interface: %s' % self.destination_interface)
+            ret_str.append(f'  destination_interface: {self.destination_interface}')
         if self.expiration:
-            ret_str.append('  expiration: %s' % self.expiration)
+            ret_str.append(f'  expiration: {self.expiration}')
         if self.platform:
-            ret_str.append('  platform: %s' % self.platform)
+            ret_str.append(f'  platform: {self.platform}')
         if self.platform_exclude:
-            ret_str.append('  platform_exclude: %s' % self.platform_exclude)
+            ret_str.append(f'  platform_exclude: {self.platform_exclude}')
         if self.ttl:
-            ret_str.append('  ttl: %s' % self.ttl)
+            ret_str.append(f'  ttl: {self.ttl}')
         if self.timeout:
-            ret_str.append('  timeout: %s' % self.timeout)
+            ret_str.append(f'  timeout: {self.timeout}')
         if self.vpn:
             vpn_name, pair_policy = self.vpn
             if pair_policy:
                 ret_str.append(f'  vpn: name = {vpn_name}, pair_policy = {pair_policy}')
             else:
-                ret_str.append('  vpn: name = %s' % vpn_name)
+                ret_str.append(f'  vpn: name = {vpn_name}')
         if self.source_zone:
-            ret_str.append('  source_zone: %s' % sorted(self.source_zone))
+            ret_str.append(f'  source_zone: {sorted(self.source_zone)}')
         if self.destination_zone:
-            ret_str.append('  destination_zone: %s' % sorted(self.destination_zone))
+            ret_str.append(f'  destination_zone: {sorted(self.destination_zone)}')
 
         return '\n'.join(ret_str)
 
@@ -1223,7 +1223,7 @@ class Term:
                 self.verbatim.append(obj.value)
             elif obj.var_type is VarType.ACTION:
                 if str(obj) not in ACTIONS:
-                    raise InvalidTermActionError('%s is not a valid action' % obj)
+                    raise InvalidTermActionError(f'{obj} is not a valid action')
                 self.action.append(obj.value)
             elif obj.var_type is VarType.COUNTER:
                 self.counter = obj
@@ -1239,7 +1239,7 @@ class Term:
                 self.icmp_code.extend(obj.value)
             elif obj.var_type is VarType.LOGGING:
                 if str(obj) not in _LOGGING:
-                    raise InvalidTermLoggingError('%s is not a valid logging option' % obj)
+                    raise InvalidTermLoggingError(f'{obj} is not a valid logging option')
                 self.logging.append(obj)
             elif obj.var_type is VarType.LOG_LIMIT:
                 self.log_limit = obj.value
@@ -1278,7 +1278,7 @@ class Term:
             elif obj.var_type is VarType.FILTER_TERM:
                 self.filter_term = obj.value
             else:
-                raise TermObjectTypeError('%s isn\'t a type I know how to deal with' % (type(obj)))
+                raise TermObjectTypeError(f'{type(obj)} isn\'t a type I know how to deal with')
 
     def SanityCheck(self) -> None:
         """Sanity check the definition of the term.
@@ -1312,9 +1312,7 @@ class Term:
                 or self.protocol
                 or self.option
             ):
-                raise ParseError(
-                    'term "%s" has both verbatim and non-verbatim tokens.' % self.name
-                )
+                raise ParseError(f'term "{self.name}" has both verbatim and non-verbatim tokens.')
         else:
             if (
                 not self.action
@@ -1324,10 +1322,10 @@ class Term:
                 and not self.filter_term
                 and not self.port_mirror
             ):
-                raise TermNoActionError('no action specified for term %s' % self.name)
+                raise TermNoActionError(f'no action specified for term {self.name}')
             if self.filter_term and self.action:
                 raise InvalidTermActionError(
-                    'term "%s" has both filter and action tokens.' % self.name
+                    f'term "{self.name}" has both filter and action tokens.'
                 )
             # have we specified a port with a protocol that doesn't support ports?
             protos_no_ports = {p for p in self.protocol if p not in PROTOS_WITH_PORTS}
@@ -1389,7 +1387,7 @@ class Term:
             for icmptype in self.icmp_type:
                 if icmptype not in self.ICMP_TYPE[4] and icmptype not in self.ICMP_TYPE[6]:
                     raise TermInvalidIcmpType(
-                        'Term %s contains an invalid icmp-type:' '%s' % (self.name, icmptype)
+                        f'Term {self.name} contains an invalid icmp-type:{icmptype}'
                     )
 
         if self.ttl:
@@ -2167,22 +2165,22 @@ def p_flex_match_key_values(p):
         return
 
     if p[1] not in FLEXIBLE_MATCH_RANGE_ATTRIBUTES:
-        raise FlexibleMatchError('%s is not a valid attribute' % p[1])
+        raise FlexibleMatchError(f'{p[1]} is not a valid attribute')
     if p[1] == 'match-start':
         if p[2] not in FLEXIBLE_MATCH_START_OPTIONS:
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+            raise FlexibleMatchError(f'{p[1]} value is not valid')
     # per Juniper, max bit length is 32
     elif p[1] == 'bit-length':
         if int(p[2]) not in list(range(33)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+            raise FlexibleMatchError(f'{p[1]} value is not valid')
     # per Juniper, max bit offset is 7
     elif p[1] == 'bit-offset':
         if int(p[2]) not in list(range(8)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+            raise FlexibleMatchError(f'{p[1]} value is not valid')
     # per Juniper, offset can be up to 256 bytes
     elif p[1] == 'byte-offset':
         if int(p[2]) not in list(range(256)):
-            raise FlexibleMatchError('%s value is not valid' % p[1])
+            raise FlexibleMatchError(f'{p[1]} value is not valid')
 
     if type(p[0]) == type([]):
         p[0].append([p.slice[1:]])
@@ -2240,7 +2238,7 @@ def p_packet_length_spec(p):
     if len(p) == 5:
         p[0] = VarType(VarType.PACKET_LEN, str(p[4]))
     else:
-        p[0] = VarType(VarType.PACKET_LEN, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.PACKET_LEN, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_fragment_offset_spec(p):
@@ -2249,7 +2247,7 @@ def p_fragment_offset_spec(p):
     if len(p) == 5:
         p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]))
     else:
-        p[0] = VarType(VarType.FRAGMENT_OFFSET, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.FRAGMENT_OFFSET, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_hop_limit_spec(p: YaccProduction) -> None:
@@ -2258,7 +2256,7 @@ def p_hop_limit_spec(p: YaccProduction) -> None:
     if len(p) == 5:
         p[0] = VarType(VarType.HOP_LIMIT, str(p[4]))
     else:
-        p[0] = VarType(VarType.HOP_LIMIT, str(p[4]) + '-' + str(p[6]))
+        p[0] = VarType(VarType.HOP_LIMIT, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_one_or_more_dscps(p):
@@ -2659,9 +2657,9 @@ def _ReadFile(filename):
                 data = f.read()
             return data
         except OSError:
-            raise FileReadError('Unable to open or read file %s' % filename)
+            raise FileReadError(f'Unable to open or read file {filename}')
     else:
-        raise FileNotFoundError('Unable to open policy file %s' % filename)
+        raise FileNotFoundError(f'Unable to open policy file {filename}')
 
 
 def _Preprocess(data: str, max_depth: int = 5, base_dir: str = '') -> list[str]:
@@ -2801,7 +2799,7 @@ if __name__ == '__main__':
         try:
             ret = ParsePolicy(open(sys.argv[1]).read(), filename=sys.argv[1])
         except OSError:
-            print('ERROR: \'%s\' either does not exist or is not readable' % (sys.argv[1]))
+            print(f'ERROR: \'{sys.argv[1]}\' either does not exist or is not readable')
             ret = 1
     else:
         # default to reading stdin

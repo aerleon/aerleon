@@ -46,15 +46,15 @@ class Term(aclgenerator.Term):
         ret_str = []
 
         # NAME
-        ret_str.append(' ' * 4 + 'Term: ' + self.term.name + '{')
+        ret_str.append(f"{' ' * 4}Term: {self.term.name}{{")
 
         # COMMENTS
         if self.term.comment:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + '#COMMENTS')
+            ret_str.append(f"{' ' * 8}#COMMENTS")
             for comment in self.term.comment:
                 for line in comment.split('\n'):
-                    ret_str.append(' ' * 8 + '#' + line)
+                    ret_str.append(f"{' ' * 8}#{line}")
 
         # SOURCE ADDRESS
         source_address = self.term.GetAddressOfVersion(
@@ -65,21 +65,21 @@ class Term(aclgenerator.Term):
         )
         if source_address:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Source IP\'s')
+            ret_str.append(f"{' ' * 8}Source IP's")
             for saddr in source_address:
                 ret_str.append(' ' * 8 + str(saddr))
 
         # SOURCE ADDRESS EXCLUDE
         if source_address_exclude:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Excluded Source IP\'s')
+            ret_str.append(f"{' ' * 8}Excluded Source IP's")
             for ex in source_address:
                 ret_str.append(' ' * 8 + str(ex))
 
         # SOURCE PORT
         if self.term.source_port:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Source ports')
+            ret_str.append(f"{' ' * 8}Source ports")
             ret_str.append(' ' * 8 + self._Group(self.term.source_port))
 
         # DESTINATION
@@ -91,40 +91,40 @@ class Term(aclgenerator.Term):
         )
         if destination_address:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Destination IP\'s')
+            ret_str.append(f"{' ' * 8}Destination IP's")
             for daddr in destination_address:
                 ret_str.append(' ' * 8 + str(daddr))
 
         # DESINATION ADDRESS EXCLUDE
         if destination_address_exclude:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Excluded Destination IP\'s')
+            ret_str.append(f"{' ' * 8}Excluded Destination IP's")
             for ex in destination_address_exclude:
                 ret_str.append(' ' * 8 + str(ex))
 
         # DESTINATION PORT
         if self.term.destination_port:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Destination Ports')
+            ret_str.append(f"{' ' * 8}Destination Ports")
             ret_str.append(' ' * 8 + self._Group(self.term.destination_port))
 
         # PROTOCOL
         if self.term.protocol:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Protocol')
+            ret_str.append(f"{' ' * 8}Protocol")
             ret_str.append(' ' * 8 + self._Group(self.term.protocol))
 
         # OPTION
         if self.term.option:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Options')
+            ret_str.append(f"{' ' * 8}Options")
             for option in self.term.option:
                 ret_str.append(' ' * 8 + option)
 
         # ACTION
         for action in self.term.action:
             ret_str.append(' ')
-            ret_str.append(' ' * 8 + 'Action: ' + self._ACTIONS.get(str(action)) + ' all traffic')
+            ret_str.append(f"{' ' * 8}Action: {self._ACTIONS.get(str(action))} all traffic")
         return '\n '.join(ret_str)
 
     def _Group(self, group):
@@ -141,7 +141,7 @@ class Term(aclgenerator.Term):
         if len(group) > 1:
             rval = ''
             for item in group:
-                rval = rval + str(item[0]) + ' '
+                rval = f"{rval}{item[0]!s} "
         else:
             rval = _FormattedGroup(group[0])
         return rval
@@ -205,15 +205,15 @@ class Demo(aclgenerator.ACLGenerator):
         for header, filter_name, filter_type, interface_specific, terms in self.demo_policies:
             target.append('Header {')
             target.append(' ' * 4 + 'Name: %s {' % filter_name)
-            target.append(' ' * 8 + 'Type: %s ' % filter_type)
+            target.append(f"{' ' * 8}Type: {filter_type} ")
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    target.append(' ' * 8 + 'Comment: %s' % line)
-            target.append(' ' * 8 + 'Family type: %s' % interface_specific)
-            target.append(' ' * 4 + '}')
+                    target.append(f"{' ' * 8}Comment: {line}")
+            target.append(f"{' ' * 8}Family type: {interface_specific}")
+            target.append(f"{' ' * 4}}}")
             for term in terms:
                 target.append(str(term))
-                target.append(' ' * 4 + '}')
+                target.append(f"{' ' * 4}}}")
                 target.append(' ')
             target.append('}')
         return '\n'.join(target)

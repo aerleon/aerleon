@@ -263,11 +263,11 @@ class Term(aclgenerator.Term):
         self._TranslateAddresses(term.destination_address_exclude)
         if term.source_address_exclude:
             self._TranslateExcludes(
-                self.term.name + '-source', term.source_address, term.source_address_exclude
+                f"{self.term.name}-source", term.source_address, term.source_address_exclude
             )
         if term.destination_address_exclude:
             self._TranslateExcludes(
-                self.term.name + '-destination',
+                f"{self.term.name}-destination",
                 term.destination_address,
                 term.destination_address_exclude,
             )

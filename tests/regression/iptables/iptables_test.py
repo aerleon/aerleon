@@ -167,12 +167,12 @@ term good-term-5 {
 }
 """
 
-GOOD_TERM_6 = """
+GOOD_TERM_6 = f"""
 term good-term-6 {{
   comment:: "Some text describing what this block does,
              possibly including newines, blank lines,
              and extra-long comments (over 255 characters)
-             {long_line}
+             {'-' * 260}
 
              All these cause problems if passed verbatim to iptables.
              "
@@ -181,9 +181,7 @@ term good-term-6 {{
   action:: accept
 
 }}
-""".format(
-    long_line='-' * 260
-)
+"""
 
 
 GOOD_TERM_7 = """
@@ -748,16 +746,16 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-s 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-s 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-s 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -d 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
         print(result)
 
@@ -795,16 +793,16 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-d 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-d 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-d 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -s 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
         print(result)
 
@@ -1044,9 +1042,9 @@ class AclCheckTest(absltest.TestCase):
         acl = iptables.Iptables(pol, EXP_INFO)
         result = str(acl)
         self.assertIn(
-            '{} {}'.format('--tcp-flags ACK,FIN,RST,SYN RST', '--dport 1024:65535 -j ACCEPT'),
+            '--tcp-flags ACK,FIN,RST,SYN RST --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching packets with RST bit only.\n' + result,
+            f"No rule matching packets with RST bit only.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'
@@ -1061,7 +1059,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn(
             '-p udp --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching TCP packets with ACK bit.\n' + result,
+            f"No rule matching TCP packets with ACK bit.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'
@@ -1103,7 +1101,7 @@ class AclCheckTest(absltest.TestCase):
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_MULTIPORT, self.naming), EXP_INFO
         )
         self.assertIn(
-            '-m multiport --sports %s' % ','.join(ports),
+            f"-m multiport --sports {','.join(ports)}",
             str(acl),
             'multiport module not used as expected.',
         )
@@ -1124,7 +1122,7 @@ class AclCheckTest(absltest.TestCase):
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_MULTIPORT_RANGE, self.naming), EXP_INFO
         )
-        expected = '-m multiport --dports %s' % ','.join(ports).replace('-', ':')
+        expected = f"-m multiport --dports {','.join(ports).replace('-', ':')}"
         self.assertIn(expected, str(acl), 'multiport module not used as expected.')
 
         print(acl)
@@ -1593,22 +1591,20 @@ YAML_GOOD_TERM_5 = """
       juniper: mary had third lamb
 """
 
-YAML_GOOD_TERM_6 = """
+YAML_GOOD_TERM_6 = f"""
   - name: good-term-6
     comment: |
         Some text describing what this block does,
         possibly including newines, blank lines,
         and extra-long comments (over 255 characters)
-        {long_line}
+        {'-' * 260}
 
         All these cause problems if passed verbatim to iptables.
                
     protocol: tcp
     action: accept
 
-""".format(
-    long_line='-' * 260
-)
+"""
 
 
 YAML_GOOD_TERM_7 = """

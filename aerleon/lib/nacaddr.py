@@ -54,7 +54,7 @@ def IP(
         return IPv4(ip, comment, token, strict=strict)
     elif imprecise_ip.version == 6:
         return IPv6(ip, comment, token, strict=strict)
-    raise ValueError('Provided IP string "%s" is not a valid v4 or v6 address' % ip)
+    raise ValueError(f'Provided IP string "{ip}" is not a valid v4 or v6 address')
 
 
 # TODO(robankeny) remove once at 3.7
@@ -125,7 +125,7 @@ class IPv4(ipaddress.IPv4Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 
@@ -247,7 +247,7 @@ class IPv6(ipaddress.IPv6Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 

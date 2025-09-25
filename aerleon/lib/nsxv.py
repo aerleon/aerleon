@@ -181,7 +181,7 @@ class Term(aclgenerator.Term):
         if self.term.comment:
             for comment in self.term.comment:
                 notes = f'{notes}{comment}'
-            notes = '{}{}{}'.format(_XML_TABLE.get('noteStart'), notes, _XML_TABLE.get('noteEnd'))
+            notes = f"{_XML_TABLE.get('noteStart')}{notes}{_XML_TABLE.get('noteEnd')}"
 
         # protocol
         protocol = None
@@ -316,7 +316,7 @@ class Term(aclgenerator.Term):
                             _XML_TABLE.get('srcIpv6End'),
                         )
                     sources = f'{sources}{saddr}'
-            sources = '{}{}'.format(sources, '</sources>')
+            sources = f'{sources}</sources>'
 
         destinations = ''
         if destination_addr:
@@ -352,7 +352,7 @@ class Term(aclgenerator.Term):
                             _XML_TABLE.get('destIpv6End'),
                         )
                     destinations = f'{destinations}{daddr}'
-            destinations = '{}{}'.format(destinations, '</destinations>')
+            destinations = f'{destinations}</destinations>'
 
         services = []
         if protocol:
@@ -378,7 +378,7 @@ class Term(aclgenerator.Term):
                 _XML_TABLE.get('appliedToEnd'),
             )
             applied_to_list = f'{applied_to_list}{applied_to_element}'
-            applied_to_list = '{}{}'.format(applied_to_list, '</appliedToList>')
+            applied_to_list = f'{applied_to_list}</appliedToList>'
 
         # action
         action = '{}{}{}'.format(
@@ -432,7 +432,7 @@ class Term(aclgenerator.Term):
                         _XML_TABLE.get('icmpTypeEnd'),
                     )
                     icmp_service = f'{icmp_service}{icmp_type}'
-                icmp_service = '{}{}'.format(icmp_service, _XML_TABLE.get('serviceEnd'))
+                icmp_service = f"{icmp_service}{_XML_TABLE.get('serviceEnd')}"
                 service = f'{service}{icmp_service}'
         else:
             # handle other protocols
@@ -450,7 +450,7 @@ class Term(aclgenerator.Term):
                     if sport[0] != sport[1]:
                         str_sport.append(f'{sport[0]}-{sport[1]}')
                     else:
-                        str_sport.append('%s' % (sport[0]))
+                        str_sport.append(f'{sport[0]}')
                 service = '{}{}{}{}'.format(
                     service,
                     _XML_TABLE.get('srcPortStart'),
@@ -465,14 +465,14 @@ class Term(aclgenerator.Term):
                     if dport[0] != dport[1]:
                         str_dport.append(f'{dport[0]}-{dport[1]}')
                     else:
-                        str_dport.append('%s' % (dport[0]))
+                        str_dport.append(f'{dport[0]}')
                 service = '{}{}{}{}'.format(
                     service,
                     _XML_TABLE.get('destPortStart'),
                     ', '.join(str_dport),
                     _XML_TABLE.get('destPortEnd'),
                 )
-            service = '{}{}'.format(service, _XML_TABLE.get('serviceEnd'))
+            service = f"{service}{_XML_TABLE.get('serviceEnd')}"
 
         return service
 
@@ -535,7 +535,7 @@ class Nsxv(aclgenerator.ACLGenerator):
             for term in terms:
                 # Check for duplicate terms
                 if term.name in term_names:
-                    raise NsxvDuplicateTermError('There are multiple terms named: %s' % term.name)
+                    raise NsxvDuplicateTermError(f'There are multiple terms named: {term.name}')
                 term_names.add(term.name)
 
                 # Get the mapped action value
@@ -630,7 +630,7 @@ class Nsxv(aclgenerator.ACLGenerator):
                         break
                     else:
                         raise UnsupportedNsxvAccessListError(
-                            'Security Group Id is not provided for %s' % (self._PLATFORM)
+                            f'Security Group Id is not provided for {self._PLATFORM}'
                         )
 
         self._FILTER_OPTIONS_DICT['section_name'] = section_name
@@ -676,7 +676,7 @@ class Nsxv(aclgenerator.ACLGenerator):
 
             # ensure that the header is always first
             target = target_header + target
-            target.append('%s' % (_XML_TABLE.get('sectionEnd')))
+            target.append(f"{_XML_TABLE.get('sectionEnd')}")
             target.append('\n')
 
             target_as_xml = xml.dom.minidom.parseString(''.join(target))

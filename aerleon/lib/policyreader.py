@@ -49,8 +49,8 @@ class Filter:
 
     def __str__(self):
         rval = []
-        title = 'Filter: %s' % str(self.name)
-        rval.append('\n%s' % title)
+        title = f'Filter: {self.name!s}'
+        rval.append(f'\n{title}')
         rval.append('-' * len(title))
         for term in self.term:
             rval.append(str(term))
@@ -72,14 +72,14 @@ class Term:
 
     def __str__(self):
         rval = []
-        rval.append('  Term: %s' % self.name)
-        rval.append('  Source-address:: %s' % ' '.join(self.source))
-        rval.append('  Destination-address:: %s' % ' '.join(self.destination))
-        rval.append('  Source-port:: %s' % ' '.join(self.sport))
-        rval.append('  Destination-port:: %s' % ' '.join(self.dport))
-        rval.append('  Protocol:: %s' % ' '.join(self.protocol))
-        rval.append('  Option:: %s' % ' '.join(self.option))
-        rval.append('  Action:: %s' % ' '.join(self.action))
+        rval.append(f'  Term: {self.name}')
+        rval.append(f"  Source-address:: {' '.join(self.source)}")
+        rval.append(f"  Destination-address:: {' '.join(self.destination)}")
+        rval.append(f"  Source-port:: {' '.join(self.sport)}")
+        rval.append(f"  Destination-port:: {' '.join(self.dport)}")
+        rval.append(f"  Protocol:: {' '.join(self.protocol)}")
+        rval.append(f"  Option:: {' '.join(self.option)}")
+        rval.append(f"  Action:: {' '.join(self.action)}")
         return '\n'.join(rval)
 
 
@@ -98,7 +98,7 @@ class Policy:
         try:
             self.data = open(filename).readlines()
         except OSError as error_info:
-            info = str(filename) + ' cannot be opened'
+            info = f"{filename!s} cannot be opened"
             raise FileOpenError(f'{info}\n{error_info}')
 
         indent = 0
@@ -212,7 +212,7 @@ class Policy:
                 if filtername == fil.name:
                     filter_list = [self.filter[idx]]
             if not filter_list:
-                raise InvalidFilterError('invalid filter name: %s' % filtername)
+                raise InvalidFilterError(f'invalid filter name: {filtername}')
 
         for findex, xfilter in enumerate(filter_list):
             mterms = []

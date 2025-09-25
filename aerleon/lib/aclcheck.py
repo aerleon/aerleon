@@ -108,7 +108,7 @@ class AclCheck:
             try:
                 self.src = nacaddr.IP(src)
             except ValueError:
-                raise AddressError('bad source address: %s\n' % src)
+                raise AddressError(f'bad source address: {src}\n')
 
         # validate destination address
         if not dst or dst == 'any':
@@ -117,7 +117,7 @@ class AclCheck:
             try:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
-                raise AddressError('bad destination address: %s\n' % dst)
+                raise AddressError(f'bad destination address: {dst}\n')
 
         if not isinstance(self.pol_obj, (policy.Policy)):
             raise BadPolicyError('Policy object is not valid.')
@@ -306,12 +306,12 @@ class Match:
     def __str__(self):
         text = ''
         if self.possibles:
-            text += 'possible ' + self.action
+            text += f"possible {self.action}"
         else:
             text += self.action
-        text += ' in term ' + self.term + ' of filter ' + self.filter
+        text += f" in term {self.term} of filter {self.filter}"
         if self.possibles:
-            text += ' with factors: ' + str(', '.join(self.possibles))
+            text += f" with factors: {', '.join(self.possibles)!s}"
         return text
 
 

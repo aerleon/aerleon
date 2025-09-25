@@ -450,7 +450,7 @@ class CiscoTest(absltest.TestCase):
         # this is a hacky sort of way to test that 'established' maps to HIGH_PORTS
         # in the destination port section.
         range_test = 'permit tcp any eq 80 10.0.0.0 0.255.255.255 range 1024 65535'
-        self.assertIn(range_test, str(acl), '[%s]' % str(acl))
+        self.assertIn(range_test, str(acl), f'[{acl!s}]')
         print(acl)
 
     @capture.stdout
@@ -461,8 +461,8 @@ class CiscoTest(absltest.TestCase):
         acl = cisco.Cisco(policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_14, self.naming), EXP_INFO)
         first_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 80'
         second_string = 'permit tcp any 10.0.0.0 0.255.255.255 eq 81'
-        self.assertIn(first_string, str(acl), '[%s]' % str(acl))
-        self.assertIn(second_string, str(acl), '[%s]' % str(acl))
+        self.assertIn(first_string, str(acl), f'[{acl!s}]')
+        self.assertIn(second_string, str(acl), f'[{acl!s}]')
         print(acl)
 
     @capture.stdout
@@ -499,10 +499,8 @@ class CiscoTest(absltest.TestCase):
         )
         self.assertIn('access-list 50 remark numbered standard', str(acl), str(acl))
         self.assertIn('access-list 50 remark standard-term-1', str(acl), str(acl))
-        self.assertIn('access-list 50 remark {}Id:{}'.format('$', '$'), str(acl), str(acl))
-        self.assertNotIn(
-            'access-list 50 remark {}Revision:{}'.format('$', '$'), str(acl), str(acl)
-        )
+        self.assertIn('access-list 50 remark $Id:$', str(acl), str(acl))
+        self.assertNotIn('access-list 50 remark $Revision:$', str(acl), str(acl))
         print(acl)
 
     @capture.stdout
@@ -545,7 +543,7 @@ class CiscoTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_1, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         expected = 'access-list 99 permit 10.1.1.1'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
 
         print(acl)
 
@@ -556,7 +554,7 @@ class CiscoTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         expected = 'access-list 99 permit 10.0.0.0 0.255.255.255'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         print(acl)
 
     @capture.stdout
@@ -566,9 +564,9 @@ class CiscoTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_2 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
         expected = 'ip access-list standard FOO'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit 10.0.0.0 0.255.255.255\n'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         print(acl)
 
     @capture.stdout
@@ -577,7 +575,7 @@ class CiscoTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_STANDARD_HEADER_1 + GOOD_STANDARD_TERM_2, self.naming)
         acl = cisco.Cisco(pol, EXP_INFO)
-        self.assertNotIn('::', str(acl), '[%s]' % str(acl))
+        self.assertNotIn('::', str(acl), f'[{acl!s}]')
         print(acl)
 
     def testStandardFilterName(self):
@@ -642,8 +640,8 @@ class CiscoTest(absltest.TestCase):
         inet6_test1 = 'no ipv6 access-list inet6_acl'
         inet6_test2 = 'ipv6 access-list inet6_acl'
         inet6_test3 = 'permit tcp any 2001:4860:8000::/33'
-        self.assertIn(inet6_test1, str(acl), '[%s]' % str(acl))
-        self.assertIn(inet6_test2, str(acl), '[%s]' % str(acl))
+        self.assertIn(inet6_test1, str(acl), f'[{acl!s}]')
+        self.assertIn(inet6_test2, str(acl), f'[{acl!s}]')
         self.assertTrue(re.search(inet6_test3, str(acl)), str(acl))
         self.assertNotIn('10.0.0.0', str(acl), str(acl))
 
@@ -663,11 +661,11 @@ class CiscoTest(absltest.TestCase):
         inet6_test5 = 'ipv6 access-list ipv6-mixed_acl'
         inet6_test6 = 'permit tcp any 2001:4860:8000::/33'
         aclout = str(acl)
-        self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
-        self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test1, aclout, f'[{aclout}]')
+        self.assertIn(inet6_test2, aclout, f'[{aclout}]')
         self.assertTrue(re.search(inet6_test3, aclout), aclout)
-        self.assertIn(inet6_test4, aclout, '[%s]' % aclout)
-        self.assertIn(inet6_test5, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test4, aclout, f'[{aclout}]')
+        self.assertIn(inet6_test5, aclout, f'[{aclout}]')
         self.assertTrue(re.search(inet6_test6, aclout), aclout)
 
         print(acl)
@@ -700,11 +698,11 @@ class CiscoTest(absltest.TestCase):
         with mock.patch.object(cisco.logging, 'warning') as mock_warning:
             aclout = str(acl)
             mock_warning.assert_not_called()
-        self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
-        self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test1, aclout, f'[{aclout}]')
+        self.assertIn(inet6_test2, aclout, f'[{aclout}]')
         self.assertTrue(re.search(inet6_test3, aclout), aclout)
-        self.assertIn(inet6_test4, aclout, '[%s]' % aclout)
-        self.assertIn(inet6_test5, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test4, aclout, f'[{aclout}]')
+        self.assertIn(inet6_test5, aclout, f'[{aclout}]')
         self.assertFalse(re.search(inet6_test6, aclout), aclout)
 
         print(acl)
@@ -724,8 +722,8 @@ class CiscoTest(absltest.TestCase):
             ' as it has destination address match specified but '
             'no destination addresses of inet6 address family are present.'
         )
-        self.assertIn(inet6_test1, aclout, '[%s]' % aclout)
-        self.assertIn(inet6_test2, aclout, '[%s]' % aclout)
+        self.assertIn(inet6_test1, aclout, f'[{aclout}]')
+        self.assertIn(inet6_test2, aclout, f'[{aclout}]')
 
         print(acl)
 
@@ -733,7 +731,7 @@ class CiscoTest(absltest.TestCase):
     def testDsmo(self):
         addr_list = list()
         for octet in range(0, 256):
-            net = nacaddr.IP('192.168.' + str(octet) + '.64/27')
+            net = nacaddr.IP(f"192.168.{octet!s}.64/27")
             addr_list.append(str(net))
 
         self.naming._ParseLine(f'SOME_HOST = {" ".join(addr_list)}', 'networks')

@@ -189,7 +189,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'remark this is a test acl'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = 'remark good-term-1'
         self.assertIn(expected, str(acl), str(acl))
         expected = 'test-filter remark'
@@ -205,7 +205,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_TERM_4, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'ipv4 access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit icmp host 10.1.1.1 any'
         self.assertIn(expected, str(acl), str(acl))
         expected = ' permit ipv4 host 10.1.1.1 any'
@@ -222,7 +222,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_4, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'ipv6 access-list ipv6-test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit tcp any eq 80 host 2001::3'
         self.assertIn(expected, str(acl), str(acl))
         expected = ' permit ipv6 host 2001::3 any'
@@ -237,7 +237,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'ipv4 access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit ipv4 any any nexthop1 ipv4 10.1.1.1'
         self.assertIn(expected, str(acl), str(acl))
 
@@ -250,7 +250,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_5, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'ipv6 access-list ipv6-test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit ipv6 any any nexthop1 ipv6 2001::3'
         self.assertIn(expected, str(acl), str(acl))
 
@@ -284,7 +284,7 @@ class CiscoXRTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_6, self.naming)
         acl = ciscoxr.CiscoXR(pol, EXP_INFO)
         expected = 'ipv4 access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit ipv4 any any'
         self.assertIn(expected, str(acl), str(acl))
         expected = 'nexthop1'

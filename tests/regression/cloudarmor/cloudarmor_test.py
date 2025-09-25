@@ -882,7 +882,7 @@ class CloudArmorTest(absltest.TestCase):
             for _ in range(4):
                 random_ip_octets.append(str(int(random.randint(1, 255))))
             rand_ip = '.'.join(random_ip_octets)
-            test_1001_ips_list.append(str(nacaddr.IP(rand_ip + '/32')))
+            test_1001_ips_list.append(str(nacaddr.IP(f"{rand_ip}/32")))
 
         self.naming._ParseLine(
             f'GOOGLE_PUBLIC_DNS_ANYCAST = {" ".join(test_1001_ips_list)}', 'networks'

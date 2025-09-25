@@ -989,7 +989,7 @@ class PolicyTest(parameterized.TestCase):
         pol = HEADER + TERM_UNSORTED_ICMP_TYPE
         ret = policy.ParsePolicy(pol, self.naming)
         icmp_types = ['echo-reply', 'echo-request', 'unreachable']
-        expected = 'icmp_type: %s' % icmp_types
+        expected = f'icmp_type: {icmp_types}'
         self.assertIn(expected, str(ret))
 
     def testICMPCodesSorting(self):
@@ -1307,8 +1307,8 @@ class PolicyTest(parameterized.TestCase):
         pol = HEADER + GOOD_TERM_48
         result = policy.ParsePolicy(pol, self.naming)
         zones = ['zone1', 'zone2']
-        expected_source = 'source_zone: %s' % zones
-        expected_destination = 'destination_zone: %s' % zones
+        expected_source = f'source_zone: {zones}'
+        expected_destination = f'destination_zone: {zones}'
         self.assertIn(expected_source, str(result))
         self.assertIn(expected_destination, str(result))
 

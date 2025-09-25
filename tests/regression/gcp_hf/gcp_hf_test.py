@@ -2475,7 +2475,7 @@ SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny', 'next'}}
 
 EXP_INFO = 2
 
-MANY_IPS = ['192.168.' + str(x) + '.0/32' for x in range(0, 256)]
+MANY_IPS = [f"192.168.{x!s}.0/32" for x in range(0, 256)]
 MANY_IPS.extend(['10.0.0.1', '10.0.1.1'])
 
 

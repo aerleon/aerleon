@@ -264,7 +264,7 @@ class WindowsAdvFirewallTest(absltest.TestCase):
 
     def assertTrue(self, strings, result, term):
         for string in strings:
-            fullstring = 'netsh advfirewall firewall add rule %s' % (string)
+            fullstring = f'netsh advfirewall firewall add rule {string}'
             super().assertIn(
                 fullstring,
                 result,

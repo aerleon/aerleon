@@ -255,9 +255,9 @@ class Term(aclgenerator.Term):
             # IPv4 stuff.
             if icmp_type and ('icmp' in ip_protocol):
                 if len(icmp_type) > 1:
-                    statement_lines.append('icmp type' + Add(self.CreateAnonymousSet(icmp_type)))
+                    statement_lines.append(f"icmp type{Add(self.CreateAnonymousSet(icmp_type))}")
                 else:
-                    statement_lines.append('icmp type' + Add(icmp_type))
+                    statement_lines.append(f"icmp type{Add(icmp_type)}")
                 ip_protocol.remove('icmp')
             if 'icmpv6' in ip_protocol:
                 # No IPv6 protocols in IPv4 family.
@@ -266,22 +266,22 @@ class Term(aclgenerator.Term):
                 # Multi-protocol and zero-ports.
                 if len(ip_protocol) > 1 and not (src_ports or dst_ports):
                     statement_lines.append(
-                        'ip protocol' + Add(self.CreateAnonymousSet(ip_protocol))
+                        f"ip protocol{Add(self.CreateAnonymousSet(ip_protocol))}"
                     )
                 else:
                     for proto in ip_protocol:
                         if src_ports or dst_ports:
                             statement_lines.append(PortStatement(proto, src_p, dst_p))
                         else:
-                            statement_lines.append('ip protocol' + Add(proto))
+                            statement_lines.append(f"ip protocol{Add(proto)}")
 
         if address_family == 'ip6':
             # IPv6 stuff.
             if icmp_type and ('icmpv6' in ip6_protocol):
                 if len(icmp_type) > 1:
-                    statement_lines.append('icmpv6 type' + Add(self.CreateAnonymousSet(icmp_type)))
+                    statement_lines.append(f"icmpv6 type{Add(self.CreateAnonymousSet(icmp_type))}")
                 else:
-                    statement_lines.append('icmpv6 type' + Add(icmp_type))
+                    statement_lines.append(f"icmpv6 type{Add(icmp_type)}")
                 ip6_protocol.remove('icmpv6')
             if 'icmp' in ip6_protocol:
                 # No IPv4 protocols in IPv6 family.
@@ -294,7 +294,7 @@ class Term(aclgenerator.Term):
                 # https://wiki.nftables.org/wiki-nftables/index.php/Matching_packet_headers
                 if len(ip6_protocol) > 1 and not (src_ports or dst_ports):
                     statement_lines.append(
-                        'meta l4proto' + Add(self.CreateAnonymousSet(ip6_protocol))
+                        f"meta l4proto{Add(self.CreateAnonymousSet(ip6_protocol))}"
                     )
                 else:
                     # We avoid using th (transport header), instead we use single
@@ -304,7 +304,7 @@ class Term(aclgenerator.Term):
                             statement_lines.append(PortStatement(proto, src_p, dst_p))
                         else:
                             # Single proto, no ports.
-                            statement_lines.append('meta l4proto' + Add(proto))
+                            statement_lines.append(f"meta l4proto{Add(proto)}")
 
         return statement_lines
 
@@ -336,7 +336,7 @@ class Term(aclgenerator.Term):
             # str() trick to circumvent VarType class attr comparison checks.
             if 'disable' not in str(term.logging):
                 # Simple syslogging implementation.
-                options.append('log prefix "%s"' % term.name)
+                options.append(f'log prefix "{term.name}"')
 
         # 'counter' handling.
         # https://wiki.nftables.org/wiki-nftables/index.php/Counters
@@ -439,23 +439,23 @@ class Term(aclgenerator.Term):
             if address_family == 'inet' or address_family == 'ip':
                 if src_addr_book['ip']:
                     address_statement.append(
-                        'ip saddr ' + self.CreateAnonymousSet(src_addr_book['ip'])
+                        f"ip saddr {self.CreateAnonymousSet(src_addr_book['ip'])}"
                     )
             if address_family == 'inet' or address_family == 'ip6':
                 if src_addr_book['ip6']:
                     address_statement.append(
-                        'ip6 saddr ' + self.CreateAnonymousSet(src_addr_book['ip6'])
+                        f"ip6 saddr {self.CreateAnonymousSet(src_addr_book['ip6'])}"
                     )
         elif dst_addr:
             if address_family == 'inet' or address_family == 'ip':
                 if dst_addr_book['ip']:
                     address_statement.append(
-                        'ip daddr ' + self.CreateAnonymousSet(dst_addr_book['ip'])
+                        f"ip daddr {self.CreateAnonymousSet(dst_addr_book['ip'])}"
                     )
             if address_family == 'inet' or address_family == 'ip6':
                 if dst_addr_book['ip6']:
                     address_statement.append(
-                        'ip6 daddr ' + self.CreateAnonymousSet(dst_addr_book['ip6'])
+                        f"ip6 daddr {self.CreateAnonymousSet(dst_addr_book['ip6'])}"
                     )
         return address_statement
 
@@ -480,7 +480,7 @@ class Term(aclgenerator.Term):
         # COMMENT handling.
         if self.verbose:
             for line in self.term.comment:
-                term_ruleset.append('comment "%s"' % line)
+                term_ruleset.append(f'comment "{line}"')
 
         # ADDRESS handling.
         address_list = self._AddrStatement(
@@ -822,7 +822,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 if base_chain_dict[item]['comment']:
                     # Handle multi-line comments
                     for comment in base_chain_dict[item]['comment']:
-                        nft_config.append(TabSpacer(8, 'comment "%s"' % comment))
+                        nft_config.append(TabSpacer(8, f'comment "{comment}"'))
                 nft_config.append(
                     TabSpacer(
                         8,
@@ -838,7 +838,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 nft_config.append(TabSpacer(8, 'ct state established,related accept'))
                 # Reference the child chains with jump.
                 for child_chain in base_chain_dict[item]['rules'][item].keys():
-                    nft_config.append(TabSpacer(8, 'jump %s' % child_chain))
+                    nft_config.append(TabSpacer(8, f'jump {child_chain}'))
                 nft_config.append(TabSpacer(4, '}'))  # chain_end
             nft_config.append('}')  # table_end
 

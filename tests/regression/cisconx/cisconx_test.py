@@ -216,13 +216,13 @@ class CiscoNXTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_4, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
         expected = 'remark this is a test extended acl'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = 'remark good-term-4'
         self.assertIn(expected, str(acl), str(acl))
         expected = 'test-filter remark'
         self.assertNotIn(expected, str(acl), str(acl))
-        self.assertNotIn(' remark {}Id:{}'.format('$', '$'), str(acl), str(acl))
-        self.assertIn(' remark "{}Revision:{}"'.format('$', '$'), str(acl), str(acl))
+        self.assertNotIn(' remark $Id:$', str(acl), str(acl))
+        self.assertIn(' remark "$Revision:$"', str(acl), str(acl))
         self.assertNotIn(' remark $', str(acl), str(acl))
 
         print(acl)
@@ -259,7 +259,7 @@ class CiscoNXTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_2 + GOOD_TERM_2 + GOOD_TERM_3, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
         expected = 'ip access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit tcp 10.1.1.0/24 any eq 22'
         self.assertIn(expected, str(acl), str(acl))
         expected = ' permit tcp 10.1.1.0/24 any eq 6537'
@@ -275,7 +275,7 @@ class CiscoNXTest(absltest.TestCase):
         pol = policy.ParsePolicy(GOOD_HEADER_IPV6 + GOOD_TERM_2, self.naming)
         acl = cisconx.CiscoNX(pol, EXP_INFO)
         expected = 'ipv6 access-list test-filter'
-        self.assertIn(expected, str(acl), '[%s]' % str(acl))
+        self.assertIn(expected, str(acl), f'[{acl!s}]')
         expected = ' permit tcp 2620:1::/64 any eq 22'
         self.assertIn(expected, str(acl), str(acl))
 

@@ -451,13 +451,13 @@ def _GenerateACL(
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(
                     str(acl_obj),
-                    '-accept' + acl_obj.SUFFIX,
+                    f"-accept{acl_obj.SUFFIX}",
                     write_files,
                 )
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info, invert=True)
                 EmitACL(
                     str(acl_obj),
-                    '-deny' + acl_obj.SUFFIX,
+                    f"-deny{acl_obj.SUFFIX}",
                     write_files,
                 )
             else:

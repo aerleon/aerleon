@@ -123,7 +123,7 @@ class WindowsIPSecTest(absltest.TestCase):
     # pylint: disable=invalid-name
     def assertTrue(self, strings, result, term):
         for string in strings:
-            fullstring = 'netsh ipsec static add %s' % (string)
+            fullstring = f'netsh ipsec static add {string}'
             super().assertIn(fullstring, result, f'did not find "{fullstring}" for {term}')
 
     @capture.stdout
