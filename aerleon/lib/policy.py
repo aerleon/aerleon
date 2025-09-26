@@ -167,7 +167,7 @@ def TranslatePorts(
             if not service_by_proto:
                 logging.warning(
                     'Term %s has service %s which is not defined with '
-                    'protocol %s, but will be permitted. Unless intended'
+                    'protocol %s, but will be matched. Unless intended'
                     ', you should consider splitting the protocols '
                     'into separate terms!',
                     term_name,
