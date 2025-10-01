@@ -8,6 +8,14 @@ runs:
   using: "composite"
   steps:
     #----------------------------------------------
+    #      if freethreaded python, force it
+    #    (we test GIL enabled python separately)
+    #----------------------------------------------
+    - name: force freethreaded python
+      shell: bash
+      if: endsWith(inputs.python-version, 't') || endsWith(inputs.python-version, 't-dev')
+      run: echo "PYTHON_GIL=0" >> $GITHUB_ENV
+    #----------------------------------------------
     #       check-out repo and set-up python
     #----------------------------------------------
     - uses: actions/setup-python@v6
