@@ -25,7 +25,7 @@ At this point you should be able to verify `aclgen` was installed. The path may 
 
 ```bash
 which aclgen
-/home/rob/.cache/pypoetry/virtualenvs/aerleon-1XT7bGG2-py3.10/bin/aclgen
+/home/user/.cache/pypoetry/virtualenvs/aerleon-1XT7bGG2-py3.13/bin/aclgen
 ```
 If you do not see a path it is possible the installation did not work successfully. Please reach out to us by filing an [issue](https://github.com/aerleon/aerleon/issues).
 
