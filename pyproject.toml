@@ -31,7 +31,7 @@ packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-PyYAML = "^6.0"
+PyYAML = "^6.0.3"
 ply = "^3.11"
 absl-py = "^2.3.1"
 typing_extensions = "^4.15.0"
@@ -39,22 +39,22 @@ importlib-metadata = { version = "^4.2", markers = "python_version <= '3.10'" }
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "25.1.0"}
-coverage = {version = "^7.6.0"}
+coverage = {version = "^7.10.6"}
 flake8 = {version = "*"}
 Flake8-pyproject = {version = "*"}
 nox = {version = "^2025.05.01"}
 nox-poetry = {version = "^1.2.0"}
 pre-commit = {version = "^2.20.0"}
-pytest = {version = "^8.4.1"}
-pyperf = {version = "^2.4.1"}
+pytest = {version = "^8.4.2"}
+pyperf = {version = "^2.6.3"}
 psutil = {version = "^7.1.0"}
 mkdocstrings-python = "^1.16.12"
 mkdocstrings = "^0.29.1"
 mkdocs-version-annotations = "^1.0.0"
 mkdocs = "^1.6.1"
-mkdocs-material = "^9.6.14"
+mkdocs-material = "^9.6.20"
 sigstore = "^1.0.0"
-isort = "^5.11.4"
+isort = "^6.1.0"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
