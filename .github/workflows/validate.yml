@@ -87,7 +87,7 @@ jobs:
         uses: ./.github/actions/setup
         id: project-setup
         with:
-          python-version: "3.14-dev"
+          python-version: "3.13"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
