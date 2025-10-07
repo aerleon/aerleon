@@ -46,7 +46,7 @@ nox = {version = "^2025.05.01"}
 nox-poetry = {version = "^1.2.0"}
 pre-commit = {version = "^2.20.0"}
 pytest = {version = "^8.4.2"}
-pyperf = {version = "^2.6.3"}
+pyperf = {version = "^2.7.0"}
 psutil = {version = "^7.1.0"}
 mkdocstrings-python = "^1.16.12"
 mkdocstrings = "^0.29.1"

@@ -1770,21 +1770,21 @@ test = ["pretend", "pytest (>=3.0.1)", "pytest-rerunfailures"]
 
 [[package]]
 name = "pyperf"
-version = "2.6.3"
+version = "2.9.0"
 description = "Python module to run and analyze benchmarks"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pyperf-2.6.3-py3-none-any.whl", hash = "sha256:ee69bedb36cb0b2bf858d7013038bb088920a95a7bab69a36749de6f051127e6"},
-    {file = "pyperf-2.6.3.tar.gz", hash = "sha256:9752fe749c21e460a564bb3f52fc319b892c62ee61c5138b4a9bbf94ad2755e6"},
+    {file = "pyperf-2.9.0-py3-none-any.whl", hash = "sha256:215673fb60f3fbbc6c7a90b609b0806d8466fded8dd502bf5731e2b92506076e"},
+    {file = "pyperf-2.9.0.tar.gz", hash = "sha256:dbe0feef8ec1a465df191bba2576149762d15a8c9985c9fea93ab625d875c362"},
 ]
 
 [package.dependencies]
 psutil = ">=5.9.0"
 
 [package.extras]
-dev = ["importlib-metadata ; python_version < \"3.8\"", "tox"]
+dev = ["tox"]
 
 [[package]]
 name = "pyproject-hooks"
@@ -2230,4 +2230,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "bddd5842d8d3dbf8e7c5d3dcb4070928f493c12a792994cb6e55d26af8715fcb"
+content-hash = "bc62381d91764c762248b5720c236244100acf1cf523463b90c1c970af03c48a"
