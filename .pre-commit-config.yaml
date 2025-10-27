@@ -1,9 +1,9 @@
 default_language_version:
-    python: python3.11
+    python: python3.13
 exclude: '\.ref$'
 repos:
   # - repo: https://github.com/python/black.git
-  #   rev: 22.8.0
+  #   rev: 25.9.0
   #   hooks:
   #     - id: black
   - repo: https://github.com/john-hen/Flake8-pyproject
