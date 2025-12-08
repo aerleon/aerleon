@@ -381,7 +381,7 @@ def _GenerateACL(
     shade_check: bool = False,
     exp_info: int = 2,
     include_path: Optional[pathlib.Path] = None,
-    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
+    includes: dict[str, policy_builder.TermsList] | None = None,
 ):
     filename = input_policy.get("filename", "<unknown>")
 
