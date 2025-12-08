@@ -44,10 +44,10 @@ class UserMessage:
 
     message: str
     filename: str
-    line: int
-    include_chain: "list[Tuple[str, int]]"
+    line: int | None
+    include_chain: "list[tuple[str, int]] | None"
 
-    def __init__(self, message: str, *, filename, line=None, include_chain=None) -> None:
+    def __init__(self, message: str, *, filename: str, line: int | None = None, include_chain: "list[tuple[str, int]] | None" = None) -> None:
         self.message = message
         self.filename = filename
         self.line = line
@@ -168,9 +168,7 @@ class YAMLPolicyPreprocessor:
 
     def __call__(
         self, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[
-        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
-    ]:
+    ) -> Optional[PolicyDict]:
         """Process includes and validate the file data as a PolicyDict.
 
         Args:
@@ -190,9 +188,7 @@ class YAMLPolicyPreprocessor:
 
     def _preprocess_inner(
         self, depth: int, debug_stack: list, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[
-        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
-    ]:
+    ) -> Optional[PolicyDict]:
         # Empty files are ignored with a warning
         if policy_dict is None or not policy_dict:
             logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))

@@ -155,6 +155,7 @@ class PolicyFilter(TypedDict):
 
 class PolicyDict(TypedDict):
     filters: 'list[PolicyFilter]'
+    filename: NotRequired[str]
 
 
 RawTarget = Annotated[

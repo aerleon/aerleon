@@ -20,6 +20,7 @@ import multiprocessing
 import pathlib
 import sys
 from collections.abc import Iterator
+import typing
 
 from absl import app, flags, logging
 
@@ -27,7 +28,7 @@ from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
-WriteList = list[tuple[pathlib.Path, str]]
+WriteList = typing.MutableSequence[tuple[pathlib.Path, str]]
 
 
 def SetupFlags():

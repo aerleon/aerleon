@@ -48,6 +48,8 @@ import sys
 from dataclasses import dataclass
 from importlib import import_module
 
+from aerleon.lib.plugin import SystemMetadata
+
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points, version
 else:
@@ -58,13 +60,13 @@ from absl import logging
 from aerleon.lib import plugin
 from aerleon.lib.aclgenerator import ACLGenerator
 
-__all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", "SystemMetadata"]
+__all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", ]
 
 
 class _PluginSupervisor:
     is_setup: bool
     plugins: list[tuple]
-    generators: dict
+    generators: dict[str, type[ACLGenerator]]
 
     def __init__(self) -> None:
         self.is_setup = False
@@ -77,12 +79,6 @@ class _PluginSupervisor:
 
 __doc_PluginSupervisor__ = """Singleton PluginSupervisor instance."""
 PluginSupervisor = _PluginSupervisor()
-
-
-@dataclass
-class SystemMetadata:
-    engine_version: str
-
 
 __doc_SYSTEM_METADATA__ = """Public module constant system metadata."""
 SYSTEM_METADATA: SystemMetadata = SystemMetadata(engine_version=version("aerleon"))
@@ -185,7 +181,7 @@ class _PluginSetup:
     def __init__(self, config: PluginSupervisorConfiguration | None = None) -> None:
         """Initialize self.generators, self.plugins."""
 
-        self.generators = {}
+        self.generators: dict[str, type[ACLGenerator]] = {}
         self.plugins = []
 
         # Apply configuration if provided
@@ -255,9 +251,9 @@ class _PluginSetup:
         logging.info(f"{len(self.plugins)} plugins active.")
         logging.info(f"{len(self.generators)} generators registered.")
 
-    def _CollectEntrypointPlugins(self):
+    def _CollectEntrypointPlugins(self) -> list[tuple[str, plugin.BasePlugin]]:
         """Locate and import modules using entrypoint discovery."""
-        loaded_plugins = []
+        loaded_plugins: list[tuple[str, plugin.BasePlugin]] = []
         for ep_plugin in entry_points(group='aerleon.plugin'):
             if self.disable_plugin and ep_plugin.name in self.disable_plugin:
                 continue
@@ -288,7 +284,7 @@ class _PluginSetup:
 
     def _CollectBuiltinGenerators(
         self, builtin_generators: list[tuple[str, str, str]]
-    ) -> list[tuple[str, ACLGenerator]]:
+    ) -> list[tuple[str, type[ACLGenerator]]]:
         """Import built-in modules by name."""
         loaded_generators = []
         for target, module_name, class_or_func in builtin_generators:
