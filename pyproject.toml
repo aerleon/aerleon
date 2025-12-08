@@ -41,7 +41,7 @@ black = {version = "25.9.0"}
 coverage = {version = "^7.10.6"}
 flake8 = {version = "*"}
 Flake8-pyproject = {version = "*"}
-nox = {version = "^2025.05.01"}
+nox = {version = "^2025.10.14"}
 nox-poetry = {version = "^1.2.0"}
 pre-commit = {version = "^2.20.0"}
 pytest = {version = "^8.4.2"}
@@ -54,6 +54,7 @@ mkdocs = "^1.6.1"
 mkdocs-material = "^9.6.20"
 sigstore = "^1.0.0"
 isort = "^6.1.0"
+pyright = "^1.1.407"
 
 [tool.poetry.scripts]
 aclgen = "aerleon.aclgen:EntryPoint"
@@ -107,3 +108,18 @@ exclude = ['.git','.github','venv','site-packages','__pycache__','doc','build','
 [tool.coverage.run]
 branch = true
 command_line = '-m pytest'
+
+[tool.pyright]
+include = ["aerleon", "tests"]
+exclude = [
+    "**/__pycache__",
+    ".venv",
+]
+
+pythonVersion = "3.11"
+typeCheckingMode = "basic"  # "off", "basic", "standard", "strict"
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"
