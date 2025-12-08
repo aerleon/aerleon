@@ -2,7 +2,7 @@
 
 import pathlib
 from typing import Optional, Union
-from unittest.mock import MagicMock
+import typing
 
 import yaml
 from absl import logging
@@ -10,8 +10,12 @@ from yaml.error import YAMLError
 
 from aerleon.lib import policy
 from aerleon.lib.policy import BadIncludePath, Policy, _SubpathOf
-from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict
+from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict, TermsList
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
+
+if typing.TYPE_CHECKING:
+    from aerleon.lib.naming import Naming
+
 
 MAX_INCLUDE_DEPTH = 5
 
@@ -87,7 +91,7 @@ class UserMessage:
         return cls(str(error), filename=filename, line=line, include_chain=include_chain)
 
 
-def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_check=False):
+def ParseFile(filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False):
     """Load a policy yaml file and return a Policy data model.
 
     Args:
@@ -118,8 +122,8 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
 
 
 def ParsePolicy(
-    file: str, *, filename, base_dir='', definitions=None, optimize=False, shade_check=False
-) -> Optional[Union[MagicMock, Policy]]:
+    file: str, *, filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False
+) -> Optional[Policy]:
     """Load a policy yaml file (provided as a string) and return a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
@@ -448,7 +452,7 @@ class YAMLPolicyPreprocessor:
 class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
     """A YAMLPolicyPreprocessor that sources includes from a dictionary."""
 
-    def __init__(self, includes: dict[str, PolicyDict]):
+    def __init__(self, includes: dict[str, TermsList]):
         """
         Args:
             includes: A read-only mapping from include name to file_dict.
@@ -458,6 +462,6 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
+    ) -> tuple[Optional[TermsList], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
         return self.includes.get(relative_path), relative_path
