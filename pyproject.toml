@@ -46,6 +46,7 @@ test = [
     "psutil>=7.1.0",
     "pyperf>=2.7.0",
     "pytest>=8.4.2",
+    "pytest-cov>=6.3.0",
 ]
 lint = [
     "black==25.9.0",
