@@ -245,7 +245,7 @@ def Generate(
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
-    include_path: Optional[pathlib.Path] = None,
+    include_path: Optional[pathlib.Path | str] = None,
     includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
 ) -> "typing.MutableMapping[str, str] | None":
     """Generate ACLs from policies.
@@ -311,7 +311,7 @@ def _Generate(
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: Optional[pathlib.Path] = None,
+    include_path: Optional[pathlib.Path | str] = None,
     includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
     max_renderers: int = 1,
 ) -> "typing.MutableMapping[str, str] | None":
@@ -380,7 +380,7 @@ def _GenerateACL(
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: Optional[pathlib.Path] = None,
+    include_path: Optional[pathlib.Path | str] = None,
     includes: dict[str, policy_builder.TermsList] | None = None,
 ):
     filename = input_policy.get("filename", "<unknown>")
@@ -408,7 +408,7 @@ def _GenerateACL(
             preprocessor = yaml.GenerateAPIPolicyPreprocessor(includes)
             processed_policy = preprocessor(filename, policy_copy)
 
-    if not processed_policy:
+    if not processed_policy or not processed_policy.get('filters'):
         logging.warning('Policy %s is empty after processing includes, skipping.', filename)
         return
 
@@ -436,11 +436,20 @@ def _GenerateACL(
         acl_suffix: str,
         write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
+        file_name_override: Optional[str] = None,
     ):
+        base_name = file_name_override if file_name_override else filename
         if output_directory:
-            RenderACL(acl_text, acl_suffix, output_directory, filename, write_files, binary)
+            RenderACL(
+                acl_text,
+                acl_suffix,
+                output_directory,
+                pathlib.Path(base_name),
+                write_files,
+                binary,
+            )
         else:
-            output_file = pathlib.Path(filename).with_suffix(acl_suffix).name
+            output_file = pathlib.Path(base_name).with_suffix(acl_suffix).name
             generated_configs[output_file] = acl_text
 
     for target in platforms:
@@ -456,14 +465,16 @@ def _GenerateACL(
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(
                     str(acl_obj),
-                    f"-accept{acl_obj.SUFFIX}",
+                    acl_obj.SUFFIX,
                     write_files,
+                    file_name_override=f"{filename}-accept",
                 )
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info, invert=True)
                 EmitACL(
                     str(acl_obj),
-                    f"-deny{acl_obj.SUFFIX}",
+                    acl_obj.SUFFIX,
                     write_files,
+                    file_name_override=f"{filename}-deny",
                 )
             else:
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
