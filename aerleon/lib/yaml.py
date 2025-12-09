@@ -99,7 +99,7 @@ class UserMessage:
 
 
 def ParseFile(
-    filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False
+    filename, base_dir='', definitions: 'Naming | None' = None, optimize=False, shade_check=False
 ):
     """Load a policy yaml file and return a Policy data model.
 
@@ -135,7 +135,7 @@ def ParsePolicy(
     *,
     filename,
     base_dir='',
-    definitions: Naming | None = None,
+    definitions: 'Naming | None' = None,
     optimize=False,
     shade_check=False,
 ) -> Optional[Policy]:
