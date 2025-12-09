@@ -4,7 +4,7 @@ import enum
 import sys
 import typing
 from dataclasses import dataclass, field
-from typing import Annotated, TypedDict
+from typing import Annotated
 
 from absl import logging
 
@@ -39,6 +39,11 @@ if sys.version_info < (3, 11):
     from typing_extensions import NotRequired, Required
 else:
     from typing import NotRequired, Required
+
+if sys.version_info < (3, 12):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 if typing.TYPE_CHECKING:
     from datetime import datetime
