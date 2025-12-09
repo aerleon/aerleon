@@ -38,7 +38,7 @@ include = [
     "tools",
 ]
 packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"}]
-requires-poetry = '>=2.0,<3.0'
+requires-poetry = '>=2.2,<3.0'
 
 [dependency-groups]
 test = [
