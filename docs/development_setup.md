@@ -6,7 +6,7 @@ This guide provides instructions for setting up a development environment for Ae
 
 Before starting, ensure you have the following installed:
 - [Python 3.10+](https://www.python.org/downloads/)
-- [Poetry](https://python-poetry.org/docs/)
+- [Poetry 2.2+](https://python-poetry.org/docs/)
 
 ## Steps
 
