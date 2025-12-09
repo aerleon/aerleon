@@ -1,7 +1,7 @@
 # Installation
 
 ## Prerequisites
-* [Python 3.9+](https://www.python.org/downloads/)
+* [Python 3.10+](https://www.python.org/downloads/)
     * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
 * [pip](https://pip.pypa.io/en/stable/getting-started/)
 

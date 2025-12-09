@@ -13,7 +13,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -30,7 +29,7 @@ include = [
 packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 PyYAML = "^6.0.3"
 ply = "^3.11"
 absl-py = "^2.3.1"
@@ -70,7 +69,6 @@ build-backend = "poetry.core.masonry.api"
 line-length = 99
 skip-string-normalization = true
 target-version = [
-    'py39',
     'py310',
     'py311',
     'py312',

@@ -16,7 +16,7 @@ Aerleon is a fork of [Capirca](https://github.com/google/capirca) with the follo
 - Many bug fixes and performance enhancements.
 
 ### Prerequisites
-Aerleon requires Python 3.9 or higher.
+Aerleon requires Python 3.10 or higher.
 
 ### Installation Steps
 You can install Aerleon using one of the following package managers:
