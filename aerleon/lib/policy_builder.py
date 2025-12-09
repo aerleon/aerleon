@@ -148,13 +148,17 @@ PolicyFilterHeader = TypedDict(
 )
 
 
+TermsList = list[PolicyTerm | PolicyInclude]
+
+
 class PolicyFilter(TypedDict):
     header: PolicyFilterHeader
-    terms: 'list[PolicyTerm | PolicyInclude]'
+    terms: TermsList
 
 
 class PolicyDict(TypedDict):
     filters: 'list[PolicyFilter]'
+    filename: NotRequired[str]
 
 
 RawTarget = Annotated[

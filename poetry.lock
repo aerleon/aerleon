@@ -810,6 +810,21 @@ files = [
 ]
 
 [[package]]
+name = "humanize"
+version = "4.14.0"
+description = "Python humanize utilities"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "humanize-4.14.0-py3-none-any.whl", hash = "sha256:d57701248d040ad456092820e6fde56c930f17749956ac47f4f655c0c547bfff"},
+    {file = "humanize-4.14.0.tar.gz", hash = "sha256:2fa092705ea640d605c435b1ca82b2866a1b601cdf96f076d70b79a855eba90d"},
+]
+
+[package.extras]
+tests = ["freezegun", "pytest", "pytest-cov"]
+
+[[package]]
 name = "hyperframe"
 version = "6.0.1"
 description = "HTTP/2 framing layer for Python"
@@ -1354,26 +1369,28 @@ setuptools = "*"
 
 [[package]]
 name = "nox"
-version = "2025.5.1"
+version = "2025.11.12"
 description = "Flexible test automation."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "nox-2025.5.1-py3-none-any.whl", hash = "sha256:56abd55cf37ff523c254fcec4d152ed51e5fe80e2ab8317221d8b828ac970a31"},
-    {file = "nox-2025.5.1.tar.gz", hash = "sha256:2a571dfa7a58acc726521ac3cd8184455ebcdcbf26401c7b737b5bc6701427b2"},
+    {file = "nox-2025.11.12-py3-none-any.whl", hash = "sha256:707171f9f63bc685da9d00edd8c2ceec8405b8e38b5fb4e46114a860070ef0ff"},
+    {file = "nox-2025.11.12.tar.gz", hash = "sha256:3d317f9e61f49d6bde39cf2f59695bb4e1722960457eee3ae19dacfe03c07259"},
 ]
 
 [package.dependencies]
 argcomplete = ">=1.9.4,<4"
-attrs = ">=23.1"
+attrs = ">=24.1"
 colorlog = ">=2.6.1,<7"
 dependency-groups = ">=1.1"
-packaging = ">=20.9"
-tomli = {version = ">=1", markers = "python_version < \"3.11\""}
-virtualenv = ">=20.14.1"
+humanize = ">=4"
+packaging = {version = ">=21", markers = "python_version >= \"3.10\""}
+tomli = {version = ">=1.1", markers = "python_version < \"3.11\""}
+virtualenv = {version = ">=20.15", markers = "python_version >= \"3.10\""}
 
 [package.extras]
+pbs = ["pbs-installer[all] (>=2025.1.6)"]
 tox-to-nox = ["importlib-resources ; python_version < \"3.9\"", "jinja2", "tox (>=4)"]
 uv = ["uv (>=0.1.6)"]
 
@@ -1713,6 +1730,27 @@ files = [
     {file = "pyproject_hooks-1.2.0-py3-none-any.whl", hash = "sha256:9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913"},
     {file = "pyproject_hooks-1.2.0.tar.gz", hash = "sha256:1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8"},
 ]
+
+[[package]]
+name = "pyright"
+version = "1.1.407"
+description = "Command line wrapper for pyright"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "pyright-1.1.407-py3-none-any.whl", hash = "sha256:6dd419f54fcc13f03b52285796d65e639786373f433e243f8b94cf93a7444d21"},
+    {file = "pyright-1.1.407.tar.gz", hash = "sha256:099674dba5c10489832d4a4b2d302636152a9a42d317986c38474c76fe562262"},
+]
+
+[package.dependencies]
+nodeenv = ">=1.6.0"
+typing-extensions = ">=4.1"
+
+[package.extras]
+all = ["nodejs-wheel-binaries", "twine (>=3.4.1)"]
+dev = ["twine (>=3.4.1)"]
+nodejs = ["nodejs-wheel-binaries"]
 
 [[package]]
 name = "pytest"
@@ -2146,4 +2184,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "0eda59133334cc255650e212815c9733d5f1133bb7fbae1c4ad32e54e473bf19"
+content-hash = "72340a0928d173efb4c1f6779d50a552418800117a4978c5be689056e17e7dcc"

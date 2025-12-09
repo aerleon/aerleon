@@ -105,3 +105,10 @@ def dev_setup(session: Session) -> None:
     """Installs pre-commit hooks using pre-commit"""
     session.run("pre-commit", "install")
     session.run("git", "config", "blame.ignoreRevsFile", ".git-blame-ignore-revs")
+
+
+@session
+def type_check(session):
+    """Runs pyright"""
+    session.run_always("poetry", "install", external=True)
+    session.run("poetry", "run", "pyright", external=True)

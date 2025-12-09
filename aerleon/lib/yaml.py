@@ -1,8 +1,8 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
+import typing
 from typing import Optional, Union
-from unittest.mock import MagicMock
 
 import yaml
 from absl import logging
@@ -10,8 +10,12 @@ from yaml.error import YAMLError
 
 from aerleon.lib import policy
 from aerleon.lib.policy import BadIncludePath, Policy, _SubpathOf
-from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict
+from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict, TermsList
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
+
+if typing.TYPE_CHECKING:
+    from aerleon.lib.naming import Naming
+
 
 MAX_INCLUDE_DEPTH = 5
 
@@ -44,10 +48,17 @@ class UserMessage:
 
     message: str
     filename: str
-    line: int
-    include_chain: "list[Tuple[str, int]]"
+    line: int | None
+    include_chain: "list[tuple[str, int]] | None"
 
-    def __init__(self, message: str, *, filename, line=None, include_chain=None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        filename: str,
+        line: int | None = None,
+        include_chain: "list[tuple[str, int]] | None" = None,
+    ) -> None:
         self.message = message
         self.filename = filename
         self.line = line
@@ -87,7 +98,9 @@ class UserMessage:
         return cls(str(error), filename=filename, line=line, include_chain=include_chain)
 
 
-def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_check=False):
+def ParseFile(
+    filename, base_dir='', definitions: 'Naming | None' = None, optimize=False, shade_check=False
+):
     """Load a policy yaml file and return a Policy data model.
 
     Args:
@@ -118,8 +131,14 @@ def ParseFile(filename, base_dir='', definitions=None, optimize=False, shade_che
 
 
 def ParsePolicy(
-    file: str, *, filename, base_dir='', definitions=None, optimize=False, shade_check=False
-) -> Optional[Union[MagicMock, Policy]]:
+    file: str,
+    *,
+    filename,
+    base_dir='',
+    definitions: 'Naming | None' = None,
+    optimize=False,
+    shade_check=False,
+) -> Optional[Policy]:
     """Load a policy yaml file (provided as a string) and return a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
@@ -166,11 +185,7 @@ class YAMLPolicyPreprocessor:
         """
         self.base_dir = base_dir
 
-    def __call__(
-        self, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[
-        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
-    ]:
+    def __call__(self, filename: str, policy_dict: Optional[PolicyDict]) -> Optional[PolicyDict]:
         """Process includes and validate the file data as a PolicyDict.
 
         Args:
@@ -190,9 +205,7 @@ class YAMLPolicyPreprocessor:
 
     def _preprocess_inner(
         self, depth: int, debug_stack: list, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[
-        dict[str, list[dict[str, Union[dict[str, dict[str, str]], list[dict[str, str]]]]]]
-    ]:
+    ) -> Optional[PolicyDict]:
         # Empty files are ignored with a warning
         if policy_dict is None or not policy_dict:
             logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
@@ -452,7 +465,7 @@ class YAMLPolicyPreprocessor:
 class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
     """A YAMLPolicyPreprocessor that sources includes from a dictionary."""
 
-    def __init__(self, includes: dict[str, PolicyDict]):
+    def __init__(self, includes: dict[str, TermsList]):
         """
         Args:
             includes: A read-only mapping from include name to file_dict.
@@ -462,6 +475,6 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
+    ) -> tuple[Optional[TermsList], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
         return self.includes.get(relative_path), relative_path

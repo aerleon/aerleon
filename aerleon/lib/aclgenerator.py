@@ -242,6 +242,9 @@ class ACLGenerator:
     is understood by a specific platform (eg. iptables, cisco, etc).
     """
 
+    SUFFIX: str = ''
+    # Subclasses must override this value.
+
     _PLATFORM = None
     # Default protocol to apply when no protocol is specified.
     _DEFAULT_PROTOCOL = 'ip'

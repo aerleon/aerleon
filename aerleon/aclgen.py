@@ -16,18 +16,21 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
-import multiprocessing
+import multiprocessing.context
+import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
+import typing
 from collections.abc import Iterator
 
 from absl import app, flags, logging
 
-from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
+from aerleon.lib import aclgenerator, naming, pcap, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
-WriteList = list[tuple[pathlib.Path, str]]
+WriteList = typing.MutableSequence[tuple[pathlib.Path, str]]
 
 
 def SetupFlags():
@@ -114,21 +117,6 @@ class ACLParserError(Error):
     """Raised when the ACL parser fails."""
 
 
-def SkipLines(text, skip_line_func=False):
-    """Apply skip_line_func to the given text.
-
-    Args:
-      text: list of the first text to scan
-      skip_line_func: function to use to check if we should skip a line
-
-    Returns:
-      ret_text: text(list) minus the skipped lines
-    """
-    if not skip_line_func:
-        return text
-    return [x for x in text if not skip_line_func(x)]
-
-
 def RenderFile(
     base_directory: str,
     input_file: pathlib.Path,
@@ -158,34 +146,6 @@ def RenderFile(
     logging.debug('rendering file: %s into %s', input_file, output_directory)
 
     pol = None
-    jcl = False
-    evojcl = False
-    acl = False
-    atp = False
-    asacl = False
-    aacl = False
-    bacl = False
-    eacl = False
-    gca = False
-    gcefw = False
-    gcphf = False
-    ips = False
-    ipt = False
-    msmpc = False
-    spd = False
-    nsx = False
-    oc = False
-    pcap_accept = False
-    pcap_deny = False
-    pf = False
-    srx = False
-    jsl = False
-    nft = False
-    win_afw = False
-    nxacl = False
-    xacl = False
-    paloalto = False
-    k8s_pol = False
 
     try:
         with open(input_file) as f:
@@ -239,6 +199,7 @@ def RenderFile(
         try:
             # special handling for pcap
             if target == 'pcap':
+                assert issubclass(generator, pcap.PcapFilter)
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
                     str(acl_obj),
@@ -268,7 +229,7 @@ def RenderACL(
     acl_suffix: str,
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
-    write_files: list[tuple[pathlib.Path, str]],
+    write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
     binary: bool = False,
 ):
     """Write the ACL string out to file if appropriate.

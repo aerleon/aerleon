@@ -98,7 +98,7 @@ class BasePlugin:
     def __init__(self):
         raise NotImplementedError
 
-    def RequestMetadata(self, _platformMetadata: dict) -> PluginMetadata:
+    def RequestMetadata(self, _platformMetadata: SystemMetadata) -> PluginMetadata:
         """
         Arguments:
             platformMetadata: A dict containing metadata about the running version of Aerleon.
@@ -111,5 +111,12 @@ class BasePlugin:
         raise NotImplementedError
 
     @property
-    def generators(self) -> dict[str, aclgenerator.ACLGenerator]:
+    def generators(self) -> dict[str, type[aclgenerator.ACLGenerator]]:
         raise NotImplementedError
+
+
+@dataclass
+class SystemMetadata:
+    """Interface for the engine to provide metadata about itself to plugins."""
+
+    engine_version: str

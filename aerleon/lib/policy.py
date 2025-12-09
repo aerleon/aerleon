@@ -1694,7 +1694,7 @@ class Header:
                 return target.options
         return []
 
-    def FilterName(self, platform: str) -> None:
+    def FilterName(self, platform: str) -> str | None:
         """Given a filter_type, return the filter name.
 
         Args:

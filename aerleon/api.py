@@ -209,9 +209,12 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 """
 
 import copy
-import multiprocessing
+import multiprocessing.context
+import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
+import typing
 from typing import Optional
 
 from absl import logging
@@ -227,6 +230,7 @@ from aerleon.lib import (
     aclcheck,
     aclgenerator,
     naming,
+    pcap,
     plugin_supervisor,
     policy,
     policy_builder,
@@ -243,7 +247,7 @@ def Generate(
     expiration_weeks: int = 2,
     include_path: Optional[pathlib.Path] = None,
     includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
-) -> "dict[str, str]":
+) -> "typing.MutableMapping[str, str] | None":
     """Generate ACLs from policies.
 
     Args:
@@ -310,12 +314,12 @@ def _Generate(
     include_path: Optional[pathlib.Path] = None,
     includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
     max_renderers: int = 1,
-) -> "dict[str, str]":
+) -> "typing.MutableMapping[str, str] | None":
     # thead-safe list for storing files to write
     manager: multiprocessing.managers.SyncManager = context.Manager()
     write_files: WriteList = manager.list()
-    errors: list = manager.list()
-    generated_configs: dict = manager.dict()
+    errors: typing.MutableSequence = manager.list()
+    generated_configs: typing.MutableMapping = manager.dict()
 
     if max_renderers == 1:
         for input_policy in policies:
@@ -371,15 +375,15 @@ def _GenerateACL(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
     write_files: WriteList,
-    generated_configs: dict,
+    generated_configs: typing.MutableMapping[str, str],
     output_directory: Optional[pathlib.Path] = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
     include_path: Optional[pathlib.Path] = None,
-    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
+    includes: dict[str, policy_builder.TermsList] | None = None,
 ):
-    filename = input_policy.get("filename")
+    filename = input_policy.get("filename", "<unknown>")
 
     processed_policy = input_policy
     if include_path or includes:
@@ -430,7 +434,7 @@ def _GenerateACL(
     def EmitACL(
         acl_text: str,
         acl_suffix: str,
-        write_files: list[tuple[pathlib.Path, str]],
+        write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
     ):
         if output_directory:
@@ -448,6 +452,7 @@ def _GenerateACL(
         try:
             # special handling for pcap
             if target == 'pcap':
+                assert issubclass(generator, pcap.PcapFilter)
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(
                     str(acl_obj),
