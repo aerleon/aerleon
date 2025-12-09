@@ -60,7 +60,10 @@ from absl import logging
 from aerleon.lib import plugin
 from aerleon.lib.aclgenerator import ACLGenerator
 
-__all__ = ["PluginSupervisor", "PluginSupervisorConfiguration", ]
+__all__ = [
+    "PluginSupervisor",
+    "PluginSupervisorConfiguration",
+]
 
 
 class _PluginSupervisor:

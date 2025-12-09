@@ -118,4 +118,5 @@ class BasePlugin:
 @dataclass
 class SystemMetadata:
     """Interface for the engine to provide metadata about itself to plugins."""
+
     engine_version: str

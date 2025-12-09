@@ -1,8 +1,8 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import pathlib
-from typing import Optional, Union
 import typing
+from typing import Optional, Union
 
 import yaml
 from absl import logging
@@ -51,7 +51,14 @@ class UserMessage:
     line: int | None
     include_chain: "list[tuple[str, int]] | None"
 
-    def __init__(self, message: str, *, filename: str, line: int | None = None, include_chain: "list[tuple[str, int]] | None" = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        filename: str,
+        line: int | None = None,
+        include_chain: "list[tuple[str, int]] | None" = None,
+    ) -> None:
         self.message = message
         self.filename = filename
         self.line = line
@@ -91,7 +98,9 @@ class UserMessage:
         return cls(str(error), filename=filename, line=line, include_chain=include_chain)
 
 
-def ParseFile(filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False):
+def ParseFile(
+    filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False
+):
     """Load a policy yaml file and return a Policy data model.
 
     Args:
@@ -122,7 +131,13 @@ def ParseFile(filename, base_dir='', definitions: Naming | None = None, optimize
 
 
 def ParsePolicy(
-    file: str, *, filename, base_dir='', definitions: Naming | None = None, optimize=False, shade_check=False
+    file: str,
+    *,
+    filename,
+    base_dir='',
+    definitions: Naming | None = None,
+    optimize=False,
+    shade_check=False,
 ) -> Optional[Policy]:
     """Load a policy yaml file (provided as a string) and return a Policy data model.
 
@@ -170,9 +185,7 @@ class YAMLPolicyPreprocessor:
         """
         self.base_dir = base_dir
 
-    def __call__(
-        self, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[PolicyDict]:
+    def __call__(self, filename: str, policy_dict: Optional[PolicyDict]) -> Optional[PolicyDict]:
         """Process includes and validate the file data as a PolicyDict.
 
         Args:

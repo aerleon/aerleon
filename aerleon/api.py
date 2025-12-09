@@ -210,12 +210,12 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 
 import copy
 import multiprocessing.context
-import multiprocessing.pool
 import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
-from typing import Optional
 import typing
+from typing import Optional
 
 from absl import logging
 

@@ -17,12 +17,12 @@
 
 import copy
 import multiprocessing.context
-import multiprocessing.pool
 import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
-from collections.abc import Iterator
 import typing
+from collections.abc import Iterator
 
 from absl import app, flags, logging
 
