@@ -1,20 +1,20 @@
 import logging
+import multiprocessing
+import os
+import pathlib
 import re
+import shutil
+import tempfile
 import unittest
 from unittest import mock
 
+from absl import logging as absl_logging  # Keep absl logging for explicit usages if any
 from absl.testing import absltest
-from absl import logging as absl_logging # Keep absl logging for explicit usages if any
 
 from aerleon import api
-from aerleon.lib import naming, policy, aclgenerator
+from aerleon.lib import aclgenerator, naming, policy
 from aerleon.lib.policy_builder import PolicyDict
 from tests.regression_utils import capture
-import pathlib
-import multiprocessing
-import tempfile
-import shutil
-import os
 
 # fmt: off
 GOOD_POLICY_1: PolicyDict = {
@@ -221,9 +221,9 @@ class ApiTest(absltest.TestCase):
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
         relevant_logs = [
-            r for r in generate_logs.records 
-            if r.getMessage() != "__SENTINEL__" 
-            and r.levelno >= logging.WARNING
+            r
+            for r in generate_logs.records
+            if r.getMessage() != "__SENTINEL__" and r.levelno >= logging.WARNING
         ]
         self.assertEqual(
             relevant_logs,
@@ -251,9 +251,9 @@ class ApiTest(absltest.TestCase):
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
         relevant_logs = [
-            r for r in aclcheck_logs.records 
-            if r.getMessage() != "__SENTINEL__" 
-            and r.levelno >= logging.WARNING
+            r
+            for r in aclcheck_logs.records
+            if r.getMessage() != "__SENTINEL__" and r.levelno >= logging.WARNING
         ]
         self.assertEqual(
             relevant_logs,
@@ -339,9 +339,9 @@ class ApiTest(absltest.TestCase):
             # Verify there were no (unexpected) log messages
             # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
             relevant_logs = [
-                r for r in generate_logs.records 
-                if r.getMessage() != "__SENTINEL__" 
-                and r.levelno >= logging.WARNING
+                r
+                for r in generate_logs.records
+                if r.getMessage() != "__SENTINEL__" and r.levelno >= logging.WARNING
             ]
             self.assertEqual(
                 relevant_logs,
@@ -502,9 +502,9 @@ class ApiTest(absltest.TestCase):
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
         relevant_logs = [
-            r for r in aclcheck_logs.records 
-            if r.getMessage() != "__SENTINEL__" 
-            and r.levelno >= logging.WARNING
+            r
+            for r in aclcheck_logs.records
+            if r.getMessage() != "__SENTINEL__" and r.levelno >= logging.WARNING
         ]
         self.assertEqual(
             relevant_logs,
@@ -557,9 +557,7 @@ class ApiTest(absltest.TestCase):
             "filters": [
                 {
                     "header": {
-                        "targets": {
-                            "pcap": "test-filter"
-                        },
+                        "targets": {"pcap": "test-filter"},
                     },
                     "terms": [
                         {
@@ -582,7 +580,9 @@ class ApiTest(absltest.TestCase):
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(NETWORKS_1, "")
 
-        configs = api._Generate([GOOD_POLICY_1], definitions, multiprocessing.get_context(), max_renderers=2)
+        configs = api._Generate(
+            [GOOD_POLICY_1], definitions, multiprocessing.get_context(), max_renderers=2
+        )
         self.assertIn("raw_policy_all_builtin.acl", configs)
 
     def testGenerateUnknownTarget(self):
@@ -592,9 +592,7 @@ class ApiTest(absltest.TestCase):
             "filters": [
                 {
                     "header": {
-                        "targets": {
-                            "unknown_target_xyz": "test-filter"
-                        },
+                        "targets": {"unknown_target_xyz": "test-filter"},
                     },
                     "terms": [
                         {
@@ -616,7 +614,7 @@ class ApiTest(absltest.TestCase):
         # Create a policy that causes a shading error
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(NETWORKS_1, "")
-        
+
         shading_policy: PolicyDict = {
             "filename": "shading_policy",
             "filters": [
@@ -643,25 +641,26 @@ class ApiTest(absltest.TestCase):
         with self.assertLogs(level=logging.WARNING) as log:
             api.Generate([shading_policy], definitions, shade_check=True)
             # Verify that the specific shading message is present in the logs
-            self.assertTrue(any("term-2 is shaded by term-1" in r.getMessage() for r in log.records))
+            self.assertTrue(
+                any("term-2 is shaded by term-1" in r.getMessage() for r in log.records)
+            )
 
     def testIncludePath(self):
-         """Test that policy includes are resolved correctly from include_path."""
-         with tempfile.TemporaryDirectory() as tmpdirname:
-             tmp_path = pathlib.Path(tmpdirname)
-             with open(tmp_path / "inc.yaml", "w") as f:
-                 f.write("terms:\n  - name: included\n    action: accept\n")
-             
-             policy_with_include = {
-                 "filename": "test_include",
-                 "filters": [{
-                     "header": {"targets": {"cisco": "test"}},
-                     "terms": [{"include": "inc.yaml"}]
-                 }]
-             }
-             
-             definitions = naming.Naming()
-             api.Generate([policy_with_include], definitions, include_path=tmp_path)
+        """Test that policy includes are resolved correctly from include_path."""
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tmp_path = pathlib.Path(tmpdirname)
+            with open(tmp_path / "inc.yaml", "w") as f:
+                f.write("terms:\n  - name: included\n    action: accept\n")
+
+            policy_with_include = {
+                "filename": "test_include",
+                "filters": [
+                    {"header": {"targets": {"cisco": "test"}}, "terms": [{"include": "inc.yaml"}]}
+                ],
+            }
+
+            definitions = naming.Naming()
+            api.Generate([policy_with_include], definitions, include_path=tmp_path)
 
     def testPolicyError(self):
         """Test that invalid policy structure raises an ACLParserError."""
@@ -692,19 +691,19 @@ class ApiTest(absltest.TestCase):
         # Invalid policy for AclCheck
         invalid_policy = {
             "filename": "invalid_policy",
-             "filters": [
-                 {
-                     "header": {
+            "filters": [
+                {
+                    "header": {
                         "targets": {"cisco": "test-filter"},
-                     },
-                     "terms": [
-                         {
-                             "name": "term-1",
-                             "action": "invalid_action_xyz",
-                         }
-                     ]
-                 }
-             ]
+                    },
+                    "terms": [
+                        {
+                            "name": "term-1",
+                            "action": "invalid_action_xyz",
+                        }
+                    ],
+                }
+            ],
         }
         definitions = naming.Naming()
         with self.assertRaisesRegex(api.ACLParserError, "Error parsing policy"):
@@ -716,10 +715,12 @@ class ApiTest(absltest.TestCase):
         # Test None for policies list
         with self.assertRaises(TypeError):
             api.Generate(None, definitions)
-        
+
         # Test None for definitions
         # This raises ACLParserError because PolicyBuilder fails and it's caught
-        with self.assertRaisesRegex(api.ACLParserError, "(?s)Error parsing policy.*UndefinedAddressError"):
+        with self.assertRaisesRegex(
+            api.ACLParserError, "(?s)Error parsing policy.*UndefinedAddressError"
+        ):
             api.Generate([GOOD_POLICY_1], None)
 
     def testGenerateEmptyPolicy(self):
@@ -739,23 +740,30 @@ class ApiTest(absltest.TestCase):
         # Mock the generator to force an error, ensuring we test the api.py error handling path
         # regardless of specific policy validity details.
         mock_generator = mock.Mock(side_effect=aclgenerator.Error("mock generator error"))
-        # Simulate the class attribute SUFFIX which api.py accesses before instantiation in some paths? 
-        
+        # Simulate the class attribute SUFFIX which api.py accesses before instantiation in some paths?
+
         class MockGen:
             SUFFIX = ".acl"
+
             def __init__(self, *args, **kwargs):
                 raise aclgenerator.Error("mock generator error")
 
-        
         # Mock Start to avoid overwriting mock generators because PluginSupervisor.Start() normally resets the generator table.
         with mock.patch.object(api.plugin_supervisor.PluginSupervisor, 'Start', return_value=None):
-            with mock.patch.dict(api.plugin_supervisor.PluginSupervisor.generators, {'cisco': MockGen}):
+            with mock.patch.dict(
+                api.plugin_supervisor.PluginSupervisor.generators, {'cisco': MockGen}
+            ):
                 policy_dict = {
-                    "filename": "test", 
-                    "filters": [{"header": {"targets": {"cisco": "test"}}, "terms": [{"name": "t", "action": "accept"}]}]
+                    "filename": "test",
+                    "filters": [
+                        {
+                            "header": {"targets": {"cisco": "test"}},
+                            "terms": [{"name": "t", "action": "accept"}],
+                        }
+                    ],
                 }
                 definitions = naming.Naming()
-                
+
                 with self.assertRaisesRegex(api.ACLGeneratorError, "Error generating target ACL"):
                     api.Generate([policy_dict], definitions)
 
@@ -771,7 +779,7 @@ class ApiTest(absltest.TestCase):
                     },
                     "terms": [
                         {
-                            "name": "term-1", 
+                            "name": "term-1",
                             "action": "accept",
                         },
                     ],
@@ -779,14 +787,11 @@ class ApiTest(absltest.TestCase):
             ],
         }
         definitions = naming.Naming()
-        
+
         # Expect a warning log about error encountered.
         with self.assertLogs(level=logging.WARNING) as log:
             api._Generate(
-                [bad_cisco_policy], 
-                definitions, 
-                multiprocessing.get_context(), 
-                max_renderers=2
+                [bad_cisco_policy], definitions, multiprocessing.get_context(), max_renderers=2
             )
             self.assertTrue(any("error encountered" in r.getMessage() for r in log.records))
 
@@ -795,7 +800,7 @@ class ApiTest(absltest.TestCase):
         """Test that policy.ShadingError is caught and logged."""
         mock_from_builder.side_effect = policy.ShadingError("mock shading error")
         definitions = naming.Naming()
-        
+
         with self.assertLogs(level=logging.WARNING) as log:
             api.Generate([GOOD_POLICY_1], definitions, shade_check=True)
             self.assertTrue(any("shading errors" in r.getMessage() for r in log.records))
