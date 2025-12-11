@@ -536,7 +536,7 @@ class ApiTest(absltest.TestCase):
         """Test that providing both include_path and includes raises a TypeError."""
         definitions = naming.Naming()
         with self.assertRaisesRegex(TypeError, "mutually exclusive"):
-            api.Generate([], definitions, include_path="foo", includes={'a': {}}) # type: ignore
+            api.Generate([], definitions, include_path="foo", includes={'a': {}})  # type: ignore
 
     def testGenerateWithOutputDirectory(self):
         """Test that api.Generate writes files to the specified output directory."""
@@ -720,14 +720,14 @@ class ApiTest(absltest.TestCase):
         definitions = naming.Naming()
         # Test None for policies list
         with self.assertRaises(TypeError):
-            api.Generate(None, definitions) # type: ignore
+            api.Generate(None, definitions)  # type: ignore
 
         # Test None for definitions
         # This raises ACLParserError because PolicyBuilder fails and it's caught
         with self.assertRaisesRegex(
             api.ACLParserError, "(?s)Error parsing policy.*UndefinedAddressError"
         ):
-            api.Generate([GOOD_POLICY_1], None) # type: ignore
+            api.Generate([GOOD_POLICY_1], None)  # type: ignore
 
     def testGenerateEmptyPolicy(self):
         """Test that an empty policy (no filters) logs a warning."""
