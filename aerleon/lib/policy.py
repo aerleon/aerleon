@@ -1860,7 +1860,7 @@ tokens = (
     'SPORT',
     'SZONE',
     'STAG',
-    'TAG',
+    'TAGS',
     'STRING',
     'TARGET',
     'TARGET_RESOURCES',
@@ -1941,7 +1941,7 @@ reserved = {
     'source-prefix-except': 'ESPFX',
     'source-port': 'SPORT',
     'source-tag': 'STAG',
-    'tag': 'TAG',
+    'tags': 'TAGS',
     'source-zone': 'SZONE',
     'target': 'TARGET',
     'target-resources': 'TARGET_RESOURCES',
@@ -2375,7 +2375,7 @@ def p_protocol_spec(p: YaccProduction) -> None:
 def p_tag_list_spec(p: YaccProduction) -> None:
     """tag_list_spec : DTAG ':' ':' one_or_more_strings
     | STAG ':' ':' one_or_more_strings
-    | TAG ':' ':' one_or_more_strings"""
+    | TAGS ':' ':' one_or_more_strings"""
     p[0] = []
     for tag in p[4]:
         if p[1].find('source-tag') >= 0:

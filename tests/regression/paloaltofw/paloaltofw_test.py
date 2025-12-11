@@ -439,7 +439,8 @@ term test-custom-tag {
   comment:: "Testing custom tag assignment."
   protocol:: tcp
   action:: accept
-  tag:: custom-tag-name second-custom-tag
+  tags:: custom-tag-name second-custom-tag
+  
 }
 """
 
@@ -448,7 +449,7 @@ term test-custom-tag-2 {
   comment:: "Testing custom tag assignment."
   protocol:: tcp
   action:: accept
-  tag:: custom-tag-name second-custom-tag
+  tags:: custom-tag-name second-custom-tag
 }
 """
 
