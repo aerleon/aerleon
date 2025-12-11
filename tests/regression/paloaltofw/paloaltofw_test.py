@@ -896,22 +896,20 @@ term rule-1 {
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-log-both']/log-end")
         self.assertEqual(x, 'yes', output)
         print(output)
-        
 
     @capture.stdout
     def testDisableLogging(self):
-        
+
         paloalto = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + LOGGING_DISABLED, self.naming), EXP_INFO
         )
         output = str(paloalto)
-        
+
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-start")
         self.assertEqual(x, 'no', output)
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-end")
         self.assertEqual(x, 'no', output)
         print(output)
-        
 
     @capture.stdout
     def testLogging(self):
@@ -934,7 +932,6 @@ term rule-1 {
             self.assertEqual(len(x), 1, output)
             self.assertEqual(x[0].text, 'yes', output)
             print(output)
-            
 
     @capture.stdout
     def testAcceptAction(self):
@@ -1887,5 +1884,7 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
+
+
 if __name__ == '__main__':
     absltest.main()
