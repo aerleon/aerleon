@@ -808,18 +808,12 @@ class ApiTest(absltest.TestCase):
     def testGenerateNestedInclude(self):
         """Verify that nested includes work with the `includes` parameter."""
         include_policy_1 = {
-            "header": {
-                "targets": {"cisco": "include_policy_1"},
-            },
             "terms": [
                 {"include": "include_policy_2"},
             ],
         }
 
         include_policy_2 = {
-            "header": {
-                "targets": {"cisco": "include_policy_2"},
-            },
             "terms": [
                 {"name": "accept", "action": "accept"},
             ],
