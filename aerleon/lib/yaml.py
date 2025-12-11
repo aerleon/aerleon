@@ -4,6 +4,7 @@ import pathlib
 import typing
 from typing import Optional, Union
 
+import copy
 import yaml
 from absl import logging
 from yaml.error import YAMLError
@@ -477,4 +478,20 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
         self, relative_path: str, stack: list
     ) -> tuple[Optional[TermsList], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
-        return self.includes.get(relative_path), relative_path
+        include_data = self.includes.get(relative_path)
+        if not include_data:
+            return None, relative_path
+
+        def _add_debug_info(data, filename):
+            if isinstance(data, dict):
+                data['__filename__'] = filename
+                data['__line__'] = 1
+                for value in data.values():
+                    _add_debug_info(value, filename)
+            elif isinstance(data, list):
+                for item in data:
+                    _add_debug_info(item, filename)
+
+        include_data_copy = copy.deepcopy(include_data)
+        _add_debug_info(include_data_copy, relative_path)
+        return include_data_copy, relative_path

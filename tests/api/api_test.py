@@ -804,3 +804,46 @@ class ApiTest(absltest.TestCase):
         with self.assertLogs(level=logging.WARNING) as log:
             api.Generate([GOOD_POLICY_1], definitions, shade_check=True)
             self.assertTrue(any("shading errors" in r.getMessage() for r in log.records))
+
+    def testGenerateNestedInclude(self):
+        """Verify that nested includes work with the `includes` parameter."""
+        include_policy_1 = {
+            "header": {
+                "targets": {"cisco": "include_policy_1"},
+            },
+            "terms": [
+                {"include": "include_policy_2"},
+            ],
+        }
+
+        include_policy_2 = {
+            "header": {
+                "targets": {"cisco": "include_policy_2"},
+            },
+            "terms": [
+                {"name": "accept", "action": "accept"},
+            ],
+        }
+
+        main_policy = {
+            "filename": "main_policy",
+            "filters": [
+                {
+                    "header": {
+                        "targets": {"cisco": "main_policy"},
+                    },
+                    "terms": [
+                        {"include": "include_policy_1"},
+                    ],
+                }
+            ],
+        }
+
+        definitions = naming.Naming()
+
+        # This should not raise an exception
+        api.Generate(
+            [main_policy],
+            definitions,
+            includes={"include_policy_1": include_policy_1, "include_policy_2": include_policy_2},
+        )
