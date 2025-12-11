@@ -434,6 +434,24 @@ term test-accept-action {
 }
 """
 
+CUSTOM_TAG_TERM = """
+term test-custom-tag {
+  comment:: "Testing custom tag assignment."
+  protocol:: tcp
+  action:: accept
+  tag:: custom-tag-name second-custom-tag
+}
+"""
+
+CUSTOM_TAG_TERM_2 = """
+term test-custom-tag-2 {
+  comment:: "Testing custom tag assignment."
+  protocol:: tcp
+  action:: accept
+  tag:: custom-tag-name second-custom-tag
+}
+"""
+
 HEADER_COMMENTS = """
 header {
   comment:: "comment 1"
@@ -499,6 +517,7 @@ SUPPORTED_TOKENS = frozenset(
         'timeout',
         'pan_application',
         'translated',
+        'tag',
     }
 )
 
@@ -876,18 +895,22 @@ term rule-1 {
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-log-both']/log-end")
         self.assertEqual(x, 'yes', output)
         print(output)
+        
 
     @capture.stdout
     def testDisableLogging(self):
+        
         paloalto = paloaltofw.PaloAltoFW(
             policy.ParsePolicy(GOOD_HEADER_1 + LOGGING_DISABLED, self.naming), EXP_INFO
         )
         output = str(paloalto)
+        
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-start")
         self.assertEqual(x, 'no', output)
         x = paloalto.config.findtext(f"{PATH_RULES}/entry[@name='test-disabled-log']/log-end")
         self.assertEqual(x, 'no', output)
         print(output)
+        
 
     @capture.stdout
     def testLogging(self):
@@ -910,6 +933,7 @@ term rule-1 {
             self.assertEqual(len(x), 1, output)
             self.assertEqual(x[0].text, 'yes', output)
             print(output)
+            
 
     @capture.stdout
     def testAcceptAction(self):
@@ -1856,6 +1880,11 @@ term rule-1 {
         addrs = {elem.text for elem in x}
         self.assertEqual({"6000::/3"}, addrs, output)
 
-
+    @capture.stdout
+    def testCustomTags(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + CUSTOM_TAG_TERM + CUSTOM_TAG_TERM_2, self.naming)
+        paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
+        output = str(paloalto)
+        print(output)
 if __name__ == '__main__':
     absltest.main()
