@@ -1356,6 +1356,7 @@ targets:
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
 * _timeout_: specify application timeout. (default 60)
+* _tags_: specifies one or more tags to be added to the rule.
 
 ### Sub Tokens
 

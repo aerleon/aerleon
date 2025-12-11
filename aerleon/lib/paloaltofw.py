@@ -141,6 +141,8 @@ class Rule:
         options["application"] = []
         options["service"] = []
         options["logging"] = []
+        # palo alto specific tag(s) for the term
+        options["tag"] = []
 
         ACTIONS = {
             "accept": "allow",
@@ -207,6 +209,12 @@ class Rule:
         if term.pan_application:
             for pan_app in term.pan_application:
                 options["application"].append(pan_app)
+
+        # TERM TAGS
+        if getattr(term, 'tag', None):
+            for t in term.tag:
+                if t and t not in options["tag"]:
+                    options["tag"].append(t)
 
         if term.source_port or term.destination_port:
             src_ports = pan_ports(term.source_port)
@@ -372,6 +380,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             "timeout",
             "pan_application",
             "translated",
+            "tag",
         }
 
         supported_sub_tokens.update(
@@ -927,6 +936,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
         security = etree.SubElement(rulebase, "security")
         rules = etree.SubElement(security, "rules")
         tag = etree.Element("tag")
+        tags_added = set()
 
         tag_num = 0
 
@@ -951,10 +961,19 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                             self._MAX_TAG_COMMENTS_LENGTH,
                         )
                     comments.text = comment[: self._MAX_TAG_COMMENTS_LENGTH]
+                    tags_added.add(tag_name)
 
             no_addr_obj = (
                 True if (len(filter_options) > 5 and filter_options[5] == "no-addr-obj") else False
             )
+
+            # Ensure any term-level tags are added to the global <tag> list
+            for _nm, _opts in pa_rules.items():
+                if _opts.get("tag"):
+                    for t in _opts.get("tag", []):
+                        if t and t not in tags_added:
+                            etree.SubElement(tag, "entry", {"name": t})
+                            tags_added.add(t)
 
             for name, options in pa_rules.items():
                 entry = etree.SubElement(rules, "entry", {"name": name})
@@ -1081,10 +1100,19 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                         member = etree.SubElement(app, "member")
                         member.text = x
 
+                # collect tags for this rule: header-generated tag_name and any term tags
+                tags_for_rule = []
                 if tag_name is not None:
+                    tags_for_rule.append(tag_name)
+                if options.get("tag"):
+                    for t in options.get("tag", []):
+                        if t:
+                            tags_for_rule.append(t)
+                if tags_for_rule:
                     rules_tag = etree.SubElement(entry, "tag")
-                    member = etree.SubElement(rules_tag, "member")
-                    member.text = tag_name
+                    for t in tags_for_rule:
+                        member = etree.SubElement(rules_tag, "member")
+                        member.text = t
 
                 # LOGGING
                 if options["logging"]:
