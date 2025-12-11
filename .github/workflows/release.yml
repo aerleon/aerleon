@@ -3,6 +3,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 jobs:
   build:
     name: Build and sign artifacts
@@ -96,7 +97,7 @@ jobs:
       - name: Remove signature json
         run: rm -f built-packages/aerleon-*.sigstore.json
       - name: publish
-        uses: pypa/gh-action-pypi-publish@v1.8.14
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
