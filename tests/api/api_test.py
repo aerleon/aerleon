@@ -14,6 +14,7 @@ from absl.testing import absltest
 from aerleon import api
 from aerleon.lib import aclgenerator, naming, policy
 from aerleon.lib.policy_builder import PolicyDict
+from aerleon.lib.yaml import ExcessiveRecursionError
 from tests.regression_utils import capture
 
 # fmt: off
@@ -804,3 +805,111 @@ class ApiTest(absltest.TestCase):
         with self.assertLogs(level=logging.WARNING) as log:
             api.Generate([GOOD_POLICY_1], definitions, shade_check=True)
             self.assertTrue(any("shading errors" in r.getMessage() for r in log.records))
+
+    def testGenerateNestedInclude(self):
+        """Verify that nested includes work with the `includes` parameter."""
+        include_policy_1 = {
+            "terms": [
+                {"include": "include_policy_2"},
+            ],
+        }
+
+        include_policy_2 = {
+            "terms": [
+                {"name": "accept", "action": "accept"},
+            ],
+        }
+
+        main_policy = {
+            "filename": "main_policy",
+            "filters": [
+                {
+                    "header": {
+                        "targets": {"cisco": "main_policy"},
+                    },
+                    "terms": [
+                        {"include": "include_policy_1"},
+                    ],
+                }
+            ],
+        }
+
+        definitions = naming.Naming()
+
+        # This should not raise an exception
+        api.Generate(
+            [main_policy],
+            definitions,
+            includes={"include_policy_1": include_policy_1, "include_policy_2": include_policy_2},
+        )
+
+    def testDeeplyGenerateNestedInclude(self):
+        """Verify that nested includes work with the `includes` parameter and can reach the nesting limit."""
+        include_policy_1 = {
+            "terms": [
+                {"include": "include_policy_2"},
+            ],
+        }
+
+        include_policy_2 = {
+            "terms": [
+                {"include": "include_policy_3"},
+            ],
+        }
+
+        include_policy_3 = {
+            "terms": [
+                {"include": "include_policy_4"},
+            ],
+        }
+
+        include_policy_4 = {
+            "terms": [
+                {"include": "include_policy_5"},
+            ],
+        }
+
+        include_policy_5 = {
+            "terms": [
+                {"include": "include_policy_6"},
+            ],
+        }
+
+        include_policy_6 = {
+            "terms": [
+                {"name": "accept", "action": "accept"},
+            ],
+        }
+
+        main_policy = {
+            "filename": "main_policy",
+            "filters": [
+                {
+                    "header": {
+                        "targets": {"cisco": "main_policy"},
+                    },
+                    "terms": [
+                        {"include": "include_policy_1"},
+                    ],
+                }
+            ],
+        }
+
+        definitions = naming.Naming()
+
+        # This should raise an exception
+        with self.assertRaisesRegex(
+            ExcessiveRecursionError, "Excessive recursion: include depth limit of 5 reached."
+        ):
+            api.Generate(
+                [main_policy],
+                definitions,
+                includes={
+                    "include_policy_1": include_policy_1,
+                    "include_policy_2": include_policy_2,
+                    "include_policy_3": include_policy_3,
+                    "include_policy_4": include_policy_4,
+                    "include_policy_5": include_policy_5,
+                    "include_policy_6": include_policy_6,
+                },
+            )
