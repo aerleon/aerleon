@@ -13,7 +13,7 @@ from absl.testing import absltest
 
 from aerleon import api
 from aerleon.lib import aclgenerator, naming, policy
-from aerleon.lib.policy_builder import PolicyDict
+from aerleon.lib.policy_builder import PolicyDict, PolicyFilterTermsOnly
 from aerleon.lib.yaml import ExcessiveRecursionError
 from tests.regression_utils import capture
 
@@ -217,6 +217,7 @@ class ApiTest(absltest.TestCase):
             logging.warning("__SENTINEL__")
 
             configs = api.Generate([GOOD_POLICY_1], definitions)
+            assert configs is not None
             acl = configs["raw_policy_all_builtin.acl"]
 
         # Verify there were no (unexpected) log messages
@@ -334,6 +335,7 @@ class ApiTest(absltest.TestCase):
             logging.warning("__SENTINEL__")
 
             configs = api.Generate([cisco_example_policy], definitions)
+            assert configs is not None
             acl = configs["cisco_example_policy.acl"]
             print(acl)
 
@@ -379,7 +381,7 @@ class ApiTest(absltest.TestCase):
         }
 
         # The dictionary that will be "included"
-        included_terms_policy = {
+        included_terms_policy: PolicyFilterTermsOnly = {
             "terms": [
                 {
                     "name": "included-term-1",
@@ -402,6 +404,7 @@ class ApiTest(absltest.TestCase):
 
         # Generate the ACL, providing the `includes` dictionary
         configs = api.Generate([main_policy], definitions, includes=includes_dict)
+        assert configs is not None
         acl = configs["policy_with_term_include.acl"]
 
         # Verify that terms from the main policy and the included policy are present
@@ -421,7 +424,7 @@ class ApiTest(absltest.TestCase):
         test_output = []
         # Define the policy as a Python dictionary
         # This structure mirrors the YAML policy file format.
-        example_policy = {
+        example_policy: PolicyDict = {
             "filename": "my_api_policy_check",  # Used for context, not for file output in AclCheck
             "filters": [
                 {
@@ -533,7 +536,7 @@ class ApiTest(absltest.TestCase):
         """Test that providing both include_path and includes raises a TypeError."""
         definitions = naming.Naming()
         with self.assertRaisesRegex(TypeError, "mutually exclusive"):
-            api.Generate([], definitions, include_path="foo", includes={'a': {}})
+            api.Generate([], definitions, include_path="foo", includes={'a': {}}) # type: ignore
 
     def testGenerateWithOutputDirectory(self):
         """Test that api.Generate writes files to the specified output directory."""
@@ -553,7 +556,7 @@ class ApiTest(absltest.TestCase):
 
     def testGeneratePcap(self):
         """Test that pcap targets are generated correctly with -accept and -deny suffixes."""
-        pcap_policy = {
+        pcap_policy: PolicyDict = {
             "filename": "pcap_policy",
             "filters": [
                 {
@@ -573,6 +576,7 @@ class ApiTest(absltest.TestCase):
         definitions = naming.Naming()
         definitions.ParseDefinitionsObject(NETWORKS_1, "")
         configs = api.Generate([pcap_policy], definitions)
+        assert configs is not None
         self.assertIn("pcap_policy-accept.pcap", configs)
         self.assertIn("pcap_policy-deny.pcap", configs)
 
@@ -584,6 +588,7 @@ class ApiTest(absltest.TestCase):
         configs = api._Generate(
             [GOOD_POLICY_1], definitions, multiprocessing.get_context(), max_renderers=2
         )
+        assert configs is not None
         self.assertIn("raw_policy_all_builtin.acl", configs)
 
     def testGenerateUnknownTarget(self):
@@ -653,7 +658,7 @@ class ApiTest(absltest.TestCase):
             with open(tmp_path / "inc.yaml", "w") as f:
                 f.write("terms:\n  - name: included\n    action: accept\n")
 
-            policy_with_include = {
+            policy_with_include: PolicyDict = {
                 "filename": "test_include",
                 "filters": [
                     {"header": {"targets": {"cisco": "test"}}, "terms": [{"include": "inc.yaml"}]}
@@ -666,7 +671,7 @@ class ApiTest(absltest.TestCase):
     def testPolicyError(self):
         """Test that invalid policy structure raises an ACLParserError."""
         # Invalid policy structure to trigger parser error
-        invalid_policy = {
+        invalid_policy: PolicyDict = {
             "filename": "invalid_policy",
             "filters": [
                 {
@@ -690,7 +695,7 @@ class ApiTest(absltest.TestCase):
     def testAclCheckInvalidAction(self):
         """Test that AclCheck raises ACLParserError for invalid actions in policy."""
         # Invalid policy for AclCheck
-        invalid_policy = {
+        invalid_policy: PolicyDict = {
             "filename": "invalid_policy",
             "filters": [
                 {
@@ -715,19 +720,19 @@ class ApiTest(absltest.TestCase):
         definitions = naming.Naming()
         # Test None for policies list
         with self.assertRaises(TypeError):
-            api.Generate(None, definitions)
+            api.Generate(None, definitions) # type: ignore
 
         # Test None for definitions
         # This raises ACLParserError because PolicyBuilder fails and it's caught
         with self.assertRaisesRegex(
             api.ACLParserError, "(?s)Error parsing policy.*UndefinedAddressError"
         ):
-            api.Generate([GOOD_POLICY_1], None)
+            api.Generate([GOOD_POLICY_1], None) # type: ignore
 
     def testGenerateEmptyPolicy(self):
         """Test that an empty policy (no filters) logs a warning."""
         # Using a valid policy structure but with empty filters list
-        empty_policy = {
+        empty_policy: PolicyDict = {
             "filename": "empty_policy",
             "filters": [],
         }
@@ -754,7 +759,7 @@ class ApiTest(absltest.TestCase):
             with mock.patch.dict(
                 api.plugin_supervisor.PluginSupervisor.generators, {'cisco': MockGen}
             ):
-                policy_dict = {
+                policy_dict: PolicyDict = {
                     "filename": "test",
                     "filters": [
                         {
@@ -771,7 +776,7 @@ class ApiTest(absltest.TestCase):
     def testGenerateMultiprocessingError(self):
         """Test exception handling in multiprocessing worker retrieval."""
         # An invalid target type triggers UnsupportedCiscoAccessListError -> ACLGeneratorError
-        bad_cisco_policy = {
+        bad_cisco_policy: PolicyDict = {
             "filename": "bad_cisco_policy",
             "filters": [
                 {
@@ -808,19 +813,19 @@ class ApiTest(absltest.TestCase):
 
     def testGenerateNestedInclude(self):
         """Verify that nested includes work with the `includes` parameter."""
-        include_policy_1 = {
+        include_policy_1: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_2"},
             ],
         }
 
-        include_policy_2 = {
+        include_policy_2: PolicyFilterTermsOnly = {
             "terms": [
                 {"name": "accept", "action": "accept"},
             ],
         }
 
-        main_policy = {
+        main_policy: PolicyDict = {
             "filename": "main_policy",
             "filters": [
                 {
@@ -845,43 +850,43 @@ class ApiTest(absltest.TestCase):
 
     def testDeeplyGenerateNestedInclude(self):
         """Verify that nested includes work with the `includes` parameter and can reach the nesting limit."""
-        include_policy_1 = {
+        include_policy_1: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_2"},
             ],
         }
 
-        include_policy_2 = {
+        include_policy_2: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_3"},
             ],
         }
 
-        include_policy_3 = {
+        include_policy_3: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_4"},
             ],
         }
 
-        include_policy_4 = {
+        include_policy_4: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_5"},
             ],
         }
 
-        include_policy_5 = {
+        include_policy_5: PolicyFilterTermsOnly = {
             "terms": [
                 {"include": "include_policy_6"},
             ],
         }
 
-        include_policy_6 = {
+        include_policy_6: PolicyFilterTermsOnly = {
             "terms": [
                 {"name": "accept", "action": "accept"},
             ],
         }
 
-        main_policy = {
+        main_policy: PolicyDict = {
             "filename": "main_policy",
             "filters": [
                 {

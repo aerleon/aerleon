@@ -246,7 +246,7 @@ def Generate(
     shade_check: bool = False,
     expiration_weeks: int = 2,
     include_path: Optional[pathlib.Path | str] = None,
-    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
+    includes: Optional[dict[str, policy_builder.PolicyFilterTermsOnly]] = None,
 ) -> "typing.MutableMapping[str, str] | None":
     """Generate ACLs from policies.
 
@@ -312,7 +312,7 @@ def _Generate(
     shade_check: bool = False,
     exp_info: int = 2,
     include_path: Optional[pathlib.Path | str] = None,
-    includes: Optional["dict[str, policy_builder.PolicyDict]"] = None,
+    includes: Optional["dict[str, policy_builder.PolicyFilterTermsOnly]"] = None,
     max_renderers: int = 1,
 ) -> "typing.MutableMapping[str, str] | None":
     # thead-safe list for storing files to write
@@ -381,7 +381,7 @@ def _GenerateACL(
     shade_check: bool = False,
     exp_info: int = 2,
     include_path: Optional[pathlib.Path | str] = None,
-    includes: dict[str, policy_builder.TermsList] | None = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
 ):
     filename = input_policy.get("filename", "<unknown>")
 

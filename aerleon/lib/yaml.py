@@ -11,7 +11,7 @@ from yaml.error import YAMLError
 
 from aerleon.lib import policy
 from aerleon.lib.policy import BadIncludePath, Policy, _SubpathOf
-from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict, TermsList
+from aerleon.lib.policy_builder import PolicyBuilder, PolicyDict, PolicyFilterTermsOnly, TermsList
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
 if typing.TYPE_CHECKING:
@@ -466,7 +466,7 @@ class YAMLPolicyPreprocessor:
 class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
     """A YAMLPolicyPreprocessor that sources includes from a dictionary."""
 
-    def __init__(self, includes: dict[str, TermsList]):
+    def __init__(self, includes: dict[str, PolicyFilterTermsOnly]):
         """
         Args:
             includes: A read-only mapping from include name to file_dict.
@@ -476,7 +476,7 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> tuple[Optional[TermsList], Union[str, pathlib.Path]]:
+    ) -> tuple[Optional[PolicyFilterTermsOnly], Union[str, pathlib.Path]]:
         """Override to load includes from the self.includes dictionary."""
         include_data = self.includes.get(relative_path)
         if not include_data:

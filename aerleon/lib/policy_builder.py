@@ -161,6 +161,10 @@ class PolicyFilter(TypedDict):
     terms: TermsList
 
 
+class PolicyFilterTermsOnly(TypedDict):
+    terms: TermsList
+
+
 class PolicyDict(TypedDict):
     filters: 'list[PolicyFilter]'
     filename: NotRequired[str]
