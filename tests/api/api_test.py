@@ -13,8 +13,8 @@ from absl.testing import absltest
 
 from aerleon import api
 from aerleon.lib import aclgenerator, naming, policy
-from aerleon.lib.yaml import ExcessiveRecursionError
 from aerleon.lib.policy_builder import PolicyDict
+from aerleon.lib.yaml import ExcessiveRecursionError
 from tests.regression_utils import capture
 
 # fmt: off
@@ -898,9 +898,18 @@ class ApiTest(absltest.TestCase):
         definitions = naming.Naming()
 
         # This should raise an exception
-        with self.assertRaisesRegex(ExcessiveRecursionError, "Excessive recursion: include depth limit of 5 reached."):
+        with self.assertRaisesRegex(
+            ExcessiveRecursionError, "Excessive recursion: include depth limit of 5 reached."
+        ):
             api.Generate(
                 [main_policy],
                 definitions,
-                includes={"include_policy_1": include_policy_1, "include_policy_2": include_policy_2, "include_policy_3": include_policy_3, "include_policy_4": include_policy_4, "include_policy_5": include_policy_5, "include_policy_6": include_policy_6},
+                includes={
+                    "include_policy_1": include_policy_1,
+                    "include_policy_2": include_policy_2,
+                    "include_policy_3": include_policy_3,
+                    "include_policy_4": include_policy_4,
+                    "include_policy_5": include_policy_5,
+                    "include_policy_6": include_policy_6,
+                },
             )

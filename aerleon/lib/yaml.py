@@ -1,10 +1,10 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
+import copy
 import pathlib
 import typing
 from typing import Optional, Union
 
-import copy
 import yaml
 from absl import logging
 from yaml.error import YAMLError
