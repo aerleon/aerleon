@@ -385,20 +385,20 @@ class Term(aclgenerator.Term):
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
-        ] |
-        tuple[
+        ]
+        | tuple[
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
-        ] |
-        tuple[
+        ]
+        | tuple[
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
-        ] |
-        tuple[
+        ]
+        | tuple[
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
             list[IPv4 | IPv6],
@@ -638,9 +638,7 @@ class Term(aclgenerator.Term):
                 ret_lines.append(' '.join(rval + [action]))
         return ret_lines
 
-    def _GenerateAddressStatement(
-        self, saddr: IPv6 | IPv4, daddr: IPv6 | IPv4
-    ) -> tuple[str, str]:
+    def _GenerateAddressStatement(self, saddr: IPv6 | IPv4, daddr: IPv6 | IPv4) -> tuple[str, str]:
         """Return the address section of an individual iptables rule.
 
         Args:

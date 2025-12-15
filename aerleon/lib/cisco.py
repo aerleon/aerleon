@@ -719,9 +719,7 @@ class Term(aclgenerator.Term):
             return f'range {port0} {port1}'
         return f'eq {port0}'
 
-    def _FixOptions(
-        self, proto: int | str, option: list[str | Any]
-    ) -> list[str | Any]:
+    def _FixOptions(self, proto: int | str, option: list[str | Any]) -> list[str | Any]:
         """Returns a set of options suitable for the given protocol.
 
         Fix done:
