@@ -633,7 +633,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         general/address-address-sets-limitations.html
         """
 
-        def Chunks(addresses: list[Union[nacaddr.IPv4, nacaddr.IPv6]]):
+        def Chunks(addresses: list[nacaddr.IPv4 | nacaddr.IPv6]):
             """Splits a list of IP addresses into smaller lists based on byte size."""
             return_list = [[]]
             counter = 0

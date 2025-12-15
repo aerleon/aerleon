@@ -397,8 +397,8 @@ class Term(aclgenerator.Term):
     def _AddrStatement(
         self,
         address_family: str,
-        src_addr: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
-        dst_addr: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
+        src_addr: list[nacaddr.IPv4 | nacaddr.IPv6],
+        dst_addr: list[nacaddr.IPv4 | nacaddr.IPv6],
     ) -> list[str]:
         """Builds an NFTables address statement.
 
@@ -506,8 +506,8 @@ class Term(aclgenerator.Term):
         return term_ruleset
 
     def _AddressClassifier(
-        self, address_to_classify: list[Union[nacaddr.IPv4, nacaddr.IPv6]]
-    ) -> DefaultDict[str, list[Union[nacaddr.IPv4, nacaddr.IPv6]]]:
+        self, address_to_classify: list[nacaddr.IPv4 | nacaddr.IPv6]
+    ) -> DefaultDict[str, list[nacaddr.IPv4 | nacaddr.IPv6]]:
         """Organizes network addresses according to IP family in a dict.
 
         Args:
@@ -768,8 +768,8 @@ class Nftables(aclgenerator.ACLGenerator):
         return netfilter_family, netfilter_hook, netfilter_priority, policy_default_action, verbose
 
     def _ConfigurationDictionary(
-        self, nft_pol: list[Union[policy.Header, str, int, bool, DefaultDict]]
-    ) -> DefaultDict[str, Union[str, DefaultDict]]:
+        self, nft_pol: list[policy.Header | str | int | bool | DefaultDict]
+    ) -> DefaultDict[str, str | DefaultDict]:
         """NFTables configuration object.
 
         Organizes policies into a data structure that can keep relationships with

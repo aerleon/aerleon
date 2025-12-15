@@ -155,7 +155,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetdest(self, addr_netdestid: str, addresses: Union[IPv4, IPv6], af: int) -> str:
+    def _GenerateNetdest(self, addr_netdestid: str, addresses: IPv4 | IPv6, af: int) -> str:
         """Generates the netdestinations text block.
 
         Args:
@@ -179,7 +179,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(t for t in ret_str if t)
 
-    def _GenerateNetworkOrHostTokens(self, address: Union[IPv4, IPv6]) -> str:
+    def _GenerateNetworkOrHostTokens(self, address: IPv4 | IPv6) -> str:
         """Generates the text block host or network identifier for netdestinations.
 
         Args:

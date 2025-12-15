@@ -280,7 +280,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(str(v) for v in ret_str if v)
 
-    def _CheckAddressAf(self, addrs: list[Union[IPv4, IPv6]]) -> list[Union[IPv4, IPv6, str]]:
+    def _CheckAddressAf(self, addrs: list[IPv4 | IPv6]) -> list[IPv4 | IPv6 | str]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -298,16 +298,16 @@ class Term(aclgenerator.Term):
         action: str,
         direction: str,
         log: list[VarType],
-        interface: Optional[str],
+        interface: str | None,
         af: str,
         proto: list[str],
         src_addr: str,
-        src_port: Union[list[str], str],
+        src_port: list[str] | str,
         dst_addr: str,
-        dst_port: Union[list[str], str],
+        dst_port: list[str] | str,
         tcp_flags_set: list[str],
         tcp_flags_check: list[str],
-        icmp_types: list[Union[str, int]],
+        icmp_types: list[str | int],
         options: list[str],
         stateful: bool,
     ) -> list[str]:
@@ -386,7 +386,7 @@ class Term(aclgenerator.Term):
         return proto
 
     def _GenerateAddrStatement(
-        self, addrs: list[Union[IPv4, IPv6]], exclude_addrs: list[Union[IPv4, IPv6]]
+        self, addrs: list[IPv4 | IPv6], exclude_addrs: list[IPv4 | IPv6]
     ) -> str:
         addresses = set()
         if addrs != ['any']:

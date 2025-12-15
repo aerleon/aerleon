@@ -77,9 +77,9 @@ class ServiceMap:
         self,
         term_name: str,
         src_ports: tuple[str],
-        ports: Union[tuple[str, str], tuple[str]],
+        ports: tuple[str, str] | tuple[str],
         protocol: str,
-        prefix: Optional[str] = None,
+        prefix: str | None = None,
     ) -> str:
         """Returns service name based on the provided ports and protocol."""
         if (src_ports, ports, protocol) in self.entries:
@@ -130,7 +130,7 @@ class Rule:
     @staticmethod
     def TermToOptions(
         from_zone: str, to_zone: str, term: Term, service_map: ServiceMap
-    ) -> tuple[dict[str, Union[list[str], str]], Optional[Term]]:
+    ) -> tuple[dict[str, list[str] | str], Term | None]:
         """Convert term to Palo Alto security rule options."""
         options = {}
         options["from_zone"] = [from_zone]

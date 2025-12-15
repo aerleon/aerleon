@@ -73,7 +73,7 @@ class Term(aclgenerator.Term):
         term: Term,
         filter_name: str,
         trackstate: bool,
-        filter_action: Optional[str],
+        filter_action: str | None,
         af: str = 'inet',
         verbose: bool = True,
         chained_terms: bool = True,
@@ -375,36 +375,36 @@ class Term(aclgenerator.Term):
 
     def _CalculateAddresses(
         self,
-        term_saddr: list[Union[IPv4, IPv6]],
-        exclude_saddr: list[Union[IPv4, IPv6]],
-        term_daddr: list[Union[IPv4, IPv6]],
-        exclude_daddr: list[Union[IPv4, IPv6]],
-    ) -> Union[
+        term_saddr: list[IPv4 | IPv6],
+        exclude_saddr: list[IPv4 | IPv6],
+        term_daddr: list[IPv4 | IPv6],
+        exclude_daddr: list[IPv4 | IPv6],
+    ) -> (
         tuple[
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-        ],
-        tuple[
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-        ],
-        tuple[
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-        ],
-        tuple[
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-            list[Union[IPv4, IPv6]],
-        ],
-    ]:
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+    ):
         """Calculate source and destination address list for a term.
 
         Args:
@@ -482,18 +482,18 @@ class Term(aclgenerator.Term):
     def _FormatPart(
         self,
         protocol: str,
-        saddr: Union[IPv6, IPv4, str],
-        sport: Union[list[tuple[int, int]], str],
-        daddr: Union[IPv6, IPv4, str],
-        dport: Union[list[tuple[int, int]], str],
-        options: Union[str, list[str]],
-        tcp_flags: Union[str, list[str]],
-        icmp_type: Union[int, str],
-        code: Union[int, str],
-        track_flags: Union[tuple[list[str], list[str]], str],
+        saddr: IPv6 | IPv4 | str,
+        sport: list[tuple[int, int]] | str,
+        daddr: IPv6 | IPv4 | str,
+        dport: list[tuple[int, int]] | str,
+        options: str | list[str],
+        tcp_flags: str | list[str],
+        icmp_type: int | str,
+        code: int | str,
+        track_flags: tuple[list[str], list[str]] | str,
         sint: str,
         dint: str,
-        log_hits: Union[str, bool],
+        log_hits: str | bool,
         action: str,
     ) -> list[str]:
         """Compose one iteration of the term parts into a string.
@@ -638,9 +638,7 @@ class Term(aclgenerator.Term):
                 ret_lines.append(' '.join(rval + [action]))
         return ret_lines
 
-    def _GenerateAddressStatement(
-        self, saddr: Union[IPv6, IPv4], daddr: Union[IPv6, IPv4]
-    ) -> tuple[str, str]:
+    def _GenerateAddressStatement(self, saddr: IPv6 | IPv4, daddr: IPv6 | IPv4) -> tuple[str, str]:
         """Return the address section of an individual iptables rule.
 
         Args:
@@ -921,7 +919,7 @@ class Iptables(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_type, default_action, new_terms)
             )
 
-    def SetTarget(self, target: str, action: Optional[str] = None) -> None:
+    def SetTarget(self, target: str, action: str | None = None) -> None:
         """Sets policy's target and default action.
 
         Args:

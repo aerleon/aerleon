@@ -104,3 +104,6 @@ jobs:
         uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
+      - name: Check for modern Python syntax using pyupgrade
+        if: steps.paths-filter.outputs.run_format == 'true'
+        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py')

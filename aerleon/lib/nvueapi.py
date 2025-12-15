@@ -151,7 +151,7 @@ class Term(aclgenerator.Term):
                 filtered.append(str(addr))
         return filtered
 
-    def _GetProtocols(self) -> list[Optional[str]]:
+    def _GetProtocols(self) -> list[str | None]:
         """Get protocol list, translating Aerleon protocol names to NVUE format.
 
         Returns:
@@ -161,7 +161,7 @@ class Term(aclgenerator.Term):
             return [None]
         return [_PROTO_TABLE.get(p, p) for p in self.term.protocol]
 
-    def _GetPorts(self, port_list) -> list[Optional[str]]:
+    def _GetPorts(self, port_list) -> list[str | None]:
         """Get port list in NVUE format (porta:portz).
 
         Args:
@@ -182,7 +182,7 @@ class Term(aclgenerator.Term):
                 ports.append(f"{port_range[0]}:{port_range[1]}")
         return ports
 
-    def _GetIcmpTypes(self) -> list[Optional[str]]:
+    def _GetIcmpTypes(self) -> list[str | None]:
         """Get ICMP type list, converting from Aerleon format to iptables format.
 
         Returns:
@@ -195,12 +195,12 @@ class Term(aclgenerator.Term):
 
     def _CreateSingleRule(
         self,
-        src_addr: Optional[str],
-        dst_addr: Optional[str],
-        protocol: Optional[str],
-        dest_port: Optional[str],
-        source_port: Optional[str],
-        icmp_type: Optional[str],
+        src_addr: str | None,
+        dst_addr: str | None,
+        protocol: str | None,
+        dest_port: str | None,
+        source_port: str | None,
+        icmp_type: str | None,
     ) -> dict:
         """Create a single NVUE rule from the given parameters.
 

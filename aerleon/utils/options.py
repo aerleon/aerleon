@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import MutableMapping
-from typing import Any, Callable, Optional
+from collections.abc import Callable, MutableMapping
+from typing import Any, Optional
 
 
 class AbstractOption(metaclass=ABCMeta):
@@ -142,7 +142,7 @@ class OptionError(Exception):
 def ProcessOptions(
     options_lambda: Callable[[MutableMapping], list[AbstractOption]],
     tokens: list[str],
-    with_config: Optional[MutableMapping] = None,
+    with_config: MutableMapping | None = None,
 ):
     if with_config is None:
         with_config = dict()

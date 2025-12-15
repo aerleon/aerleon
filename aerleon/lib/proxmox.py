@@ -49,7 +49,7 @@ class ZoneMismatchError(Error):
 ### helper classes ###
 class ProxmoxConfigDataClass(MutableMapping):
     def __init__(self, *args, **kwargs):
-        self._store: dict[str, Union[str, list[str]]] = dict()
+        self._store: dict[str, str | list[str]] = dict()
         self._store.update(*args)
         self._store.update(**kwargs)
         self._store['enable'] = '1'
@@ -126,7 +126,7 @@ class ProxmoxPort:
         else:
             return f"{port[0]}-{port[1]}"
 
-    def __init__(self, port: Union[tuple[int, int], int]):
+    def __init__(self, port: tuple[int, int] | int):
         self.str_representation = ''
         if isinstance(port, int):
             self.str_representation = self._singlePortFmt(port)
@@ -228,8 +228,8 @@ class ProxmoxIcmp:
     def __init__(
         self,
         icmp_proto: str,
-        icmp_type: Optional[str] = None,
-        icmp_code: Optional[int] = None,
+        icmp_type: str | None = None,
+        icmp_code: int | None = None,
     ):
         self.icmp_proto = icmp_proto
         self.type = icmp_type
@@ -271,13 +271,13 @@ class Term(aclgenerator.Term):
         self.direction = direction
 
     @staticmethod
-    def has_mixed_af(addresses: list[Union[IPv4, IPv6]]):
+    def has_mixed_af(addresses: list[IPv4 | IPv6]):
         has_v4 = any(map(lambda a: isinstance(a, IPv4), addresses))
         has_v6 = any(map(lambda a: isinstance(a, IPv6), addresses))
         return has_v4 and has_v6
 
     @staticmethod
-    def filter_for_af(af: Union[type[IPv4], type[IPv6]], addresses: list[Union[IPv4, IPv6]]):
+    def filter_for_af(af: type[IPv4] | type[IPv6], addresses: list[IPv4 | IPv6]):
         return list(filter(lambda a: isinstance(a, af), addresses))
 
     @staticmethod
@@ -337,21 +337,21 @@ class Term(aclgenerator.Term):
 
     def _Format(
         self,
-        protocol: Optional[str],
+        protocol: str | None,
         direction: str,
         action: str,
-        source_addresses: list[Union[IPv4, IPv6]],
-        destination_addresses: list[Union[IPv4, IPv6]],
-        icmp_code: Optional[str],
-        icmp_type: Optional[str],
+        source_addresses: list[IPv4 | IPv6],
+        destination_addresses: list[IPv4 | IPv6],
+        icmp_code: str | None,
+        icmp_type: str | None,
         source_interface: str,
-        source_ports: list[Union[tuple[int, int], int]],
-        destination_ports: list[Union[tuple[int, int], int]],
+        source_ports: list[tuple[int, int] | int],
+        destination_ports: list[tuple[int, int] | int],
         comment: list[str],
         logging: list[str],
         term_options: list[str],
     ):
-        def to_network_addr(i: Union[IPv6, IPv4]):
+        def to_network_addr(i: IPv6 | IPv4):
             return str(i.with_prefixlen)
 
         options = [direction, action]

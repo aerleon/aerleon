@@ -86,8 +86,8 @@ class Term(windows.Term):
 
     def _CartesianProduct(
         self,
-        src_addr: list[Union[IPv4, IPv6]],
-        dst_addr: list[Union[IPv4, IPv6]],
+        src_addr: list[IPv4 | IPv6],
+        dst_addr: list[IPv4 | IPv6],
         protocol: list[str],
         unused_icmp_types: list[str],
         src_port: list[str],

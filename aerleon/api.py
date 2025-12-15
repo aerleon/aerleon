@@ -241,12 +241,12 @@ from aerleon.lib import (
 def Generate(
     policies: "list[policy_builder.PolicyDict]",
     definitions: naming.Naming,
-    output_directory: Optional[pathlib.Path] = None,
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
-    include_path: Optional[pathlib.Path | str] = None,
-    includes: Optional[dict[str, policy_builder.PolicyFilterTermsOnly]] = None,
+    include_path: pathlib.Path | str | None = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
 ) -> "typing.MutableMapping[str, str] | None":
     """Generate ACLs from policies.
 
@@ -307,11 +307,11 @@ def _Generate(
     policies: "list[policy_builder.PolicyDict]",
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
-    output_directory: Optional[pathlib.Path] = None,
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: Optional[pathlib.Path | str] = None,
+    include_path: pathlib.Path | str | None = None,
     includes: Optional["dict[str, policy_builder.PolicyFilterTermsOnly]"] = None,
     max_renderers: int = 1,
 ) -> "typing.MutableMapping[str, str] | None":
@@ -376,11 +376,11 @@ def _GenerateACL(
     definitions: naming.Naming,
     write_files: WriteList,
     generated_configs: typing.MutableMapping[str, str],
-    output_directory: Optional[pathlib.Path] = None,
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
-    include_path: Optional[pathlib.Path | str] = None,
+    include_path: pathlib.Path | str | None = None,
     includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
 ):
     filename = input_policy.get("filename", "<unknown>")
@@ -436,7 +436,7 @@ def _GenerateACL(
         acl_suffix: str,
         write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
-        file_name_override: Optional[str] = None,
+        file_name_override: str | None = None,
     ):
         base_name = file_name_override if file_name_override else filename
         if output_directory:
@@ -487,11 +487,11 @@ def _GenerateACL(
 def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
-    src: Optional[str] = None,
-    dst: Optional[str] = None,
-    sport: Optional[str] = None,
-    dport: Optional[str] = None,
-    proto: Optional[str] = None,
+    src: str | None = None,
+    dst: str | None = None,
+    sport: str | None = None,
+    dport: str | None = None,
+    proto: str | None = None,
 ):
     filename = input_policy.get("filename")
     try:

@@ -202,7 +202,7 @@ class Term(aclgenerator.Term):
 
         return cond + '\n'
 
-    def _CheckAddressAf(self, addrs: list[Union[IPv4, IPv6]]) -> list[Union[str, IPv4, IPv6]]:
+    def _CheckAddressAf(self, addrs: list[IPv4 | IPv6]) -> list[str | IPv4 | IPv6]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -239,7 +239,7 @@ class Term(aclgenerator.Term):
         return res
 
     def _GenerateAddrStatement(
-        self, addrs: list[Union[str, IPv6, IPv4]], exclude_addrs: list[Union[str, IPv6, IPv4]]
+        self, addrs: list[str | IPv6 | IPv4], exclude_addrs: list[str | IPv6 | IPv4]
     ) -> str:
         addrlist = []
         for d in addrs:

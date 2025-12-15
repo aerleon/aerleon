@@ -111,7 +111,7 @@ class Term(aclgenerator.Term):
     """Creates a  single ACL Term for Nsxv."""
 
     def __init__(
-        self, term: policy.Term, filter_type: str, applied_to: Optional[str] = None, af: int = 4
+        self, term: policy.Term, filter_type: str, applied_to: str | None = None, af: int = 4
     ):
         self.term = term
         # Our caller should have already verified the address family.

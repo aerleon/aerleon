@@ -146,7 +146,7 @@ class Term:
             )
         self.term = term
 
-    def NormalizeAddressFamily(self, af: Union[int, str]) -> int:
+    def NormalizeAddressFamily(self, af: int | str) -> int:
         """Convert (if necessary) address family name to numeric value.
 
         Args:
@@ -503,7 +503,7 @@ class ACLGenerator:
         term_name: str,
         abbreviate: bool = False,
         truncate: bool = False,
-        override_max_length: Optional[int] = None,
+        override_max_length: int | None = None,
     ):
         """Return a term name which is equal or shorter than _TERM_MAX_LENGTH.
 
@@ -542,7 +542,7 @@ class ACLGenerator:
             'disabled.' % (new_term, term_name, override_max_length, len(new_term))
         )
 
-    def HexDigest(self, name: str, truncation_length: Optional[int] = None):
+    def HexDigest(self, name: str, truncation_length: int | None = None):
         """Return a hexadecimal digest of the name object.
 
         Args:
@@ -593,7 +593,7 @@ class ACLGenerator:
 
 def ProtocolNameToNumber(
     protocols: list[str], proto_to_num: list[str], name_to_num_map: dict[str, int]
-) -> list[Union[str, int]]:
+) -> list[str | int]:
     """Convert a protocol name to a numeric value.
 
     Args:
