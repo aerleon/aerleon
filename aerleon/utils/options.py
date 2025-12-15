@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import MutableMapping
+from collections.abc import Callable, MutableMapping
 from typing import Any, Optional
-from collections.abc import Callable
 
 
 class AbstractOption(metaclass=ABCMeta):

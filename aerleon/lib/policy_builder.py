@@ -4,7 +4,7 @@ import enum
 import sys
 import typing
 from dataclasses import dataclass, field
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from absl import logging
 
@@ -29,8 +29,6 @@ from aerleon.lib.recognizers import (
     TUnion,
     TValue,
 )
-
-from typing import TypeAlias
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired, Required

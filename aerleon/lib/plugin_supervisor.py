@@ -47,15 +47,13 @@ import pathlib
 import sys
 from dataclasses import dataclass
 from importlib import import_module
-
-from aerleon.lib.plugin import SystemMetadata
-
 from importlib.metadata import entry_points, version
 
 from absl import logging
 
 from aerleon.lib import plugin
 from aerleon.lib.aclgenerator import ACLGenerator
+from aerleon.lib.plugin import SystemMetadata
 
 __all__ = [
     "PluginSupervisor",
