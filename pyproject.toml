@@ -55,6 +55,7 @@ lint = [
     "isort>=6.1.0",
     "pre-commit>=2.20.0",
     "pyright>=1.1.407",
+    "pyupgrade>=3.21.2",
 ]
 docs = [
     "mkdocs>=1.6.1",
