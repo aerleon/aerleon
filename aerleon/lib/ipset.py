@@ -53,15 +53,15 @@ class Term(iptables.Term):
 
     def _CalculateAddresses(
         self,
-        src_addr_list: list[Union[IPv4, IPv6]],
-        src_addr_exclude_list: list[Union[IPv4, IPv6]],
-        dst_addr_list: list[Union[IPv4, IPv6]],
-        dst_addr_exclude_list: list[Union[IPv4, IPv6]],
+        src_addr_list: list[IPv4 | IPv6],
+        src_addr_exclude_list: list[IPv4 | IPv6],
+        dst_addr_list: list[IPv4 | IPv6],
+        dst_addr_exclude_list: list[IPv4 | IPv6],
     ) -> tuple[
-        list[Union[IPv4, IPv6]],
-        list[Union[IPv4, IPv6]],
-        list[Union[IPv4, IPv6]],
-        list[Union[IPv4, IPv6]],
+        list[IPv4 | IPv6],
+        list[IPv4 | IPv6],
+        list[IPv4 | IPv6],
+        list[IPv4 | IPv6],
     ]:
         """Calculates source and destination address list for a term.
 
@@ -103,11 +103,11 @@ class Term(iptables.Term):
 
     def _CalculateAddrList(
         self,
-        addr_list: list[Union[IPv4, IPv6]],
+        addr_list: list[IPv4 | IPv6],
         addr_exclude_list: list[Any],
         target_af: int,
         direction: str,
-    ) -> list[Union[IPv4, IPv6]]:
+    ) -> list[IPv4 | IPv6]:
         """Calculates and stores address list for target AF and direction.
 
         Args:

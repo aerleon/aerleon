@@ -197,9 +197,9 @@ class Term(aclgenerator.Term):
         term_type: str,
         enable_dsmo: bool,
         noverbose: bool,
-        filter_direction: Optional[str] = None,
-        interface_type: Optional[str] = None,
-        filter_type: Optional[str] = None,
+        filter_direction: str | None = None,
+        interface_type: str | None = None,
+        filter_type: str | None = None,
     ):
         super().__init__(term)
         self.term = term
@@ -728,7 +728,7 @@ class Term(aclgenerator.Term):
         return str(config)
 
     @staticmethod
-    def NextIpCheck(next_ip: list[Union[nacaddr.IPv4, nacaddr.IPv6]], term_name: str):
+    def NextIpCheck(next_ip: list[nacaddr.IPv4 | nacaddr.IPv6], term_name: str):
         if len(next_ip) > 1:
             raise JuniperNextIpError(
                 f'The following term has more than one next IP value: {term_name}'
@@ -751,8 +751,8 @@ class Term(aclgenerator.Term):
 
     def _MinimizePrefixes(
         self,
-        include: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
-        exclude: list[Union[nacaddr.IPv4, nacaddr.IPv6]],
+        include: list[nacaddr.IPv4 | nacaddr.IPv6],
+        exclude: list[nacaddr.IPv4 | nacaddr.IPv6],
     ):
         """Calculate a minimal set of prefixes for Juniper match conditions.
 
@@ -789,7 +789,7 @@ class Term(aclgenerator.Term):
 
     def _Comment(
         self,
-        addr: Union[nacaddr.IPv4, nacaddr.IPv6, summarizer.DSMNet],
+        addr: nacaddr.IPv4 | nacaddr.IPv6 | summarizer.DSMNet,
         exclude: bool = False,
         line_length: int = 132,
     ):

@@ -41,7 +41,7 @@ class CiscoNX(cisco.Cisco):
     _PROTO_INT = False
 
     def _RepositoryTagsHelper(
-        self, target: Optional[list[str]] = None, filter_type: str = '', filter_name: str = ''
+        self, target: list[str] | None = None, filter_type: str = '', filter_name: str = ''
     ) -> list[str]:
         if target is None:
             target = []

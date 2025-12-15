@@ -151,7 +151,7 @@ class Term(aclgenerator.Term):
     }
 
     def __init__(
-        self, term: policy.Term, term_type: str, noverbose: bool, filter_type: Optional[str] = None
+        self, term: policy.Term, term_type: str, noverbose: bool, filter_type: str | None = None
     ) -> None:
         super().__init__(term)
         self.term = term
@@ -561,7 +561,7 @@ class Term(aclgenerator.Term):
 
         return flags, misc_options
 
-    def _Group(self, group: list[Union[str, tuple[int, int]]], lc: bool = True) -> str:
+    def _Group(self, group: list[str | tuple[int, int]], lc: bool = True) -> str:
         """If 1 item return it, else return [item1 item2].
 
         Args:
@@ -673,8 +673,8 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         return supported_tokens, supported_sub_tokens
 
     def _MinimizePrefixes(
-        self, include: list[Union[IPv4, IPv6]], exclude: list[Union[IPv4, IPv6]]
-    ) -> Union[tuple[list[IPv4], list[IPv4]], tuple[list[IPv6], list[IPv6]]]:
+        self, include: list[IPv4 | IPv6], exclude: list[IPv4 | IPv6]
+    ) -> tuple[list[IPv4], list[IPv4]] | tuple[list[IPv6], list[IPv6]]:
         """Calculate a minimal set of prefixes for match conditions.
 
         Args:
@@ -711,8 +711,8 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
         self,
         direction: str,
         name: str,
-        pfxs: list[Union[IPv4, IPv6]],
-        ex_pfxs: list[Union[IPv4, IPv6]],
+        pfxs: list[IPv4 | IPv6],
+        ex_pfxs: list[IPv4 | IPv6],
         af: str,
     ) -> str:
         field_list = ""

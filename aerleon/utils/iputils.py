@@ -10,7 +10,7 @@ from typing import Union
 def exclude_address(
     base_net: ipaddress._BaseNetwork,  # pylint disable=protected-access
     exclude_net: ipaddress._BaseNetwork,  # pylint disable=protected-access
-) -> Iterator[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]]:
+) -> Iterator[ipaddress.IPv4Network | ipaddress.IPv6Network]:
     """
     Function to exclude a subnetwork from another, returning a generator that
     yields all values that correspond to the base network without the exclude

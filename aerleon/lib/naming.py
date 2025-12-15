@@ -135,8 +135,8 @@ class UserMessage:
         message: str,
         *,
         filename: str,
-        line: Optional[int] = None,
-        include_chain: Optional[list[tuple[str, int]]] = None,
+        line: int | None = None,
+        include_chain: list[tuple[str, int]] | None = None,
     ):
         self.message = message
         self.filename = filename
@@ -206,9 +206,9 @@ class Naming:
 
     def __init__(
         self,
-        naming_dir: Optional[str] = None,
-        naming_file: Optional[str] = None,
-        naming_type: Optional[str] = None,
+        naming_dir: str | None = None,
+        naming_file: str | None = None,
+        naming_type: str | None = None,
     ) -> None:
         """Set the default values for a new Naming object.
 
@@ -593,11 +593,11 @@ class Naming:
             i.parent_token = token
         return returnlist
 
-    def GetNetAddr(self, query: str) -> list[Union[IPv4, IPv6]]:
+    def GetNetAddr(self, query: str) -> list[IPv4 | IPv6]:
         """Alias of Naming.GetNet"""
         return self.GetNet(query)
 
-    def GetNet(self, query: str) -> list[Union[IPv4, IPv6]]:
+    def GetNet(self, query: str) -> list[IPv4 | IPv6]:
         """Expand a network token into a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
         Args:
@@ -615,7 +615,7 @@ class Naming:
             raise EmptyDefinitionError(f"No IP addresses found for network: {query}")
         return results
 
-    def _GetNet(self, query: str) -> list[Union[IPv4, IPv6]]:
+    def _GetNet(self, query: str) -> list[IPv4 | IPv6]:
         returnlist = []
         data = query.split('#')
         token = data[0].split()[0]

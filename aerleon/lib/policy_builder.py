@@ -30,10 +30,7 @@ from aerleon.lib.recognizers import (
     TValue,
 )
 
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeAlias
-else:
-    from typing import TypeAlias
+from typing import TypeAlias
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired, Required

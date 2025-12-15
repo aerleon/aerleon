@@ -97,7 +97,7 @@ class Addressbook:
         """
         return self._ip_addressbook[zone][name]
 
-    def AddAddresses(self, zone: str, address_list: list[Union[IPv4, IPv6]]):
+    def AddAddresses(self, zone: str, address_list: list[IPv4 | IPv6]):
         """Create the address book configuration entries.
 
         Args:
@@ -112,7 +112,7 @@ class Addressbook:
         when new networks are added.
         """
 
-        def _drop_subnets(address_list: list[Union[IPv4, IPv6]]):
+        def _drop_subnets(address_list: list[IPv4 | IPv6]):
             """Remove any network contained by another network in this list.
 
             Args:

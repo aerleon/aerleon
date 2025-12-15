@@ -99,8 +99,8 @@ class Term(windows.Term):
 
     def _CartesianProduct(
         self,
-        src_addr: list[Union[IPv4, IPv6]],
-        dst_addr: list[Union[IPv4, IPv6]],
+        src_addr: list[IPv4 | IPv6],
+        dst_addr: list[IPv4 | IPv6],
         protocol: list[str],
         unused_icmp_types: list[str],
         src_port: list[str],
@@ -142,7 +142,7 @@ class Term(windows.Term):
                                 )
                             )
 
-    def _CollapsePortTuples(self, port_tuples: tuple[int, int]) -> list[Union[str, int]]:
+    def _CollapsePortTuples(self, port_tuples: tuple[int, int]) -> list[str | int]:
         ports = ['']
         for tpl in port_tuples:
             if tpl:
@@ -162,8 +162,8 @@ class Term(windows.Term):
 
     def _ComposeFilter(
         self,
-        srcaddr: Union[IPv4, IPv6],
-        dstaddr: Union[IPv4, IPv6],
+        srcaddr: IPv4 | IPv6,
+        dstaddr: IPv4 | IPv6,
         proto: str,
         srcmask: int,
         dstmask: int,

@@ -585,7 +585,7 @@ class GCE(gcp.GCP):
         return out
 
 
-def GetAttributeCount(dict_term: dict[str, Union[list, str]]) -> int:
+def GetAttributeCount(dict_term: dict[str, list | str]) -> int:
     """Calculate the attribute count of a term in its dictionary form.
 
     The attribute count of a rule is the sum of the number of ports, protocols, IP

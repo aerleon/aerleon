@@ -425,7 +425,7 @@ class Term(aclgenerator.Term):
         term_remark: bool = True,
         platform: str = 'cisco',
         verbose: bool = True,
-        filter_type: Optional[str] = None,
+        filter_type: str | None = None,
     ) -> None:
         self.term = term
         self.proto_int = proto_int
@@ -668,7 +668,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(ret_str)
 
-    def _GetIpString(self, addr: Union[IPv6, IPv4, DSMNet]) -> str:
+    def _GetIpString(self, addr: IPv6 | IPv4 | DSMNet) -> str:
         """Formats the address object for printing in the ACL.
 
         Args:
@@ -697,7 +697,7 @@ class Term(aclgenerator.Term):
             return f'host {addr.network_address}'
         return addr
 
-    def _FormatPort(self, port: Union[tuple[()], tuple[int, int]], proto: Union[int, str]) -> str:
+    def _FormatPort(self, port: tuple[()] | tuple[int, int], proto: int | str) -> str:
         """Returns a formatted port string for the range.
 
         Args:
@@ -720,8 +720,8 @@ class Term(aclgenerator.Term):
         return f'eq {port0}'
 
     def _FixOptions(
-        self, proto: Union[int, str], option: list[Union[str, Any]]
-    ) -> list[Union[str, Any]]:
+        self, proto: int | str, option: list[str | Any]
+    ) -> list[str | Any]:
         """Returns a set of options suitable for the given protocol.
 
         Fix done:
@@ -743,13 +743,13 @@ class Term(aclgenerator.Term):
     def _TermletToStr(
         self,
         action: str,
-        proto: Union[int, str],
+        proto: int | str,
         saddr: str,
         sport: str,
         daddr: str,
         dport: str,
-        icmp_type: Union[int, str],
-        icmp_code: Union[int, str],
+        icmp_type: int | str,
+        icmp_code: int | str,
         option: list[str],
     ) -> list[str]:
         """Take the various compenents and turn them into a cisco acl line.
@@ -828,7 +828,7 @@ class ObjectGroupTerm(Term):
     in the acl.
     """
 
-    def _FormatPort(self, port: Union[tuple[()], tuple[int, int]], proto: str) -> str:
+    def _FormatPort(self, port: tuple[()] | tuple[int, int], proto: str) -> str:
         """Returns a formatted port string for the range.
 
         Args:
@@ -842,7 +842,7 @@ class ObjectGroupTerm(Term):
             return ''
         return f'port-group {port[0]}-{port[1]}'
 
-    def _GetIpString(self, addr: Union[IPv4, IPv6]) -> str:
+    def _GetIpString(self, addr: IPv4 | IPv6) -> str:
         """Formats the address object for printing in the ACL.
 
         Args:
@@ -1043,7 +1043,7 @@ class Cisco(aclgenerator.ACLGenerator):
         return target
 
     def _RepositoryTagsHelper(
-        self, target: Optional[list[str]] = None, filter_type: str = '', filter_name: str = ''
+        self, target: list[str] | None = None, filter_type: str = '', filter_name: str = ''
     ) -> list[str]:
         if target is None:
             target = []

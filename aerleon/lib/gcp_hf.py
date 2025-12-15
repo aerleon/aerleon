@@ -572,7 +572,7 @@ class HierarchicalFirewall(gcp.GCP):
             logging.info('Policy %s quota cost: %d', policy[display_name], total_cost)
 
 
-def GetRuleTupleCount(dict_term: dict[str, Union[list, str]], api_version: str) -> int:
+def GetRuleTupleCount(dict_term: dict[str, list | str], api_version: str) -> int:
     """Calculate the tuple count of a rule in its dictionary form.
 
     Quota is charged based on how complex the rules are rather than simply

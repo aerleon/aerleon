@@ -143,7 +143,7 @@ def ParsePolicy(
     definitions: 'Naming | None' = None,
     optimize=False,
     shade_check=False,
-) -> Optional[Policy]:
+) -> Policy | None:
     """Load a policy yaml file (provided as a string) and return a Policy data model.
 
     Note that "filename" must still be provided. The input filename is used to
@@ -190,7 +190,7 @@ class YAMLPolicyPreprocessor:
         """
         self.base_dir = base_dir
 
-    def __call__(self, filename: str, policy_dict: Optional[PolicyDict]) -> Optional[PolicyDict]:
+    def __call__(self, filename: str, policy_dict: PolicyDict | None) -> PolicyDict | None:
         """Process includes and validate the file data as a PolicyDict.
 
         Args:
@@ -209,8 +209,8 @@ class YAMLPolicyPreprocessor:
         )
 
     def _preprocess_inner(
-        self, depth: int, debug_stack: list, filename: str, policy_dict: Optional[PolicyDict]
-    ) -> Optional[PolicyDict]:
+        self, depth: int, debug_stack: list, filename: str, policy_dict: PolicyDict | None
+    ) -> PolicyDict | None:
         # Empty files are ignored with a warning
         if policy_dict is None or not policy_dict:
             logging.warning(UserMessage("Ignoring empty policy file.", filename=filename))
@@ -448,7 +448,7 @@ class YAMLPolicyPreprocessor:
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> tuple[Optional[PolicyDict], Union[str, pathlib.Path]]:
+    ) -> tuple[PolicyDict | None, str | pathlib.Path]:
         """Load, parse, and validate an include file path."""
         if not suffix_is_yaml(relative_path):
             raise ValueError(
@@ -480,7 +480,7 @@ class GenerateAPIPolicyPreprocessor(YAMLPolicyPreprocessor):
 
     def _load_include_file(
         self, relative_path: str, stack: list
-    ) -> tuple[Optional[PolicyFilterTermsOnly], Union[str, pathlib.Path]]:
+    ) -> tuple[PolicyFilterTermsOnly | None, str | pathlib.Path]:
         """Override to load includes from the self.includes dictionary."""
         include_data = self.includes.get(relative_path)
         if not include_data:
