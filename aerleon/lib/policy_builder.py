@@ -126,6 +126,7 @@ PolicyTerm = TypedDict(
         "platform-exclude": WordList,
         "target-resources": "list[str | list[str]]",
         "target-service-accounts": WordList,
+        "tags": WordList,
         "timeout": "int | str",
     },
     total=False,
@@ -521,6 +522,7 @@ BUILTIN_SPEC: "dict[str, TValue | TComposition]" = {
     'platform-exclude':           TListStrCollapsible,
     'target-resources':           TList(of=TValue.TargetResourceTuple),
     'target-service-accounts':    TListStrCollapsible,
+    'tags':                       TListStrCollapsible,
     'timeout':                    TValue.Integer,
     # fmt: on
 }
@@ -597,6 +599,7 @@ class _Builtin:
         'source-interface':           (_CallType.SingleValue,  VarType.SINTERFACE),
         'destination-interface':      (_CallType.SingleValue,  VarType.DINTERFACE),
         'timeout':                    (_CallType.SingleValue,  VarType.TIMEOUT),
+        'tags':                       (_CallType.SingleList,  VarType.TAG),
         'dscp-set':                   (_CallType.SingleValue,  VarType.DSCP_SET),
         'ttl':                        (_CallType.SingleValue,  VarType.TTL),
         'filter-term':                (_CallType.SingleValue,  VarType.FILTER_TERM),
@@ -884,6 +887,7 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             'port-mirror',
             'destination-zone',
             'source-zone',
+            'tags',
             'vpn',
             'source-tag',
             'destination-tag',

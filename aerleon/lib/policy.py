@@ -497,6 +497,8 @@ class Term:
         self.flattened_saddr = None
         self.flattened_daddr = None
         self.stateless_reply = False
+        # palo alto specific
+        self.tag = []
 
         # AddObject touches variables which might not have been initialized
         # further up so this has to be at the end.
@@ -1167,10 +1169,14 @@ class Term:
                     self.dscp_match.append(x.value)
                 elif x.var_type is VarType.DSCP_EXCEPT:
                     self.dscp_except.append(x.value)
+                elif x.var_type is VarType.LOGGING:
+                    self.logging.append(x)
                 elif x.var_type is VarType.STAG:
                     self.source_tag.append(x.value)
                 elif x.var_type is VarType.DTAG:
                     self.destination_tag.append(x.value)
+                elif x.var_type is VarType.TAG:
+                    self.tag.append(x.value)
                 elif x.var_type is VarType.FLEXIBLE_MATCH_RANGE:
                     self.flexible_match_range.append(x.value)
                 elif x.var_type is VarType.TARGET_RESOURCES:
@@ -1233,9 +1239,13 @@ class Term:
             elif obj.var_type is VarType.ICMP_CODE:
                 self.icmp_code.extend(obj.value)
             elif obj.var_type is VarType.LOGGING:
+                # validate logging token and append
                 if str(obj) not in _LOGGING:
                     raise InvalidTermLoggingError(f'{obj} is not a valid logging option')
                 self.logging.append(obj)
+            elif obj.var_type is VarType.TAG:
+                # single-value form (accept but normalize to list)
+                self.tag.append(obj.value)
             elif obj.var_type is VarType.LOG_LIMIT:
                 self.log_limit = obj.value
             elif obj.var_type is VarType.LOG_NAME:
@@ -1596,6 +1606,7 @@ class VarType:
     FORWARDING_CLASS = 43
     STAG = 44
     DTAG = 45
+    TAG = 69
     NEXT_IP = 46
     HOP_LIMIT = 47
     LOG_NAME = 48
@@ -1849,6 +1860,7 @@ tokens = (
     'SPORT',
     'SZONE',
     'STAG',
+    'TAGS',
     'STRING',
     'TARGET',
     'TARGET_RESOURCES',
@@ -1929,6 +1941,7 @@ reserved = {
     'source-prefix-except': 'ESPFX',
     'source-port': 'SPORT',
     'source-tag': 'STAG',
+    'tags': 'TAGS',
     'source-zone': 'SZONE',
     'target': 'TARGET',
     'target-resources': 'TARGET_RESOURCES',
@@ -2361,13 +2374,16 @@ def p_protocol_spec(p: YaccProduction) -> None:
 
 def p_tag_list_spec(p: YaccProduction) -> None:
     """tag_list_spec : DTAG ':' ':' one_or_more_strings
-    | STAG ':' ':' one_or_more_strings"""
+    | STAG ':' ':' one_or_more_strings
+    | TAGS ':' ':' one_or_more_strings"""
     p[0] = []
     for tag in p[4]:
         if p[1].find('source-tag') >= 0:
             p[0].append(VarType(VarType.STAG, tag))
         elif p[1].find('destination-tag') >= 0:
             p[0].append(VarType(VarType.DTAG, tag))
+        else:
+            p[0].append(VarType(VarType.TAG, tag))
 
 
 def p_target_resources_spec(p: YaccProduction) -> None:
