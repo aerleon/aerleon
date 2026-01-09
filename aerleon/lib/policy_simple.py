@@ -235,6 +235,10 @@ class PacketLength(Field):
     """A packet-length field."""
 
 
+class ProfileSettings(Field):
+    """A profile-settings field."""
+
+
 class Platform(Field):
     """A platform field."""
 
@@ -371,6 +375,7 @@ field_map = {
     'protocol-except': ProtocolExcept,
     'qos': Qos,
     'pan-application': PANApplication,
+    'profile-settings': ProfileSettings,
     'routing-instance': RoutingInstance,
     'source-address': SourceAddress,
     'source-exclude': SourceExclude,
