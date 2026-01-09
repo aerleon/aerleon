@@ -116,6 +116,7 @@ PolicyTerm = TypedDict(
         "port-mirror": str,
         "destination-zone": WordList,
         "source-zone": WordList,
+        "profile-settings": WordList,
         "vpn": VPNValue,
         "source-tag": WordList,
         "destination-tag": WordList,
@@ -507,6 +508,8 @@ BUILTIN_SPEC: "dict[str, TValue | TComposition]" = {
     'destination-prefix-except':  TListStrCollapsible,
     'encapsulate':                TValue.WordString,
     'port-mirror':                TValue.WordString,
+    # palo alto specific
+    'profile-settings':           TListStrCollapsible,
     # srx specific                
     'destination-zone':           TListStrCollapsible,
     'source-zone':                TListStrCollapsible,
@@ -594,6 +597,7 @@ class _Builtin:
         'priority':                   (_CallType.SingleValue,  VarType.PRIORITY),
         'qos':                        (_CallType.SingleValue,  VarType.QOS),
         'packet-length':              (_CallType.SingleValue,  VarType.PACKET_LEN),
+        'profile-settings':           (_CallType.SingleList,  VarType.PROFILE_SETTINGS),
         'fragment-offset':            (_CallType.SingleValue,  VarType.FRAGMENT_OFFSET),
         'hop-limit':                  (_CallType.SingleValue,  VarType.HOP_LIMIT),
         'source-interface':           (_CallType.SingleValue,  VarType.SINTERFACE),
@@ -869,6 +873,7 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             'ttl',
             'verbatim',
             'packet-length',
+            'profile-settings',
             'fragment-offset',
             'hop-limit',
             'icmp-type',

@@ -433,6 +433,14 @@ term test-accept-action {
   platform-exclude:: junipersrx
 }
 """
+PROFILE_SETTINGS_TERM = """
+term test-profile-settings {
+  comment:: "Testing profile-settings filter."
+  protocol:: tcp
+  action:: accept
+  profile-settings:: foo bar
+}
+"""
 
 CUSTOM_TAG_TERM = """
 term test-custom-tag {
@@ -510,6 +518,7 @@ SUPPORTED_TOKENS = frozenset(
         'owner',
         'platform',
         'platform_exclude',
+        'profile_settings',
         'protocol',
         'source_address',
         'source_address_exclude',
@@ -1884,6 +1893,18 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
+
+    @capture.stdout
+    def testProfileSettings(self):
+        pol = policy.ParsePolicy(GOOD_HEADER_1 + PROFILE_SETTINGS_TERM, self.naming)
+        paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
+        output = str(paloalto)
+        print(output)
+        x = paloalto.config.find(f".//entry[@name='test-profile-settings']/profile-setting")
+        self.assertIsNotNone(x)
+        members = x.findall("group/member")
+        profiles = {member.text for member in members}
+        self.assertEqual(profiles, {"foo", "bar"})
 
 
 if __name__ == '__main__':

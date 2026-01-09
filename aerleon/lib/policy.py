@@ -343,6 +343,7 @@ class Term:
       port-mirror: VarType.PORT_MIRROR
       qos: VarType.QOS
       pan-application: VarType.PAN_APPLICATION
+      profile-settings: VarType.PROFILE_SETTINGS
       policer: VarType.POLICER
       priority: VarType.PRIORITY
       destination-zone: VarType.DZONE
@@ -448,6 +449,7 @@ class Term:
         self.protocol_except = []
         self.qos = None
         self.pan_application = []
+        self.profile_settings = []
         self.routing_instance = None
         self.source_address = []
         self.source_address_exclude = []
@@ -782,6 +784,8 @@ class Term:
             ret_str.append(f'  qos: {self.qos}')
         if self.pan_application:
             ret_str.append(f'  pan_application: {self.pan_application}')
+        if self.profile_settings:
+            ret_str.append(f'  profile_settings: {self.profile_settings}')
         if self.logging:
             ret_str.append(f'  logging: {self.logging}')
         if self.log_limit:
@@ -876,6 +880,10 @@ class Term:
         if sorted(self.pan_application) != sorted(other.pan_application):
             return False
 
+        # profile-settings
+        if sorted(self.profile_settings) != sorted(other.profile_settings):
+            return False
+
         # verbatim
         if self.verbatim != other.verbatim:
             return False
@@ -908,6 +916,8 @@ class Term:
         if self.qos != other.qos:
             return False
         if sorted(self.pan_application) != sorted(other.pan_application):
+            return False
+        if sorted(self.profile_settings) != sorted(other.profile_settings):
             return False
         if self.packet_length != other.packet_length:
             return False
@@ -1159,6 +1169,8 @@ class Term:
                     self.forwarding_class_except.append(x.value)
                 elif x.var_type is VarType.PAN_APPLICATION:
                     self.pan_application.append(x.value)
+                elif x.var_type is VarType.PROFILE_SETTINGS:
+                    self.profile_settings.append(x.value)
                 elif x.var_type is VarType.NEXT_IP:
                     self.next_ip = DEFINITIONS.GetNetAddr(x.value)
                 elif x.var_type is VarType.PLATFORM:
@@ -1218,6 +1230,8 @@ class Term:
                 self.forwarding_class_except.append(obj.value)
             elif obj.var_type is VarType.PAN_APPLICATION:
                 self.pan_application.append(obj.value)
+            elif obj.var_type is VarType.PROFILE_SETTINGS:
+                self.profile_settings.append(obj.value)
             elif obj.var_type is VarType.NEXT_IP:
                 self.next_ip = DEFINITIONS.GetNetAddr(obj.value)
             elif obj.var_type is VarType.VERBATIM:
@@ -1616,6 +1630,7 @@ class VarType:
     FORWARDING_CLASS_EXCEPT = 52
     TRAFFIC_CLASS_COUNT = 53
     PAN_APPLICATION = 54
+    PROFILE_SETTINGS = 70
     ICMP_CODE = 55
     PRIORITY = 56
     TTL = 57
@@ -1851,6 +1866,7 @@ tokens = (
     'RPAREN',
     'RSQUARE',
     'PAN_APPLICATION',
+    'PROFILE_SETTINGS',
     'ROUTING_INSTANCE',
     'SADDR',
     'SADDREXCLUDE',
@@ -1933,6 +1949,7 @@ reserved = {
     'protocol-except': 'PROTOCOL_EXCEPT',
     'qos': 'QOS',
     'pan-application': 'PAN_APPLICATION',
+    'profile-settings': 'PROFILE_SETTINGS',
     'routing-instance': 'ROUTING_INSTANCE',
     'source-address': 'SADDR',
     'source-exclude': 'SADDREXCLUDE',
@@ -2115,6 +2132,7 @@ def p_term_spec(p: YaccProduction) -> None:
     | term_spec protocol_spec
     | term_spec qos_spec
     | term_spec pan_application_spec
+    | term_spec profile_settings_spec
     | term_spec routinginstance_spec
     | term_spec term_zone_spec
     | term_spec tag_list_spec
@@ -2507,6 +2525,13 @@ def p_pan_application_spec(p):
     p[0] = []
     for apps in p[4]:
         p[0].append(VarType(VarType.PAN_APPLICATION, apps))
+
+
+def p_profile_settings_spec(p):
+    """profile_settings_spec : PROFILE_SETTINGS ':' ':' one_or_more_strings"""
+    p[0] = []
+    for ps in p[4]:
+        p[0].append(VarType(VarType.PROFILE_SETTINGS, ps))
 
 
 def p_interface_spec(p: YaccProduction) -> None:

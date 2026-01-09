@@ -143,6 +143,7 @@ class Rule:
         options["logging"] = []
         # palo alto specific tag(s) for the term
         options["tag"] = []
+        options["profile_setting"] = []
 
         ACTIONS = {
             "accept": "allow",
@@ -209,6 +210,12 @@ class Rule:
         if term.pan_application:
             for pan_app in term.pan_application:
                 options["application"].append(pan_app)
+
+        # PROFILE-SETTINGS
+        if getattr(term, 'profile_settings', None):
+            for ps in term.profile_settings:
+                if ps and ps not in options["profile_setting"]:
+                    options["profile_setting"].append(ps)
 
         # TERM TAGS
         if getattr(term, 'tag', None):
@@ -372,6 +379,7 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
             "owner",
             "platform",
             "platform_exclude",
+            "profile_settings",
             "protocol",
             "source_address",
             "source_address_exclude",
@@ -1077,6 +1085,15 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
                     for x in options["service"]:
                         member = etree.SubElement(service, "member")
                         member.text = x
+
+                # PROFILE-SETTINGS
+                if options.get("profile_setting"):
+                    ps = etree.SubElement(entry, "profile-setting")
+                    grp = etree.SubElement(ps, "group")
+                    for psm in options.get("profile_setting", []):
+                        if psm:
+                            m = etree.SubElement(grp, "member")
+                            m.text = psm
 
                 # ACTION
                 action = etree.SubElement(entry, "action")
