@@ -80,7 +80,7 @@ PolicyTerm = TypedDict(
         "log-limit": str,
         "log-name": str,
         "loss-priority": str,
-        "option": "str | list[str]",
+        "option": WordList,
         "owner": str,
         "policer": str,
         "port": WordList,
