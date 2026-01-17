@@ -81,11 +81,11 @@ class AclCheck:
         cls,
         policy_dict: policy_builder.PolicyDict,
         definitions: naming.Naming,
-        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None,
-        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None,
-        sport: int | str | Literal["any"] | None,
-        dport: int | str | Literal["any"] | None,
-        proto: str | Literal["any"] | None,
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        sport: int | str | Literal["any"],
+        dport: int | str | Literal["any"],
+        proto: str | Literal["any"],
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
@@ -94,16 +94,24 @@ class AclCheck:
     def __init__(
         self,
         pol: policy.Policy,
-        src: (
-            IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
-        ) = 'any',
-        dst: (
-            IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
-        ) = 'any',
-        sport: int | str | Literal["any"] | None = 'any',
-        dport: int | str | Literal["any"] | None = 'any',
-        proto: str | Literal["any"] | None = 'any',
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        sport: int | str | Literal["any"] = 'any',
+        dport: int | str | Literal["any"] = 'any',
+        proto: str | Literal["any"] = 'any',
     ) -> None:
+        if (
+            pol is None
+            or src is None
+            or dst is None
+            or sport is None
+            or dport is None
+            or proto is None
+        ):
+            logging.warning(
+                "None provided as AclCheck input - instead provide value or rely on defaults"
+            )
+
         self.pol_obj = pol
 
         # validate proto
