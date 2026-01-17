@@ -78,6 +78,13 @@ def main():
     _parser.add_argument(
         '--sport', '--source-port', '--source_port', dest='source_port', help='Source port.'
     )
+    _parser.add_argument('--source-zone', '--source_zone', dest='source_zone', help='Source zone.')
+    _parser.add_argument(
+        '--destination-zone',
+        '--destination_zone',
+        dest='destination_zone',
+        help='Destination zone.',
+    )
     FLAGS = _parser.parse_args()
 
     default_flags = {
@@ -90,6 +97,8 @@ def main():
         'protocol': 'any',
         'destination_port': '80',
         'source_port': '1025',
+        'source_zone': None,
+        'destination_zone': None,
     }
 
     configs = {}
@@ -131,6 +140,8 @@ def main():
         sport=configs['source_port'],
         dport=configs['destination_port'],
         proto=configs['protocol'],
+        source_zone=configs.get('source_zone'),
+        destination_zone=configs.get('destination_zone'),
     )
     print(str(check))
 

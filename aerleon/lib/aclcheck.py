@@ -85,6 +85,8 @@ class AclCheck:
         sport='any',
         dport='any',
         proto='any',
+        source_zone='any',
+        destination_zone='any',
     ):
         self.pol_obj = pol
         self.proto = proto
@@ -118,6 +120,16 @@ class AclCheck:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
                 raise AddressError(f'bad destination address: {dst}\n')
+        # validate zones
+        if not source_zone or source_zone == 'any':
+            self.source_zone = 'any'
+        else:
+            self.source_zone = str(source_zone)
+
+        if not destination_zone or destination_zone == 'any':
+            self.destination_zone = 'any'
+        else:
+            self.destination_zone = str(destination_zone)
 
         if not isinstance(self.pol_obj, (policy.Policy)):
             raise BadPolicyError('Policy object is not valid.')
@@ -137,6 +149,19 @@ class AclCheck:
                     logging.debug('dstaddr does not match')
                     continue
                 logging.debug('dstaddr matches: %s', self.dst)
+                # source-zone matching if requested. If the term does not specify
+                # a source_zone, treat it as 'any' (match all zones).
+                if self._ZoneMatch(self.source_zone, term.source_zone) is False:
+                    logging.debug('source zone does not match')
+                    continue
+                logging.debug('source zone matches: %s', self.source_zone)
+                # destination-zone matching if requested. If the term does not specify
+                # a destination_zone, treat it as 'any' (match all zones).
+                if self._ZoneMatch(self.destination_zone, term.destination_zone) is False:
+                    logging.debug('destination zone does not match')
+                    continue
+                logging.debug('destination zone matches: %s', self.destination_zone)
+
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -255,6 +280,19 @@ class AclCheck:
         if 'tcp-established' in term.option and 'tcp' in term.protocol:
             ret_str.append('tcp-est')
         return ret_str
+
+    def _ZoneMatch(self, zone, term_zone) -> bool:
+        """Check if zone matches term zone.
+
+        Args:
+          zone: A string for the zone to check
+          term_zone: A list of zones from the term
+        """
+        if term_zone == [] or zone == 'any':
+            return True
+        if zone not in term_zone:
+            return False
+        return True
 
     def _AddrInside(self, addr, addresses):
         """Check if address is matched in another address or group of addresses.
