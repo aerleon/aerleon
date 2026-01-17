@@ -215,6 +215,7 @@ import multiprocessing.pool
 import pathlib
 import sys
 import typing
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Optional
 
 from absl import logging
@@ -487,11 +488,15 @@ def _GenerateACL(
 def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
-    src: str | None = None,
-    dst: str | None = None,
-    sport: str | None = None,
-    dport: str | None = None,
-    proto: str | None = None,
+    src: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+    ) = None,
+    dst: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+    ) = None,
+    sport: int | str | typing.Literal["any"] | None = None,
+    dport: int | str | typing.Literal["any"] | None = None,
+    proto: str | typing.Literal["any"] | None = None,
 ):
     filename = input_policy.get("filename")
     try:

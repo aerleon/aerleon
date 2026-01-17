@@ -27,34 +27,43 @@ import aerleon.utils.iputils as iputils
 
 
 def IP(
-    ip: ipaddress.IPv4Network | ipaddress.IPv6Network | str,
+    ip: (
+        ipaddress.IPv4Address
+        | ipaddress.IPv6Address
+        | ipaddress.IPv4Network
+        | ipaddress.IPv6Network
+        | str
+    ),
     comment: str = '',
     token: str = '',
     strict: bool = True,
 ) -> IPv4 | IPv6:
-    """Take an ip string and return an object of the correct type.
+    """Take an IP string/object and return an object of the correct type.
 
     Args:
       ip: the ip address.
       comment: option comment field
       token: option token name where this address was extracted from
-      strict: If strict should be used in ipaddress object.
+      strict: If strict should be used in ipaddress object validation.
 
     Returns:
-      ipaddress.IPv4 or ipaddress.IPv6 object or raises ValueError.
+      IPv4 or IPv6 object or raises ValueError.
 
     Raises:
       ValueError: if the string passed isn't either a v4 or a v6 address.
     """
+
     if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
         imprecise_ip = ip
     else:
         imprecise_ip = ipaddress.ip_network(ip, strict=strict)
+
     if imprecise_ip.version == 4:
         return IPv4(ip, comment, token, strict=strict)
     elif imprecise_ip.version == 6:
         return IPv6(ip, comment, token, strict=strict)
-    raise ValueError(f'Provided IP string "{ip}" is not a valid v4 or v6 address')
+    else:
+        raise ValueError(f'Provided IP string "{ip}" is not a valid v4 or v6 address')
 
 
 # TODO(robankeny) remove once at 3.7
