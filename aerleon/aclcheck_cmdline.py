@@ -78,12 +78,17 @@ def main():
     _parser.add_argument(
         '--sport', '--source-port', '--source_port', dest='source_port', help='Source port.'
     )
-    _parser.add_argument('--source-zone', '--source_zone', dest='source_zone', help='Source zone.')
+    _parser.add_argument(
+        '--source-zone',
+        '--source_zone',
+        dest='source_zone',
+        help='Source security/zone identifier. When provided, `AclCheck` will only match terms that either have no `source-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).',
+    )
     _parser.add_argument(
         '--destination-zone',
         '--destination_zone',
         dest='destination_zone',
-        help='Destination zone.',
+        help='Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).',
     )
     FLAGS = _parser.parse_args()
 

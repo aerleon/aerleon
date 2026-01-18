@@ -31,6 +31,8 @@ The `aclcheck` tool accepts the following arguments:
 *   `--proto, --protocol PROTO`: Protocol (e.g., `tcp`, `udp`, `icmp`). Defaults to `any`.
 *   `--dport, --destination-port PORT`: Destination port. Defaults to `80`.
 *   `--sport, --source-port PORT`: Source port. Defaults to `1025`.
+*   `--source-zone ZONE`: Source security/zone identifier. When provided, `AclCheck` will only match terms that either have no `source-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
+*   `--destination-zone ZONE`: Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
 
 ### Detailed Example
 

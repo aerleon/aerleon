@@ -122,6 +122,10 @@ options:
                         Destination port.
   --sport SOURCE_PORT, --source-port SOURCE_PORT, --source_port SOURCE_PORT
                         Source port.
+  --source-zone, --source_zone SOURCE_ZONE
+                        Source security/zone identifier. When provided, `AclCheck` will only match terms that either have no `source-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
+  --destination-zone, --destination_zone DESTINATION_ZONE
+                        Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
 ```
 
 
