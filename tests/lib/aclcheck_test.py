@@ -14,6 +14,7 @@
 
 """Unit tests for AclCheck."""
 
+from typing import Literal
 import pytest
 from absl.testing import absltest
 

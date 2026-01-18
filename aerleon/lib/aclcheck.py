@@ -18,6 +18,7 @@
 
 import logging
 from collections import defaultdict
+from typing import Collection, Literal
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 
