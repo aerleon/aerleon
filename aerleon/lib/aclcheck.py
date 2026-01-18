@@ -281,7 +281,7 @@ class AclCheck:
             ret_str.append('tcp-est')
         return ret_str
 
-    def _ZoneMatch(self, zone, term_zone) -> bool:
+    def _ZoneMatch(self, zone: str | Literal["any"], term_zone: Collection[str]) -> bool:
         """Check if zone matches term zone.
 
         Args:
