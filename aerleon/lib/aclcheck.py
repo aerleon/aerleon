@@ -151,7 +151,7 @@ class AclCheck:
                 logging.debug('dstaddr matches: %s', self.dst)
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
-                if self._ZoneMatch(self.source_zone, term.source_zone) is False:
+                if not self._ZoneMatch(self.source_zone, term.source_zone):
                     logging.debug('source zone does not match')
                     continue
                 logging.debug('source zone matches: %s', self.source_zone)
