@@ -15,6 +15,7 @@
 """Unit tests for AclCheck."""
 
 from typing import Literal
+
 import pytest
 from absl.testing import absltest
 
@@ -197,7 +198,12 @@ class AclCheckTest(absltest.TestCase):
         ("equals", "WRONG", "UNTRUST", ["default-term"]),
     ],
 )
-def test_zone_matches_parametrized(mode: Literal["contains", "equals"], source_zone: str | None, destination_zone: str | None, expected: list[str]) -> None:
+def test_zone_matches_parametrized(
+    mode: Literal["contains", "equals"],
+    source_zone: str | None,
+    destination_zone: str | None,
+    expected: list[str],
+) -> None:
     defs = naming.Naming(None)
     servicedata = ["SSH = 22/tcp"]
     networkdata = ["NET172 = 172.16.0.0/12", "NET10 = 10.0.0.0/8"]
