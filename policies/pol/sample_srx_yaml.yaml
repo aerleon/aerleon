@@ -4,14 +4,12 @@ filters:
         this is a sample policy to generate Juniper SRX filter
         from zone Untrust to zone DMZ.
       targets:
-        srx: from-zone foo to-zone bar
+        srx: from-zone Untrust to-zone DMZ
 
     terms:
       - name: test-tcp
         destination-address: RFC1918
         protocol: tcp udp
-        destination-zone: Untrust
-        source-zone: trust
         logging: log-both
         action: accept
 
