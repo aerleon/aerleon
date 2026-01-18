@@ -286,9 +286,9 @@ class AclCheck:
 
         Args:
           zone: A string for the zone to check
-          term_zone: A list of zones from the term
+          term_zone: A collection of zones from the term
         """
-        if term_zone == [] or zone == 'any':
+        if not term_zone or zone == 'any':
             return True
         if zone not in term_zone:
             return False
