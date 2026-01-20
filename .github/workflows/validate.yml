@@ -89,6 +89,12 @@ jobs:
         with:
           python-version: "3.13"
       #----------------------------------------------
+      # run pyupgrade
+      #----------------------------------------------
+      - name: Check for modern Python syntax using pyupgrade
+        if: steps.paths-filter.outputs.run_format == 'true'
+        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py')
+      #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
       - name: Format project using Black
@@ -104,6 +110,3 @@ jobs:
         uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
-      - name: Check for modern Python syntax using pyupgrade
-        if: steps.paths-filter.outputs.run_format == 'true'
-        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py')
