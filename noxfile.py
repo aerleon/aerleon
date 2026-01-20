@@ -89,6 +89,22 @@ def benchmark_tuned(session):
 def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
+
+    files = session.run(
+        "git",
+        "ls-files",
+        "*.py",
+        silent=True,
+        external=True,
+    ).splitlines()
+
+    if files:
+        session.run(
+            "pyupgrade",
+            "--py310-plus",
+            *files,
+            success_codes=[0, 1],
+        )
     session.run("black", "aerleon", "tests")
     session.run("isort", ".")
 
@@ -104,7 +120,8 @@ def lint(session):
 def dev_setup(session: Session) -> None:
     """Installs pre-commit hooks using pre-commit"""
     session.run("pre-commit", "install")
-    session.run("git", "config", "blame.ignoreRevsFile", ".git-blame-ignore-revs")
+    session.run("git", "config", "blame.ignoreRevsFile",
+                ".git-blame-ignore-revs")
 
 
 @session
