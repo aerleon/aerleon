@@ -490,18 +490,25 @@ def AclCheck(
     definitions: naming.Naming,
     src: (
         IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
-    ) = None,
+    ) = "any",
     dst: (
         IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
-    ) = None,
-    sport: int | str | typing.Literal["any"] | None = None,
-    dport: int | str | typing.Literal["any"] | None = None,
-    proto: str | typing.Literal["any"] | None = None,
+    ) = "any",
+    sport: int | str | typing.Literal["any"] | None = "any",
+    dport: int | str | typing.Literal["any"] | None = "any",
+    proto: str | typing.Literal["any"] | None = "any",
 ):
     filename = input_policy.get("filename")
     try:
+        # None is still allowed for certain arguments here to avoid
         check = aclcheck.AclCheck.FromPolicyDict(
-            input_policy, definitions, src, dst, sport, dport, proto
+            input_policy,
+            definitions,
+            src if src is not None else "any",
+            dst if dst is not None else "any",
+            sport if sport is not None else "any",
+            dport if dport is not None else "any",
+            proto if proto is not None else "any",
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:
