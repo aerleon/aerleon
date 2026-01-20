@@ -149,7 +149,7 @@ class PPP:
             raise NotSinglePort('Comparisons cannot be performed on port ranges')
 
 
-def Port(port):
+def Port(port: int | str) -> int:
     """Sanitize a port value.
 
     Args:

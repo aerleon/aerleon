@@ -18,6 +18,10 @@
 
 import logging
 from collections import defaultdict
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
+from typing import Literal
+
+from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 
@@ -44,11 +48,11 @@ class AclCheck:
     Attributes:
       pol_obj: policy.Policy object.
       pol: policy.Policy object.
-      src: A string for the source address.
-      dst: A string for the destination address.
-      sport: A string for the source port.
-      dport: A string for the destination port.
-      proto: A string for the protocol.
+      src: The source address.
+      dst: The destination address.
+      sport: The source port.
+      dport: The destination port.
+      proto: The protocol.
       matches: A list of term-related matches.
       exact_matches: A list of exact matches.
 
@@ -62,17 +66,27 @@ class AclCheck:
 
     """
 
+    pol_object: policy.Policy
+    pol: policy.Policy
+    src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
+    dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
+    sport: int | Literal["any"]
+    dport: int | Literal["any"]
+    proto: str | Literal["any"]
+    matches: list
+    exact_matches: list
+
     @classmethod
     def FromPolicyDict(
         cls,
         policy_dict: policy_builder.PolicyDict,
         definitions: naming.Naming,
-        src,
-        dst,
-        sport,
-        dport,
-        proto,
-    ):
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        sport: int | str | Literal["any"],
+        dport: int | str | Literal["any"],
+        proto: str | Literal["any"],
+    ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
         return cls(policy_obj, src, dst, sport, dport, proto)
@@ -80,14 +94,19 @@ class AclCheck:
     def __init__(
         self,
         pol: policy.Policy,
-        src='any',
-        dst='any',
-        sport='any',
-        dport='any',
-        proto='any',
-    ):
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        sport: int | str | Literal["any"] = 'any',
+        dport: int | str | Literal["any"] = 'any',
+        proto: str | Literal["any"] = 'any',
+    ) -> None:
         self.pol_obj = pol
-        self.proto = proto
+
+        # validate proto
+        if proto is None:
+            self.proto = 'any'
+        else:
+            self.proto = proto
 
         # validate source port
         if not sport or sport == 'any':

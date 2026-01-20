@@ -215,6 +215,7 @@ import multiprocessing.pool
 import pathlib
 import sys
 import typing
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Optional
 
 from absl import logging
@@ -487,16 +488,27 @@ def _GenerateACL(
 def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
-    src: str | None = None,
-    dst: str | None = None,
-    sport: str | None = None,
-    dport: str | None = None,
-    proto: str | None = None,
+    src: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+    ) = "any",
+    dst: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+    ) = "any",
+    sport: int | str | typing.Literal["any"] | None = "any",
+    dport: int | str | typing.Literal["any"] | None = "any",
+    proto: str | typing.Literal["any"] | None = "any",
 ):
     filename = input_policy.get("filename")
     try:
+        # None is still allowed for certain arguments here to avoid
         check = aclcheck.AclCheck.FromPolicyDict(
-            input_policy, definitions, src, dst, sport, dport, proto
+            input_policy,
+            definitions,
+            src if src is not None else "any",
+            dst if dst is not None else "any",
+            sport if sport is not None else "any",
+            dport if dport is not None else "any",
+            proto if proto is not None else "any",
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:
