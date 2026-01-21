@@ -94,9 +94,9 @@ jobs:
       - name: Format project using Black
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
-        src: "aerleon tests noxfile.py"
         with:
           version: "25.9.0"
+          src: "aerleon tests noxfile.py"
       #----------------------------------------------
       # run isort
       #----------------------------------------------
