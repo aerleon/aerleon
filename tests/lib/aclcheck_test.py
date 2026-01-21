@@ -14,7 +14,6 @@
 
 """Unit tests for AclCheck."""
 from ipaddress import IPv4Address
-
 from typing import Literal
 
 import pytest
