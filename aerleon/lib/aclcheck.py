@@ -18,6 +18,7 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import Collection
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
@@ -75,6 +76,8 @@ class AclCheck:
     proto: str | Literal["any"]
     matches: list
     exact_matches: list
+    source_zone: str | Literal["any"]
+    destination_zone: str | Literal["any"]
 
     @classmethod
     def FromPolicyDict(
@@ -99,7 +102,10 @@ class AclCheck:
         sport: int | str | Literal["any"] = 'any',
         dport: int | str | Literal["any"] = 'any',
         proto: str | Literal["any"] = 'any',
+        source_zone: str | Literal["any"] = 'any',
+        destination_zone: str | Literal["any"] = 'any',
     ) -> None:
+
         self.pol_obj = pol
 
         # validate proto
@@ -137,6 +143,16 @@ class AclCheck:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
                 raise AddressError(f'bad destination address: {dst}\n')
+        # validate zones
+        if not source_zone or source_zone == 'any':
+            self.source_zone = 'any'
+        else:
+            self.source_zone = str(source_zone)
+
+        if not destination_zone or destination_zone == 'any':
+            self.destination_zone = 'any'
+        else:
+            self.destination_zone = str(destination_zone)
 
         if not isinstance(self.pol_obj, (policy.Policy)):
             raise BadPolicyError('Policy object is not valid.')
@@ -156,6 +172,19 @@ class AclCheck:
                     logging.debug('dstaddr does not match')
                     continue
                 logging.debug('dstaddr matches: %s', self.dst)
+                # source-zone matching if requested. If the term does not specify
+                # a source_zone, treat it as 'any' (match all zones).
+                if not self._ZoneMatch(self.source_zone, term.source_zone):
+                    logging.debug('source zone does not match')
+                    continue
+                logging.debug('source zone matches: %s', self.source_zone)
+                # destination-zone matching if requested. If the term does not specify
+                # a destination_zone, treat it as 'any' (match all zones).
+                if not self._ZoneMatch(self.destination_zone, term.destination_zone):
+                    logging.debug('destination zone does not match')
+                    continue
+                logging.debug('destination zone matches: %s', self.destination_zone)
+
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -274,6 +303,19 @@ class AclCheck:
         if 'tcp-established' in term.option and 'tcp' in term.protocol:
             ret_str.append('tcp-est')
         return ret_str
+
+    def _ZoneMatch(self, zone: str | Literal["any"], term_zone: Collection[str]) -> bool:
+        """Check if zone matches term zone.
+
+        Args:
+          zone: A string for the zone to check
+          term_zone: A collection of zones from the term
+        """
+        if not term_zone or zone == 'any':
+            return True
+        if zone not in term_zone:
+            return False
+        return True
 
     def _AddrInside(self, addr, addresses):
         """Check if address is matched in another address or group of addresses.

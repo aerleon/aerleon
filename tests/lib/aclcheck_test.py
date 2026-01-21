@@ -14,7 +14,9 @@
 
 """Unit tests for AclCheck."""
 from ipaddress import IPv4Address
+from typing import Literal
 
+import pytest
 from absl.testing import absltest
 
 from aerleon.lib import aclcheck, naming, policy, port
@@ -51,6 +53,25 @@ term term-4 {
   action:: accept
 }
 term term-5 {
+  action:: reject
+}
+"""
+
+ZONE_POLICY_TEST = """
+header {
+  comment:: "zone test acl"
+  target:: srx from-zone any to-zone any
+}
+term zone-term {
+  source-address:: NET172
+  source-zone:: TRUST
+
+  destination-address:: NET10
+  destination-zone:: UNTRUST
+  protocol:: tcp
+  action:: accept
+}
+term default-term {
   action:: reject
 }
 """
@@ -209,6 +230,52 @@ class AclCheckTest(absltest.TestCase):
                             self.helper_testExceptions(
                                 srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
                             )
+
+
+@pytest.mark.parametrize(
+    "mode,source_zone,destination_zone,expected",
+    [
+        ("contains", None, None, ["zone-term"]),
+        ("equals", "TRUST", "UNTRUST", ["zone-term"]),
+        ("equals", "WRONG", "UNTRUST", ["default-term"]),
+    ],
+)
+def test_zone_matches_parametrized(
+    mode: Literal["contains", "equals"],
+    source_zone: str | None,
+    destination_zone: str | None,
+    expected: list[str],
+) -> None:
+    defs = naming.Naming(None)
+    servicedata = ["SSH = 22/tcp"]
+    networkdata = ["NET172 = 172.16.0.0/12", "NET10 = 10.0.0.0/8"]
+    defs.ParseServiceList(servicedata)
+    defs.ParseNetworkList(networkdata)
+
+    pol = policy.ParsePolicy(ZONE_POLICY_TEST, defs)
+
+    kwargs = {}
+    if source_zone is not None:
+        kwargs["source_zone"] = source_zone
+    if destination_zone is not None:
+        kwargs["destination_zone"] = destination_zone
+
+    check = aclcheck.AclCheck(
+        pol,
+        src="172.16.1.1",
+        dst="10.2.2.10",
+        sport="10000",
+        dport="22",
+        proto="tcp",
+        **kwargs,
+    )
+
+    matches = [m.term for m in check.Matches()]
+
+    if mode == "contains":
+        assert expected[0] in matches
+    else:
+        assert matches == expected
 
 
 if __name__ == '__main__':
