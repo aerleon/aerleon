@@ -297,7 +297,14 @@ class OpenConfig(aclgenerator.ACLGenerator):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         # Remove unsupported things
-        supported_tokens -= {'platform', 'platform_exclude', 'icmp-type', 'verbatim'}
+        supported_tokens -= {
+            'platform',
+            'platform_exclude',
+            'icmp-type',
+            'verbatim',
+            'source_address_exclude',
+            'destination_address_exclude',
+        }
 
         # OpenConfig ACL model only supports these three forwarding actions.
         supported_sub_tokens['action'] = {'accept', 'deny', 'reject'}
