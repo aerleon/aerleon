@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Unit tests for AclCheck."""
+from ipaddress import IPv4Address
 
 from typing import Literal
 
@@ -91,17 +92,25 @@ class AclCheckTest(absltest.TestCase):
         self.defs.ParseNetworkList(networkdata)
         self.pol = policy.ParsePolicy(POLICYTEXT, self.defs)
 
-    def testExactMatches(self):
-        check = aclcheck.AclCheck(self.pol, '172.16.1.1', '10.1.1.1', '1025', '22', 'tcp')
+    def helper_testExactMatches(self, srcip, dstip, sport, dport, proto) -> None:
+        check = aclcheck.AclCheck(self.pol, srcip, dstip, sport, dport, proto)
         matches = check.ExactMatches()
         self.assertEqual(len(matches), 1)
 
-    def testAclCheck(self):
-        srcip = '172.16.1.1'
-        dstip = '10.2.2.10'
-        sport = '10000'
-        dport = '22'
+    def testExactMatchesWithTypes(self) -> None:
+        srcip_str = '172.16.1.1'
+        dstip_str = '10.1.1.1'
+        sport_str = '1025'
+        dport_str = '22'
         proto = 'tcp'
+
+        for srcip in {srcip_str, IPv4Address(srcip_str)}:
+            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+                for sport in {sport_str, int(sport_str)}:
+                    for dport in {dport_str, int(dport_str)}:
+                        self.helper_testExactMatches(srcip, dstip, sport, dport, proto)
+
+    def helper_testAclCheck(self, srcip, dstip, sport, dport, proto) -> None:
         check = aclcheck.AclCheck(
             self.pol, src=srcip, dst=dstip, sport=sport, dport=dport, proto=proto
         )
@@ -129,13 +138,20 @@ class AclCheckTest(absltest.TestCase):
         self.assertNotIn('term-4', str(matches))
         self.assertNotIn('term-5', str(matches))
 
-    @capture.stdout
-    def testSummarize(self):
-        srcip = '172.16.1.1'
-        dstip = '10.2.2.10'
-        sport = '10000'
-        dport = '22'
+    def testAclCheckWithTypes(self) -> None:
+        srcip_str = '172.16.1.1'
+        dstip_str = '10.2.2.10'
+        sport_str = '10000'
+        dport_str = '22'
         proto = 'tcp'
+
+        for srcip in {srcip_str, IPv4Address(srcip_str)}:
+            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+                for sport in {sport_str, int(sport_str)}:
+                    for dport in {dport_str, int(dport_str)}:
+                        self.helper_testAclCheck(srcip, dstip, sport, dport, proto)
+
+    def helper_testSummarize(self, srcip, dstip, sport, dport, proto) -> None:
         check = aclcheck.AclCheck(
             self.pol, src=srcip, dst=dstip, sport=sport, dport=dport, proto=proto
         )
@@ -150,14 +166,23 @@ class AclCheckTest(absltest.TestCase):
 
         print(str(check))
 
-    def testExceptions(self):
-        srcip = '172.16.1.1'
-        dstip = '10.2.2.10'
-        sport = '10000'
-        dport = '22'
+    @capture.stdout
+    def testSummarizeWithTypes(self) -> None:
+        srcip_str = '172.16.1.1'
+        dstip_str = '10.2.2.10'
+        sport_str = '10000'
+        dport_str = '22'
         proto = 'tcp'
-        bad_portrange = '99999'
-        bad_portvalue = 'port_99'
+
+        for srcip in {srcip_str, IPv4Address(srcip_str)}:
+            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+                for sport in {sport_str, int(sport_str)}:
+                    for dport in {dport_str, int(dport_str)}:
+                        self.helper_testSummarize(srcip, dstip, sport, dport, proto)
+
+    def helper_testExceptions(
+        self, srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
+    ) -> None:
         self.assertRaises(
             port.BadPortValue,
             aclcheck.AclCheck,
@@ -188,6 +213,24 @@ class AclCheckTest(absltest.TestCase):
             dport,
             proto,
         )
+
+    def testExceptionsWithTypes(self) -> None:
+        srcip_str = '172.16.1.1'
+        dstip_str = '10.2.2.10'
+        sport_str = '10000'
+        dport_str = '22'
+        proto = 'tcp'
+        bad_portrange_str = '99999'
+        bad_portvalue = 'port_99'
+
+        for srcip in {srcip_str, IPv4Address(srcip_str)}:
+            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+                for sport in {sport_str, int(sport_str)}:
+                    for dport in {dport_str, int(dport_str)}:
+                        for bad_portrange in {bad_portrange_str, int(bad_portrange_str)}:
+                            self.helper_testExceptions(
+                                srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
+                            )
 
 
 @pytest.mark.parametrize(

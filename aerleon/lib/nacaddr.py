@@ -21,40 +21,59 @@ from __future__ import annotations
 import collections
 import ipaddress
 import itertools
-from typing import Union
+from typing import Union, cast
 
 import aerleon.utils.iputils as iputils
 
 
 def IP(
-    ip: ipaddress.IPv4Network | ipaddress.IPv6Network | str,
+    ip: (
+        ipaddress.IPv4Address
+        | ipaddress.IPv6Address
+        | ipaddress.IPv4Network
+        | ipaddress.IPv6Network
+        | str
+    ),
     comment: str = '',
     token: str = '',
     strict: bool = True,
 ) -> IPv4 | IPv6:
-    """Take an ip string and return an object of the correct type.
+    """Take an IP string/object and return an object of the correct type.
 
     Args:
-      ip: the ip address.
+      ip: the IP address.
       comment: option comment field
       token: option token name where this address was extracted from
-      strict: If strict should be used in ipaddress object.
+      strict: If strict should be used in ipaddress object validation.
 
     Returns:
-      ipaddress.IPv4 or ipaddress.IPv6 object or raises ValueError.
+      IPv4 or IPv6 object or raises ValueError.
 
     Raises:
       ValueError: if the string passed isn't either a v4 or a v6 address.
     """
+
     if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
         imprecise_ip = ip
     else:
         imprecise_ip = ipaddress.ip_network(ip, strict=strict)
+
     if imprecise_ip.version == 4:
-        return IPv4(ip, comment, token, strict=strict)
+        return IPv4(
+            cast(ipaddress.IPv4Address | ipaddress.IPv4Network | str, ip),
+            comment,
+            token,
+            strict=strict,
+        )
     elif imprecise_ip.version == 6:
-        return IPv6(ip, comment, token, strict=strict)
-    raise ValueError(f'Provided IP string "{ip}" is not a valid v4 or v6 address')
+        return IPv6(
+            cast(ipaddress.IPv6Address | ipaddress.IPv6Network | str, ip),
+            comment,
+            token,
+            strict=strict,
+        )
+    else:
+        raise ValueError(f'Provided IP "{ip}" is not a valid v4 or v6 address')
 
 
 # TODO(robankeny) remove once at 3.7
@@ -76,7 +95,7 @@ class IPv4(ipaddress.IPv4Network):
 
     def __init__(
         self,
-        ip_string: ipaddress.IPv4Network | tuple[int, int] | str | IPv4,
+        ip: ipaddress.IPv4Address | ipaddress.IPv4Network | tuple[int, int] | str | IPv4,
         comment: str | IPv4 = '',
         token: str = '',
         strict: bool = True,
@@ -87,14 +106,14 @@ class IPv4(ipaddress.IPv4Network):
 
         # Using a tuple of IP integer/prefixlength is significantly faster than
         # using the BaseNetwork object for recreating the IP network
-        if isinstance(ip_string, ipaddress._BaseNetwork):  # pylint disable=protected-access
-            ip = (
-                ip_string.network_address._ip,
-                ip_string.prefixlen,
+        if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
+            new_ip = (
+                ip.network_address._ip,
+                ip.prefixlen,
             )  # pylint disable=protected-access # pytype: disable=attribute-error
         else:
-            ip = ip_string
-        super().__init__(ip, strict)
+            new_ip = ip
+        super().__init__(new_ip, strict)
 
     def subnet_of(self, other: IPv4) -> bool:
         """Return True if this network is a subnet of other."""
@@ -167,7 +186,7 @@ class IPv6(ipaddress.IPv6Network):
 
     def __init__(
         self,
-        ip_string: str | ipaddress.IPv6Network | tuple[int, int] | IPv6,
+        ip: ipaddress.IPv6Address | ipaddress.IPv6Network | tuple[int, int] | str | IPv6,
         comment: str = '',
         token: str = '',
         strict: bool = True,
@@ -178,14 +197,14 @@ class IPv6(ipaddress.IPv6Network):
 
         # Using a tuple of IP integer/prefixlength is significantly faster than
         # using the BaseNetwork object for recreating the IP network
-        if isinstance(ip_string, ipaddress._BaseNetwork):  # pylint disable=protected-access
-            ip = (
-                ip_string.network_address._ip,
-                ip_string.prefixlen,
+        if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
+            new_ip = (
+                ip.network_address._ip,
+                ip.prefixlen,
             )  # pylint disable=protected-access # pytype: disable=attribute-error
         else:
-            ip = ip_string
-        super().__init__(ip, strict)
+            new_ip = ip
+        super().__init__(new_ip, strict)
 
     def subnet_of(self, other: IPv6) -> bool:
         """Return True if this network is a subnet of other."""
