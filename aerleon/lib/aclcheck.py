@@ -76,6 +76,8 @@ class AclCheck:
     proto: str | Literal["any"]
     matches: list
     exact_matches: list
+    source_zone: str | Literal["any"]
+    destination_zone: str | Literal["any"]
 
     @classmethod
     def FromPolicyDict(
