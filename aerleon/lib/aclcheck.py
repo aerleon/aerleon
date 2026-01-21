@@ -89,10 +89,12 @@ class AclCheck:
         sport: int | str | Literal["any"],
         dport: int | str | Literal["any"],
         proto: str | Literal["any"],
+        source_zone: str | Literal["any"],
+        destination_zone: str | Literal["any"],
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
-        return cls(policy_obj, src, dst, sport, dport, proto)
+        return cls(policy_obj, src, dst, sport, dport, proto, source_zone, destination_zone)
 
     def __init__(
         self,
