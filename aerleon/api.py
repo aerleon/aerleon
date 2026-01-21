@@ -511,8 +511,8 @@ def AclCheck(
             sport if sport is not None else "any",
             dport if dport is not None else "any",
             proto if proto is not None else "any",
-            source_zone if source_zone is not None else "any",
-            destination_zone if destination_zone is not None else "any",
+            source_zone,
+            destination_zone,
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:
