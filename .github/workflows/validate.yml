@@ -94,6 +94,7 @@ jobs:
       - name: Format project using Black
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
+        src: "aerleon tests noxfile.py"
         with:
           version: "25.9.0"
       #----------------------------------------------
@@ -104,6 +105,9 @@ jobs:
         uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
+      #----------------------------------------------
+      # run pyupgrade
+      #----------------------------------------------
       - name: Check for modern Python syntax using pyupgrade
         if: steps.paths-filter.outputs.run_format == 'true'
         run: poetry run pyupgrade --py310-plus $(git ls-files '*.py')

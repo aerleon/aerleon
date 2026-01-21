@@ -89,7 +89,23 @@ def benchmark_tuned(session):
 def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
-    session.run("black", "aerleon", "tests")
+
+    files = session.run(
+        "git",
+        "ls-files",
+        "*.py",
+        silent=True,
+        external=True,
+    ).splitlines()
+
+    if files:
+        session.run(
+            "pyupgrade",
+            "--py310-plus",
+            *files,
+            success_codes=[0, 1],
+        )
+    session.run("black", "aerleon", "tests", "noxfile.py")
     session.run("isort", ".")
 
 
