@@ -216,7 +216,7 @@ import pathlib
 import sys
 import typing
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Optional
+from typing import Literal, Optional
 
 from absl import logging
 
@@ -497,6 +497,8 @@ def AclCheck(
     sport: int | str | typing.Literal["any"] | None = "any",
     dport: int | str | typing.Literal["any"] | None = "any",
     proto: str | typing.Literal["any"] | None = "any",
+    source_zone: str | Literal["any"] = "any",
+    destination_zone: str | Literal["any"] = "any",
 ):
     filename = input_policy.get("filename")
     try:
@@ -509,6 +511,8 @@ def AclCheck(
             sport if sport is not None else "any",
             dport if dport is not None else "any",
             proto if proto is not None else "any",
+            source_zone,
+            destination_zone,
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:

@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal
+from typing import Literal, Optional
 
 from typing_extensions import Self
 
@@ -89,10 +89,21 @@ class AclCheck:
         sport: int | str | Literal["any"],
         dport: int | str | Literal["any"],
         proto: str | Literal["any"],
+        source_zone: str | Literal["any"] | None = None,
+        destination_zone: str | Literal["any"] | None = None,
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
-        return cls(policy_obj, src, dst, sport, dport, proto)
+        return cls(
+            policy_obj,
+            src,
+            dst,
+            sport,
+            dport,
+            proto,
+            source_zone or 'any',
+            destination_zone or 'any',
+        )
 
     def __init__(
         self,
