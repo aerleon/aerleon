@@ -89,8 +89,8 @@ class AclCheck:
         sport: int | str | Literal["any"],
         dport: int | str | Literal["any"],
         proto: str | Literal["any"],
-        source_zone: Optional[str | Literal["any"]] = None,
-        destination_zone: Optional[str | Literal["any"]] = None,
+        source_zone: str | Literal["any"] | None = None,
+        destination_zone: str | Literal["any"] | None = None,
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
