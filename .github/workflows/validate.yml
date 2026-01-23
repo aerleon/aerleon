@@ -110,4 +110,4 @@ jobs:
       #----------------------------------------------
       - name: Check for modern Python syntax using pyupgrade
         if: steps.paths-filter.outputs.run_format == 'true'
-        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py')
+        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py' | grep -v '^aerleon/_vendor/')
