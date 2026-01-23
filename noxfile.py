@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+from pathlib import Path
 
 import nox
 from nox_poetry import Session, session
@@ -90,21 +91,13 @@ def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
 
-    files = session.run(
-        "git",
-        "ls-files",
-        "*.py",
-        silent=True,
-        external=True,
-    ).splitlines()
-
+    # pyupgrade
+    files = session.run("git", "ls-files", "*.py", silent=True, external=True).splitlines()
+    vendor_path = Path("aerleon/_vendor")
+    files = [f for f in files if not Path(f).is_relative_to(vendor_path)]
     if files:
-        session.run(
-            "pyupgrade",
-            "--py310-plus",
-            *files,
-            success_codes=[0, 1],
-        )
+        session.run("pyupgrade", "--py310-plus", *files, success_codes=[0, 1])
+
     session.run("black", "aerleon", "tests", "noxfile.py")
     session.run("isort", ".")
 
