@@ -24,9 +24,9 @@ import sys
 from typing import TYPE_CHECKING, Any
 
 from absl import logging
-from ply import lex, yacc
-from ply.lex import LexToken
-from ply.yacc import YaccProduction
+from aerleon._vendor.ply import lex, yacc
+from aerleon._vendor.ply.lex import LexToken
+from aerleon._vendor.ply.yacc import YaccProduction
 
 from aerleon.lib import nacaddr, naming
 from aerleon.lib.nacaddr import IPv4, IPv6
