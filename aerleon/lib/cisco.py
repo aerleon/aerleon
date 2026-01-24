@@ -196,8 +196,6 @@ class ObjectGroup:
 
     def __str__(self) -> str:
         ret_str = ['\n']
-        # netgroups will contain two-tuples of group name string and family int.
-        netgroups = set()
         ports = {}
 
         # I don't have an easy way get the token name used in the pol file

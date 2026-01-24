@@ -1310,7 +1310,6 @@ class JuniperTest(parameterized.TestCase):
         self.naming._ParseLine('INTERNAL = 0.0.0.0/1', 'networks')
         self.naming._ParseLine('SOME_HOST = 192.168.0.64/27 192.168.1.64/27', 'networks')
 
-        mock_calls = []
         for term in terms:
             jcl = juniper.Juniper(
                 policy.ParsePolicy(GOOD_DSMO_HEADER + term, self.naming), EXP_INFO

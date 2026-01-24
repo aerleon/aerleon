@@ -985,7 +985,6 @@ class Naming:
                 # ('protocol' and 'port') or 'name' must be present in any dictionary item
                 value = None
                 service_ref = None
-                service_port = None
                 comment = None
                 if isinstance(item, str):
                     value = service_ref = item
@@ -1002,7 +1001,7 @@ class Naming:
                     ):
                         protocol = item['protocol']
                         port = item['port']
-                        value = service_port = f'{port}/{protocol}'
+                        value = f'{port}/{protocol}'
                     else:
                         logging.info(f'\nService name or port definition expected for: {symbol}')
                         continue

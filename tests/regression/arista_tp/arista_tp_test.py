@@ -1011,9 +1011,6 @@ class AristaTpTest(absltest.TestCase):
 
     @capture.stdout
     def testAddressExclude(self):
-        big = nacaddr.IPv4("0.0.0.0/1")
-        ip1 = nacaddr.IPv4("10.0.0.0/8")
-        ip2 = nacaddr.IPv4("172.16.0.0/12")
         terms = (GOOD_TERM_18_SRC, GOOD_TERM_18_DST)
         self.naming._ParseLine('INTERNAL = 0.0.0.0/1 10.0.0.0/8 172.16.0.0/12', 'networks')
         self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')

@@ -417,7 +417,6 @@ class PaloAltoFW(aclgenerator.ACLGenerator):
           name.
         """
         first_addr_obj = None
-        address_book_dup_check = set()
 
         for header, terms in pol.filters:
             # The filter_options is a list of options from header, e.g.
