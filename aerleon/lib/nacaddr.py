@@ -76,20 +76,6 @@ def IP(
         raise ValueError(f'Provided IP "{ip}" is not a valid v4 or v6 address')
 
 
-# TODO(robankeny) remove once at 3.7
-@staticmethod
-def _is_subnet_of(a: IPv4 | IPv6, b: IPv4 | IPv6) -> bool:  # pylint: disable=invalid-name
-    try:
-        # Always false if one is v4 and the other is v6.
-        if a.version != b.version:
-            raise TypeError(f'{a} and {b} are not of the same version')
-        return (
-            b.network_address <= a.network_address and b.broadcast_address >= a.broadcast_address
-        )
-    except AttributeError:
-        raise TypeError(f'Unable to test subnet containment between {a} and {b}')
-
-
 class IPv4(ipaddress.IPv4Network):
     """This subclass allows us to keep text comments related to each object."""
 
