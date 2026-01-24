@@ -18,10 +18,8 @@
 # pylint: disable=super-init-not-called
 
 
-import collections
 import copy
 import itertools
-from typing import Union
 
 from absl import logging
 
@@ -711,7 +709,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         for fqdn in fqdns:
             target.IndentAppend(4, f'address {token}_{counter} {{')
             target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
-            target.IndentAppend(4, f'}}')
+            target.IndentAppend(4, '}')
         return target
 
     def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:

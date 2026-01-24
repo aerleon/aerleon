@@ -17,7 +17,7 @@
 """Cisco generator."""
 
 import ipaddress
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 from absl import logging
 

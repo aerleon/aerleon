@@ -6,10 +6,6 @@ from aerleon.lib import nacaddr, naming, policy
 from aerleon.lib.policy_builder import (
     PolicyBuilder,
     PolicyDict,
-    RawFilter,
-    RawFilterHeader,
-    RawPolicy,
-    RawTerm,
 )
 
 # fmt: off

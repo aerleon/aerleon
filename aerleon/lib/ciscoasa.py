@@ -18,9 +18,8 @@
 
 import ipaddress
 import re
-from typing import Union, cast
+from typing import cast
 
-from absl import logging
 
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
 from aerleon.lib.nacaddr import IPv4, IPv6

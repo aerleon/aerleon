@@ -48,7 +48,7 @@ DNS = 53/tcp
 
 import re
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import yaml
 from absl import logging

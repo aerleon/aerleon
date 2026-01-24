@@ -16,7 +16,6 @@
 
 """Juniper JCL generator."""
 
-from typing import Optional, Union
 
 from absl import logging
 

@@ -616,7 +616,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testInactiveTerm(self):
-        self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
         msmpc = junipermsmpc.JuniperMSMPC(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_36, self.naming), EXP_INFO
         )
@@ -626,7 +626,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testInet6(self):
-        self.naming._ParseLine(f'SOME_HOST = 2001::/33', 'networks')
+        self.naming._ParseLine('SOME_HOST = 2001::/33', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         msmpc = junipermsmpc.JuniperMSMPC(
@@ -781,7 +781,7 @@ class JuniperMSMPCTest(parameterized.TestCase):
 
     @capture.stdout
     def testStatelessReply(self):
-        self.naming._ParseLine(f'SOME_HOST = 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.1/32', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         ret = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_1, self.naming)

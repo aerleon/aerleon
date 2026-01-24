@@ -15,7 +15,6 @@
 #
 """Demo generator for Aerleon."""
 
-from absl import logging
 
 from aerleon.lib import aclgenerator
 

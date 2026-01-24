@@ -17,7 +17,6 @@
 """Generic Windows security policy generator; requires subclassing."""
 
 import string
-from typing import Union
 
 from absl import logging
 

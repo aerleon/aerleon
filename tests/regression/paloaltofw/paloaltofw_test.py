@@ -1900,7 +1900,7 @@ term rule-1 {
         paloalto = paloaltofw.PaloAltoFW(pol, EXP_INFO)
         output = str(paloalto)
         print(output)
-        x = paloalto.config.find(f".//entry[@name='test-profile-settings']/profile-setting")
+        x = paloalto.config.find(".//entry[@name='test-profile-settings']/profile-setting")
         self.assertIsNotNone(x)
         members = x.findall("group/member")
         profiles = {member.text for member in members}

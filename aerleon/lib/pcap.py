@@ -29,7 +29,6 @@ Stolen liberally from packetfilter.py.
 """
 
 
-from typing import Union
 
 from absl import logging
 

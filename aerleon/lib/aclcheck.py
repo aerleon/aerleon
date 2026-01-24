@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal, Optional
+from typing import Literal
 
 from typing_extensions import Self
 

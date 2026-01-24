@@ -17,7 +17,6 @@
 
 import copy
 import re
-from typing import Optional, Union
 
 from absl import logging
 

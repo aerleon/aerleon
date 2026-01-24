@@ -888,7 +888,7 @@ class AristaTpTest(absltest.TestCase):
     @mock.patch.object(arista_tp.logging, "warning")
     @capture.stdout
     def testSkipTermAF(self, mock_warning):
-        self.naming._ParseLine(f'SOME_HOST = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         atp = arista_tp.AristaTrafficPolicy(

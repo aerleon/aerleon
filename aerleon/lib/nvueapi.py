@@ -23,7 +23,6 @@ https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-514/System-Co
 
 import itertools
 import json
-from typing import Optional
 
 try:
     from absl import logging

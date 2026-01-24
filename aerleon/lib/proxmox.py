@@ -1,6 +1,5 @@
 import math
 from collections.abc import MutableMapping
-from typing import Optional, Union
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6

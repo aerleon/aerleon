@@ -4,7 +4,6 @@
 
 import ipaddress
 from collections.abc import Iterator
-from typing import Union
 
 
 def exclude_address(

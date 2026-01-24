@@ -25,7 +25,7 @@ import copy
 import ipaddress
 import json
 import re
-from typing import TypedDict, Union
+from typing import TypedDict
 
 from absl import logging
 

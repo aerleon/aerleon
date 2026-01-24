@@ -14,11 +14,9 @@
 # limitations under the License.
 """Palo Alto Firewall generator."""
 
-import collections
 import copy
 import re
 import xml.etree.ElementTree as etree
-from typing import Optional, Union
 from xml.dom import minidom
 
 from absl import logging
