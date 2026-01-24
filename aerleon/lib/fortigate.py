@@ -11,7 +11,6 @@ from aerleon.utils.options import (
     AbstractOption,
     ArbitraryValueOption,
     ProcessOptions,
-    ValueOption,
 )
 
 FORTIGATE_SERVICES_ALL = 'ALL'
@@ -67,9 +66,9 @@ class FortigateIcmpService(FortigateObjectGroup):
         """Return string representation of Fortigate service."""
         output = []
         output.append(f'    edit {self.name}')
-        output.append(f'        set protocol ICMP')
+        output.append('        set protocol ICMP')
         output.append(f'        set icmptype {" ".join(self.icmp_types)}')
-        output.append(f'    next')
+        output.append('    next')
         return '\n'.join(output)
 
 
@@ -124,10 +123,10 @@ class FortinetAddress(FortigateObjectGroup):
         output = []
         output.append(f'    edit {self.name}')
         if self.ip.version == 6:
-            output.append(f'        set type ipprefix')
+            output.append('        set type ipprefix')
             output.append(f'        set ip6 {str(self.ip)}')
         else:
-            output.append(f'        set type ipmask')
+            output.append('        set type ipmask')
             output.append(
                 f'        set subnet {str(self.ip.network_address)} {str(self.ip.netmask)}'
             )
@@ -156,9 +155,9 @@ class FortigateExcludeGroup(FortigateObjectGroup):
         output = []
         output.append(f'    edit {self.name}')
         output.append(f'        set member {" ".join(self._members_cfg_list)}')
-        output.append(f'        set exclude enable')
+        output.append('        set exclude enable')
         output.append(f'        set exclude-member {" ".join(self._exclude_cfg_list)}')
-        output.append(f'    next')
+        output.append('    next')
         return '\n'.join(output)
 
 
@@ -206,7 +205,7 @@ class FortigateAddressGroup(FortigateObjectGroup):
         output.append(f'    edit {self.name}')
         member_names = [f'"{addr.name}"' for addr in current_fortigate_addrs]
         output.append(f'        set member {" ".join(member_names)}')
-        output.append(f'    next')
+        output.append('    next')
         return '\n'.join(output)
 
     def __len__(self):
@@ -345,13 +344,13 @@ class Term(aclgenerator.Term):
     def _SetStrLogging(self, output):
         if self.term.logging:
             if self.logtraffic == 'log_traffic_mode_all':
-                output.append(f'        set logtraffic all')
+                output.append('        set logtraffic all')
             elif self.logtraffic == 'log_traffic_mode_disable':
-                output.append(f'        set logtraffic disable')
+                output.append('        set logtraffic disable')
             if self.logtraffic_start == 'log_traffic_start_session':
-                output.append(f'        set logtraffic-start enable')
+                output.append('        set logtraffic-start enable')
         else:
-            output.append(f'        set logtraffic disable')
+            output.append('        set logtraffic disable')
         return output
 
     def _SetStrInterfaces(self, output):

@@ -18,7 +18,7 @@
 
 import collections
 import copy
-from typing import Optional, Union, cast
+from typing import cast
 
 from absl import logging
 

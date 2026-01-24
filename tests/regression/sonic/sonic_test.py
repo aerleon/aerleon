@@ -16,7 +16,7 @@
 """Unittest for OpenConfig rendering module."""
 
 
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
 from aerleon.lib import naming, policy, sonic
 from tests.regression_utils import capture

@@ -17,7 +17,7 @@
 
 import json
 
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 
 from aerleon.lib import naming, openconfig, policy
 from tests.regression_utils import capture

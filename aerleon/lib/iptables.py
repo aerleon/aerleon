@@ -18,7 +18,6 @@
 
 import re
 from string import Template  # pylint: disable=g-importing-member
-from typing import Optional, Union
 
 from absl import logging
 

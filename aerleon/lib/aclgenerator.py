@@ -21,7 +21,6 @@ import datetime
 import hashlib
 import re
 import string
-from typing import Optional, Union
 
 from absl import logging
 

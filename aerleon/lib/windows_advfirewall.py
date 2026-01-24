@@ -16,7 +16,6 @@
 """Windows advfirewall policy generator."""
 
 import string
-from typing import Union
 
 from aerleon.lib import windows
 from aerleon.lib.nacaddr import IPv4, IPv6

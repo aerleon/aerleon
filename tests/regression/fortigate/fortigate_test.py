@@ -3,7 +3,7 @@
 import textwrap
 from unittest import mock
 
-from absl.testing import absltest, parameterized
+from absl.testing import parameterized
 
 from aerleon.lib import fortigate, naming, policy
 from aerleon.lib import yaml as yaml_frontend

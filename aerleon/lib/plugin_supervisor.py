@@ -44,7 +44,6 @@ from __future__ import annotations
 
 import importlib.util
 import pathlib
-import sys
 from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import entry_points, version

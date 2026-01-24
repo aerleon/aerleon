@@ -17,7 +17,7 @@
 
 import collections
 import copy
-from typing import DefaultDict, Union
+from typing import DefaultDict
 
 from absl import logging
 

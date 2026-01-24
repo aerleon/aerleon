@@ -3,7 +3,6 @@
 import copy
 import pathlib
 import typing
-from typing import Optional, Union
 
 import yaml
 from absl import logging

@@ -17,7 +17,7 @@
 """Cisco generator."""
 
 import ipaddress
-from typing import Any, Optional, Union, cast
+from typing import Any, Union, cast
 
 from absl import logging
 
@@ -196,8 +196,6 @@ class ObjectGroup:
 
     def __str__(self) -> str:
         ret_str = ['\n']
-        # netgroups will contain two-tuples of group name string and family int.
-        netgroups = set()
         ports = {}
 
         # I don't have an easy way get the token name used in the pol file

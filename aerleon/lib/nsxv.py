@@ -18,7 +18,6 @@
 
 import re
 import xml
-from typing import Optional
 
 from absl import logging
 
