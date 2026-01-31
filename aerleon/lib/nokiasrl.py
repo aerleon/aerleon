@@ -21,6 +21,8 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 
 from typing import TypedDict
 
+from absl import logging
+
 from aerleon.lib import aclgenerator, openconfig
 from aerleon.lib.policy import Term
 
@@ -263,6 +265,9 @@ class NokiaSRLinux(openconfig.OpenConfig):
     ) -> None:
         srl_acl_entries: dict[str, list[ACLEntry]] = {'inet': [], 'inet6': []}
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
+        logging.warning(
+            "NOTICE: The Nokia SRLinux default ACL output will switch to the r24.3 syntax in Aerleon 1.11 . Please see https://github.com/aerleon/aerleon/issues/383"
+        )
         for term in terms:
             for term_af in afs:
                 t = SRLTerm(term, term_af)
