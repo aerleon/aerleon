@@ -255,7 +255,7 @@ class Term(aclgenerator.Term):
 
         self.address_groups = addressgroups
         self.address_groups_v6 = addressgroups_v6
-        self.services = []
+        self.services = dict()
 
         self._TranslateAddresses(term.source_address)
         self._TranslateAddresses(term.destination_address)
@@ -273,15 +273,29 @@ class Term(aclgenerator.Term):
             )
 
         if term.destination_port or term.source_port:
-            service = FortigateIPService(
-                term.name, term.source_port, term.destination_port, term.protocol
-            )
-            self.services.append(service)
+            prev_length_sum = 0
+            for (name, length) in term.destination_port_name:
+                prev_length_sum_src = 0
+                if len(term.source_port_name):
+                    for (name_src, length_src) in term.source_port_name:
+                        c_name = f'{name}_FROM_{name_src}'
+                        service = FortigateIPService(
+                            c_name, term.source_port[prev_length_sum_src:prev_length_sum_src + length_src], term.destination_port[prev_length_sum:prev_length_sum + length], term.protocol
+                        )
+                        self.services[c_name] = service
+                        prev_length_sum_src += length_src
+                else:
+                    service = FortigateIPService(
+                        name, [], term.destination_port[prev_length_sum:prev_length_sum + length], term.protocol
+                    )
+                    self.services[name] = service
+                prev_length_sum += length
+
         if term.icmp_type:
             service = FortigateIcmpService(
                 term.name, self.NormalizeIcmpTypes(term.icmp_type, term.protocol, 4)
             )
-            self.services.append(service)
+            self.services[term.name](service)
         # Logging defaults to UTM on fortigate
         # Set those defaults and then if logging is enabled, check options for
         # deviations from defaults.
@@ -516,10 +530,10 @@ class Term(aclgenerator.Term):
             output.append(f'        set {self.SADDR_V6} {src_v6_to_set}')
             output.append(f'        set {self.DADDR_V6} {dst_v6_to_set}')
         output.append(f'        set schedule {FORTIGATE_SCHEDULE_ALWAYS}')
-        services = [f'"{service.name}"' for service in self.services]
+        services = [f'"{service}"' for service in self.services.keys()]
         if not services:
             services = [f'"{FORTIGATE_SERVICES_ALL}"']
-        output.append(f'        set service {"".join(services)}')
+        output.append(f'        set service {" ".join(services)}')
 
         # Multiple logging types are available, check if logging is true and then print relevant log statements.
         output = self._SetStrLogging(output)
@@ -569,7 +583,7 @@ class Fortigate(aclgenerator.ACLGenerator):
           name: Name of the ACL.
           description: Description of the ACL.
         """
-        self.services = []
+        self.services = dict()
         self.terms = []
         self.local_in_terms_v4 = []
         self.local_in_terms_v6 = []
@@ -648,7 +662,7 @@ class Fortigate(aclgenerator.ACLGenerator):
                     self.address_groups_v6,
                     af,
                 )
-                self.services.extend(fortigate_term.services)
+                self.services.update(fortigate_term.services)
                 self.term_names.add(term.name)
                 if destination_interface == "local-in-policy":
                     if af == "inet":
@@ -727,8 +741,9 @@ class Fortigate(aclgenerator.ACLGenerator):
         # Services
         if self.services:
             output.append('config firewall service custom')
-            for service in sorted(self.services):
-                output.append(str(service))
+            for service in sorted(self.services.keys()):
+                v = self.services[service]
+                output.append(str(v))
             output.append('end')
 
         # Firewall Policies
