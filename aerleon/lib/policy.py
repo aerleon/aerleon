@@ -21,7 +21,7 @@ import datetime
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Tuple
 
 from absl import logging
 
@@ -161,6 +161,7 @@ def TranslatePorts(
       Duplication will be taken care of in Term.CollapsePortList
     """
     ret_array = []
+    ret_names_array = []
     for proto in protocols:
         for port in ports:
             service_by_proto = DEFINITIONS.GetServiceByProto(port, proto)
@@ -170,12 +171,14 @@ def TranslatePorts(
                     'Unless intended, you should consider splitting the protocols into separate terms!'
                 )
 
+            ret_names_array.append((port, len(service_by_proto)))
+
             for p in [x.split('-') for x in service_by_proto]:
                 if len(p) == 1:
                     ret_array.append((int(p[0]), int(p[0])))
                 else:
                     ret_array.append((int(p[0]), int(p[1])))
-    return ret_array
+    return ret_names_array, ret_array
 
 
 # classes for storing the object types in the policy files.
@@ -217,19 +220,19 @@ class Policy:
             if term.translated:
                 continue
             if term.port:
-                term.port = TranslatePorts(term.port, term.protocol, term.name)
+                term.port_name, term.port = TranslatePorts(term.port, term.protocol, term.name)
                 if not term.port:
                     raise TermPortProtocolError(
                         f'no ports of the correct protocol for term {term.name}'
                     )
             if term.source_port:
-                term.source_port = TranslatePorts(term.source_port, term.protocol, term.name)
+                term.source_port_name, term.source_port = TranslatePorts(term.source_port, term.protocol, term.name)
                 if not term.source_port:
                     raise TermPortProtocolError(
                         f'no source ports of the correct protocol for term {term.name}'
                     )
             if term.destination_port:
-                term.destination_port = TranslatePorts(
+                term.destination_port_name, term.destination_port = TranslatePorts(
                     term.destination_port, term.protocol, term.name
                 )
                 if not term.destination_port:
@@ -431,6 +434,7 @@ class Term:
         self.destination_address = []
         self.destination_address_exclude = []
         self.destination_fqdn = []
+        self.destination_port_name = []
         self.destination_port = []
         self.destination_prefix = []
         self.filter_term = None
@@ -443,6 +447,7 @@ class Term:
         self.option = []
         self.owner = None
         self.policer = None
+        self.port_name = []
         self.port = []
         self.precedence = []
         self.protocol = []
@@ -454,6 +459,7 @@ class Term:
         self.source_address = []
         self.source_address_exclude = []
         self.source_fqdn = []
+        self.source_port_name = []
         self.source_port = []
         self.source_prefix = []
         self.ttl = None
@@ -1457,13 +1463,14 @@ class Term:
                 self.destination_address_exclude, self.destination_address
             )
 
-        # port collapsing.
-        if self.port:
-            self.port = self.CollapsePortList(self.port)
-        if self.source_port:
-            self.source_port = self.CollapsePortList(self.source_port)
-        if self.destination_port:
-            self.destination_port = self.CollapsePortList(self.destination_port)
+        if optimize:
+            # port collapsing.
+            if self.port:
+                self.port = self.CollapsePortList(self.port)
+            if self.source_port:
+                self.source_port = self.CollapsePortList(self.source_port)
+            if self.destination_port:
+                self.destination_port = self.CollapsePortList(self.destination_port)
 
     def CollapsePortList(self, ports: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """Given a list of ports, Collapse to the smallest required.
