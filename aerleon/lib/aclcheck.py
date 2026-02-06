@@ -22,6 +22,7 @@ from collections.abc import Collection
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
+from nacaddr import IPv4, IPv6
 from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
@@ -175,24 +176,30 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
-                if self._AddrInside(self.src, term.source_address):
-                    src_too_broad = False
-                    logging.debug('srcaddr matches: %s', self.src)
-                elif self._AddrContains(self.src, term.source_address):
-                    src_too_broad = True
-                    logging.debug('srcaddr too broadly matches: %s', self.src)
-                else:
-                    logging.debug('srcaddr does not match')
-                    continue
-                if self._AddrInside(self.dst, term.destination_address):
-                    dst_too_broad = False
-                    logging.debug('dstaddr matches: %s', self.dst)
-                elif self._AddrContains(self.dst, term.destination_address):
-                    dst_too_broad = True
-                    logging.debug('dstaddr too broadly matches: %s', self.dst)
-                else:
-                    logging.debug('dstaddr does not match')
-                    continue
+                match self._AddrMatch(self.src, term.source_address):
+                    case "full":
+                        src_too_broad = False
+                        logging.debug('srcaddr matches: %s', self.src)
+                    case "partial":
+                        src_too_broad = True
+                        logging.debug('srcaddr too broadly matches: %s', self.src)
+                    case False:
+                        logging.debug('srcaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unreachable')
+                match self._AddrMatch(self.dst, term.destination_address):
+                    case "full":
+                        dst_too_broad = False
+                        logging.debug('dstaddr matches: %s', self.dst)
+                    case "partial":
+                        dst_too_broad = True
+                        logging.debug('dstaddr too broadly matches: %s', self.dst)
+                    case False:
+                        logging.debug('dstaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unreachable')
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.source_zone, term.source_zone):
@@ -344,45 +351,38 @@ class AclCheck:
             return False
         return True
 
-    def _AddrInside(self, addr, addresses):
-        """Check if address is matched exactly or within another address or group of addresses.
+    def _AddrMatch(
+        self, addr: IPv4 | IPv6 | Literal["any"], addresses
+    ) -> Literal["full", "partial", False]:
+        """Check if an address matches another address or group of addresses,
+        as a full match, partial match, or no match.
 
         Args:
           addr: An ipaddr network or host address or text 'any'
           addresses: A list of ipaddr network or host addresses
 
         Returns:
-          bool: True of false
+          "full": if addr is fully matched by any of addresses (i.e. addr is a subnet) or is "any"
+          "partial": if addr is partially matched by any of addresses, but not fully matched (i.e. addr is a supernet)
+          False: if addr is not matched by any of addresses
         """
         if addr == 'any':
-            return True  # always true if we match for any addr
+            return "full"  # always true if we match for any addr
         if not addresses:
-            return True  # always true if term has nothing to match
+            return "full"  # always true if term has nothing to match
+
+        partial_match: bool = False
         for ip in addresses:
             # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
             if addr.subnet_of(ip):
-                return True
-        return False
-
-    def _AddrContains(self, addr, addresses):
-        """Check if address is matched exactly or as a supernet of another address or group of addresses.
-
-        Args:
-          addr: An ipaddr network or host address or text 'any'
-          addresses: A list of ipaddr network or host addresses
-
-        Returns:
-          bool: True of false
-        """
-        if addr == 'any':
-            return True  # always true if we match for any addr
-        if not addresses:
-            return True  # always true if term has nothing to match
-        for ip in addresses:
-            # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
+                return "full"
             if addr.supernet_of(ip):
-                return True
-        return False
+                partial_match = True
+
+        if partial_match:
+            return "partial"
+        else:
+            return False
 
     def _PortInside(self, myport, port_list):
         """Check if port matches in a port or group of ports.
