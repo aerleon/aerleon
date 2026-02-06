@@ -175,14 +175,26 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
-                if not self._AddrInside(self.src, term.source_address):
+                if self._AddrOverlaps(self.src, term.source_address):
+                    if self._AddrInside(self.src, term.source_address):
+                        src_too_broad = False
+                        logging.debug('srcaddr matches: %s', self.src)
+                    else:
+                        src_too_broad = True
+                        logging.debug('srcaddr contains: %s', self.src)
+                else:
                     logging.debug('srcaddr does not match')
                     continue
-                logging.debug('srcaddr matches: %s', self.src)
-                if not self._AddrInside(self.dst, term.destination_address):
+                if self._AddrOverlaps(self.dst, term.destination_address):
+                    if self._AddrInside(self.dst, term.destination_address):
+                        dst_too_broad = False
+                        logging.debug('dstaddr matches: %s', self.dst)
+                    else:
+                        dst_too_broad = True
+                        logging.debug('dstaddr contains: %s', self.dst)
+                else:
                     logging.debug('dstaddr does not match')
                     continue
-                logging.debug('dstaddr matches: %s', self.dst)
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.source_zone, term.source_zone):
@@ -195,7 +207,6 @@ class AclCheck:
                     logging.debug('destination zone does not match')
                     continue
                 logging.debug('destination zone matches: %s', self.destination_zone)
-
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -224,7 +235,8 @@ class AclCheck:
                     logging.debug('term had no action (verbatim?), no match.')
                     continue
                 logging.debug('term has an action')
-                possible = self._PossibleMatch(term)
+
+                possible = self._PossibleMatch(term, src_too_broad, dst_too_broad)
                 self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
                 if possible:
                     logging.debug('term has options: %s, not treating as exact match', possible)
@@ -293,16 +305,22 @@ class AclCheck:
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term):
-        """Ignore some options and keywords that are edge cases.
+    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool):
+        """Address overly broad checks and ignore some options and keywords that are edge cases.
 
         Args:
           term: term object to examine for edge-cases
+          src_too_broad: boolean indicating if a subset of src matched the term
+          dst_too_broad: boolean indicating if a subset of dst matched the term
 
         Returns:
-          ret_str: a list of reasons this term may possible match
+          ret_str: a list of reasons this term may possibly match
         """
         ret_str = []
+        if src_too_broad:
+            ret_str.append('src-subset')
+        if dst_too_broad:
+            ret_str.append('dst-subset')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:
@@ -347,6 +365,20 @@ class AclCheck:
             if addr.subnet_of(ip):
                 return True
         return False
+
+    def _AddrContains(self, addr, addresses):
+        if addr == 'any':
+            return True  # always true if we match for any addr
+        if not addresses:
+            return True  # always true if term has nothing to match
+        for ip in addresses:
+            # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
+            if addr.supernet_of(ip):
+                return True
+        return False
+
+    def _AddrOverlaps(self, addr, addresses):
+        return self._AddrInside(addr, addresses) or self._AddrContains(addr, addresses)
 
     def _PortInside(self, myport, port_list):
         """Check if port matches in a port or group of ports.
