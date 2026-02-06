@@ -254,11 +254,15 @@ class ApiTest(absltest.TestCase):
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.0.0/16')
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
-            self.assertIn('dst-too-broad', configs['test-filter']['allow-web-to-mail']['possibles'])
+            self.assertIn(
+                'dst-too-broad', configs['test-filter']['allow-web-to-mail']['possibles']
+            )
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.0/24", dst='49.1.1.0/24')
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
-            self.assertIn('src-too-broad', configs['test-filter']['allow-web-to-mail']['possibles'])
+            self.assertIn(
+                'src-too-broad', configs['test-filter']['allow-web-to-mail']['possibles']
+            )
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="0.0.0.0/0", dst='0.0.0.0/0')
             self.assertLen(configs['test-filter'].keys(), 3)
