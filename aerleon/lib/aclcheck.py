@@ -366,10 +366,11 @@ class AclCheck:
           "partial": if addr is partially matched by any of addresses, but not fully matched (i.e. addr is a supernet)
           False: if addr is not matched by any of addresses
         """
-        if addr == 'any':
-            return "full"  # always true if we match for any addr
         if not addresses:
-            return "full"  # always true if term has nothing to match
+            return "full"  # always "full" if term has nothing to match
+        if addr == 'any':
+            # note that "any" behaves differently than 0.0.0.0/0 or ::/0 (which will return "partial")
+            return "full"
 
         partial_match: bool = False
         for ip in addresses:
