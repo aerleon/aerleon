@@ -175,23 +175,21 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
-                if self._AddrOverlaps(self.src, term.source_address):
-                    if self._AddrInside(self.src, term.source_address):
-                        src_too_broad = False
-                        logging.debug('srcaddr matches: %s', self.src)
-                    else:
-                        src_too_broad = True
-                        logging.debug('srcaddr contains: %s', self.src)
+                if self._AddrInside(self.src, term.source_address):
+                    src_too_broad = False
+                    logging.debug('srcaddr matches: %s', self.src)
+                elif self._AddrContains(self.src, term.source_address):
+                    src_too_broad = True
+                    logging.debug('srcaddr contains: %s', self.src)
                 else:
                     logging.debug('srcaddr does not match')
                     continue
-                if self._AddrOverlaps(self.dst, term.destination_address):
-                    if self._AddrInside(self.dst, term.destination_address):
-                        dst_too_broad = False
-                        logging.debug('dstaddr matches: %s', self.dst)
-                    else:
-                        dst_too_broad = True
-                        logging.debug('dstaddr contains: %s', self.dst)
+                if self._AddrInside(self.dst, term.destination_address):
+                    dst_too_broad = False
+                    logging.debug('dstaddr matches: %s', self.dst)
+                elif self._AddrContains(self.dst, term.destination_address):
+                    dst_too_broad = True
+                    logging.debug('dstaddr contains: %s', self.dst)
                 else:
                     logging.debug('dstaddr does not match')
                     continue
@@ -310,17 +308,17 @@ class AclCheck:
 
         Args:
           term: term object to examine for edge-cases
-          src_too_broad: boolean indicating if a subset of src matched the term
-          dst_too_broad: boolean indicating if a subset of dst matched the term
+          src_too_broad: boolean indicating if only a subset of src matched the term
+          dst_too_broad: boolean indicating if only a subset of dst matched the term
 
         Returns:
           ret_str: a list of reasons this term may possibly match
         """
         ret_str = []
         if src_too_broad:
-            ret_str.append('src-subset')
+            ret_str.append('src-partial')
         if dst_too_broad:
-            ret_str.append('dst-subset')
+            ret_str.append('dst-partial')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:
@@ -347,7 +345,7 @@ class AclCheck:
         return True
 
     def _AddrInside(self, addr, addresses):
-        """Check if address is matched in another address or group of addresses.
+        """Check if address is matched exactly or within another address or group of addresses.
 
         Args:
           addr: An ipaddr network or host address or text 'any'
@@ -367,6 +365,15 @@ class AclCheck:
         return False
 
     def _AddrContains(self, addr, addresses):
+        """Check if address is matched exactly or as a supernet of another address or group of addresses.
+
+        Args:
+          addr: An ipaddr network or host address or text 'any'
+          addresses: A list of ipaddr network or host addresses
+
+        Returns:
+          bool: True of false
+        """
         if addr == 'any':
             return True  # always true if we match for any addr
         if not addresses:
@@ -376,9 +383,6 @@ class AclCheck:
             if addr.supernet_of(ip):
                 return True
         return False
-
-    def _AddrOverlaps(self, addr, addresses):
-        return self._AddrInside(addr, addresses) or self._AddrContains(addr, addresses)
 
     def _PortInside(self, myport, port_list):
         """Check if port matches in a port or group of ports.
