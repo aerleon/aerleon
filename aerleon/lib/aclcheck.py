@@ -376,7 +376,7 @@ class AclCheck:
             # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
             if addr.subnet_of(ip):
                 return "full"
-            if addr.supernet_of(ip):
+            elif addr.supernet_of(ip):
                 partial_match = True
 
         if partial_match:
