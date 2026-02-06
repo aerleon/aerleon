@@ -187,7 +187,7 @@ class AclCheck:
                         logging.debug('srcaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unreachable')
+                        raise AssertionError('unhandled switch case')
                 match self._AddrMatch(self.dst, term.destination_address):
                     case "full":
                         dst_too_broad = False
@@ -199,7 +199,7 @@ class AclCheck:
                         logging.debug('dstaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unreachable')
+                        raise AssertionError('unhandled switch case')
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.source_zone, term.source_zone):
