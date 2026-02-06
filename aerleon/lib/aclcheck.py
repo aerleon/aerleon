@@ -322,9 +322,9 @@ class AclCheck:
         """
         ret_str = []
         if src_too_broad:
-            ret_str.append('src-too-broad')
+            ret_str.append('source-ip')
         if dst_too_broad:
-            ret_str.append('dst-too-broad')
+            ret_str.append('destination-ip')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:
