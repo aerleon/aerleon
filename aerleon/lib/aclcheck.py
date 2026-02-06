@@ -180,7 +180,7 @@ class AclCheck:
                     logging.debug('srcaddr matches: %s', self.src)
                 elif self._AddrContains(self.src, term.source_address):
                     src_too_broad = True
-                    logging.debug('srcaddr contains: %s', self.src)
+                    logging.debug('srcaddr too broadly matches: %s', self.src)
                 else:
                     logging.debug('srcaddr does not match')
                     continue
@@ -189,7 +189,7 @@ class AclCheck:
                     logging.debug('dstaddr matches: %s', self.dst)
                 elif self._AddrContains(self.dst, term.destination_address):
                     dst_too_broad = True
-                    logging.debug('dstaddr contains: %s', self.dst)
+                    logging.debug('dstaddr too broadly matches: %s', self.dst)
                 else:
                     logging.debug('dstaddr does not match')
                     continue
@@ -304,21 +304,21 @@ class AclCheck:
         return summary
 
     def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool):
-        """Address overly broad checks and ignore some options and keywords that are edge cases.
+        """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
           term: term object to examine for edge-cases
-          src_too_broad: boolean indicating if only a subset of src matched the term
-          dst_too_broad: boolean indicating if only a subset of dst matched the term
+          src_too_broad: boolean indicating if only a subnet of src matched the term
+          dst_too_broad: boolean indicating if only a subnet of dst matched the term
 
         Returns:
           ret_str: a list of reasons this term may possibly match
         """
         ret_str = []
         if src_too_broad:
-            ret_str.append('src-partial')
+            ret_str.append('src-too-broad')
         if dst_too_broad:
-            ret_str.append('dst-partial')
+            ret_str.append('dst-too-broad')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:

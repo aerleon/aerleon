@@ -254,11 +254,11 @@ class ApiTest(absltest.TestCase):
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.0.0/16')
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
-            self.assertIn('dst-partial', configs['test-filter']['allow-web-to-mail']['possibles'])
+            self.assertIn('dst-too-broad', configs['test-filter']['allow-web-to-mail']['possibles'])
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.0/24", dst='49.1.1.0/24')
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
-            self.assertIn('src-partial', configs['test-filter']['allow-web-to-mail']['possibles'])
+            self.assertIn('src-too-broad', configs['test-filter']['allow-web-to-mail']['possibles'])
 
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
