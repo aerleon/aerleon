@@ -260,6 +260,9 @@ class ApiTest(absltest.TestCase):
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
             self.assertIn('src-too-broad', configs['test-filter']['allow-web-to-mail']['possibles'])
 
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="0.0.0.0/0", dst='0.0.0.0/0')
+            self.assertLen(configs['test-filter'].keys(), 3)
+
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
         relevant_logs = [
