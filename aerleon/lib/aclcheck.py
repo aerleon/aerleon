@@ -22,7 +22,6 @@ from collections.abc import Collection
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
-from nacaddr import IPv4, IPv6
 from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
@@ -352,7 +351,7 @@ class AclCheck:
         return True
 
     def _AddrMatch(
-        self, addr: IPv4 | IPv6 | Literal["any"], addresses
+        self, addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"], addresses
     ) -> Literal["full", "partial", False]:
         """Check if an address matches another address or group of addresses,
         as a full match, partial match, or no match.
