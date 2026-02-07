@@ -110,3 +110,143 @@
                 accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
           term: term-3
                 accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
+  filter: test-filter
+          term: term-1
+                next
+          term: term-2 (possible match)
+                accept if ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+          term: term-3
+                accept
