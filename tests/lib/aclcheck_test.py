@@ -338,7 +338,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertEqual(matches[0].term, 'term-small')
         self.assertEmpty(matches[0].possibles)
 
-        eck = aclcheck.AclCheck(
+        check = aclcheck.AclCheck(
             pol,
             src=IPv4Address("10.1.1.123"),
             dst=IPv4Network("10.1.1.123/32"),
