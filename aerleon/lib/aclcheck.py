@@ -351,7 +351,9 @@ class AclCheck:
         return True
 
     def _AddrMatch(
-        self, addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"], addresses
+        self,
+        addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"],
+        addresses: list[nacaddr.IPv4 | nacaddr.IPv6],
     ) -> Literal["full", "partial", False]:
         """Check if an address matches another address or group of addresses,
         as a full match, partial match, or no match.
