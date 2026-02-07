@@ -49,8 +49,8 @@ class AclCheck:
     Attributes:
       pol_obj: policy.Policy object.
       pol: policy.Policy object.
-      src: The source address.
-      dst: The destination address.
+      src: The source IP address or network.
+      dst: The destination IP address or network.
       sport: The source port.
       dport: The destination port.
       proto: The protocol.
@@ -357,7 +357,7 @@ class AclCheck:
         as a full match, partial match, or no match.
 
         Args:
-          addr: An ipaddr network or host address or text 'any'
+          addr: An IP address or network or text 'any'
           addresses: A list of ipaddr network or host addresses
 
         Returns:

@@ -502,7 +502,7 @@ def AclCheck(
 ):
     filename = input_policy.get("filename")
     try:
-        # None is still allowed for certain arguments here to avoid
+        # None is still allowed for certain arguments here for backwards compatability
         check = aclcheck.AclCheck.FromPolicyDict(
             input_policy,
             definitions,

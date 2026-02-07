@@ -55,12 +55,17 @@ def main():
         dest='config_file',
         help='Change the location searched for the configuration YAML file.',
     )
-    _parser.add_argument('-d', '--destination', dest='destination_ip', help='Destination IP.')
+    _parser.add_argument(
+        '-d',
+        '--destination',
+        dest='destination_ip',
+        help='Destination IP address or network.',
+    )
     _parser.add_argument(
         '-s',
         '--source',
         dest='source_ip',
-        help='Source IP.',
+        help='Source IP address or network.',
     )
     _parser.add_argument(
         '--proto',

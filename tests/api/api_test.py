@@ -479,7 +479,7 @@ class ApiTest(absltest.TestCase):
         defs.ParseDefinitionsObject(definitions_data, "")  # Second arg is filename context
 
         # Perform the AclCheck
-        source_ip = "192.168.1.50"
+        source_ip = "192.168.1.0/24"
         destination_ip = "10.0.0.10"
         protocol = "tcp"
         destination_port = "80"

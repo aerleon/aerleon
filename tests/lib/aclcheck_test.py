@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Unit tests for AclCheck."""
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv4Network
 from typing import Literal
 
 import pytest
@@ -103,8 +103,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testExactMatches(srcip, dstip, sport, dport, proto)
@@ -144,8 +144,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testAclCheck(srcip, dstip, sport, dport, proto)
@@ -173,8 +173,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testSummarize(srcip, dstip, sport, dport, proto)
@@ -222,8 +222,8 @@ class AclCheckTest(absltest.TestCase):
         bad_portrange_str = '99999'
         bad_portvalue = 'port_99'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         for bad_portrange in {bad_portrange_str, int(bad_portrange_str)}:
