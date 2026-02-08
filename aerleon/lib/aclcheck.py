@@ -309,7 +309,17 @@ class AclCheck:
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool):
+    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool) -> list[
+        Literal[
+            "source-ip",
+            "destination-ip",
+            "first-frag",
+            "frag-offset",
+            "packet-length",
+            "est",
+            "tcp-est",
+        ]
+    ]:
         """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
