@@ -74,8 +74,8 @@ class AclCheck:
     sport: int | Literal["any"]
     dport: int | Literal["any"]
     proto: str | Literal["any"]
-    matches: list
-    exact_matches: list
+    matches: list["Match"]
+    exact_matches: list["Match"]
     source_zone: str | Literal["any"]
     destination_zone: str | Literal["any"]
 
@@ -240,15 +240,15 @@ class AclCheck:
                     )
                     break
 
-    def Matches(self):
+    def Matches(self) -> list["Match"]:
         """Return list of matched terms."""
         return self.matches
 
-    def ExactMatches(self):
+    def ExactMatches(self) -> list["Match"]:
         """Return matched terms, but not terms with possibles or action next."""
         return self.exact_matches
 
-    def ActionMatch(self, action='any'):
+    def ActionMatch(self, action='any') -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
         for match in self.matches:
@@ -258,7 +258,7 @@ class AclCheck:
                         match_list.append(match)
         return match_list
 
-    def DescribeMatches(self):
+    def DescribeMatches(self) -> str:
         """Provide sentence descriptions of matches.
 
         Returns:
@@ -270,7 +270,7 @@ class AclCheck:
             ret_str.append(text)
         return '\n'.join(ret_str)
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = []
         summary = self.Summarize()
         for filter, terms in summary.items():
@@ -348,7 +348,7 @@ class AclCheck:
                 return True
         return False
 
-    def _PortInside(self, myport, port_list):
+    def _PortInside(self, myport, port_list) -> bool:
         """Check if port matches in a port or group of ports.
 
         Args:
@@ -368,14 +368,14 @@ class AclCheck:
 class Match:
     """A matching term and its associate values."""
 
-    def __init__(self, filtername, term, possibles, action, qos=None):
+    def __init__(self, filtername, term, possibles, action, qos=None) -> None:
         self.filter = filtername
         self.term = term
         self.possibles = possibles
         self.action = action[0]
         self.qos = qos
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = ''
         if self.possibles:
             text += f"possible {self.action}"
@@ -387,7 +387,7 @@ class Match:
         return text
 
 
-def main():
+def main() -> None:
     pass
 
 
