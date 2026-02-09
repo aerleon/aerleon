@@ -700,7 +700,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
     def _GenerateAddresses(self, token: str, ips, fqdns):
         target = IndentList(self.INDENT)
-        counter = 0
+        counter: int = 0
         ips = nacaddr.SortAddrList(ips)
         ips = nacaddr.CollapseAddrList(ips)
         for ip in ips:
@@ -710,6 +710,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(4, f'address {token}_{counter} {{')
             target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
             target.IndentAppend(4, '}')
+            counter += 1
         return target
 
     def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
