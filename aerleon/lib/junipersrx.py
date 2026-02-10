@@ -926,4 +926,3 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         target.extend(self._GenerateApplications())
 
         return '\n'.join(target)
-
