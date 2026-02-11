@@ -634,8 +634,8 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         def Chunks(addresses: list[nacaddr.IPv4 | nacaddr.IPv6]):
             """Splits a list of IP addresses into smaller lists based on byte size."""
             return_list = [[]]
-            counter = 0
-            index = 0
+            counter: int = 0
+            index: int = 0
             for i in addresses:
                 # Size is split in half due to the max size being a sum of src and dst.
                 if counter > (self._ADDRESS_LENGTH_LIMIT / 2):
@@ -654,7 +654,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             if term.AddressesByteLength(self._AF_MAP[address_family]) > self._ADDRESS_LENGTH_LIMIT:
                 logging.warning('LARGE TERM ENCOUNTERED')
                 src_chunks = Chunks(term.source_address)
-                counter = 0
+                counter: int = 0
                 for chunk in src_chunks:
                     for ip in chunk:
                         ip.parent_token = f"src_{term.name}{counter!s}"
@@ -700,7 +700,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
     def _GenerateAddresses(self, token: str, ips, fqdns):
         target = IndentList(self.INDENT)
-        counter = 0
+        counter: int = 0
         ips = nacaddr.SortAddrList(ips)
         ips = nacaddr.CollapseAddrList(ips)
         for ip in ips:
@@ -710,12 +710,13 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             target.IndentAppend(4, f'address {token}_{counter} {{')
             target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
             target.IndentAppend(4, '}')
+            counter += 1
         return target
 
     def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
         target = IndentList(self.INDENT)
         target.IndentAppend(4, f"address-set {group} {{")
-        counter = 0
+        counter: int = 0
         for _ in nacaddr.CollapseAddrList(ips):
             target.IndentAppend(5, f"address {group}_{counter!s};")
             counter += 1
@@ -795,7 +796,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     else:
                         target.IndentAppend(1, f"application {app['name']}-app {{")
 
-                    term_counter = 0
+                    term_counter: int = 0
                     for i, code in enumerate(app['icmp-type']):
                         for proto in app['protocol']:
                             # if we have more than 8 (ICMP_TERM_LIMIT) terms, we use an app
