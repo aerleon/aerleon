@@ -101,17 +101,17 @@ class IPv4(ipaddress.IPv4Network):
             new_ip = ip
         super().__init__(new_ip, strict)
 
-    def subnet_of(self, other: IPv4) -> bool:
+    def subnet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(self, other)
+        return super().subnet_of(other)
 
     def supernet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(other, self)
+        return super().supernet_of(other)
 
     def __deepcopy__(self, memo: dict):
         result = self.__class__(self)
@@ -192,17 +192,17 @@ class IPv6(ipaddress.IPv6Network):
             new_ip = ip
         super().__init__(new_ip, strict)
 
-    def subnet_of(self, other: IPv6) -> bool:
+    def subnet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(self, other)
+        return super().subnet_of(other)
 
-    def supernet_of(self, other: IPv6) -> bool:
+    def supernet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(other, self)
+        return super().supernet_of(other)
 
     def __deepcopy__(self, memo: dict):
         result = self.__class__(self)

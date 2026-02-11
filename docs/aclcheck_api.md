@@ -56,7 +56,7 @@ defs.ParseDefinitionsObject(definitions_data, "definitions_data")
 # The second argument is used for debugging / error messages only
 
 # Define the target packet
-source_ip = "192.168.1.50"
+source_ip = "192.168.1.0/24"
 destination_ip = "10.0.0.10"
 protocol = "tcp"
 destination_port = "80"

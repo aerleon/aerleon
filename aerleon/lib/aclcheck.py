@@ -49,8 +49,8 @@ class AclCheck:
     Attributes:
       pol_obj: policy.Policy object.
       pol: policy.Policy object.
-      src: The source address.
-      dst: The destination address.
+      src: The source IP address or network.
+      dst: The destination IP address or network.
       sport: The source port.
       dport: The destination port.
       proto: The protocol.
@@ -175,14 +175,30 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
-                if not self._AddrInside(self.src, term.source_address):
-                    logging.debug('srcaddr does not match')
-                    continue
-                logging.debug('srcaddr matches: %s', self.src)
-                if not self._AddrInside(self.dst, term.destination_address):
-                    logging.debug('dstaddr does not match')
-                    continue
-                logging.debug('dstaddr matches: %s', self.dst)
+                match self._AddrMatch(self.src, term.source_address):
+                    case "full":
+                        src_too_broad = False
+                        logging.debug('srcaddr matches: %s', self.src)
+                    case "partial":
+                        src_too_broad = True
+                        logging.debug('srcaddr too broadly matches: %s', self.src)
+                    case False:
+                        logging.debug('srcaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unhandled switch case')
+                match self._AddrMatch(self.dst, term.destination_address):
+                    case "full":
+                        dst_too_broad = False
+                        logging.debug('dstaddr matches: %s', self.dst)
+                    case "partial":
+                        dst_too_broad = True
+                        logging.debug('dstaddr too broadly matches: %s', self.dst)
+                    case False:
+                        logging.debug('dstaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unhandled switch case')
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.source_zone, term.source_zone):
@@ -195,7 +211,6 @@ class AclCheck:
                     logging.debug('destination zone does not match')
                     continue
                 logging.debug('destination zone matches: %s', self.destination_zone)
-
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -224,7 +239,8 @@ class AclCheck:
                     logging.debug('term had no action (verbatim?), no match.')
                     continue
                 logging.debug('term has an action')
-                possible = self._PossibleMatch(term)
+
+                possible = self._PossibleMatch(term, src_too_broad, dst_too_broad)
                 self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
                 if possible:
                     logging.debug('term has options: %s, not treating as exact match', possible)
@@ -293,16 +309,32 @@ class AclCheck:
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term):
-        """Ignore some options and keywords that are edge cases.
+    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool) -> list[
+        Literal[
+            "source-ip",
+            "destination-ip",
+            "first-frag",
+            "frag-offset",
+            "packet-length",
+            "est",
+            "tcp-est",
+        ]
+    ]:
+        """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
           term: term object to examine for edge-cases
+          src_too_broad: boolean indicating if only a subnet of src matched the term
+          dst_too_broad: boolean indicating if only a subnet of dst matched the term
 
         Returns:
-          ret_str: a list of reasons this term may possible match
+          ret_str: a list of reasons this term may possibly match
         """
         ret_str = []
+        if src_too_broad:
+            ret_str.append('source-ip')
+        if dst_too_broad:
+            ret_str.append('destination-ip')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:
@@ -328,25 +360,41 @@ class AclCheck:
             return False
         return True
 
-    def _AddrInside(self, addr, addresses):
-        """Check if address is matched in another address or group of addresses.
+    def _AddrMatch(
+        self,
+        addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"],
+        addresses: list[nacaddr.IPv4 | nacaddr.IPv6],
+    ) -> Literal["full", "partial", False]:
+        """Check if an address matches another address or group of addresses,
+        as a full match, partial match, or no match.
 
         Args:
-          addr: An ipaddr network or host address or text 'any'
+          addr: An IP address or network or text 'any'
           addresses: A list of ipaddr network or host addresses
 
         Returns:
-          bool: True of false
+          "full": if addr is fully matched by any of addresses (i.e. addr is a subnet) or is "any"
+          "partial": if addr is partially matched by any of addresses, but not fully matched (i.e. addr is a supernet)
+          False: if addr is not matched by any of addresses
         """
-        if addr == 'any':
-            return True  # always true if we match for any addr
         if not addresses:
-            return True  # always true if term has nothing to match
+            return "full"  # always "full" if term has nothing to match
+        if addr == 'any':
+            # note that "any" behaves differently than 0.0.0.0/0 or ::/0 (which will return "partial")
+            return "full"
+
+        partial_match: bool = False
         for ip in addresses:
             # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
             if addr.subnet_of(ip):
-                return True
-        return False
+                return "full"
+            elif addr.supernet_of(ip):
+                partial_match = True
+
+        if partial_match:
+            return "partial"
+        else:
+            return False
 
     def _PortInside(self, myport, port_list):
         """Check if port matches in a port or group of ports.

@@ -242,9 +242,28 @@ class ApiTest(absltest.TestCase):
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="10.2.0.0")
             self.assertIn('deny-to-reserved', configs['test-filter'].keys())
+            self.assertEmpty(configs['test-filter']['deny-to-reserved']['possibles'])
 
             configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.5')
             self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+            self.assertEmpty(configs['test-filter']['allow-web-to-mail']['possibles'])
+
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.1.0/24')
+            self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+            self.assertEmpty(configs['test-filter']['allow-web-to-mail']['possibles'])
+
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.4", dst='49.1.0.0/16')
+            self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+            self.assertIn(
+                'destination-ip', configs['test-filter']['allow-web-to-mail']['possibles']
+            )
+
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="1.2.3.0/24", dst='49.1.1.0/24')
+            self.assertIn('allow-web-to-mail', configs['test-filter'].keys())
+            self.assertIn('source-ip', configs['test-filter']['allow-web-to-mail']['possibles'])
+
+            configs = api.AclCheck(GOOD_POLICY_1, definitions, src="0.0.0.0/0", dst='0.0.0.0/0')
+            self.assertLen(configs['test-filter'].keys(), 3)
 
         # Verify there were no (unexpected) log messages
         # Filter out DEBUG logs from aclcheck and INFO logs from plugin_supervisor
@@ -460,7 +479,7 @@ class ApiTest(absltest.TestCase):
         defs.ParseDefinitionsObject(definitions_data, "")  # Second arg is filename context
 
         # Perform the AclCheck
-        source_ip = "192.168.1.50"
+        source_ip = "192.168.1.0/24"
         destination_ip = "10.0.0.10"
         protocol = "tcp"
         destination_port = "80"
