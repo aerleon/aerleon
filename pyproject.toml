@@ -3,7 +3,7 @@ name = "aerleon"
 description = "A firewall generation tool"
 license = "Apache-2.0"
 keywords = ["firewall", "networking", "security"]
-version = "1.14.2"
+version = "1.15.0"
 dynamic = ["classifiers"]
 readme = "README.md"
 authors = [{name = "Jason Benterou", email = "jason.benterou@gmail.com"}, {name = "Rob Ankeny", email = "ankenyr@gmail.com"}]
