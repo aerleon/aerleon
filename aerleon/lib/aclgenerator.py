@@ -377,6 +377,7 @@ class ACLGenerator:
             'comment',
             'destination_address',
             'destination_address_exclude',
+            'destination_port_name',
             'destination_port',
             'expiration',
             'icmp_type',
@@ -388,6 +389,7 @@ class ACLGenerator:
             'platform_exclude',
             'source_address',
             'source_address_exclude',
+            'source_port_name',
             'source_port',
             'translated',  # obj attribute, not token
             'verbatim',
