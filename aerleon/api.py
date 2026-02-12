@@ -214,7 +214,7 @@ import multiprocessing.managers
 import multiprocessing.pool
 import pathlib
 import sys
-import typing
+from collections.abc import MutableMapping, MutableSequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal, Optional
 
@@ -240,7 +240,7 @@ from aerleon.lib import (
 
 
 def Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: list[policy_builder.PolicyDict],
     definitions: naming.Naming,
     output_directory: pathlib.Path | None = None,
     optimize: bool = False,
@@ -248,7 +248,7 @@ def Generate(
     expiration_weeks: int = 2,
     include_path: pathlib.Path | str | None = None,
     includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
-) -> "typing.MutableMapping[str, str] | None":
+) -> MutableMapping[str, str] | None:
     """Generate ACLs from policies.
 
     Args:
@@ -305,7 +305,7 @@ def Generate(
 
 
 def _Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: list[policy_builder.PolicyDict],
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
     output_directory: pathlib.Path | None = None,
@@ -313,14 +313,14 @@ def _Generate(
     shade_check: bool = False,
     exp_info: int = 2,
     include_path: pathlib.Path | str | None = None,
-    includes: Optional["dict[str, policy_builder.PolicyFilterTermsOnly]"] = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
     max_renderers: int = 1,
-) -> "typing.MutableMapping[str, str] | None":
+) -> MutableMapping[str, str] | None:
     # thead-safe list for storing files to write
     manager: multiprocessing.managers.SyncManager = context.Manager()
     write_files: WriteList = manager.list()
-    errors: typing.MutableSequence = manager.list()
-    generated_configs: typing.MutableMapping = manager.dict()
+    errors: MutableSequence = manager.list()
+    generated_configs: MutableMapping = manager.dict()
 
     if max_renderers == 1:
         for input_policy in policies:
@@ -376,7 +376,7 @@ def _GenerateACL(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
     write_files: WriteList,
-    generated_configs: typing.MutableMapping[str, str],
+    generated_configs: MutableMapping[str, str],
     output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
@@ -435,7 +435,7 @@ def _GenerateACL(
     def EmitACL(
         acl_text: str,
         acl_suffix: str,
-        write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
+        write_files: MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
         file_name_override: str | None = None,
     ):
@@ -489,20 +489,20 @@ def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
     src: (
-        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
     ) = "any",
     dst: (
-        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | typing.Literal["any"] | None
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
     ) = "any",
-    sport: int | str | typing.Literal["any"] | None = "any",
-    dport: int | str | typing.Literal["any"] | None = "any",
-    proto: str | typing.Literal["any"] | None = "any",
+    sport: int | str | Literal["any"] | None = "any",
+    dport: int | str | Literal["any"] | None = "any",
+    proto: str | Literal["any"] | None = "any",
     source_zone: str | Literal["any"] = "any",
     destination_zone: str | Literal["any"] = "any",
 ):
     filename = input_policy.get("filename")
     try:
-        # None is still allowed for certain arguments here to avoid
+        # None is still allowed for certain arguments here for backwards compatability
         check = aclcheck.AclCheck.FromPolicyDict(
             input_policy,
             definitions,

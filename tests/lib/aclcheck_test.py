@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """Unit tests for AclCheck."""
-from ipaddress import IPv4Address
-from typing import Literal
+from ipaddress import IPv4Address, IPv4Network
+from typing import Final, Literal
 
 import pytest
 from absl.testing import absltest
@@ -76,6 +76,33 @@ term default-term {
 }
 """
 
+PARTIAL_POLICY_TEST: Final[
+    str
+] = """
+header {
+  comment:: "partial supernet/subnet test acl"
+  target:: juniper test-filter
+}
+term term-small {
+  source-address:: NET10_1_1
+  destination-address:: NET10_1_1
+  action:: accept
+}
+term term-medium {
+  source-address:: NET10_1
+  destination-address:: NET10_1
+  action:: accept
+}
+term term-large {
+  source-address:: NET10
+  destination-address:: NET10
+  action:: accept
+}
+term default-term {
+  action:: reject
+}
+"""
+
 
 class AclCheckTest(absltest.TestCase):
     def setUp(self):
@@ -103,8 +130,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testExactMatches(srcip, dstip, sport, dport, proto)
@@ -144,8 +171,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testAclCheck(srcip, dstip, sport, dport, proto)
@@ -173,8 +200,8 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         self.helper_testSummarize(srcip, dstip, sport, dport, proto)
@@ -222,14 +249,104 @@ class AclCheckTest(absltest.TestCase):
         bad_portrange_str = '99999'
         bad_portvalue = 'port_99'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str)}:
-            for dstip in {dstip_str, IPv4Address(dstip_str)}:
+        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
+            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
                 for sport in {sport_str, int(sport_str)}:
                     for dport in {dport_str, int(dport_str)}:
                         for bad_portrange in {bad_portrange_str, int(bad_portrange_str)}:
                             self.helper_testExceptions(
                                 srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
                             )
+
+    def test_partial_networks_match(self) -> None:
+        defs = naming.Naming(None)
+        networkdata = ["NET10_1_1 = 10.1.1.0/24", "NET10_1 = 10.1.0.0/16", "NET10 = 10.0.0.0/8"]
+        defs.ParseNetworkList(networkdata)
+
+        pol = policy.ParsePolicy(PARTIAL_POLICY_TEST, defs)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="any",
+            dst="any",
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 1)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEmpty(matches[0].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="0.0.0.0/0",
+            dst=IPv4Network("0.0.0.0/0"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 4)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].term, 'term-medium')
+        self.assertEqual(matches[1].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[2].term, 'term-large')
+        self.assertEqual(matches[2].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[3].term, "default-term")
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="10.0.0.0/8",
+            dst=IPv4Network("10.0.0.0/8"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 3)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].term, 'term-medium')
+        self.assertEqual(matches[1].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[2].term, 'term-large')
+        self.assertEmpty(matches[2].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="10.1.0.0/16",
+            dst=IPv4Network("10.1.0.0/16"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 2)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].term, 'term-medium')
+        self.assertEmpty(matches[1].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="10.1.0.0/20",
+            dst=IPv4Network("10.1.0.0/20"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 2)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].term, 'term-medium')
+        self.assertEmpty(matches[1].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="10.1.1.0/24",
+            dst=IPv4Network("10.1.1.0/24"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 1)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEmpty(matches[0].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src=IPv4Address("10.1.1.123"),
+            dst=IPv4Network("10.1.1.123/32"),
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 1)
+        self.assertEqual(matches[0].term, 'term-small')
+        self.assertEmpty(matches[0].possibles)
 
 
 @pytest.mark.parametrize(
