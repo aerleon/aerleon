@@ -18,7 +18,7 @@
 
 import logging
 from collections import defaultdict
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal
 
@@ -416,7 +416,40 @@ class AclCheck:
 class Match:
     """A matching term and its associate values."""
 
-    def __init__(self, filtername, term, possibles, action, qos=None) -> None:
+    filter: str
+    term: str
+    possibles: list[
+        Literal[
+            "source-ip",
+            "destination-ip",
+            "first-frag",
+            "frag-offset",
+            "packet-length",
+            "est",
+            "tcp-est",
+        ]
+    ]
+    action: Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str
+    qos: object | None
+
+    def __init__(
+        self,
+        filtername: str,
+        term: str,
+        possibles: list[
+            Literal[
+                "source-ip",
+                "destination-ip",
+                "first-frag",
+                "frag-offset",
+                "packet-length",
+                "est",
+                "tcp-est",
+            ]
+        ],
+        action: Sequence[Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str],
+        qos=None,
+    ) -> None:
         self.filter = filtername
         self.term = term
         self.possibles = possibles
