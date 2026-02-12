@@ -264,7 +264,14 @@ class AclCheck:
         """Return matched terms, but not terms with possibles or action next."""
         return self.exact_matches
 
-    def ActionMatch(self, action='any') -> list["Match"]:
+    def ActionMatch(
+        self,
+        action: (
+            Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"]
+            | str
+            | Literal['any']
+        ) = 'any',
+    ) -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
         for match in self.matches:
