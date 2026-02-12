@@ -295,7 +295,11 @@ class AclCheck:
                 text.append(matches['message'])
         return '\n'.join(text)
 
-    def Summarize(self):
+    def Summarize(
+        self,
+    ) -> defaultdict[
+        str, defaultdict[str, dict[Literal["possibles", "message"], list[str] | str]]
+    ]:
         summary = defaultdict(lambda: defaultdict(dict))
         for match in self.matches:
             summary[match.filter][match.term]["possibles"] = match.possibles
