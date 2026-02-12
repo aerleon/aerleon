@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal, TypeAlias
+from typing import DefaultDict, Literal, TypeAlias, TypedDict, cast
 
 from typing_extensions import Self
 
@@ -310,12 +310,17 @@ class AclCheck:
                 text.append(matches['message'])
         return '\n'.join(text)
 
+    class SummarizeMatchTermDetails(TypedDict):
+        possibles: list[PossibleMatchReason]
+        message: str
+
     def Summarize(
         self,
-    ) -> defaultdict[
-        str, defaultdict[str, dict[Literal["possibles", "message"], list[str] | str]]
-    ]:
-        summary = defaultdict(lambda: defaultdict(dict))
+    ) -> DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]]:
+        summary = cast(
+            DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]],
+            defaultdict(lambda: defaultdict(dict)),
+        )
         for match in self.matches:
             summary[match.filter][match.term]["possibles"] = match.possibles
             text = []
