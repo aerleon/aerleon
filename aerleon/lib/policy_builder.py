@@ -4,10 +4,12 @@ import enum
 import sys
 import typing
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Annotated, TypeAlias
 
 from absl import logging
 
+from aerleon.lib import naming
 from aerleon.lib.policy import (
     FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
     FLEXIBLE_MATCH_START_OPTIONS,
@@ -40,42 +42,36 @@ if sys.version_info < (3, 12):
 else:
     from typing import TypedDict
 
-if typing.TYPE_CHECKING:
-    from datetime import datetime
-
-    from aerleon.lib import naming
-
-
 # NOTE: TypedDict is just a normal dictionary, it is not a class. This syntax tells the type checker
 # what keys need to be present in the given dictionary.
 
-WordList: TypeAlias = "str | list[str]"
+WordList: TypeAlias = str | list[str]
 
 
 class VPNValue(TypedDict):
     name: str
-    policy: 'NotRequired[str]'
+    policy: NotRequired[str]
 
 
 PolicyTerm = TypedDict(
     'PolicyTerm',
     {
         "comment": str,
-        "name": "Required[str]",
+        "name": Required[str],
         "action": WordList,
         "address": WordList,
         "address-exclude": WordList,
         "restrict-address-family": str,
         "counter": str,
-        "expiration": "datetime.date | str",
+        "expiration": date | str,
         "destination-address": WordList,
         "destination-exclude": WordList,
         "destination-fqdn": WordList,
         "destination-port": WordList,
         "destination-prefix": WordList,
         "filter-term": str,
-        "forwarding-class": "list[str]",
-        "forwarding-class-except": "list[str]",
+        "forwarding-class": list[str],
+        "forwarding-class-except": list[str],
         "logging": WordList,
         "log-limit": str,
         "log-name": str,
@@ -84,9 +80,9 @@ PolicyTerm = TypedDict(
         "owner": str,
         "policer": str,
         "port": WordList,
-        "precedence": "int | str | list[int | str]",
-        "protocol": "int | str | list[int | str]",
-        "protocol-except": "int | str | list[int | str]",
+        "precedence": int | str | list[int | str],
+        "protocol": int | str | list[int | str],
+        "protocol-except": int | str | list[int | str],
         "qos": str,
         "pan-application": WordList,
         "routing-instance": str,
@@ -95,21 +91,21 @@ PolicyTerm = TypedDict(
         "source-fqdn": WordList,
         "source-port": WordList,
         "source-prefix": WordList,
-        "ttl": "int | str",
-        "verbatim": "dict[str, str]",
-        "packet-length": "int | str",
-        "fragment-offset": "int | str",
-        "hop-limit": "int | str",
+        "ttl": int | str,
+        "verbatim": dict[str, str],
+        "packet-length": int | str,
+        "fragment-offset": int | str,
+        "hop-limit": int | str,
         "icmp-type": WordList,
-        "icmp-code": "int | str | list[int | str]",
+        "icmp-code": int | str | list[int | str],
         "ether-type": WordList,
         "traffic-class-count": str,
         "traffic-type": WordList,
-        "dscp-set": "int | str",
-        "dscp-match": "int | str | list[int | str]",
-        "dscp-except": "int | str | list[int | str]",
+        "dscp-set": int | str,
+        "dscp-match": int | str | list[int | str],
+        "dscp-except": int | str | list[int | str],
         "next-ip": str,
-        "flexible-match-range": "dict[str, int | str]",
+        "flexible-match-range": dict[str, int | str],
         "source-prefix-except": WordList,
         "destination-prefix-except": WordList,
         "encapsulate": str,
@@ -120,15 +116,15 @@ PolicyTerm = TypedDict(
         "vpn": VPNValue,
         "source-tag": WordList,
         "destination-tag": WordList,
-        "priority": "int | str",
+        "priority": int | str,
         "source-interface": str,
         "destination-interface": str,
         "platform": WordList,
         "platform-exclude": WordList,
-        "target-resources": "list[str | list[str]]",
+        "target-resources": list[str | list[str]],
         "target-service-accounts": WordList,
         "tags": WordList,
-        "timeout": "int | str",
+        "timeout": int | str,
     },
     total=False,
 )
@@ -141,7 +137,7 @@ class PolicyInclude(TypedDict):
 PolicyFilterHeader = TypedDict(
     'PolicyFilterHeader',
     {
-        "targets": "Required[dict[str, str]]",
+        "targets": Required[dict[str, str]],
         "comment": str,
         "apply-groups": WordList,
         "apply-groups-except": WordList,
@@ -163,7 +159,7 @@ class PolicyFilterTermsOnly(TypedDict):
 
 
 class PolicyDict(TypedDict):
-    filters: 'list[PolicyFilter]'
+    filters: list[PolicyFilter]
     filename: NotRequired[str]
 
 
@@ -212,7 +208,7 @@ class RawFilter:
     """
 
     header: RawFilterHeader
-    terms: "list[RawTerm]"
+    terms: list[RawTerm]
 
 
 @dataclass
@@ -225,7 +221,7 @@ class RawPolicy:
     """
 
     filename: str
-    filters: "list[RawFilter]"
+    filters: list[RawFilter]
 
 
 class PolicyBuilder:
@@ -268,14 +264,14 @@ class PolicyBuilder:
     """
 
     raw_policy: RawPolicy
-    definitions: "naming.Naming"
+    definitions: naming.Naming
     optimize: bool
     shade_check: bool
 
     def __init__(
         self,
         policy_dict: PolicyDict,
-        definitions: "naming.Naming",
+        definitions: naming.Naming,
         optimize=False,
         shade_check=False,
     ):
@@ -448,7 +444,7 @@ class PolicyBuilder:
 # ### BUILTINS ###
 # The following section deals with the recognition and normalization of built-in keywords.
 
-BUILTIN_SPEC: "dict[str, TValue | TComposition]" = {
+BUILTIN_SPEC: dict[str, TValue | TComposition] = {
     # fmt: off
     'apply-groups':               TListStrCollapsible,
     'apply-groups-except':        TListStrCollapsible,
