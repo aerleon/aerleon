@@ -20,11 +20,23 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
+
+PossibleMatchReason: TypeAlias = Literal[
+    "source-ip",
+    "destination-ip",
+    "first-frag",
+    "frag-offset",
+    "packet-length",
+    "est",
+    "tcp-est",
+]
+
+MatchAction: TypeAlias = Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str
 
 
 class Error(Exception):
@@ -266,11 +278,7 @@ class AclCheck:
 
     def ActionMatch(
         self,
-        action: (
-            Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"]
-            | str
-            | Literal['any']
-        ) = 'any',
+        action: MatchAction | Literal['any'] = 'any',
     ) -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
@@ -320,17 +328,9 @@ class AclCheck:
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool) -> list[
-        Literal[
-            "source-ip",
-            "destination-ip",
-            "first-frag",
-            "frag-offset",
-            "packet-length",
-            "est",
-            "tcp-est",
-        ]
-    ]:
+    def _PossibleMatch(
+        self, term, src_too_broad: bool, dst_too_broad: bool
+    ) -> list[PossibleMatchReason]:
         """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
@@ -429,36 +429,16 @@ class Match:
 
     filter: str
     term: str
-    possibles: list[
-        Literal[
-            "source-ip",
-            "destination-ip",
-            "first-frag",
-            "frag-offset",
-            "packet-length",
-            "est",
-            "tcp-est",
-        ]
-    ]
-    action: Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str
+    possibles: list[PossibleMatchReason]
+    action: MatchAction
     qos: object | None
 
     def __init__(
         self,
         filtername: str,
         term: str,
-        possibles: list[
-            Literal[
-                "source-ip",
-                "destination-ip",
-                "first-frag",
-                "frag-offset",
-                "packet-length",
-                "est",
-                "tcp-est",
-            ]
-        ],
-        action: Sequence[Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str],
+        possibles: list[PossibleMatchReason],
+        action: Sequence[MatchAction],
         qos=None,
     ) -> None:
         self.filter = filtername
