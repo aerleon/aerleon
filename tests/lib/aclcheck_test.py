@@ -14,6 +14,7 @@
 
 """Unit tests for AclCheck."""
 from ipaddress import IPv4Address, IPv4Network
+from itertools import product
 from typing import Final, Literal
 
 import pytest
@@ -130,11 +131,13 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
-            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
-                for sport in {sport_str, int(sport_str)}:
-                    for dport in {dport_str, int(dport_str)}:
-                        self.helper_testExactMatches(srcip, dstip, sport, dport, proto)
+        for srcip, dstip, sport, dport in product(
+            {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")},
+            {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")},
+            {sport_str, int(sport_str)},
+            {dport_str, int(dport_str)},
+        ):
+            self.helper_testExactMatches(srcip, dstip, sport, dport, proto)
 
     def helper_testAclCheck(self, srcip, dstip, sport, dport, proto) -> None:
         check = aclcheck.AclCheck(
@@ -171,11 +174,13 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
-            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
-                for sport in {sport_str, int(sport_str)}:
-                    for dport in {dport_str, int(dport_str)}:
-                        self.helper_testAclCheck(srcip, dstip, sport, dport, proto)
+        for srcip, dstip, sport, dport in product(
+            {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")},
+            {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")},
+            {sport_str, int(sport_str)},
+            {dport_str, int(dport_str)},
+        ):
+            self.helper_testAclCheck(srcip, dstip, sport, dport, proto)
 
     def helper_testSummarize(self, srcip, dstip, sport, dport, proto) -> None:
         check = aclcheck.AclCheck(
@@ -200,11 +205,13 @@ class AclCheckTest(absltest.TestCase):
         dport_str = '22'
         proto = 'tcp'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
-            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
-                for sport in {sport_str, int(sport_str)}:
-                    for dport in {dport_str, int(dport_str)}:
-                        self.helper_testSummarize(srcip, dstip, sport, dport, proto)
+        for srcip, dstip, sport, dport in product(
+            {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")},
+            {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")},
+            {sport_str, int(sport_str)},
+            {dport_str, int(dport_str)},
+        ):
+            self.helper_testSummarize(srcip, dstip, sport, dport, proto)
 
     def helper_testExceptions(
         self, srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
@@ -249,14 +256,16 @@ class AclCheckTest(absltest.TestCase):
         bad_portrange_str = '99999'
         bad_portvalue = 'port_99'
 
-        for srcip in {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")}:
-            for dstip in {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")}:
-                for sport in {sport_str, int(sport_str)}:
-                    for dport in {dport_str, int(dport_str)}:
-                        for bad_portrange in {bad_portrange_str, int(bad_portrange_str)}:
-                            self.helper_testExceptions(
-                                srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
-                            )
+        for srcip, dstip, sport, dport, bad_portrange in product(
+            {srcip_str, IPv4Address(srcip_str), IPv4Network(srcip_str + "/32")},
+            {dstip_str, IPv4Address(dstip_str), IPv4Network(dstip_str + "/32")},
+            {sport_str, int(sport_str)},
+            {dport_str, int(dport_str)},
+            {bad_portrange_str, int(bad_portrange_str)},
+        ):
+            self.helper_testExceptions(
+                srcip, dstip, sport, dport, proto, bad_portrange, bad_portvalue
+            )
 
     def test_partial_networks_match(self) -> None:
         defs = naming.Naming(None)
