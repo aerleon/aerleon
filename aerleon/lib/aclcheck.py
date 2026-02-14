@@ -167,12 +167,14 @@ class AclCheck:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
                 raise AddressError(f'bad destination address: {dst}\n')
-        # validate zones
+
+        # validate source zone
         if not source_zone or source_zone == 'any':
             self.source_zone = 'any'
         else:
             self.source_zone = str(source_zone)
 
+        # validate destination zone
         if not destination_zone or destination_zone == 'any':
             self.destination_zone = 'any'
         else:
