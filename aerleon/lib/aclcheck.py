@@ -424,7 +424,7 @@ class AclCheck:
         """
         if myport == 'any':
             return True
-        if [x for x in port_list if x[0] <= myport <= x[1]]:
+        if any(range_start <= myport <= range_end for range_start, range_end in port_list):
             return True
         return False
 
