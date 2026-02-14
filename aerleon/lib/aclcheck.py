@@ -18,13 +18,25 @@
 
 import logging
 from collections import defaultdict
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal
+from typing import DefaultDict, Literal, TypeAlias, TypedDict, cast
 
 from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
+
+PossibleMatchReason: TypeAlias = Literal[
+    "source-ip",
+    "destination-ip",
+    "first-frag",
+    "frag-offset",
+    "packet-length",
+    "est",
+    "tcp-est",
+]
+
+MatchAction: TypeAlias = Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str
 
 
 class Error(Exception):
@@ -48,12 +60,13 @@ class AclCheck:
 
     Attributes:
       pol_obj: policy.Policy object.
-      pol: policy.Policy object.
       src: The source IP address or network.
       dst: The destination IP address or network.
       sport: The source port.
       dport: The destination port.
       proto: The protocol.
+      source_zone: The source zone.
+      destination_zone: The destination zone.
       matches: A list of term-related matches.
       exact_matches: A list of exact matches.
 
@@ -64,20 +77,20 @@ class AclCheck:
       port.BadPortValue: An invalid source port is used
       port.BadPortRange: A port is outside of the acceptable range 0-65535
       AddressError: Incorrect ip address or format
-
     """
 
-    pol_object: policy.Policy
-    pol: policy.Policy
+    pol_obj: policy.Policy
+
     src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
     dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
     sport: int | Literal["any"]
     dport: int | Literal["any"]
     proto: str | Literal["any"]
-    matches: list
-    exact_matches: list
     source_zone: str | Literal["any"]
     destination_zone: str | Literal["any"]
+
+    matches: list["Match"]
+    exact_matches: list["Match"]
 
     @classmethod
     def FromPolicyDict(
@@ -154,12 +167,14 @@ class AclCheck:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
                 raise AddressError(f'bad destination address: {dst}\n')
-        # validate zones
+
+        # validate source zone
         if not source_zone or source_zone == 'any':
             self.source_zone = 'any'
         else:
             self.source_zone = str(source_zone)
 
+        # validate destination zone
         if not destination_zone or destination_zone == 'any':
             self.destination_zone = 'any'
         else:
@@ -256,15 +271,18 @@ class AclCheck:
                     )
                     break
 
-    def Matches(self):
+    def Matches(self) -> list["Match"]:
         """Return list of matched terms."""
         return self.matches
 
-    def ExactMatches(self):
+    def ExactMatches(self) -> list["Match"]:
         """Return matched terms, but not terms with possibles or action next."""
         return self.exact_matches
 
-    def ActionMatch(self, action='any'):
+    def ActionMatch(
+        self,
+        action: MatchAction | Literal['any'] = 'any',
+    ) -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
         for match in self.matches:
@@ -274,7 +292,7 @@ class AclCheck:
                         match_list.append(match)
         return match_list
 
-    def DescribeMatches(self):
+    def DescribeMatches(self) -> str:
         """Provide sentence descriptions of matches.
 
         Returns:
@@ -286,7 +304,7 @@ class AclCheck:
             ret_str.append(text)
         return '\n'.join(ret_str)
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = []
         summary = self.Summarize()
         for filter, terms in summary.items():
@@ -295,8 +313,17 @@ class AclCheck:
                 text.append(matches['message'])
         return '\n'.join(text)
 
-    def Summarize(self):
-        summary = defaultdict(lambda: defaultdict(dict))
+    class SummarizeMatchTermDetails(TypedDict):
+        possibles: list[PossibleMatchReason]
+        message: str
+
+    def Summarize(
+        self,
+    ) -> DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]]:
+        summary = cast(
+            DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]],
+            defaultdict(lambda: defaultdict(dict)),
+        )
         for match in self.matches:
             summary[match.filter][match.term]["possibles"] = match.possibles
             text = []
@@ -309,17 +336,9 @@ class AclCheck:
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term, src_too_broad: bool, dst_too_broad: bool) -> list[
-        Literal[
-            "source-ip",
-            "destination-ip",
-            "first-frag",
-            "frag-offset",
-            "packet-length",
-            "est",
-            "tcp-est",
-        ]
-    ]:
+    def _PossibleMatch(
+        self, term, src_too_broad: bool, dst_too_broad: bool
+    ) -> list[PossibleMatchReason]:
         """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
@@ -363,7 +382,7 @@ class AclCheck:
     def _AddrMatch(
         self,
         addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"],
-        addresses: list[nacaddr.IPv4 | nacaddr.IPv6],
+        addresses: Sequence[nacaddr.IPv4 | nacaddr.IPv6],
     ) -> Literal["full", "partial", False]:
         """Check if an address matches another address or group of addresses,
         as a full match, partial match, or no match.
@@ -396,19 +415,19 @@ class AclCheck:
         else:
             return False
 
-    def _PortInside(self, myport, port_list):
-        """Check if port matches in a port or group of ports.
+    def _PortInside(self, myport: int | Literal["any"], port_list: list[tuple[int, int]]) -> bool:
+        """Check if a port matches a port list
 
         Args:
           myport: port number
-          port_list: list of ports
+          port_list: list of port ranges
 
         Returns:
-          bool: True of false
+          bool: True or False
         """
         if myport == 'any':
             return True
-        if [x for x in port_list if x[0] <= myport <= x[1]]:
+        if any(range_start <= myport <= range_end for range_start, range_end in port_list):
             return True
         return False
 
@@ -416,14 +435,27 @@ class AclCheck:
 class Match:
     """A matching term and its associate values."""
 
-    def __init__(self, filtername, term, possibles, action, qos=None):
+    filter: str
+    term: str
+    possibles: list[PossibleMatchReason]
+    action: MatchAction
+    qos: object | None
+
+    def __init__(
+        self,
+        filtername: str,
+        term: str,
+        possibles: list[PossibleMatchReason],
+        action: Sequence[MatchAction],
+        qos=None,
+    ) -> None:
         self.filter = filtername
         self.term = term
         self.possibles = possibles
         self.action = action[0]
         self.qos = qos
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = ''
         if self.possibles:
             text += f"possible {self.action}"
@@ -435,7 +467,7 @@ class Match:
         return text
 
 
-def main():
+def main() -> None:
     pass
 
 
