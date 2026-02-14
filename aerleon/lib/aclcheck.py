@@ -65,6 +65,8 @@ class AclCheck:
       sport: The source port.
       dport: The destination port.
       proto: The protocol.
+      source_zone: The source zone.
+      destination_zone: The destination zone.
       matches: A list of term-related matches.
       exact_matches: A list of exact matches.
 
