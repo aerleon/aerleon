@@ -81,15 +81,17 @@ class AclCheck:
 
     pol_object: policy.Policy
     pol: policy.Policy
+
     src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
     dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
     sport: int | Literal["any"]
     dport: int | Literal["any"]
     proto: str | Literal["any"]
-    matches: list["Match"]
-    exact_matches: list["Match"]
     source_zone: str | Literal["any"]
     destination_zone: str | Literal["any"]
+
+    matches: list["Match"]
+    exact_matches: list["Match"]
 
     @classmethod
     def FromPolicyDict(
