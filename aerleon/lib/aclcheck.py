@@ -60,7 +60,6 @@ class AclCheck:
 
     Attributes:
       pol_obj: policy.Policy object.
-      pol: policy.Policy object.
       src: The source IP address or network.
       dst: The destination IP address or network.
       sport: The source port.
@@ -76,11 +75,9 @@ class AclCheck:
       port.BadPortValue: An invalid source port is used
       port.BadPortRange: A port is outside of the acceptable range 0-65535
       AddressError: Incorrect ip address or format
-
     """
 
-    pol_object: policy.Policy
-    pol: policy.Policy
+    pol_obj: policy.Policy
 
     src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
     dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
