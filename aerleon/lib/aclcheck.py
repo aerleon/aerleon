@@ -412,15 +412,15 @@ class AclCheck:
         else:
             return False
 
-    def _PortInside(self, myport, port_list) -> bool:
-        """Check if port matches in a port or group of ports.
+    def _PortInside(self, myport: int | Literal["any"], port_list: list[tuple[int, int]]) -> bool:
+        """Check if a port matches a port list
 
         Args:
           myport: port number
-          port_list: list of ports
+          port_list: list of port ranges
 
         Returns:
-          bool: True of false
+          bool: True or False
         """
         if myport == 'any':
             return True
