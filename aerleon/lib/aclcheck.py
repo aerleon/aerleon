@@ -190,6 +190,7 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
+
                 match self._AddrMatch(self.src, term.source_address):
                     case "full":
                         src_too_broad = False
@@ -202,6 +203,7 @@ class AclCheck:
                         continue
                     case _:
                         raise AssertionError('unhandled switch case')
+
                 match self._AddrMatch(self.dst, term.destination_address):
                     case "full":
                         dst_too_broad = False
@@ -214,18 +216,21 @@ class AclCheck:
                         continue
                     case _:
                         raise AssertionError('unhandled switch case')
+
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.source_zone, term.source_zone):
                     logging.debug('source zone does not match')
                     continue
                 logging.debug('source zone matches: %s', self.source_zone)
+
                 # destination-zone matching if requested. If the term does not specify
                 # a destination_zone, treat it as 'any' (match all zones).
                 if not self._ZoneMatch(self.destination_zone, term.destination_zone):
                     logging.debug('destination zone does not match')
                     continue
                 logging.debug('destination zone matches: %s', self.destination_zone)
+
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -234,6 +239,7 @@ class AclCheck:
                     logging.debug('sport does not match')
                     continue
                 logging.debug('sport matches: %s', self.sport)
+
                 if (
                     self.dport != 'any'
                     and term.destination_port
@@ -242,14 +248,17 @@ class AclCheck:
                     logging.debug('dport does not match')
                     continue
                 logging.debug('dport matches: %s', self.dport)
+
                 if self.proto != 'any' and term.protocol and self.proto not in term.protocol:
                     logging.debug('proto does not match')
                     continue
                 logging.debug('proto matches: %s', self.proto)
+
                 if term.protocol_except and self.proto in term.protocol_except:
                     logging.debug('protocol excepted by term, no match.')
                     continue
                 logging.debug('proto not excepted: %s', self.proto)
+
                 if not term.action:  # avoid any verbatim
                     logging.debug('term had no action (verbatim?), no match.')
                     continue
