@@ -534,7 +534,7 @@ class Match:
     def __str__(self) -> str:
         text = ''
         if self.possibles:
-            text += f"possible {sorted(self.action)}"
+            text += f"possible {self.action}"
         else:
             text += self.action
         text += f" in term {self.term} of filter {self.filter}"
