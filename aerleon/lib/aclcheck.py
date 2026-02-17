@@ -18,7 +18,7 @@
 
 import logging
 from collections import defaultdict
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Sequence, Set
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import DefaultDict, Literal, TypeAlias, TypedDict, cast
 
@@ -213,7 +213,7 @@ class AclCheck:
         for header, terms in self.pol_obj.filters:
             filtername = header.target[0].options[0]
             for term in terms:
-                possible: list[PossibleMatchReason] = []
+                possible: set[PossibleMatchReason] = set()
                 """Reasons a term may/may not match, depending on more specific information or context"""
 
                 logging.debug('checking term: %s', term.name)
@@ -222,7 +222,7 @@ class AclCheck:
                     case "full":
                         logging.debug('srcaddr matches: %s', self.src)
                     case "partial":
-                        possible.append('source-ip')
+                        possible.add('source-ip')
                         logging.debug('srcaddr too broadly matches: %s', self.src)
                     case False:
                         logging.debug('srcaddr does not match')
@@ -234,7 +234,7 @@ class AclCheck:
                     case "full":
                         logging.debug('dstaddr matches: %s', self.dst)
                     case "partial":
-                        possible.append('destination-ip')
+                        possible.add('destination-ip')
                         logging.debug('dstaddr too broadly matches: %s', self.dst)
                     case False:
                         logging.debug('dstaddr does not match')
@@ -248,7 +248,7 @@ class AclCheck:
                     case "full":
                         logging.debug('source zone matches: %s', self.source_zone)
                     case "partial":
-                        possible.append('source-zone')
+                        possible.add('source-zone')
                         logging.debug('source zone too broadly matches: %s', self.source_zone)
                     case False:
                         logging.debug('source zone does not match')
@@ -262,7 +262,7 @@ class AclCheck:
                     case "full":
                         logging.debug('destination zone matches: %s', self.destination_zone)
                     case "partial":
-                        possible.append('destination-zone')
+                        possible.add('destination-zone')
                         logging.debug(
                             'destination zone too broadly matches: %s', self.destination_zone
                         )
@@ -276,7 +276,7 @@ class AclCheck:
                     case "full":
                         logging.debug('sport matches: %s', self.sport)
                     case "partial":
-                        possible.append('source-port')
+                        possible.add('source-port')
                         logging.debug('sport too broadly matches: %s', self.sport)
                     case False:
                         logging.debug('sport does not match')
@@ -288,7 +288,7 @@ class AclCheck:
                     case "full":
                         logging.debug('dport matches: %s', self.dport)
                     case "partial":
-                        possible.append('destination-port')
+                        possible.add('destination-port')
                         logging.debug('dport too broadly matches: %s', self.dport)
                     case False:
                         logging.debug('dport does not match')
@@ -299,7 +299,7 @@ class AclCheck:
                 if not term.protocol or self.proto == "any":
                     logging.debug('proto matches: %s', self.proto)
                 elif self.proto == "all":
-                    possible.append('protocol')
+                    possible.add('protocol')
                     logging.debug('proto too broadly matches: %s', self.proto)
                 elif self.proto not in term.protocol:
                     logging.debug('proto does not match')
@@ -308,7 +308,7 @@ class AclCheck:
                 if not term.protocol_except:
                     logging.debug('proto not excepted: %s', self.proto)
                 elif self.proto == "all":
-                    possible.append('protocol-except')
+                    possible.add('protocol-except')
                     logging.debug(
                         'proto partially excepted by term, too broadly matches: %s', self.proto
                     )
@@ -321,7 +321,7 @@ class AclCheck:
                     continue
                 logging.debug('term has an action')
 
-                possible.extend(self._PossibleMatch(term))
+                possible.update(self._PossibleMatch(term))
                 self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
                 if possible:
                     logging.debug('term has options: %s, not treating as exact match', possible)
@@ -333,7 +333,7 @@ class AclCheck:
                 # we'll never get there we shouldn't report them)
                 if 'next' not in term.action:
                     self.exact_matches.append(
-                        Match(filtername, term.name, [], term.action, term.qos)
+                        Match(filtername, term.name, frozenset(), term.action, term.qos)
                     )
                     break
 
@@ -380,7 +380,7 @@ class AclCheck:
         return '\n'.join(text)
 
     class SummarizeMatchTermDetails(TypedDict):
-        possibles: list[PossibleMatchReason]
+        possibles: frozenset[PossibleMatchReason]
         message: str
 
     def Summarize(
@@ -395,14 +395,14 @@ class AclCheck:
             text = []
             if match.possibles:
                 text.append(f"{' ' * 10}term: {match.term} (possible match)")
-                text.append(f"{' ' * 16}{match.action} if {match.possibles}")
+                text.append(f"{' ' * 16}{match.action} if {sorted(match.possibles)}")
             else:
                 text.append(f"{' ' * 10}term: {match.term}")
                 text.append(f"{' ' * 16}{match.action}")
             summary[match.filter][match.term]["message"] = '\n'.join(text)
         return summary
 
-    def _PossibleMatch(self, term) -> list[PossibleMatchReason]:
+    def _PossibleMatch(self, term) -> frozenset[PossibleMatchReason]:
         """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
@@ -411,18 +411,18 @@ class AclCheck:
         Returns:
           ret_str: a list of reasons this term may possibly match
         """
-        ret_str = []
+        ret_str = set()
         if 'first-fragment' in term.option:
-            ret_str.append('first-frag')
+            ret_str.add('first-frag')
         if term.fragment_offset:
-            ret_str.append('frag-offset')
+            ret_str.add('frag-offset')
         if term.packet_length:
-            ret_str.append('packet-length')
+            ret_str.add('packet-length')
         if 'established' in term.option:
-            ret_str.append('est')
+            ret_str.add('est')
         if 'tcp-established' in term.option and 'tcp' in term.protocol:
-            ret_str.append('tcp-est')
-        return ret_str
+            ret_str.add('tcp-est')
+        return frozenset(ret_str)
 
     def _ZoneMatch(
         self, zone: str | Literal["any", "all"], term_zone: Collection[str]
@@ -513,7 +513,7 @@ class Match:
 
     filter: str
     term: str
-    possibles: list[PossibleMatchReason]
+    possibles: frozenset[PossibleMatchReason]
     action: MatchAction
     qos: object | None
 
@@ -521,25 +521,25 @@ class Match:
         self,
         filtername: str,
         term: str,
-        possibles: list[PossibleMatchReason],
+        possibles: Set[PossibleMatchReason],
         action: Sequence[MatchAction],
         qos=None,
     ) -> None:
         self.filter = filtername
         self.term = term
-        self.possibles = possibles
+        self.possibles = frozenset(possibles)
         self.action = action[0]
         self.qos = qos
 
     def __str__(self) -> str:
         text = ''
         if self.possibles:
-            text += f"possible {self.action}"
+            text += f"possible {sorted(self.action)}"
         else:
             text += self.action
         text += f" in term {self.term} of filter {self.filter}"
         if self.possibles:
-            text += f" with factors: {', '.join(self.possibles)!s}"
+            text += f" with factors: {', '.join(sorted(self.possibles))!s}"
         return text
 
 
