@@ -61,6 +61,13 @@ class NoTargetError(Error):
     """Specified target platform not available in specified policy."""
 
 
+class UnreachableMatchCaseError(AssertionError):
+    """Unreachable match case hit - should be impossible"""
+
+    def __init__(self, value):
+        super().__init__(f"Unreachable match case hit: {value!r}")
+
+
 class AclCheck:
     """Check where hosts, ports and protocols match in a NAC policy.
 
@@ -221,7 +228,7 @@ class AclCheck:
                         logging.debug('srcaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 match self._AddrMatch(self.dst, term.destination_address):
                     case "full":
@@ -233,7 +240,7 @@ class AclCheck:
                         logging.debug('dstaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
@@ -247,7 +254,7 @@ class AclCheck:
                         logging.debug('source zone does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 # destination-zone matching if requested. If the term does not specify
                 # a destination_zone, treat it as 'any' (match all zones).
@@ -263,7 +270,7 @@ class AclCheck:
                         logging.debug('destination zone does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 match self._PortMatch(self.sport, term.source_port):
                     case "full":
@@ -275,7 +282,7 @@ class AclCheck:
                         logging.debug('sport does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 match self._PortMatch(self.dport, term.destination_port):
                     case "full":
@@ -287,7 +294,7 @@ class AclCheck:
                         logging.debug('dport does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 if not term.protocol or self.proto == "any":
                     logging.debug('proto matches: %s', self.proto)
