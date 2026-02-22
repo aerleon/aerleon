@@ -344,6 +344,7 @@ A Term must contain a `name` field naming the term.
 | terms[].destination-tag           |            | list of words                | `destination-tag: ["[TAG]", ...]`                                                                          |
 | terms[].destination-tag           |            | list of words                | `destination-tag: ["[TAG]", ...]`                                                                          |
 | terms[].destination-interface     |            | word                         | `destination-interface: "[INTERFACE_NAME]"`                                                                |
+| terms[].dynamic-application       | SRX        | list of words                | `dynamic-application: ["[DYNAMIC_APPLICATION]", ...]`                                                      |
 | terms[].filter-name               |            | word                         | `filter-name: "[FILTER_NAME]"`                                                                             |
 | terms[].forwarding-class          |            | list of words                | `forwarding-class: "[TRAFFIC_CLASS] ..."`                                                                  |
 | terms[].forwarding-class          |            | list of words                | `forwarding-class: ["[TRAFFIC_CLASS]", ...]`                                                               |

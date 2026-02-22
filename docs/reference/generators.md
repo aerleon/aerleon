@@ -912,6 +912,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
 * _dscp-except_: Do not match the DSCP number.
 * _dscp-match_: Match a DSCP number.
 * _dscp-set_: Match a DSCP set.
+* _dynamic-application_: one or more SRX layer 7 dynamic applications or dynamic application groups used as match criteria.
 * _logging_: Specify that these packets should be logged.
     * Based on the input value the resulting logging actions will follow this logic:
 

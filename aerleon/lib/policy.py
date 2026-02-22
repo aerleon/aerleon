@@ -478,10 +478,11 @@ class Term:
         self.inactive = False
         self.encapsulate = None
         self.port_mirror = None
-        # srx specific
+        # junipersrx specific
         self.destination_zone = []
         self.source_zone = []
         self.vpn = None
+        self.dynamic_application: str | list[str] | None = None
         # gce specific
         self.source_tag = []
         self.destination_tag = []
@@ -700,6 +701,10 @@ class Term:
             if sorted(self.destination_zone) is not sorted(other.destination_zone):
                 return False
 
+        if self.dynamic_application:
+            if set(self.dynamic_application) is not set(other.dynamic_application):
+                return False
+
         # we have containment
         return True
 
@@ -822,6 +827,8 @@ class Term:
             ret_str.append(f'  source_zone: {sorted(self.source_zone)}')
         if self.destination_zone:
             ret_str.append(f'  destination_zone: {sorted(self.destination_zone)}')
+        if self.dynamic_application:
+            ret_str.append(f'  dynamic_application: {sorted(self.dynamic_application)}')
 
         return '\n'.join(ret_str)
 
@@ -987,6 +994,13 @@ class Term:
 
         # destination_zone
         if sorted(self.destination_zone) != sorted(other.destination_zone):
+            return False
+
+        # SRX dynamic-application
+        if self.dynamic_application is None or other.dynamic_application is None:
+            if self.dynamic_application != other.dynamic_application:
+                return False
+        elif set(self.dynamic_application) != set(other.dynamic_application):
             return False
 
         return True
@@ -1199,6 +1213,8 @@ class Term:
                     self.source_zone.append(x.value)
                 elif x.var_type is VarType.DZONE:
                     self.destination_zone.append(x.value)
+                elif x.var_type is VarType.DYNAMIC_APPLICATION:
+                    self.dynamic_application.append(x.value)
                 elif x.var_type is VarType.DESTINATION_FQDN:
                     self.destination_fqdn.extend(DEFINITIONS.GetFQDN(x.value))
                 elif x.var_type is VarType.SOURCE_FQDN:
@@ -1645,6 +1661,7 @@ class VarType:
     DZONE = 66
     SOURCE_FQDN = 67
     DESTINATION_FQDN = 68
+    DYNAMIC_APPLICATION = 69
 
     def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type

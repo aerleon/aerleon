@@ -544,6 +544,7 @@ SUPPORTED_TOKENS = frozenset(
         'dscp_except',
         'dscp_match',
         'dscp_set',
+        'dynamic_application',
         'source_zone',
         'expiration',
         'icmp_type',
