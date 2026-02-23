@@ -36,8 +36,6 @@ PossibleMatchReason: TypeAlias = Literal[
     "tcp-est",
 ]
 
-MatchAction: TypeAlias = Literal["accept", "deny", "next", "reject", "reject-with-tcp-rst"] | str
-
 
 class Error(Exception):
     """Base error class."""
@@ -290,7 +288,7 @@ class AclCheck:
 
     def ActionMatch(
         self,
-        action: MatchAction | Literal['any'] = 'any',
+        action: str | Literal['any'] = 'any',
     ) -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
@@ -447,7 +445,7 @@ class Match:
     filter: str
     term: str
     possibles: list[PossibleMatchReason]
-    action: MatchAction
+    action: str
     qos: object | None
 
     def __init__(
@@ -455,7 +453,7 @@ class Match:
         filtername: str,
         term: str,
         possibles: list[PossibleMatchReason],
-        action: Sequence[MatchAction],
+        action: Sequence[str],
         qos=None,
     ) -> None:
         self.filter = filtername
