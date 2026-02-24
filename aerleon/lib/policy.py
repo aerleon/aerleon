@@ -998,10 +998,7 @@ class Term:
             return False
 
         # SRX dynamic-application
-        if self.dynamic_application is None or other.dynamic_application is None:
-            if self.dynamic_application != other.dynamic_application:
-                return False
-        elif self.dynamic_application != other.dynamic_application:
+        if self.dynamic_application != other.dynamic_application:
             return False
 
         return True

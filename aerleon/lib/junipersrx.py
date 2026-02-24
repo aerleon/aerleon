@@ -167,7 +167,7 @@ class Term(aclgenerator.Term):
         if self.term.dynamic_application:
             ret_str.IndentAppend(
                 5,
-                JunipersrxList('dynamic-application', sorted(set(self.term.dynamic_application))),
+                JunipersrxList('dynamic-application', sorted(self.term.dynamic_application)),
             )
 
         # DSCP MATCH
