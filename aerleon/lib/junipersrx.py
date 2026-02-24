@@ -173,19 +173,15 @@ class Term(aclgenerator.Term):
 
         # SOURCE-ZONE
         if self.term.source_zone:
-            szone_check = set()
-            for szone in self.term.source_zone:
-                szone_check.add(szone)
-            szone_check = sorted(szone_check)
-            ret_str.IndentAppend(5, JunipersrxList('from-zone', szone_check))
+            ret_str.IndentAppend(
+                5, JunipersrxList('from-zone', sorted(set(self.term.source_zone)))
+            )
 
         # DESTINATION-ZONE
         if self.term.destination_zone:
-            dzone_check = set()
-            for dzone in self.term.destination_zone:
-                dzone_check.add(dzone)
-            dzone_check = sorted(dzone_check)
-            ret_str.IndentAppend(5, JunipersrxList('to-zone', dzone_check))
+            ret_str.IndentAppend(
+                5, JunipersrxList('to-zone', sorted(set(self.term.destination_zone)))
+            )
 
         ret_str.IndentAppend(4, '}')
 

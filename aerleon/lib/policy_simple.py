@@ -483,8 +483,7 @@ class Term(Block):
         if verbatims:
             return f'Verbatim: {verbatims}'
 
-        handled = set()
-        handled.update(self.FieldsWithType(Comment))
+        handled = set(self.FieldsWithType(Comment))
 
         pieces = []
         actions = self.FieldsWithType(Action)
