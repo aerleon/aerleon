@@ -5,7 +5,7 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, Any, Self, TypeAlias
+from typing import Annotated, Any, TypeAlias
 
 from absl import logging
 
@@ -654,7 +654,7 @@ class _Builtin:
         self.var_type = var_type
 
     @classmethod
-    def FromKeyword(cls, keyname: str) -> Self:
+    def FromKeyword(cls, keyname: str) -> "_Builtin":
         """Construct a Builtin instance from keyname.
 
         Args:
