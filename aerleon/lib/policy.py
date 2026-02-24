@@ -1844,7 +1844,6 @@ tokens = (
     'DSCP_SET',
     'DTAG',
     'DZONE',
-    'DYNAMIC_APPLICATION',
     'ENCAPSULATE',
     'ESCAPEDSTRING',
     'ETHER_TYPE',
@@ -1934,7 +1933,6 @@ reserved = {
     'dscp-except': 'DSCP_EXCEPT',
     'dscp-match': 'DSCP_MATCH',
     'dscp-set': 'DSCP_SET',
-    'dynamic-application': 'DYNAMIC_APPLICATION',
     'encapsulate': 'ENCAPSULATE',
     'ether-type': 'ETHER_TYPE',
     'expiration': 'EXPIRATION',
@@ -2052,7 +2050,6 @@ def t_INTEGER(t: LexToken) -> LexToken:
 
 
 def t_STRING(t: LexToken) -> LexToken:
-    # r'\w+([-_:+.@/]\w*)*' # TODO should include `:` for dynamic-application?
     r'\w+([-_+.@/]\w*)*'
     # we have an identifier; let's check if it's a keyword or just a string.
     t.type = reserved.get(t.value, 'STRING')
@@ -2122,7 +2119,6 @@ def p_term_spec(p: YaccProduction) -> None:
     | term_spec dscp_set_spec
     | term_spec dscp_match_spec
     | term_spec dscp_except_spec
-    | term_spec dynamic_application_spec
     | term_spec encapsulate_spec
     | term_spec ether_type_spec
     | term_spec exclude_spec
@@ -2526,13 +2522,6 @@ def p_term_zone_spec(p: YaccProduction) -> None:
             p[0].append(VarType(VarType.SZONE, zone))
         elif p[1].find('destination-zone') >= 0:
             p[0].append(VarType(VarType.DZONE, zone))
-
-
-def p_dynamic_application_spec(p: YaccProduction) -> None:
-    """dynamic_application_spec : DYNAMIC_APPLICATION ':' ':' one_or_more_strings"""
-    p[0] = []
-    for apps in p[4]:
-        p[0].append(VarType(VarType.DYNAMIC_APPLICATION, apps))
 
 
 def p_vpn_spec(p: YaccProduction) -> None:

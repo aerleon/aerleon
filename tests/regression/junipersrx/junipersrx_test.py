@@ -22,7 +22,6 @@ from typing import Final
 from unittest import mock
 
 from absl.testing import absltest
-from pytest import mark
 
 from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy
 from aerleon.lib import yaml as yaml_frontend
@@ -1984,17 +1983,6 @@ class JuniperSRXTest(absltest.TestCase):
 
         pattern = re.compile(r'delete: applications;')
         self.assertTrue(pattern.search(str(''.join(output))), ''.join(output))
-        print(output)
-
-    @mark.xfail
-    def testDynamicApplications(self):
-        # GOOD_HEADER_3 doesn't matter, any valid header should do
-        pol = policy.ParsePolicy(
-            GOOD_HEADER_3 + GOOD_TERM_24 + GOOD_TERM_25 + GOOD_TERM_26, self.naming
-        )
-        output = junipersrx.JuniperSRX(pol, EXP_INFO)
-        output_str = str(output)
-
         print(output)
 
 
