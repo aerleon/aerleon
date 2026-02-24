@@ -2,10 +2,9 @@
 
 import enum
 import sys
-import typing
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, Sequence, TypeAlias, Self
+from typing import Annotated, Any, Self, Sequence, TypeAlias
 
 from absl import logging
 
@@ -183,7 +182,7 @@ class RawFilterHeader:
     """
 
     targets: dict[str, RawTarget]
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    kvs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -196,7 +195,7 @@ class RawTerm:
     """
 
     name: str
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    kvs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -673,7 +672,7 @@ class _Builtin:
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
-    def AddObjectCallSequence(self, value: typing.Any):
+    def AddObjectCallSequence(self, value: Any):
         """Construct a calling sequence for Term.AddObject or Header.AddObject for
         this builtin type.
 
@@ -796,7 +795,7 @@ class BuiltinRecognizer:
         return RecognizerValueResult(recognized=True, valueKV={context.keyword: repr})
 
     @classmethod
-    def _NormalizeValues(cls, _context: RecognizerContext, repr: typing.Any) -> typing.Any:
+    def _NormalizeValues(cls, _context: RecognizerContext, repr: Any) -> Any:
         """Subclasses of BuiltinRecognizer can implement this method to adjust the output
         of recognizeKeywordValue.
 
