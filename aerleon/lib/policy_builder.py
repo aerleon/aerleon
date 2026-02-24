@@ -5,7 +5,7 @@ import sys
 import typing
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, Sequence, TypeAlias
+from typing import Annotated, Sequence, TypeAlias, Self
 
 from absl import logging
 
@@ -273,11 +273,11 @@ class PolicyBuilder:
         self,
         policy_dict: PolicyDict,
         definitions: Naming,
-        optimize=False,
-        shade_check=False,
-    ):
-        def PolicyDictToRawPolicy(input_policy):
-            raw_filters = []
+        optimize: bool = False,
+        shade_check: bool = False,
+    ) -> None:
+        def PolicyDictToRawPolicy(input_policy: PolicyDict) -> RawPolicy:
+            raw_filters: list[RawFilter] = []
             input_filters = input_policy["filters"]
             filename = input_policy.get("filename")
             for filter in input_filters:
@@ -648,13 +648,13 @@ class _Builtin:
     }
     # fmt: on
 
-    def __init__(self, keyname: str, call_convention: _CallType, var_type: VarType):
+    def __init__(self, keyname: str, call_convention: _CallType, var_type: VarType) -> None:
         self.keyname = keyname
         self.call_convention = call_convention
         self.var_type = var_type
 
     @classmethod
-    def FromKeyword(cls, keyname: str):
+    def FromKeyword(cls, keyname: str) -> Self:
         """Construct a Builtin instance from keyname.
 
         Args:
