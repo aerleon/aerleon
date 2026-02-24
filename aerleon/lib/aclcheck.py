@@ -513,7 +513,7 @@ class Match:
     term: str
     possibles: frozenset[PossibleMatchReason]
     action: str
-    qos: object | None
+    qos: str | None
 
     def __init__(
         self,
@@ -521,7 +521,7 @@ class Match:
         term: str,
         possibles: Set[PossibleMatchReason],
         action: Sequence[str],
-        qos=None,
+        qos: str | None = None,
     ) -> None:
         self.filter = filtername
         self.term = term
