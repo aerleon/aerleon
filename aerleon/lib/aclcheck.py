@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import DefaultDict, Literal, TypeAlias, TypedDict, cast
+from typing import Literal, TypeAlias, TypedDict, cast
 
 from typing_extensions import Self
 
@@ -326,9 +326,9 @@ class AclCheck:
 
     def Summarize(
         self,
-    ) -> DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]]:
-        summary = cast(
-            DefaultDict[str, DefaultDict[str, "AclCheck.SummarizeMatchTermDetails"]],
+    ) -> defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]]:
+        summary: defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]] = cast(
+            defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]],
             defaultdict(lambda: defaultdict(dict)),
         )
         for match in self.matches:
