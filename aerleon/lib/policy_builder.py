@@ -669,7 +669,7 @@ class _Builtin:
         return cls(keyname, *cls.BUILTINS[keyname])
 
     @property
-    def recognizer(self) -> "TValue | TComposition":
+    def recognizer(self) -> TValue | TComposition:
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
