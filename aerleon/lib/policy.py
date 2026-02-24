@@ -348,6 +348,7 @@ class Term:
       priority: VarType.PRIORITY
       destination-zone: VarType.DZONE
       source-zone: VarType.SZONE
+      dynamic-application: VarType.DYNAMIC_APPLICATION
       vpn: VarType.VPN
     """
 
@@ -482,7 +483,7 @@ class Term:
         self.destination_zone = []
         self.source_zone = []
         self.vpn = None
-        self.dynamic_application: str | list[str] | None = None
+        self.dynamic_application: list[str] = []
         # gce specific
         self.source_tag = []
         self.destination_tag = []
@@ -1661,7 +1662,7 @@ class VarType:
     DZONE = 66
     SOURCE_FQDN = 67
     DESTINATION_FQDN = 68
-    DYNAMIC_APPLICATION = 69
+    DYNAMIC_APPLICATION = 71
 
     def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type
@@ -1843,6 +1844,7 @@ tokens = (
     'DSCP_SET',
     'DTAG',
     'DZONE',
+    'DYNAMIC_APPLICATION',
     'ENCAPSULATE',
     'ESCAPEDSTRING',
     'ETHER_TYPE',
@@ -1932,6 +1934,7 @@ reserved = {
     'dscp-except': 'DSCP_EXCEPT',
     'dscp-match': 'DSCP_MATCH',
     'dscp-set': 'DSCP_SET',
+    'dynamic-application': 'DYNAMIC_APPLICATION',
     'encapsulate': 'ENCAPSULATE',
     'ether-type': 'ETHER_TYPE',
     'expiration': 'EXPIRATION',
@@ -2049,6 +2052,7 @@ def t_INTEGER(t: LexToken) -> LexToken:
 
 
 def t_STRING(t: LexToken) -> LexToken:
+    # r'\w+([-_:+.@/]\w*)*' # TODO should include `:` for dynamic-application?
     r'\w+([-_+.@/]\w*)*'
     # we have an identifier; let's check if it's a keyword or just a string.
     t.type = reserved.get(t.value, 'STRING')
@@ -2118,6 +2122,7 @@ def p_term_spec(p: YaccProduction) -> None:
     | term_spec dscp_set_spec
     | term_spec dscp_match_spec
     | term_spec dscp_except_spec
+    | term_spec dynamic_application_spec
     | term_spec encapsulate_spec
     | term_spec ether_type_spec
     | term_spec exclude_spec
@@ -2521,6 +2526,13 @@ def p_term_zone_spec(p: YaccProduction) -> None:
             p[0].append(VarType(VarType.SZONE, zone))
         elif p[1].find('destination-zone') >= 0:
             p[0].append(VarType(VarType.DZONE, zone))
+
+
+def p_dynamic_application_spec(p: YaccProduction) -> None:
+    """dynamic_application_spec : DYNAMIC_APPLICATION ':' ':' one_or_more_strings"""
+    p[0] = []
+    for apps in p[4]:
+        p[0].append(VarType(VarType.DYNAMIC_APPLICATION, apps))
 
 
 def p_vpn_spec(p: YaccProduction) -> None:
