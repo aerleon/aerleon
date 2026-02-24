@@ -326,8 +326,10 @@ class AclCheck:
 
     def Summarize(
         self,
-    ) -> defaultdict[str, dict[str, "AclCheck.SummarizeMatchTermDetails"]]:
-        summary: defaultdict[str, dict[str, "AclCheck.SummarizeMatchTermDetails"]] = defaultdict()
+    ) -> defaultdict[str, dict[str, SummarizeMatchTermDetails]]:
+        summary: defaultdict[str, dict[str, AclCheck.SummarizeMatchTermDetails]] = defaultdict(
+            dict
+        )
         for match in self.matches:
             text: list[str] = []
             if match.possibles:
