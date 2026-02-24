@@ -2,9 +2,10 @@
 
 import enum
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, Any, Self, Sequence, TypeAlias
+from typing import Annotated, Any, Self, TypeAlias
 
 from absl import logging
 
