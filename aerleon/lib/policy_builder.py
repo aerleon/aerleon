@@ -50,6 +50,7 @@ if typing.TYPE_CHECKING:
 # what keys need to be present in the given dictionary.
 
 WordList: TypeAlias = "str | list[str]"
+WordSet: TypeAlias = str | set[str]
 
 
 class VPNValue(TypedDict):
@@ -116,7 +117,7 @@ PolicyTerm = TypedDict(
         "port-mirror": str,
         "destination-zone": WordList,
         "source-zone": WordList,
-        "dynamic-application": WordList,
+        "dynamic-application": WordSet,
         "profile-settings": WordList,
         "vpn": VPNValue,
         "source-tag": WordList,

@@ -483,7 +483,7 @@ class Term:
         self.destination_zone = []
         self.source_zone = []
         self.vpn = None
-        self.dynamic_application: list[str] = []
+        self.dynamic_application: set[str] = set()
         # gce specific
         self.source_tag = []
         self.destination_tag = []
@@ -703,7 +703,7 @@ class Term:
                 return False
 
         if self.dynamic_application:
-            if set(self.dynamic_application) is not set(other.dynamic_application):
+            if self.dynamic_application is not other.dynamic_application:
                 return False
 
         # we have containment
@@ -1001,7 +1001,7 @@ class Term:
         if self.dynamic_application is None or other.dynamic_application is None:
             if self.dynamic_application != other.dynamic_application:
                 return False
-        elif set(self.dynamic_application) != set(other.dynamic_application):
+        elif self.dynamic_application != other.dynamic_application:
             return False
 
         return True
@@ -1215,7 +1215,7 @@ class Term:
                 elif x.var_type is VarType.DZONE:
                     self.destination_zone.append(x.value)
                 elif x.var_type is VarType.DYNAMIC_APPLICATION:
-                    self.dynamic_application.append(x.value)
+                    self.dynamic_application.add(x.value)
                 elif x.var_type is VarType.DESTINATION_FQDN:
                     self.destination_fqdn.extend(DEFINITIONS.GetFQDN(x.value))
                 elif x.var_type is VarType.SOURCE_FQDN:
