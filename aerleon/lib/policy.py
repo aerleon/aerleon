@@ -703,7 +703,7 @@ class Term:
                 return False
 
         if self.dynamic_application:
-            if self.dynamic_application is not other.dynamic_application:
+            if self.dynamic_application != other.dynamic_application:
                 return False
 
         # we have containment
