@@ -180,21 +180,15 @@ class Rule:
 
         # SOURCE-ADDRESS
         if term.source_address:
-            saddr_check = set()
-            for saddr in term.source_address:
-                saddr_check.add(saddr.parent_token)
-            saddr_check = sorted(saddr_check)
-            for addr in saddr_check:
+            saddr_check = {saddr.parent_token for saddr in term.source_address}
+            for addr in sorted(saddr_check):
                 options["source"].append(str(addr))
         # missing source handled during XML document generation
 
         # DESTINATION-ADDRESS
         if term.destination_address:
-            daddr_check = set()
-            for daddr in term.destination_address:
-                daddr_check.add(daddr.parent_token)
-            daddr_check = sorted(daddr_check)
-            for addr in daddr_check:
+            daddr_check = {daddr.parent_token for daddr in term.destination_address}
+            for addr in sorted(daddr_check):
                 options["destination"].append(str(addr))
         # missing destination handled during XML document generation
 

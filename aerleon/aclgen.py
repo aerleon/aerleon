@@ -183,9 +183,7 @@ def RenderFile(
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
 
-    platforms = set()
-    for header in pol.headers:
-        platforms.update(header.platforms)
+    platforms = {platform for header in pol.headers for platform in header.platforms}
 
     acl_obj: aclgenerator.ACLGenerator
     plugin_supervisor.PluginSupervisor.Start()
