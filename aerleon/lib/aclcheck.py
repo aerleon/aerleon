@@ -430,7 +430,7 @@ class AclCheck:
           port_list: list of port ranges
 
         Returns:
-          bool: True or False
+          bool: True if `myport` is within any [start, end] port range in `port_list` (inclusive), otherwise False
         """
         if myport == 'any':
             return True
