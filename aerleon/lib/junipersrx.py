@@ -163,6 +163,13 @@ class Term(aclgenerator.Term):
             else:
                 ret_str.IndentAppend(5, f"application {self.term.name}-app;")
 
+        # DYNAMIC-APPLICATION
+        if self.term.dynamic_application:
+            ret_str.IndentAppend(
+                5,
+                JunipersrxList('dynamic-application', sorted(self.term.dynamic_application)),
+            )
+
         # DSCP MATCH
         if self.term.dscp_match:
             ret_str.IndentAppend(5, JunipersrxList('dscp', self.term.dscp_match))
@@ -318,11 +325,12 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         supported_tokens |= {
+            'destination_fqdn',
+            'destination_zone',
             'dscp_except',
             'dscp_match',
             'dscp_set',
-            'destination_fqdn',
-            'destination_zone',
+            'dynamic_application',
             'logging',
             'option',
             'owner',

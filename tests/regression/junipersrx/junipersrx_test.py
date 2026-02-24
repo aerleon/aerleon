@@ -18,6 +18,7 @@
 import copy
 import datetime
 import re
+from typing import Final
 from unittest import mock
 
 from absl.testing import absltest
@@ -329,6 +330,33 @@ term good_term_23 {
 }
 """
 
+GOOD_TERM_24: Final[
+    str
+] = """
+term good_term_24 {
+  action:: accept
+  dynamic-application:: junos:FTP junos:UNKNOWN junos:web:shopping junos:unassigned junos:all-new-apps
+}
+"""
+
+GOOD_TERM_25: Final[
+    str
+] = """
+term good_term_25 {
+  action:: accept
+  dynamic-application:: any
+}
+"""
+
+GOOD_TERM_26: Final[
+    str
+] = """
+term good_term_26 {
+  action:: accept
+  dynamic-application:: none
+}
+"""
+
 BAD_TERM_1 = """
 term bad-term-1 {
   destination-address:: SOME_HOST
@@ -544,10 +572,9 @@ SUPPORTED_TOKENS = frozenset(
         'dscp_except',
         'dscp_match',
         'dscp_set',
-        'source_zone',
+        'dynamic_application',
         'expiration',
         'icmp_type',
-        'stateless_reply',
         'logging',
         'name',
         'option',
@@ -559,6 +586,8 @@ SUPPORTED_TOKENS = frozenset(
         'source_address_exclude',
         'source_fqdn',
         'source_port',
+        'source_zone',
+        'stateless_reply',
         'timeout',
         'translated',
         'verbatim',
@@ -2280,6 +2309,30 @@ YAML_GOOD_TERM_23 = """
     action: accept
 """
 
+YAML_GOOD_TERM_24: Final[
+    str
+] = """
+  - name: good_term_24
+    action: accept
+    dynamic-application: junos:FTP junos:UNKNOWN junos:web:shopping junos:unassigned junos:all-new-apps
+"""
+
+YAML_GOOD_TERM_25: Final[
+    str
+] = """
+  - name: good_term_25
+    action: accept
+    dynamic-application: any
+"""
+
+YAML_GOOD_TERM_26: Final[
+    str
+] = """
+  - name: good_term_26
+    action: accept
+    dynamic-application: none
+"""
+
 YAML_BAD_TERM_1 = """
   - name: bad-term-1
     destination-address: SOME_HOST
@@ -2613,6 +2666,9 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             GOOD_TERM_20=YAML_GOOD_TERM_20,
             GOOD_TERM_21=YAML_GOOD_TERM_21,
             GOOD_TERM_23=YAML_GOOD_TERM_23,
+            GOOD_TERM_24=YAML_GOOD_TERM_24,
+            GOOD_TERM_25=YAML_GOOD_TERM_25,
+            GOOD_TERM_26=YAML_GOOD_TERM_26,
             BAD_TERM_1=YAML_BAD_TERM_1,
             TCP_ESTABLISHED_TERM=YAML_TCP_ESTABLISHED_TERM,
             UDP_ESTABLISHED_TERM=YAML_UDP_ESTABLISHED_TERM,
@@ -2636,6 +2692,25 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_TERM=YAML_PLATFORM_TERM,
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
         )
+
+    def testDynamicApplicationYaml(self) -> None:
+        definitions = naming.Naming()
+        definitions.ParseNetworkList(["SOME_HOST = 10.1.1.0/24"])
+        definitions.ParseServiceList(["SMTP = 25/tcp"])
+
+        pol = (
+            YAML_GOOD_HEADER
+            + YAML_GOOD_TERM_1
+            + YAML_GOOD_TERM_24
+            + YAML_GOOD_TERM_25
+            + YAML_GOOD_TERM_26
+        )
+        definitions.ParseYaml(pol, "filename")
+        x = policy.ParsePolicy(pol, definitions)
+
+        output = str(junipersrx.JuniperSRX(x, EXP_INFO))
+
+        print("done")
 
 
 #     @capture.stdout

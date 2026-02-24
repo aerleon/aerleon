@@ -50,6 +50,7 @@ if typing.TYPE_CHECKING:
 # what keys need to be present in the given dictionary.
 
 WordList: TypeAlias = "str | list[str]"
+WordSet: TypeAlias = str | set[str]
 
 
 class VPNValue(TypedDict):
@@ -116,6 +117,7 @@ PolicyTerm = TypedDict(
         "port-mirror": str,
         "destination-zone": WordList,
         "source-zone": WordList,
+        "dynamic-application": WordSet,
         "profile-settings": WordList,
         "vpn": VPNValue,
         "source-tag": WordList,
@@ -510,9 +512,10 @@ BUILTIN_SPEC: "dict[str, TValue | TComposition]" = {
     'port-mirror':                TValue.WordString,
     # palo alto specific
     'profile-settings':           TListStrCollapsible,
-    # srx specific                
+    # junipersrx specific
     'destination-zone':           TListStrCollapsible,
     'source-zone':                TListStrCollapsible,
+    'dynamic-application':        TListStrCollapsible,
     'vpn':                        TSection(of=[('name', TValue.WordString), ('policy', TValue.WordString)]),
     # gce specific                
     'source-tag':                 TListStrCollapsible,
@@ -610,8 +613,8 @@ class _Builtin:
         'vpn':                        (_CallType.SingleValue,  VarType.VPN),
         'source-address':             (_CallType.SingleList,   VarType.SADDRESS),
         'destination-address':        (_CallType.SingleList,   VarType.DADDRESS),
-        'destination-fqdn':       (_CallType.SingleList,   VarType.DESTINATION_FQDN),
-        'source-fqdn':            (_CallType.SingleList,   VarType.SOURCE_FQDN),
+        'destination-fqdn':           (_CallType.SingleList,   VarType.DESTINATION_FQDN),
+        'source-fqdn':                (_CallType.SingleList,   VarType.SOURCE_FQDN),
         'address':                    (_CallType.SingleList,   VarType.ADDRESS),
         'source-exclude':             (_CallType.SingleList,   VarType.SADDREXCLUDE),
         'destination-exclude':        (_CallType.SingleList,   VarType.DADDREXCLUDE),
@@ -639,6 +642,7 @@ class _Builtin:
         'target-service-accounts':    (_CallType.SingleList,   VarType.TARGET_SERVICE_ACCOUNTS),
         'source-zone':                (_CallType.SingleList,   VarType.SZONE),
         'destination-zone':           (_CallType.SingleList,   VarType.DZONE),
+        'dynamic-application':        (_CallType.SingleList,   VarType.DYNAMIC_APPLICATION),
         'apply-groups':               (_CallType.SingleList,   VarType.APPLY_GROUPS),
         'apply-groups-except':        (_CallType.SingleList,   VarType.APPLY_GROUPS_EXCEPT),
         'dscp-match':                 (_CallType.SingleList,   VarType.DSCP_MATCH),
@@ -892,6 +896,7 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             'port-mirror',
             'destination-zone',
             'source-zone',
+            'dynamic-application',
             'tags',
             'vpn',
             'source-tag',

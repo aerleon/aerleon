@@ -308,7 +308,7 @@ A Term must contain a `name` field naming the term.
 ### Full Field Syntax Reference
 
 | Path                              | Platform   | Value Type                   | Allowed Syntax                                                                                             |
-| --------------------------------- | ---------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+|-----------------------------------|------------|------------------------------|------------------------------------------------------------------------------------------------------------|
 | header.targets                    |            | mapping                      | `"[TARGET_NAME]": "[PLATFORM_OPTION] ..."`                                                                 |
 | header.apply-groups               | SRX        | list of words                | `apply-groups: "[filter name] [filter name]..."`                                                           |
 | header.apply-groups               | SRX        | list of words                | `apply-groups: ["filter name", ...]`                                                                       |
@@ -331,8 +331,8 @@ A Term must contain a `name` field naming the term.
 | terms[].destination-address       |            | list of words                | `destination-address: ["[IP \| CIDR \| NAME]", ...]`                                                       |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: "[IP \| CIDR \| NAME] ..."`                                                          |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                       |
-| terms[].destination-fqdn          |            | list of words                | `destination-address: "[NAME] ..."`                                                          |
-| terms[].destination-fqdn          |            | list of words                | `destination-address: ["[NAME]", ...]`                                                       |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: "[NAME] ..."`                                                                        |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: ["[NAME]", ...]`                                                                     |
 | terms[].destination-port          |            | list of words                | `destination-port: "[PORT_NUMBER \| NAME] ..."`                                                            |
 | terms[].destination-port          |            | list of words                | `destination-port: ["[PORT_NUMBER \| NAME]", ...]`                                                         |
 | terms[].destination-prefix        |            | list of words                | `destination-prefix: "[IP \| CIDR \| NAME] ..."`                                                           |
@@ -340,10 +340,9 @@ A Term must contain a `name` field naming the term.
 | terms[].destination-prefix-except |            | list of words                | `destination-prefix-except: "[IP \| CIDR \| NAME] ..."`                                                    |
 | terms[].destination-prefix-except |            | list of words                | `destination-prefix-except: ["[IP \| CIDR \| NAME]", ...]`                                                 |
 | terms[].destination-zone          |            | list of words                | `destination-zone: ["[ZONE]", ...]`                                                                        |
-| terms[].destination-zone          |            | list of words                | `destination-zone: ["[ZONE]", ...]`                                                                        |
-| terms[].destination-tag           |            | list of words                | `destination-tag: ["[TAG]", ...]`                                                                          |
 | terms[].destination-tag           |            | list of words                | `destination-tag: ["[TAG]", ...]`                                                                          |
 | terms[].destination-interface     |            | word                         | `destination-interface: "[INTERFACE_NAME]"`                                                                |
+| terms[].dynamic-application       | SRX        | list of words                | `dynamic-application: ["[DYNAMIC_APPLICATION]", ...]`                                                      |
 | terms[].filter-name               |            | word                         | `filter-name: "[FILTER_NAME]"`                                                                             |
 | terms[].forwarding-class          |            | list of words                | `forwarding-class: "[TRAFFIC_CLASS] ..."`                                                                  |
 | terms[].forwarding-class          |            | list of words                | `forwarding-class: ["[TRAFFIC_CLASS]", ...]`                                                               |
@@ -371,15 +370,14 @@ A Term must contain a `name` field naming the term.
 | terms[].qos                       | Juniper    | word                         | `qos: "[TRAFFIC_CLASS]"`                                                                                   |
 | terms[].pan-application           | PaloAltoFW | list of words                | `pan-application: "[APPLICATION_NAME] ..."`                                                                |
 | terms[].pan-application           | PaloAltoFW | list of words                | `pan-application: ["[APPLICATION_NAME]", ...]`                                                             |
-| terms[].profile-settings          | PaloAltoFW | list of words                | `profile-settings: ["[NAME]", ...]`                                                             |
-| terms[].profile-settings          | PaloAltoFW | list of words                | `profile-settings: ["[NAME]", ...]`                                                             |
+| terms[].profile-settings          | PaloAltoFW | list of words                | `profile-settings: ["[NAME]", ...]`                                                                        |
 | terms[].routing-instance          |            | word                         | `routing-instance: "[ROUTING_INSTANCE_NAME]"`                                                              |
 | terms[].source-address            |            | list of words                | `source-address: "[IP \| CIDR \| NAME] ..."`                                                               |
 | terms[].source-address            |            | list of words                | `source-address: ["[IP \| CIDR \| NAME]", ...]`                                                            |
 | terms[].source-exclude            |            | list of words                | `source-exclude: "[IP \| CIDR \| NAME] ..."`                                                               |
 | terms[].source-exclude            |            | list of words                | `source-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                            |
-| terms[].source-fqdn               |            | list of words                | `source-address: "[NAME] ..."`                                                               |
-| terms[].source-fqdn               |            | list of words                | `source-address: ["[NAME]", ...]`                                                            |
+| terms[].source-fqdn               |            | list of words                | `source-address: "[NAME] ..."`                                                                             |
+| terms[].source-fqdn               |            | list of words                | `source-address: ["[NAME]", ...]`                                                                          |
 | terms[].source-port               |            | list of words                | `source-port: "[PORT_NUMBER \| NAME] ..."`                                                                 |
 | terms[].source-port               |            | list of words                | `source-port: ["[PORT_NUMBER \| NAME]", ...]`                                                              |
 | terms[].source-prefix             |            | list of words                | `source-prefix: "[IP \| CIDR \| NAME] ..."`                                                                |
@@ -387,8 +385,6 @@ A Term must contain a `name` field naming the term.
 | terms[].source-prefix-except      |            | list of words                | `source-prefix-except: "[IP \| CIDR \| NAME] ..."`                                                         |
 | terms[].source-prefix-except      |            | list of words                | `source-prefix-except: ["[IP \| CIDR \| NAME]", ...]`                                                      |
 | terms[].source-zone               |            | list of words                | `source-zone: ["[ZONE]", ...]`                                                                             |
-| terms[].source-zone               |            | list of words                | `source-zone: ["[ZONE]", ...]`                                                                             |
-| terms[].source-tag                |            | list of words                | `source-tag: ["[TAG]", ...]`                                                                               |
 | terms[].source-tag                |            | list of words                | `source-tag: ["[TAG]", ...]`                                                                               |
 | terms[].source-interface          |            | word                         | `source-interface: "[INTERFACE_NAME]"`                                                                     |
 | terms[].ttl                       |            | number                       | `ttl: "[TTL]"`                                                                                             |
