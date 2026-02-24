@@ -5,7 +5,7 @@ import sys
 import typing
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, TypeAlias
+from typing import Annotated, Sequence, TypeAlias
 
 from absl import logging
 
@@ -81,9 +81,9 @@ PolicyTerm = TypedDict(
         "owner": str,
         "policer": str,
         "port": WordList,
-        "precedence": int | str | list[int | str],
-        "protocol": int | str | list[int | str],
-        "protocol-except": int | str | list[int | str],
+        "precedence": int | str | Sequence[int | str],
+        "protocol": int | str | Sequence[int | str],
+        "protocol-except": int | str | Sequence[int | str],
         "qos": str,
         "pan-application": WordList,
         "routing-instance": str,
@@ -98,13 +98,13 @@ PolicyTerm = TypedDict(
         "fragment-offset": int | str,
         "hop-limit": int | str,
         "icmp-type": WordList,
-        "icmp-code": int | str | list[int | str],
+        "icmp-code": int | str | Sequence[int | str],
         "ether-type": WordList,
         "traffic-class-count": str,
         "traffic-type": WordList,
         "dscp-set": int | str,
-        "dscp-match": int | str | list[int | str],
-        "dscp-except": int | str | list[int | str],
+        "dscp-match": int | str | Sequence[int | str],
+        "dscp-except": int | str | Sequence[int | str],
         "next-ip": str,
         "flexible-match-range": dict[str, int | str],
         "source-prefix-except": WordList,
@@ -122,7 +122,7 @@ PolicyTerm = TypedDict(
         "destination-interface": str,
         "platform": WordList,
         "platform-exclude": WordList,
-        "target-resources": list[str | list[str]],
+        "target-resources": Sequence[str | list[str]],
         "target-service-accounts": WordList,
         "tags": WordList,
         "timeout": int | str,
@@ -147,7 +147,7 @@ PolicyFilterHeader = TypedDict(
 )
 
 
-TermsList = list[PolicyTerm | PolicyInclude]
+TermsList = Sequence[PolicyTerm | PolicyInclude]
 
 
 class PolicyFilter(TypedDict):
