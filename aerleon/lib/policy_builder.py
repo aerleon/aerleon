@@ -5,11 +5,10 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, Any, TypeAlias
+from typing import TYPE_CHECKING, Annotated, Any, TypeAlias
 
 from absl import logging
 
-from aerleon.lib.naming import Naming
 from aerleon.lib.policy import (
     FLEXIBLE_MATCH_RANGE_ATTRIBUTES,
     FLEXIBLE_MATCH_START_OPTIONS,
@@ -41,6 +40,9 @@ if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
 else:
     from typing import TypedDict
+
+if TYPE_CHECKING:
+    from aerleon.lib.naming import Naming
 
 
 # NOTE: TypedDict is just a normal dictionary, it is not a class. This syntax tells the type checker
@@ -265,14 +267,14 @@ class PolicyBuilder:
     """
 
     raw_policy: RawPolicy
-    definitions: Naming
+    definitions: "Naming"
     optimize: bool
     shade_check: bool
 
     def __init__(
         self,
         policy_dict: PolicyDict,
-        definitions: Naming,
+        definitions: "Naming",
         optimize: bool = False,
         shade_check: bool = False,
     ) -> None:
