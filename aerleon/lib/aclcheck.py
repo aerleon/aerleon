@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal, TypeAlias, TypedDict, cast
+from typing import Literal, TypeAlias, TypedDict
 
 from typing_extensions import Self
 
@@ -326,21 +326,21 @@ class AclCheck:
 
     def Summarize(
         self,
-    ) -> defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]]:
-        summary: defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]] = cast(
-            defaultdict[str, defaultdict[str, "AclCheck.SummarizeMatchTermDetails"]],
-            defaultdict(lambda: defaultdict(dict)),
+    ) -> defaultdict[str, dict[str, SummarizeMatchTermDetails]]:
+        summary: defaultdict[str, dict[str, AclCheck.SummarizeMatchTermDetails]] = defaultdict(
+            dict
         )
         for match in self.matches:
-            summary[match.filter][match.term]["possibles"] = match.possibles
-            text = []
+            text: list[str] = []
             if match.possibles:
                 text.append(f"{' ' * 10}term: {match.term} (possible match)")
                 text.append(f"{' ' * 16}{match.action} if {match.possibles}")
             else:
                 text.append(f"{' ' * 10}term: {match.term}")
                 text.append(f"{' ' * 16}{match.action}")
-            summary[match.filter][match.term]["message"] = '\n'.join(text)
+            summary[match.filter][match.term] = AclCheck.SummarizeMatchTermDetails(
+                possibles=match.possibles, message='\n'.join(text)
+            )
         return summary
 
     def _PossibleMatch(

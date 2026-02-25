@@ -483,8 +483,7 @@ class Term(Block):
         if verbatims:
             return f'Verbatim: {verbatims}'
 
-        handled = set()
-        handled.update(self.FieldsWithType(Comment))
+        handled = set(self.FieldsWithType(Comment))
 
         pieces = []
         actions = self.FieldsWithType(Action)
@@ -521,9 +520,7 @@ class Term(Block):
         if sources:
             handled.update(sources)
             pieces.append('originating from')
-            all_sources = set()
-            for source in sources:
-                all_sources.update(source.value)
+            all_sources = {value for source in sources for value in source.value}
             pieces.append(', '.join(sorted(all_sources)))
 
         source_ports = self.FieldsWithType(SourcePort)
@@ -533,18 +530,16 @@ class Term(Block):
                 pieces.append('using port')
             else:
                 pieces.append('originating port')
-            all_sources = set()
-            for source in source_ports:
-                all_sources.update(source.value)
+            all_sources = {value for source in source_ports for value in source.value}
             pieces.append(', '.join(sorted(all_sources)))
 
         destinations = self.FieldsWithType(DestinationAddress)
         if destinations:
             handled.update(destinations)
             pieces.append('destined for')
-            all_destinations = set()
-            for destination in destinations:
-                all_destinations.update(destination.value)
+            all_destinations = {
+                value for destination in destinations for value in destination.value
+            }
             pieces.append(', '.join(sorted(all_destinations)))
 
         destination_ports = self.FieldsWithType(DestinationPort)
@@ -554,9 +549,9 @@ class Term(Block):
                 pieces.append('on port')
             else:
                 pieces.append('destined for port')
-            all_destinations = set()
-            for destination in destination_ports:
-                all_destinations.update(destination.value)
+            all_destinations = {
+                value for destination in destination_ports for value in destination.value
+            }
             pieces.append(', '.join(sorted(all_destinations)))
 
         vpns = self.FieldsWithType(Vpn)
