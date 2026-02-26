@@ -249,7 +249,7 @@ class Term(aclgenerator.Term):
             # The way we handle mixed is we call ourselves twice.
             ipv4_list = self.PortsAndProtocols(ip4, protocol, src_ports, dst_ports, icmp_type)
             ipv6_list = self.PortsAndProtocols(ip6, protocol, src_ports, dst_ports, icmp_type)
-            return ipv4_list + ipv6_list
+            return list(dict.fromkeys(ipv4_list + ipv6_list))
 
         if address_family == 'ip':
             # IPv4 stuff.
