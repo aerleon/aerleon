@@ -2,11 +2,10 @@
 
 import enum
 import sys
-import typing
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Annotated, TypeAlias
+from typing import TYPE_CHECKING, Annotated, Any, TypeAlias
 
 from absl import logging
 
@@ -42,6 +41,10 @@ if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
 else:
     from typing import TypedDict
+
+if TYPE_CHECKING:
+    from aerleon.lib.naming import Naming
+
 
 # NOTE: TypedDict is just a normal dictionary, it is not a class. This syntax tells the type checker
 # what keys need to be present in the given dictionary.
@@ -147,7 +150,7 @@ PolicyFilterHeader = TypedDict(
 )
 
 
-TermsList = list[PolicyTerm | PolicyInclude]
+TermsList = Sequence[PolicyTerm | PolicyInclude]
 
 
 class PolicyFilter(TypedDict):
@@ -183,7 +186,7 @@ class RawFilterHeader:
     """
 
     targets: dict[str, RawTarget]
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    kvs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -196,7 +199,7 @@ class RawTerm:
     """
 
     name: str
-    kvs: dict[str, typing.Any] = field(default_factory=dict)
+    kvs: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -265,19 +268,19 @@ class PolicyBuilder:
     """
 
     raw_policy: RawPolicy
-    definitions: naming.Naming
+    definitions: "Naming"
     optimize: bool
     shade_check: bool
 
     def __init__(
         self,
         policy_dict: PolicyDict,
-        definitions: naming.Naming,
-        optimize=False,
-        shade_check=False,
-    ):
-        def PolicyDictToRawPolicy(input_policy):
-            raw_filters = []
+        definitions: "Naming",
+        optimize: bool = False,
+        shade_check: bool = False,
+    ) -> None:
+        def PolicyDictToRawPolicy(input_policy: PolicyDict) -> RawPolicy:
+            raw_filters: list[RawFilter] = []
             input_filters = input_policy["filters"]
             filename = input_policy.get("filename")
             for filter in input_filters:
@@ -648,13 +651,13 @@ class _Builtin:
     }
     # fmt: on
 
-    def __init__(self, keyname: str, call_convention: _CallType, var_type: VarType):
+    def __init__(self, keyname: str, call_convention: _CallType, var_type: VarType) -> None:
         self.keyname = keyname
         self.call_convention = call_convention
         self.var_type = var_type
 
     @classmethod
-    def FromKeyword(cls, keyname: str):
+    def FromKeyword(cls, keyname: str) -> "_Builtin":
         """Construct a Builtin instance from keyname.
 
         Args:
@@ -669,11 +672,11 @@ class _Builtin:
         return cls(keyname, *cls.BUILTINS[keyname])
 
     @property
-    def recognizer(self) -> "TValue | TComposition":
+    def recognizer(self) -> TValue | TComposition:
         """The recognizer specific to this Builtin instance."""
         return BUILTIN_SPEC[self.keyname]
 
-    def AddObjectCallSequence(self, value: typing.Any):
+    def AddObjectCallSequence(self, value: Any):
         """Construct a calling sequence for Term.AddObject or Header.AddObject for
         this builtin type.
 
@@ -796,7 +799,7 @@ class BuiltinRecognizer:
         return RecognizerValueResult(recognized=True, valueKV={context.keyword: repr})
 
     @classmethod
-    def _NormalizeValues(cls, _context: RecognizerContext, repr: typing.Any) -> typing.Any:
+    def _NormalizeValues(cls, _context: RecognizerContext, repr: Any) -> Any:
         """Subclasses of BuiltinRecognizer can implement this method to adjust the output
         of recognizeKeywordValue.
 

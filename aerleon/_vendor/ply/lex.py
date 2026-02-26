@@ -925,10 +925,8 @@ def lex(module=None, object=None, debug=False, optimize=False, lextab='lextab',
         debuglog.info('lex: literals = %r', linfo.literals)
         debuglog.info('lex: states   = %r', linfo.stateinfo)
 
-    # Build a dictionary of valid token names
-    lexobj.lextokens = set()
-    for n in linfo.tokens:
-        lexobj.lextokens.add(n)
+    # Build a set of valid token names
+    lexobj.lextokens = set(linfo.tokens)
 
     # Get literals specification
     if isinstance(linfo.literals, (list, tuple)):

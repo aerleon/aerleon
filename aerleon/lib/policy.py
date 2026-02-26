@@ -1348,10 +1348,8 @@ class Term:
                 )
             # have we specified a port with a protocol that doesn't support ports?
             protos_no_ports = {p for p in self.protocol if p not in PROTOS_WITH_PORTS}
-            if protos_no_ports != set() and (
-                self.source_port or self.destination_port or self.port
-            ):
-                if set(self.protocol) - protos_no_ports != set():
+            if protos_no_ports and (self.source_port or self.destination_port or self.port):
+                if set(self.protocol) - protos_no_ports:
                     # This is a more specific error - some protocols support, but not all
                     raise MixedPortandNonPortProtos(
                         'Term %s contains mixed uses of protocols with and without port '
