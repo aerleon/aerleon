@@ -95,14 +95,16 @@ class Term(windows.Term):
     ) -> None:
         # At least advfirewall supports port ranges, unlike windows ipsec,
         # so the src and dst port lists will always be one element long.
+        commands = []
         for saddr in src_addr:
             for daddr in dst_addr:
                 for proto in protocol:
-                    ret_str.append(
+                    commands.append(
                         self._ComposeRule(
                             saddr, daddr, proto, src_port[0], dst_port[0], self.term.action[0]
                         )
                     )
+        ret_str.extend(list(dict.fromkeys(commands)))
 
     def _ComposeRule(
         self, srcaddr: IPv4, dstaddr: IPv4, proto: str, srcport: str, dstport: str, action: str
