@@ -111,14 +111,21 @@ class Term(windows.Term):
     ) -> str:
         """Convert the given parameters into a netsh add rule string."""
         atoms = []
-        src_label = 'local'
-        dst_label = 'remote'
 
         # We assume a default direction of OUT, but if it's IN, the Windows
         # advfirewall changes around the remote and local labels.
-        if 'in' == self.filter.lower():
+        if self.filter is None:
+            self.filter = 'out'
+        if self.filter.lower() == 'in':
             src_label = 'remote'
             dst_label = 'local'
+        elif self.filter.lower() == 'out':
+            src_label = 'local'
+            dst_label = 'remote'
+        else:
+            raise UnsupportedFilterOptionError(
+                f"direction {filter_direction} unrecognized"
+                )
 
         atoms.append(self._DIR_ATOM.substitute(dir=self.filter))
 
