@@ -726,7 +726,7 @@ class Nftables(aclgenerator.ACLGenerator):
         Returns:
           netfilter_family: x. filter_options[0]
           netfilter_hook: x. filter_options[1].lower()
-          netfilter_priority: numbers = [x for x in filter_options if x.isdigit()]
+          netfilter_priority: numbers = [x for x in filter_options if is_int(x)]
           policy_default_action: nftable action to take on unmatched packets.
           verbose: header and term verbosity.
         """
@@ -749,7 +749,15 @@ class Nftables(aclgenerator.ACLGenerator):
                 % (netfilter_hook, list(self._SUPPORTED_HOOKS))
             )
         if len(header_options) >= 2:
-            numbers = [x for x in header_options if x.isdigit()]
+            def is_int(s):
+                try:
+                    int(s)
+                    return True
+                except ValueError:
+                    return False
+
+            numbers = [x for x in header_options if is_int(x)]
+            print(numbers)
             if not numbers:
                 netfilter_priority = self._HOOK_PRIORITY_DEFAULT
                 logging.info(

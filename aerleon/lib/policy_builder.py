@@ -340,6 +340,7 @@ class PolicyBuilder:
             val_recognizer_result = HeaderBuiltinRecognizer.RecognizeKeywordValue(
                 recognizer_context
             )
+            print(val_recognizer_result)
             if not val_recognizer_result.recognized:
                 logging.warning(f"Unrecognized value format for {keyword}: {value}")
                 continue
