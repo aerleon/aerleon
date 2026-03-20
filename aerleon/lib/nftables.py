@@ -757,7 +757,7 @@ class Nftables(aclgenerator.ACLGenerator):
                     return False
 
             numbers = [x for x in header_options if is_int(x)]
-            print(numbers)
+
             if not numbers:
                 netfilter_priority = self._HOOK_PRIORITY_DEFAULT
                 logging.info(
