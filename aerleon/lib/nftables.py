@@ -391,7 +391,7 @@ class Term(aclgenerator.Term):
                 statement.append(pstat + Add(options) + Add(verdict))
         else:
             # If no addresses or ports & protocol. Verdict only statement.
-            statement.append(Add(options) + verdict)
+            statement.append(Add(options) + Add(verdict))
         return statement
 
     def _AddrStatement(
