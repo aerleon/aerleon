@@ -68,9 +68,10 @@ class Term(aclgenerator.Term):
     def __str__(self) -> str:
         ret_str = []
 
-        # Don't render icmpv6 protocol terms under inet, or icmp under inet6
-        if (self.af == 'inet6' and 'icmp' in self.term.protocol) or (
-            self.af == 'inet' and 'icmpv6' in self.term.protocol
+        # Don't render icmpv6 protocol terms under inet, or icmp/icmpv4 under inet6
+        protos = set(self.term.protocol)
+        if (self.af == 'inet6' and protos & {'icmp', 'icmpv4'}) or (
+            self.af == 'inet' and 'icmpv6' in protos
         ):
             logging.warning(
                 self.NO_AF_LOG_PROTO.substitute(
@@ -110,14 +111,33 @@ class Term(aclgenerator.Term):
         else:
             protocols = ['any']
 
-        # addresses
+        # addresses — filter to current AF; skip term if no AF-matching addresses remain
+        af_version = 4 if self.af == 'inet' else 6
+        src_specified = bool(self.term.source_address)
         src_addr = self.term.source_address
-        if not src_addr:
+        if src_specified:
+            src_addr = [a for a in src_addr if a.version == af_version]
+            if not src_addr:
+                return ''
+        else:
             src_addr = [self._all_ips]
 
+        dst_specified = bool(self.term.destination_address)
         dst_addr = self.term.destination_address
-        if not dst_addr:
+        if dst_specified:
+            dst_addr = [a for a in dst_addr if a.version == af_version]
+            if not dst_addr:
+                return ''
+        else:
             dst_addr = [self._all_ips]
+
+        # For mixed filters: if both src and dst resolve to 'any' (/0 prefixes), Windows
+        # 'any' covers both stacks — only render on the inet pass to avoid duplicates.
+        # Exception: inet6-specific protocols (icmpv6) must render on the inet6 pass.
+        if (self.af == 'inet6' and 'icmpv6' not in protos
+                and all(a.prefixlen == 0 for a in src_addr)
+                and all(a.prefixlen == 0 for a in dst_addr)):
+            return ''
 
         if self.term.source_address_exclude or self.term.destination_address_exclude:
             raise aclgenerator.UnsupportedFilterError(
@@ -250,7 +270,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
     _DEFAULT_ACTION = 'block'
     _TERM = Term
 
-    _GOOD_AFS = ['inet', 'inet6']
+    _GOOD_AFS = ['inet', 'inet6', 'mixed']
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
@@ -332,6 +352,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             # add the terms
             new_terms = []
             term_names = set()
+            afs = ['inet', 'inet6'] if filter_type == 'mixed' else [filter_type]
             for term in terms:
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
@@ -341,7 +362,19 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
                 if 'established' in term.option or 'tcp-established' in term.option:
                     continue
-                new_terms.append(self._TERM(term, filter_name, default_action, filter_type))
+                for af in afs:
+                    protos = set(term.protocol)
+                    # Skip AF-mismatched ICMP terms early to avoid noisy warnings
+                    if af == 'inet' and 'icmpv6' in protos:
+                        continue
+                    if af == 'inet6' and protos & {'icmp', 'icmpv4'}:
+                        continue
+                    # For mixed filters: if a term has no AF-specific addresses and no
+                    # inet6-only protocol, netsh 'any' covers both stacks — skip inet6 pass.
+                    if af == 'inet6' and not term.source_address and not term.destination_address:
+                        if not (protos & {'icmpv6'}):
+                            continue
+                    new_terms.append(self._TERM(term, filter_name, default_action, af))
 
             self.windows_policies.append(
                 (header, filter_name, filter_type, default_action, new_terms)
