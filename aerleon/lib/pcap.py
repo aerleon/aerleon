@@ -135,7 +135,7 @@ class Term(aclgenerator.Term):
             return ''
 
         conditions.append(
-            self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude)
+            self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude, 'src')
         )
 
         # destination address
@@ -150,7 +150,7 @@ class Term(aclgenerator.Term):
             return ''
 
         conditions.append(
-            self._GenerateAddrStatement(term_daddrs, self.term.destination_address_exclude)
+            self._GenerateAddrStatement(term_daddrs, self.term.destination_address_exclude, 'dst')
         )
 
         # protocol
@@ -237,18 +237,19 @@ class Term(aclgenerator.Term):
         return res
 
     def _GenerateAddrStatement(
-        self, addrs: list[str | IPv6 | IPv4], exclude_addrs: list[str | IPv6 | IPv4]
+        self, addrs: list[str | IPv6 | IPv4], exclude_addrs: list[str | IPv6 | IPv4],
+        direction: str = 'dst'
     ) -> str:
         addrlist = []
         for d in addrs:
             if d != 'any' and str(d) != '::/0':
-                addrlist.append(f'dst net {d}')
+                addrlist.append(f'{direction} net {d}')
 
         excludes = []
         if exclude_addrs:
             for d in exclude_addrs:
                 if d != 'any' and str(d) != '::/0':
-                    excludes.append(f'not dst net {d}')
+                    excludes.append(f'not {direction} net {d}')
                 else:
                     # excluding 'any' doesn't really make sense ...
                     return ''
@@ -456,14 +457,14 @@ class PcapFilter(aclgenerator.ACLGenerator):
                 term_str = str(term)
                 if term_str:
                     accept.append(str(term))
-            accept_clause = Term.JoinConditionals(accept, 'and')
+            accept_clause = Term.JoinConditionals(accept, 'or')
 
             deny = []
             for term in deny_terms:
                 term_str = str(term)
                 if term_str:
                     deny.append(str(term))
-            deny_clause = Term.JoinConditionals(deny, 'and')
+            deny_clause = Term.JoinConditionals(deny, 'or')
 
             if self._invert:
                 target.append(Term.JoinConditionals([deny_clause, accept_clause], 'and not'))
