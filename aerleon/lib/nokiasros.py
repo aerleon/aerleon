@@ -225,17 +225,19 @@ class NokiaSROS(aclgenerator.ACLGenerator):
             filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
 
+            comment = ' '.join(header.comment) if header.comment else None
             if 'cpm' in filter_options:
                 filter_options.remove('cpm')
-                self._TranslateCPMFilter(filter_options, terms)
+                self._TranslateCPMFilter(filter_options, terms, comment)
             else:
-                self._TranslateIPFilter(filter_name, filter_options, terms)
+                self._TranslateIPFilter(filter_name, filter_options, terms, comment)
 
     def _TranslateIPFilter(
         self,
         filter_name: str,
         filter_options: list[str],
         terms: list[Any],
+        comment: str | None = None,
     ) -> None:
         try:
             filter_key: str = 'nokia-conf:filter-id'
@@ -277,6 +279,8 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         filter_dict: dict[str, Any] = {'nokia-conf:scope': 'template'}
         if packet_length:
             filter_dict['nokia-conf:type'] = 'packet-length'
+        if comment:
+            filter_dict['nokia-conf:description'] = comment
         filter_dict['nokia-conf:default-action'] = default_action
         filter_dict[filter_key] = filter_value
         filter_dict['nokia-conf:entry'] = entries
@@ -286,6 +290,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         self,
         filter_options: list[str],
         terms: list[Any],
+        comment: str | None = None,
     ) -> None:
         address_family = 'inet'
         for af in ('inet', 'inet6'):
@@ -305,12 +310,11 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 entry_offset += 1
                 entries.append(entry)
 
-        self.ip_filters.append(
-            {
-                'nokia-conf:admin-state': 'enable',
-                'nokia-conf:entry': entries,
-            }
-        )
+        cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
+        if comment:
+            cpm_dict['nokia-conf:description'] = comment
+        cpm_dict['nokia-conf:entry'] = entries
+        self.ip_filters.append(cpm_dict)
 
     def _parse_common_options(self, filter_options: list[str]) -> int:
         """Extract syslog-profile from remaining options."""
