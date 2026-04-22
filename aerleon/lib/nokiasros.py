@@ -27,7 +27,7 @@ Filter options (ip-filter mode):
   mixed            - generate entries for both IPv4 and IPv6
   accept           - set default-action to accept (default: drop)
   drop             - set default-action to drop
-  packet-length    - set nokia-conf:scope=template and nokia-conf:type=packet-length
+  pktlenfilter    - set nokia-conf:type=pktlenfilter (scope=template is always set)
   syslog-profile N - syslog profile ID for log entries (default: 102)
   (filter name may be numeric → nokia-conf:filter-id, or string →
    nokia-conf:filter-name)
@@ -253,9 +253,9 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 default_action = opt
                 filter_options.remove(opt)
 
-        packet_length = 'packet-length' in filter_options
+        packet_length = 'pktlenfilter' in filter_options
         if packet_length:
-            filter_options.remove('packet-length')
+            filter_options.remove('pktlenfilter')
 
         syslog_profile = self._parse_common_options(filter_options)
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
@@ -271,10 +271,9 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                     entry_offset += 1
                     entries.append(entry)
 
-        filter_dict: dict[str, Any] = {}
+        filter_dict: dict[str, Any] = {'nokia-conf:scope': 'template'}
         if packet_length:
-            filter_dict['nokia-conf:scope'] = 'template'
-            filter_dict['nokia-conf:type'] = 'packet-length'
+            filter_dict['nokia-conf:type'] = 'pktlenfilter'
         filter_dict['nokia-conf:default-action'] = default_action
         filter_dict[filter_key] = filter_value
         filter_dict['nokia-conf:entry'] = entries
