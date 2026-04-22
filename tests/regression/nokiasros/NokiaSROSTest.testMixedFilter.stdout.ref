@@ -1,0 +1,36 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-name": "my-filter",
+    "nokia-conf:entry": [
+        {
+            "description": "term-saddr",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "src-ip": {
+                    "address": "10.2.3.4/32"
+                }
+            },
+            "entry-id": 10000
+        },
+        {
+            "description": "term-saddr",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "src-ip": {
+                    "address": "2001:4860:8000::5/128"
+                }
+            },
+            "entry-id": 10001
+        }
+    ]
+}
+
