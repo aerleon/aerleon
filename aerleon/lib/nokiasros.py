@@ -96,6 +96,8 @@ class SROSTerm(aclgenerator.Term):
                 return []
             icmp_types = resolved  # type: ignore[assignment]
 
+        icmp_codes: list[int | None] = self.term.icmp_code or [None]
+
         opts = [str(x) for x in self.term.option]
         if 'tcp-established' in opts:
             if self.term.protocol and self.term.protocol != ['tcp']:
@@ -116,23 +118,24 @@ class SROSTerm(aclgenerator.Term):
                     for dport in dports:
                         for proto in protos:
                             for icmp_type in icmp_types:
-                                match = self._BuildMatch(
-                                    saddr, daddr, sport, dport, proto, icmp_type, opts
-                                )
-                                desc = (
-                                    ' '.join(self.term.comment)
-                                    if self.term.comment
-                                    else self.term.name
-                                )
-                                entry: dict[str, Any] = {
-                                    'description': desc,
-                                    'action': copy.deepcopy(action),
-                                }
-                                if match:
-                                    entry['match'] = match
-                                if self.term.logging:
-                                    entry['log'] = self.syslog_profile
-                                entries.append(entry)
+                                for icmp_code in icmp_codes:
+                                    match = self._BuildMatch(
+                                        saddr, daddr, sport, dport, proto, icmp_type, icmp_code, opts
+                                    )
+                                    desc = (
+                                        ' '.join(self.term.comment)
+                                        if self.term.comment
+                                        else self.term.name
+                                    )
+                                    entry: dict[str, Any] = {
+                                        'description': desc,
+                                        'action': copy.deepcopy(action),
+                                    }
+                                    if match:
+                                        entry['match'] = match
+                                    if self.term.logging:
+                                        entry['log'] = self.syslog_profile
+                                    entries.append(entry)
         return entries
 
     def _BuildMatch(
@@ -143,6 +146,7 @@ class SROSTerm(aclgenerator.Term):
         dport: tuple[int, int],
         proto: int | str | None,
         icmp_type: int | None,
+        icmp_code: int | None,
         opts: list[str],
     ) -> dict[str, Any]:
         match: dict[str, Any] = {}
@@ -172,7 +176,10 @@ class SROSTerm(aclgenerator.Term):
                 match['protocol'] = proto_name if proto_name else str(proto)
 
         if icmp_type is not None:
-            match['icmp'] = {'type': icmp_type}
+            icmp: dict[str, int] = {'type': icmp_type}
+            if icmp_code is not None:
+                icmp['code'] = icmp_code
+            match['icmp'] = icmp
 
         if self.term.hop_limit:
             match['hop-limit'] = {'lt': int(self.term.hop_limit)}
@@ -199,7 +206,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
-        supported_tokens |= {'counter', 'logging', 'hop_limit', 'policer'}
+        supported_tokens |= {'counter', 'logging', 'hop_limit', 'icmp_code', 'policer'}
         supported_sub_tokens['action'] = {'accept', 'deny'}
         return supported_tokens, supported_sub_tokens
 
