@@ -107,8 +107,6 @@ class SROSTerm(aclgenerator.Term):
                 )
 
         action: dict[str, Any] = {action_key: [None]}
-        if self.term.counter:
-            action['count'] = str(self.term.counter)
         if self.term.policer:
             action['rate-limit'] = {'policer': str(self.term.policer)}
 
@@ -214,8 +212,9 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
-        supported_tokens |= {'counter', 'logging', 'hop_limit', 'icmp_code', 'policer', 'ttl'}
+        supported_tokens |= {'logging', 'hop_limit', 'icmp_code', 'policer', 'ttl'}
         supported_sub_tokens['action'] = {'accept', 'deny'}
+        supported_sub_tokens['option'] |= {'fragments'}
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Any, exp_info: int) -> None:
