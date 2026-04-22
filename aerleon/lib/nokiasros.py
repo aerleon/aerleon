@@ -27,6 +27,7 @@ Filter options (ip-filter mode):
   mixed            - generate entries for both IPv4 and IPv6
   accept           - set default-action to accept (default: drop)
   drop             - set default-action to drop
+  packet-length    - set nokia-conf:scope=template and nokia-conf:type=packet-length
   syslog-profile N - syslog profile ID for log entries (default: 102)
   (filter name may be numeric → nokia-conf:filter-id, or string →
    nokia-conf:filter-name)
@@ -184,6 +185,9 @@ class SROSTerm(aclgenerator.Term):
         if self.term.hop_limit:
             match['hop-limit'] = {'lt': int(self.term.hop_limit)}
 
+        if self.term.ttl:
+            match['ttl'] = {'lt': self.term.ttl}
+
         if 'tcp-established' in opts:
             if self.cpm_mode:
                 match['tcp-flags'] = {'ack': True}
@@ -206,7 +210,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
-        supported_tokens |= {'counter', 'logging', 'hop_limit', 'icmp_code', 'policer'}
+        supported_tokens |= {'counter', 'logging', 'hop_limit', 'icmp_code', 'policer', 'ttl'}
         supported_sub_tokens['action'] = {'accept', 'deny'}
         return supported_tokens, supported_sub_tokens
 
@@ -249,6 +253,10 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 default_action = opt
                 filter_options.remove(opt)
 
+        packet_length = 'packet-length' in filter_options
+        if packet_length:
+            filter_options.remove('packet-length')
+
         syslog_profile = self._parse_common_options(filter_options)
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         entries: list[dict[str, Any]] = []
@@ -263,13 +271,14 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                     entry_offset += 1
                     entries.append(entry)
 
-        self.ip_filters.append(
-            {
-                'nokia-conf:default-action': default_action,
-                filter_key: filter_value,
-                'nokia-conf:entry': entries,
-            }
-        )
+        filter_dict: dict[str, Any] = {}
+        if packet_length:
+            filter_dict['nokia-conf:scope'] = 'template'
+            filter_dict['nokia-conf:type'] = 'packet-length'
+        filter_dict['nokia-conf:default-action'] = default_action
+        filter_dict[filter_key] = filter_value
+        filter_dict['nokia-conf:entry'] = entries
+        self.ip_filters.append(filter_dict)
 
     def _TranslateCPMFilter(
         self,
