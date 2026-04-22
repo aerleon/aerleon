@@ -171,10 +171,13 @@ class SROSTerm(aclgenerator.Term):
 
         if proto is not None:
             if isinstance(proto, str):
-                match['protocol'] = proto
+                proto_name = proto
             else:
-                proto_name = self.PROTO_MAP_BY_NUMBER.get(proto)
-                match['protocol'] = proto_name if proto_name else str(proto)
+                proto_name = self.PROTO_MAP_BY_NUMBER.get(proto) or str(proto)
+            if self.inet_version == 'inet6':
+                match['next-header'] = 'ipv6-icmp' if proto_name == 'icmpv6' else proto_name
+            else:
+                match['protocol'] = proto_name
 
         if icmp_type is not None:
             icmp: dict[str, int] = {'type': icmp_type}
@@ -186,7 +189,8 @@ class SROSTerm(aclgenerator.Term):
             match['hop-limit'] = {'lt': int(self.term.hop_limit)}
 
         if self.term.ttl:
-            match['ttl'] = {'lt': self.term.ttl}
+            ttl_key = 'hop-limit' if self.inet_version == 'inet6' else 'ttl'
+            match[ttl_key] = {'lt': self.term.ttl}
 
         if 'tcp-established' in opts:
             if self.cpm_mode:
