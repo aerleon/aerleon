@@ -79,6 +79,20 @@ header {
 }
 """
 
+HEADER_INET_COMMENT = """
+header {
+  comment:: "my filter description"
+  target:: nokiasros my-filter inet
+}
+"""
+
+HEADER_CPM_COMMENT = """
+header {
+  comment:: "my cpm description"
+  target:: nokiasros my-cpm cpm inet
+}
+"""
+
 # ---------------------------------------------------------------------------
 # Terms
 # ---------------------------------------------------------------------------
@@ -208,6 +222,13 @@ term term-comment {
 }
 """
 
+TERM_ESP = """
+term term-esp {
+  protocol:: esp
+  action:: accept
+}
+"""
+
 BAD_TERM_TCP_EST = """
 term bad-term-tcp-est {
   protocol:: udp
@@ -282,6 +303,21 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertNotIn('nokia-conf:scope', output)
         self.assertNotIn('nokia-conf:default-action', output)
         print(acl)
+
+    def testFilterDescriptionFromComment(self):
+        acl = self._make_acl(HEADER_INET_COMMENT, TERM_DENY)
+        output = json.loads(str(acl))
+        self.assertEqual(output['nokia-conf:description'], 'my filter description')
+
+    def testFilterNoDescriptionWithoutComment(self):
+        acl = self._make_acl(HEADER_INET, TERM_DENY)
+        output = json.loads(str(acl))
+        self.assertNotIn('nokia-conf:description', output)
+
+    def testCpmFilterDescriptionFromComment(self):
+        acl = self._make_acl(HEADER_CPM_COMMENT, TERM_DENY)
+        output = json.loads(str(acl))
+        self.assertEqual(output['nokia-conf:description'], 'my cpm description')
 
     # -----------------------------------------------------------------------
     # Entry-id numbering
@@ -388,6 +424,14 @@ class NokiaSROSTest(absltest.TestCase):
         entries = self._entries(HEADER_INET, TERM_MULTI_PROTO)
         protos = {e['match']['protocol'] for e in entries}
         self.assertEqual(protos, {'tcp', 'udp'})
+
+    def testEspInetUsesNumericProtocol(self):
+        entries = self._entries(HEADER_INET, TERM_ESP)
+        self.assertEqual(entries[0]['match']['protocol'], 50)
+
+    def testEspInet6UsesNumericNextHeader(self):
+        entries = self._entries(HEADER_INET6, TERM_ESP)
+        self.assertEqual(entries[0]['match']['next-header'], 50)
 
     # -----------------------------------------------------------------------
     # Match: ICMP types and codes

@@ -64,6 +64,8 @@ class SROSTerm(aclgenerator.Term):
     """Converts a policy term into SROS filter entry dicts."""
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
+    # Protocols that SROS does not accept by name and must be expressed numerically.
+    PROTO_NAME_TO_NUM = {'esp': 50}
 
     def __init__(
         self,
@@ -172,10 +174,11 @@ class SROSTerm(aclgenerator.Term):
                 proto_name = proto
             else:
                 proto_name = self.PROTO_MAP_BY_NUMBER.get(proto) or str(proto)
+            proto_val: str | int = self.PROTO_NAME_TO_NUM.get(proto_name, proto_name)
             if self.inet_version == 'inet6':
-                match['next-header'] = 'ipv6-icmp' if proto_name == 'icmpv6' else proto_name
+                match['next-header'] = 'ipv6-icmp' if proto_name == 'icmpv6' else proto_val
             else:
-                match['protocol'] = proto_name
+                match['protocol'] = proto_val
 
         if icmp_type is not None:
             icmp: dict[str, int] = {'type': icmp_type}
