@@ -315,9 +315,10 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertNotIn('nokia-conf:description', output)
 
     def testCpmFilterDescriptionFromComment(self):
-        acl = self._make_acl(HEADER_CPM_COMMENT, TERM_DENY)
-        output = json.loads(str(acl))
-        self.assertEqual(output['nokia-conf:description'], 'my cpm description')
+        entries = self._entries(HEADER_CPM_COMMENT, TERM_DENY)
+        self.assertNotIn('nokia-conf:description', json.loads(str(self._make_acl(HEADER_CPM_COMMENT, TERM_DENY))))
+        self.assertEqual(entries[-1]['description'], 'my cpm description')
+        self.assertEqual(entries[-1]['entry-id'], entries[-2]['entry-id'] + 1)
 
     # -----------------------------------------------------------------------
     # Entry-id numbering

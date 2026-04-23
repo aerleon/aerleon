@@ -229,8 +229,10 @@ class NokiaSROS(aclgenerator.ACLGenerator):
             filter_name = header.FilterName(self._PLATFORM)
 
             comment = ' '.join(header.comment) if header.comment else None
+            is_cpm = filter_name == 'cpm' or 'cpm' in filter_options
             if 'cpm' in filter_options:
                 filter_options.remove('cpm')
+            if is_cpm:
                 self._TranslateCPMFilter(filter_options, terms, comment)
             else:
                 self._TranslateIPFilter(filter_name, filter_options, terms, comment)
@@ -313,9 +315,11 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 entry_offset += 1
                 entries.append(entry)
 
+        if comment and entries:
+            last_id = entries[-1]['entry-id']
+            entries.append({'entry-id': last_id + 1, 'description': comment, 'action': {'drop': [None]}})
+
         cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
-        if comment:
-            cpm_dict['nokia-conf:description'] = comment
         cpm_dict['nokia-conf:entry'] = entries
         self.ip_filters.append(cpm_dict)
 
