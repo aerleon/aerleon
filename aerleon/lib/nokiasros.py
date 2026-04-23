@@ -27,7 +27,8 @@ Filter options (ip-filter mode):
   mixed            - generate entries for both IPv4 and IPv6
   accept           - set default-action to accept (default: drop)
   drop             - set default-action to drop
-  pktlenfilter     - set nokia-conf:type=pktlenfilter
+  pktlenfilter     - set filter type to packet-length
+
   syslog-profile N - syslog profile ID for log entries (default: 102)
   (filter name may be numeric → nokia-conf:filter-id, or string →
    nokia-conf:filter-name)
