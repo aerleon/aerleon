@@ -318,7 +318,8 @@ class NokiaSROSTest(absltest.TestCase):
         acl = self._make_acl(HEADER_CPM_COMMENT, TERM_DENY)
         output = json.loads(str(acl))
         self.assertNotIn('nokia-conf:description', output)
-        self.assertEqual(output['_annotate'], 'my cpm description')
+        entries = output['nokia-conf:entry']
+        self.assertEqual(entries[0]['description'], 'my cpm description | term-deny')
 
     # -----------------------------------------------------------------------
     # Entry-id numbering
@@ -388,7 +389,7 @@ class NokiaSROSTest(absltest.TestCase):
         acl = self._make_acl(HEADER_INET, TERM_SPORT)
         entries = json.loads(str(acl))['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0]['match']['src-port'], {'port': 53})
+        self.assertEqual(entries[0]['match']['src-port'], {'eq': 53})
         print(acl)
 
     @capture.stdout
@@ -396,12 +397,12 @@ class NokiaSROSTest(absltest.TestCase):
         acl = self._make_acl(HEADER_INET, TERM_DPORT)
         entries = json.loads(str(acl))['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0]['match']['dst-port'], {'port': 53})
+        self.assertEqual(entries[0]['match']['dst-port'], {'eq': 53})
         print(acl)
 
     def testPortRange(self):
         entries = self._entries(HEADER_INET, TERM_PORT_RANGE)
-        self.assertEqual(entries[0]['match']['dst-port'], {'start': 1024, 'end': 65535})
+        self.assertEqual(entries[0]['match']['dst-port'], {'range': {'start': 1024, 'end': 65535}})
 
     # -----------------------------------------------------------------------
     # Match: protocol

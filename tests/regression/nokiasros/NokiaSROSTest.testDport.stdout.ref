@@ -12,7 +12,7 @@
             },
             "match": {
                 "dst-port": {
-                    "port": 53
+                    "eq": 53
                 },
                 "protocol": "tcp"
             },

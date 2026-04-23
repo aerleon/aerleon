@@ -41,6 +41,10 @@ Filter options (cpm mode):
 Both modes expand addresses to individual prefixes.  The only behavioural
 difference in CPM mode is that tcp-established is rendered as
 tcp-flags {ack: true} instead of the ip-filter tcp-established leaf.
+
+CPM filter comments: the CPM YANG model has no top-level description leaf, so
+a header comment is prepended to the first entry's description field as
+"<comment> | <term-description>".
 """
 
 import copy
@@ -315,9 +319,10 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 entry_offset += 1
                 entries.append(entry)
 
+        if comment and entries:
+            entries[0]['description'] = f"{comment} | {entries[0]['description']}"
+
         cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
-        if comment:
-            cpm_dict['_annotate'] = comment
         cpm_dict['nokia-conf:entry'] = entries
         self.ip_filters.append(cpm_dict)
 
