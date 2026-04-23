@@ -315,11 +315,9 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 entry_offset += 1
                 entries.append(entry)
 
-        if comment and entries:
-            last_id = entries[-1]['entry-id']
-            entries.append({'entry-id': last_id + 1, 'description': comment, 'action': {'drop': [None]}})
-
         cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
+        if comment:
+            cpm_dict['_annotate'] = comment
         cpm_dict['nokia-conf:entry'] = entries
         self.ip_filters.append(cpm_dict)
 
