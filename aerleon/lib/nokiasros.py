@@ -158,13 +158,13 @@ class SROSTerm(aclgenerator.Term):
         s_start, s_end = sport
         if not (s_start == s_end == 0):
             match['src-port'] = (
-                {'port': s_start} if s_start == s_end else {'start': s_start, 'end': s_end}
+                {'eq': s_start} if s_start == s_end else {'range':{'start': s_start, 'end': s_end}}
             )
 
         d_start, d_end = dport
         if not (d_start == d_end == 0):
             match['dst-port'] = (
-                {'port': d_start} if d_start == d_end else {'start': d_start, 'end': d_end}
+                {'eq': d_start} if d_start == d_end else {'range':{'start': s_start, 'end': s_end}}
             )
 
         if proto is not None:
