@@ -164,7 +164,7 @@ class SROSTerm(aclgenerator.Term):
         d_start, d_end = dport
         if not (d_start == d_end == 0):
             match['dst-port'] = (
-                {'eq': d_start} if d_start == d_end else {'range':{'start': s_start, 'end': s_end}}
+                {'eq': d_start} if d_start == d_end else {'range':{'start': d_start, 'end': d_end}}
             )
 
         if proto is not None:
