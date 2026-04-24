@@ -174,7 +174,7 @@ class SROSTerm(aclgenerator.Term):
             match['src-port'] = (
                 {'eq': s_start}
                 if s_start == s_end
-                else {'range':{'start': s_start, 'end': s_end}}
+                else {'range': {'start': s_start, 'end': s_end}}
             )
 
         d_start, d_end = dport
