@@ -250,9 +250,7 @@ class NokiaSROSTest(absltest.TestCase):
         self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp 1024-65535/udp', 'services')
 
     def _make_acl(self, header, term):
-        return nokiasros.NokiaSROS(
-            policy.ParsePolicy(header + term, self.naming), EXP_INFO
-        )
+        return nokiasros.NokiaSROS(policy.ParsePolicy(header + term, self.naming), EXP_INFO)
 
     def _entries(self, header, term):
         return json.loads(str(self._make_acl(header, term)))['nokia-conf:entry']

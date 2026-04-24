@@ -126,7 +126,14 @@ class SROSTerm(aclgenerator.Term):
                             for icmp_type in icmp_types:
                                 for icmp_code in icmp_codes:
                                     match = self._BuildMatch(
-                                        saddr, daddr, sport, dport, proto, icmp_type, icmp_code, opts
+                                        saddr,
+                                        daddr,
+                                        sport,
+                                        dport,
+                                        proto,
+                                        icmp_type,
+                                        icmp_code,
+                                        opts,
                                     )
                                     desc = (
                                         ' '.join(self.term.comment)
@@ -171,7 +178,9 @@ class SROSTerm(aclgenerator.Term):
         d_start, d_end = dport
         if not (d_start == d_end == 0):
             match['dst-port'] = (
-                {'eq': d_start} if d_start == d_end else {'range':{'start': d_start, 'end': d_end}}
+                {'eq': d_start}
+                if d_start == d_end
+                else {'range': {'start': d_start, 'end': d_end}}
             )
 
         if proto is not None:
