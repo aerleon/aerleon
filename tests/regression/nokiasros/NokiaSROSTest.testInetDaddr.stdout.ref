@@ -1,0 +1,22 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-name": "my-filter",
+    "nokia-conf:entry": [
+        {
+            "description": "term-daddr",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "dst-ip": {
+                    "address": "10.2.3.4/32"
+                }
+            },
+            "entry-id": 10000
+        }
+    ]
+}
+
