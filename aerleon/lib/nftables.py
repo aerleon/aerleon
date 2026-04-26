@@ -327,7 +327,21 @@ class Term(aclgenerator.Term):
         # Base chain already allows all return traffic of
         # state (ESTABLISHED, RELATED)
         # This should prevent invalid, untracked packets from being accepted.
-        if 'deny' not in term.action:
+        # Exception: icmpv6. Neighbor/router discovery and MLD are marked
+        # IP_CT_UNTRACKED by the kernel, and the icmpv6 error types are tracked
+        # as RELATED (or INVALID when the original flow is unknown). Neither is
+        # ever NEW, so requiring 'ct state new' silently prevents such a rule
+        # from matching -- which breaks NDP, and breaks PMTUD via
+        # packet-too-big. echo-request is the only icmpv6 type the match suits,
+        # and the base chain already accepts its replies as established.
+        # An ip table has no icmpv6 to match, so the exception does not apply
+        # there: the rule would have no protocol match left.
+        is_icmpv6_only = (
+            self.address_family != 'ip'
+            and bool(term.protocol)
+            and set(term.protocol) == {'icmpv6'}
+        )
+        if 'deny' not in term.action and not is_icmpv6_only:
             options.append('ct state new')
 
         # 'logging' handling.

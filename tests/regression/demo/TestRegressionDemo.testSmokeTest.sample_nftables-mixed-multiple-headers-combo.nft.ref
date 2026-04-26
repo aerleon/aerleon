@@ -37,7 +37,7 @@ table inet filtering_policies {
     }
     chain test-icmp-type-ip6 {
         comment "IPv6 icmp-type test"
-        icmpv6 type { mld-listener-done, nd-router-solicit, nd-router-advert } ct state new accept
+        icmpv6 type { mld-listener-done, nd-router-solicit, nd-router-advert } accept
     }
     chain full-combo-term {
         comment "Test src/dest 80 - with addresses"

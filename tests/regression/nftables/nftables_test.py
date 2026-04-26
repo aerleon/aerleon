@@ -196,6 +196,14 @@ term counted-and-logged {
 }
 """
 
+NDP_TERM = """
+term ndp {
+  protocol:: icmpv6
+  icmp-type:: router-solicit router-advertisement
+  action:: accept
+}
+"""
+
 ESTABLISHED_OPTION_TERM = """
 term established-term {
   protocol:: udp
@@ -789,6 +797,45 @@ class NftablesTest(parameterized.TestCase):
         )
         self.assertIn('counter', nft, f'counter statement missing:\n{nft}')
         self.assertIn('log prefix "counted-and-logged"', nft, f'log statement missing:\n{nft}')
+
+    def testIcmpv6OnlyTermOmitsConntrackState(self):
+        """icmpv6-only terms must not be gated on 'ct state new'.
+
+        NDP (neighbor/router discovery) is stateless and untracked, so requiring
+        conntrack state new would drop legitimate NDP traffic. The rule must
+        still carry its icmpv6 type match.
+        """
+        nft = str(
+            nftables.Nftables(policy.ParsePolicy(GOOD_HEADER_1 + NDP_TERM, self.naming), EXP_INFO)
+        )
+        rules = [l.strip() for l in nft.splitlines() if l.strip().startswith('icmpv6 type')]
+        self.assertTrue(rules, f'icmpv6 rule not rendered:\n{nft}')
+        for rule in rules:
+            self.assertNotIn('ct state new', rule, f'NDP gated on conntrack: {rule!r}')
+            self.assertTrue(rule.endswith('accept'), f'unexpected verdict: {rule!r}')
+
+    def testNonIcmpv6TermKeepsConntrackState(self):
+        """Ordinary terms must still be gated on 'ct state new'."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + GOOD_TERM_1, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn('ct state new', nft, f'conntrack state dropped from tcp term:\n{nft}')
+
+    def testIcmpv6OnlyTermInIpTableKeepsConntrackState(self):
+        """An ip table has no icmpv6 to match, so the exception must not apply.
+
+        The term's rule there has no protocol match; without 'ct state new' it
+        would be a bare accept for every packet reaching the chain.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + NDP_TERM, self.naming), EXP_INFO
+            )
+        )
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
 
     def testBuildTokens(self):
         pol1 = nftables.Nftables(
