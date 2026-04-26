@@ -327,7 +327,7 @@ class NftablesTest(parameterized.TestCase):
             [(3199, 3199)],
             [(80, 80)],
             [],
-            ['tcp sport 3199 tcp dport 80', 'tcp sport 3199 tcp dport 80'],
+            ['tcp sport 3199 tcp dport 80'],
         ),
         (
             'inet',
@@ -335,7 +335,7 @@ class NftablesTest(parameterized.TestCase):
             [(3199, 3199)],
             [],
             [],
-            ['tcp sport 3199', 'tcp sport 3199'],
+            ['tcp sport 3199'],
         ),
         (
             'inet',
@@ -343,7 +343,7 @@ class NftablesTest(parameterized.TestCase):
             [],
             [(80, 80)],
             [],
-            ['tcp dport 80', 'tcp dport 80'],
+            ['tcp dport 80'],
         ),
         ('inet', ['tcp'], [], [], [], ['ip protocol tcp', 'meta l4proto tcp']),
         ('ip6', ['tcp'], [], [], [], ['meta l4proto tcp']),
