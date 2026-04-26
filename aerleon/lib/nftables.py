@@ -376,13 +376,18 @@ class Term(aclgenerator.Term):
             for addr in address_expr:
                 if pp_expr:
                     for pstat in pp_expr:
-                        if pstat.startswith('icmp type') or addr.startswith('ip '):
-                            # Handle IPv4 ports and proto statements.
-                            if addr.startswith('ip '):
-                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
-                        elif pstat.startswith('icmpv6 type') or addr.startswith('ip6'):
+                        if pstat.startswith('icmpv6 type'):
+                            # ICMPv6 must only pair with IPv6 address statements.
                             if addr.startswith('ip6'):
                                 statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif pstat.startswith('icmp type'):
+                            # ICMPv4 must only pair with IPv4 address statements.
+                            if addr.startswith('ip '):
+                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip '):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip6'):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
                 else:
                     statement.append(addr + Add(options) + Add(verdict))
         elif pp_expr:
