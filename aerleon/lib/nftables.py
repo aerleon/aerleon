@@ -328,7 +328,10 @@ class Term(aclgenerator.Term):
         # Base chain already allows all return traffic of
         # state (ESTABLISHED, RELATED)
         # This should prevent invalid, untracked packets from being accepted.
-        if 'deny' not in term.action:
+        # Exception: icmpv6 NDP messages (neighbor/router discovery) are stateless
+        # and untracked — gating them on ct state new would drop legitimate NDP.
+        is_icmpv6_only = bool(term.protocol) and set(term.protocol) == {'icmpv6'}
+        if 'deny' not in term.action and not is_icmpv6_only:
             options.append('ct state new')
 
         # 'logging' handling.
