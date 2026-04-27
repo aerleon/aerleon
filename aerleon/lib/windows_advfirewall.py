@@ -93,34 +93,52 @@ class Term(windows.Term):
         dst_port: list[str],
         ret_str: list[str],
     ) -> None:
-        # At least advfirewall supports port ranges, unlike windows ipsec,
-        # so the src and dst port lists will always be one element long.
-        for saddr in src_addr:
-            for daddr in dst_addr:
-                for proto in protocol:
-                    ret_str.append(
-                        self._ComposeRule(
-                            saddr, daddr, proto, src_port[0], dst_port[0], self.term.action[0]
-                        )
+        # advfirewall remoteip/localip accept comma-separated addresses, so collapse
+        # the address list into one rule per (daddr, proto) rather than one per src addr.
+        if not src_addr or (len(src_addr) == 1 and src_addr[0].prefixlen == 0):
+            src_str = 'any'
+        else:
+            src_str = ','.join(dict.fromkeys(str(a) for a in src_addr))
+
+        commands = []
+        for daddr in dst_addr:
+            for proto in protocol:
+                commands.append(
+                    self._ComposeRule(
+                        src_str, daddr, proto, src_port[0], dst_port[0], self.term.action[0]
                     )
+                )
+        ret_str.extend(list(dict.fromkeys(commands)))
 
     def _ComposeRule(
-        self, srcaddr: IPv4, dstaddr: IPv4, proto: str, srcport: str, dstport: str, action: str
+        self, srcaddr: IPv4 | str, dstaddr: IPv4, proto: str, srcport: str, dstport: str, action: str
     ) -> str:
-        """Convert the given parameters into a netsh add rule string."""
+        """Convert the given parameters into a netsh add rule string.
+
+        srcaddr may be a nacaddr object or a pre-built comma-separated address string.
+        """
         atoms = []
-        src_label = 'local'
-        dst_label = 'remote'
 
         # We assume a default direction of OUT, but if it's IN, the Windows
         # advfirewall changes around the remote and local labels.
-        if 'in' == self.filter.lower():
+        if self.filter is None:
+            self.filter = 'out'
+        if self.filter.lower() == 'in':
             src_label = 'remote'
             dst_label = 'local'
+        elif self.filter.lower() == 'out':
+            src_label = 'local'
+            dst_label = 'remote'
+        else:
+            raise UnsupportedFilterOptionError(
+                f"direction {self.filter} unrecognized"
+                )
 
         atoms.append(self._DIR_ATOM.substitute(dir=self.filter))
 
-        if srcaddr.prefixlen == 0:
+        if isinstance(srcaddr, str):
+            atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr=srcaddr))
+        elif srcaddr.prefixlen == 0:
             atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr='any'))
         else:
             atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr=str(srcaddr)))

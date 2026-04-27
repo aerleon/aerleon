@@ -249,7 +249,7 @@ class Term(aclgenerator.Term):
             # The way we handle mixed is we call ourselves twice.
             ipv4_list = self.PortsAndProtocols(ip4, protocol, src_ports, dst_ports, icmp_type)
             ipv6_list = self.PortsAndProtocols(ip6, protocol, src_ports, dst_ports, icmp_type)
-            return ipv4_list + ipv6_list
+            return list(dict.fromkeys(ipv4_list + ipv6_list))
 
         if address_family == 'ip':
             # IPv4 stuff.
@@ -328,7 +328,10 @@ class Term(aclgenerator.Term):
         # Base chain already allows all return traffic of
         # state (ESTABLISHED, RELATED)
         # This should prevent invalid, untracked packets from being accepted.
-        if 'deny' not in term.action:
+        # Exception: icmpv6 NDP messages (neighbor/router discovery) are stateless
+        # and untracked — gating them on ct state new would drop legitimate NDP.
+        is_icmpv6_only = bool(term.protocol) and set(term.protocol) == {'icmpv6'}
+        if 'deny' not in term.action and not is_icmpv6_only:
             options.append('ct state new')
 
         # 'logging' handling.
@@ -376,13 +379,18 @@ class Term(aclgenerator.Term):
             for addr in address_expr:
                 if pp_expr:
                     for pstat in pp_expr:
-                        if pstat.startswith('icmp type') or addr.startswith('ip '):
-                            # Handle IPv4 ports and proto statements.
-                            if addr.startswith('ip '):
-                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
-                        elif pstat.startswith('icmpv6 type') or addr.startswith('ip6'):
+                        if pstat.startswith('icmpv6 type'):
+                            # ICMPv6 must only pair with IPv6 address statements.
                             if addr.startswith('ip6'):
                                 statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif pstat.startswith('icmp type'):
+                            # ICMPv4 must only pair with IPv4 address statements.
+                            if addr.startswith('ip '):
+                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip '):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip6'):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
                 else:
                     statement.append(addr + Add(options) + Add(verdict))
         elif pp_expr:
@@ -391,7 +399,7 @@ class Term(aclgenerator.Term):
                 statement.append(pstat + Add(options) + Add(verdict))
         else:
             # If no addresses or ports & protocol. Verdict only statement.
-            statement.append(Add(options) + verdict)
+            statement.append((Add(options) + Add(verdict)).strip())
         return statement
 
     def _AddrStatement(
@@ -726,7 +734,7 @@ class Nftables(aclgenerator.ACLGenerator):
         Returns:
           netfilter_family: x. filter_options[0]
           netfilter_hook: x. filter_options[1].lower()
-          netfilter_priority: numbers = [x for x in filter_options if x.isdigit()]
+          netfilter_priority: numbers = [x for x in filter_options if is_int(x)]
           policy_default_action: nftable action to take on unmatched packets.
           verbose: header and term verbosity.
         """
@@ -749,7 +757,15 @@ class Nftables(aclgenerator.ACLGenerator):
                 % (netfilter_hook, list(self._SUPPORTED_HOOKS))
             )
         if len(header_options) >= 2:
-            numbers = [x for x in header_options if x.isdigit()]
+            def is_int(s):
+                try:
+                    int(s)
+                    return True
+                except ValueError:
+                    return False
+
+            numbers = [x for x in header_options if is_int(x)]
+
             if not numbers:
                 netfilter_priority = self._HOOK_PRIORITY_DEFAULT
                 logging.info(
