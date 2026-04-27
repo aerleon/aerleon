@@ -65,8 +65,21 @@ class Term(aclgenerator.Term):
 
         self.term_name = f'{self.filter[:1]}_{self.term.name}'
 
+    _LOOPBACK_NETS = ('127.', '::1')
+
+    def _is_loopback_only(self, addrs):
+        """True if all addresses are loopback (127.x or ::1)."""
+        return bool(addrs) and all(
+            str(a).startswith(self._LOOPBACK_NETS) for a in addrs
+        )
+
     def __str__(self) -> str:
         ret_str = []
+
+        # Windows handles loopback natively — skip explicit loopback terms
+        if (self._is_loopback_only(self.term.source_address) or
+                self._is_loopback_only(self.term.destination_address)):
+            return ''
 
         # Don't render icmpv6 protocol terms under inet, or icmp/icmpv4 under inet6
         protos = set(self.term.protocol)
@@ -389,7 +402,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
         for header, _, filter_type, default_action, terms in self.windows_policies:
             # Add comments for this filter
-            target.append(f': {pretty_platform} {header.FilterName(self._PLATFORM)} Policy')
+            target.append(f'rem {pretty_platform} {header.FilterName(self._PLATFORM)} Policy')
 
             self._HandlePolicyHeader(header, target)
 
@@ -397,11 +410,11 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append(f': {line}')
-                target.append(':')
+                    target.append(f'rem {line}')
+                target.append('rem')
             # add the p4 tags
-            target.extend(aclgenerator.AddRepositoryTags(': '))
-            target.append(f": {filter_type}")
+            target.extend(aclgenerator.AddRepositoryTags('rem '))
+            target.append(f"rem {filter_type}")
 
             if default_action:
                 raise aclgenerator.UnsupportedTargetOptionError(
