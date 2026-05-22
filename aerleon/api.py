@@ -316,13 +316,12 @@ def _Generate(
     includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
     max_renderers: int = 1,
 ) -> MutableMapping[str, str] | None:
-    # thead-safe list for storing files to write
-    manager: multiprocessing.managers.SyncManager = context.Manager()
-    write_files: WriteList = manager.list()
-    errors: MutableSequence = manager.list()
-    generated_configs: MutableMapping = manager.dict()
-
     if max_renderers == 1:
+        # Single-renderer: no need for IPC — use plain collections.
+        # Avoids fork() overhead and BlockingIOError under constrained RLIMIT_NPROC.
+        write_files: WriteList = []
+        errors: MutableSequence = []
+        generated_configs: MutableMapping = {}
         for input_policy in policies:
             _GenerateACL(
                 input_policy,
@@ -337,6 +336,11 @@ def _Generate(
                 includes,
             )
     else:
+        # Multi-renderer: SyncManager provides process-safe proxy objects for IPC.
+        manager: multiprocessing.managers.SyncManager = context.Manager()
+        write_files: WriteList = manager.list()
+        errors: MutableSequence = manager.list()
+        generated_configs: MutableMapping = manager.dict()
         pool = context.Pool(processes=max_renderers)
         async_results: list[multiprocessing.pool.AsyncResult] = []
         for input_policy in policies:
