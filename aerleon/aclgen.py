@@ -396,8 +396,6 @@ def Run(
     with_errors = False
     logging.info('finding policies...')
     if max_renderers == 1 or policy_file:
-        # Single-renderer: no need for IPC — use a plain list.
-        # Avoids fork() overhead and BlockingIOError under constrained RLIMIT_NPROC.
         write_files: WriteList = []
         if policy_file:
             policies = [pathlib.Path(policy_file)]
@@ -419,7 +417,6 @@ def Run(
             with_errors = True
             logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
-        # Multi-renderer: SyncManager provides a process-safe proxy list for IPC.
         manager: multiprocessing.managers.SyncManager = context.Manager()
         write_files: WriteList = manager.list()
         # render all files in parallel

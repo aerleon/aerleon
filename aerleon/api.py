@@ -317,8 +317,6 @@ def _Generate(
     max_renderers: int = 1,
 ) -> MutableMapping[str, str] | None:
     if max_renderers == 1:
-        # Single-renderer: no need for IPC — use plain collections.
-        # Avoids fork() overhead and BlockingIOError under constrained RLIMIT_NPROC.
         write_files: WriteList = []
         errors: MutableSequence = []
         generated_configs: MutableMapping = {}
@@ -336,7 +334,6 @@ def _Generate(
                 includes,
             )
     else:
-        # Multi-renderer: SyncManager provides process-safe proxy objects for IPC.
         manager: multiprocessing.managers.SyncManager = context.Manager()
         write_files: WriteList = manager.list()
         errors: MutableSequence = manager.list()
