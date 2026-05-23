@@ -48,7 +48,7 @@ test = [
     "pytest-cov>=6.3.0",
 ]
 lint = [
-    "black==25.9.0",
+    "black==26.3.1",
     "flake8",
     "Flake8-pyproject",
     "isort>=6.1.0",
