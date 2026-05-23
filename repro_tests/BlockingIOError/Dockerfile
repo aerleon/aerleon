@@ -13,7 +13,7 @@ COPY tools/ ./tools/
 RUN pip install --no-cache-dir -e .
 
 # Copy the reproduction script
-COPY repro/repro_errno11.py ./
+COPY repro_tests/BlockingIOError/repro_errno11.py ./
 
 # Run as non-root user
 USER aerleon_user

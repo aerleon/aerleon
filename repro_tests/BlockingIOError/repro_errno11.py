@@ -4,7 +4,7 @@ Reproduce: BlockingIOError: [Errno 11] Resource temporarily unavailable
 
 USAGE (from the repository root):
 
-  docker build -f repro/Dockerfile -t aerleon-repro .
+  docker build -f repro_tests/BlockingIOError/Dockerfile -t aerleon-repro .
   docker run --rm --ulimit nproc=200:200 aerleon-repro
 
 WHY --ulimit nproc=200:200:

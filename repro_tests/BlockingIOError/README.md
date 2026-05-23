@@ -9,11 +9,11 @@ BlockingIOError: [Errno 11] Resource temporarily unavailable
 
 ## Quick Start
 
-From the **repository root** (the parent of this `repro/` directory):
+From the **repository root**:
 
 ```bash
 # 1. Build the Docker image
-docker build -f repro/Dockerfile -t aerleon-repro .
+docker build -f repro_tests/BlockingIOError/Dockerfile -t aerleon-repro .
 
 # 2. Run the reproduction
 docker run --rm --ulimit nproc=200:200 aerleon-repro
