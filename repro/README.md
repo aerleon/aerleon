@@ -125,21 +125,6 @@ The same pattern exists in [`aerleon/aclgen.py`, line 397](../aerleon/aclgen.py#
 
 | File | Description |
 |------|-------------|
-| [`repro_errno11.py`](repro_errno11.py) | Main reproduction script (errno 11 via `RLIMIT_NPROC`) |
+| [`repro_errno11.py`](repro_errno11.py) | Reproduction script (errno 11 via `RLIMIT_NPROC`) |
 | [`Dockerfile`](Dockerfile) | Docker build with Python 3.13 and non-root user |
-| [`repro_final.py`](repro_final.py) | Alternate reproduction for errno 24 (`EMFILE`) via FD exhaustion |
 
-### Archived exploration scripts
-
-These intermediate scripts were created during the investigation and are
-preserved for reference. They are **not needed** for the reproduction:
-
-| File | What it explored |
-|------|-----------------|
-| `repro_blocking_io.py` | Initial threading + FD pressure exploration |
-| `repro_blocking_io_fork.py` | Fork-based contention testing |
-| `repro_blocking_io_aggressive.py` | Aggressive concurrent SyncManager creation |
-| `repro_blocking_io_targeted.py` | Targeted FD limit + thread count combinations |
-| `repro_blocking_io_sweep.py` | Parameter sweep (threads × FD limits) |
-| `repro_blocking_io_minimal.py` | Minimal SyncManager-only reproduction |
-| `repro_blocking_io_final.py` | Refined FD-based reproduction |
