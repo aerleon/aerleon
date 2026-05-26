@@ -139,6 +139,7 @@ flask_proc = subprocess.Popen(
     stderr=subprocess.PIPE,
 )
 
+
 # ---------------------------------------------------------------------------
 # Step 3: Wait for Flask to be ready
 # ---------------------------------------------------------------------------
@@ -150,7 +151,7 @@ def wait_for_flask(host="127.0.0.1", port=5000, timeout=15):
             resp = urllib.request.urlopen(f"http://{host}:{port}/health", timeout=2)
             if resp.status == 200:
                 return True
-        except (urllib.error.URLError, ConnectionRefusedError, socket.timeout, OSError):
+        except (urllib.error.URLError, ConnectionRefusedError, TimeoutError, OSError):
             time.sleep(0.3)
     return False
 
@@ -205,8 +206,9 @@ def send_request(req_id):
 
 
 print(f"Sending {N_REQUESTS} concurrent /generate requests... ", flush=True)
-threads = [threading.Thread(target=send_request, args=(i,), daemon=True)
-           for i in range(N_REQUESTS)]
+threads = [
+    threading.Thread(target=send_request, args=(i,), daemon=True) for i in range(N_REQUESTS)
+]
 for t in threads:
     t.start()
 
