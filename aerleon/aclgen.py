@@ -393,13 +393,10 @@ def Run(
         logging.fatal(err_msg)
         return  # static type analyzer can't detect that logging.fatal exits program
 
-    # thead-safe list for storing files to write
-    manager: multiprocessing.managers.SyncManager = context.Manager()
-    write_files: WriteList = manager.list()
-
     with_errors = False
     logging.info('finding policies...')
     if max_renderers == 1 or policy_file:
+        write_files: WriteList = []
         if policy_file:
             policies = [pathlib.Path(policy_file)]
         else:
@@ -420,6 +417,8 @@ def Run(
             with_errors = True
             logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
+        manager: multiprocessing.managers.SyncManager = context.Manager()
+        write_files: WriteList = manager.list()
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
