@@ -66,6 +66,26 @@ _MIN_TTL = 0
 ADDRESSBOOK_PLATFORMS = frozenset(['srx', 'fortigate'])
 
 
+def _ResolveNextIp(value: str) -> list:
+    """Resolve a next-ip value to a list of nacaddr objects.
+
+    Accepts either a defined network token or a literal IP address. The literal
+    fallback lets a policy write `next-ip: 192.0.2.1` directly, without first
+    defining a single-host network. A value that is neither a known token nor a
+    valid IP still raises (from nacaddr.IP).
+
+    Args:
+      value: a network token name or a literal IP/CIDR string.
+
+    Returns:
+      list of nacaddr.IPv4 | nacaddr.IPv6 objects.
+    """
+    try:
+        return DEFINITIONS.GetNetAddr(value)
+    except naming.UndefinedAddressError:
+        return [nacaddr.IP(value)]
+
+
 class Error(Exception):
     """Generic error class."""
 
@@ -483,6 +503,7 @@ class Term:
         self.dscp_match = []
         self.dscp_except = []
         self.next_ip = None
+        self.nat_port = None
         self.flexible_match_range = []
         self.source_prefix_except = []
         self.destination_prefix_except = []
@@ -1183,7 +1204,7 @@ class Term:
                 elif x.var_type is VarType.PROFILE_SETTINGS:
                     self.profile_settings.append(x.value)
                 elif x.var_type is VarType.NEXT_IP:
-                    self.next_ip = DEFINITIONS.GetNetAddr(x.value)
+                    self.next_ip = _ResolveNextIp(x.value)
                 elif x.var_type is VarType.PLATFORM:
                     self.platform.append(x.value)
                 elif x.var_type is VarType.PLATFORMEXCLUDE:
@@ -1244,7 +1265,9 @@ class Term:
             elif obj.var_type is VarType.PROFILE_SETTINGS:
                 self.profile_settings.append(obj.value)
             elif obj.var_type is VarType.NEXT_IP:
-                self.next_ip = DEFINITIONS.GetNetAddr(obj.value)
+                self.next_ip = _ResolveNextIp(obj.value)
+            elif obj.var_type is VarType.NAT_PORT:
+                self.nat_port = obj.value
             elif obj.var_type is VarType.VERBATIM:
                 self.verbatim.append(obj.value)
             elif obj.var_type is VarType.ACTION:
@@ -1657,6 +1680,7 @@ class VarType:
     SOURCE_FQDN = 67
     DESTINATION_FQDN = 68
     TCP_MSS = 71
+    NAT_PORT = 72
 
     def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type

@@ -282,6 +282,54 @@ class NftablesForkTest(parameterized.TestCase):
                 [{'name': 'dnat-bad', 'protocol': 'tcp', 'action': 'dnat'}],
             )
 
+    def testDnatLiteralIpTarget(self):
+        # D1: next-ip accepts a literal IP, no named network needed.
+        out = self._render_one(
+            'inet prerouting dstnat',
+            [
+                {
+                    'name': 'dnat-literal',
+                    'protocol': 'tcp',
+                    'destination-port': 'HTTPS',
+                    'next-ip': '192.168.1.50',
+                    'action': 'dnat',
+                }
+            ],
+        )
+        self.assertIn('dnat to 192.168.1.50', out)
+
+    def testDnatPortTranslation(self):
+        # D2: nat-port appends ':<port>' to the target.
+        out = self._render_one(
+            'inet prerouting dstnat',
+            [
+                {
+                    'name': 'dnat-remap',
+                    'protocol': 'tcp',
+                    'destination-port': 'HTTPS',
+                    'next-ip': '192.168.1.50',
+                    'nat-port': 8080,
+                    'action': 'dnat',
+                }
+            ],
+        )
+        self.assertIn('dnat to 192.168.1.50:8080', out)
+
+    def testSnatLiteralWithPort(self):
+        out = self._render_one(
+            'inet postrouting srcnat',
+            [
+                {
+                    'name': 'snat-literal',
+                    'source-address': 'LAN',
+                    'next-ip': '203.0.113.5',
+                    'nat-port': 9000,
+                    'action': 'snat',
+                }
+            ],
+        )
+        self.assertIn('snat to 203.0.113.5:9000', out)
+
     # --- Full-ruleset snapshots (also serve as `nft -c -f` fixtures) ---------
 
     @capture.stdout
@@ -377,6 +425,26 @@ class NftablesForkTest(parameterized.TestCase):
                     ],
                 ),
             ]
+        )
+        print(out)
+
+    @capture.stdout
+    def testPortForwardRemapRuleset(self):
+        """Port-forward with a literal target and port remap (external 443 -> :8080)."""
+        out = self._render_one(
+            'inet prerouting dstnat',
+            [
+                {
+                    'name': 'pf-https',
+                    'source-interface': 'wan0',
+                    'protocol': 'tcp',
+                    'destination-port': 'HTTPS',
+                    'next-ip': '192.168.1.50',
+                    'nat-port': 8080,
+                    'action': 'dnat',
+                }
+            ],
+            comment='port-forward https to internal:8080',
         )
         print(out)
 

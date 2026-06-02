@@ -35,7 +35,7 @@ The end state: publish the fork on GitHub, consume it as a pinned `git+https://�
 | negative priority | ❌ (crashes) | ✅ | ✅ | via the **name** (raw `-150` is unparseable) |
 | reject action | ❌ | ✅ | ✅ | already in parser `ACTIONS` |
 | NAT masquerade (`type nat`) | ❌ | ✅ | ✅ | spike-quality; see §7 |
-| NAT dnat / snat | ❌ | ✅ | ✅ | renders `dnat/snat to <next-ip>`; named target only |
+| NAT dnat / snat | ❌ | ✅ | ✅ | `dnat/snat to <ip>`; literal **or** named target; optional `nat-port` port remap |
 | MSS clamp (`tcp-mss`) | ❌ | ✅ | ✅ | new token across 3 files |
 | interface match (`iifname`/`oifname`) | ❌ | ✅ | ✅ | from the existing `source-/destination-interface` tokens |
 | packet mark | ❌ | ❌ | ❌ | no token; out of scope |
@@ -421,12 +421,14 @@ filters:
         source-interface: wan0
         protocol: tcp
         destination-port: HTTPS
-        next-ip: WEBHOST        # a NAMED network (single /32 host)
+        next-ip: 192.168.1.50   # literal IP, or a named network token
+        nat-port: 8080          # OPTIONAL: remap to internal :8080
         action: dnat
 ```
 → renders `type nat hook prerouting priority -100; policy accept;` with
-`iifname "wan0" tcp dport 443 … dnat to <WEBHOST>`. Use `action: snat` +
-`next-ip` in `postrouting` for source NAT.
+`iifname "wan0" tcp dport 443 … dnat to 192.168.1.50:8080` (drop `nat-port` for
+a plain `dnat to 192.168.1.50`). Use `action: snat` + `next-ip` (+ optional
+`nat-port`) in `postrouting` for source NAT.
 
 **Composed networks + shared include** (multi-router, define once):
 ```yaml
@@ -496,9 +498,9 @@ Stable IDs for the issues surfaced during the fork review. Status legend:
 | B1 | low | **Fixed** | `_OptionsHandler` added `ct state new` to every non-`deny` term, including masquerade/dnat/snat/mss — valid nft but a small semantic narrowing on NAT (skips `related`/untracked). Now suppressed for NAT actions and tcp-mss terms. |
 | B2 | n/a | Deferred | One shared table (`filtering_policies`) holds filter + nat chains of different types/hooks. Valid and functional; separate tables per type would be cleaner (atomic per-table reloads). Not changing now. |
 | C1 | medium | **Fixed** | NAT-type detection string-sniffed the rendered rule text (`' masquerade'`/`' dnat '`/`' snat '`), which also scanned comment lines (false-positive risk). Now the chain is tagged NAT from the actual term action during `_TranslatePolicy`. |
-| D1 | — | Planned | dnat/snat target must be a **named** `next-ip` token; literal IPs in the policy are not accepted. |
-| D2 | — | Planned | dnat/snat do **port translation** (`dnat to <ip>:<port>`)? Not yet — only `… to <ip>`. Needed for "expose 8443 → internal :443". |
-| D3 | — | Planned | dnat/snat to an **address range / pool** (`dnat to a-b`) for crude load-balancing. Not yet — first address only, single host. |
+| D1 | — | **Fixed** | dnat/snat target now accepts a **literal IP** as well as a named token. Shared `_ResolveNextIp` in policy.py tries `GetNetAddr` then falls back to `nacaddr.IP` on `UndefinedAddressError`, so all platforms' `next-ip` gained literals (additive). |
+| D2 | — | **Fixed** | Port translation via the new `nat-port` token → `dnat/snat to <ip>:<port>` (e.g. expose external :443 to internal :8080). |
+| D3 | — | Deferred | dnat/snat to an **address range / pool** (`dnat to a-b`). Very low priority; still first-address/single-host only. |
 | D4 | — | Future | Packet mark / `meta mark` — no token; out of scope for now. |
 | D5 | — | Future | `counter` on NAT chains, separate logging chains, and other niceties. |
 

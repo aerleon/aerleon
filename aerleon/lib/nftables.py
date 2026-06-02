@@ -555,7 +555,11 @@ class Term(aclgenerator.Term):
                     'Term %s uses %s but has no next-ip target.'
                     % (self.term.name, self.term.action[0])
                 )
-            verdict = '%s to %s' % (verdict, self.term.next_ip[0].network_address)
+            target = self.term.next_ip[0].network_address
+            # Optional port translation: 'dnat to <ip>:<port>'.
+            if getattr(self.term, 'nat_port', None):
+                target = '%s:%s' % (target, self.term.nat_port)
+            verdict = '%s to %s' % (verdict, target)
         # TODO: If verdict is not supported, drop nftable_rule for it.
         nftable_rule = self.GroupExpressions(address_list, proto_and_ports, opt, verdict)
         # INTERFACE matching (iifname/oifname) prefixes every rule line.
@@ -687,6 +691,7 @@ class Nftables(aclgenerator.ACLGenerator):
             'destination_interface',
             'source_port',
             'next_ip',
+            'nat_port',
             'tcp_mss',
             'translated',  # obj attribute, not token
             'stateless_reply',

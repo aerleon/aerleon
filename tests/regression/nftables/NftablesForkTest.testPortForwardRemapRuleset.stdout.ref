@@ -1,0 +1,12 @@
+table ip filtering_policies {
+    chain pf-https {
+        iifname "wan0" tcp dport 443 dnat to 192.168.1.50:8080
+    }
+    chain root0 {
+        comment "port-forward https to internal:8080"
+        type nat hook prerouting priority -100; policy accept;
+        jump pf-https
+    }
+}
+
+

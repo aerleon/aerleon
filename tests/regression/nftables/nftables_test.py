@@ -57,6 +57,7 @@ SUPPORTED_TOKENS = frozenset(
         'destination_interface',
         'source_port',
         'next_ip',
+        'nat_port',
         'tcp_mss',
         'translated',  # obj attribute, not token
         'stateless_reply',
