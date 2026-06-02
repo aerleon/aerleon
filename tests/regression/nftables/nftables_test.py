@@ -56,6 +56,7 @@ SUPPORTED_TOKENS = frozenset(
         'source_interface',
         'destination_interface',
         'source_port',
+        'next_ip',
         'tcp_mss',
         'translated',  # obj attribute, not token
         'stateless_reply',
@@ -63,7 +64,7 @@ SUPPORTED_TOKENS = frozenset(
 )
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny', 'reject', 'masquerade'},
+    'action': {'accept', 'deny', 'reject', 'masquerade', 'dnat', 'snat'},
     'option': {'established', 'tcp-established'},
     'icmp_type': {
         'alternate-address',

@@ -36,7 +36,17 @@ if TYPE_CHECKING:
 
 DEFINITIONS = None
 DEFAULT_DEFINITIONS = './def'
-ACTIONS = {'accept', 'count', 'deny', 'reject', 'next', 'reject-with-tcp-rst', 'masquerade'}
+ACTIONS = {
+    'accept',
+    'count',
+    'deny',
+    'reject',
+    'next',
+    'reject-with-tcp-rst',
+    'masquerade',
+    'dnat',
+    'snat',
+}
 PROTOS_WITH_PORTS = frozenset(('tcp', 'udp', 'udplite', 'sctp'))
 FLEXIBLE_MATCH_RANGE_ATTRIBUTES = {
     'byte-offset',

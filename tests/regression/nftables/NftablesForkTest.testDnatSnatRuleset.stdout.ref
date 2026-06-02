@@ -1,0 +1,20 @@
+table ip filtering_policies {
+    chain dnat-https {
+        iifname "eth0" tcp dport 443 ct state new dnat to 192.168.1.50
+    }
+    chain root0 {
+        comment "port forward https"
+        type nat hook prerouting priority -100; policy accept;
+        jump dnat-https
+    }
+    chain snat-lan {
+        oifname "eth0" ip saddr 192.168.1.0/24 ct state new snat to 203.0.113.5
+    }
+    chain root1 {
+        comment "source nat"
+        type nat hook postrouting priority 100; policy accept;
+        jump snat-lan
+    }
+}
+
+

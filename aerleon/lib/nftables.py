@@ -110,6 +110,8 @@ class Term(aclgenerator.Term):
         'deny': 'drop',
         'reject': 'reject',
         'masquerade': 'masquerade',
+        'dnat': 'dnat',
+        'snat': 'snat',
     }
 
     def __init__(self, term: policy.Term, nf_af: str, nf_hook: str, verbose: bool = True):
@@ -533,6 +535,15 @@ class Term(aclgenerator.Term):
             verdict = 'tcp flags syn tcp option maxseg size set ' + (
                 'rt mtu' if mss in ('pmtu', 'rt-mtu', 'rt_mtu') else str(mss)
             )
+        # DNAT / SNAT: append the translation target from next-ip, rendering
+        # 'dnat to <ip>' / 'snat to <ip>'. These verdicts require a target.
+        if self.term.action[0] in ('dnat', 'snat'):
+            if not self.term.next_ip:
+                raise TermError(
+                    'Term %s uses %s but has no next-ip target.'
+                    % (self.term.name, self.term.action[0])
+                )
+            verdict = '%s to %s' % (verdict, self.term.next_ip[0].network_address)
         # TODO: If verdict is not supported, drop nftable_rule for it.
         nftable_rule = self.GroupExpressions(address_list, proto_and_ports, opt, verdict)
         # INTERFACE matching (iifname/oifname) prefixes every rule line.
@@ -663,6 +674,7 @@ class Nftables(aclgenerator.ACLGenerator):
             'source_interface',
             'destination_interface',
             'source_port',
+            'next_ip',
             'tcp_mss',
             'translated',  # obj attribute, not token
             'stateless_reply',
@@ -681,6 +693,8 @@ class Nftables(aclgenerator.ACLGenerator):
                 'deny',
                 'reject',
                 'masquerade',
+                'dnat',
+                'snat',
             },
             'icmp_type': set(list(Term.ICMP_TYPE[4].keys()) + list(Term.ICMP_TYPE[6].keys())),
         }

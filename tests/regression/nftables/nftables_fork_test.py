@@ -44,6 +44,9 @@ NETWORKS = {
         'DMZ': {'values': [{'address': '172.16.0.0/24'}]},
         # Dual-stack group to exercise 'mixed' (table inet) rendering.
         'WEBHOST': {'values': [{'address': '192.0.2.10/32'}, {'address': '2001:db8::10/128'}]},
+        # Single-host NAT targets (next-ip resolves named tokens only).
+        'DNAT_TARGET': {'values': [{'address': '192.168.1.50/32'}]},
+        'WAN_IP': {'values': [{'address': '203.0.113.5/32'}]},
     }
 }
 
@@ -213,6 +216,46 @@ class NftablesForkTest(parameterized.TestCase):
         self.assertIn('masquerade', out)
         self.assertIn('type nat hook postrouting', out)
 
+    # --- dnat / snat ---------------------------------------------------------
+
+    def testDnatRendersTarget(self):
+        out = self._render_one(
+            'inet prerouting dstnat',
+            [
+                {
+                    'name': 'dnat-https',
+                    'protocol': 'tcp',
+                    'destination-port': 'HTTPS',
+                    'next-ip': 'DNAT_TARGET',
+                    'action': 'dnat',
+                }
+            ],
+        )
+        self.assertIn('dnat to 192.168.1.50', out)
+        self.assertIn('type nat hook prerouting', out)
+
+    def testSnatRendersTarget(self):
+        out = self._render_one(
+            'inet postrouting srcnat',
+            [
+                {
+                    'name': 'snat-out',
+                    'source-address': 'LAN',
+                    'next-ip': 'WAN_IP',
+                    'action': 'snat',
+                }
+            ],
+        )
+        self.assertIn('snat to 203.0.113.5', out)
+        self.assertIn('type nat hook postrouting', out)
+
+    def testDnatRequiresNextIp(self):
+        with self.assertRaises(nftables.TermError):
+            self._render_one(
+                'inet prerouting dstnat',
+                [{'name': 'dnat-bad', 'protocol': 'tcp', 'action': 'dnat'}],
+            )
+
     # --- Full-ruleset snapshots (also serve as `nft -c -f` fixtures) ---------
 
     @capture.stdout
@@ -271,6 +314,43 @@ class NftablesForkTest(parameterized.TestCase):
             'inet postrouting srcnat',
             [{'name': 'masq-lan', 'source-address': 'LAN', 'action': 'masquerade'}],
             comment='masquerade out',
+        )
+        print(out)
+
+    @capture.stdout
+    def testDnatSnatRuleset(self):
+        """Port-forward (dnat in prerouting) plus source NAT (snat in postrouting)."""
+        out = self._render(
+            [
+                (
+                    'port forward https',
+                    'inet prerouting dstnat',
+                    [
+                        {
+                            'name': 'dnat-https',
+                            # Inbound interface: oifname is not available at prerouting.
+                            'source-interface': 'eth0',
+                            'protocol': 'tcp',
+                            'destination-port': 'HTTPS',
+                            'next-ip': 'DNAT_TARGET',
+                            'action': 'dnat',
+                        }
+                    ],
+                ),
+                (
+                    'source nat',
+                    'inet postrouting srcnat',
+                    [
+                        {
+                            'name': 'snat-lan',
+                            'source-address': 'LAN',
+                            'destination-interface': 'eth0',
+                            'next-ip': 'WAN_IP',
+                            'action': 'snat',
+                        }
+                    ],
+                ),
+            ]
         )
         print(out)
 
