@@ -26,7 +26,7 @@ table ip filtering_policies {
         jump drop-guest
     }
     chain masq-lan {
-        ip saddr 192.168.1.0/24 ct state new masquerade
+        ip saddr 192.168.1.0/24 masquerade
     }
     chain root2 {
         comment "router1 nat"

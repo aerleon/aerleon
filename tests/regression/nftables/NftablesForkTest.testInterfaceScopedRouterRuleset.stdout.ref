@@ -9,7 +9,7 @@ table ip filtering_policies {
         jump lan-out
     }
     chain masq-wan {
-        oifname "eth0" ip saddr 192.168.1.0/24 ct state new masquerade
+        oifname "eth0" ip saddr 192.168.1.0/24 masquerade
     }
     chain root1 {
         comment "masquerade out wan"

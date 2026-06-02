@@ -38,6 +38,11 @@ ip4 = 'ip'
 ip6 = 'ip6'
 mixed = 'inet'
 
+# Actions whose verdict is a NAT statement. A base chain carrying any of these
+# must be rendered as 'type nat' (policy accept, no conntrack preamble), and the
+# term itself should not be gated on 'ct state new'.
+_NAT_ACTIONS = frozenset(('masquerade', 'dnat', 'snat'))
+
 
 def TabSpacer(number_spaces: int, string: str) -> str:
     """Configuration indentation utility function."""
@@ -335,7 +340,14 @@ class Term(aclgenerator.Term):
         # Base chain already allows all return traffic of
         # state (ESTABLISHED, RELATED)
         # This should prevent invalid, untracked packets from being accepted.
-        if 'deny' not in term.action:
+        # NAT verdicts and the MSS clamp are not gated on 'ct state new':
+        # conntrack already applies NAT to a connection's later packets, and the
+        # SYN-only clamp is inherently new-traffic, so the match is redundant and
+        # would needlessly skip related/untracked packets.
+        is_nat_or_mangle = (term.action and term.action[0] in _NAT_ACTIONS) or getattr(
+            term, 'tcp_mss', None
+        )
+        if 'deny' not in term.action and not is_nat_or_mangle:
             options.append('ct state new')
 
         # 'logging' handling.
@@ -732,6 +744,10 @@ class Nftables(aclgenerator.ACLGenerator):
             child_chains = collections.defaultdict(dict)
             term_names = set()
             new_terms = []
+            # A base chain is a NAT chain if any of its rendered terms uses a
+            # NAT verdict. Determined from the term action (not the rendered
+            # text) so comments can never trigger a false positive.
+            is_nat = False
             # TODO: Add checks for ICMP and address families.
             for term in terms:
                 if term.name in term_names:
@@ -764,6 +780,8 @@ class Nftables(aclgenerator.ACLGenerator):
                     term.destination_address = nacaddr.RemoveAddressFromList(
                         term.destination_address, i
                     )
+                if term.action and term.action[0] in _NAT_ACTIONS:
+                    is_nat = True
                 new_terms.append(Term(term, nf_af, nf_hook, verbose))
                 # Instantiate object to call function from Term()
                 term_object = Term(term, nf_af, nf_hook, verbose)
@@ -781,6 +799,7 @@ class Nftables(aclgenerator.ACLGenerator):
                     filter_policy_default_action,
                     verbose,
                     child_chains,
+                    is_nat,
                 )
             )
 
@@ -872,6 +891,7 @@ class Nftables(aclgenerator.ACLGenerator):
             filter_policy_default_action,
             verbose,
             child_chains,
+            is_nat,
         ) in nft_pol:
             base_chain_comment = ''
             # Add max character checking on header.comment later if needed.
@@ -883,6 +903,7 @@ class Nftables(aclgenerator.ACLGenerator):
                 'priority': nf_priority,
                 'policy': filter_policy_default_action,
                 'rules': child_chains,
+                'is_nat': is_nat,
             }
         return nftables
 
@@ -906,15 +927,9 @@ class Nftables(aclgenerator.ACLGenerator):
                         nft_config.append(TabSpacer(8, f'comment "{comment}"'))
                 # A base chain that carries a NAT verdict must be declared as
                 # 'type nat' with 'policy accept' and without the stateful
-                # conntrack preamble. Detection sniffs the rendered rule text;
-                # a cleaner approach would tag the chain during _TranslatePolicy.
-                all_rules = []
-                for _term_name, term_rules in base_chain_dict[item]['rules'][item].items():
-                    all_rules.extend(term_rules)
-                is_nat = any(
-                    (' masquerade' in rule) or (' dnat ' in rule) or (' snat ' in rule)
-                    for rule in all_rules
-                )
+                # conntrack preamble. The NAT flag is set from the term actions
+                # in _TranslatePolicy (not sniffed from rendered text).
+                is_nat = base_chain_dict[item]['is_nat']
                 chain_type = 'nat' if is_nat else 'filter'
                 chain_policy = 'accept' if is_nat else base_chain_dict[item]['policy']
                 nft_config.append(

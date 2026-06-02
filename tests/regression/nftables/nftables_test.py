@@ -384,7 +384,7 @@ class NftablesTest(parameterized.TestCase):
     def testVerboseHeader(self, header_to_use, expected_output):
         pol = policy.ParsePolicy(header_to_use + GOOD_TERM_1, self.naming)
         data = nftables.Nftables(pol, EXP_INFO)
-        for _, _, _, _, _, _, verbose, _ in data.nftables_policies:
+        for _, _, _, _, _, _, verbose, _, _ in data.nftables_policies:
             result = verbose
         self.assertEqual(result, expected_output)
 
@@ -422,7 +422,7 @@ class NftablesTest(parameterized.TestCase):
 
         pol = policy.ParsePolicy(HEAD_OVERRIDE_DEFAULT_ACTION + GOOD_TERM_1, self.naming)
         data = nftables.Nftables(pol, EXP_INFO)
-        for _, _, _, _, _, default_policy, _, _ in data.nftables_policies:
+        for _, _, _, _, _, default_policy, _, _, _ in data.nftables_policies:
             result = default_policy
         self.assertEqual(result, expected_output)
         print(data)

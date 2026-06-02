@@ -157,6 +157,23 @@ class NftablesForkTest(parameterized.TestCase):
         self.assertIn('type filter hook input', out)
         self.assertIn('ct state established,related accept', out)
 
+    def testMasqueradeHasNoCtStateNew(self):
+        # B1: NAT verdicts are not gated on 'ct state new'.
+        out = self._render_one(
+            'inet postrouting srcnat',
+            [{'name': 'masq-lan', 'source-address': 'LAN', 'action': 'masquerade'}],
+        )
+        self.assertIn('masquerade', out)
+        self.assertNotIn('ct state new', out)
+
+    def testFilterTermKeepsCtStateNew(self):
+        # Non-NAT/non-mangle accept terms still get the stateful 'ct state new'.
+        out = self._render_one(
+            'inet input',
+            [{'name': 'allow-ssh', 'protocol': 'tcp', 'destination-port': 'SSH', 'action': 'accept'}],
+        )
+        self.assertIn('ct state new accept', out)
+
     # --- MSS clamp -----------------------------------------------------------
 
     @parameterized.parameters(
@@ -172,6 +189,15 @@ class NftablesForkTest(parameterized.TestCase):
             [{'name': 'clamp-mss', 'protocol': 'tcp', 'tcp-mss': value, 'action': 'accept'}],
         )
         self.assertIn(f'tcp flags syn tcp option maxseg size set {expected}', out)
+
+    def testMssClampHasNoCtStateNew(self):
+        # B1: the SYN-only MSS clamp is not gated on 'ct state new'.
+        out = self._render_one(
+            'inet forward mangle',
+            [{'name': 'clamp-mss', 'protocol': 'tcp', 'tcp-mss': 'pmtu', 'action': 'accept'}],
+        )
+        self.assertIn('maxseg size set rt mtu', out)
+        self.assertNotIn('ct state new', out)
 
     # --- Interface matching --------------------------------------------------
 
