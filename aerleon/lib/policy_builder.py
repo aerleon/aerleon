@@ -95,6 +95,7 @@ PolicyTerm = TypedDict(
         "source-port": WordList,
         "source-prefix": WordList,
         "ttl": int | str,
+        "tcp-mss": str,
         "verbatim": dict[str, str],
         "packet-length": int | str,
         "fragment-offset": int | str,
@@ -488,6 +489,7 @@ BUILTIN_SPEC: dict[str, TValue | TComposition] = {
     'source-port':                TListStrCollapsible,
     'source-prefix':              TListStrCollapsible,
     'ttl':                        TValue.Integer,
+    'tcp-mss':                    TValue.WordString,  # WordString so 'pmtu' and integers both parse
     'verbatim':                   TSection(of=[(TValue.WordString, TValue.AnyString)]),
     # juniper specific.           
     'packet-length':              TUnion(of=[TValue.Integer, TValue.IntegerRange]),
@@ -605,6 +607,7 @@ class _Builtin:
         'tags':                       (_CallType.SingleList,  VarType.TAG),
         'dscp-set':                   (_CallType.SingleValue,  VarType.DSCP_SET),
         'ttl':                        (_CallType.SingleValue,  VarType.TTL),
+        'tcp-mss':                    (_CallType.SingleValue,  VarType.TCP_MSS),
         'filter-term':                (_CallType.SingleValue,  VarType.FILTER_TERM),
         'vpn':                        (_CallType.SingleValue,  VarType.VPN),
         'source-address':             (_CallType.SingleList,   VarType.SADDRESS),
@@ -870,6 +873,7 @@ class TermBuiltinRecognizer(BuiltinRecognizer):
             'source-port',
             'source-prefix',
             'ttl',
+            'tcp-mss',
             'verbatim',
             'packet-length',
             'profile-settings',

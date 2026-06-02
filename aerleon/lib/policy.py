@@ -457,6 +457,7 @@ class Term:
         self.source_port = []
         self.source_prefix = []
         self.ttl = None
+        self.tcp_mss = None
         self.verbatim = []
         # juniper specific.
         self.packet_length = None
@@ -1290,6 +1291,8 @@ class Term:
                 self.vpn = (obj.value[0], obj.value[1])
             elif obj.var_type is VarType.TTL:
                 self.ttl = int(obj.value)
+            elif obj.var_type is VarType.TCP_MSS:
+                self.tcp_mss = obj.value
             elif obj.var_type is VarType.TARGET_RESOURCES:
                 self.target_resources.append(obj.value)
             elif obj.var_type is VarType.TARGET_SERVICE_ACCOUNTS:
@@ -1643,6 +1646,7 @@ class VarType:
     DZONE = 66
     SOURCE_FQDN = 67
     DESTINATION_FQDN = 68
+    TCP_MSS = 71
 
     def __init__(self, var_type: int, value: Any) -> None:
         self.var_type = var_type

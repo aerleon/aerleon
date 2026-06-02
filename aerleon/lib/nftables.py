@@ -505,6 +505,13 @@ class Term(aclgenerator.Term):
         opt = self._OptionsHandler(term)
         # STATEMENT VERDICT / ACTION.
         verdict = self._ACTIONS[self.term.action[0]]
+        # MSS clamp: a tcp-mss term emits a non-terminating mangle statement in
+        # place of the verdict ('pmtu' clamps to the path MTU via 'rt mtu').
+        if getattr(self.term, 'tcp_mss', None):
+            mss = self.term.tcp_mss
+            verdict = 'tcp flags syn tcp option maxseg size set ' + (
+                'rt mtu' if mss in ('pmtu', 'rt-mtu', 'rt_mtu') else str(mss)
+            )
         # TODO: If verdict is not supported, drop nftable_rule for it.
         nftable_rule = self.GroupExpressions(address_list, proto_and_ports, opt, verdict)
         term_ruleset.extend(nftable_rule)
@@ -627,6 +634,7 @@ class Nftables(aclgenerator.ACLGenerator):
             'source_address',
             'source_address_exclude',
             'source_port',
+            'tcp_mss',
             'translated',  # obj attribute, not token
             'stateless_reply',
         }

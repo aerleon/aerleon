@@ -54,6 +54,7 @@ SUPPORTED_TOKENS = frozenset(
         'source_address',
         'source_address_exclude',
         'source_port',
+        'tcp_mss',
         'translated',  # obj attribute, not token
         'stateless_reply',
     }
