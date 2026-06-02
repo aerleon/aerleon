@@ -170,6 +170,49 @@ class NftablesForkTest(parameterized.TestCase):
         )
         self.assertIn(f'tcp flags syn tcp option maxseg size set {expected}', out)
 
+    # --- Interface matching --------------------------------------------------
+
+    def testSourceInterface(self):
+        out = self._render_one(
+            'inet forward',
+            [{'name': 'from-lan', 'source-interface': 'eth1', 'action': 'accept'}],
+        )
+        self.assertIn('iifname "eth1"', out)
+
+    def testDestinationInterface(self):
+        out = self._render_one(
+            'inet forward',
+            [{'name': 'to-wan', 'destination-interface': 'eth0', 'action': 'accept'}],
+        )
+        self.assertIn('oifname "eth0"', out)
+
+    def testBothInterfacesPrefixMatch(self):
+        out = self._render_one(
+            'inet forward',
+            [
+                {
+                    'name': 'lan-to-wan',
+                    'source-interface': 'eth1',
+                    'destination-interface': 'eth0',
+                    'protocol': 'tcp',
+                    'destination-port': 'HTTP',
+                    'action': 'accept',
+                }
+            ],
+        )
+        # Interface match is the prefix, ahead of the address/port match.
+        self.assertIn('iifname "eth1" oifname "eth0" tcp dport 80', out)
+
+    def testMasqueradeScopedByInterface(self):
+        """The §7 use case: masquerade only out the WAN interface, not unconditional."""
+        out = self._render_one(
+            'inet postrouting srcnat',
+            [{'name': 'masq-wan', 'destination-interface': 'wan0', 'action': 'masquerade'}],
+        )
+        self.assertIn('oifname "wan0"', out)
+        self.assertIn('masquerade', out)
+        self.assertIn('type nat hook postrouting', out)
+
     # --- Full-ruleset snapshots (also serve as `nft -c -f` fixtures) ---------
 
     @capture.stdout
@@ -228,6 +271,40 @@ class NftablesForkTest(parameterized.TestCase):
             'inet postrouting srcnat',
             [{'name': 'masq-lan', 'source-address': 'LAN', 'action': 'masquerade'}],
             comment='masquerade out',
+        )
+        print(out)
+
+    @capture.stdout
+    def testInterfaceScopedRouterRuleset(self):
+        """Real router shape: forward LAN(eth1)->WAN(eth0), masquerade out eth0."""
+        out = self._render(
+            [
+                (
+                    'forward lan to wan',
+                    'inet forward',
+                    [
+                        {
+                            'name': 'lan-out',
+                            'source-interface': 'eth1',
+                            'destination-interface': 'eth0',
+                            'source-address': 'LAN',
+                            'action': 'accept',
+                        },
+                    ],
+                ),
+                (
+                    'masquerade out wan',
+                    'inet postrouting srcnat',
+                    [
+                        {
+                            'name': 'masq-wan',
+                            'destination-interface': 'eth0',
+                            'source-address': 'LAN',
+                            'action': 'masquerade',
+                        }
+                    ],
+                ),
+            ]
         )
         print(out)
 

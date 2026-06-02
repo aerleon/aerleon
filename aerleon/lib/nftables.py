@@ -466,6 +466,25 @@ class Term(aclgenerator.Term):
                     )
         return address_statement
 
+    def _InterfaceStatement(
+        self, source_interface: str, destination_interface: str
+    ) -> str:
+        """Builds an nftables interface match (iifname/oifname).
+
+        Args:
+          source_interface: inbound interface name (term.source_interface).
+          destination_interface: outbound interface name (term.destination_interface).
+
+        Returns:
+          a string such as 'iifname "eth1" oifname "eth0"', or '' if neither is set.
+        """
+        parts = []
+        if source_interface:
+            parts.append(f'iifname "{source_interface}"')
+        if destination_interface:
+            parts.append(f'oifname "{destination_interface}"')
+        return ' '.join(parts)
+
     def RulesetGenerator(self, term: policy.Term) -> list[str]:
         """Generate string rules of a given Term.
 
@@ -516,6 +535,12 @@ class Term(aclgenerator.Term):
             )
         # TODO: If verdict is not supported, drop nftable_rule for it.
         nftable_rule = self.GroupExpressions(address_list, proto_and_ports, opt, verdict)
+        # INTERFACE matching (iifname/oifname) prefixes every rule line.
+        iface = self._InterfaceStatement(
+            self.term.source_interface, self.term.destination_interface
+        )
+        if iface:
+            nftable_rule = [iface + Add(line) for line in nftable_rule]
         term_ruleset.extend(nftable_rule)
         return term_ruleset
 
@@ -635,6 +660,8 @@ class Nftables(aclgenerator.ACLGenerator):
             'platform_exclude',
             'source_address',
             'source_address_exclude',
+            'source_interface',
+            'destination_interface',
             'source_port',
             'tcp_mss',
             'translated',  # obj attribute, not token

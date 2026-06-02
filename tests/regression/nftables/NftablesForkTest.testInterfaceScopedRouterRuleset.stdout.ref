@@ -1,0 +1,21 @@
+table ip filtering_policies {
+    chain lan-out {
+        iifname "eth1" oifname "eth0" ip saddr 192.168.1.0/24 ct state new accept
+    }
+    chain root0 {
+        comment "forward lan to wan"
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        jump lan-out
+    }
+    chain masq-wan {
+        oifname "eth0" ip saddr 192.168.1.0/24 ct state new masquerade
+    }
+    chain root1 {
+        comment "masquerade out wan"
+        type nat hook postrouting priority 100; policy accept;
+        jump masq-wan
+    }
+}
+
+

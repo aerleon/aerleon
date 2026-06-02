@@ -53,6 +53,8 @@ SUPPORTED_TOKENS = frozenset(
         'platform_exclude',
         'source_address',
         'source_address_exclude',
+        'source_interface',
+        'destination_interface',
         'source_port',
         'tcp_mss',
         'translated',  # obj attribute, not token
