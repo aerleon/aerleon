@@ -568,8 +568,21 @@ class Nftables(aclgenerator.ACLGenerator):
     _PLATFORM = 'nftables'
     SUFFIX = '.nft'
     _HEADER_AF = frozenset(('inet', 'inet6', 'mixed'))
-    _SUPPORTED_HOOKS = frozenset(('input', 'output'))
+    _SUPPORTED_HOOKS = frozenset(
+        ('prerouting', 'input', 'forward', 'output', 'postrouting')
+    )
     _HOOK_PRIORITY_DEFAULT = 0
+    # Named netfilter priorities. Policy authors reference these by name because
+    # the parser cannot accept a literal negative integer in the header; the
+    # negative number only appears in the generated nft, which nft accepts.
+    PRIORITY_ALIASES = {
+        'raw': -300,
+        'mangle': -150,
+        'dstnat': -100,
+        'filter': 0,
+        'security': 50,
+        'srcnat': 100,
+    }
     _BASE_CHAIN_PREFIX = 'root'
     _LOGGING = set()
 
@@ -749,18 +762,28 @@ class Nftables(aclgenerator.ACLGenerator):
                 % (netfilter_hook, list(self._SUPPORTED_HOOKS))
             )
         if len(header_options) >= 2:
-            numbers = [x for x in header_options if x.isdigit()]
-            if not numbers:
-                netfilter_priority = self._HOOK_PRIORITY_DEFAULT
-                logging.info(
-                    'INFO: NFtables priority not specified in header.' 'Defaulting to %s',
-                    self._HOOK_PRIORITY_DEFAULT,
-                )
-            if len(numbers) == 1:
-                # A single integer value is used to set priority.
-                netfilter_priority = numbers[0]
-            if len(numbers) > 1:
-                raise HeaderError('Too many integers in header.')
+            # A named priority (raw/mangle/dstnat/filter/security/srcnat) takes
+            # precedence and is the only way to express a negative priority.
+            alias = [
+                self.PRIORITY_ALIASES[x.lower()]
+                for x in header_options
+                if x.lower() in self.PRIORITY_ALIASES
+            ]
+            if alias:
+                netfilter_priority = alias[0]
+            else:
+                numbers = [x for x in header_options if x.isdigit()]
+                if not numbers:
+                    netfilter_priority = self._HOOK_PRIORITY_DEFAULT
+                    logging.info(
+                        'INFO: NFtables priority not specified in header.' 'Defaulting to %s',
+                        self._HOOK_PRIORITY_DEFAULT,
+                    )
+                if len(numbers) == 1:
+                    # A single integer value is used to set priority.
+                    netfilter_priority = numbers[0]
+                if len(numbers) > 1:
+                    raise HeaderError('Too many integers in header.')
         verbose = True
         if 'noverbose' in header_options:
             verbose = False
