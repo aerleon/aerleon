@@ -479,3 +479,30 @@ sudo nft -f generated/router1.pol.nft    # apply live
 ```
 
 Deployment context: ship `generated/<host>.nft` to each box and reload via Ansible (`copy` with `validate: "nft -c -f %s"` + a `systemctl reload nftables` handler), or include it from a base `/etc/nftables.conf`. Always keep an SSH-allow rule in the input chain before applying, and prefer a timed-rollback when pushing to remote routers.
+
+---
+
+## 9. Known issues & roadmap (tracked)
+
+Stable IDs for the issues surfaced during the fork review. Status legend:
+**Fixed** · **Accepted** (working as intended / won't change) · **Deferred**
+(real, not now) · **Planned** (intend to do) · **Future** (someday/maybe).
+
+| ID | Severity | Status | Summary |
+| --- | --- | --- | --- |
+| A1 | low | Accepted | NAT verdict lives in a regular child chain reached by `jump` from the `type nat` base chain, not inline in the base chain. nft generally allows this; verify once with `nft -c -f`. If it ever rejects, inline the NAT verdict into the base chain. |
+| A2 | low | Accepted | All base chains for an address family share one table and there is no dedup of (hook, priority). Two same-hook chains with equal priority are **allowed by nft** but evaluate in undefined order. Pre-existing Aerleon/Capirca behaviour, not fork-introduced. Mitigation: give same-hook chains distinct priorities. |
+| A3 | low | Accepted | The generator emits whatever interface tokens you write; `oifname` is invalid at `prerouting`/`input` (output iface unknown pre-routing). Author's responsibility: use `source-interface` (iifname) on ingress hooks, `destination-interface` (oifname) on egress hooks. Could add hook/direction validation later. |
+| B1 | low | **Fixed** | `_OptionsHandler` added `ct state new` to every non-`deny` term, including masquerade/dnat/snat/mss — valid nft but a small semantic narrowing on NAT (skips `related`/untracked). Now suppressed for NAT actions and tcp-mss terms. |
+| B2 | n/a | Deferred | One shared table (`filtering_policies`) holds filter + nat chains of different types/hooks. Valid and functional; separate tables per type would be cleaner (atomic per-table reloads). Not changing now. |
+| C1 | medium | **Fixed** | NAT-type detection string-sniffed the rendered rule text (`' masquerade'`/`' dnat '`/`' snat '`), which also scanned comment lines (false-positive risk). Now the chain is tagged NAT from the actual term action during `_TranslatePolicy`. |
+| D1 | — | Planned | dnat/snat target must be a **named** `next-ip` token; literal IPs in the policy are not accepted. |
+| D2 | — | Planned | dnat/snat do **port translation** (`dnat to <ip>:<port>`)? Not yet — only `… to <ip>`. Needed for "expose 8443 → internal :443". |
+| D3 | — | Planned | dnat/snat to an **address range / pool** (`dnat to a-b`) for crude load-balancing. Not yet — first address only, single host. |
+| D4 | — | Future | Packet mark / `meta mark` — no token; out of scope for now. |
+| D5 | — | Future | `counter` on NAT chains, separate logging chains, and other niceties. |
+
+> **Strategic note:** B1 + C1 are exactly the polish the upstream-PR endgame in §7
+> needs (proper NAT tagging + no spurious conntrack state). D1–D3 complete the
+> NAT feature surface. A1–A3/B2 are accepted trade-offs documented for whoever
+> reviews or rebases this fork.
