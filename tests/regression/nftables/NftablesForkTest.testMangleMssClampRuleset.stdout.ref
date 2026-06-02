@@ -1,0 +1,13 @@
+table ip filtering_policies {
+    chain clamp-mss {
+        ip protocol tcp ct state new tcp flags syn tcp option maxseg size set rt mtu
+    }
+    chain root0 {
+        comment "clamp mss on forward"
+        type filter hook forward priority -150; policy drop;
+        ct state established,related accept
+        jump clamp-mss
+    }
+}
+
+

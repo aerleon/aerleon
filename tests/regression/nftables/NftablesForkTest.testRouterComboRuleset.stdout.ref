@@ -1,0 +1,38 @@
+table ip filtering_policies {
+    chain fwd-lan-web {
+        ip saddr 192.168.1.0/24 tcp dport 80 ct state new accept
+    }
+    chain root0 {
+        comment "router1 forward"
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        jump fwd-lan-web
+    }
+    chain allow-ssh {
+        tcp dport 22 ct state new accept
+    }
+    chain allow-icmp {
+        ip protocol icmp ct state new accept
+    }
+    chain drop-guest {
+        ip saddr 10.0.9.0/24 ct state new reject
+    }
+    chain root1 {
+        comment "router1 input"
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump allow-ssh
+        jump allow-icmp
+        jump drop-guest
+    }
+    chain masq-lan {
+        ip saddr 192.168.1.0/24 ct state new masquerade
+    }
+    chain root2 {
+        comment "router1 nat"
+        type nat hook postrouting priority 100; policy accept;
+        jump masq-lan
+    }
+}
+
+

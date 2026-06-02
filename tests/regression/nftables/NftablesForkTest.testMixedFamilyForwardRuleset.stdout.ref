@@ -1,0 +1,16 @@
+table inet filtering_policies {
+    chain fwd-to-webhost {
+        ip daddr 192.0.2.10/32 tcp dport 443 ct state new accept
+        ip daddr 192.0.2.10/32 tcp dport 443 ct state new accept
+        ip6 daddr 2001:db8::10/128 tcp dport 443 ct state new accept
+        ip6 daddr 2001:db8::10/128 tcp dport 443 ct state new accept
+    }
+    chain root0 {
+        comment "dual-stack forward"
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        jump fwd-to-webhost
+    }
+}
+
+
