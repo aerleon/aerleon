@@ -395,8 +395,10 @@ class Term(aclgenerator.Term):
             for pstat in pp_expr:
                 statement.append(pstat + Add(options) + Add(verdict))
         else:
-            # If no addresses or ports & protocol. Verdict only statement.
-            statement.append(Add(options) + verdict)
+            # If no addresses or ports & protocol. Options (if any) then verdict.
+            # filter() drops an empty options string and keeps a single space
+            # separator so we never emit e.g. 'ct state newaccept'.
+            statement.append(' '.join(filter(None, [options, verdict])))
         return statement
 
     def _AddrStatement(
