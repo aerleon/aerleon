@@ -105,7 +105,12 @@ class Term(aclgenerator.Term):
     _ALLOWED_PROTO_NAME = frozenset(
         ['tcp', 'udp', 'icmp', 'esp', 'udp', 'ah', 'comp', 'udplite', 'dccp', 'sctp', 'icmpv6']
     )
-    _ACTIONS = {'accept': 'accept', 'deny': 'drop'}
+    _ACTIONS = {
+        'accept': 'accept',
+        'deny': 'drop',
+        'reject': 'reject',
+        'masquerade': 'masquerade',
+    }
 
     def __init__(self, term: policy.Term, nf_af: str, nf_hook: str, verbose: bool = True):
         """Individual instances of a Term for NFtables.
@@ -637,6 +642,8 @@ class Nftables(aclgenerator.ACLGenerator):
             'action': {
                 'accept',
                 'deny',
+                'reject',
+                'masquerade',
             },
             'icmp_type': set(list(Term.ICMP_TYPE[4].keys()) + list(Term.ICMP_TYPE[6].keys())),
         }
@@ -846,19 +853,34 @@ class Nftables(aclgenerator.ACLGenerator):
                     # Handle multi-line comments
                     for comment in base_chain_dict[item]['comment']:
                         nft_config.append(TabSpacer(8, f'comment "{comment}"'))
+                # A base chain that carries a NAT verdict must be declared as
+                # 'type nat' with 'policy accept' and without the stateful
+                # conntrack preamble. Detection sniffs the rendered rule text;
+                # a cleaner approach would tag the chain during _TranslatePolicy.
+                all_rules = []
+                for _term_name, term_rules in base_chain_dict[item]['rules'][item].items():
+                    all_rules.extend(term_rules)
+                is_nat = any(
+                    (' masquerade' in rule) or (' dnat ' in rule) or (' snat ' in rule)
+                    for rule in all_rules
+                )
+                chain_type = 'nat' if is_nat else 'filter'
+                chain_policy = 'accept' if is_nat else base_chain_dict[item]['policy']
                 nft_config.append(
                     TabSpacer(
                         8,
-                        'type filter hook %s priority %s; policy %s;'
+                        'type %s hook %s priority %s; policy %s;'
                         % (
+                            chain_type,
                             base_chain_dict[item]['hook'],
                             base_chain_dict[item]['priority'],
-                            base_chain_dict[item]['policy'],
+                            chain_policy,
                         ),
                     )
                 )
-                # stateful firewall: allow reply traffic.
-                nft_config.append(TabSpacer(8, 'ct state established,related accept'))
+                if not is_nat:
+                    # stateful firewall: allow reply traffic.
+                    nft_config.append(TabSpacer(8, 'ct state established,related accept'))
                 # Reference the child chains with jump.
                 for child_chain in base_chain_dict[item]['rules'][item].keys():
                     nft_config.append(TabSpacer(8, f'jump {child_chain}'))

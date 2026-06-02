@@ -60,7 +60,7 @@ SUPPORTED_TOKENS = frozenset(
 )
 
 SUPPORTED_SUB_TOKENS = {
-    'action': {'accept', 'deny'},
+    'action': {'accept', 'deny', 'reject', 'masquerade'},
     'option': {'established', 'tcp-established'},
     'icmp_type': {
         'alternate-address',
