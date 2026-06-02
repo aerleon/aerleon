@@ -35,12 +35,19 @@ The end state: publish the fork on GitHub, consume it as a pinned `git+https://�
 | negative priority | ❌ (crashes) | ✅ | ✅ | via the **name** (raw `-150` is unparseable) |
 | reject action | ❌ | ✅ | ✅ | already in parser `ACTIONS` |
 | NAT masquerade (`type nat`) | ❌ | ✅ | ✅ | spike-quality; see §7 |
-| NAT dnat / snat | ❌ | ❌ | ❌ | `next-ip` token exists; render TODO |
+| NAT dnat / snat | ❌ | ✅ | ✅ | renders `dnat/snat to <next-ip>`; named target only |
 | MSS clamp (`tcp-mss`) | ❌ | ✅ | ✅ | new token across 3 files |
-| interface match (`iifname`/`oifname`) | ❌ | ❌ | ❌ | **TODO** — port from Capirca |
+| interface match (`iifname`/`oifname`) | ❌ | ✅ | ✅ | from the existing `source-/destination-interface` tokens |
 | packet mark | ❌ | ❌ | ❌ | no token; out of scope |
 
 Legend: ✅ done · ❌ not done.
+
+> **Implementation note (post-spike):** every feature above is now implemented
+> on the `feature/nftables-ext` branch and covered by regression tests in
+> `tests/regression/nftables/nftables_fork_test.py` (assertion tests + full
+> `.ref` snapshots that double as `nft -c -f` fixtures). One upstream bug was
+> fixed along the way: the verdict-only rule branch emitted `ct state newaccept`
+> (missing space) — invalid nft for interface-/NAT-only rules; see §4a-7.
 
 ---
 
@@ -244,9 +251,55 @@ When forking you edit the built-in `nftables` target directly, so **delete the p
 
 Both existed only because the plugin used a *renamed* target. Gone in a fork.
 
-### 4e. TODO — interface matching (not spiked)
+### 4a-7. Verdict-only spacing fix (`GroupExpressions`)
 
-The tokens `source-interface` / `destination-interface` **already parse** (used by other platforms). Port the rendering from **Capirca's** `capirca/lib/nftables.py` (~lines 501–503, the `iifname`/`oifname` logic) plus its `source_interface`/`destination_interface` entries in `_BuildTokens`. This is the highest-value remaining item for real router rules (so you can say "in eth1 → out eth0" instead of subnet-only). Capirca also has `reject` and `counter` rendering you can crib while you're in there.
+A term with no address and no protocol/port match took the verdict-only branch,
+which concatenated options and verdict directly → invalid nft like `ct state
+newaccept`. This breaks interface-only and NAT-only rules. Fixed to join with a
+single space (dropping empty options); deny-only rules (`drop`, no options) are
+unaffected.
+```python
+# find:
+            statement.append(Add(options) + verdict)
+# replace:
+            statement.append(' '.join(filter(None, [options, verdict])))
+```
+
+### 4e. Interface matching — IMPLEMENTED (`iifname`/`oifname`)
+
+The tokens `source-interface` / `destination-interface` already parse. Added
+`source_interface`/`destination_interface` to `_BuildTokens` and a
+`_InterfaceStatement` that prefixes each rule line:
+```python
+# in RulesetGenerator, after GroupExpressions:
+iface = self._InterfaceStatement(
+    self.term.source_interface, self.term.destination_interface)
+if iface:
+    nftable_rule = [iface + Add(line) for line in nftable_rule]
+```
+
+`source-interface 'eth1'` → `iifname "eth1"`, `destination-interface 'eth0'` →
+`oifname "eth0"`. This lets masquerade be WAN-scoped (`oifname "wan0" masquerade`)
+instead of unconditional. Note: `oifname` is unavailable at the `prerouting`
+hook — match inbound dnat rules on `source-interface` (iifname) instead.
+
+### 4f. dnat / snat — IMPLEMENTED (`dnat to`/`snat to`)
+
+Added `dnat`/`snat` to the parser `ACTIONS`, the generator `_ACTIONS` verdict
+map and action sub-tokens, and registered `next_ip` as a supported token. The
+translation target is resolved from the existing `next-ip` token (named network
+only):
+```python
+# in RulesetGenerator, after the verdict lookup:
+if self.term.action[0] in ('dnat', 'snat'):
+    if not self.term.next_ip:
+        raise TermError('Term %s uses %s but has no next-ip target.'
+                        % (self.term.name, self.term.action[0]))
+    verdict = '%s to %s' % (verdict, self.term.next_ip[0].network_address)
+```
+
+The `__str__` NAT detection already recognised `' dnat '`/`' snat '`, so these
+chains render as `type nat … policy accept` automatically.
 
 ---
 
@@ -342,6 +395,39 @@ filters:
         action: reject
 ```
 
+**interface matching** (forward in eth1 → out eth0):
+```yaml
+filters:
+  - header:
+      comment: "lan to wan"
+      targets: { nftables: inet forward }
+    terms:
+      - name: lan-out
+        source-interface: eth1
+        destination-interface: eth0
+        source-address: LAN
+        action: accept
+```
+→ renders `iifname "eth1" oifname "eth0" ip saddr 192.168.1.0/24 … accept`.
+
+**dnat port-forward** (prerouting; inbound interface = iifname):
+```yaml
+filters:
+  - header:
+      comment: "publish https"
+      targets: { nftables: inet prerouting dstnat }
+    terms:
+      - name: dnat-https
+        source-interface: wan0
+        protocol: tcp
+        destination-port: HTTPS
+        next-ip: WEBHOST        # a NAMED network (single /32 host)
+        action: dnat
+```
+→ renders `type nat hook prerouting priority -100; policy accept;` with
+`iifname "wan0" tcp dport 443 … dnat to <WEBHOST>`. Use `action: snat` +
+`next-ip` in `postrouting` for source NAT.
+
 **Composed networks + shared include** (multi-router, define once):
 ```yaml
 # def/networks.yaml
@@ -355,14 +441,27 @@ networks:
 
 ## 7. Caveats / TODO before production
 
-The spike proves feasibility; it is **not** production-ready:
+All seven priority features are now implemented and unit-tested, but a few
+rough edges remain before trusting output on a production router:
 
-- **NAT is masquerade-only.** `dnat`/`snat` need a target — the `next-ip` token already parses, so it's "render `dnat to <next-ip>`," not a new wall. TODO.
-- **Leftover `ct state new`** appears on masquerade/mss rules (harmless-but-redundant on the SYN clamp, mildly wrong on masquerade). Suppress the stateful preamble for NAT/mangle terms (the `if 'deny' not in term.action` block that adds `ct state new`).
-- **NAT detection is string-sniffing** the rendered rules — replace with a proper chain tag set during `_TranslatePolicy`.
-- **No real `nft` validation done** — the sandbox had no `nft`. Run `nft -c -f <file>.nft` on a real box before trusting output.
-- **Masquerade is unconditional** (`masquerade`, not `oifname "wan0" masquerade`) until interface matching (§4e) lands — over-broad for a real router.
-- **Mixed nat+filter base chains share one table** (`filtering_policies`). nft allows it, but consider whether you want separate tables.
+- **NAT masquerade/dnat/snat are done**, but dnat/snat targets must be a *named*
+  network token (`next-ip` resolves names, not literal IPs) and only the first
+  address is used (single host, no ranges).
+- **Leftover `ct state new`** still appears on masquerade/dnat/snat/mss rules
+  (harmless-but-redundant on the SYN clamp, mildly wrong on NAT). Suppress the
+  stateful preamble for NAT/mangle terms (the `if 'deny' not in term.action`
+  block that adds `ct state new`).
+- **NAT detection is string-sniffing** the rendered rules — replace with a
+  proper chain tag set during `_TranslatePolicy`.
+- **No real `nft` validation done in-repo** — the dev sandbox has no privileged
+  `nft`. The snapshot `.ref` fixtures are valid-by-inspection; run `nft -c -f
+  <file>.nft` on a real box (or `sudo` locally) before trusting output.
+- **Masquerade can now be WAN-scoped** via `destination-interface` (`oifname
+  "wan0" masquerade`); it is only unconditional if you omit the interface.
+- **Mixed nat+filter base chains share one table** (`filtering_policies`). nft
+  allows it, but consider whether you want separate tables.
+- **`oifname` is invalid at `prerouting`** — scope inbound dnat rules with
+  `source-interface` (iifname), not `destination-interface`.
 
 **The strategic reason to keep this clean:** every change is to **core files**, so this is a fork you must rebase against upstream forever. The sane endgame is an **upstream PR** — with the TODOs above polished (proper tagging, ct-state suppression, dnat/snat, interfaces), the diff is small and mergeable, which *eliminates* the rebase cost and benefits everyone. Until then, weigh the fork against simply hand-writing the handful of NAT/mangle lines per router (or Jinja-from-host_vars), which needs no fork at all.
 
