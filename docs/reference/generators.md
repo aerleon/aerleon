@@ -1134,6 +1134,7 @@ targets:
 ### Term Format
 
 * for common keys see the [common](#common) section above.
+* _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
 
 ### Sub Tokens
 

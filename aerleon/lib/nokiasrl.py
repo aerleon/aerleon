@@ -233,7 +233,13 @@ class NokiaSRLinux(openconfig.OpenConfig):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-        supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
+        supported_tokens -= {
+            'platform',
+            'platform_exclude',
+            'verbatim',
+            'icmp-type',
+            'restrict_address_family',
+        }
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {
@@ -265,6 +271,9 @@ class NokiaSRLinux(openconfig.OpenConfig):
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for term in terms:
             for term_af in afs:
+                # Ignore if the term is for a different AF
+                if term.restrict_address_family and term.restrict_address_family != term_af:
+                    continue
                 t = SRLTerm(term, term_af)
                 for rule in t.ConvertToDict(filter_options):
                     self.total_rule_count += 1

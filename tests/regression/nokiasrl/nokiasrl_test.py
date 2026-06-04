@@ -114,6 +114,19 @@ term good-term-1 {
 }
 """
 
+GOOD_RESTRICTAF = """
+term good-term-1 {
+  comment:: "Deny TCP & UDP 53 with saddr/daddr and logging, but for v4 only."
+  destination-address:: CORP_EXTERNAL
+  source-address:: CORP_EXTERNAL
+  destination-port:: DNS
+  protocol:: udp tcp
+  restrict-address-family:: inet
+  action:: deny
+  logging:: True
+}
+"""
+
 GOOD_JSON_SADDR = """
 [
 {
@@ -469,6 +482,13 @@ class NokiaSRLTest(absltest.TestCase):
     def testEverything(self):
         acl = nokiasrl.NokiaSRLinux(
             policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_EVERYTHING, self.naming), EXP_INFO
+        )
+        print(acl)
+
+    @capture.stdout
+    def testRestrictAddressFamilyType(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER_MIXED + GOOD_RESTRICTAF, self.naming), EXP_INFO
         )
         print(acl)
 
