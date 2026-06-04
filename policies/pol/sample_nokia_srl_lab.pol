@@ -35,6 +35,7 @@ term accept-tcp-replies {
 term deny-to-internal {
   comment:: "Deny access to rfc1918/internal."
   destination-address:: INTERNAL
+  restrict-address-family:: inet
   action:: deny
 }
 

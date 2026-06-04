@@ -1,0 +1,59 @@
+[
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "GOOD_HEADER_MIXED comment.",
+      "entry": [
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging, but for v4 only.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "destination-ip": {
+              "prefix": "10.2.3.4/32"
+            },
+            "destination-port": {
+              "value": 53
+            },
+            "protocol": 17,
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "_annotate_description": "Deny TCP & UDP 53 with saddr/daddr and logging, but for v4 only.",
+          "action": {
+            "drop": {
+              "log": true
+            }
+          },
+          "description": "good-term-1",
+          "match": {
+            "destination-ip": {
+              "prefix": "10.2.3.4/32"
+            },
+            "destination-port": {
+              "value": 53
+            },
+            "protocol": 6,
+            "source-ip": {
+              "prefix": "10.2.3.4/32"
+            }
+          },
+          "sequence-id": 10
+        }
+      ],
+      "name": "good-name-mixed",
+      "statistics-per-entry": true,
+      "type": "ipv4"
+    }
+  }
+]
+
+
