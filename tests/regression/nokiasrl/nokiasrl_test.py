@@ -114,6 +114,53 @@ term good-term-1 {
 }
 """
 
+GOOD_SPFX = """
+term good-term-1 {
+  comment:: "Allow from named prefix-list."
+  source-prefix:: CORP_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+GOOD_DPFX = """
+term good-term-1 {
+  comment:: "Allow to named prefix-list."
+  destination-prefix:: CORP_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+GOOD_MULTI_SPFX = """
+term good-term-1 {
+  comment:: "Allow from multiple prefix-lists."
+  source-prefix:: CORP_PREFIXES EXTERNAL_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+BAD_SPFX_AND_SADDR = """
+term bad-term-6 {
+  comment:: "source-prefix and source-address together."
+  source-prefix:: CORP_PREFIXES
+  source-address:: CORP_EXTERNAL
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+BAD_DPFX_AND_DADDR = """
+term bad-term-7 {
+  comment:: "destination-prefix and destination-address together."
+  destination-prefix:: CORP_PREFIXES
+  destination-address:: CORP_EXTERNAL
+  protocol:: tcp
+  action:: accept
+}
+"""
+
 GOOD_JSON_SADDR = """
 [
 {
@@ -321,6 +368,99 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
             "destination-port": { "range": { "start": 1024, "end": 65535 } }
           },
           "sequence-id": 10
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_JSON_SPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow from named prefix-list.",
+          "match": {
+            "protocol": 6,
+            "source-ip": {
+              "prefix-list": [ { "name": "CORP_PREFIXES" } ]
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_JSON_DPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow to named prefix-list.",
+          "match": {
+            "protocol": 6,
+            "destination-ip": {
+              "prefix-list": [ { "name": "CORP_PREFIXES" } ]
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_JSON_MULTI_SPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow from multiple prefix-lists.",
+          "match": {
+            "protocol": 6,
+            "source-ip": {
+              "prefix-list": [
+                { "name": "CORP_PREFIXES" },
+                { "name": "EXTERNAL_PREFIXES" }
+              ]
+            }
+          },
+          "sequence-id": 5
         }
       ]
     }
@@ -571,6 +711,46 @@ class NokiaSRLTest(absltest.TestCase):
     def testEstablishedWithNoProtocolError(self):
         acl = policy.ParsePolicy(GOOD_HEADER + BAD_TERM_4, self.naming)
         with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    @capture.stdout
+    def testSourcePrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_SPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    @capture.stdout
+    def testDestinationPrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_DPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_DPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    @capture.stdout
+    def testMultiSourcePrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_SPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_MULTI_SPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    def testSourcePrefixListWithAddressError(self):
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_SPFX_AND_SADDR, self.naming)
+        with self.assertRaises(nokiasrl.PrefixListWithAddressError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testDestinationPrefixListWithAddressError(self):
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_DPFX_AND_DADDR, self.naming)
+        with self.assertRaises(nokiasrl.PrefixListWithAddressError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
 

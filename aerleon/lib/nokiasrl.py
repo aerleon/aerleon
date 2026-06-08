@@ -27,8 +27,18 @@ from aerleon.lib.policy import Term
 R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
 
 
-class IPPrefix(TypedDict):
-    prefix: str
+class PrefixListRef(TypedDict):
+    name: str
+
+
+IPPrefix = TypedDict(
+    "IPPrefix",
+    {
+        "prefix": str,
+        "prefix-list": list[PrefixListRef],
+    },
+    total=False,
+)
 
 
 class PortRange(TypedDict):
@@ -103,6 +113,10 @@ class EstablishedWithNonTcpUdpError(Error):
 
 
 class UnsupportedLogging(Error):
+    pass
+
+
+class PrefixListWithAddressError(Error):
     pass
 
 
@@ -194,11 +208,42 @@ class SRLTerm(openconfig.Term):
         ):
             self.SetProtocol(family=family, protocol="tcp", filter_options=filter_options)
 
+        # Named prefix-list references. prefix-list and a literal prefix are
+        # mutually exclusive in the SR Linux YANG model.
+        if self.term.source_prefix:
+            if self.term.GetAddressOfVersion(
+                'flattened_saddr', self.AF_MAP.get(self.inet_version)
+            ):
+                raise PrefixListWithAddressError(
+                    f'source-prefix excludes source-address in term {self.term.name}'
+                )
+            self.SetSourcePrefixList(family, self.term.source_prefix, filter_options)
+        if self.term.destination_prefix:
+            if self.term.GetAddressOfVersion(
+                'flattened_daddr', self.AF_MAP.get(self.inet_version)
+            ):
+                raise PrefixListWithAddressError(
+                    f'destination-prefix excludes destination-address in term {self.term.name}'
+                )
+            self.SetDestPrefixList(family, self.term.destination_prefix, filter_options)
+
     def SetSourceAddress(self, family: str, saddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['source-ip'] = {'prefix': saddr}
 
     def SetDestAddress(self, family: str, daddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['destination-ip'] = {'prefix': daddr}
+
+    def SetSourcePrefixList(
+        self, family: str, names: list[str], filter_options: list[str]
+    ) -> None:
+        self._field(family, filter_options)['source-ip'] = {
+            'prefix-list': [{'name': n} for n in names]
+        }
+
+    def SetDestPrefixList(self, family: str, names: list[str], filter_options: list[str]) -> None:
+        self._field(family, filter_options)['destination-ip'] = {
+            'prefix-list': [{'name': n} for n in names]
+        }
 
     def SetSourcePorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
@@ -234,6 +279,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
+        supported_tokens |= {'source_prefix', 'destination_prefix'}
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {

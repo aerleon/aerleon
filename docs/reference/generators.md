@@ -1134,6 +1134,8 @@ targets:
 ### Term Format
 
 * for common keys see the [common](#common) section above.
+* _source-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _destination-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
 
 ### Sub Tokens
 
