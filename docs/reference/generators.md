@@ -489,6 +489,13 @@ targets:
 
 * For common keys, see section [common](#common) above.
 
+* _destination-fqdn_: One or more destination FQDNs to filter. Rendered as a
+  `config firewall address` object of `type fqdn`, referenced from the term's
+  `dstaddr` (there is no separate FQDN field on a Fortigate policy). IPv4-only:
+  not supported when the target's address family is `inet6`.
+* _source-fqdn_: One or more source FQDNs to filter. Rendered the same way as
+  _destination-fqdn_, referenced from the term's `srcaddr`. IPv4-only: not
+  supported when the target's address family is `inet6`.
 
 ### Sub Tokens
 

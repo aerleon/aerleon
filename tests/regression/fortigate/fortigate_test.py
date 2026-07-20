@@ -5,7 +5,7 @@ from unittest import mock
 
 from absl.testing import parameterized
 
-from aerleon.lib import fortigate, naming, policy
+from aerleon.lib import aclgenerator, fortigate, naming, policy
 from aerleon.lib import yaml as yaml_frontend
 from tests.regression_utils import capture
 
@@ -428,6 +428,20 @@ class FortigateTest(parameterized.TestCase):
         # Different IPs from MIXED_P for exclusion testing
         self.naming._ParseLine('MIXED_Q = 1.1.1.3/32 2001:db8::3/128', 'networks')
 
+        # FQDN definitions (only expressible via the object/YAML naming path).
+        self.naming.ParseDefinitionsObject(
+            {
+                'networks': {
+                    'GOOGLE_DNS': {'values': [{'fqdn': 'dns.google.com'}]},
+                    'MULTI_FQDN': {
+                        'values': [{'fqdn': 'a.example.com'}, {'fqdn': 'b.example.com'}]
+                    },
+                },
+                'services': {},
+            },
+            '',
+        )
+
     @capture.stdout
     def testNoAddressesInet6OutputsAll(self):
         pol = policy.ParsePolicy(INET6_HEADER + ALL_IPS, self.naming)
@@ -465,6 +479,113 @@ class FortigateTest(parameterized.TestCase):
         self.assertNotIn('srcaddr6 ', str(acl))
         self.assertNotIn('dstaddr6 ', str(acl))
         print(acl)
+
+    @capture.stdout
+    def testDestinationFqdn(self):
+        term = """
+  - name: to-fqdn
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('edit GOOGLE_DNS', acl)
+        self.assertIn('set type fqdn', acl)
+        self.assertIn('set fqdn "dns.google.com"', acl)
+        self.assertIn('set dstaddr "GOOGLE_DNS"', acl)
+        print(acl)
+
+    @capture.stdout
+    def testSourceFqdn(self):
+        term = """
+  - name: from-fqdn
+    source-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('set type fqdn', acl)
+        self.assertIn('set fqdn "dns.google.com"', acl)
+        self.assertIn('set srcaddr "GOOGLE_DNS"', acl)
+        print(acl)
+
+    @capture.stdout
+    def testMultipleFqdnValuesExpandToIndexedObjects(self):
+        term = """
+  - name: multi
+    destination-fqdn: MULTI_FQDN
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('edit MULTI_FQDN_0', acl)
+        self.assertIn('set fqdn "a.example.com"', acl)
+        self.assertIn('edit MULTI_FQDN_1', acl)
+        self.assertIn('set fqdn "b.example.com"', acl)
+        self.assertIn('set dstaddr "MULTI_FQDN_0" "MULTI_FQDN_1"', acl)
+        print(acl)
+
+    @capture.stdout
+    def testFqdnMixedAddressFamilyIsIPv4Only(self):
+        # FQDN address objects are only ever referenced from the IPv4 srcaddr/
+        # dstaddr field, so a `mixed` term with only a destination-fqdn should
+        # render just the IPv4 leg (no srcaddr6/dstaddr6 at all).
+        term = """
+  - name: to-fqdn-mixed
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_MIXED_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('set dstaddr "GOOGLE_DNS"', acl)
+        self.assertNotIn('srcaddr6', acl)
+        self.assertNotIn('dstaddr6', acl)
+        print(acl)
+
+    def testDestinationFqdnUnsupportedWithInet6(self):
+        # A pure inet6 term never renders srcaddr/dstaddr (only srcaddr6/
+        # dstaddr6), so silently accepting destination-fqdn here would drop the
+        # restriction entirely and fail open to "set dstaddr6 all". Fail loudly
+        # instead.
+        term = """
+  - name: to-fqdn-v6
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET6_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        self.assertRaises(aclgenerator.UnsupportedAFError, fortigate.Fortigate, pol, EXP_INFO)
+
+    def testSourceFqdnUnsupportedWithInet6(self):
+        term = """
+  - name: from-fqdn-v6
+    source-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET6_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        self.assertRaises(aclgenerator.UnsupportedAFError, fortigate.Fortigate, pol, EXP_INFO)
+
+    def testDestinationFqdnUnsupportedWithLocalInPolicyInet6(self):
+        term = """
+  - name: to-fqdn-local-v6
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_LOCAL_POLICY_V6 + term, filename="fqdn", definitions=self.naming
+        )
+        self.assertRaises(aclgenerator.UnsupportedAFError, fortigate.Fortigate, pol, EXP_INFO)
 
     @capture.stdout
     def testInet6(self):
