@@ -43,6 +43,22 @@ term good-simple {
 }
 """
 
+GOOD_HEADER_IN_DEDUP = """
+header {
+  comment:: "dedup test acl"
+  target:: windows_advfirewall in
+}
+"""
+
+DEDUP_TERM = """
+term dedup-term {
+  protocol:: tcp
+  destination-port:: HTTPS
+  source-address:: SRC_NET
+  action:: accept
+}
+"""
+
 GOOD_SIMPLE_WARNING = """
 term good-simple-warning {
   protocol:: tcp
@@ -415,6 +431,59 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             'explicit miscellaneous proto',
         )
         print(result)
+
+    def _RuleLines(self, result):
+        """Just the emitted netsh rule lines, ignoring header comments."""
+        return [
+            line for line in result.splitlines() if line.startswith('netsh advfirewall firewall')
+        ]
+
+    def _RenderDedup(self, src_net):
+        self.naming._ParseLine(f'SRC_NET = {src_net}', 'networks')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN_DEDUP + DEDUP_TERM, self.naming), EXP_INFO
+        )
+        return self._RuleLines(str(acl))
+
+    def testDualStackAnyEmitsSingleRule(self):
+        """A dual-stack ANY must not emit one identical rule per address family.
+
+        0.0.0.0/0 and ::/0 both render as netsh 'any', so emitting a rule per
+        source address produced two byte-identical rules.
+        """
+        rules = self._RenderDedup('0.0.0.0/0 ::/0')
+        self.assertEqual(len(rules), 1, f'expected a single rule, got: {rules}')
+        self.assertEqual(len(set(rules)), len(rules), f'duplicate rules emitted: {rules}')
+        self.assertIn('remoteip=any', rules[0], f'dual-stack ANY should render as any: {rules[0]}')
+
+    def testSingleFamilyAnyRendersAsAny(self):
+        """A lone /0 keeps rendering as 'any'."""
+        rules = self._RenderDedup('0.0.0.0/0')
+        self.assertEqual(len(rules), 1, f'expected a single rule, got: {rules}')
+        self.assertIn('remoteip=any', rules[0])
+
+    def testMultipleSourcesCollapseToCommaList(self):
+        """Several source addresses collapse into one comma-separated rule."""
+        rules = self._RenderDedup('10.0.0.0/8 192.168.0.0/16')
+        self.assertEqual(len(rules), 1, f'expected a single collapsed rule, got: {rules}')
+        self.assertIn('remoteip=10.0.0.0/8,192.168.0.0/16', rules[0])
+
+    def testUnrecognizedDirectionRaises(self):
+        """An unexpected direction must fail rather than silently rendering as 'out'.
+
+        The local/remote labels are swapped for 'in', so falling through to the
+        'out' labeling would emit rules with the local/remote sense reversed.
+        """
+        self.naming._ParseLine('SRC_NET = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN_DEDUP + DEDUP_TERM, self.naming), EXP_INFO
+        )
+        for _, _, _, _, terms in acl.windows_policies:
+            for term in terms:
+                term.filter = 'input'
+        self.assertRaises(aclgenerator.UnsupportedFilterError, str, acl)
 
     def testBuildTokens(self):
         pol1 = windows_advfirewall.WindowsAdvFirewall(
