@@ -1,6 +1,6 @@
 table ip6 filtering_policies {
     chain good-term-1 {
-         ct state newaccept
+        ct state new accept
     }
     chain root0 {
         type filter hook input priority 0; policy drop;
