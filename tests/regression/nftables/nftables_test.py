@@ -43,6 +43,7 @@ SUPPORTED_TOKENS = frozenset(
         'comment',
         'destination_address',
         'destination_address_exclude',
+        'destination_interface',
         'destination_port',
         'expiration',
         'icmp_type',
@@ -53,6 +54,7 @@ SUPPORTED_TOKENS = frozenset(
         'platform_exclude',
         'source_address',
         'source_address_exclude',
+        'source_interface',
         'source_port',
         'translated',  # obj attribute, not token
         'stateless_reply',
@@ -146,6 +148,12 @@ header {
 }
 """
 
+GOOD_HEADER_FORWARD = """
+header {
+  target:: nftables inet FORWARD
+}
+"""
+
 ESTABLISHED_OPTION_TERM = """
 term established-term {
   protocol:: udp
@@ -178,6 +186,32 @@ term good-term-1 {
 IPV6_TERM_2 = """
 term inet6-icmp {
   action:: deny
+}
+"""
+
+BOTH_INTERFACES_TERM = """
+term transit-web {
+  source-interface:: eth0
+  destination-interface:: eth1
+  source-address:: INTERNAL
+  protocol:: tcp
+  destination-port:: HTTP
+  action:: accept
+}
+"""
+
+SOURCE_INTERFACE_TERM = """
+term from-lan {
+  source-interface:: eth0
+  action:: accept
+}
+"""
+
+DESTINATION_INTERFACE_TERM = """
+term to-wan {
+  destination-interface:: eth1
+  protocol:: udp
+  action:: accept
 }
 """
 
@@ -309,6 +343,54 @@ class NftablesTest(parameterized.TestCase):
         result = self.dummyterm.GroupExpressions(address_expr, porst_proto_expr, opt, verdict)
         self.assertEqual(result, expected_output)
 
+    @parameterized.parameters(
+        (
+            {'source_interface': 'eth0', 'destination_interface': 'eth1'},
+            'iifname "eth0" oifname "eth1"',
+        ),
+        ({'source_interface': 'eth0', 'destination_interface': None}, 'iifname "eth0"'),
+        ({'source_interface': None, 'destination_interface': 'eth1'}, 'oifname "eth1"'),
+        ({'source_interface': None, 'destination_interface': None}, ''),
+    )
+    def testInterfaceStatement(self, term_dict, expected_output):
+        term = DictObj(term_dict)
+        result = self.dummyterm._InterfaceStatement(term)
+        self.assertEqual(result, expected_output)
+
+    @parameterized.parameters(
+        (
+            ['ip saddr 10.0.0.0/8'],
+            ['tcp dport 80'],
+            'ct state new',
+            'accept',
+            'iifname "eth0" oifname "eth1"',
+            ['iifname "eth0" oifname "eth1" ip saddr 10.0.0.0/8 tcp dport 80 ct state new accept'],
+        ),
+        (
+            [],
+            ['ip protocol tcp'],
+            'ct state new',
+            'accept',
+            'iifname "eth0"',
+            ['iifname "eth0" ip protocol tcp ct state new accept'],
+        ),
+        (
+            [],
+            [],
+            'ct state new',
+            'accept',
+            'oifname "eth1"',
+            ['oifname "eth1" ct state new accept'],
+        ),
+    )
+    def testGroupExpressionsWithInterface(
+        self, address_expr, porst_proto_expr, opt, verdict, interface, expected_output
+    ):
+        result = self.dummyterm.GroupExpressions(
+            address_expr, porst_proto_expr, opt, verdict, interface
+        )
+        self.assertEqual(result, expected_output)
+
     def testDuplicateTerm(self):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_TERM_1, self.naming)
         with self.assertRaises(nftables.TermError):
@@ -396,6 +478,32 @@ class NftablesTest(parameterized.TestCase):
             )
         )
         self.assertIn('type filter hook input', nft)
+        print(nft)
+
+    @capture.stdout
+    def testForwardHook(self):
+        """Transit policy: forward hook with interface-matched terms."""
+        self.naming.ParseServiceList(['HTTP = 80/tcp'])
+        self.naming.ParseNetworkList(['INTERNAL = 10.0.0.0/8'])
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(
+                    GOOD_HEADER_FORWARD
+                    + BOTH_INTERFACES_TERM
+                    + SOURCE_INTERFACE_TERM
+                    + DESTINATION_INTERFACE_TERM,
+                    self.naming,
+                ),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('type filter hook forward', nft)
+        self.assertIn(
+            'iifname "eth0" oifname "eth1" ip saddr 10.0.0.0/8 tcp dport 80 ct state new accept',
+            nft,
+        )
+        self.assertIn('iifname "eth0" ct state new accept', nft)
+        self.assertIn('oifname "eth1" ip protocol udp', nft)
         print(nft)
 
     @capture.stdout

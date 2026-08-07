@@ -988,7 +988,7 @@ targets:
 Unless otherwise stated, all fields are required unless they're marked optional.
 
 * nf_address_family: defines the IP address family for the policies. (inet, inet6, mixed)
-* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output)
+* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output, forward)
 * default_policy_override: **OPTIONAL** defines the default action (ACCEPT, DROP) for non-matching packets. Default behavior is DROP.
 * priority: **OPTIONAL** By default, this generator creates base chains with a starting priority of 0. Defining an integer value will override this behavior.
 * noverbose: **OPTIONAL** Disable header and term comments in final ACL output. Default behavior is verbose.
@@ -1000,6 +1000,10 @@ This NFTables ACL generator generates stateful policies via  [conntrack](https:/
 When a non-deny term is processed for ACL generation, the `ct state new` is added to the resulting policy to ensure only valid incoming connections for that term is accepted. This means invalid state packets are dropped by default.
 
 An implementation design for this generator is that terms with options 'established', 'tcp-established' will not rendered in the final NFT configuration.
+
+### Transit (forward) policies
+
+The `forward` hook renders a base chain of `type filter hook forward`, for policy applied to routed/transit traffic rather than to traffic terminating on (or originating from) the host. Terms in a forward filter typically pair with the `source-interface` and `destination-interface` keywords to express which way traffic is crossing the box.
 
 ### Reporting bugs
 
@@ -1015,6 +1019,8 @@ When reporting bugs about this generator ensure to include:
 
 * _logging_: NFTables system logging (host-based).
 * _counter_: NFTables counter for specific term.
+* _source-interface_: match the interface the packet arrived on, rendered as `iifname`.
+* _destination-interface_: match the interface the packet is leaving by, rendered as `oifname`.
 
 ### Sub-tokens
 
