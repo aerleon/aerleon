@@ -1,0 +1,15 @@
+{
+    "nokia-conf:admin-state": "enable",
+    "nokia-conf:entry": [
+        {
+            "description": "term-deny",
+            "action": {
+                "drop": [
+                    null
+                ]
+            },
+            "entry-id": 10000
+        }
+    ]
+}
+

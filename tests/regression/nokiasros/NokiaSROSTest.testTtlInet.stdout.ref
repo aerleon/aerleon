@@ -1,0 +1,22 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-name": "my-filter",
+    "nokia-conf:entry": [
+        {
+            "description": "term-ttl",
+            "action": {
+                "drop": [
+                    null
+                ]
+            },
+            "match": {
+                "ttl": {
+                    "lt": 5
+                }
+            },
+            "entry-id": 10000
+        }
+    ]
+}
+
