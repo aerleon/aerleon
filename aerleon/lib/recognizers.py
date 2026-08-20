@@ -117,7 +117,7 @@ class TValue(enum.Enum):
         elif self == TValue.WordString:
             if not isinstance(value, str):
                 raise TypeError("Expected string.")
-            match = re.fullmatch(r'\w+([-_+.@/]\w*)*', value.strip())
+            match = re.fullmatch(r'-?\w+([-_+.@/]\w*)*', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'String'.")
             return match[0]
@@ -127,7 +127,7 @@ class TValue(enum.Enum):
                 return value
             if not isinstance(value, str):
                 raise TypeError("Expected integer or string.")
-            match = re.fullmatch(r'\d+', value.strip())
+            match = re.fullmatch(r'-?\d+', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'Integer'.")
             return int(match[0])
