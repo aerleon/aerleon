@@ -91,6 +91,24 @@ class NacaddrUnitTest(absltest.TestCase):
             ipaddress.NetmaskValueError, nacaddr.IP('::1/64', strict=False).supernet, 65
         )
 
+    def testDeprecatedSupernet(self):
+        for addr in (self.addr1, self.addr2):
+            with self.assertWarns(DeprecationWarning):
+                supernet = addr.Supernet()
+            self.assertEqual(supernet, addr.supernet())
+            self.assertEqual(supernet.text, addr.text)
+
+    def testDeprecatedExcludeAddrs(self):
+        superset = [nacaddr.IPv4('1.1.1.0/24')]
+        excludes = [nacaddr.IPv4('1.1.1.0/25')]
+        with self.assertWarns(DeprecationWarning):
+            result = nacaddr.ExcludeAddrs(superset, excludes)
+        self.assertListEqual(result, nacaddr.AddressListExclude(superset, excludes))
+
+    def testDeprecatedPrefixlenDiffInvalidError(self):
+        self.assertTrue(issubclass(nacaddr.PrefixlenDiffInvalidError, ipaddress.NetmaskValueError))
+        self.assertRaises(nacaddr.PrefixlenDiffInvalidError, nacaddr.IP('1.1.1.0/24').supernet, 25)
+
     def testAddressListExclusion(self):
         a1 = nacaddr.IPv4('1.1.1.0/24')
         a2 = nacaddr.IPv4('10.0.0.0/24')

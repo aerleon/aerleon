@@ -442,7 +442,7 @@ class Term(aclgenerator.Term):
         exclude_count = (len(term_saddr_excluded) or 1) * (len(term_daddr_excluded) or 1)
 
         # Use bailout jumps for excluded addresses if it results in fewer output
-        # lines than nacaddr.ExcludeAddrs() method.
+        # lines than nacaddr.AddressListExclude() method.
         if exclude_count < bailout_count:
             exclude_saddr = []
             exclude_daddr = []
