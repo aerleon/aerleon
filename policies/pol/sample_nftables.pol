@@ -179,3 +179,24 @@ term high-ports {
   destination-port:: HIGH_PORTS
   action:: accept
 }
+
+header {
+  comment:: "Transit (forward) traffic nftables policy example"
+  target:: nftables inet FORWARD
+}
+
+term forward-web-outbound {
+  comment:: "Transit HTTP from the internal LAN towards the internet."
+  source-interface:: eth0
+  destination-interface:: eth1
+  source-address:: INTERNAL
+  protocol:: tcp
+  destination-port:: HTTP
+  action:: accept
+}
+
+term forward-deny-inbound {
+  comment:: "No transit traffic entering from the internet."
+  source-interface:: eth1
+  action:: deny
+}

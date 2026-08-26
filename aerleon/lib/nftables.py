@@ -114,7 +114,8 @@ class Term(aclgenerator.Term):
           term: Term data.
           nf_af: nftables table type IPv4 only (ip), IPv6 (ip6) or dual-stack
             (inet).
-          nf_hook: INPUT or OUTPUT (packet processing/direction of traffic).
+          nf_hook: INPUT, OUTPUT or FORWARD (packet processing/direction of
+            traffic).
           verbose: used for comment handling.
         """
         self.term = term
@@ -352,8 +353,33 @@ class Term(aclgenerator.Term):
         else:
             return ''
 
+    def _InterfaceStatement(self, term: policy.Term) -> str:
+        """Builds an NFTables interface match statement.
+
+        Interface matching is meaningful on any hook, but is what makes the
+        'forward' hook usable for transit (router/firewall) policy.
+
+        Args:
+          term: Aerleon Term data.
+
+        Returns:
+          string of nftables iifname/oifname statements, empty if term defines
+          no interfaces.
+        """
+        interfaces = []
+        if term.source_interface:
+            interfaces.append(f'iifname "{term.source_interface}"')
+        if term.destination_interface:
+            interfaces.append(f'oifname "{term.destination_interface}"')
+        return ' '.join(interfaces)
+
     def GroupExpressions(
-        self, address_expr: list[str], pp_expr: list[str], options: str, verdict: str
+        self,
+        address_expr: list[str],
+        pp_expr: list[str],
+        options: str,
+        verdict: str,
+        interface_expr: str = '',
     ) -> list[str]:
         """Combines all expressions with a verdict (decision).
 
@@ -367,6 +393,8 @@ class Term(aclgenerator.Term):
           pp_expr: pre-processed list of nftables protocols and ports.
           options: string value to append before verdict for NFT special options.
           verdict: action to take on resulting final statement (allow/deny).
+          interface_expr: pre-processed nftables interface match statement. It
+            leads the rule, as NFT matches metadata before packet headers.
 
         Returns:
           list of strings representing valid nftables statements.
@@ -392,6 +420,8 @@ class Term(aclgenerator.Term):
         else:
             # If no addresses or ports & protocol. Verdict only statement.
             statement.append((Add(options) + Add(verdict)).strip())
+        if interface_expr:
+            statement = [interface_expr + Add(stmt) for stmt in statement]
         return statement
 
     def _AddrStatement(
@@ -482,6 +512,9 @@ class Term(aclgenerator.Term):
             for line in self.term.comment:
                 term_ruleset.append(f'comment "{line}"')
 
+        # INTERFACE handling.
+        interface = self._InterfaceStatement(term)
+
         # ADDRESS handling.
         address_list = self._AddrStatement(
             self.address_family, self.term.source_address, self.term.destination_address
@@ -501,7 +534,9 @@ class Term(aclgenerator.Term):
         # STATEMENT VERDICT / ACTION.
         verdict = self._ACTIONS[self.term.action[0]]
         # TODO: If verdict is not supported, drop nftable_rule for it.
-        nftable_rule = self.GroupExpressions(address_list, proto_and_ports, opt, verdict)
+        nftable_rule = self.GroupExpressions(
+            address_list, proto_and_ports, opt, verdict, interface
+        )
         term_ruleset.extend(nftable_rule)
         return term_ruleset
 
@@ -557,7 +592,7 @@ class Term(aclgenerator.Term):
         """Terms printing function.
 
         Each term is expressed as its own chain. Later referenced to a parent chain
-        with filter directionality (input/output).
+        with filter directionality (input/output/forward).
         """
         return ChainFormat('chain', self.term.name, self.RulesetGenerator(self.term))
 
@@ -568,7 +603,7 @@ class Nftables(aclgenerator.ACLGenerator):
     _PLATFORM = 'nftables'
     SUFFIX = '.nft'
     _HEADER_AF = frozenset(('inet', 'inet6', 'mixed'))
-    _SUPPORTED_HOOKS = frozenset(('input', 'output'))
+    _SUPPORTED_HOOKS = frozenset(('input', 'output', 'forward'))
     _HOOK_PRIORITY_DEFAULT = 0
     _BASE_CHAIN_PREFIX = 'root'
     _LOGGING = set()
@@ -598,6 +633,7 @@ class Nftables(aclgenerator.ACLGenerator):
             'comment',
             'destination_address',
             'destination_address_exclude',
+            'destination_interface',
             'destination_port',
             'expiration',
             'icmp_type',
@@ -608,6 +644,7 @@ class Nftables(aclgenerator.ACLGenerator):
             'platform_exclude',
             'source_address',
             'source_address_exclude',
+            'source_interface',
             'source_port',
             'translated',  # obj attribute, not token
             'stateless_reply',

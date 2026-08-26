@@ -102,6 +102,21 @@ table ip filtering_policies {
         jump test-combined-port
         jump high-ports
     }
+    chain forward-web-outbound {
+        comment "Transit HTTP from the internal LAN towards the internet."
+        iifname "eth0" oifname "eth1" ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } tcp dport 80 ct state new accept
+    }
+    chain forward-deny-inbound {
+        comment "No transit traffic entering from the internet."
+        iifname "eth1" drop
+    }
+    chain root7 {
+        comment "Transit (forward) traffic nftables policy example"
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        jump forward-web-outbound
+        jump forward-deny-inbound
+    }
 }
 table ip6 filtering_policies {
     chain default-deny {
