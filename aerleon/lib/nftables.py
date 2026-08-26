@@ -255,10 +255,9 @@ class Term(aclgenerator.Term):
         if address_family == 'ip':
             # IPv4 stuff.
             if icmp_type and ('icmp' in ip_protocol):
-                if len(icmp_type) > 1:
-                    statement_lines.append(f"icmp type{Add(self.CreateAnonymousSet(icmp_type))}")
-                else:
-                    statement_lines.append(f"icmp type{Add(icmp_type)}")
+                # CreateAnonymousSet returns the bare element for a single
+                # type and a { ... } set for several.
+                statement_lines.append(f"icmp type{Add(self.CreateAnonymousSet(icmp_type))}")
                 ip_protocol.remove('icmp')
             if 'icmpv6' in ip_protocol:
                 # No IPv6 protocols in IPv4 family.
@@ -279,10 +278,9 @@ class Term(aclgenerator.Term):
         if address_family == 'ip6':
             # IPv6 stuff.
             if icmp_type and ('icmpv6' in ip6_protocol):
-                if len(icmp_type) > 1:
-                    statement_lines.append(f"icmpv6 type{Add(self.CreateAnonymousSet(icmp_type))}")
-                else:
-                    statement_lines.append(f"icmpv6 type{Add(icmp_type)}")
+                # CreateAnonymousSet returns the bare element for a single
+                # type and a { ... } set for several.
+                statement_lines.append(f"icmpv6 type{Add(self.CreateAnonymousSet(icmp_type))}")
                 ip6_protocol.remove('icmpv6')
             if 'icmp' in ip6_protocol:
                 # No IPv4 protocols in IPv6 family.

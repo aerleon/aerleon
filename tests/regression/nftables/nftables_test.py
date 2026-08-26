@@ -154,6 +154,36 @@ header {
 }
 """
 
+GOOD_HEADER_INET_INPUT = """
+header {
+  target:: nftables inet INPUT
+}
+"""
+
+MULTI_ICMPV4_TYPE_TERM = """
+term multi-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+SINGLE_ICMPV4_TYPE_TERM = """
+term single-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request
+  action:: accept
+}
+"""
+
+SINGLE_ICMPV6_TYPE_TERM = """
+term single-icmpv6-type {
+  protocol:: icmpv6
+  icmp-type:: multicast-listener-query
+  action:: accept
+}
+"""
+
 ESTABLISHED_OPTION_TERM = """
 term established-term {
   protocol:: udp
@@ -640,6 +670,42 @@ class NftablesTest(parameterized.TestCase):
         term = DictObj(term_dict)
         result = self.dummyterm._OptionsHandler(term)
         self.assertEqual(result, expected_output)
+
+    def testSingleIcmpv4TypeRenders(self):
+        """One icmp-type must render as a bare type, not raise.
+
+        The single-type branch passed the type *list* to Add(), which
+        concatenates onto a string, so a term naming exactly one ICMP type
+        raised TypeError.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + SINGLE_ICMPV4_TYPE_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmp type echo-request', nft, f'single icmp type not rendered:\n{nft}')
+
+    def testSingleIcmpv6TypeRenders(self):
+        """The IPv6 path had the same defect."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + SINGLE_ICMPV6_TYPE_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn(
+            'icmpv6 type mld-listener-query', nft, f'single icmpv6 type not rendered:\n{nft}'
+        )
+
+    def testMultipleIcmpTypesStillRenderAsSet(self):
+        """Several types keep rendering as an anonymous set."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + MULTI_ICMPV4_TYPE_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmp type {', nft, f'multi-type set not rendered:\n{nft}')
 
     def testBuildTokens(self):
         pol1 = nftables.Nftables(
