@@ -17,7 +17,7 @@
 
 import string
 
-from aerleon.lib import windows
+from aerleon.lib import aclgenerator, windows
 from aerleon.lib.nacaddr import IPv4, IPv6
 
 
@@ -95,35 +95,59 @@ class Term(windows.Term):
     ) -> None:
         # At least advfirewall supports port ranges, unlike windows ipsec,
         # so the src and dst port lists will always be one element long.
-        for saddr in src_addr:
-            for daddr in dst_addr:
-                for proto in protocol:
-                    ret_str.append(
-                        self._ComposeRule(
-                            saddr, daddr, proto, src_port[0], dst_port[0], self.term.action[0]
-                        )
+        #
+        # advfirewall remoteip/localip accept comma-separated addresses, so collapse
+        # the address list into one rule per (daddr, proto) rather than one per src addr.
+        # A list of only /0 prefixes (e.g. dual-stack ANY: 0.0.0.0/0 + ::/0) is
+        # netsh's 'any', which already covers both stacks -- emit that rather than
+        # spelling out every family.
+        if not src_addr or all(a.prefixlen == 0 for a in src_addr):
+            src_str = 'any'
+        else:
+            src_str = ','.join(dict.fromkeys(str(a) for a in src_addr))
+
+        commands = []
+        for daddr in dst_addr:
+            for proto in protocol:
+                commands.append(
+                    self._ComposeRule(
+                        src_str, daddr, proto, src_port[0], dst_port[0], self.term.action[0]
                     )
+                )
+        ret_str.extend(list(dict.fromkeys(commands)))
 
     def _ComposeRule(
-        self, srcaddr: IPv4, dstaddr: IPv4, proto: str, srcport: str, dstport: str, action: str
+        self,
+        srcaddr: str,
+        dstaddr: IPv4,
+        proto: str,
+        srcport: str,
+        dstport: str,
+        action: str,
     ) -> str:
-        """Convert the given parameters into a netsh add rule string."""
+        """Convert the given parameters into a netsh add rule string.
+
+        srcaddr is the pre-built comma-separated address string (or 'any')
+        assembled by _CartesianProduct.
+        """
         atoms = []
-        src_label = 'local'
-        dst_label = 'remote'
 
         # We assume a default direction of OUT, but if it's IN, the Windows
         # advfirewall changes around the remote and local labels.
-        if 'in' == self.filter.lower():
+        if self.filter.lower() == 'in':
             src_label = 'remote'
             dst_label = 'local'
+        elif self.filter.lower() == 'out':
+            src_label = 'local'
+            dst_label = 'remote'
+        else:
+            raise aclgenerator.UnsupportedFilterError(
+                f'Unrecognized windows_advfirewall direction: {self.filter}'
+            )
 
         atoms.append(self._DIR_ATOM.substitute(dir=self.filter))
 
-        if srcaddr.prefixlen == 0:
-            atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr='any'))
-        else:
-            atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr=str(srcaddr)))
+        atoms.append(self._ADDR_ATOM.substitute(dir=src_label, addr=srcaddr))
 
         if dstaddr.prefixlen == 0:
             atoms.append(self._ADDR_ATOM.substitute(dir=dst_label, addr='any'))
