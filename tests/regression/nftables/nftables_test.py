@@ -47,6 +47,8 @@ SUPPORTED_TOKENS = frozenset(
         'destination_port',
         'expiration',
         'icmp_type',
+        'logging',
+        'counter',
         'name',  # obj attribute, not token
         'option',
         'protocol',
@@ -180,6 +182,16 @@ SINGLE_ICMPV6_TYPE_TERM = """
 term single-icmpv6-type {
   protocol:: icmpv6
   icmp-type:: multicast-listener-query
+  action:: accept
+}
+"""
+
+COUNTER_LOGGING_TERM = """
+term counted-and-logged {
+  protocol:: tcp
+  destination-port:: SSH
+  counter:: ssh-hits
+  logging:: true
   action:: accept
 }
 """
@@ -755,6 +767,28 @@ class NftablesTest(parameterized.TestCase):
             )
         )
         self.assertIn('icmp type {', nft, f'multi-type set not rendered:\n{nft}')
+
+    def testCounterAndLoggingAreDeclaredSupported(self):
+        """counter and logging are emitted, so they must not warn as unsupported.
+
+        Both are in aclgenerator.WARN_IF_UNSUPPORTED, so omitting them from
+        supported_tokens produced a warning that the generator does not support
+        keywords it in fact renders.
+        """
+        supported, _ = nftables.Nftables._BuildTokens(nftables.Nftables.__new__(nftables.Nftables))
+        self.assertIn('counter', supported)
+        self.assertIn('logging', supported)
+
+    def testCounterAndLoggingRender(self):
+        """Both keywords must actually appear in the rendered ruleset."""
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + COUNTER_LOGGING_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn('counter', nft, f'counter statement missing:\n{nft}')
+        self.assertIn('log prefix "counted-and-logged"', nft, f'log statement missing:\n{nft}')
 
     def testBuildTokens(self):
         pol1 = nftables.Nftables(
