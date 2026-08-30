@@ -21,9 +21,31 @@ from __future__ import annotations
 import collections
 import ipaddress
 import itertools
+import warnings
 from typing import Union, cast
 
 import aerleon.utils.iputils as iputils
+
+# Names kept only for backwards compatibility with Capirca / nacaddr v1. Calling
+# one emits a DeprecationWarning pointing at its replacement.
+# TODO(aerleon): remove the deprecated names (IPv4.Supernet, IPv6.Supernet,
+# ExcludeAddrs, PrefixlenDiffInvalidError) in February 2027.
+_DEPRECATION_REMOVAL = 'February 2027'
+
+
+def _WarnDeprecatedName(old_name: str, new_name: str) -> None:
+    """Emit a DeprecationWarning for a deprecated backwards compatibility name.
+
+    Args:
+      old_name: the deprecated name that was called.
+      new_name: the name callers should use instead.
+    """
+    warnings.warn(
+        f"nacaddr.{old_name} is deprecated and will be removed in "
+        f"{_DEPRECATION_REMOVAL}. Use nacaddr.{new_name} instead.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 
 def IP(
@@ -146,8 +168,9 @@ class IPv4(ipaddress.IPv4Network):
           An IPv4 object
 
         Raises:
-          PrefixlenDiffInvalidError: Raised when prefixlen - prefixlen_diff results
-            in a negative number.
+          PrefixlenDiffInvalidError: A deprecated subclass of
+            ipaddress.NetmaskValueError. Raised when prefixlen - prefixlen_diff
+            results in a negative number.
         """
         if self.prefixlen == 0:
             return self
@@ -163,8 +186,19 @@ class IPv4(ipaddress.IPv4Network):
         )
         return ret_addr
 
-    # Backwards compatibility name from v1.
-    Supernet = supernet
+    # DEPRECATED: backwards compatibility name from v1.
+    # TODO(aerleon): remove in February 2027, callers should use supernet().
+    def Supernet(self, prefixlen_diff: int = 1) -> IPv4:
+        """Deprecated alias for supernet().
+
+        Args:
+          prefixlen_diff: Prefix length difference.
+
+        Returns:
+          An IPv4 object
+        """
+        _WarnDeprecatedName('IPv4.Supernet', 'IPv4.supernet')
+        return self.supernet(prefixlen_diff)
 
 
 class IPv6(ipaddress.IPv6Network):
@@ -222,8 +256,9 @@ class IPv6(ipaddress.IPv6Network):
           An IPv4 object
 
         Raises:
-          PrefixlenDiffInvalidError: Raised when prefixlen - prefixlen_diff results
-            in a negative number.
+          PrefixlenDiffInvalidError: A deprecated subclass of
+            ipaddress.NetmaskValueError. Raised when prefixlen - prefixlen_diff
+            results in a negative number.
         """
         if self.prefixlen == 0:
             return self
@@ -239,8 +274,19 @@ class IPv6(ipaddress.IPv6Network):
         )
         return ret_addr
 
-    # Backwards compatibility name from v1.
-    Supernet = supernet
+    # DEPRECATED: backwards compatibility name from v1.
+    # TODO(aerleon): remove in February 2027, callers should use supernet().
+    def Supernet(self, prefixlen_diff: int = 1) -> IPv6:
+        """Deprecated alias for supernet().
+
+        Args:
+          prefixlen_diff: Prefix length difference.
+
+        Returns:
+          An IPv6 object
+        """
+        _WarnDeprecatedName('IPv6.Supernet', 'IPv6.supernet')
+        return self.supernet(prefixlen_diff)
 
     def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
@@ -400,7 +446,7 @@ def _CollapseAddrListInternal(
             ):  # pylint disable=protected-access
                 # Preserve addr's comment, then merge with it.
                 prev_addr.AddComment(addr.text)
-                addr = ret_array.pop().Supernet()
+                addr = ret_array.pop().supernet()
                 addr_is_fresh = True
             else:
                 ret_array.append(addr)
@@ -514,11 +560,36 @@ def AddressListExclude(
         return sorted(set(ret_array + superset))
 
 
-ExcludeAddrs = AddressListExclude
+# DEPRECATED: backwards compatibility name from v1.
+# TODO(aerleon): remove in February 2027, callers should use AddressListExclude().
+def ExcludeAddrs(
+    superset: list[IPv4 | IPv6],
+    excludes: list[IPv4 | IPv6],
+    collapse_addrs: bool = True,
+) -> list[IPv4 | IPv6]:
+    """Deprecated alias for AddressListExclude().
+
+    Args:
+      superset: a List of nacaddr IPv4 or IPv6 addresses
+      excludes: a List nacaddr IPv4 or IPv6 addresses
+      collapse_addrs: whether or not to collapse contiguous CIDRs togethe
+
+    Returns:
+      a List of nacaddr IPv4 or IPv6 addresses
+    """
+    _WarnDeprecatedName('ExcludeAddrs', 'AddressListExclude')
+    return AddressListExclude(superset, excludes, collapse_addrs)
 
 
+# DEPRECATED: holdover from ipaddr v1. It subclasses ipaddress.NetmaskValueError,
+# so callers should catch ipaddress.NetmaskValueError instead.
+# TODO(aerleon): remove in February 2027 and raise ipaddress.NetmaskValueError
+# directly from IPv4.supernet() and IPv6.supernet().
 class PrefixlenDiffInvalidError(ipaddress.NetmaskValueError):
-    """Holdover from ipaddr v1."""
+    """Holdover from ipaddr v1.
+
+    Deprecated: catch ipaddress.NetmaskValueError instead.
+    """
 
 
 if __name__ == '__main__':
