@@ -491,7 +491,8 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     # If we have a naked source_exclude, we need something to exclude from
                     if not term.source_address:
                         term.source_address = [
-                            nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper())
+                            nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper()),
+                            nacaddr.IP('::/0', term.name.upper(), term.name.upper()),
                         ]
                     # Use the term name as the token & parent_token
                     new_src_parent_token = f"{term.name.upper()}_SRC_EXCLUDE"
@@ -505,7 +506,8 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 if term.destination_address_exclude:
                     if not term.destination_address:
                         term.destination_address = [
-                            nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper())
+                            nacaddr.IP('0.0.0.0/0', term.name.upper(), term.name.upper()),
+                            nacaddr.IP('::/0', term.name.upper(), term.name.upper()),
                         ]
                     new_dst_parent_token = f"{term.name.upper()}_DST_EXCLUDE"
                     new_dst_token = new_dst_parent_token
