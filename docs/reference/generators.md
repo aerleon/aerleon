@@ -1001,6 +1001,8 @@ When a non-deny term is processed for ACL generation, the `ct state new` is adde
 
 An implementation design for this generator is that terms with options 'established', 'tcp-established' will not rendered in the final NFT configuration.
 
+A term is likewise not rendered when every protocol it lists belongs to the other address family -- an `icmpv6` term in an `inet` filter, or an `icmp` term in an `inet6` filter. The protocol match for such a term cannot be expressed in that table, and rendering it without one would leave a rule matching every packet in the chain. A term keeping at least one protocol valid for the family is rendered as normal, minus the protocols that are not.
+
 ### Transit (forward) policies
 
 The `forward` hook renders a base chain of `type filter hook forward`, for policy applied to routed/transit traffic rather than to traffic terminating on (or originating from) the host. Terms in a forward filter typically pair with the `source-interface` and `destination-interface` keywords to express which way traffic is crossing the box.

@@ -618,6 +618,9 @@ class Nftables(aclgenerator.ACLGenerator):
     # Below mapping converts Aerleon HEADER native to nftables table.
     # In Nftables 'inet' contains both IPv4 and IPv6 addresses and rules.
     NF_TABLE_AF_MAP = {'inet': 'ip', 'inet6': 'ip6', 'mixed': 'inet'}
+    # Protocols that cannot appear in a single-family nftables table.
+    # 'inet' (mixed) is absent: it renders each family separately.
+    _AF_INCOMPATIBLE_PROTOCOLS = {'ip': frozenset(['icmpv6']), 'ip6': frozenset(['icmp'])}
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """NFTables generator list of supported tokens and sub tokens.
@@ -698,11 +701,29 @@ class Nftables(aclgenerator.ACLGenerator):
             child_chains = collections.defaultdict(dict)
             term_names = set()
             new_terms = []
-            # TODO: Add checks for ICMP and address families.
             for term in terms:
                 if term.name in term_names:
                     raise TermError('Duplicate term name')
                 term_names.add(term.name)
+                # Skip terms whose protocols are all incompatible with this
+                # table's address family. PortsAndProtocols drops ICMPv6 in an
+                # IPv4 table (and ICMPv4 in an IPv6 table), so such a term would
+                # otherwise render with no match statement at all -- a bare
+                # verdict matching every packet in the chain.
+                incompatible_protos = self._AF_INCOMPATIBLE_PROTOCOLS.get(nf_af)
+                if (
+                    incompatible_protos
+                    and term.protocol
+                    and set(term.protocol).issubset(incompatible_protos)
+                ):
+                    logging.warning(
+                        aclgenerator.Term.NO_AF_LOG_PROTO.substitute(
+                            term=term.name,
+                            proto=', '.join(term.protocol),
+                            af=nf_af,
+                        )
+                    )
+                    continue
                 if term.stateless_reply:
                     logging.warning(
                         'WARNING: Term %s is a stateless reply ' 'term and will not be rendered.',
