@@ -16,10 +16,9 @@
 
 """Iptables generator."""
 
+import logging
 import re
 from string import Template  # pylint: disable=g-importing-member
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -205,7 +204,7 @@ class Term(aclgenerator.Term):
             logging.warning('Term %s is using hopopt in IPv4 context.', self.term_name)
             return ''
 
-        (term_saddr, exclude_saddr, term_daddr, exclude_daddr) = self._CalculateAddresses(
+        term_saddr, exclude_saddr, term_daddr, exclude_daddr = self._CalculateAddresses(
             self.term.source_address,
             self.term.source_address_exclude,
             self.term.destination_address,

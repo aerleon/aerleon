@@ -45,13 +45,12 @@ DNS = 53/tcp
 
 """
 
-
+import logging
 import re
 from pathlib import Path
 from typing import Any
 
 import yaml
-from absl import logging
 from yaml import YAMLError
 
 from aerleon.lib import nacaddr
@@ -574,7 +573,7 @@ class Naming:
         for i in self.fqdn[token].items:
             comment = ''
             if i.find('#') > -1:
-                (name, comment) = i.split('#', 1)
+                name, comment = i.split('#', 1)
             else:
                 name = i
 
@@ -625,7 +624,7 @@ class Naming:
         for i in self.networks[token].items:
             comment = ''
             if i.find('#') > -1:
-                (net, comment) = i.split('#', 1)
+                net, comment = i.split('#', 1)
             else:
                 net = i
 
@@ -736,7 +735,7 @@ class Naming:
             return
         comment = ''
         if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
+            line, comment = line.split('#', 1)
         line_parts = line.split('=')  # Split on var = val lines.
         # the value field still has the comment at this point
         # If there was '=', then do var and value

@@ -16,9 +16,8 @@
 
 """Generic Windows security policy generator; requires subclassing."""
 
+import logging
 import string
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -131,9 +130,7 @@ class Term(aclgenerator.Term):
             )
 
         # ports = Map the ports in a straight list since multiports aren't supported
-        (src_ports, dst_ports) = self._HandlePorts(
-            self.term.source_port, self.term.destination_port
-        )
+        src_ports, dst_ports = self._HandlePorts(self.term.source_port, self.term.destination_port)
 
         # The windows ipsec driver requires either 'tcp' or 'udp' to be specified
         # if a srcport or dstport is specified.  Fail if src or dst ports are
@@ -152,7 +149,7 @@ class Term(aclgenerator.Term):
             )
 
         # icmp-types
-        (icmp_types, protocols) = self._HandleIcmpTypes(self.term.icmp_type, protocols)
+        icmp_types, protocols = self._HandleIcmpTypes(self.term.icmp_type, protocols)
 
         ret_str = []
         self._HandlePreRule(ret_str)

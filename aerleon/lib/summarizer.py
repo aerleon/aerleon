@@ -15,6 +15,7 @@
 #
 
 """Discontinuous subnet mask summarizer."""
+
 from __future__ import annotations
 
 import collections

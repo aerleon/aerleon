@@ -16,6 +16,9 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
+import logging
+import logging.config
+import logging.handlers
 import multiprocessing.context
 import multiprocessing.managers
 import multiprocessing.pool
@@ -23,10 +26,13 @@ import pathlib
 import sys
 import typing
 from collections.abc import Iterator
+from multiprocessing import Event, Process, Queue
 
-from absl import app, flags, logging
+from absl import app, flags
 
-from aerleon.lib import aclgenerator, naming, pcap, plugin_supervisor, policy, yaml
+from aerleon.lib import aclgenerator
+from aerleon.lib import logging as aerleon_logger
+from aerleon.lib import naming, pcap, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
@@ -126,6 +132,8 @@ def RenderFile(
     optimize: bool,
     shade_check: bool,
     write_files: WriteList,
+    queue: Queue = None,
+    log_level: int = logging.DEBUG,
 ):
     """Render a single file.
 
@@ -139,7 +147,12 @@ def RenderFile(
       optimize: a boolean indicating if we should turn on optimization or not.
       shade_check: should we raise an error if a term is completely shaded
       write_files: a list of file tuples, (output_file, acl_text), to write
+      queue: Queue used to send logs back when in multiprocessing.
+      log_level: level the queued logs are filtered at, matching the parent.
     """
+    if queue:
+        logging.config.dictConfig(aerleon_logger.get_worker_config(queue, log_level))
+
     output_relative = input_file.relative_to(base_directory).parent.parent
     output_directory = output_directory / output_relative
 
@@ -357,6 +370,24 @@ def _WriteFile(output_file: pathlib.Path, file_contents: str):
         raise
 
 
+def _ListenerProcess(queue: Queue, stop_event, log_level: int):
+    """Emit log records produced by the renderer subprocesses.
+
+    Must stay at module level: the spawn start method pickles the target.
+
+    Args:
+      queue: Queue the renderer subprocesses send their log records on.
+      stop_event: Event set by the parent once every renderer has finished.
+      log_level: level the records are filtered at, matching the parent.
+    """
+    logging.config.dictConfig(aerleon_logger.get_root_config(log_level))
+    listener = logging.handlers.QueueListener(queue, *logging.getLogger().handlers)
+    listener.start()
+    stop_event.wait()
+    # stop() drains whatever is still queued; simply returning would drop it.
+    listener.stop()
+
+
 def Run(
     base_directory: str,
     definitions_directory: str,
@@ -390,8 +421,8 @@ def Run(
         definitions = naming.Naming(definitions_directory)
     except naming.NoDefinitionsError:
         err_msg = f'bad definitions directory: {definitions_directory}'
-        logging.fatal(err_msg)
-        return  # static type analyzer can't detect that logging.fatal exits program
+        logging.critical(err_msg)
+        sys.exit(1)
 
     with_errors = False
     logging.info('finding policies...')
@@ -420,6 +451,8 @@ def Run(
         manager: multiprocessing.managers.SyncManager = context.Manager()
         write_files: WriteList = manager.list()
         # render all files in parallel
+        q = multiprocessing.Manager().Queue()
+        log_level = logging.getLogger().getEffectiveLevel()
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
         results: list[multiprocessing.pool.AsyncResult] = []
@@ -436,11 +469,18 @@ def Run(
                         optimize,
                         shade_check,
                         write_files,
+                        q,
+                        log_level,
                     ),
                 )
             )
+        stop_event = Event()
+        lp = Process(target=_ListenerProcess, name='listener', args=(q, stop_event, log_level))
+        lp.start()
         pool.close()
         pool.join()
+        stop_event.set()
+        lp.join()
 
         for result in results:
             try:
@@ -471,10 +511,11 @@ def main(argv):
     except config.ConfigFileError as e:
         exit(f"Error: {e}")
 
-    if configs['verbose']:
-        logging.set_verbosity(logging.INFO)
+    log_level = 'INFO'
     if configs['debug']:
-        logging.set_verbosity(logging.DEBUG)
+        log_level = 'DEBUG'
+
+    logging.config.dictConfig(aerleon_logger.get_root_config(log_level))
     logging.debug(
         'binary: %s\noptimize: %d\nbase_directory: %s\n'
         'policy_file: %s\nrendered_acl_directory: %s',
@@ -487,22 +528,18 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-    try:
-        Run(
-            configs['base_directory'],
-            configs['definitions_directory'],
-            configs['policy_file'],
-            configs['output_directory'],
-            configs['exp_info'],
-            configs['max_renderers'],
-            configs['ignore_directories'],
-            configs['optimize'],
-            configs['shade_check'],
-            context,
-        )
-    except Exception as e:
-        logging.error(f"Unhandled exception: {e}", exc_info=True)
-        sys.exit(1)
+    Run(
+        configs['base_directory'],
+        configs['definitions_directory'],
+        configs['policy_file'],
+        configs['output_directory'],
+        configs['exp_info'],
+        configs['max_renderers'],
+        configs['ignore_directories'],
+        configs['optimize'],
+        configs['shade_check'],
+        context,
+    )
 
 
 def EntryPoint():

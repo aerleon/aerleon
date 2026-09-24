@@ -15,11 +15,10 @@
 #
 """Windows IP security policy generator."""
 
+import logging
 
 # pylint: disable=g-importing-member
 from string import Template
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, windows
 from aerleon.lib.nacaddr import IPv4, IPv6
@@ -145,7 +144,7 @@ class Term(windows.Term):
         ports = ['']
         for tpl in port_tuples:
             if tpl:
-                (port_start, port_end) = tpl
+                port_start, port_end = tpl
                 ports = list(range(port_start, port_end + 1))
         return ports
 

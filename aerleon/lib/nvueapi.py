@@ -23,11 +23,7 @@ https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-514/System-Co
 
 import itertools
 import json
-
-try:
-    from absl import logging
-except ImportError:
-    import logging
+import logging
 
 from aerleon.lib import aclgenerator, policy
 

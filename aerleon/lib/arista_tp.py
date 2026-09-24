@@ -16,9 +16,8 @@
 """Arista traffic-policy generator."""
 
 import copy
+import logging
 import re
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, policy
 from aerleon.lib.nacaddr import IPv4, IPv6

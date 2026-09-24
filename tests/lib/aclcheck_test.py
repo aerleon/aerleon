@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Unit tests for AclCheck."""
+
 from ipaddress import IPv4Address, IPv4Network
 from itertools import product
 from typing import Final, Literal
@@ -77,9 +78,7 @@ term default-term {
 }
 """
 
-PARTIAL_POLICY_TEST: Final[
-    str
-] = """
+PARTIAL_POLICY_TEST: Final[str] = """
 header {
   comment:: "partial supernet/subnet test acl"
   target:: juniper test-filter

@@ -15,13 +15,13 @@
 #
 
 """SRX generator."""
+
 # pylint: disable=super-init-not-called
 
 
 import copy
 import itertools
-
-from absl import logging
+import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
 

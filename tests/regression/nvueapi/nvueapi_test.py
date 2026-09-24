@@ -255,8 +255,7 @@ class NvueApiTest(absltest.TestCase):
     def testMacAddressFamilyError(self):
         """Test that MAC ACL raises an error since Aerleon doesn't support MAC ACLs."""
         pol = policy.ParsePolicy(
-            GOOD_HEADER_MAC
-            + """
+            GOOD_HEADER_MAC + """
 term allow-mac {
   comment:: "Allow specific MAC addresses"
   action:: accept
@@ -338,8 +337,7 @@ term allow-mac {
         self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         pol = policy.ParsePolicy(
-            GOOD_HEADER_IPV4
-            + """
+            GOOD_HEADER_IPV4 + """
 term allow-web-multi {
   comment:: "Allow HTTP from multiple clients to multiple servers"
   source-address:: CLIENTS

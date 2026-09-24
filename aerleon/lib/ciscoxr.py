@@ -15,6 +15,7 @@
 #
 
 """Cisco IOS-XR filter renderer."""
+
 from __future__ import annotations
 
 from aerleon.lib import cisco

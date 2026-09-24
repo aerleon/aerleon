@@ -1,11 +1,11 @@
 """YAML front-end. Loads a Policy model from a .yaml file."""
 
 import copy
+import logging
 import pathlib
 import typing
 
 import yaml
-from absl import logging
 from yaml.error import YAMLError
 
 from aerleon.lib import policy

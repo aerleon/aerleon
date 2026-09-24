@@ -43,12 +43,11 @@ undocumented and subject to change.
 from __future__ import annotations
 
 import importlib.util
+import logging
 import pathlib
 from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import entry_points, version
-
-from absl import logging
 
 from aerleon.lib import plugin
 from aerleon.lib.aclgenerator import ACLGenerator

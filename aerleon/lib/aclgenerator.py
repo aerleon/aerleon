@@ -19,10 +19,9 @@
 import copy
 import datetime
 import hashlib
+import logging
 import re
 import string
-
-from absl import logging
 
 from aerleon.lib import policy
 

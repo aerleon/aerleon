@@ -21,11 +21,11 @@ https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/
 """
 
 import copy
+import logging
 import re
 from typing import TypedDict
 
 import yaml
-from absl import logging
 
 from aerleon.lib import aclgenerator
 from aerleon.lib.policy import Policy, Term

@@ -395,8 +395,7 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMultipleCallsSingleOwnerLine(self):
-        expected_result = textwrap.dedent(
-            """\
+        expected_result = textwrap.dedent("""\
         # $Id:$
         # $Date:$
         # $Revision:$
@@ -408,8 +407,7 @@ class ArubaTest(absltest.TestCase):
           # Owner: wshakespeare
           any any any permit
         !
-        """
-        )
+        """)
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_LONG_COMMENT, self.naming), EXP_INFO
         )
@@ -483,8 +481,7 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMultipleCallsSingleNetdestinationsBlock(self):
-        expected_result = textwrap.dedent(
-            """\
+        expected_result = textwrap.dedent("""\
         # $Id:$
         # $Date:$
         # $Revision:$
@@ -495,8 +492,7 @@ class ArubaTest(absltest.TestCase):
         ip access-list session test-filter
           alias gt-one-netd_src any 1 permit
         !
-        """
-        )
+        """)
         self.naming._ParseLine('SINGLE_HOST = 10.1.1.1/32', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_SINGLE_NETDESTINATION, self.naming),

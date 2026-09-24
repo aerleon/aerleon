@@ -15,7 +15,6 @@
 #
 """CiscoNX generator."""
 
-
 from aerleon.lib import aclgenerator, cisco
 
 

@@ -209,6 +209,7 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 """
 
 import copy
+import logging
 import multiprocessing.context
 import multiprocessing.managers
 import multiprocessing.pool
@@ -217,8 +218,6 @@ import sys
 from collections.abc import MutableMapping, MutableSequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal, Optional
-
-from absl import logging
 
 from aerleon.aclgen import (
     ACLGeneratorError,

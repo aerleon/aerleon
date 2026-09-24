@@ -6,10 +6,9 @@ Hierarchical Firewalls (HF) are represented in a SecurityPolicy GCP resouce.
 """
 
 import copy
+import logging
 import re
 from typing import TypedDict
-
-from absl import logging
 
 from aerleon.lib import gcp, nacaddr, policy
 

@@ -9,9 +9,8 @@ https://cloud.google.com/armor/docs/
 
 import copy
 import json
+import logging
 from typing import TypedDict
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, policy
 

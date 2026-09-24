@@ -24,7 +24,7 @@ inline comments but preservers line-level comments. Fields expected to have
 
 from __future__ import annotations
 
-from absl import logging
+import logging
 
 
 class Field:

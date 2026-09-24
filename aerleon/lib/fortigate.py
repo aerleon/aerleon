@@ -1,9 +1,8 @@
+import logging
 from collections import defaultdict
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from typing import Any
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
 from aerleon.lib.proxmox import BooleanKeywordOption

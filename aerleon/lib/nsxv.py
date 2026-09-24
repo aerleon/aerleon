@@ -16,10 +16,9 @@
 
 """Nsxv generator."""
 
+import logging
 import re
 import xml
-
-from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr, policy
 
