@@ -1,0 +1,23 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-name": "my-filter",
+    "nokia-conf:entry": [
+        {
+            "description": "term-sport",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "src-port": {
+                    "eq": 53
+                },
+                "protocol": "tcp"
+            },
+            "entry-id": 10000
+        }
+    ]
+}
+
