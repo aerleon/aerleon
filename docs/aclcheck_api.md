@@ -108,11 +108,11 @@ The output dictionary from `Summarize()` is structured as:
 {
     "filter_name_1": {
         "term_name_1": {
-            "possibles": ["packet-length", "tcp-est"], # List of reasons if it's a possible match
+            "possibles": frozenset({"packet-length", "tcp-est"}),  # set of reasons if it's a possible match
             "message": "  term: term_name_1 (possible match)\n    action if ['packet-length', 'tcp-est']"
         },
         "term_name_2": {
-            "possibles": [],
+            "possibles": frozenset(),
             "message": "  term: term_name_2\n    accept"
         }
     },
