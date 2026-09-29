@@ -89,7 +89,8 @@ jobs:
         id: project-setup
         with:
           # must be >= highest [tool.black] target-version
-          python-version: "3.14"
+          # TODO switch to prod 3.15 before merge
+          python-version: "3.15-dev"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
