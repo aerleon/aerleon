@@ -152,8 +152,8 @@ command_line = '-m pytest'
 include = ["aerleon", "tests"]
 exclude = [
     "**/__pycache__",
+    "**/_vendor",
     ".venv",
-    "_vendor",
 ]
 
 pythonVersion = "3.10"
