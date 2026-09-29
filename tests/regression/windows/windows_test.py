@@ -15,7 +15,6 @@
 
 """Unittest for windows acl rendering module."""
 
-
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, windows
