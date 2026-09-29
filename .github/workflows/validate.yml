@@ -96,7 +96,7 @@ jobs:
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
         with:
-          version: "25.9.0"
+          version: "26.5.1"
           src: "aerleon tests noxfile.py"
       #----------------------------------------------
       # run isort
