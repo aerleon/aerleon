@@ -88,7 +88,9 @@ jobs:
         uses: ./.github/actions/setup
         id: project-setup
         with:
-          python-version: "3.13"
+          # must be >= highest [tool.black] target-version
+          # TODO switch to prod 3.15 before merge
+          python-version: "3.15-dev"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------

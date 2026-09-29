@@ -86,7 +86,8 @@ def benchmark_tuned(session):
     session.notify('benchmark', ['__benchmark_tune'])
 
 
-@session
+# must be >= highest [tool.black] target-version
+@session(python="3.15")
 def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
