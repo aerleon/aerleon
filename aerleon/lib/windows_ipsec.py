@@ -15,7 +15,6 @@
 #
 """Windows IP security policy generator."""
 
-
 # pylint: disable=g-importing-member
 from string import Template
 
@@ -145,7 +144,7 @@ class Term(windows.Term):
         ports = ['']
         for tpl in port_tuples:
             if tpl:
-                (port_start, port_end) = tpl
+                port_start, port_end = tpl
                 ports = list(range(port_start, port_end + 1))
         return ports
 
