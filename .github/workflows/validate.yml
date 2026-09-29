@@ -87,7 +87,8 @@ jobs:
         uses: ./.github/actions/setup
         id: project-setup
         with:
-          python-version: "3.13"
+          # must be >= highest [tool.black] target-version
+          python-version: "3.14"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
