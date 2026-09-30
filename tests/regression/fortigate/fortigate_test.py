@@ -428,6 +428,20 @@ class FortigateTest(parameterized.TestCase):
         # Different IPs from MIXED_P for exclusion testing
         self.naming._ParseLine('MIXED_Q = 1.1.1.3/32 2001:db8::3/128', 'networks')
 
+        # FQDN definitions (only expressible via the object/YAML naming path).
+        self.naming.ParseDefinitionsObject(
+            {
+                'networks': {
+                    'GOOGLE_DNS': {'values': [{'fqdn': 'dns.google.com'}]},
+                    'MULTI_FQDN': {
+                        'values': [{'fqdn': 'a.example.com'}, {'fqdn': 'b.example.com'}]
+                    },
+                },
+                'services': {},
+            },
+            '',
+        )
+
     @capture.stdout
     def testNoAddressesInet6OutputsAll(self):
         pol = policy.ParsePolicy(INET6_HEADER + ALL_IPS, self.naming)
@@ -464,6 +478,57 @@ class FortigateTest(parameterized.TestCase):
         acl = fortigate.Fortigate(pol, EXP_INFO)
         self.assertNotIn('srcaddr6 ', str(acl))
         self.assertNotIn('dstaddr6 ', str(acl))
+        print(acl)
+
+    @capture.stdout
+    def testDestinationFqdn(self):
+        term = """
+  - name: to-fqdn
+    destination-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('edit GOOGLE_DNS', acl)
+        self.assertIn('set type fqdn', acl)
+        self.assertIn('set fqdn "dns.google.com"', acl)
+        self.assertIn('set dstaddr "GOOGLE_DNS"', acl)
+        print(acl)
+
+    @capture.stdout
+    def testSourceFqdn(self):
+        term = """
+  - name: from-fqdn
+    source-fqdn: GOOGLE_DNS
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('set type fqdn', acl)
+        self.assertIn('set fqdn "dns.google.com"', acl)
+        self.assertIn('set srcaddr "GOOGLE_DNS"', acl)
+        print(acl)
+
+    @capture.stdout
+    def testMultipleFqdnValuesExpandToIndexedObjects(self):
+        term = """
+  - name: multi
+    destination-fqdn: MULTI_FQDN
+    action: accept
+"""
+        pol = yaml_frontend.ParsePolicy(
+            YAML_INET_HEADER + term, filename="fqdn", definitions=self.naming
+        )
+        acl = str(fortigate.Fortigate(pol, EXP_INFO))
+        self.assertIn('edit MULTI_FQDN_0', acl)
+        self.assertIn('set fqdn "a.example.com"', acl)
+        self.assertIn('edit MULTI_FQDN_1', acl)
+        self.assertIn('set fqdn "b.example.com"', acl)
+        self.assertIn('set dstaddr "MULTI_FQDN_0" "MULTI_FQDN_1"', acl)
         print(acl)
 
     @capture.stdout
