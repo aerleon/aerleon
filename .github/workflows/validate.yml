@@ -11,8 +11,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # TODO switch to prod 3.15 versions
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15-dev", "3.15t-dev"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -89,8 +88,7 @@ jobs:
         id: project-setup
         with:
           # must be >= highest [tool.black] target-version
-          # TODO switch to prod 3.15 before merge
-          python-version: "3.15-dev"
+          python-version: "3.15"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
