@@ -15,6 +15,7 @@
 #
 
 """SRX generator."""
+
 # pylint: disable=super-init-not-called
 
 
