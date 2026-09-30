@@ -48,7 +48,7 @@ test = [
     "pytest-cov>=6.3.0",
 ]
 lint = [
-    "black==26.3.1",
+    "black==26.5.1",
     "flake8",
     "Flake8-pyproject",
     "isort>=6.1.0",
@@ -148,11 +148,11 @@ command_line = '-m pytest'
 include = ["aerleon", "tests"]
 exclude = [
     "**/__pycache__",
+    "**/_vendor",
     ".venv",
-    "_vendor",
 ]
 
-pythonVersion = "3.11"
+pythonVersion = "3.10"
 typeCheckingMode = "basic"  # "off", "basic", "standard", "strict"
 
 reportMissingImports = true
