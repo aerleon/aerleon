@@ -67,15 +67,11 @@ nox = [
     "nox>=2025.10.14",
     "nox-poetry>=1.2.0",
 ]
-release = [
-    "sigstore>=1.0.0",
-]
 dev = [
     {include-group = "test"},
     {include-group = "lint"},
     {include-group = "docs"},
     {include-group = "nox"},
-    {include-group = "release"},
 ]
 
 [build-system]
