@@ -127,6 +127,20 @@ header {
 }
 """
 
+GOOD_HEADER_IN_BLOCK = """
+header {
+  comment:: "default block in"
+  target:: windows_advfirewall in block
+}
+"""
+
+GOOD_HEADER_OUT_PERMIT = """
+header {
+  comment:: "default permit out"
+  target:: windows_advfirewall out permit
+}
+"""
+
 BAD_TERM_ICMP = """
 term test-icmp {
   icmp-type:: echo-request echo-reply
@@ -535,6 +549,42 @@ class WindowsAdvFirewallTest(absltest.TestCase):
         rules = self._Render(GOOD_HEADER_IN, GOOD_TERM_ICMP, GOOD_TERM_ICMPV6)
         self.assertIn('protocol=icmpv4', ' '.join(rules))
         self.assertNotIn('icmpv6', ' '.join(rules))
+
+    def _Policy(self, header, *terms):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(header + ''.join(terms), self.naming), EXP_INFO
+        )
+        return [line for line in str(acl).splitlines() if line.startswith('netsh advfirewall set')]
+
+    def testDefaultActionBlockIn(self):
+        lines = self._Policy(GOOD_HEADER_IN_BLOCK, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy blockinbound,notconfigured']
+        )
+
+    def testDefaultActionPermitOut(self):
+        lines = self._Policy(GOOD_HEADER_OUT_PERMIT, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy notconfigured,allowoutbound']
+        )
+
+    def testDefaultActionDoesNotCarryToNextFilter(self):
+        """A default action on one filter must not apply to the filters after it."""
+        lines = self._Policy(GOOD_HEADER_IN_BLOCK + GOOD_SIMPLE + GOOD_HEADER_OUT, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy blockinbound,notconfigured']
+        )
+
+    def testDefaultActionTwiceRejected(self):
+        header = """
+header {
+  target:: windows_advfirewall in permit block
+}
+"""
+        with self.assertRaisesRegex(
+            aclgenerator.UnsupportedTargetOptionError, 'only specify one default action'
+        ):
+            self._Policy(header, GOOD_SIMPLE)
 
     def testBuildTokens(self):
         pol1 = windows_advfirewall.WindowsAdvFirewall(

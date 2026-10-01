@@ -6,7 +6,7 @@ Renders `netsh advfirewall firewall add rule …` commands.
 
 ```yaml
 targets:
-    windows_advfirewall: [out|in] {inet|inet6|mixed}
+    windows_advfirewall: [out|in] {inet|inet6|mixed} {permit|block}
 ```
 
 | Option | Description | Notes |
@@ -16,8 +16,9 @@ targets:
 | `inet` | IPv4 only. | |
 | `inet6` | IPv6 only. | |
 | `mixed` | Both address families. | Default. netsh takes IPv4 and IPv6 addresses in one `remoteip`/`localip` list, so each term renders once with all its addresses. `icmp` and `icmpv6` both render; under `inet` only `icmp` does, and under `inet6` only `icmpv6`. |
+| `permit`, `block` | The default action for this direction, on all profiles. | Optional. Renders `netsh advfirewall set allprofiles firewallpolicy`, with the other direction left `notconfigured`. Without it, the host's default is unchanged. |
 
-A `permit` or `block` default action in the header raises "Windows generator does not support default actions".
+A `block` default is the way to express default deny. A final deny-all term doesn't work on Windows: block rules take precedence over allow rules, so it would block the traffic the earlier terms allow.
 
 ## Term Format
 

@@ -193,3 +193,24 @@ class WindowsAdvFirewall(windows.WindowsGenerator):
 
     _PLATFORM = 'windows_advfirewall'
     _TERM = Term
+
+    _DEFAULT_ACTIONS = ('permit', 'block')
+
+    # netsh sets both directions in one firewallpolicy value; the direction
+    # this filter does not cover is left as notconfigured.
+    _FIREWALLPOLICY = {
+        ('in', 'block'): 'blockinbound,notconfigured',
+        ('in', 'permit'): 'allowinbound,notconfigured',
+        ('out', 'block'): 'notconfigured,blockoutbound',
+        ('out', 'permit'): 'notconfigured,allowoutbound',
+    }
+
+    def _HandleDefaultAction(self, header, default_action: str, target: list[str]) -> None:
+        direction = header.FilterName(self._PLATFORM).lower()
+        policy = self._FIREWALLPOLICY.get((direction, default_action))
+        if policy is None:
+            raise aclgenerator.UnsupportedFilterError(
+                f'Unrecognized windows_advfirewall direction: {direction}'
+            )
+        # Applies to every profile, as the generated rules do.
+        target.append(f'netsh advfirewall set allprofiles firewallpolicy {policy}')
