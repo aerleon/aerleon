@@ -6,15 +6,16 @@ Renders `netsh advfirewall firewall add rule …` commands.
 
 ```yaml
 targets:
-    windows_advfirewall: [out|in] {inet|inet6}
+    windows_advfirewall: [out|in] {inet|inet6|mixed}
 ```
 
 | Option | Description | Notes |
 |---|---|---|
 | `out` | Outbound rules (`dir=out`). | |
 | `in` | Inbound rules (`dir=in`). | |
-| `inet` | IPv4 only. | Default. |
-| `inet6` | IPv6 only. | `mixed` is not accepted. |
+| `inet` | IPv4 only. | |
+| `inet6` | IPv6 only. | |
+| `mixed` | Both address families. | Default. netsh takes IPv4 and IPv6 addresses in one `remoteip`/`localip` list, so each term renders once with all its addresses. `icmp` and `icmpv6` both render; under `inet` only `icmp` does, and under `inet6` only `icmpv6`. |
 
 A `permit` or `block` default action in the header raises "Windows generator does not support default actions".
 
