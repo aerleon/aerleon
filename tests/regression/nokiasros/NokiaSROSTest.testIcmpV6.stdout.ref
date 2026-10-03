@@ -1,0 +1,38 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-name": "my-filter",
+    "nokia-conf:entry": [
+        {
+            "description": "term-icmpv6",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "next-header": "ipv6-icmp",
+                "icmp": {
+                    "type": 135
+                }
+            },
+            "entry-id": 10000
+        },
+        {
+            "description": "term-icmpv6",
+            "action": {
+                "accept": [
+                    null
+                ]
+            },
+            "match": {
+                "next-header": "ipv6-icmp",
+                "icmp": {
+                    "type": 136
+                }
+            },
+            "entry-id": 10001
+        }
+    ]
+}
+

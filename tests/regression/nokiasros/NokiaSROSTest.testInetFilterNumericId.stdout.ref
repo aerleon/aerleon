@@ -1,0 +1,17 @@
+{
+    "nokia-conf:scope": "template",
+    "nokia-conf:default-action": "drop",
+    "nokia-conf:filter-id": 100,
+    "nokia-conf:entry": [
+        {
+            "description": "term-deny",
+            "action": {
+                "drop": [
+                    null
+                ]
+            },
+            "entry-id": 10000
+        }
+    ]
+}
+
