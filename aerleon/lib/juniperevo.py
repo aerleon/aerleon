@@ -37,7 +37,7 @@ class Term(juniper.Term):
     _PAYLOAD_PROTOCOL = 'payload-protocol'
     _PAYLOAD_PROTOCOL_EXCEPT = 'payload-protocol-except'
 
-    def __str__(self):
+    def __str__(self) -> str:
         self._Ipv6ProtocolMatch()
         term_config = super().__str__()
         # Reset to original syntax.
@@ -45,7 +45,7 @@ class Term(juniper.Term):
         self._TERM_TYPE[self._INET6][self._PROTOCOL_EXCEPT] = self._NEXT_HEADER_EXCEPT
         return term_config
 
-    def _Ipv6ProtocolMatch(self):
+    def _Ipv6ProtocolMatch(self) -> None:
         """Use the correct syntax to match protocols after the IPv6 header.
 
         Refer to juniperevo.md in documentation for matching syntax.
