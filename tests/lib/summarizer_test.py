@@ -70,7 +70,7 @@ class SummarizerTest(absltest.TestCase):
     def testSummarizeNoNetworks(self):
         nets = []
         for octet in range(0, 256):
-            net = nacaddr.IPv4('192.' + str(255 - octet) + '.' + str(octet) + '.64/27')
+            net = nacaddr.IPv4(f"192.{255 - octet!s}.{octet!s}.64/27")
             nets.append(net)
         random.shuffle(nets)
         result = summarizer.Summarize(nets)
@@ -89,7 +89,7 @@ class SummarizerTest(absltest.TestCase):
             nacaddr.IPv4('10.0.0.0/8'),
         ]
         for octet in range(0, 256):
-            net = nacaddr.IPv4('172.16.' + str(octet) + '.96/30')
+            net = nacaddr.IPv4(f"172.16.{octet!s}.96/30")
             nets.append(net)
         random.shuffle(nets)
         result = summarizer.Summarize(nets)
@@ -105,7 +105,7 @@ class SummarizerTest(absltest.TestCase):
     def testSummarizeAllNetworks(self):
         nets = []
         for octet in range(0, 256):
-            net = nacaddr.IPv4('192.168.' + str(octet) + '.64/27')
+            net = nacaddr.IPv4(f"192.168.{octet!s}.64/27")
             nets.append(net)
         random.shuffle(nets)
         result = summarizer.Summarize(nets)
@@ -174,7 +174,7 @@ class SummarizerTest(absltest.TestCase):
 
         for octet3 in range(56, 60):
             for octet4 in fourth_octet:
-                nets.append(nacaddr.IPv4('192.168.' + str(octet3) + '.' + str(octet4) + '/31'))
+                nets.append(nacaddr.IPv4(f"192.168.{octet3!s}.{octet4!s}/31"))
 
         result = summarizer.Summarize(nets)
         self.assertEqual(
@@ -201,7 +201,7 @@ class SummarizerTest(absltest.TestCase):
         self.assertEqual(dsm_net.MergeText(existing_comment), existing_comment)
 
         dsm_net = summarizer.DSMNet(167772160, 4278190080, existing_comment)
-        self.assertEqual(dsm_net.MergeText(addition), existing_comment + ', ' + addition)
+        self.assertEqual(dsm_net.MergeText(addition), f"{existing_comment}, {addition}")
 
     def testOrder(self):
         nets = [

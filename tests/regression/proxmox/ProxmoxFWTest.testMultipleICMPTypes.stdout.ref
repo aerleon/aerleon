@@ -1,0 +1,8 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN DROP -proto icmp -source 0.0.0.0/0 -icmp-type redirect
+IN DROP -proto icmp -source 0.0.0.0/0 -icmp-type router-advertisement
+IN DROP -proto icmp -source 0.0.0.0/0 -icmp-type address-mask-request
+IN DROP -proto icmp -source 0.0.0.0/0 -icmp-type address-mask-reply
+

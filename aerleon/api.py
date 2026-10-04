@@ -1,4 +1,4 @@
-""" Aerleon API
+"""Aerleon API
 
 This module accepts plain Python dictionaries and lists as input.
 It allows users to use Aerleon's functionality without having to
@@ -38,7 +38,7 @@ have a single filter, which must have a "header" section and a "terms" list. The
 "header" instructs Aerleon to produce Cisco ACL output. The "terms" list defines
 the access control behavior we want for this filter.
 
-```
+```python
 cisco_example_policy = {
     "filename": "cisco_example_policy",
     "filters": [
@@ -47,9 +47,7 @@ cisco_example_policy = {
                 "targets": {
                     "cisco": "test-filter"
                 },
-                "kvs": {
-                    "comment": "Sample comment"
-                },
+                "comment": "Sample comment",
             },
             "terms": [
                 {
@@ -80,7 +78,7 @@ Now the network names used in this example have to be defined. The naming defini
 constructed as follows. In this example we are dynamically selecting between two sets of IP
 addresses for the mail server.
 
-```
+```python
 mail_server_ips_set0 = ["200.1.1.4/32","200.1.1.5/32"]
 mail_server_ips_set1 = ["200.1.2.4/32","200.1.2.5/32"]
 
@@ -122,7 +120,7 @@ Now to call the Generate method. We need to first construct a Naming object
 and load the network definitions, then pass that to Generate along with the
 policy object.
 
-```
+```python
 definitions = naming.Naming()
 definitions.ParseDefinitionsObject(networks, "")
 configs = api.Generate([cisco_example_policy], definitions)
@@ -184,6 +182,23 @@ ip access-list extended test-filter
 exit
 ```
 
+## Using `include` with the Generate API
+
+To support `include` directives with the Generate API, specify the optional `include_path` argument.
+
+```python
+configs = api.Generate([cisco_example_policy], definitions, include_path='/path/to/includes/')
+```
+
+When following includes, paths are resolved relative to the `include_path` directory. The python relative_to check is performed to ensure that only files within the `include_path` directory can be accessed, preventing arbitrary file access.
+
+Alternatively, you can specify a fixed list of includable files using the `include_files` argument:
+
+```python
+configs = api.Generate([cisco_example_policy], definitions, include_files={
+    'deny_bogons': deny_bogons_terms
+})
+```
 
 ## Aerleon "AclCheck" API
 
@@ -192,11 +207,16 @@ command line tool. It accepts as input plain Python dictionaries and lists.
 
 
 """
+
 import copy
-import multiprocessing
+import multiprocessing.context
+import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
-import typing
+from collections.abc import MutableMapping, MutableSequence
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
+from typing import Literal, Optional
 
 from absl import logging
 
@@ -211,20 +231,24 @@ from aerleon.lib import (
     aclcheck,
     aclgenerator,
     naming,
+    pcap,
     plugin_supervisor,
     policy,
     policy_builder,
+    yaml,
 )
 
 
 def Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: list[policy_builder.PolicyDict],
     definitions: naming.Naming,
-    output_directory: pathlib.Path = None,
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     expiration_weeks: int = 2,
-) -> "dict[str, str]":
+    include_path: pathlib.Path | str | None = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
+) -> MutableMapping[str, str] | None:
     """Generate ACLs from policies.
 
     Args:
@@ -251,12 +275,20 @@ def Generate(
         with an expiration date less than this number of weeks in the future.
         Default value is 2.
 
+      include_path: Optional, a pathlib.Path to a directory to search for included
+        YAML policies.
+
+      includes: Optional, a dictionary mapping include names to policy dictionaries.
+        This is used for programmatically-defined includes.
+
     Returns:
       A dictionary mapping generated file names to their contents. Users should take
       care to use different file names for each given policy to avoid file name collisions.
       If option output_directory is used the generated files will be written to that output
       directory and no data will be returned to the caller.
     """
+    if include_path and includes:
+        raise TypeError("include_path and includes are mutually exclusive.")
 
     context = multiprocessing.get_context()
     return _Generate(
@@ -266,28 +298,28 @@ def Generate(
         output_directory,
         optimize,
         shade_check,
-        exp_info=expiration_weeks,
+        expiration_weeks,
+        include_path,
+        includes,
     )
 
 
 def _Generate(
-    policies: "list[policy_builder.PolicyDict]",
+    policies: list[policy_builder.PolicyDict],
     definitions: naming.Naming,
     context: multiprocessing.context.BaseContext,
-    output_directory: pathlib.Path = None,
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
+    include_path: pathlib.Path | str | None = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
     max_renderers: int = 1,
-) -> "dict[str, str]":
-
-    # thead-safe list for storing files to write
-    manager: multiprocessing.managers.SyncManager = context.Manager()
-    write_files: WriteList = manager.list()
-    errors: list = manager.list()
-    generated_configs: dict = manager.dict()
-
+) -> MutableMapping[str, str] | None:
     if max_renderers == 1:
+        write_files: WriteList = []
+        errors: MutableSequence = []
+        generated_configs: MutableMapping = {}
         for input_policy in policies:
             _GenerateACL(
                 input_policy,
@@ -298,8 +330,14 @@ def _Generate(
                 optimize,
                 shade_check,
                 exp_info,
+                include_path,
+                includes,
             )
     else:
+        manager: multiprocessing.managers.SyncManager = context.Manager()
+        write_files: WriteList = manager.list()
+        errors: MutableSequence = manager.list()
+        generated_configs: MutableMapping = manager.dict()
         pool = context.Pool(processes=max_renderers)
         async_results: list[multiprocessing.pool.AsyncResult] = []
         for input_policy in policies:
@@ -314,6 +352,8 @@ def _Generate(
                     optimize,
                     shade_check,
                     exp_info,
+                    include_path,
+                    includes,
                 ),
             )
             async_results.append(async_result)
@@ -337,28 +377,56 @@ def _GenerateACL(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
     write_files: WriteList,
-    generated_configs: dict,
-    output_directory: pathlib.Path = None,
+    generated_configs: MutableMapping[str, str],
+    output_directory: pathlib.Path | None = None,
     optimize: bool = False,
     shade_check: bool = False,
     exp_info: int = 2,
+    include_path: pathlib.Path | str | None = None,
+    includes: dict[str, policy_builder.PolicyFilterTermsOnly] | None = None,
 ):
-    filename = input_policy.get("filename")
+    filename = input_policy.get("filename", "<unknown>")
+
+    processed_policy = input_policy
+    if include_path or includes:
+
+        def _add_debug_info(data, filename):
+            if isinstance(data, dict):
+                data['__filename__'] = filename
+                data['__line__'] = 1
+                for value in data.values():
+                    _add_debug_info(value, filename)
+            elif isinstance(data, list):
+                for item in data:
+                    _add_debug_info(item, filename)
+
+        policy_copy = copy.deepcopy(input_policy)
+        _add_debug_info(policy_copy, filename)
+
+        if include_path:
+            preprocessor = yaml.YAMLPolicyPreprocessor(str(include_path))
+            processed_policy = preprocessor(filename, policy_copy)
+        elif includes:
+            preprocessor = yaml.GenerateAPIPolicyPreprocessor(includes)
+            processed_policy = preprocessor(filename, policy_copy)
+
+    if not processed_policy or not processed_policy.get('filters'):
+        logging.warning('Policy %s is empty after processing includes, skipping.', filename)
+        return
+
     try:
         policy_obj = policy.FromBuilder(
-            policy_builder.PolicyBuilder(input_policy, definitions, optimize, shade_check)
+            policy_builder.PolicyBuilder(processed_policy, definitions, optimize, shade_check)
         )
     except policy.ShadingError as e:
         logging.warning('shading errors for %s:\n%s', filename, e)
         return
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
-            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+            f'Error parsing policy {filename}:\n{sys.exc_info()[0]}{sys.exc_info()[1]}'
         ) from e
 
-    platforms = set()
-    for header in policy_obj.headers:
-        platforms.update(header.platforms)
+    platforms = {platform for header in policy_obj.headers for platform in header.platforms}
 
     acl_obj: aclgenerator.ACLGenerator
     plugin_supervisor.PluginSupervisor.Start()
@@ -366,13 +434,22 @@ def _GenerateACL(
     def EmitACL(
         acl_text: str,
         acl_suffix: str,
-        write_files: typing.List[typing.Tuple[pathlib.Path, str]],
+        write_files: MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
+        file_name_override: str | None = None,
     ):
+        base_name = file_name_override if file_name_override else filename
         if output_directory:
-            RenderACL(acl_text, acl_suffix, output_directory, filename, write_files, binary)
+            RenderACL(
+                acl_text,
+                acl_suffix,
+                output_directory,
+                pathlib.Path(base_name),
+                write_files,
+                binary,
+            )
         else:
-            output_file = pathlib.Path(filename).with_suffix(acl_suffix).name
+            output_file = pathlib.Path(base_name).with_suffix(acl_suffix).name
             generated_configs[output_file] = acl_text
 
     for target in platforms:
@@ -384,44 +461,60 @@ def _GenerateACL(
         try:
             # special handling for pcap
             if target == 'pcap':
+                assert issubclass(generator, pcap.PcapFilter)
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(
                     str(acl_obj),
-                    '-accept' + acl_obj.SUFFIX,
+                    acl_obj.SUFFIX,
                     write_files,
+                    file_name_override=f"{filename}-accept",
                 )
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info, invert=True)
                 EmitACL(
                     str(acl_obj),
-                    '-deny' + acl_obj.SUFFIX,
+                    acl_obj.SUFFIX,
                     write_files,
+                    file_name_override=f"{filename}-deny",
                 )
             else:
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(str(acl_obj), acl_obj.SUFFIX, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError(
-                'Error generating target ACL for %s:\n%s' % (filename, e)
-            ) from e
+            raise ACLGeneratorError(f'Error generating target ACL for {filename}:\n{e}') from e
 
 
 def AclCheck(
     input_policy: policy_builder.PolicyDict,
     definitions: naming.Naming,
-    src: str = None,
-    dst: str = None,
-    sport: str = None,
-    dport: str = None,
-    proto: str = None,
+    src: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
+    ) = "any",
+    dst: (
+        IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] | None
+    ) = "any",
+    sport: int | str | Literal["any"] | None = "any",
+    dport: int | str | Literal["any"] | None = "any",
+    proto: str | Literal["any"] | None = "any",
+    source_zone: str | Literal["any"] = "any",
+    destination_zone: str | Literal["any"] = "any",
 ):
     filename = input_policy.get("filename")
     try:
+        # None is still allowed for certain arguments here for backwards compatability
         check = aclcheck.AclCheck.FromPolicyDict(
-            input_policy, definitions, src, dst, sport, dport, proto
+            input_policy,
+            definitions,
+            src if src is not None else "any",
+            dst if dst is not None else "any",
+            sport if sport is not None else "any",
+            dport if dport is not None else "any",
+            proto if proto is not None else "any",
+            source_zone,
+            destination_zone,
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:
         raise ACLParserError(
-            'Error parsing policy %s:\n%s%s' % (filename, sys.exc_info()[0], sys.exc_info()[1])
+            f'Error parsing policy {filename}:\n{sys.exc_info()[0]}{sys.exc_info()[1]}'
         ) from e

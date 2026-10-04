@@ -1,0 +1,118 @@
+{
+  "$id": "urn:aerleon:schemas:aerleon-policy-yaml:1.0.0",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "https://aerleon.readthedocs.io/en/latest/reference/yaml_reference/",
+  "title": "Aerleon Policy File",
+  "oneOf": [
+    { "$ref": "#/$defs/policyTermIncludeFile" },
+    { "$ref": "#/$defs/policyFilterIncludeFile" },
+    { "$ref": "#/$defs/policyFile" }
+  ],
+  "$defs": {
+    "policyFile": {
+      "type": "object",
+      "title": "Policy File",
+      "required": ["filters"],
+      "properties": {
+        "filters": {
+          "description": "A policy file contains one or more filters. Each filter has a header that lists the generator target platforms and their options. The filter ACL rules appear in the terms section.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/filter" }
+        }
+      }
+    },
+    "policyFilterIncludeFile": {
+      "type": "object",
+      "title": "Policy File",
+      "required": ["filters_include_only"],
+      "properties": {
+        "filters_include_only": {
+          "description": "A policy file contains one or more filters. Each filter has a header that lists the generator target platforms and their options. The filter ACL rules appear in the terms section.\n\nfilters_include_only defines a list of filters that will not be directly converted into an ACL, but can be included by other files.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/filter" }
+        }
+      }
+    },
+    "policyTermIncludeFile": {
+      "type": "object",
+      "title": "Policy Include File",
+      "required": ["terms"],
+      "properties": {
+        "terms": {
+          "description": "A policy include file contains a single list of terms. Other policy files can insert this list using the include directive. This file can include other files, but be careful not to exceed the include depth limit of 5.\n\nEach entry in this list is a term and must have a 'name' property defined.\n\nCommon lists of terms shared between policy files can be placed in an include file. Create an item in the list with a single property, 'include', that references the path to the include file.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/term" }
+        }
+      }
+    },
+    "filter": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["header", "terms"],
+          "properties": {
+            "header": {
+              "type": "object",
+              "title": "Filter Header",
+              "description": "The filter header lists the generator target platforms and their options. Other filter-level settings can be defined in the header.",
+              "required": ["targets"],
+              "properties": {
+                "targets": {
+                  "title": "Filter Targets",
+                  "description": "aclgen will generate an ACL for each target platforms identified here.",
+                  "type": "object"
+                }
+              }
+            },
+            "terms": {
+              "title": "Term List",
+              "description": "The ACL rules for this filter. Each entry in this list is a term and must have a 'name' property defined.\n\nCommon lists of terms shared between policy files can be placed in an include file. Create an item in the list with a single property, 'include', that references the path to the include file.",
+              "type": "array",
+              "items": { "$ref": "#/$defs/term" }
+            }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "required": ["include"],
+          "properties": {
+            "include": {
+              "type": "string",
+              "title": "Filter List Include",
+              "description": "Common filters shared between policy files can be placed in an include file. Create an item in the list with a single property, 'include', that references the path to the include file. The path will be resolved relative to the --base_directory given to aclgen, which is './policies/' by default."
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "term": {
+      "oneOf": [
+        {
+          "title": "Term",
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        {
+          "title": "Include Term List",
+          "type": "object",
+          "required": ["include"],
+          "properties": {
+            "include": {
+              "description": "Common lists of terms shared between policy files can be placed in an include file. Create an item in the list with a single property, 'include', that references the path to the include file. The path will be resolved relative to the --base_directory given to aclgen, which is './policies/' by default.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

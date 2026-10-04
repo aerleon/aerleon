@@ -11,7 +11,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        # TODO switch to prod 3.15 versions
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15-dev", "3.15t-dev"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -87,7 +88,9 @@ jobs:
         uses: ./.github/actions/setup
         id: project-setup
         with:
-          python-version: "3.10"
+          # must be >= highest [tool.black] target-version
+          # TODO switch to prod 3.15 before merge
+          python-version: "3.15-dev"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
@@ -95,7 +98,8 @@ jobs:
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
         with:
-          version: "22.12.0"
+          version: "26.5.1"
+          src: "aerleon tests noxfile.py"
       #----------------------------------------------
       # run isort
       #----------------------------------------------
@@ -104,3 +108,9 @@ jobs:
         uses: isort/isort-action@v1.1.0
         with:
           isort-version: ""
+      #----------------------------------------------
+      # run pyupgrade
+      #----------------------------------------------
+      - name: Check for modern Python syntax using pyupgrade
+        if: steps.paths-filter.outputs.run_format == 'true'
+        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py' | grep -v '^aerleon/_vendor/')

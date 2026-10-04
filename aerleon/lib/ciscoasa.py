@@ -20,9 +20,9 @@ import ipaddress
 import re
 from typing import cast
 
-from absl import logging
-
 from aerleon.lib import aclgenerator, cisco, nacaddr, summarizer
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
 
 _ACTION_TABLE = {
     'accept': 'permit',
@@ -53,7 +53,9 @@ class NoCiscoPolicyError(Error):
 class Term(cisco.ExtendedTerm):
     """A single ACL Term."""
 
-    def __init__(self, term, filter_name, af=4, enable_dsmo=False):
+    def __init__(
+        self, term: Term, filter_name: str, af: int = 4, enable_dsmo: bool = False
+    ) -> None:
         self.term = term
         self.filter_name = filter_name
         self.options = []
@@ -61,23 +63,23 @@ class Term(cisco.ExtendedTerm):
         self.af = af
         self.enable_dsmo = enable_dsmo
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = ['\n']
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
         if (self.af == 6 and 'icmp' in self.term.protocol) or (
             self.af == 4 and 'icmpv6' in self.term.protocol
         ):
-            ret_str.append('remark Term %s' % self.term.name)
+            ret_str.append(f'remark Term {self.term.name}')
             ret_str.append('remark not rendered due to protocol/AF mismatch.')
             return '\n'.join(ret_str)
 
-        ret_str.append('access-list %s remark %s' % (self.filter_name, self.term.name))
+        ret_str.append(f'access-list {self.filter_name} remark {self.term.name}')
         if self.term.owner:
-            self.term.comment.append('Owner: %s' % self.term.owner)
+            self.term.comment.append(f'Owner: {self.term.owner}')
         for comment in self.term.comment:
             for line in comment.split('\n'):
-                ret_str.append('access-list %s remark %s' % (self.filter_name, str(line)[:100]))
+                ret_str.append(f'access-list {self.filter_name} remark {str(line)[:100]}')
 
         # Term verbatim output - this will skip over normal term creation
         # code by returning early.  Warnings provided in policy.py.
@@ -193,8 +195,17 @@ class Term(cisco.ExtendedTerm):
         return '\n'.join(ret_str)
 
     def _TermletToStr(
-        self, filter_name, action, proto, saddr, sport, daddr, dport, icmp_type, option
-    ):
+        self,
+        filter_name: str,
+        action: str,
+        proto: str,
+        saddr: str | IPv4 | IPv6,
+        sport: tuple[()] | tuple[int, int],
+        daddr: str | IPv4 | IPv6,
+        dport: tuple[()] | tuple[int, int],
+        icmp_type: str,
+        option: list[str],
+    ) -> list[str]:
         """Take the various compenents and turn them into a cisco acl line.
 
         Args:
@@ -206,7 +217,7 @@ class Term(cisco.ExtendedTerm):
           daddr: str or ipaddress, the destination address
           dport: str list or none, the destination port
           icmp_type: icmp-type numeric specification (if any)
-          option: list or none, optional, eg. 'logging' tokens.
+          option: list of options, eg. 'logging' tokens.
 
         Returns:
           string of the cisco acl line, suitable for printing.
@@ -215,54 +226,54 @@ class Term(cisco.ExtendedTerm):
         if isinstance(saddr, nacaddr.IPv4) or isinstance(saddr, ipaddress.IPv4Network):
             saddr = cast(self.IPV4_ADDRESS, saddr)
             if saddr.num_addresses > 1:
-                saddr = '%s %s' % (saddr.network_address, saddr.netmask)
+                saddr = f'{saddr.network_address} {saddr.netmask}'
             else:
-                saddr = 'host %s' % (saddr.network_address)
-        elif isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
+                saddr = f'host {saddr.network_address}'
+        if isinstance(daddr, nacaddr.IPv4) or isinstance(daddr, ipaddress.IPv4Network):
             daddr = cast(self.IPV4_ADDRESS, daddr)
             if daddr.num_addresses > 1:
-                daddr = '%s %s' % (daddr.network_address, daddr.netmask)
+                daddr = f'{daddr.network_address} {daddr.netmask}'
             else:
-                daddr = 'host %s' % (daddr.network_address)
-        elif isinstance(saddr, summarizer.DSMNet):
+                daddr = f'host {daddr.network_address}'
+        if isinstance(saddr, summarizer.DSMNet):
             saddr = '%s %s' % summarizer.ToDottedQuad(saddr, negate=False)
 
         if isinstance(daddr, summarizer.DSMNet):
             daddr = '%s %s' % summarizer.ToDottedQuad(daddr, negate=False)
         # inet6
-        elif isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
+        if isinstance(saddr, nacaddr.IPv6) or isinstance(saddr, ipaddress.IPv6Network):
             saddr = cast(self.IPV6_ADDRESS, saddr)
             if saddr.num_addresses > 1:
-                saddr = '%s/%s' % (saddr.network_address, saddr.prefixlen)
+                saddr = f'{saddr.network_address}/{saddr.prefixlen}'
             else:
-                saddr = 'host %s' % (saddr.network_address)
-        elif isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
+                saddr = f'host {saddr.network_address}'
+        if isinstance(daddr, nacaddr.IPv6) or isinstance(daddr, ipaddress.IPv6Network):
             daddr = cast(self.IPV6_ADDRESS, daddr)
             if daddr.num_addresses > 1:
-                daddr = '%s/%s' % (daddr.network_address, daddr.prefixlen)
+                daddr = f'{daddr.network_address}/{daddr.prefixlen}'
             else:
-                daddr = 'host %s' % (daddr.network_address)
+                daddr = f'host {daddr.network_address}'
 
         # fix ports
         if not sport:
             sport = ''
         elif sport[0] != sport[1]:
-            sport = ' range %s %s' % (
+            sport = ' range {} {}'.format(
                 cisco.PortMap.GetProtocol(sport[0], proto),
                 cisco.PortMap.GetProtocol(sport[1], proto),
             )
         else:
-            sport = ' eq %s' % (cisco.PortMap.GetProtocol(sport[0], proto))
+            sport = f' eq {cisco.PortMap.GetProtocol(sport[0], proto)}'
 
         if not dport:
             dport = ''
         elif dport[0] != dport[1]:
-            dport = ' range %s %s' % (
+            dport = ' range {} {}'.format(
                 cisco.PortMap.GetProtocol(dport[0], proto),
                 cisco.PortMap.GetProtocol(dport[1], proto),
             )
         else:
-            dport = ' eq %s' % (cisco.PortMap.GetProtocol(dport[0], proto))
+            dport = f' eq {cisco.PortMap.GetProtocol(dport[0], proto)}'
 
         if not option:
             option = ['']
@@ -304,7 +315,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
     _DEFAULT_PROTOCOL = 'ip'
     SUFFIX = '.asa'
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -324,7 +335,7 @@ class CiscoASA(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.ciscoasa_policies = []
         for header, terms in self.policy.filters:
             filter_name = header.FilterName(self._PLATFORM)
@@ -338,20 +349,19 @@ class CiscoASA(aclgenerator.ACLGenerator):
 
             self.ciscoasa_policies.append((header, filter_name, new_terms))
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = []
 
-        for (header, filter_name, terms) in self.ciscoasa_policies:
-
-            target.append('clear configure access-list %s' % filter_name)
+        for header, filter_name, terms in self.ciscoasa_policies:
+            target.append(f'clear configure access-list {filter_name}')
 
             # add the p4 tags
-            target.extend(aclgenerator.AddRepositoryTags('access-list %s remark ' % filter_name))
+            target.extend(aclgenerator.AddRepositoryTags(f'access-list {filter_name} remark '))
 
             # add a header comment if one exists
             for comment in header.comment:
                 for line in comment.split('\n'):
-                    target.append('access-list %s remark %s' % (filter_name, line))
+                    target.append(f'access-list {filter_name} remark {line}')
 
             # now add the terms
             for term in terms:

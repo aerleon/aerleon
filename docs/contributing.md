@@ -27,7 +27,7 @@ Writing code can include adding new features or fixing issues that have been rep
 
 ### Guidelines
 
-* Generally it is best to reach out before writing any significant amount of code. It may be that someone is almost finished with a fix, or maybe an idea needs to be discussed before hand. The best place to reach out would be in a Github issue.
+* Generally it is best to reach out before writing any significant amount of code. It may be that someone is almost finished with a fix, or maybe an idea needs to be discussed beforehand. The best place to reach out would be in a Github issue.
 * Tests always need to be included, these are important and cannot be skipped. Good tests make sure we are not accidentally breaking your code in the future.
 
 ## Code Style and Formatting

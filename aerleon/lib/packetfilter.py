@@ -23,6 +23,8 @@ from typing import cast
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term, VarType
 
 
 class Error(aclgenerator.Error):
@@ -89,7 +91,14 @@ class Term(aclgenerator.Term):
     }
     _UNSUPPORTED_PROTOS = ['hopopt']
 
-    def __init__(self, term, filter_name, stateful=True, af='inet', direction=''):
+    def __init__(
+        self,
+        term: Term,
+        filter_name: str,
+        stateful: bool = True,
+        af: str = 'inet',
+        direction: str = '',
+    ) -> None:
         """Setup a new term.
 
         Args:
@@ -111,20 +120,20 @@ class Term(aclgenerator.Term):
         self.stateful = stateful
         self.direction = direction
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render config output from this term object."""
 
         ret_str = []
         self._SetDefaultAction()
 
         # Create a new term
-        ret_str.append('\n# term %s' % self.term.name)
+        ret_str.append(f'\n# term {self.term.name}')
 
         comments = aclgenerator.WrapWords(self.term.comment, 80)
         # append comments to output
         if comments and comments[0]:
             for line in comments:
-                ret_str.append('# %s' % str(line))
+                ret_str.append(f'# {line!s}')
 
         if str(self.term.action[0]) not in self._ACTION_TABLE:
             raise aclgenerator.UnsupportedFilterError(
@@ -146,20 +155,24 @@ class Term(aclgenerator.Term):
         # source address
         term_saddrs = self._CheckAddressAf(self.term.source_address)
         if not term_saddrs:
-            logging.warning(
-                self.NO_AF_LOG_ADDR.substitute(term=self.term.name, direction='source', af=self.af)
-            )
+            if self.af != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_ADDR.substitute(
+                        term=self.term.name, direction='source', af=self.af
+                    )
+                )
             return ''
         term_saddr = self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude)
 
         # destination address
         term_daddrs = self._CheckAddressAf(self.term.destination_address)
         if not term_daddrs:
-            logging.warning(
-                self.NO_AF_LOG_ADDR.substitute(
-                    term=self.term.name, direction='destination', af=self.af
+            if self.af != 'mixed':
+                logging.warning(
+                    self.NO_AF_LOG_ADDR.substitute(
+                        term=self.term.name, direction='destination', af=self.af
+                    )
                 )
-            )
             return ''
         term_daddr = self._GenerateAddrStatement(
             term_daddrs, self.term.destination_address_exclude
@@ -267,7 +280,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(str(v) for v in ret_str if v)
 
-    def _CheckAddressAf(self, addrs):
+    def _CheckAddressAf(self, addrs: list[IPv4 | IPv6]) -> list[IPv4 | IPv6 | str]:
         """Verify that the requested address-family matches the address's family."""
         if not addrs:
             return ['any']
@@ -282,31 +295,31 @@ class Term(aclgenerator.Term):
 
     def _FormatPart(
         self,
-        action,
-        direction,
-        log,
-        interface,
-        af,
-        proto,
-        src_addr,
-        src_port,
-        dst_addr,
-        dst_port,
-        tcp_flags_set,
-        tcp_flags_check,
-        icmp_types,
-        options,
-        stateful,
-    ):
+        action: str,
+        direction: str,
+        log: list[VarType],
+        interface: str | None,
+        af: str,
+        proto: list[str],
+        src_addr: str,
+        src_port: list[str] | str,
+        dst_addr: str,
+        dst_port: list[str] | str,
+        tcp_flags_set: list[str],
+        tcp_flags_check: list[str],
+        icmp_types: list[str | int],
+        options: list[str],
+        stateful: bool,
+    ) -> list[str]:
         """Format the string which will become a single PF entry."""
-        line = ['%s' % self._ACTION_TABLE.get(action)]
+        line = [f'{self._ACTION_TABLE.get(action)}']
 
         if direction:
             line.append(direction)
 
         quick = self._QUICK_TABLE.get(action)
         if quick:
-            line.append('%s' % quick)
+            line.append(f'{quick}')
 
         if log:
             logaction = self._LOG_TABLE.get(direction)
@@ -316,7 +329,7 @@ class Term(aclgenerator.Term):
                 line.append('log')
 
         if interface:
-            line.append('on %s' % interface)
+            line.append(f'on {interface}')
 
         if af != 'mixed':
             line.append(af)
@@ -324,17 +337,17 @@ class Term(aclgenerator.Term):
         if proto:
             line.append(self._GenerateProtoStatement(proto))
 
-        line.append('from %s' % src_addr)
+        line.append(f'from {src_addr}')
         if src_port:
-            line.append('port %s' % src_port)
+            line.append(f'port {src_port}')
 
-        line.append('to %s' % dst_addr)
+        line.append(f'to {dst_addr}')
         if dst_port:
-            line.append('port %s' % dst_port)
+            line.append(f'port {dst_port}')
 
         if tcp_flags_set and tcp_flags_check:
             line.append('flags')
-            line.append('%s/%s' % (''.join(tcp_flags_set), ''.join(tcp_flags_check)))
+            line.append(f"{''.join(tcp_flags_set)}/{''.join(tcp_flags_check)}")
 
         if 'icmp' in proto and icmp_types:
             type_strs = [str(icmp_type) for icmp_type in icmp_types]
@@ -358,7 +371,7 @@ class Term(aclgenerator.Term):
 
         return [' '.join(line)]
 
-    def _GenerateProtoStatement(self, protocols):
+    def _GenerateProtoStatement(self, protocols: list[str]) -> str:
         proto = ''
         if protocols:
             protocols = copy.deepcopy(protocols)
@@ -372,7 +385,9 @@ class Term(aclgenerator.Term):
             proto = 'proto { %s }' % ' '.join(protocols)
         return proto
 
-    def _GenerateAddrStatement(self, addrs, exclude_addrs):
+    def _GenerateAddrStatement(
+        self, addrs: list[IPv4 | IPv6], exclude_addrs: list[IPv4 | IPv6]
+    ) -> str:
         addresses = set()
         if addrs != ['any']:
             parent_token_set = set()
@@ -380,7 +395,7 @@ class Term(aclgenerator.Term):
                 addr = cast(nacaddr.IPType, addr)
                 parent_token_set.add(addr.parent_token)
             for token in parent_token_set:
-                addresses.add('<%s>' % token[:31])
+                addresses.add(f'<{token[:31]}>')
         else:
             addresses.add('any')
         if exclude_addrs != ['any']:
@@ -389,19 +404,19 @@ class Term(aclgenerator.Term):
                 addr = cast(nacaddr.IPType, addr)
                 parent_token_set.add(addr.parent_token)
             for token in parent_token_set:
-                addresses.add('!<%s>' % token[:31])
+                addresses.add(f'!<{token[:31]}>')
         return '{ %s }' % ', '.join(sorted(addresses))
 
-    def _GeneratePortStatement(self, ports):
+    def _GeneratePortStatement(self, ports: list[tuple[int, int]]) -> str:
         port_list = []
         for port_tuple in ports:
             if port_tuple[0] == port_tuple[1]:
                 port_list.append(str(port_tuple[0]))
             else:
-                port_list.append('%s:%s' % (port_tuple[0], port_tuple[1]))
+                port_list.append(f'{port_tuple[0]}:{port_tuple[1]}')
         return '{ %s }' % (' '.join(list(collections.OrderedDict.fromkeys(port_list))))
 
-    def _SetDefaultAction(self):
+    def _SetDefaultAction(self) -> None:
         """If term does not specify action, use filter default action."""
         if not self.term.action:
             self.term.action[0].value = self.default_action
@@ -416,7 +431,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
     SUFFIX = '.pf'
     _TERM = Term
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -444,7 +459,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
 
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         self.pf_policies = []
         self.address_book = {}
         self.def_short_to_long = {}
@@ -506,7 +521,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
             for term in terms:
                 term.name = self.FixTermLength(term.name)
                 if term.name in term_names:
-                    raise DuplicateTermError('You have a duplicate term: %s' % term.name)
+                    raise DuplicateTermError(f'You have a duplicate term: {term.name}')
                 term_names.add(term.name)
 
                 for source_addr in term.source_address:
@@ -529,7 +544,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
                         self.def_short_to_long[src_token] = source_addr.parent_token
 
                     if src_token not in self.address_book:
-                        self.address_book[src_token] = set([source_addr])
+                        self.address_book[src_token] = {source_addr}
                     else:
                         self.address_book[src_token].add(source_addr)
 
@@ -553,7 +568,7 @@ class PacketFilter(aclgenerator.ACLGenerator):
                         self.def_short_to_long[dst_token] = dest_addr.parent_token
 
                     if dst_token not in self.address_book:
-                        self.address_book[dst_token] = set([dest_addr])
+                        self.address_book[dst_token] = {dest_addr}
                     else:
                         self.address_book[dst_token].add(dest_addr)
 
@@ -583,30 +598,30 @@ class PacketFilter(aclgenerator.ACLGenerator):
 
             self.pf_policies.append((header, filter_name, filter_type, new_terms))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Render the output of the PF policy into config."""
         target = []
-        pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
+        pretty_platform = f'{self._PLATFORM[0].upper()}{self._PLATFORM[1:]}'
         # Create address table.
         for name in sorted(self.address_book):
             v4 = sorted([x for x in self.address_book[name] if x.version == 4])
             v6 = sorted([x for x in self.address_book[name] if x.version == 6])
             entries = ',\\\n'.join(str(x) for x in v4 + v6)
-            target.append('table <%s> {%s}' % (name, entries))
+            target.append(f'table <{name}> {{{entries}}}')
         # pylint: disable=unused-variable
-        for (header, filter_name, filter_type, terms) in self.pf_policies:
+        for header, filter_name, filter_type, terms in self.pf_policies:
             # Add comments for this filter
-            target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
+            target.append(f'# {pretty_platform} {header.FilterName(self._PLATFORM)} Policy')
 
             # reformat long text comments, if needed
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append('# %s' % line)
+                    target.append(f'# {line}')
                 target.append('#')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags('# '))
-            target.append('# ' + filter_type)
+            target.append(f"# {filter_type}")
 
             # add the terms
             for term in terms:

@@ -1,9 +1,9 @@
 security {
     replace: address-book {
         global {
-                address _0 10.0.0.0/8;
-                address-set  {
-                    address _0;
+                address SOME_HOST_0 10.0.0.0/8;
+                address-set SOME_HOST {
+                    address SOME_HOST_0;
                 }
         }
     }
@@ -20,22 +20,18 @@ security {
             policy good-term-2 {
                 match {
                     source-address any;
-                    destination-address [  ];
+                    destination-address [ SOME_HOST ];
                     application good-term-2-app;
                 }
                 then {
                     permit;
                 }
             }
-            /*
-            This header is very very very very very very very very very very
-            very very very very very very very very very very large
-            */
-            policy good-term-1 {
+            policy good_term_20 {
                 match {
                     source-address any;
-                    destination-address [  ];
-                    application good-term-1-app;
+                    destination-address [ SOME_HOST ];
+                    application good_term_20-app;
                 }
                 then {
                     permit;
@@ -45,17 +41,17 @@ security {
     }
 }
 replace: applications {
-    application good-term-1-app1 {
+    application good-term-2-app1 {
         term t1 protocol tcp destination-port 25;
     }
-    application good-term-2-app1 {
+    application good_term_20-app1 {
         term t1 protocol tcp destination-port 80;
-    }
-    application-set good-term-1-app {
-        application good-term-1-app1;
     }
     application-set good-term-2-app {
         application good-term-2-app1;
+    }
+    application-set good_term_20-app {
+        application good_term_20-app1;
     }
 }
 

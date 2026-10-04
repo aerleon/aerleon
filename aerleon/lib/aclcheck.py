@@ -18,8 +18,23 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import Collection, Sequence
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
+from typing import Literal, TypeAlias, TypedDict
+
+from typing_extensions import Self
 
 from aerleon.lib import nacaddr, naming, policy, policy_builder, port
+
+PossibleMatchReason: TypeAlias = Literal[
+    "source-ip",
+    "destination-ip",
+    "first-frag",
+    "frag-offset",
+    "packet-length",
+    "est",
+    "tcp-est",
+]
 
 
 class Error(Exception):
@@ -43,12 +58,13 @@ class AclCheck:
 
     Attributes:
       pol_obj: policy.Policy object.
-      pol: policy.Policy object.
-      src: A string for the source address.
-      dst: A string for the destination address.
-      sport: A string for the source port.
-      dport: A string for the destination port.
-      proto: A string for the protocol.
+      src: The source IP address or network.
+      dst: The destination IP address or network.
+      sport: The source port.
+      dport: The destination port.
+      proto: The protocol.
+      source_zone: The source zone.
+      destination_zone: The destination zone.
       matches: A list of term-related matches.
       exact_matches: A list of exact matches.
 
@@ -59,35 +75,66 @@ class AclCheck:
       port.BadPortValue: An invalid source port is used
       port.BadPortRange: A port is outside of the acceptable range 0-65535
       AddressError: Incorrect ip address or format
-
     """
+
+    pol_obj: policy.Policy
+
+    src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
+    dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
+    sport: int | Literal["any"]
+    dport: int | Literal["any"]
+    proto: str | Literal["any"]
+    source_zone: str | Literal["any"]
+    destination_zone: str | Literal["any"]
+
+    matches: list["Match"]
+    exact_matches: list["Match"]
 
     @classmethod
     def FromPolicyDict(
         cls,
         policy_dict: policy_builder.PolicyDict,
         definitions: naming.Naming,
-        src,
-        dst,
-        sport,
-        dport,
-        proto,
-    ):
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
+        sport: int | str | Literal["any"],
+        dport: int | str | Literal["any"],
+        proto: str | Literal["any"],
+        source_zone: str | Literal["any"] | None = None,
+        destination_zone: str | Literal["any"] | None = None,
+    ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
-        return cls(policy_obj, src, dst, sport, dport, proto)
+        return cls(
+            policy_obj,
+            src,
+            dst,
+            sport,
+            dport,
+            proto,
+            source_zone or 'any',
+            destination_zone or 'any',
+        )
 
     def __init__(
         self,
         pol: policy.Policy,
-        src='any',
-        dst='any',
-        sport='any',
-        dport='any',
-        proto='any',
-    ):
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
+        sport: int | str | Literal["any"] = 'any',
+        dport: int | str | Literal["any"] = 'any',
+        proto: str | Literal["any"] = 'any',
+        source_zone: str | Literal["any"] = 'any',
+        destination_zone: str | Literal["any"] = 'any',
+    ) -> None:
+
         self.pol_obj = pol
-        self.proto = proto
+
+        # validate proto
+        if proto is None:
+            self.proto = 'any'
+        else:
+            self.proto = proto
 
         # validate source port
         if not sport or sport == 'any':
@@ -108,7 +155,7 @@ class AclCheck:
             try:
                 self.src = nacaddr.IP(src)
             except ValueError:
-                raise AddressError('bad source address: %s\n' % src)
+                raise AddressError(f'bad source address: {src}\n')
 
         # validate destination address
         if not dst or dst == 'any':
@@ -117,7 +164,19 @@ class AclCheck:
             try:
                 self.dst = nacaddr.IP(dst)
             except ValueError:
-                raise AddressError('bad destination address: %s\n' % dst)
+                raise AddressError(f'bad destination address: {dst}\n')
+
+        # validate source zone
+        if not source_zone or source_zone == 'any':
+            self.source_zone = 'any'
+        else:
+            self.source_zone = str(source_zone)
+
+        # validate destination zone
+        if not destination_zone or destination_zone == 'any':
+            self.destination_zone = 'any'
+        else:
+            self.destination_zone = str(destination_zone)
 
         if not isinstance(self.pol_obj, (policy.Policy)):
             raise BadPolicyError('Policy object is not valid.')
@@ -129,14 +188,47 @@ class AclCheck:
             for term in terms:
                 possible = []
                 logging.debug('checking term: %s', term.name)
-                if not self._AddrInside(self.src, term.source_address):
-                    logging.debug('srcaddr does not match')
+
+                match self._AddrMatch(self.src, term.source_address):
+                    case "full":
+                        src_too_broad = False
+                        logging.debug('srcaddr matches: %s', self.src)
+                    case "partial":
+                        src_too_broad = True
+                        logging.debug('srcaddr too broadly matches: %s', self.src)
+                    case False:
+                        logging.debug('srcaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unhandled switch case')
+
+                match self._AddrMatch(self.dst, term.destination_address):
+                    case "full":
+                        dst_too_broad = False
+                        logging.debug('dstaddr matches: %s', self.dst)
+                    case "partial":
+                        dst_too_broad = True
+                        logging.debug('dstaddr too broadly matches: %s', self.dst)
+                    case False:
+                        logging.debug('dstaddr does not match')
+                        continue
+                    case _:
+                        raise AssertionError('unhandled switch case')
+
+                # source-zone matching if requested. If the term does not specify
+                # a source_zone, treat it as 'any' (match all zones).
+                if not self._ZoneMatch(self.source_zone, term.source_zone):
+                    logging.debug('source zone does not match')
                     continue
-                logging.debug('srcaddr matches: %s', self.src)
-                if not self._AddrInside(self.dst, term.destination_address):
-                    logging.debug('dstaddr does not match')
+                logging.debug('source zone matches: %s', self.source_zone)
+
+                # destination-zone matching if requested. If the term does not specify
+                # a destination_zone, treat it as 'any' (match all zones).
+                if not self._ZoneMatch(self.destination_zone, term.destination_zone):
+                    logging.debug('destination zone does not match')
                     continue
-                logging.debug('dstaddr matches: %s', self.dst)
+                logging.debug('destination zone matches: %s', self.destination_zone)
+
                 if (
                     self.sport != 'any'
                     and term.source_port
@@ -145,6 +237,7 @@ class AclCheck:
                     logging.debug('sport does not match')
                     continue
                 logging.debug('sport matches: %s', self.sport)
+
                 if (
                     self.dport != 'any'
                     and term.destination_port
@@ -153,19 +246,23 @@ class AclCheck:
                     logging.debug('dport does not match')
                     continue
                 logging.debug('dport matches: %s', self.dport)
+
                 if self.proto != 'any' and term.protocol and self.proto not in term.protocol:
                     logging.debug('proto does not match')
                     continue
                 logging.debug('proto matches: %s', self.proto)
+
                 if term.protocol_except and self.proto in term.protocol_except:
                     logging.debug('protocol excepted by term, no match.')
                     continue
                 logging.debug('proto not excepted: %s', self.proto)
+
                 if not term.action:  # avoid any verbatim
                     logging.debug('term had no action (verbatim?), no match.')
                     continue
                 logging.debug('term has an action')
-                possible = self._PossibleMatch(term)
+
+                possible = self._PossibleMatch(term, src_too_broad, dst_too_broad)
                 self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
                 if possible:
                     logging.debug('term has options: %s, not treating as exact match', possible)
@@ -181,15 +278,18 @@ class AclCheck:
                     )
                     break
 
-    def Matches(self):
+    def Matches(self) -> list["Match"]:
         """Return list of matched terms."""
         return self.matches
 
-    def ExactMatches(self):
+    def ExactMatches(self) -> list["Match"]:
         """Return matched terms, but not terms with possibles or action next."""
         return self.exact_matches
 
-    def ActionMatch(self, action='any'):
+    def ActionMatch(
+        self,
+        action: str | Literal['any'] = 'any',
+    ) -> list["Match"]:
         """Return list of matched terms with specified actions."""
         match_list = []
         for match in self.matches:
@@ -199,7 +299,7 @@ class AclCheck:
                         match_list.append(match)
         return match_list
 
-    def DescribeMatches(self):
+    def DescribeMatches(self) -> str:
         """Provide sentence descriptions of matches.
 
         Returns:
@@ -211,7 +311,7 @@ class AclCheck:
             ret_str.append(text)
         return '\n'.join(ret_str)
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = []
         summary = self.Summarize()
         for filter, terms in summary.items():
@@ -220,30 +320,47 @@ class AclCheck:
                 text.append(matches['message'])
         return '\n'.join(text)
 
-    def Summarize(self):
-        summary = defaultdict(lambda: defaultdict(dict))
+    class SummarizeMatchTermDetails(TypedDict):
+        possibles: list[PossibleMatchReason]
+        message: str
+
+    def Summarize(
+        self,
+    ) -> defaultdict[str, dict[str, SummarizeMatchTermDetails]]:
+        summary: defaultdict[str, dict[str, AclCheck.SummarizeMatchTermDetails]] = defaultdict(
+            dict
+        )
         for match in self.matches:
-            summary[match.filter][match.term]["possibles"] = match.possibles
-            text = []
+            text: list[str] = []
             if match.possibles:
                 text.append(f"{' ' * 10}term: {match.term} (possible match)")
                 text.append(f"{' ' * 16}{match.action} if {match.possibles}")
             else:
                 text.append(f"{' ' * 10}term: {match.term}")
                 text.append(f"{' ' * 16}{match.action}")
-            summary[match.filter][match.term]["message"] = '\n'.join(text)
+            summary[match.filter][match.term] = AclCheck.SummarizeMatchTermDetails(
+                possibles=match.possibles, message='\n'.join(text)
+            )
         return summary
 
-    def _PossibleMatch(self, term):
-        """Ignore some options and keywords that are edge cases.
+    def _PossibleMatch(
+        self, term, src_too_broad: bool, dst_too_broad: bool
+    ) -> list[PossibleMatchReason]:
+        """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
           term: term object to examine for edge-cases
+          src_too_broad: boolean indicating if only a subnet of src matched the term
+          dst_too_broad: boolean indicating if only a subnet of dst matched the term
 
         Returns:
-          ret_str: a list of reasons this term may possible match
+          ret_str: a list of reasons this term may possibly match
         """
         ret_str = []
+        if src_too_broad:
+            ret_str.append('source-ip')
+        if dst_too_broad:
+            ret_str.append('destination-ip')
         if 'first-fragment' in term.option:
             ret_str.append('first-frag')
         if term.fragment_offset:
@@ -256,39 +373,68 @@ class AclCheck:
             ret_str.append('tcp-est')
         return ret_str
 
-    def _AddrInside(self, addr, addresses):
-        """Check if address is matched in another address or group of addresses.
+    def _ZoneMatch(self, zone: str | Literal["any"], term_zone: Collection[str]) -> bool:
+        """Check if zone matches term zone.
 
         Args:
-          addr: An ipaddr network or host address or text 'any'
+          zone: A string for the zone to check
+          term_zone: A collection of zones from the term
+        """
+        if not term_zone or zone == 'any':
+            return True
+        if zone not in term_zone:
+            return False
+        return True
+
+    def _AddrMatch(
+        self,
+        addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"],
+        addresses: Sequence[nacaddr.IPv4 | nacaddr.IPv6],
+    ) -> Literal["full", "partial", False]:
+        """Check if an address matches another address or group of addresses,
+        as a full match, partial match, or no match.
+
+        Args:
+          addr: An IP address or network or text 'any'
           addresses: A list of ipaddr network or host addresses
 
         Returns:
-          bool: True of false
+          "full": if addr is fully matched by any of addresses (i.e. addr is a subnet) or is "any"
+          "partial": if addr is partially matched by any of addresses, but not fully matched (i.e. addr is a supernet)
+          False: if addr is not matched by any of addresses
         """
-        if addr == 'any':
-            return True  # always true if we match for any addr
         if not addresses:
-            return True  # always true if term has nothing to match
+            return "full"  # always "full" if term has nothing to match
+        if addr == 'any':
+            # note that "any" behaves differently than 0.0.0.0/0 or ::/0 (which will return "partial")
+            return "full"
+
+        partial_match: bool = False
         for ip in addresses:
             # ipaddr can incorrectly report ipv4 as contained with ipv6 addrs
             if addr.subnet_of(ip):
-                return True
-        return False
+                return "full"
+            elif addr.supernet_of(ip):
+                partial_match = True
 
-    def _PortInside(self, myport, port_list):
-        """Check if port matches in a port or group of ports.
+        if partial_match:
+            return "partial"
+        else:
+            return False
+
+    def _PortInside(self, myport: int | Literal["any"], port_list: list[tuple[int, int]]) -> bool:
+        """Check if a port matches a port list
 
         Args:
           myport: port number
-          port_list: list of ports
+          port_list: list of port ranges
 
         Returns:
-          bool: True of false
+          bool: True if `myport` is within any [start, end] port range in `port_list` (inclusive), otherwise False
         """
         if myport == 'any':
             return True
-        if [x for x in port_list if x[0] <= myport <= x[1]]:
+        if any(range_start <= myport <= range_end for range_start, range_end in port_list):
             return True
         return False
 
@@ -296,26 +442,39 @@ class AclCheck:
 class Match:
     """A matching term and its associate values."""
 
-    def __init__(self, filtername, term, possibles, action, qos=None):
+    filter: str
+    term: str
+    possibles: list[PossibleMatchReason]
+    action: str
+    qos: str | None
+
+    def __init__(
+        self,
+        filtername: str,
+        term: str,
+        possibles: list[PossibleMatchReason],
+        action: Sequence[str],
+        qos: str | None = None,
+    ) -> None:
         self.filter = filtername
         self.term = term
         self.possibles = possibles
         self.action = action[0]
         self.qos = qos
 
-    def __str__(self):
+    def __str__(self) -> str:
         text = ''
         if self.possibles:
-            text += 'possible ' + self.action
+            text += f"possible {self.action}"
         else:
             text += self.action
-        text += ' in term ' + self.term + ' of filter ' + self.filter
+        text += f" in term {self.term} of filter {self.filter}"
         if self.possibles:
-            text += ' with factors: ' + str(', '.join(self.possibles))
+            text += f" with factors: {', '.join(self.possibles)!s}"
         return text
 
 
-def main():
+def main() -> None:
     pass
 
 

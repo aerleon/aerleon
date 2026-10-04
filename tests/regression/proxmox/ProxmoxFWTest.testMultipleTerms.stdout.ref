@@ -1,0 +1,7 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN ACCEPT -proto tcp -dest 10.0.0.1/32 # some comment
+IN DROP -proto tcp -source 0.0.0.0/0
+IN DROP -proto udp -source 0.0.0.0/0
+

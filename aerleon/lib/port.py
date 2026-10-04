@@ -43,7 +43,7 @@ class PPP:
     Make port/protocol pairs an object for easy comparisons
     """
 
-    def __init__(self, service):
+    def __init__(self, service) -> None:
         """Init for PPP object.
 
         Args:
@@ -82,7 +82,7 @@ class PPP:
         if '-' in self.port:
             self._start = int(self.port.split('-')[0])
         else:
-            raise InvalidRange('%s is not a valid port range' % self.port)
+            raise InvalidRange(f'{self.port} is not a valid port range')
         return self._start
 
     @property
@@ -91,7 +91,7 @@ class PPP:
         if '-' in self.port:
             self._end = int(self.port.split('-')[1])
         else:
-            raise InvalidRange('%s is not a valid port range' % self.port)
+            raise InvalidRange(f'{self.port} is not a valid port range')
         return self._end
 
     def __contains__(self, other):
@@ -101,7 +101,7 @@ class PPP:
                 int(self.start) <= int(other.port) <= int(self.end)
             ) and self.protocol == other.protocol
         except:
-            raise InvalidRange('%s must be a range' % self.port)
+            raise InvalidRange(f'{self.port} must be a range')
 
     def __lt__(self, other):
         if self.is_single_port:
@@ -149,7 +149,7 @@ class PPP:
             raise NotSinglePort('Comparisons cannot be performed on port ranges')
 
 
-def Port(port):
+def Port(port: int | str) -> int:
     """Sanitize a port value.
 
     Args:
@@ -166,7 +166,7 @@ def Port(port):
     try:
         pval = int(port)
     except ValueError:
-        raise BadPortValue('port %s is not valid.' % port)
+        raise BadPortValue(f'port {port} is not valid.')
     if pval < 0 or pval > 65535:
-        raise BadPortRange('port %s is out of range 0-65535.' % port)
+        raise BadPortRange(f'port {port} is out of range 0-65535.')
     return pval

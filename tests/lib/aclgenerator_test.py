@@ -208,26 +208,28 @@ class ACLGeneratorTest(absltest.TestCase):
         self.assertListEqual(expected_protocol_list, retprotocol_list)
 
     def testAddRepositoryTags(self):
-        # Format print the '$' into the RCS tags in order prevent the tags from
-        # being interpolated here.
-
         # Include all tags.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$'), '%sDate:%s' % ('$', '$'), '%sRevision:%s' % ('$', '$')],
+            [
+                '$Id:$',
+                '$Date:$',
+                '$Revision:$',
+            ],
             aclgenerator.AddRepositoryTags(),
         )
         # Remove the revision tag.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$'), '%sDate:%s' % ('$', '$')],
+            ['$Id:$', '$Date:$'],
             aclgenerator.AddRepositoryTags(revision=False),
         )
         # Only include the Id: tag.
         self.assertListEqual(
-            ['%sId:%s' % ('$', '$')], aclgenerator.AddRepositoryTags(date=False, revision=False)
+            ['$Id:$'],
+            aclgenerator.AddRepositoryTags(date=False, revision=False),
         )
         # Wrap the Date: tag.
         self.assertListEqual(
-            ['"%sDate:%s"' % ('$', '$')],
+            ['"$Date:$"'],
             aclgenerator.AddRepositoryTags(revision=False, rid=False, wrap=True),
         )
 

@@ -1,4 +1,4 @@
-# YAML Policy Files
+# Policy Files
 
 ## Usage
 
@@ -208,22 +208,21 @@ may find this representation easier to assemble.
 
 ### Includes
 
-Place an item in the list of terms with a key "include" containing a file path
-to include that file. All terms found in the include file will be inserted into
-the terms list, replacing the "include" item. The include file will be resolved
-relative to the base directory. The include file name must match
-\*.yaml.
+Place an item in the list of terms with the key "include" containing the path
+of the file to include, relative to the base directory. All terms found in the
+included file will be inserted into the list of terms, replacing the "include" item.
+The included file name must end in ".yaml".
 
 ```
 # example_policy.yaml
 filters:
 - header:
-# ...
+    # ...
   terms:
   - name: deny-to-reserved
     destination-address: RESERVED
     action: deny
-  - include: include_1.yaml
+  - include: deny_bogons_include.yaml
   - name: allow-web-to-mail
     source-address: WEB_SERVERS
     destination-address: MAIL_SERVERS
@@ -231,14 +230,41 @@ filters:
 ```
 
 ```
-# include_1.yaml
+# deny_bogons_include.yaml
 terms:
 - name: deny-to-bogons
   destination-address: RESERVED
   action: deny
 ```
 
-Recursive includes are supported up to a recursion limit of 5. This is the same
+You can also include one or more filters by placing an item in the list of filters
+with the key "include" containing the path of the file to include, relative to the
+base directory. If you wish to create a common list of filters that should not be
+turned directly into ACLs, use the top level key "filters_include_only" instead of
+"filters".
+
+```
+# example_policy.yaml
+filters:
+- include: common_filters.yaml
+```
+
+```
+# common_filters.yaml
+filters_include_only:
+- header:
+    # ...
+  terms:
+  - name: deny-to-reserved
+    destination-address: RESERVED
+    action: deny
+  - name: allow-web-to-mail
+    source-address: WEB_SERVERS
+    destination-address: MAIL_SERVERS
+    action: accept
+```
+
+Recursive includes are supported with a recursion limit of 5. This is the same
 recursion limit as for .pol files.
 
 ### YAML Aliases and Anchors
@@ -247,7 +273,7 @@ YAML supports in-file code reuse through aliases and anchors. This is not an
 Aerleon-specific feature; YAML automatically resolves aliases as part of the
 loading process.
 
-# YAML Policy File Spec
+## YAML Policy File Spec
 
 | File Structure          |                                                           |
 | ----------------------- | --------------------------------------------------------- |
@@ -258,7 +284,7 @@ loading process.
 | filter[].terms[].name   | Required, see [Configuring Terms](#configuring-terms)     |
 | filter[].terms[].\*     | See [Field Reference](#full-field-syntax-reference)       |
 
-## Configuring Targets
+### Configuring Targets
 
 `filter[].header.targets` must be present in every filter. It must contain a
 mapping from a target name to a list of words configuring the target generator.
@@ -269,7 +295,7 @@ this mapping. If multiple filters are present in this policy file, each
 platform's generated configuration file will contain only the filters that
 included that platform as a target.
 
-## Configuring Terms
+### Configuring Terms
 
 `filter[].terms` must be present in every filter. It must contain a non-empty
 list of mappings (Terms).
@@ -279,7 +305,7 @@ in the named file. See section [Includes](#includes) above.
 
 A Term must contain a `name` field naming the term.
 
-## Full Field Syntax Reference
+### Full Field Syntax Reference
 
 | Path                              | Platform   | Value Type                   | Allowed Syntax                                                                                             |
 | --------------------------------- | ---------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -305,6 +331,8 @@ A Term must contain a `name` field naming the term.
 | terms[].destination-address       |            | list of words                | `destination-address: ["[IP \| CIDR \| NAME]", ...]`                                                       |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: "[IP \| CIDR \| NAME] ..."`                                                          |
 | terms[].destination-exclude       |            | list of words                | `destination-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                       |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: "[NAME] ..."`                                                          |
+| terms[].destination-fqdn          |            | list of words                | `destination-address: ["[NAME]", ...]`                                                       |
 | terms[].destination-port          |            | list of words                | `destination-port: "[PORT_NUMBER \| NAME] ..."`                                                            |
 | terms[].destination-port          |            | list of words                | `destination-port: ["[PORT_NUMBER \| NAME]", ...]`                                                         |
 | terms[].destination-prefix        |            | list of words                | `destination-prefix: "[IP \| CIDR \| NAME] ..."`                                                           |
@@ -343,11 +371,15 @@ A Term must contain a `name` field naming the term.
 | terms[].qos                       | Juniper    | word                         | `qos: "[TRAFFIC_CLASS]"`                                                                                   |
 | terms[].pan-application           | PaloAltoFW | list of words                | `pan-application: "[APPLICATION_NAME] ..."`                                                                |
 | terms[].pan-application           | PaloAltoFW | list of words                | `pan-application: ["[APPLICATION_NAME]", ...]`                                                             |
+| terms[].profile-settings          | PaloAltoFW | list of words                | `profile-settings: ["[NAME]", ...]`                                                             |
+| terms[].profile-settings          | PaloAltoFW | list of words                | `profile-settings: ["[NAME]", ...]`                                                             |
 | terms[].routing-instance          |            | word                         | `routing-instance: "[ROUTING_INSTANCE_NAME]"`                                                              |
 | terms[].source-address            |            | list of words                | `source-address: "[IP \| CIDR \| NAME] ..."`                                                               |
 | terms[].source-address            |            | list of words                | `source-address: ["[IP \| CIDR \| NAME]", ...]`                                                            |
 | terms[].source-exclude            |            | list of words                | `source-exclude: "[IP \| CIDR \| NAME] ..."`                                                               |
 | terms[].source-exclude            |            | list of words                | `source-exclude: ["[IP \| CIDR \| NAME]", ...]`                                                            |
+| terms[].source-fqdn               |            | list of words                | `source-address: "[NAME] ..."`                                                               |
+| terms[].source-fqdn               |            | list of words                | `source-address: ["[NAME]", ...]`                                                            |
 | terms[].source-port               |            | list of words                | `source-port: "[PORT_NUMBER \| NAME] ..."`                                                                 |
 | terms[].source-port               |            | list of words                | `source-port: ["[PORT_NUMBER \| NAME]", ...]`                                                              |
 | terms[].source-prefix             |            | list of words                | `source-prefix: "[IP \| CIDR \| NAME] ..."`                                                                |
@@ -399,8 +431,9 @@ A Term must contain a `name` field naming the term.
 | terms[].platform-exclude          |            | list of words                | `platform-exclude: ["[TARGET_NAME]", ...]`                                                                 |
 | terms[].target-resources          | GCP        | list of tuples               | `target-resources: ["([PROJECT_NAME], [NETWORK_NAME])", ...]`                                              |
 | terms[].timeout                   |            | number                       | `timeout: "[NUMBER]"`                                                                                      |
+| terms[].tags                      | PaloAltoFW | list of words                | `source-tag: ["[TAG]", ...]`                                                                               |
 
-## Value Types
+### Value Types
 
 - "word": A "word" is a space-free string consisting of unicode word characters
   plus `-` `_` `+` `.` `@` `/`. A word may only start with a unicode word
@@ -426,11 +459,11 @@ A Term must contain a `name` field naming the term.
   separated by spaces. A YAML list containing one word per entry may be used.
 - "any string": Any string value.
 
-## ICMP_TYPE
+### ICMP_TYPE
 
 The following options are allowed for field icmp-type:
 
-### IPv4
+#### IPv4
 
 - echo-reply
 - unreachable
@@ -451,7 +484,7 @@ The following options are allowed for field icmp-type:
 - conversion-error
 - mobile-redirect
 
-### IPv6
+#### IPv6
 
 - destination-unreachable
 - packet-too-big
@@ -483,7 +516,7 @@ The following options are allowed for field icmp-type:
 - multicast-router-solicitation
 - multicast-router-termination
 
-## DSCP
+### DSCP
 
 The following options are allowed for DSCP traffic classes:
 
@@ -494,4 +527,4 @@ The following options are allowed for DSCP traffic classes:
 - The class “be”.
 - An integer value.
 
-## Flexible Match Values
+### Flexible Match Values

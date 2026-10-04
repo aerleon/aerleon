@@ -16,5 +16,56 @@ table inet filtering_policies {
         jump multi-all-families
         jump multi-proto-term
     }
+    chain test-tcp-icmp {
+        comment "Allow ICMP from company."
+        ip saddr 200.1.1.3/32 ip protocol { udp, tcp, icmp } ct state new accept
+        ip saddr 200.1.1.3/32 meta l4proto { udp, tcp } ct state new accept
+    }
+    chain root1 {
+        comment "Noverbose + custom priority policy example"
+        type filter hook input priority 400; policy drop;
+        ct state established,related accept
+        jump test-tcp-icmp
+    }
+    chain test-icmp {
+        comment "Allow ICMP from company."
+        ip saddr 200.1.1.3/32 ip protocol icmp ct state new accept
+    }
+    chain test-icmp-type-ip4 {
+        comment "IPv4 icmp-type test"
+        icmp type { echo-request, echo-reply } ct state new accept
+    }
+    chain test-icmp-type-ip6 {
+        comment "IPv6 icmp-type test"
+        icmpv6 type { mld-listener-done, nd-router-solicit, nd-router-advert } ct state new accept
+    }
+    chain full-combo-term {
+        comment "Test src/dest 80 - with addresses"
+        ip saddr 1.1.1.1/32 ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 80 tcp dport 80 ct state new accept
+        ip saddr 1.1.1.1/32 ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 80 tcp dport 80 ct state new accept
+        ip6 saddr 2606:4700:4700::1111/128 ip6 daddr { 2001:4860:4860::8844/128, 2001:4860:4860::8888/128 } tcp sport 80 tcp dport 80 ct state new accept
+        ip6 saddr 2606:4700:4700::1111/128 ip6 daddr { 2001:4860:4860::8844/128, 2001:4860:4860::8888/128 } tcp sport 80 tcp dport 80 ct state new accept
+    }
+    chain multi-all-families {
+        comment "Validate multiple protocols."
+        ip protocol { udp, tcp, icmp } ct state new accept
+        meta l4proto { udp, tcp, icmpv6 } ct state new accept
+    }
+    chain base-traceroute-in {
+        comment "Ensure we can output a port-range."
+        udp sport 33434-33534 udp dport 1024-65535 ct state new accept
+        udp sport 33434-33534 udp dport 1024-65535 ct state new accept
+    }
+    chain root2 {
+        comment "Noverbose + custom priority policy example"
+        type filter hook output priority 0; policy drop;
+        ct state established,related accept
+        jump test-icmp
+        jump test-icmp-type-ip4
+        jump test-icmp-type-ip6
+        jump full-combo-term
+        jump multi-all-families
+        jump base-traceroute-in
+    }
 }
 

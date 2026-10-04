@@ -39,7 +39,6 @@ Examples:
   $ cgrep.py -p 22 tcp
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
 import logging
@@ -63,7 +62,7 @@ def is_valid_ip(arg):
     try:
         nacaddr.IP(arg)
     except:
-        raise argparse.ArgumentTypeError('%s is an invalid ip address' % arg)
+        raise argparse.ArgumentTypeError(f'{arg} is an invalid ip address')
     return arg
 
 
@@ -83,6 +82,7 @@ def cli_options():
     parser.add_argument(
         '-d',
         '--def',
+        '--definitions_directory',
         dest='defs',
         help='Network Definitions directory location. \n',
         default='./def',
@@ -215,7 +215,7 @@ def main(parser):
         logging.info('Union of %s and %s:\n %s\n', first_name, second_name, union)
         logging.info('Diff of %s and %s:', first_name, second_name)
         for i in results:
-            logging.info(' ' + i)
+            logging.info(f" {i}")
         logging.info('')
         first_obj, sec_obj = options.cmp
         if check_encapsulated('network', first_obj, sec_obj, db):
@@ -236,7 +236,7 @@ def main(parser):
             except naming.UndefinedAddressError:
                 logging.info('%s is an invalid object', obj)
             else:
-                logging.info(token + ':')
+                logging.info(f"{token}:")
                 # convert list of ip objects to strings and sort them
                 sorted_ips = nacaddr.SortAddrList(ips)
                 p([str(x) for x in sorted_ips])
@@ -250,7 +250,7 @@ def main(parser):
         else:
             for result in get_ports(options.svc, db):
                 svc, port = result
-                logging.info(svc + ':')
+                logging.info(f"{svc}:")
                 p(port)
 
     # if -p
@@ -325,13 +325,13 @@ def print_diff(ip, common, diff1, diff2):
     """
     logging.info('IP: %s', ip)
     if common:
-        common = ['  {0}'.format(elem) for elem in common]
+        common = [f'  {elem}' for elem in common]
         logging.info('\n'.join(common))
     if diff1:
-        diff = ['+ {0}'.format(elem) for elem in diff1]
+        diff = [f'+ {elem}' for elem in diff1]
         logging.info('\n'.join(diff))
     if diff2:
-        diff = ['- {0}'.format(elem) for elem in diff2]
+        diff = [f'- {elem}' for elem in diff2]
         logging.info('\n'.join(diff))
 
 
@@ -376,7 +376,7 @@ def get_ip_parents(ip, db):
         prefix_and_nets = get_nets_and_highest_prefix(ip, v, db)
         if nested:
             for n in nested:
-                results.append(('%s -> %s' % (n, v), prefix_and_nets))
+                results.append((f'{n} -> {v}', prefix_and_nets))
         else:
             results.append((v, prefix_and_nets))
     # sort the results by prefix length descending
@@ -474,9 +474,9 @@ def compare_ip_token(options, db):
     for ip in options.ip:
         rval = db.GetIpParents(ip)
         if token in rval:
-            results = '%s is in %s' % (ip, token)
+            results = f'{ip} is in {token}'
         else:
-            results = '%s is _not_ in %s' % (ip, token)
+            results = f'{ip} is _not_ in {token}'
     return results
 
 

@@ -19,14 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import (
-    aclgenerator,
-    nacaddr,
-    naming,
-    policy,
-    windows,
-    windows_advfirewall,
-)
+from aerleon.lib import aclgenerator, naming, policy, windows, windows_advfirewall
 from tests.regression_utils import capture
 
 GOOD_HEADER_OUT = """
@@ -46,6 +39,22 @@ header {
 GOOD_SIMPLE = """
 term good-simple {
   protocol:: tcp
+  action:: accept
+}
+"""
+
+GOOD_HEADER_IN_DEDUP = """
+header {
+  comment:: "dedup test acl"
+  target:: windows_advfirewall in
+}
+"""
+
+DEDUP_TERM = """
+term dedup-term {
+  protocol:: tcp
+  destination-port:: HTTPS
+  source-address:: SRC_NET
   action:: accept
 }
 """
@@ -267,21 +276,21 @@ EXP_INFO = 2
 class WindowsAdvFirewallTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def assertTrue(self, strings, result, term):
         for string in strings:
-            fullstring = 'netsh advfirewall firewall add rule %s' % (string)
+            fullstring = f'netsh advfirewall firewall add rule {string}'
             super().assertIn(
                 fullstring,
                 result,
-                'did not find "%s" for %s\nGot:\n%s' % (fullstring, term, result),
+                f'did not find "{fullstring}" for {term}\nGot:\n{result}',
             )
 
     @capture.stdout
     def testTcp(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['25']
+        self.naming._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
 
         acl = windows_advfirewall.WindowsAdvFirewall(
             policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_TCP, self.naming), EXP_INFO
@@ -295,9 +304,6 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             result,
             'did not find actual term for good-term-tcp',
         )
-
-        self.naming.GetNetAddr.assert_called_once_with('PROD_NETWRK')
-        self.naming.GetServiceByProto.assert_called_once_with('SMTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -390,7 +396,7 @@ class WindowsAdvFirewallTest(absltest.TestCase):
 
     @capture.stdout
     def testAnyProtocol(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('FOO = 10.0.0.0/8', 'networks')
         acl = windows_advfirewall.WindowsAdvFirewall(
             policy.ParsePolicy(GOOD_HEADER_OUT + GOOD_TERM_ANYPROTO, self.naming), EXP_INFO
         )
@@ -425,6 +431,59 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             'explicit miscellaneous proto',
         )
         print(result)
+
+    def _RuleLines(self, result):
+        """Just the emitted netsh rule lines, ignoring header comments."""
+        return [
+            line for line in result.splitlines() if line.startswith('netsh advfirewall firewall')
+        ]
+
+    def _RenderDedup(self, src_net):
+        self.naming._ParseLine(f'SRC_NET = {src_net}', 'networks')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN_DEDUP + DEDUP_TERM, self.naming), EXP_INFO
+        )
+        return self._RuleLines(str(acl))
+
+    def testDualStackAnyEmitsSingleRule(self):
+        """A dual-stack ANY must not emit one identical rule per address family.
+
+        0.0.0.0/0 and ::/0 both render as netsh 'any', so emitting a rule per
+        source address produced two byte-identical rules.
+        """
+        rules = self._RenderDedup('0.0.0.0/0 ::/0')
+        self.assertEqual(len(rules), 1, f'expected a single rule, got: {rules}')
+        self.assertEqual(len(set(rules)), len(rules), f'duplicate rules emitted: {rules}')
+        self.assertIn('remoteip=any', rules[0], f'dual-stack ANY should render as any: {rules[0]}')
+
+    def testSingleFamilyAnyRendersAsAny(self):
+        """A lone /0 keeps rendering as 'any'."""
+        rules = self._RenderDedup('0.0.0.0/0')
+        self.assertEqual(len(rules), 1, f'expected a single rule, got: {rules}')
+        self.assertIn('remoteip=any', rules[0])
+
+    def testMultipleSourcesCollapseToCommaList(self):
+        """Several source addresses collapse into one comma-separated rule."""
+        rules = self._RenderDedup('10.0.0.0/8 192.168.0.0/16')
+        self.assertEqual(len(rules), 1, f'expected a single collapsed rule, got: {rules}')
+        self.assertIn('remoteip=10.0.0.0/8,192.168.0.0/16', rules[0])
+
+    def testUnrecognizedDirectionRaises(self):
+        """An unexpected direction must fail rather than silently rendering as 'out'.
+
+        The local/remote labels are swapped for 'in', so falling through to the
+        'out' labeling would emit rules with the local/remote sense reversed.
+        """
+        self.naming._ParseLine('SRC_NET = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(GOOD_HEADER_IN_DEDUP + DEDUP_TERM, self.naming), EXP_INFO
+        )
+        for _, _, _, _, terms in acl.windows_policies:
+            for term in terms:
+                term.filter = 'input'
+        self.assertRaises(aclgenerator.UnsupportedFilterError, str, acl)
 
     def testBuildTokens(self):
         pol1 = windows_advfirewall.WindowsAdvFirewall(

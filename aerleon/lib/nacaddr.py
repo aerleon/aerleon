@@ -21,56 +21,59 @@ from __future__ import annotations
 import collections
 import ipaddress
 import itertools
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Union, cast
 
 import aerleon.utils.iputils as iputils
 
 
 def IP(
-    ip: Union[ipaddress.IPv4Network, ipaddress.IPv6Network, str],
+    ip: (
+        ipaddress.IPv4Address
+        | ipaddress.IPv6Address
+        | ipaddress.IPv4Network
+        | ipaddress.IPv6Network
+        | str
+    ),
     comment: str = '',
     token: str = '',
     strict: bool = True,
-) -> Union[IPv4, IPv6]:
-    """Take an ip string and return an object of the correct type.
+) -> IPv4 | IPv6:
+    """Take an IP string/object and return an object of the correct type.
 
     Args:
-      ip: the ip address.
+      ip: the IP address.
       comment: option comment field
       token: option token name where this address was extracted from
-      strict: If strict should be used in ipaddress object.
+      strict: If strict should be used in ipaddress object validation.
 
     Returns:
-      ipaddress.IPv4 or ipaddress.IPv6 object or raises ValueError.
+      IPv4 or IPv6 object or raises ValueError.
 
     Raises:
       ValueError: if the string passed isn't either a v4 or a v6 address.
     """
+
     if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
         imprecise_ip = ip
     else:
         imprecise_ip = ipaddress.ip_network(ip, strict=strict)
+
     if imprecise_ip.version == 4:
-        return IPv4(ip, comment, token, strict=strict)
-    elif imprecise_ip.version == 6:
-        return IPv6(ip, comment, token, strict=strict)
-    raise ValueError('Provided IP string "%s" is not a valid v4 or v6 address' % ip)
-
-
-# TODO(robankeny) remove once at 3.7
-@staticmethod
-def _is_subnet_of(
-    a: Union[IPv4, IPv6], b: Union[IPv4, IPv6]
-) -> bool:  # pylint: disable=invalid-name
-    try:
-        # Always false if one is v4 and the other is v6.
-        if a.version != b.version:
-            raise TypeError('%s and %s are not of the same version' % (a, b))
-        return (
-            b.network_address <= a.network_address and b.broadcast_address >= a.broadcast_address
+        return IPv4(
+            cast(ipaddress.IPv4Address | ipaddress.IPv4Network | str, ip),
+            comment,
+            token,
+            strict=strict,
         )
-    except AttributeError:
-        raise TypeError('Unable to test subnet containment between %s and %s' % (a, b))
+    elif imprecise_ip.version == 6:
+        return IPv6(
+            cast(ipaddress.IPv6Address | ipaddress.IPv6Network | str, ip),
+            comment,
+            token,
+            strict=strict,
+        )
+    else:
+        raise ValueError(f'Provided IP "{ip}" is not a valid v4 or v6 address')
 
 
 class IPv4(ipaddress.IPv4Network):
@@ -78,8 +81,8 @@ class IPv4(ipaddress.IPv4Network):
 
     def __init__(
         self,
-        ip_string: Union[ipaddress.IPv4Network, Tuple[int, int], str, IPv4],
-        comment: Union[str, IPv4] = '',
+        ip: ipaddress.IPv4Address | ipaddress.IPv4Network | tuple[int, int] | str | IPv4,
+        comment: str | IPv4 = '',
         token: str = '',
         strict: bool = True,
     ) -> None:
@@ -89,28 +92,28 @@ class IPv4(ipaddress.IPv4Network):
 
         # Using a tuple of IP integer/prefixlength is significantly faster than
         # using the BaseNetwork object for recreating the IP network
-        if isinstance(ip_string, ipaddress._BaseNetwork):  # pylint disable=protected-access
-            ip = (
-                ip_string.network_address._ip,
-                ip_string.prefixlen,
+        if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
+            new_ip = (
+                ip.network_address._ip,
+                ip.prefixlen,
             )  # pylint disable=protected-access # pytype: disable=attribute-error
         else:
-            ip = ip_string
-        super().__init__(ip, strict)
+            new_ip = ip
+        super().__init__(new_ip, strict)
 
-    def subnet_of(self, other: "IPv4") -> bool:
+    def subnet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(self, other)
+        return super().subnet_of(other)
 
-    def supernet_of(self, other: Union[IPv4, IPv6]) -> bool:
+    def supernet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(other, self)
+        return super().supernet_of(other)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict):
         result = self.__class__(self)
         result.text = self.text
         result.token = self.token
@@ -127,11 +130,11 @@ class IPv4(ipaddress.IPv4Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 
-    def supernet(self, prefixlen_diff: int = 1) -> "IPv4":
+    def supernet(self, prefixlen_diff: int = 1) -> IPv4:
         """Override ipaddress.IPv4 supernet so we can maintain comments.
 
         See ipaddress.IPv4.Supernet for complete documentation.
@@ -162,7 +165,6 @@ class IPv4(ipaddress.IPv4Network):
 
     # Backwards compatibility name from v1.
     Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
 
 class IPv6(ipaddress.IPv6Network):
@@ -170,7 +172,7 @@ class IPv6(ipaddress.IPv6Network):
 
     def __init__(
         self,
-        ip_string: Union[str, ipaddress.IPv6Network, Tuple[int, int], IPv6],
+        ip: ipaddress.IPv6Address | ipaddress.IPv6Network | tuple[int, int] | str | IPv6,
         comment: str = '',
         token: str = '',
         strict: bool = True,
@@ -181,35 +183,35 @@ class IPv6(ipaddress.IPv6Network):
 
         # Using a tuple of IP integer/prefixlength is significantly faster than
         # using the BaseNetwork object for recreating the IP network
-        if isinstance(ip_string, ipaddress._BaseNetwork):  # pylint disable=protected-access
-            ip = (
-                ip_string.network_address._ip,
-                ip_string.prefixlen,
+        if isinstance(ip, ipaddress._BaseNetwork):  # pylint disable=protected-access
+            new_ip = (
+                ip.network_address._ip,
+                ip.prefixlen,
             )  # pylint disable=protected-access # pytype: disable=attribute-error
         else:
-            ip = ip_string
-        super().__init__(ip, strict)
+            new_ip = ip
+        super().__init__(new_ip, strict)
 
-    def subnet_of(self, other: "IPv6") -> bool:
+    def subnet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a subnet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(self, other)
+        return super().subnet_of(other)
 
-    def supernet_of(self, other: "IPv6") -> bool:
+    def supernet_of(self, other: IPv4 | IPv6) -> bool:
         """Return True if this network is a supernet of other."""
         if self.version != other.version:
             return False
-        return self._is_subnet_of(other, self)
+        return super().supernet_of(other)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict):
         result = self.__class__(self)
         result.text = self.text
         result.token = self.token
         result.parent_token = self.parent_token
         return result
 
-    def supernet(self, prefixlen_diff: int = 1) -> "IPv6":
+    def supernet(self, prefixlen_diff: int = 1) -> IPv6:
         """Override ipaddress.IPv6Network supernet so we can maintain comments.
 
         See ipaddress.IPv6Network.Supernet for complete documentation.
@@ -239,7 +241,6 @@ class IPv6(ipaddress.IPv6Network):
 
     # Backwards compatibility name from v1.
     Supernet = supernet
-    _is_subnet_of = _is_subnet_of
 
     def AddComment(self, comment: str = '') -> None:
         """Append comment to self.text, comma separated.
@@ -251,7 +252,7 @@ class IPv6(ipaddress.IPv6Network):
         """
         if self.text:
             if comment and comment not in self.text:
-                self.text += ', ' + comment
+                self.text += f", {comment}"
         else:
             self.text = comment
 
@@ -259,7 +260,7 @@ class IPv6(ipaddress.IPv6Network):
 IPType = Union[IPv4, IPv6]
 
 
-def _InNetList(adders: List[ipaddress._BaseNetwork], ip: ipaddress._BaseNetwork) -> bool:
+def _InNetList(adders: list[ipaddress._BaseNetwork], ip: ipaddress._BaseNetwork) -> bool:
     """Returns True if ip is contained in adders."""
     for addr in adders:
         if ip.subnet_of(addr):
@@ -268,7 +269,7 @@ def _InNetList(adders: List[ipaddress._BaseNetwork], ip: ipaddress._BaseNetwork)
 
 
 def IsSuperNet(
-    supernets: List[ipaddress._BaseNetwork], subnets: List[ipaddress._BaseNetwork]
+    supernets: list[ipaddress._BaseNetwork], subnets: list[ipaddress._BaseNetwork]
 ) -> bool:
     """Returns True if subnets are fully consumed by supernets."""
     for net in subnets:
@@ -277,7 +278,7 @@ def IsSuperNet(
     return True
 
 
-def CollapseAddrListPreserveTokens(addresses: List[IPv4]) -> List[IPv4]:
+def CollapseAddrListPreserveTokens(addresses: list[IPv4 | IPv6]) -> list[IPv4 | IPv6]:
     """Collapse an array of IPs only when their tokens are the same.
 
     Args:
@@ -310,12 +311,11 @@ def CollapseAddrListPreserveTokens(addresses: List[IPv4]) -> List[IPv4]:
 
 
 def _SafeToMerge(
-    address: Union[IPv4, IPv6],
-    merge_target: Union[IPv4, IPv6],
-    check_addresses: Union[
-        Dict[ipaddress.IPv4Address, List[IPv4]],
-        Dict[ipaddress.IPv6Address, List[IPv6]],
-    ],
+    address: IPv4 | IPv6,
+    merge_target: IPv4 | IPv6,
+    check_addresses: (
+        dict[ipaddress.IPv4Address, list[IPv4]] | dict[ipaddress.IPv6Address, list[IPv6]]
+    ),
 ) -> bool:
     """Determine if it's safe to merge address into merge target.
 
@@ -339,12 +339,11 @@ def _SafeToMerge(
 
 
 def _CollapseAddrListInternal(
-    addresses: List[Union[IPv4, IPv6]],
-    complements_by_network: Union[
-        Dict[ipaddress.IPv4Address, List[IPv4]],
-        Dict[ipaddress.IPv6Address, List[IPv6]],
-    ],
-) -> List[Union[IPv4, IPv6]]:
+    addresses: list[IPv4 | IPv6],
+    complements_by_network: (
+        dict[ipaddress.IPv4Address, list[IPv4]] | dict[ipaddress.IPv6Address, list[IPv6]]
+    ),
+) -> list[IPv4 | IPv6]:
     """Collapses consecutive netblocks until reaching a fixed point.
 
      Example:
@@ -391,8 +390,9 @@ def _CollapseAddrListInternal(
                 and prev_addr.prefixlen == addr.prefixlen
                 and
                 # It's faster to compare integers than IP objects
-                prev_addr.broadcast_address._ip + 1 == addr.network_address._ip
-                and  # pylint disable=protected-access
+                prev_addr.broadcast_address._ip + 1
+                == addr.network_address._ip  # pylint disable=protected-access
+                and
                 # Generating Supernet is relatively intensive compared to doing bit
                 # operations
                 (prev_addr.netmask._ip << 1) & prev_addr.network_address._ip
@@ -409,9 +409,9 @@ def _CollapseAddrListInternal(
 
 
 def CollapseAddrList(
-    addresses: List[Union[IPv4, IPv6]],
-    complement_addresses: Optional[Union[List[IPv4], List[IPv6]]] = None,
-) -> List[Union[IPv4, IPv6]]:
+    addresses: list[IPv4 | IPv6],
+    complement_addresses: list[IPv4] | list[IPv6] | None = None,
+) -> list[IPv4 | IPv6]:
     """Collapse an array of IP objects.
 
     Example:  CollapseAddrList(
@@ -438,7 +438,7 @@ def CollapseAddrList(
       list of ipaddress.IPNetwork objects
     """
     complements_dict = collections.defaultdict(list)
-    address_set = set([a.network_address for a in addresses])
+    address_set = {a.network_address for a in addresses}
     for ca in complement_addresses or []:
         if ca.network_address in address_set:
             complements_dict[ca.network_address].append(ca)
@@ -447,14 +447,12 @@ def CollapseAddrList(
     )
 
 
-def SortAddrList(addresses: List[Union[Any, IPv6, IPv4]]) -> List[Union[Any, IPv6, IPv4]]:
+def SortAddrList(addresses: list[IPv6 | IPv4]) -> list[IPv6 | IPv4]:
     """Return a sorted list of nacaddr objects."""
     return sorted(addresses, key=ipaddress.get_mixed_type_key)
 
 
-def RemoveAddressFromList(
-    superset: List[Union[IPv4, IPv6]], exclude: Union[IPv4, IPv6]
-) -> List[Union[Any, IPv6, IPv4]]:
+def RemoveAddressFromList(superset: list[IPv4 | IPv6], exclude: IPv4 | IPv6) -> list[IPv6 | IPv4]:
     """Remove a single address from a list of addresses.
 
     Args:
@@ -478,10 +476,10 @@ def RemoveAddressFromList(
 
 
 def AddressListExclude(
-    superset: List[Union[IPv4, IPv6]],
-    excludes: List[Union[IPv4, IPv6]],
+    superset: list[IPv4 | IPv6],
+    excludes: list[IPv4 | IPv6],
     collapse_addrs: bool = True,
-) -> List[Union[IPv4, IPv6]]:
+) -> list[IPv4 | IPv6]:
     """Remove a list of addresses from another list of addresses.
 
     Args:

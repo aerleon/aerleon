@@ -1,7 +1,8 @@
-""" Define nox sessions for Aerleon """
+"""Define nox sessions for Aerleon"""
 
 import os
 from datetime import datetime
+from pathlib import Path
 
 import nox
 from nox_poetry import Session, session
@@ -11,14 +12,14 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@session(python=["3.7", "3.8", "3.9", "3.10"])
+@session(python=["3.10", "3.11", "3.12", "3.13", "3.14", "python3.14t", "3.15", "python3.15t"])
 def test(session):
     """Runs pytest"""
     session.run_always("poetry", "install", external=True)
     session.run("pytest", "--durations=20")
 
 
-@session(python="3.10")
+@session(python="3.13")
 def coverage(session):
     """Runs pytest and generates the code coverage report"""
     session.run_always("poetry", "install", external=True)
@@ -28,7 +29,7 @@ def coverage(session):
     session.run("coverage", "xml")
 
 
-@session(python="3.10")
+@session(python="3.13")
 def benchmark(session):
     """Runs pyperf and produces a report"""
     session.run_always("poetry", "install", external=True)
@@ -79,17 +80,26 @@ def benchmark(session):
         inner()
 
 
-@session(python="3.10")
+@session(python="3.13")
 def benchmark_tuned(session):
     """Runs pyperf with system tuning on and produces a report"""
     session.notify('benchmark', ['__benchmark_tune'])
 
 
-@session
+# must be >= highest [tool.black] target-version
+@session(python="3.15")
 def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)
-    session.run("black", "aerleon", "tests")
+
+    # pyupgrade
+    files = session.run("git", "ls-files", "*.py", silent=True, external=True).splitlines()
+    vendor_path = Path("aerleon/_vendor")
+    files = [f for f in files if not Path(f).is_relative_to(vendor_path)]
+    if files:
+        session.run("pyupgrade", "--py310-plus", *files, success_codes=[0, 1])
+
+    session.run("black", "aerleon", "tests", "noxfile.py")
     session.run("isort", ".")
 
 
@@ -105,3 +115,10 @@ def dev_setup(session: Session) -> None:
     """Installs pre-commit hooks using pre-commit"""
     session.run("pre-commit", "install")
     session.run("git", "config", "blame.ignoreRevsFile", ".git-blame-ignore-revs")
+
+
+@session
+def type_check(session):
+    """Runs pyright"""
+    session.run_always("poetry", "install", external=True)
+    session.run("poetry", "run", "pyright", external=True)

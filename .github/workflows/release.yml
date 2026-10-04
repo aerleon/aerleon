@@ -3,6 +3,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 jobs:
   build:
     name: Build and sign artifacts
@@ -13,13 +14,12 @@ jobs:
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b # v3.2.0
-      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912
+      - uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912 # v4.4.0
         with:
-          python-version: "3.x"
+          python-version: "3.13"
       - name: deps
         run: |
           python -m pip install -U build
-          python -m pip install -U sigstore
       - name: build
         run: python -m build
       - name: sign
@@ -65,7 +65,7 @@ jobs:
           echo "hashes=$(sha256sum ./dist/* | base64 -w0)" >> $GITHUB_OUTPUT
 
       - name: Upload built packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: built-packages
           path: ./dist/
@@ -79,11 +79,10 @@ jobs:
       contents: write # To add assets to a release.
     # Currently this action needs to be referred by tag. More details at:
     # https://github.com/slsa-framework/slsa-github-generator#verification-of-provenance
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.1
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
-      attestation-name: provenance-sigstore-${{ github.event.release.tag_name }}.intoto.jsonl
+      provenance-name: provenance-sigstore-${{ github.event.release.tag_name }}.intoto.jsonl
       base64-subjects: "${{ needs.build.outputs.hashes }}"
-      compile-generator: true # Workaround for https://github.com/slsa-framework/slsa-github-generator/issues/1163
       upload-assets: true
   release-pypi:
     needs: [build, generate-provenance]
@@ -91,9 +90,13 @@ jobs:
     permissions: {}
     steps:
       - name: Download artifacts directories # goes to current working directory
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+      - name: Remove signature # pypi will not ignore the signatures anymore and does not support them.
+        run: rm -f built-packages/aerleon-*.sigstore
+      - name: Remove signature json
+        run: rm -f built-packages/aerleon-*.sigstore.json
       - name: publish
-        uses: pypa/gh-action-pypi-publish@c7f29f7adef1a245bd91520e94867e5c6eedddcc
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
@@ -106,7 +109,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts directories # goes to current working directory
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Upload artifacts to github
         # Confusingly, this action also supports updating releases, not
         # just creating them. This is what we want here, since we've manually

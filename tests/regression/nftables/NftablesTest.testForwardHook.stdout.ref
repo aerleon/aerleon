@@ -1,0 +1,20 @@
+table ip filtering_policies {
+    chain transit-web {
+        iifname "eth0" oifname "eth1" ip saddr 10.0.0.0/8 tcp dport 80 ct state new accept
+    }
+    chain from-lan {
+        iifname "eth0" ct state new accept
+    }
+    chain to-wan {
+        oifname "eth1" ip protocol udp ct state new accept
+    }
+    chain root0 {
+        type filter hook forward priority 0; policy drop;
+        ct state established,related accept
+        jump transit-web
+        jump from-lan
+        jump to-wan
+    }
+}
+
+

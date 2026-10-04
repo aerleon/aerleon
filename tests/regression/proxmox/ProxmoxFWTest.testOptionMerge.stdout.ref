@@ -1,0 +1,11 @@
+[OPTIONS]
+enable: 1
+log_level_in: err
+ndp: 1
+nf_conntrack_helpers: irc,sip,tftp
+[RULES]
+OUT ACCEPT -proto tcp -dest 10.0.0.1/32 # some comment
+IN ACCEPT -proto tcp -dest 10.0.0.1/32 # some comment
+OUT DROP -proto tcp -source 0.0.0.0/0
+OUT DROP -proto udp -source 0.0.0.0/0
+

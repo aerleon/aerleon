@@ -1,0 +1,42 @@
+filters:
+  - header:
+      comment: |
+        sample proxmox VM policy IN part
+      targets:
+        proxmox: vm IN policy_in REJECT policy_out ACCEPT log_level_in err
+    terms:
+      - name: accept-dns
+        comment: "allow name resolution using google dns"
+        source-address: GOOGLE_PUBLIC_DNS_ANYCAST
+        destination-address: RFC1918
+        protocol: udp tcp # not all stubs support edns
+        action: accept
+      - name: accept-certain-hosts
+        destination-address: WEB_SERVERS MAIL_SERVERS
+        comment: "allow access for public hosts and log"
+        action: accept
+        logging: true
+      - name: allow-certain-ICMPv4-types
+        source-address: ANY
+        protocol: icmp
+        icmp-type: echo-request unreachable time-exceeded echo-reply
+        action: accept
+      - name: log-ICMPv6-redirects
+        comment: "log ICMPv6 redirects and deny"
+        protocol: icmpv6
+        icmp-type: redirect-message
+        logging: true
+        option: log_info
+        action: deny
+  - header:
+      comment: |
+        sample proxmox VM policy OUT part
+      targets:
+        proxmox: vm OUT
+    terms:
+      - name: allow-from-priv
+        comment: "allow tcp and udp from private IP addresses"
+        source-address: RFC1918
+        destination-address: ANY
+        protocol: udp tcp
+        action: accept

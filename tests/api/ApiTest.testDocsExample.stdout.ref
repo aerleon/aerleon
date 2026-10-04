@@ -4,6 +4,7 @@
 no ip access-list extended test-filter
 ip access-list extended test-filter
  remark $Id:$
+ remark Sample comment
 
 
  remark deny-to-reserved

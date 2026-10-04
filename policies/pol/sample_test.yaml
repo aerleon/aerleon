@@ -1,0 +1,10 @@
+filters:
+  - header:
+      comment: |
+        foo
+      targets:
+        speedway: OUTPUT DROP inet nochainedterms
+    terms:
+      - name: deny-all
+        protocol: tcp udp
+        action: deny

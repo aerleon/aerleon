@@ -43,6 +43,6 @@ class Speedway(iptables.Iptables):
 
     _RENDER_PREFIX = '*filter'
     _RENDER_SUFFIX = 'COMMIT'
-    _DEFAULTACTION_FORMAT = ':%s %s'
+    _DEFAULTACTION_FORMAT = ':%s %s [0:0]'
 
     _TERM = Term

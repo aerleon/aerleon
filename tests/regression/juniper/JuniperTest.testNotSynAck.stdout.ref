@@ -1,0 +1,23 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** this is a test acl
+         */
+        replace: filter test-filter {
+            interface-specific;
+            term notsynack-term-1 {
+                from {
+                    protocol tcp;
+                    destination-port 443;
+                    tcp-flags "!(syn&ack)";
+                }
+                then accept;
+            }
+        }
+    }
+}
+

@@ -38,14 +38,16 @@ class CiscoNX(cisco.Cisco):
     # Protocols should be emitted as they were in the policy (names).
     _PROTO_INT = False
 
-    def _RepositoryTagsHelper(self, target=None, filter_type='', filter_name=''):
+    def _RepositoryTagsHelper(
+        self, target: list[str] | None = None, filter_type: str = '', filter_name: str = ''
+    ) -> list[str]:
         if target is None:
             target = []
         target.extend(aclgenerator.AddRepositoryTags(' remark ', rid=False, wrap=True))
         return target
 
     # CiscoNX omits the "extended" access-list argument.
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> list[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -60,16 +62,16 @@ class CiscoNX(cisco.Cisco):
         """
         target = []
         if filter_type == 'extended':
-            target.append('no ip access-list %s' % filter_name)
-            target.append('ip access-list %s' % filter_name)
+            target.append(f'no ip access-list {filter_name}')
+            target.append(f'ip access-list {filter_name}')
         elif filter_type == 'object-group':
-            target.append('no ip access-list %s' % filter_name)
-            target.append('ip access-list %s' % filter_name)
+            target.append(f'no ip access-list {filter_name}')
+            target.append(f'ip access-list {filter_name}')
         elif filter_type == 'inet6':
-            target.append('no ipv6 access-list %s' % filter_name)
-            target.append('ipv6 access-list %s' % filter_name)
+            target.append(f'no ipv6 access-list {filter_name}')
+            target.append(f'ipv6 access-list {filter_name}')
         else:
             raise UnsupportedNXosAccessListError(
-                'access list type %s not supported by %s' % (filter_type, self._PLATFORM)
+                f'access list type {filter_type} not supported by {self._PLATFORM}'
             )
         return target

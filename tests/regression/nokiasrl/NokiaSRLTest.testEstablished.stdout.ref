@@ -1,0 +1,29 @@
+[
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "The general policy comment.",
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "established-term-1",
+          "match": {
+            "protocol": 6,
+            "source-port": {
+              "value": 53
+            },
+            "tcp-flags": "ack|rst"
+          },
+          "sequence-id": 5
+        }
+      ],
+      "name": "good-name-v4",
+      "statistics-per-entry": true,
+      "type": "ipv4"
+    }
+  }
+]
+
+

@@ -1,0 +1,36 @@
+[
+  {
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "destination-address": "10.2.3.4/32",
+              "protocol": 6
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "source-port": 80,
+              "tcp-session-established": true
+            }
+          }
+        }
+      ]
+    },
+    "config": {
+      "name": "good-name-v4",
+      "type": "ACL_IPV4"
+    },
+    "name": "good-name-v4",
+    "type": "ACL_IPV4"
+  }
+]
+
+

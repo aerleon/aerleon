@@ -1,0 +1,29 @@
+[
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "The general policy comment.",
+      "entry": [
+        {
+          "_annotate_description": "Allow TCP 53 source.",
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "match": {
+            "protocol": 6,
+            "source-port": {
+              "value": 53
+            }
+          },
+          "sequence-id": 5
+        }
+      ],
+      "name": "good-name-v4",
+      "statistics-per-entry": true,
+      "type": "ipv4"
+    }
+  }
+]
+
+

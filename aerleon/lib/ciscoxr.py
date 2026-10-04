@@ -16,7 +16,10 @@
 
 """Cisco IOS-XR filter renderer."""
 
+from __future__ import annotations
+
 from aerleon.lib import cisco
+from aerleon.lib.policy import Term
 
 
 class CiscoXR(cisco.Cisco):
@@ -27,7 +30,7 @@ class CiscoXR(cisco.Cisco):
     SUFFIX = '.xacl'
     _PROTO_INT = False
 
-    def _AppendTargetByFilterType(self, filter_name, filter_type):
+    def _AppendTargetByFilterType(self, filter_name: str, filter_type: str) -> list[str]:
         """Takes in the filter name and type and appends headers.
 
         Args:
@@ -39,14 +42,14 @@ class CiscoXR(cisco.Cisco):
         """
         target = []
         if filter_type == 'inet6':
-            target.append('no ipv6 access-list %s' % filter_name)
-            target.append('ipv6 access-list %s' % filter_name)
+            target.append(f'no ipv6 access-list {filter_name}')
+            target.append(f'ipv6 access-list {filter_name}')
         else:
-            target.append('no ipv4 access-list %s' % filter_name)
-            target.append('ipv4 access-list %s' % filter_name)
+            target.append(f'no ipv4 access-list {filter_name}')
+            target.append(f'ipv4 access-list {filter_name}')
         return target
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -58,7 +61,7 @@ class CiscoXR(cisco.Cisco):
 
         return supported_tokens, supported_sub_tokens
 
-    def _GetObjectGroupTerm(self, term, verbose=True):
+    def _GetObjectGroupTerm(self, term: Term, verbose: bool = True) -> CiscoXRObjectGroupTerm:
         """Returns an ObjectGroupTerm object."""
         return CiscoXRObjectGroupTerm(term, platform=self._PLATFORM, verbose=verbose)
 

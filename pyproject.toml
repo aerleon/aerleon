@@ -1,22 +1,33 @@
-[tool.poetry]
+[project]
 name = "aerleon"
-version = "1.2.0"
 description = "A firewall generation tool"
-authors = ["Rob Ankeny <ankenyr@gmail.com>", "Jason Benterou <jason.benterou@gmail.com>"]
 license = "Apache-2.0"
+keywords = ["firewall", "networking", "security"]
+version = "1.18.0"
+dynamic = ["classifiers"]
 readme = "README.md"
+authors = [{name = "Jason Benterou", email = "jason.benterou@gmail.com"}, {name = "Rob Ankeny", email = "ankenyr@gmail.com"}]
+requires-python = '>=3.10,<4.0'
+dependencies = [
+    'PyYAML (>=6.0.3,<7.0.0)',
+    'absl-py (>=2.3.1,<3.0.0)',
+    'typing_extensions (>=4.15.0,<5.0.0)',
+    'importlib-metadata (>=4.2,<5.0) ; python_version <= "3.10"'
+]
+
+[project.urls]
 homepage = "https://github.com/aerleon/aerleon"
 repository = "https://github.com/aerleon/aerleon"
-keywords = ["firewall", "networking", "security"]
+
+[project.scripts]
+aclgen = "aerleon.aclgen:EntryPoint"
+cgrep = "tools.cgrep:EntryPoint"
+aclcheck = "aerleon.aclcheck_cmdline:main"
+
+[tool.poetry]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Topic :: Security",
     "Topic :: System :: Networking :: Firewalls"
 ]
@@ -26,48 +37,59 @@ include = [
     "tools",
 ]
 packages = [{include = "aerleon"}, {include = "aerleon/lib"}, {include = "tools"}]
+requires-poetry = '>=2.2,<3.0'
 
-[tool.poetry.dependencies]
-python = "^3.7"
-PyYAML = "^6.0"
-ply = "^3.11"
-absl-py = "^1.2.0"
-typing_extensions = "^4.4.0"
-importlib-metadata = { version = "^4.2", markers = "python_version <= '3.10'" }
-
-[tool.poetry.dev-dependencies]
-black = {version = "^22.8.0"}
-coverage = {version = "^6.4.4"}
-flake8 = {version = "*"}
-Flake8-pyproject = {version = "*"}
-nox = {version = "^2022.8.7"}
-nox-poetry = {version = "^1.0.1"}
-pre-commit = {version = "^2.20.0"}
-pytest = {version = "^7.1.3"}
-pyperf = {version = "^2.4.1"}
-psutil = {version = "^5.9.2"}
-mkdocs = "1.3.1"
-mkdocs-material = "8.3.9"
-mkdocstrings = "0.19"
-mkdocstrings-python = "0.7.1"
-mkdocs-version-annotations = "1.0.0"
-sigstore = "^1.0.0"
-isort = "^5.11.4"
-
-[tool.poetry.scripts]
-aclgen = "aerleon.aclgen:EntryPoint"
-cgrep = "tools.cgrep:EntryPoint"
-aclcheck = "aerleon.aclcheck_cmdline:main"
+[dependency-groups]
+test = [
+    "coverage>=7.10.6",
+    "psutil>=7.1.0",
+    "pyperf>=2.7.0",
+    "pytest>=8.4.2",
+    "pytest-cov>=6.3.0",
+]
+lint = [
+    "black==26.5.1",
+    "flake8",
+    "Flake8-pyproject",
+    "isort>=6.1.0",
+    "pre-commit>=2.20.0",
+    "pyright>=1.1.407",
+    "pyupgrade>=3.21.2",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.20",
+    "mkdocs-version-annotations>=1.0.0",
+    "mkdocstrings>=0.29.1",
+    "mkdocstrings-python>=1.16.12",
+]
+nox = [
+    "nox>=2025.10.14",
+    "nox-poetry>=1.2.0",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+    {include-group = "docs"},
+    {include-group = "nox"},
+]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ['poetry-core (>=2.0,<3.0)']
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 # extend-exclude = "/__pycache__|\.ref/"
 line-length = 99
 skip-string-normalization = true
-target-version = ['py37']
+target-version = [
+    'py310',
+    'py311',
+    'py312',
+    'py313',
+    'py314',
+    'py315',
+]
 exclude = '''
 (
   /(
@@ -77,10 +99,12 @@ exclude = '''
     | \.mypy_cache
     | \.tox
     | \.venv
+    | \.nox
     | _build
     | buck-out
     | build
     | dist
+    | _vendor
   )/
   | settings.py     # This is where you define files that should not be stylized by black
                      # the root of the project
@@ -89,13 +113,50 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
+skip = [
+    '.bzr',
+    '.direnv',
+    '.eggs',
+    '.git',
+    '.hg',
+    '.mypy_cache',
+    '.nox',
+    '.pants.d',
+    '.svn',
+    '.tox',
+    '.venv',
+    '__pypackages__',
+    '_build',
+    'buck-out',
+    'build',
+    'dist',
+    'node_modules',
+    'venv',
+    '_vendor',
+]
 
 [tool.flake8]
 max-complexity = 10
 max-line-length = 99
 extend-ignore = ['E203', 'C901']
-exclude = ['.git','.github','venv','site-packages','__pycache__','doc','build','dist','policies']
+exclude = ['.git','.github','venv','site-packages','__pycache__','doc','build','dist','policies','_vendor']
 
 [tool.coverage.run]
 branch = true
 command_line = '-m pytest'
+
+[tool.pyright]
+include = ["aerleon", "tests"]
+exclude = [
+    "**/__pycache__",
+    "**/_vendor",
+    ".venv",
+]
+
+pythonVersion = "3.10"
+typeCheckingMode = "basic"  # "off", "basic", "standard", "strict"
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"

@@ -16,9 +16,12 @@
 
 """Discontinuous subnet mask summarizer."""
 
+from __future__ import annotations
+
 import collections
 
 from aerleon.lib import nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
 
 
 class DSMNet:
@@ -28,7 +31,7 @@ class DSMNet:
     support discontinuous subnet masks, hence this is required.
     """
 
-    def __init__(self, address, netmask, text=''):
+    def __init__(self, address: int, netmask: int, text: str = '') -> None:
         """Creates DSMNet.
 
         Args:
@@ -40,34 +43,34 @@ class DSMNet:
         self.netmask = netmask
         self.text = text
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self.address) + str(self.netmask))
 
-    def __eq__(self, other):
+    def __eq__(self, other: DSMNet) -> bool:
         try:
             return self.address == other.address and self.netmask == other.netmask
         except AttributeError:
             return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: DSMNet) -> bool:
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
         return not eq
 
-    def __le__(self, other):
+    def __le__(self, other: DSMNet) -> bool:
         gt = self.__gt__(other)
         if gt is NotImplemented:
             return NotImplemented
         return not gt
 
-    def __ge__(self, other):
+    def __ge__(self, other: DSMNet) -> bool:
         lt = self.__lt__(other)
         if lt is NotImplemented:
             return NotImplemented
         return not lt
 
-    def __lt__(self, other):
+    def __lt__(self, other: DSMNet) -> bool:
         try:
             if self.address != other.address:
                 return self.address < other.address
@@ -75,7 +78,7 @@ class DSMNet:
             return NotImplemented
         return False
 
-    def __gt__(self, other):
+    def __gt__(self, other: DSMNet) -> bool:
         try:
             if self.address != other.address:
                 return self.address > other.address
@@ -83,10 +86,10 @@ class DSMNet:
             return NotImplemented
         return False
 
-    def __str__(self):
-        return ' '.join([self.address, self.netmask])
+    def __str__(self) -> str:
+        return f"{self.address} {self.netmask}"
 
-    def MergeText(self, text=''):
+    def MergeText(self, text: str = '') -> str:
         """Returns self.text joined with optional text.
 
         Don't join the text if it's already contained in self.text.
@@ -99,13 +102,13 @@ class DSMNet:
         """
         if self.text:
             if text and text not in self.text:
-                return ', '.join([self.text, text])
+                return f"{self.text}, {text}"
             return self.text
         else:
             return text
 
 
-def ToDottedQuad(net, negate=False, nondsm=False):
+def ToDottedQuad(net: DSMNet, negate: bool = False, nondsm: bool = False) -> tuple[str, str]:
     """Turns a DSMNet object into decimal dotted quad tuple.
 
     Args:
@@ -136,7 +139,7 @@ def ToDottedQuad(net, negate=False, nondsm=False):
     )
 
 
-def _PrefixlenForNonDSM(intmask):
+def _PrefixlenForNonDSM(intmask: int) -> str:
     """Turns 32 bit integer into dotted decimal with JunOS friendly.
 
     Args:
@@ -150,7 +153,7 @@ def _PrefixlenForNonDSM(intmask):
     if dotmask == '255.255.255.255':
         return '32'
 
-    bitmask = '{:032b}'.format(intmask)
+    bitmask = f'{intmask:032b}'
 
     prefixlen = 0
     while bitmask[prefixlen] == '1':
@@ -159,7 +162,7 @@ def _PrefixlenForNonDSM(intmask):
     return dotmask if int(bitmask[prefixlen:], 2) else str(prefixlen)
 
 
-def _Int32ToDottedQuad(num):
+def _Int32ToDottedQuad(num: int) -> str:
     """Turns 32 bit integer into dotted decimal notation.
 
     Args:
@@ -177,7 +180,7 @@ def _Int32ToDottedQuad(num):
     return '.'.join(octets)
 
 
-def _NacaddrNetToDSMNet(net):
+def _NacaddrNetToDSMNet(net: IPv4 | IPv6) -> DSMNet:
     """Converts nacaddr.IPv4 or nacaddr.IPv6 object into DSMNet object.
 
     Args:
@@ -194,7 +197,7 @@ def _NacaddrNetToDSMNet(net):
     return DSMNet(address_as_int, netmask_as_int, net.text)
 
 
-def _ToPrettyBinaryFormat(num):
+def _ToPrettyBinaryFormat(num: int) -> str:
     """Prettily formatted string of binary representation of suplied number.
 
     Useful for debugging.
@@ -208,12 +211,12 @@ def _ToPrettyBinaryFormat(num):
     # like ipaddr make assumption that this is ipv4
     byte_strings = []
     while num > 0 or len(byte_strings) < 4:
-        byte_strings.append('{0:08b}'.format(num & 0xFF))
+        byte_strings.append(f'{num & 0xFF:08b}')
         num >>= 8
     return ' '.join(reversed(byte_strings))
 
 
-def Summarize(nets):
+def Summarize(nets: list[IPv4 | IPv6]) -> list[DSMNet]:
     """Summarizes networks while allowing for discontinuous subnet mask.
 
     Args:
@@ -236,7 +239,7 @@ def Summarize(nets):
     return sorted(result)
 
 
-def _SummarizeSameMask(nets):
+def _SummarizeSameMask(nets: list[DSMNet]) -> list[DSMNet]:
     """Summarizes networks while allowing for discontinuous subnet mask.
 
     Args:

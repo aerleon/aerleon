@@ -36,4 +36,4 @@ def write_excludes_testcase(ipstr, excludelist='', max_prefix_range=8, max_rando
     exst = ",".join(map(str, excludelist))
     rest = ";".join(",".join(map(str, sorted(result))) for result in result_list)
     with open('tests/utils/address_exclude_test_cases.txt', 'a') as f:
-        f.write("%s %s %s\n" % (ipst, exst, rest))
+        f.write(f"{ipst} {exst} {rest}\n")

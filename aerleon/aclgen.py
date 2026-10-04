@@ -16,18 +16,21 @@
 """Renders policy source files into actual Access Control Lists."""
 
 import copy
-import multiprocessing
+import multiprocessing.context
+import multiprocessing.managers
+import multiprocessing.pool
 import pathlib
 import sys
-from typing import Iterator, List, Tuple
+import typing
+from collections.abc import Iterator
 
 from absl import app, flags, logging
 
-from aerleon.lib import aclgenerator, naming, plugin_supervisor, policy, yaml
+from aerleon.lib import aclgenerator, naming, pcap, plugin_supervisor, policy, yaml
 from aerleon.utils import config
 
 FLAGS = flags.FLAGS
-WriteList = List[Tuple[pathlib.Path, str]]
+WriteList = typing.MutableSequence[tuple[pathlib.Path, str]]
 
 
 def SetupFlags():
@@ -35,70 +38,67 @@ def SetupFlags():
     flags.DEFINE_string(
         'base_directory',
         None,
-        'The base directory to look for acls; '
-        'typically where you\'d find ./corp and ./prod\n(default: \'%s\')'
-        % config.defaults['base_directory'],
+        'The base directory to search recursively for policy files.\n'
+        'Relative policy imports are resolved against this directory.\n'
+        'If --policy_file is used, aclgen will not search this directory.\n'
+        'Default: \'%s\'' % config.defaults['base_directory'],
     )
     flags.DEFINE_string(
         'definitions_directory',
         None,
-        'Directory where the definitions can be found.\n(default: \'%s\')'
-        % config.defaults['definitions_directory'],
+        'Directory containing network and service definition files.\n'
+        'Default: \'%s\'' % config.defaults['definitions_directory'],
     )
     flags.DEFINE_string('policy_file', None, 'Individual policy file to generate.')
     flags.DEFINE_string(
         'output_directory',
         None,
-        'Directory to output the rendered acls.\n(default: \'%s\')'
+        'Directory to output the rendered acls.\nDefault: \'%s\''
         % config.defaults['output_directory'],
     )
     flags.DEFINE_boolean(
         'optimize',
         None,
-        'Turn on optimization.\n(default: \'%s\')' % config.defaults['optimize'],
+        f"Turn on optimization.\nDefault: '{config.defaults['optimize']}'",
         short_name='o',
     )
     flags.DEFINE_boolean(
         'recursive',
         None,
-        'Descend recursively from the base directory rendering acls\n(default: \'%s\')'
-        % str(config.defaults['recursive']).lower(),
+        'UNUSED. '
+        'Recursive policy file search is always enabled except when using the --policy_file flag.',
     )
     flags.DEFINE_boolean(
-        'debug', None, 'Debug messages\n(default: \'%s\')' % str(config.defaults['debug']).lower()
-    )
-    flags.DEFINE_boolean(
-        'verbose',
+        'debug',
         None,
-        'Verbose messages\n(default: \'%s\')' % str(config.defaults['verbose']).lower(),
+        f"Display detailed messages.\nDefault: '{str(config.defaults['debug']).lower()}'",
     )
+    flags.DEFINE_boolean('verbose', None, 'UNUSED. Use --debug instead.')
     flags.DEFINE_list(
         'ignore_directories',
         None,
-        'Don\'t descend into directories that look like this string\n(default: \'%s\')'
+        'Don\'t descend into directories that look like this string.\nDefault: \'%s\''
         % ','.join(config.defaults['ignore_directories']),
     )
     flags.DEFINE_integer(
         'max_renderers',
         None,
-        'Max number of rendering processes to use.\n(default: \'%s\')'
+        'Max number of rendering processes to use.\nDefault: \'%s\''
         % config.defaults['max_renderers'],
     )
     flags.DEFINE_boolean(
         'shade_check',
         None,
-        'Raise an error when a term is completely shaded by a prior term.\n(default: \'%s\')'
+        'Raise an error when a term is completely shaded by a prior term.\nDefault: \'%s\''
         % str(config.defaults['shade_check']).lower(),
     )
     flags.DEFINE_integer(
         'exp_info',
         None,
-        'Print a info message when a term is set to expire in that many weeks.\n(default: \'%s\')'
+        'Print a message when a term is set to expire in that many weeks.\nDefault: \'%s\''
         % str(config.defaults['exp_info']),
     )
-    flags.DEFINE_multi_string(
-        'config_file', None, 'A yaml file with the configuration options for aerleon'
-    )
+    flags.DEFINE_multi_string('config_file', None, 'A YAML file with configuration options')
 
 
 class Error(Exception):
@@ -115,21 +115,6 @@ class ACLGeneratorError(Error):
 
 class ACLParserError(Error):
     """Raised when the ACL parser fails."""
-
-
-def SkipLines(text, skip_line_func=False):
-    """Apply skip_line_func to the given text.
-
-    Args:
-      text: list of the first text to scan
-      skip_line_func: function to use to check if we should skip a line
-
-    Returns:
-      ret_text: text(list) minus the skipped lines
-    """
-    if not skip_line_func:
-        return text
-    return [x for x in text if not skip_line_func(x)]
 
 
 def RenderFile(
@@ -161,40 +146,12 @@ def RenderFile(
     logging.debug('rendering file: %s into %s', input_file, output_directory)
 
     pol = None
-    jcl = False
-    evojcl = False
-    acl = False
-    atp = False
-    asacl = False
-    aacl = False
-    bacl = False
-    eacl = False
-    gca = False
-    gcefw = False
-    gcphf = False
-    ips = False
-    ipt = False
-    msmpc = False
-    spd = False
-    nsx = False
-    oc = False
-    pcap_accept = False
-    pcap_deny = False
-    pf = False
-    srx = False
-    jsl = False
-    nft = False
-    win_afw = False
-    nxacl = False
-    xacl = False
-    paloalto = False
-    k8s_pol = False
 
     try:
         with open(input_file) as f:
             conf = f.read()
             logging.debug('opened and read %s', input_file)
-    except IOError as e:
+    except OSError as e:
         logging.warning('bad file: \n%s', e)
         raise
 
@@ -226,9 +183,7 @@ def RenderFile(
             % (input_file, sys.exc_info()[0], sys.exc_info()[1])
         ) from e
 
-    platforms = set()
-    for header in pol.headers:
-        platforms.update(header.platforms)
+    platforms = {platform for header in pol.headers for platform in header.platforms}
 
     acl_obj: aclgenerator.ACLGenerator
     plugin_supervisor.PluginSupervisor.Start()
@@ -242,10 +197,11 @@ def RenderFile(
         try:
             # special handling for pcap
             if target == 'pcap':
+                assert issubclass(generator, pcap.PcapFilter)
                 acl_obj = generator(copy.deepcopy(pol), exp_info)
                 RenderACL(
                     str(acl_obj),
-                    '-accept' + acl_obj.SUFFIX,
+                    f"-accept{acl_obj.SUFFIX}",
                     output_directory,
                     input_file,
                     write_files,
@@ -253,7 +209,7 @@ def RenderFile(
                 acl_obj = generator(copy.deepcopy(pol), exp_info, invert=True)
                 RenderACL(
                     str(acl_obj),
-                    '-deny' + acl_obj.SUFFIX,
+                    f"-deny{acl_obj.SUFFIX}",
                     output_directory,
                     input_file,
                     write_files,
@@ -263,9 +219,7 @@ def RenderFile(
                 RenderACL(str(acl_obj), acl_obj.SUFFIX, output_directory, input_file, write_files)
 
         except aclgenerator.Error as e:
-            raise ACLGeneratorError(
-                'Error generating target ACL for %s:\n%s' % (input_file, e)
-            ) from e
+            raise ACLGeneratorError(f'Error generating target ACL for {input_file}:\n{e}') from e
 
 
 def RenderACL(
@@ -273,7 +227,7 @@ def RenderACL(
     acl_suffix: str,
     output_directory: pathlib.Path,
     input_file: pathlib.Path,
-    write_files: List[Tuple[pathlib.Path, str]],
+    write_files: typing.MutableSequence[tuple[pathlib.Path, str]],
     binary: bool = False,
 ):
     """Write the ACL string out to file if appropriate.
@@ -314,7 +268,7 @@ def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
     try:
         with open(file_name, readmode) as f:
             conf: str = str(f.read())
-    except IOError:
+    except OSError:
         return True
     if not binary:
         p4_id = '$I d:'.replace(' ', '')
@@ -330,7 +284,7 @@ def FilesUpdated(file_name: pathlib.Path, new_text: str, binary: bool) -> bool:
     return conf != new_text
 
 
-def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[pathlib.Path]:
+def DescendDirectory(input_dirname: str, ignore_directories: list[str]) -> list[pathlib.Path]:
     """Descend from input_dirname looking for policy files to render.
 
     Args:
@@ -342,14 +296,14 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
     """
     input_dir = pathlib.Path(input_dirname)
 
-    policy_files: List[pathlib.Path] = []
+    policy_files: list[pathlib.Path] = []
     policy_directories: Iterator[pathlib.Path] = filter(
         lambda path: path.is_dir(), input_dir.glob('**/pol')
     )
     for ignored_directory in ignore_directories:
 
         def Filtering(path, ignored=ignored_directory):
-            return not path.match('%s/**/pol' % ignored) and not path.match('%s/pol' % ignored)
+            return not path.match(f'{ignored}/**/pol') and not path.match(f'{ignored}/pol')
 
         policy_directories = filter(Filtering, policy_directories)
 
@@ -363,7 +317,7 @@ def DescendDirectory(input_dirname: str, ignore_directories: List[str]) -> List[
         )
         depth = len(directory.parents) - 1
         logging.warning(
-            '-' * (2 * depth) + '> %s (%d pol files found)' % (directory, len(directory_policies))
+            f"{'-' * (2 * depth)}> {directory} ({len(directory_policies)} pol files found)"
         )
         policy_files.extend(filter(lambda path: path.is_file(), directory_policies))
 
@@ -398,7 +352,7 @@ def _WriteFile(output_file: pathlib.Path, file_contents: str):
         with open(output_file, 'w') as output:
             logging.info('writing file: %s', output_file)
             output.write(file_contents)
-    except IOError:
+    except OSError:
         logging.warning('error while writing file: %s', output_file)
         raise
 
@@ -410,7 +364,7 @@ def Run(
     output_directory: str,
     exp_info: int,
     max_renderers: int,
-    ignore_directories: List[str],
+    ignore_directories: list[str],
     optimize: bool,
     shade_check: bool,
     context: multiprocessing.context.BaseContext,
@@ -435,48 +389,40 @@ def Run(
     try:
         definitions = naming.Naming(definitions_directory)
     except naming.NoDefinitionsError:
-        err_msg = 'bad definitions directory: %s' % definitions_directory
+        err_msg = f'bad definitions directory: {definitions_directory}'
         logging.fatal(err_msg)
         return  # static type analyzer can't detect that logging.fatal exits program
 
-    # thead-safe list for storing files to write
-    manager: multiprocessing.managers.SyncManager = context.Manager()
-    write_files: WriteList = manager.list()
-
     with_errors = False
     logging.info('finding policies...')
-    if policy_file:
-        # render just one file
-        logging.info('rendering one file')
-        RenderFile(
-            base_directory,
-            pathlib.Path(policy_file),
-            pathlib.Path(output_directory),
-            definitions,
-            exp_info,
-            optimize,
-            shade_check,
-            write_files,
-        )
-    elif max_renderers == 1:
-        # If only one process, run it sequentially
-        policies = DescendDirectory(base_directory, ignore_directories)
-        for pol in policies:
-            RenderFile(
-                base_directory,
-                pol,
-                pathlib.Path(output_directory),
-                definitions,
-                exp_info,
-                optimize,
-                shade_check,
-                write_files,
-            )
+    if max_renderers == 1 or policy_file:
+        write_files: WriteList = []
+        if policy_file:
+            policies = [pathlib.Path(policy_file)]
+        else:
+            policies = DescendDirectory(base_directory, ignore_directories)
+        try:
+            for pol in policies:
+                RenderFile(
+                    base_directory,
+                    pol,
+                    pathlib.Path(output_directory),
+                    definitions,
+                    exp_info,
+                    optimize,
+                    shade_check,
+                    write_files,
+                )
+        except (ACLParserError, ACLGeneratorError) as e:
+            with_errors = True
+            logging.warning('\n\nerror encountered in rendering process:\n%s\n\n', e)
     else:
+        manager: multiprocessing.managers.SyncManager = context.Manager()
+        write_files: WriteList = manager.list()
         # render all files in parallel
         policies = DescendDirectory(base_directory, ignore_directories)
         pool = context.Pool(processes=max_renderers)
-        results: List[multiprocessing.pool.AsyncResult] = []
+        results: list[multiprocessing.pool.AsyncResult] = []
         for pol in policies:
             results.append(
                 pool.apply_async(
@@ -541,19 +487,22 @@ def main(argv):
     logging.debug('aerleon configurations: %s', configs)
 
     context = multiprocessing.get_context()
-
-    Run(
-        configs['base_directory'],
-        configs['definitions_directory'],
-        configs['policy_file'],
-        configs['output_directory'],
-        configs['exp_info'],
-        configs['max_renderers'],
-        configs['ignore_directories'],
-        configs['optimize'],
-        configs['shade_check'],
-        context,
-    )
+    try:
+        Run(
+            configs['base_directory'],
+            configs['definitions_directory'],
+            configs['policy_file'],
+            configs['output_directory'],
+            configs['exp_info'],
+            configs['max_renderers'],
+            configs['ignore_directories'],
+            configs['optimize'],
+            configs['shade_check'],
+            context,
+        )
+    except Exception as e:
+        logging.error(f"Unhandled exception: {e}", exc_info=True)
+        sys.exit(1)
 
 
 def EntryPoint():

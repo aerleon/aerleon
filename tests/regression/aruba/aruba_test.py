@@ -16,13 +16,12 @@
 """Unittest for Aruba acl rendering module."""
 
 import datetime
-import logging
 import textwrap
 from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aruba, nacaddr, naming, policy
+from aerleon.lib import aclgenerator, aruba, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER_V4 = """
@@ -267,7 +266,7 @@ EXP_INFO = 2
 class ArubaTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     def testBuildTokens(self):
         aru = aruba.Aruba(
@@ -277,7 +276,7 @@ class ArubaTest(absltest.TestCase):
         self.assertEqual(SUPPORTED_TOKENS, st)
         self.assertEqual(SUPPORTED_SUB_TOKENS, sst)
 
-    @mock.patch.object(aruba.logging, 'warning')
+    @mock.patch.object(aclgenerator.logging, 'warning')
     def testExpiredTerm(self, mock_warn):
         aruba.Aruba(policy.ParsePolicy(GOOD_HEADER_V4 + EXPIRED_TERM, self.naming), EXP_INFO)
         mock_warn.assert_called_once_with(
@@ -286,7 +285,7 @@ class ArubaTest(absltest.TestCase):
             'test-filter',
         )
 
-    @mock.patch.object(aruba.logging, 'info')
+    @mock.patch.object(aclgenerator.logging, 'info')
     def testExpiringTerm(self, mock_info):
         exp_date = datetime.date.today() + datetime.timedelta(weeks=EXP_INFO)
         aruba.Aruba(
@@ -396,8 +395,7 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMultipleCallsSingleOwnerLine(self):
-        expected_result = textwrap.dedent(
-            """\
+        expected_result = textwrap.dedent("""\
         # $Id:$
         # $Date:$
         # $Revision:$
@@ -409,8 +407,7 @@ class ArubaTest(absltest.TestCase):
           # Owner: wshakespeare
           any any any permit
         !
-        """
-        )
+        """)
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_LONG_COMMENT, self.naming), EXP_INFO
         )
@@ -484,8 +481,7 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMultipleCallsSingleNetdestinationsBlock(self):
-        expected_result = textwrap.dedent(
-            """\
+        expected_result = textwrap.dedent("""\
         # $Id:$
         # $Date:$
         # $Revision:$
@@ -496,9 +492,8 @@ class ArubaTest(absltest.TestCase):
         ip access-list session test-filter
           alias gt-one-netd_src any 1 permit
         !
-        """
-        )
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        """)
+        self.naming._ParseLine('SINGLE_HOST = 10.1.1.1/32', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_SINGLE_NETDESTINATION, self.naming),
             EXP_INFO,
@@ -521,7 +516,7 @@ class ArubaTest(absltest.TestCase):
       alias gt-one-netd_src any 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('SINGLE_HOST = 10.1.1.1/32', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_SINGLE_NETDESTINATION, self.naming),
             EXP_INFO,
@@ -543,7 +538,7 @@ class ArubaTest(absltest.TestCase):
       ipv6 alias gt-one-netd_src any 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::/128')]
+        self.naming._ParseLine('SINGLE_HOST = 2001::/128', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_SINGLE_NETDESTINATION, self.naming),
             EXP_INFO,
@@ -569,7 +564,7 @@ class ArubaTest(absltest.TestCase):
       alias gt-two-netd_src alias gt-two-netd_dst 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.1.1.1/32')]
+        self.naming._ParseLine('SINGLE_HOST = 10.1.1.1/32', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_TWO_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -595,7 +590,7 @@ class ArubaTest(absltest.TestCase):
       ipv6 alias gt-two-netd_src alias gt-two-netd_dst 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::/128')]
+        self.naming._ParseLine('SINGLE_HOST = 2001::/128', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_TWO_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -621,7 +616,7 @@ class ArubaTest(absltest.TestCase):
       alias gt-mix-netd_src alias gt-mix-netd_dst 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('10.0.0.0/8')]
+        self.naming._ParseLine('SOME_NETWORK = 10.0.0.0/8', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + GOOD_TERM_TWO_NETWORK_NETDESTINATIONS, self.naming
@@ -649,7 +644,7 @@ class ArubaTest(absltest.TestCase):
       ipv6 alias gt-mix-netd_src alias gt-mix-netd_dst 1 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2001::/64')]
+        self.naming._ParseLine('SOME_NETWORK = 2001::/64', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V6 + GOOD_TERM_TWO_NETWORK_NETDESTINATIONS, self.naming
@@ -674,11 +669,8 @@ class ArubaTest(absltest.TestCase):
       alias good-term-combined-netdestinations_src any tcp 80 deny
     !
     """
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('100.0.0.0/8'),
-            nacaddr.IP('10.0.0.1/32'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('MIXED_HOSTS = 100.0.0.0/8 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_COMBINED_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -701,8 +693,8 @@ class ArubaTest(absltest.TestCase):
       ipv6 alias good-term-combined-netdestinations_src any tcp 80 deny
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2002::/64'), nacaddr.IP('2001::/128')]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('MIXED_HOSTS = 2002::/64 2001::/128', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERM_COMBINED_NETDESTINATIONS, self.naming),
             EXP_INFO,
@@ -731,11 +723,8 @@ class ArubaTest(absltest.TestCase):
       any any any deny
     !
     """
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('100.0.0.0/8'),
-            nacaddr.IP('10.0.0.1/32'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming._ParseLine('SOME_HOST = 100.0.0.0/8 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('TFTP = 69/udp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming),
             EXP_INFO,
@@ -764,8 +753,8 @@ class ArubaTest(absltest.TestCase):
       ipv6 any any any deny
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('2002::/64'), nacaddr.IP('2001::/128')]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming._ParseLine('SOME_HOST = 2002::/64 2001::/128', 'networks')
+        self.naming._ParseLine('TFTP = 69/udp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V6 + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming),
             EXP_INFO,
@@ -787,8 +776,8 @@ class ArubaTest(absltest.TestCase):
       user alias good-term-source-is-user_dst tcp 53 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_SOURCE_IS_USER, self.naming), EXP_INFO
         )
@@ -809,8 +798,8 @@ class ArubaTest(absltest.TestCase):
       alias good-term-destination-is-user_src user tcp 53 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53']
+        self.naming._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -832,8 +821,8 @@ class ArubaTest(absltest.TestCase):
       alias good-term-destination-is-user_src user tcp 53 55 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53-55', '54']
+        self.naming._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53-55/tcp 54/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -857,8 +846,8 @@ class ArubaTest(absltest.TestCase):
       alias good-term-destination-is-user_src user tcp 53 55 permit
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
-        self.naming.GetServiceByProto.return_value = ['53-55', '54', '10-20', '1']
+        self.naming._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
+        self.naming._ParseLine('DNS = 53-55/tcp 54/tcp 10-20/tcp 1/tcp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_DESTINATION_IS_USER, self.naming),
             EXP_INFO,
@@ -880,7 +869,7 @@ class ArubaTest(absltest.TestCase):
       no alias good-term-negate_src any any deny
     !
     """
-        self.naming.GetNetAddr.return_value = [nacaddr.IP('100.0.0.0/8')]
+        self.naming._ParseLine('SOME_NETWORK = 100.0.0.0/8', 'networks')
         aru = aruba.Aruba(
             policy.ParsePolicy(GOOD_HEADER_V4 + GOOD_TERM_NEGATE_1, self.naming), EXP_INFO
         )
@@ -905,11 +894,8 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testMissingPlatformTerm(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('100.0.0.0/8'),
-            nacaddr.IP('10.0.0.1/32'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming._ParseLine('SOME_HOST = 100.0.0.0/8 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('TFTP = 69/udp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + MISSING_PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,
@@ -923,11 +909,8 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testPlatformTerm(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('100.0.0.0/8'),
-            nacaddr.IP('10.0.0.1/32'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming._ParseLine('SOME_HOST = 100.0.0.0/8 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('TFTP = 69/udp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + PLATFORM_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE, self.naming
@@ -940,11 +923,8 @@ class ArubaTest(absltest.TestCase):
 
     @capture.stdout
     def testPlatformExclude(self):
-        self.naming.GetNetAddr.return_value = [
-            nacaddr.IP('100.0.0.0/8'),
-            nacaddr.IP('10.0.0.1/32'),
-        ]
-        self.naming.GetServiceByProto.return_value = ['69']
+        self.naming._ParseLine('SOME_HOST = 100.0.0.0/8 10.0.0.1/32', 'networks')
+        self.naming._ParseLine('TFTP = 69/udp', 'services')
         aru = aruba.Aruba(
             policy.ParsePolicy(
                 GOOD_HEADER_V4 + PLATFORM_EXCLUDE_TERM + GOOD_TERMS_COMBINED_SINGLE_CASE,

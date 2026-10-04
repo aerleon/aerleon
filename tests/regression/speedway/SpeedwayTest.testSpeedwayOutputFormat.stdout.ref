@@ -6,7 +6,7 @@
 # $Date:$
 # $Revision:$
 # inet
-:INPUT ACCEPT
+:INPUT ACCEPT [0:0]
 -N I_good-term-1
 -A I_good-term-1 -p icmp -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -j I_good-term-1

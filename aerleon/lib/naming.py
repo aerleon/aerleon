@@ -45,10 +45,9 @@ DNS = 53/tcp
 
 """
 
-
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import yaml
 from absl import logging
@@ -56,6 +55,7 @@ from yaml import YAMLError
 
 from aerleon.lib import nacaddr
 from aerleon.lib import port as portlib
+from aerleon.lib.fqdn import FQDN
 from aerleon.lib.nacaddr import IPv4, IPv6
 from aerleon.lib.yaml_loader import SpanSafeYamlLoader
 
@@ -72,7 +72,7 @@ class NamespaceCollisionError(Error):
 
 
 class BadNetmaskTypeError(Error):
-    """Used to report on duplicate symbol names found while parsing."""
+    """Deprecated."""
 
 
 class NoDefinitionsError(Error):
@@ -107,6 +107,10 @@ class DefinitionFileTypeError(Error):
     """Invalid Definition File"""
 
 
+class EmptyDefinitionError(Error):
+    """A token returned no results."""
+
+
 # Consider making this span-oriented
 # (file > line > (start_ch, end_ch))
 class UserMessage:
@@ -125,18 +129,20 @@ class UserMessage:
             The top-level file should be the first item in the list.
     """
 
-    message: str
-    filename: str
-    line: int
-    include_chain: "list[Tuple[str, int]]"
-
-    def __init__(self, message, *, filename, line=None, include_chain=None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        filename: str,
+        line: int | None = None,
+        include_chain: list[tuple[str, int]] | None = None,
+    ):
         self.message = message
         self.filename = filename
         self.line = line
         self.include_chain = include_chain
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Display user-facing error message with include chain (if present).
 
         e.g.
@@ -161,11 +167,11 @@ class UserMessage:
                     error_context += " (Top Level)"
         return error_context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"UserMessage(\"{str(self)}\")"
 
 
-def is_yaml_suffix(suffix):
+def is_yaml_suffix(suffix: str) -> bool:
     return suffix == '.yaml' or suffix == '.yml'
 
 
@@ -198,7 +204,10 @@ class Naming:
     """
 
     def __init__(
-        self, naming_dir: str = None, naming_file: str = None, naming_type: str = None
+        self,
+        naming_dir: str | None = None,
+        naming_file: str | None = None,
+        naming_type: str | None = None,
     ) -> None:
         """Set the default values for a new Naming object.
 
@@ -214,6 +223,7 @@ class Naming:
         self.current_symbol = None
         self.services = {}
         self.networks = {}
+        self.fqdn = {}
         self.unseen_services = {}
         self.unseen_networks = {}
         self.port_re = re.compile(r'(^\d+-\d+|^\d+)\/\w+$|^[\w\d-]+$', re.IGNORECASE | re.DOTALL)
@@ -225,10 +235,10 @@ class Naming:
                 if naming_type:
                     logging.warning('Naming object: ignoring unexpected naming_type.')
 
-                with open(file_path, 'r') as file_handle:
+                with open(file_path) as file_handle:
                     self.ParseYaml(file_handle, file_path.name)
             elif naming_type:
-                with open(file_path, 'r') as file_handle:
+                with open(file_path) as file_handle:
                     self._ParseFile(file_handle, naming_type)
 
         elif naming_dir:
@@ -259,7 +269,7 @@ class Naming:
                     )
                 )
 
-    def GetIpParents(self, query: str) -> List[str]:
+    def GetIpParents(self, query: str) -> list[str]:
         """Return network tokens that contain IP in query.
 
         Args:
@@ -312,7 +322,7 @@ class Naming:
                     recursive_parents.append(bp)
         return sorted(list(set(recursive_parents)))
 
-    def GetServiceParents(self, query: str) -> List[str]:
+    def GetServiceParents(self, query: str) -> list[str]:
         """Given a query token, return list of services definitions with that token.
 
         Args:
@@ -322,7 +332,7 @@ class Naming:
         """
         return self._GetParents(query, self.services)
 
-    def GetNetParents(self, query: str) -> List[str]:
+    def GetNetParents(self, query: str) -> list[str]:
         """Given a query token, return list of network definitions with that token.
 
         Args:
@@ -332,7 +342,7 @@ class Naming:
         """
         return self._GetParents(query, self.networks)
 
-    def _GetParents(self, query: str, query_group: Dict[str, _ItemUnit]) -> List[str]:
+    def _GetParents(self, query: str, query_group: dict[str, _ItemUnit]) -> list[str]:
         """Given a naming item dict, return any tokens containing the value.
 
         Args:
@@ -360,7 +370,7 @@ class Naming:
                 recursive_parents.append(bp)
         return recursive_parents
 
-    def GetNetChildren(self, query: str) -> List[str]:
+    def GetNetChildren(self, query: str) -> list[str]:
         """Given a query token, return list of network definitions tokens within provided token.
 
         This will only return children, not descendants of provided token.
@@ -373,7 +383,7 @@ class Naming:
         """
         return self._GetChildren(query, self.networks)
 
-    def _GetChildren(self, query: str, query_group: Dict[str, _ItemUnit]) -> List[str]:
+    def _GetChildren(self, query: str, query_group: dict[str, _ItemUnit]) -> list[str]:
         """Given a naming item dict, return tokens (not IPs) contained within this value.
 
         Args:
@@ -411,11 +421,11 @@ class Naming:
         except ValueError:
             return False
 
-    def GetServiceNames(self):
+    def GetServiceNames(self) -> list[str]:
         """Returns the list of all known service names."""
         return list(self.services.keys())
 
-    def GetService(self, query: str) -> List[str]:
+    def GetService(self, query: str) -> list[str]:
         """Given a service name, return a list of associated ports and protocols.
 
         Args:
@@ -434,7 +444,7 @@ class Naming:
         data = query.split('#')  # Get the token keyword and remove any comment
         service_name = data[0].split()[0]  # strip and cast from list to string
         if service_name not in self.services:
-            raise UndefinedServiceError('\nNo such service: %s' % query)
+            raise UndefinedServiceError(f'\nNo such service: {query}')
 
         already_done.add(service_name)
 
@@ -450,12 +460,12 @@ class Naming:
                         expandset.update(self.GetService(service))
                     except UndefinedServiceError as e:
                         # One of the services in query is undefined, refine the error msg.
-                        raise UndefinedServiceError('%s (in %s)' % (e, query))
+                        raise UndefinedServiceError(f'{e} (in {query})')
             else:
                 expandset.add(service)
         return sorted(expandset)
 
-    def GetPortParents(self, query, proto):
+    def GetPortParents(self, query: str, proto: str) -> list[str]:
         """Returns a list of all service tokens containing the port/protocol pair.
 
         Args:
@@ -470,7 +480,7 @@ class Naming:
           service tokens.
         """
         # turn the given port and protocol into a PortProtocolPair object
-        given_ppp = portlib.PPP(query + '/' + proto)
+        given_ppp = portlib.PPP(f"{query}/{proto}")
         base_parents = []
         matches = set()
         # check each service token to see if it's a PPP or a nested group.
@@ -504,10 +514,10 @@ class Naming:
                     matches.add(bp)
         # error if the port/protocol pair is not found.
         if not matches:
-            raise UndefinedPortError('%s/%s is not found in any service tokens' % (query, proto))
+            raise UndefinedPortError(f'{query}/{proto} is not found in any service tokens')
         return sorted(matches)
 
-    def GetServiceByProto(self, query: str, proto: str) -> List[str]:
+    def GetServiceByProto(self, query: str, proto: str) -> list[str]:
         """Given a service name, return list of ports in the service by protocol.
 
         Args:
@@ -527,7 +537,7 @@ class Naming:
         data = query.split('#')  # Get the token keyword and remove any comment
         servicename = data[0].split()[0]  # strip and cast from list to string
         if servicename not in self.services:
-            raise UndefinedServiceError('%s %s' % ('\nNo such service,', servicename))
+            raise UndefinedServiceError('{} {}'.format('\nNo such service,', servicename))
 
         for service in self.GetService(servicename):
             if service and '/' in service:
@@ -536,48 +546,85 @@ class Naming:
                     services_set.add(parts[0])
         return sorted(services_set)
 
-    def GetNetAddr(self, token: str) -> List[Union[IPv4, IPv6]]:
-        """Given a network token, return a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
+    def GetFQDN(self, query: str) -> list[FQDN]:
+        """Expand a network token into a list of FQDN objects.
 
         Args:
-          token: A name of a network definition, such as 'INTERNAL'
+          query: Network definition token. May include comment text
 
         Returns:
-          A list of nacaddr.IPv4 or nacaddr.IPv6 objects.
+          List of FQDN objects
 
         Raises:
-          UndefinedAddressError: if the network name isn't defined.
+          UndefinedAddressError: Network token not defined
+          EmptyDefinitionError: No FQDN values found for this network token
         """
-        return self.GetNet(token)
+        results = self._GetFQDN(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"No FQDN values found for network: {query}")
+        return results
 
-    def GetNet(self, query: str) -> List[Union[IPv4, IPv6]]:
+    def _GetFQDN(self, query: str, level=0) -> list[FQDN]:
+        returnlist: list[FQDN] = []
+        data = query.split('#')
+        token = data[0].split()[0]
+        if token not in self.fqdn:
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
+        for i in self.fqdn[token].items:
+            comment = ''
+            if i.find('#') > -1:
+                name, comment = i.split('#', 1)
+            else:
+                name = i
+
+            name = name.strip()
+            if self.token_re.match(name):
+                returnlist.extend(self._GetFQDN(name))
+            else:
+                try:
+                    fqdn = FQDN(name, token, comment)
+                    fqdn.text = comment.lstrip()
+                    fqdn.token = token
+                    returnlist.append(fqdn)
+                except ValueError:
+                    pass
+        for i in returnlist:
+            i.parent_token = token
+        return returnlist
+
+    def GetNetAddr(self, query: str) -> list[IPv4 | IPv6]:
+        """Alias of Naming.GetNet"""
+        return self.GetNet(query)
+
+    def GetNet(self, query: str) -> list[IPv4 | IPv6]:
         """Expand a network token into a list of nacaddr.IPv4 or nacaddr.IPv6 objects.
 
         Args:
-          query: Network definition token which may include comment text
-
-        Raises:
-          BadNetmaskTypeError: Results when an unknown netmask_type is
-          specified.  Acceptable values are 'cidr', 'netmask', and 'hostmask'.
+          query: Network definition token. May include comment text.
 
         Returns:
           List of nacaddr.IPv4 or nacaddr.IPv6 objects
 
         Raises:
-          UndefinedAddressError: for an undefined token value
+          UndefinedAddressError: Network token not defined
+          EmptyDefinitionError: No IP address values found for this network token
         """
+        results = self._GetNet(query)
+        if len(results) == 0:
+            raise EmptyDefinitionError(f"No IP addresses found for network: {query}")
+        return results
+
+    def _GetNet(self, query: str) -> list[IPv4 | IPv6]:
         returnlist = []
-        data = []
-        token = ''
-        data = query.split('#')  # Get the token keyword and remove any comment
-        token = data[0].split()[0]  # Remove whitespace and cast from list to string
+        data = query.split('#')
+        token = data[0].split()[0]
         if token not in self.networks:
-            raise UndefinedAddressError('%s %s' % ('\nUNDEFINED:', str(token)))
+            raise UndefinedAddressError(f'UNDEFINED: {token}')
 
         for i in self.networks[token].items:
             comment = ''
             if i.find('#') > -1:
-                (net, comment) = i.split('#', 1)
+                net, comment = i.split('#', 1)
             else:
                 net = i
 
@@ -586,20 +633,17 @@ class Naming:
                 returnlist.extend(self.GetNet(net))
             else:
                 try:
-                    # TODO(robankeny): Fix using error to continue processing.
                     addr = nacaddr.IP(net, strict=False)
                     addr.text = comment.lstrip()
                     addr.token = token
                     returnlist.append(addr)
                 except ValueError:
-                    # if net was something like 'FOO', or the name of another token which
-                    # needs to be dereferenced, nacaddr.IP() will return a ValueError
-                    returnlist.extend(self.GetNet(net))
+                    pass
         for i in returnlist:
             i.parent_token = token
         return returnlist
 
-    def _Parse(self, definitions_directory):
+    def _Parse(self, definitions_directory: str) -> None:
         """Parse files for tokens and values.
 
         Given a directory name, grab all the appropriate files in that
@@ -612,7 +656,6 @@ class Naming:
         Raises:
           NoDefinitionsError: if no definitions are found.
         """
-
         file_def_type = {
             '.net': DEF_TYPE_NETWORKS,
             '.svc': DEF_TYPE_SERVICES,
@@ -621,27 +664,26 @@ class Naming:
         }
 
         for path in Path(definitions_directory).iterdir():
-
             def_type = file_def_type.get(path.suffix)
 
             if not def_type:
                 continue
 
             try:
-                with open(path, 'r') as file:
+                with open(path) as file:
                     if def_type == 'yaml':
                         self.ParseYaml(file, path.name)
                     else:
                         self._ParseFile(file, def_type)
 
-            except IOError as error_info:
-                raise NoDefinitionsError('%s' % error_info)
+            except OSError as error_info:
+                raise NoDefinitionsError(f'{error_info}')
 
-    def _ParseFile(self, file_handle: List[str], def_type: str) -> None:
+    def _ParseFile(self, file_handle: list[str], def_type: str) -> None:
         for line in file_handle:
             self._ParseLine(line, def_type)
 
-    def ParseServiceList(self, data: List[str]) -> None:
+    def ParseServiceList(self, data: list[str]) -> None:
         """Take an array of service data and import into class.
 
         This method allows us to pass an array of data that contains service
@@ -653,7 +695,7 @@ class Naming:
         for line in data:
             self._ParseLine(line, DEF_TYPE_SERVICES)
 
-    def ParseNetworkList(self, data: List[str]) -> None:
+    def ParseNetworkList(self, data: list[str]) -> None:
         """Take an array of network data and import into class.
 
         This method allows us to pass an array of data that contains network
@@ -684,23 +726,16 @@ class Naming:
           NamingSyntaxError: Syntax error parsing config.
         """
 
-        #
-        # NOTE: The "unseen name" logic defined in this function (_ParseLine) is duplicated in
-        # function ParseDefinitionsObject. Any changes to how "unseen name" checking is done
-        # need to be made in both places.
-        #
-        # TODO(jb): Consider splitting up _ParseLine so that it generates an intermediate
-        #  representation (ItemUnit) and "unseen name" checks are done on the IR (by both _Parse* flows).
         if definition_type not in ['services', 'networks']:
             raise UnexpectedDefinitionTypeError(
-                '%s %s' % ('Received an unexpected definition type:', definition_type)
+                f'Received an unexpected definition type: {definition_type}'
             )
         line = line.strip()
         if not line or line.startswith('#'):  # Skip comments and blanks.
             return
         comment = ''
         if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
+            line, comment = line.split('#', 1)
         line_parts = line.split('=')  # Split on var = val lines.
         # the value field still has the comment at this point
         # If there was '=', then do var and value
@@ -715,9 +750,7 @@ class Naming:
             if definition_type == DEF_TYPE_SERVICES:
                 for port in line_parts[1].strip().split():
                     if not self.port_re.match(port):
-                        raise NamingSyntaxError(
-                            '%s: %s' % ('The following line has a syntax error', line)
-                        )
+                        raise NamingSyntaxError(f'The following line has a syntax error: {line}')
                 if self.current_symbol in self.services:
                     raise NamespaceCollisionError(
                         '%s %s'
@@ -753,7 +786,7 @@ class Naming:
             if not self.current_symbol:
                 break
             if comment:
-                self.unit.items.append(value_piece + ' # ' + comment)
+                self.unit.items.append(f"{value_piece} # {comment}")
             else:
                 self.unit.items.append(value_piece)
                 # token?
@@ -769,16 +802,16 @@ class Naming:
                             if value_piece not in self.unseen_networks:
                                 self.unseen_networks[value_piece] = True
 
-    def ParseYaml(self, file_handle: str, file_name: str) -> None:
-        """Load a definition yaml file as a string.
+    def ParseYaml(self, file: str, file_name: str) -> None:
+        """Load network and service definitions from YAML.
 
         Arguments:
             file: A string containing the file contents.
-            filename: The original filename of the file.
+            file_name: The original filename of the file.
         """
 
         try:
-            file_data = yaml.load(file_handle, Loader=SpanSafeYamlLoader(filename=file_name))
+            file_data = yaml.load(file, Loader=SpanSafeYamlLoader(filename=file_name))
         except YAMLError as yaml_error:
             raise DefinitionFileTypeError(
                 UserMessage("Unable to read file as YAML.", filename=file_name)
@@ -786,7 +819,14 @@ class Naming:
 
         self.ParseDefinitionsObject(file_data, file_name)
 
-    def ParseDefinitionsObject(self, file_data: Dict[str, str], file_name: str) -> None:
+    def ParseDefinitionsObject(self, file_data: dict[str, Any], file_name: str) -> None:
+        """Load network and service definitions from a Python object.
+
+        Arguments:
+            file_data: A Python dict where file_data.networks contains network
+                data and/or file_data.services contains service data.
+            file_name: The original filename of the file.
+        """
         # Empty files are ignored with a warning
         if not file_data:
             logging.warning(UserMessage("Ignoring empty address book file.", filename=file_name))
@@ -795,7 +835,7 @@ class Naming:
         # Check for at least one essential key, ignore with warning
         essential_keys = ['networks', 'services']
 
-        if not any((key in file_data for key in essential_keys)):
+        if not any(key in file_data for key in essential_keys):
             logging.warning(
                 UserMessage("File contains no network or service data.", filename=file_name)
             )
@@ -807,7 +847,7 @@ class Naming:
         if 'services' in file_data:
             self._ParseYamlServices(file_data, file_name)
 
-    def _ParseYamlNetworks(self, file_data: Dict[str, Any], file_name: str) -> None:
+    def _ParseYamlNetworks(self, file_data: dict[str, Any], file_name: str) -> None:
         if 'networks' in file_data and not isinstance(file_data['networks'], dict):
             logging.warning(
                 UserMessage(
@@ -827,22 +867,21 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if not self.token_re.match(symbol):
                 logging.info(
                     f'\nNetwork name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                 )
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if symbol in self.networks:
                 raise NamespaceCollisionError(
                     f'\nMultiple definitions found for network: {symbol}'
                 )
 
-            unit = _ItemUnit(symbol)
+            addr_unit = _ItemUnit(symbol)
+            fqdn_unit = _ItemUnit(symbol)
 
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
-            self.networks[symbol] = unit
+            self.networks[symbol] = addr_unit
+            self.fqdn[symbol] = fqdn_unit
             if symbol in self.unseen_networks:
                 self.unseen_networks.pop(symbol)
 
@@ -851,6 +890,7 @@ class Naming:
                 # 1. A string, understood as a network name reference
                 # 2. A dictionary, with these fields:
                 #    'address': A specific IP address or CIDR range
+                #    'fqdn': A FQDN for use in DNS filtering.
                 #    'name': A network name reference
                 #    'comment': An optional comment
                 # 'address' or 'name' must be present in any dictionary item
@@ -865,6 +905,8 @@ class Naming:
                         value = network_ref = item['name']
                     elif 'address' in item and isinstance(item['address'], str):
                         value = ip = item['address']
+                    elif 'fqdn' in item and isinstance(item['fqdn'], str):
+                        value = item['fqdn']
                     else:
                         logging.info(f'\nNetwork name or CIDR expected for: {symbol}')
                         continue
@@ -874,17 +916,28 @@ class Naming:
                 else:
                     logging.info(f'\nUnexpected symbol definition: {symbol}')
                     continue
-
                 if comment is None:
-                    unit.items.append(value)
+                    if network_ref:
+                        addr_unit.items.append(value)
+                        fqdn_unit.items.append(value)
+                    elif ip:
+                        addr_unit.items.append(value)
+                    else:
+                        fqdn_unit.items.append(value)
                 else:
-                    unit.items.append(f'{value} # {comment}')
+                    if network_ref:
+                        addr_unit.items.append(f'{value} # {comment}')
+                        fqdn_unit.items.append(f'{value} # {comment}')
+                    elif ip:
+                        addr_unit.items.append(f'{value} # {comment}')
+                    else:
+                        fqdn_unit.items.append(f'{value} # {comment}')
 
                 if network_ref and network_ref not in self.networks:
                     if network_ref not in self.unseen_networks:
                         self.unseen_networks[network_ref] = True
 
-    def _ParseYamlServices(self, file_data: Dict[str, Any], file_name: str) -> None:
+    def _ParseYamlServices(self, file_data: dict[str, Any], file_name: str) -> None:
         if 'services' in file_data and not isinstance(file_data['services'], dict):
             logging.warning(
                 UserMessage(
@@ -904,13 +957,11 @@ class Naming:
                 )
                 continue
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if not self.token_re.match(symbol):
                 logging.info(
                     f'\nService name does not match recommended criteria: {symbol}\nOnly A-Z, a-z, 0-9, -, and _ allowed'
                 )
 
-            # TODO(jb) This check should be performed on the IR so we can hoist it from _ParseLine
             if symbol in self.services:
                 raise NamespaceCollisionError(
                     f'\nMultiple definitions found for service: {symbol}'
@@ -918,7 +969,6 @@ class Naming:
 
             unit = _ItemUnit(symbol)
 
-            # TODO(jb) This operation should be performed on the IR so we can hoist it from _ParseLine
             self.services[symbol] = unit
             if symbol in self.unseen_services:
                 self.unseen_services.pop(symbol)
@@ -934,7 +984,6 @@ class Naming:
                 # ('protocol' and 'port') or 'name' must be present in any dictionary item
                 value = None
                 service_ref = None
-                service_port = None
                 comment = None
                 if isinstance(item, str):
                     value = service_ref = item
@@ -951,7 +1000,7 @@ class Naming:
                     ):
                         protocol = item['protocol']
                         port = item['port']
-                        value = service_port = f'{port}/{protocol}'
+                        value = f'{port}/{protocol}'
                     else:
                         logging.info(f'\nService name or port definition expected for: {symbol}')
                         continue

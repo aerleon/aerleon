@@ -113,7 +113,7 @@ option: {established|tcp-established|initial|rst|first-fragment}
 ```
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _initial_
 * _rst_
 * _first-fragment_: this will be rendered as a _fragment_ match.
@@ -156,7 +156,7 @@ The arista header designation has the following format:
 
 ```yaml
 targets:
-    arista: [filter name] {standard|extended|object-group|inet6}
+    arista: [filter name] {standard|extended|object-group|inet6} {noverbose}
 ```
 
 <!--
@@ -169,6 +169,7 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 * _extended_: specifies that the output should be an extended access list
 * _object-group_: specifies this is a arista extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: #TODO: does this exist on all Cisco inherited platforms?
 * _enable_dsmo_: #TODO: does this exist on all Cisco inherited platforms?
 
@@ -184,7 +185,6 @@ target:: arista [filter name] {standard|extended|object-group|inet6}
 * _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
-* _verbose_: adds additional remark statements with the term name, owner (if set) and the comment (if set) (default: True)
 
 ### Sub Tokens
 
@@ -208,7 +208,7 @@ option:: {established|is-fragment|tcp-established}
 -->
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
 * _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 
 ***
 
@@ -284,7 +284,7 @@ The cisco header designation has the following format:
 
 ```yaml
 targets:
-    cisco: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo}
+    cisco: [filter name] {extended|standard|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisco filter.
@@ -292,6 +292,7 @@ targets:
 * _standard_: specifies that the output should be a standard access list, and the filter name should be numeric and in the range of 1-99.
 * _object-group_: specifies this is a cisco extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: specifies output will include both IPv6 and IPv4 filters.
 * _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
@@ -325,7 +326,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
 * _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
 ***
@@ -364,7 +365,7 @@ targets:
 ### Option
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 
 ***
 
@@ -376,13 +377,14 @@ The cisconx header designation has the following format:
 
 ```yaml
 targets:
-    cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo}
+    cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisconx filter.
 * _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
 * _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 * _mixed_: specifies output will include both IPv6 and IPv4 filters.
 * _enable_dsmo_: Enable discontinuous subnet mask summarization.
 When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
@@ -415,7 +417,7 @@ The default format is _inet4_, and is implied if not other argument is given.
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
 * _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
 ***
@@ -428,11 +430,12 @@ The ciscoxr header designation has the following format:
 
 ```yaml
 targets:
-    ciscoxr: [filter name] {inet6}
+    ciscoxr: [filter name] {inet6} {noverbose}
 ```
 
 * _filter name_: defines the name or number of the cisco filter.
 * _inet6_: specifies the output be for IPv6 only filters.
+* _noverbose_: omit additional term and address comments. (optional)
 
 ### Term Format
 
@@ -462,8 +465,43 @@ targets:
 
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
 * _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
+
+***
+
+## Fortigate
+
+### Header Format
+
+The Fortigate header designation has the following format:
+
+```yaml
+targets:
+    fortigate: from-zone [source interface or zone] to-zone [destination interface or zone] {address_family}
+```
+
+* _source interface or zone_: Defines the source interface or source zone
+* _destination interface or zone_: Defines the destination interface or destination zone
+* _address_family_: Address family to use, valid inputs are `inet`, `inet6`, or `mixed`. (default: `mixed`)
+
+### Term Format
+
+* For common keys, see section [common](#common) above.
+
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+
+### Option
+
+* _log_traffic_mode_all_: Enables `set logtraffic all` in term.
+* _log_traffic_start_session_: Enabled `set logtraffic-start` in term.
+
 
 ***
 
@@ -522,7 +560,7 @@ targets:
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -557,7 +595,7 @@ targets:
 * _rst_: Match on RST flag being present.
 * _sample_: Samples traffic for netflow.
 * _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
 
@@ -595,7 +633,7 @@ targets:
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -630,7 +668,7 @@ targets:
 * _rst_: Match on RST flag being present.
 * _sample_: Samples traffic for netflow.
 * _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
 
@@ -676,7 +714,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _flexible-match-range_: Filter based on flexible match options.
 * _forwarding-class_: Specify the forwarding class to match.
 * _forwarding-class-except_: Do not match the specified forwarding classes.
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
@@ -712,10 +750,10 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 ### Option
 
 * _.*_: wat
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
+* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
 * _first-fragment_: Only match on first fragment of a fragmented pakcet.
 * _sample_: Samples traffic for netflow.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
 ***
@@ -759,7 +797,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _flexible-match-range_: Filter based on flexible match options.
 * _forwarding-class_: Specify the forwarding class to match.
 * _forwarding-class-except_: Do not match the specified forwarding classes.
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
@@ -798,7 +836,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
 * _first-fragment_: Only match on first fragment of a fragmented pakcet.
 * _sample_: Samples traffic for netflow.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
 ### IPv6 Protocol Match
@@ -826,7 +864,7 @@ targets:
 * _filter name_: defines the name of the Juniper msmpc filter.
 * _inet6_: specifies the output be for IPv6 only filters.
 * _mixed_: specifies the output be for IPv4 and IPv6 filters. This is the default format.
-* _noverbose_: omit additional term and address comments.
+* _noverbose_: omit additional term and address comments. (optional)
 * _ingress_: filter will be applied in the input direction.
 * _egress_: filter will be appliced in the output direction.
 * _no-apply-groups_: generate configuration without `apply-groups` (optional)
@@ -869,6 +907,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
 * for common keys see the [common](#common) section above.
 
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
+* _destination-fqdn_: One or more destination FQDNs to filter.
 * _destination-zone_: one or more destination zones tokens. Only supported by global policy
 * _dscp-except_: Do not match the DSCP number.
 * _dscp-match_: Match a DSCP number.
@@ -886,6 +925,7 @@ NOTE: For generating global policies use `from-zone all to-zone all {inet}`.
         * See [here](https://kb.juniper.net/InfoCenter/index?page=content&id=KB16506) for explanation.
 * _owner_: Owner of the term, used for organizational purposes.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
+* _source-fqdn_: One or more source FQDNs to filter.
 * _source-zone_: one or more source zones tokens. Only supported by global policy
 * _timeout_: specify application timeout. (default 60)
 * _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
@@ -942,13 +982,13 @@ The NFTables header designation has the following format:
 
 ```yaml
 targets:
-    newnftables: [nf_address_family] [nf_hook] {default_policy_override} {int: base chain priority} {noverbose}
+    nftables: [nf_address_family] [nf_hook] {default_policy_override} {int: base chain priority} {noverbose}
 ```
 
 Unless otherwise stated, all fields are required unless they're marked optional.
 
 * nf_address_family: defines the IP address family for the policies. (inet, inet6, mixed)
-* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output)
+* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output, forward)
 * default_policy_override: **OPTIONAL** defines the default action (ACCEPT, DROP) for non-matching packets. Default behavior is DROP.
 * priority: **OPTIONAL** By default, this generator creates base chains with a starting priority of 0. Defining an integer value will override this behavior.
 * noverbose: **OPTIONAL** Disable header and term comments in final ACL output. Default behavior is verbose.
@@ -960,6 +1000,10 @@ This NFTables ACL generator generates stateful policies via  [conntrack](https:/
 When a non-deny term is processed for ACL generation, the `ct state new` is added to the resulting policy to ensure only valid incoming connections for that term is accepted. This means invalid state packets are dropped by default.
 
 An implementation design for this generator is that terms with options 'established', 'tcp-established' will not rendered in the final NFT configuration.
+
+### Transit (forward) policies
+
+The `forward` hook renders a base chain of `type filter hook forward`, for policy applied to routed/transit traffic rather than to traffic terminating on (or originating from) the host. Terms in a forward filter typically pair with the `source-interface` and `destination-interface` keywords to express which way traffic is crossing the box.
 
 ### Reporting bugs
 
@@ -975,6 +1019,8 @@ When reporting bugs about this generator ensure to include:
 
 * _logging_: NFTables system logging (host-based).
 * _counter_: NFTables counter for specific term.
+* _source-interface_: match the interface the packet arrived on, rendered as `iifname`.
+* _destination-interface_: match the interface the packet is leaving by, rendered as `oifname`.
 
 ### Sub-tokens
 
@@ -1070,11 +1116,47 @@ _source:_ https://www.netfilter.org/projects/nftables/manpage.html
 
 ***
 
+## Nokia SR Linux
+
+### Header Format
+
+The Nokia SR Linux header designation has the following format:
+
+```yaml
+targets:
+    nokiasrl: {section_name} {inet|inet6|mixed} {stats} {r24.3} {r24.3.2}
+```
+
+* _section_name_: specifies the name of the section all terms in this header apply to.
+* _inet_: specifies that the resulting filter should only render IPv4 addresses.
+* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
+* _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
+* _stats_: Collect stats for ACL entries
+* _r24.3_: Use release 24.3.1 format
+* _r24.3.2_: Use new format (post release 24.3.1)
+
+(Required keywords option and verbatim are not supported)
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+* _source-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _destination-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+
+***
+
 ## NSXv
 
 ### Header Format
 
-The nsx header designation has the following format:
+The nsxv header designation has the following format:
 
 ```yaml
 targets:
@@ -1089,8 +1171,6 @@ targets:
 * _securitygroup_: specifies that the appliedTo should be security group (optional)
 * _securitygroupId_: specifies the Id of the security group (mandatory if securitygroup is given)
 
-(Required keywords option and verbatim are not supported in NSX)
-
 ### Term Format
 
 * for common keys see the [common](#common) section above.
@@ -1098,7 +1178,6 @@ targets:
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _logging_: Specify that this packet should be logged via syslog.
 * _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
 
 ### Sub Tokens
 
@@ -1110,6 +1189,97 @@ targets:
 * _reject-with-tcp-rst_
 
 ***
+
+## NVUE API
+
+### Header Format
+
+The NVUE API header designation has the following format:
+
+```yaml
+targets:
+    nvueapi: [filter name] {ipv4|ipv6}
+```
+
+* _filter name_: defines the name of the NVUE ACL.
+* _ipv4_: specifies that the resulting filter should only render IPv4 addresses. This is the default format.
+* _ipv6_: specifies that the resulting filter should only render IPv6 addresses.
+
+The NVUE API generator produces JSON configuration for NVIDIA Cumulus Linux switches using the NVUE (NVIDIA User Experience) REST API format. This generator follows iptables patterns for multiple address expansion, creating separate rules for each combination of source and destination addresses.
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+* _logging_: Specify that this packet should be logged via syslog.
+* _option_: Supports TCP state matching with 'tcp-established' option.
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+* _reject_
+
+### Option
+
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags.
+
+### Supported Features
+
+* IPv4 and IPv6 address families (separate ACLs)
+* TCP, UDP, ICMP, and ICMPv6 protocols
+* Source and destination address matching (single CIDR per rule)
+* Source and destination port matching (ranges supported in porta:portz format)
+* ICMP type matching (converted to iptables format)
+* TCP state matching (established connections)
+* Action logging
+
+### Limitations
+
+* Does not support address exclusions (source-address-exclude, destination-address-exclude)
+* Does not support MAC address filtering rules
+* Does not support mixed address family ACLs (use separate IPv4 and IPv6 ACLs)
+
+
+***
+
+## NSXt
+
+### Header Format
+
+The nsxt header designation has the following format:
+
+```yaml
+targets:
+    nsxt: {section_name} {inet|inet6|mixed} section-id securitygroup securitygroupId
+```
+
+* _section_name_: specifies the name of the dfw rule all terms in this header apply to. [mandatory field]
+* _inet_: specifies the output should be for IPv4 only filters. This is the default format.
+* _inet6_: specifies the output be for IPv6 only filters.
+* _mixed_: specifies that the resulting filter should render both IPv4 and IPv6 addresses.
+* _sectionId_: specifies the Id for the section [optional]
+* _securitygroup_: specifies that the appliedTo should be security group [optional]
+* _securitygroupId_: specifies the Id of the security group [mandatory if securitygroup is given]
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
+* _logging_: Specify that this packet should be logged via syslog.
+* _source-exclude_: exclude one or more address tokens from the specified source-address.
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_
+* _reject_
+* _reject-with-tcp-rst_
 
 ## PacketFilter
 
@@ -1158,7 +1328,7 @@ targets:
 * _psh_: Match on PSH flag being present.
 * _rst_: Match on RST flag being present.
 * _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _urg_: Match on URG flag being present.
 
 ***
@@ -1194,6 +1364,8 @@ targets:
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
 * _timeout_: specify application timeout. (default 60)
+* _tags_: specifies one or more tags to be added to the rule.
+* _profile-settings_: specifies one or more profile settings to be added to the rule.
 
 ### Sub Tokens
 
@@ -1258,10 +1430,59 @@ FILL ME IN
 * _psh_: Match on PSH flag being present.
 * _rst_: Match on RST flag being present.
 * _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _urg_: Match on URG flag being present.
 
 ***
+
+## Proxmox
+
+### Header Format
+The Proxmox header designation has the following format:
+```yaml
+targets:
+   proxmox: [cluster|host|vnet|vm] [IN|OUT|FORWARD] {zone_options}
+```
+
+Where `zone_options` differs from zone to zone, and is a set of options separated by spaces.
+The order does not matter, and some options take one or more arguments, also separated by spaces.
+The options are named exactly the same as in the
+[Proxmox Firewall Documentation](https://pve.proxmox.com/pve-docs/chapter-pve-firewall.html).
+
+The acceptable direction arguments (*IN, OUT or FORWARD*) vary depending on the zone type:
+```text
+| Zone    | Available directions |
+|---------+----------------------|
+| cluster | IN OUT FORWARD       |
+| host    | IN OUT FORWARD       |
+| vm      | IN OUT               |
+| vnet    | FORWARD              |
+```
+
+Example:
+```yaml
+targets:
+   proxmox: vm IN dhcp log_level_in info ndp radv
+```
+
+### Term Format
+* For common keys, see section [common](#common) above.
+* _source-interface_: specify source interface via the `-iface` directive in the Proxmox Firewall rule.
+  Please note no interface naming validation is done in the plugin.
+### Sub Tokens
+### Actions
+* _accept_
+* _deny_
+* _reject_
+### Option
+* _log_nolog_: disable logging for the Term
+* _log_emergency_: set log level to `emerg` for the Term
+* _log_alert_: set log level to `alert` for the Term
+* _log_critical_: set log level to `crit` for the Term
+* _log_error_: set log level to `err` for the Term
+* _log_notice_: set log level to `notice` for the Term
+* _log_info_: set log level to `info` for the Term
+* _log_debug_: set log level to `debug` for the Term
 
 ## Speedway
 
@@ -1295,7 +1516,7 @@ targets:
 * _destination-exclude_: Exclude one or more address tokens from the specified destination-address
 * _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
 * _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
 * _owner_: Owner of the term, used for organizational purposes.
@@ -1330,7 +1551,7 @@ targets:
 * _rst_: Match on RST flag being present.
 * _sample_: Samples traffic for netflow.
 * _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 * _urg_: Match on URG flag being present.
 
@@ -1375,7 +1596,7 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 * _ether-type_: Match EtherType field.
 * _forwarding-class_: Specify the forwarding class to match.
 * _forwarding-class-except_: Do not match the specified forwarding classes.
-* _fragement-offset_: specify a fragment offset of a fragmented packet
+* _fragment-offset_: specify a fragment offset of a fragmented packet
 * _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
 * _icmp-code_: Specifies the ICMP code to filter on.
 * _logging_: Specify that this packet should be logged via syslog.
@@ -1410,10 +1631,10 @@ When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filt
 ### Option
 
 * _.*_: wat
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
+* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
 * _first-fragment_: Only match on first fragment of a fragmented pakcet.
 * _sample_: Samples traffic for netflow.
-* _tcp-established_: Only match established tcp connections, based on statefull match or TCP flags. Not supported for other protocols.
+* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
 * _tcp-initial_: Only match initial packet for TCP protocol.
 
 ***

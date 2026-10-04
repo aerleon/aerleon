@@ -7,11 +7,11 @@ Hierarchical Firewalls (HF) are represented in a SecurityPolicy GCP resouce.
 
 import copy
 import re
-from typing import Any, Dict
+from typing import TypedDict
 
 from absl import logging
 
-from aerleon.lib import gcp, nacaddr
+from aerleon.lib import gcp, nacaddr, policy
 
 
 class ExceededCostError(gcp.Error):
@@ -25,8 +25,8 @@ class DifferentPolicyNameError(gcp.Error):
 class ApiVersionSyntaxMap:
     """Defines the syntax changes between different API versions.
 
-    http://cloud/compute/docs/reference/rest/v1/firewallPolicies/addRule
-    http://cloud/compute/docs/reference/rest/beta/organizationSecurityPolicies/addRule
+    https://cloud.google.com/compute/docs/reference/rest/v1/firewallPolicies/addRule
+    https://cloud.google.com/compute/docs/reference/rest/beta/organizationSecurityPolicies/addRule
     """
 
     SYNTAX_MAP = {
@@ -43,6 +43,36 @@ class ApiVersionSyntaxMap:
             'layer_4_config': 'layer4Configs',
         },
     }
+
+
+class L4Matcher(TypedDict):
+    IPProtocol: str
+    ports: 'list[str]'
+
+
+class MatchConfig(TypedDict):
+    destIpRanges: 'list[str]'
+    srcIpRanges: 'list[str]'
+    layer4Configs: 'list[L4Matcher]'
+
+
+RuleMatch = TypedDict("PropertyMap", {"config": MatchConfig, "versionedExpr": str})
+
+
+class OrganizationalPolicyRule(TypedDict):
+    action: str
+    match: RuleMatch
+    priority: int
+    description: str
+    direction: str
+    enableLogging: bool
+    targetResources: 'list[str]'
+
+
+class OrganizationPolicy(TypedDict):
+    displayName: str
+    type: str
+    rules: 'list[OrganizationalPolicyRule]'
 
 
 class Term(gcp.Term):
@@ -63,8 +93,12 @@ class Term(gcp.Term):
     _TERM_DESTINATION_PORTS_LIMIT = 256
 
     def __init__(
-        self, term, address_family='inet', policy_inet_version='inet', api_version='beta'
-    ):
+        self,
+        term: policy.Term,
+        address_family: str = 'inet',
+        policy_inet_version: str = 'inet',
+        api_version: str = 'beta',
+    ) -> None:
         super().__init__(term)
         self.address_family = address_family
         self.term = term
@@ -77,7 +111,7 @@ class Term(gcp.Term):
         # This is only useful for term name and priority.
         self.policy_inet_version = policy_inet_version
 
-    def _ValidateTerm(self):
+    def _ValidateTerm(self) -> None:
         if self.term.destination_tag or self.term.source_tag:
             raise gcp.TermError('Hierarchical Firewall does not support tags')
 
@@ -132,7 +166,7 @@ class Term(gcp.Term):
                 % self.term.name
             )
 
-    def ConvertToDict(self, priority_index):
+    def ConvertToDict(self, priority_index: int) -> list[OrganizationPolicy]:
         """Converts term to dict representation of SecurityPolicy.Rule JSON format.
 
         Takes all of the attributes associated with a term (match, action, etc) and
@@ -179,7 +213,7 @@ class Term(gcp.Term):
         term_name = self.term.name
         if mixed_policy_inet6_term:
             term_name = gcp.GetIpv6TermName(term_name)
-        raw_description = term_name + ': ' + ' '.join(self.term.comment)
+        raw_description = f"{term_name}: {' '.join(self.term.comment)}"
         term_dict['description'] = gcp.TruncateString(
             raw_description, self._MAX_TERM_COMMENT_LENGTH
         )
@@ -322,7 +356,7 @@ class Term(gcp.Term):
 
         return rules
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ''
 
 
@@ -340,7 +374,7 @@ class HierarchicalFirewall(gcp.GCP):
     _SUPPORTED_API_VERSION = frozenset(['beta', 'ga'])
     _DEFAULT_MAXIMUM_COST = 100
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -368,7 +402,7 @@ class HierarchicalFirewall(gcp.GCP):
         supported_sub_tokens = {'action': {'accept', 'deny', 'next'}}
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         """Translates a Aerleon policy into a HF-specific data structure.
 
         Takes in a POL file, parses each term and populates the policy
@@ -395,7 +429,6 @@ class HierarchicalFirewall(gcp.GCP):
         policies_max_cost = self._DEFAULT_MAXIMUM_COST
         previous_max_cost = -1
         for header, terms in pol.filters:
-
             filter_options = header.FilterOptions(self._PLATFORM)
 
             is_policy_modified = True
@@ -539,7 +572,7 @@ class HierarchicalFirewall(gcp.GCP):
             logging.info('Policy %s quota cost: %d', policy[display_name], total_cost)
 
 
-def GetRuleTupleCount(dict_term: Dict[str, Any], api_version):
+def GetRuleTupleCount(dict_term: dict[str, list | str], api_version: str) -> int:
     """Calculate the tuple count of a rule in its dictionary form.
 
     Quota is charged based on how complex the rules are rather than simply

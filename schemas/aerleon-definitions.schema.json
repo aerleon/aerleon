@@ -1,0 +1,146 @@
+{
+  "$id": "urn:aerleon:schemas:aerleon-definitions:1.0.0",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "https://aerleon.readthedocs.io/en/latest/reference/naming/",
+  "title": "Aerleon Network & Service Definitions",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "networks": {
+      "title": "Network Definition Section",
+      "description": "Policy files can reference the networks in this section by name. A network is a list of IP addresses or CIDR IP address ranges and may contain other networks.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/networkDefinition" },
+      "propertyNames": { "$ref": "#/$defs/token" }
+    },
+    "services": {
+      "title": "Service Definition Section",
+      "description": "Policy files can reference the services in this section by name. A service is a list of port/protocol pairs (e.g. port: 80, protocol: tcp) and can include port ranges. A service can include other services.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/serviceDefinition" },
+      "propertyNames": { "$ref": "#/$defs/token" }
+    }
+  },
+  "$defs": {
+    "token": {
+      "type": "string",
+      "pattern": "^[-_a-zA-Z0-9]+$"
+    },
+    "comment": {
+      "description": "Attach a comment directly to a value. This comment may be included in generated output on platforms that support it.",
+      "type": "string"
+    },
+    "address": {
+      "description": "Specifies an IP address or CIDR IP address range expression.",
+      "type": "string"
+    },
+    "fqdn": {
+      "description": "Specifies a fully qualified domain name with two or more labels.",
+      "type": "string",
+      "pattern": "^(?!.*://)(?=.{1,255}$)((.{1,63}\\.){1,127}(?![0-9]*$)[a-z0-9-]+\\.?)$"
+    },
+    "port": {
+      "description": "Specifies a port or port range.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d+-\\d+|^\\d+$"
+        },
+        {
+          "type": "integer"
+        }
+      ]
+    },
+    "protocol": {
+      "description": "Specifies a protocol by name or number.",
+      "oneOf": [{ "type": "integer" }, { "type": "string" }]
+    },
+    "networkDefinition": {
+      "type": "object",
+      "title": "Network Definition",
+      "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
+      "additionalProperties": false,
+      "required": ["values"],
+      "properties": {
+        "values": {
+          "description": "Defines a named network, composed of IP addresses, IP address ranges, and references to other networks.\nAn object with the \"address\" property adds that address or address range to the network.\nAn object with the \"name\" property includes the contents of that network into this one.\nA single string also includes the content of that network into this one.",
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "title": "Network Reference",
+                "description": "Include another network by name.",
+                "$ref": "#/$defs/token"
+              },
+              {
+                "type": "object",
+                "required": ["address"],
+                "properties": {
+                  "address": { "$ref": "#/$defs/address" },
+                  "comment": { "$ref": "#/$defs/comment" }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": ["fqdn"],
+                "properties": {
+                  "fqdn": { "$ref": "#/$defs/fqdn" },
+                  "comment": { "$ref": "#/$defs/comment" }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "title": "Network Reference",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "description": "Include another network by name.",
+                    "$ref": "#/$defs/token"
+                  },
+                  "comment": { "$ref": "#/$defs/comment" }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    "serviceDefinition": {
+      "type": "array",
+      "title": "Service Definition",
+      "description": "Defines a named service, composed of portocol, port pairs and/or references to other services.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["port", "protocol"],
+            "properties": {
+              "port": { "$ref": "#/$defs/port" },
+              "protocol": { "$ref": "#/$defs/protocol" },
+              "comment": { "$ref": "#/$defs/comment" }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "Service Reference",
+            "description": "Include another service by name.",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "description": "Include another service by name.",
+                "$ref": "#/$defs/token"
+              },
+              "comment": { "$ref": "#/$defs/comment" }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  }
+}

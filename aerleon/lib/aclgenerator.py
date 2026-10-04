@@ -102,14 +102,20 @@ class Term:
         'udplite': 136,
         'all': -1,  # Used for GCE default deny, do not use in pol file.
     }
-    AF_MAP = {'inet': 4, 'inet6': 6, 'bridge': 4}  # if this doesn't exist, output includes v4 & v6
+    AF_MAP = {
+        'inet': 4,
+        'inet6': 6,
+        'bridge': 4,
+        'ethernet-switching': 4,
+    }
+    # if this doesn't exist, output includes v4 & v6
     # These protos are always expressed as numbers instead of name
     #  due to inconsistencies on the end platform's name-to-number
     #  mapping.
     ALWAYS_PROTO_NUM = ['ipip']
     # provide flipped key/value dicts
-    PROTO_MAP_BY_NUMBER = dict([(v, k) for (k, v) in PROTO_MAP.items()])
-    AF_MAP_BY_NUMBER = dict([(v, k) for (k, v) in AF_MAP.items()])
+    PROTO_MAP_BY_NUMBER = {v: k for (k, v) in PROTO_MAP.items()}
+    AF_MAP_BY_NUMBER = {v: k for (k, v) in AF_MAP.items()}
 
     NO_AF_LOG_ADDR = string.Template(
         'Term $term will not be rendered, as it has'
@@ -124,14 +130,14 @@ class Term:
         ' $af address family.'
     )
 
-    def __init__(self, term):
+    def __init__(self, term: policy.Term) -> None:
         if term.protocol:
             for protocol in term.protocol:
                 if protocol not in self.PROTO_MAP and str(protocol) not in [
                     str(p) for p in self.PROTO_MAP_BY_NUMBER
                 ]:
                     raise UnsupportedFilterError(
-                        'Protocol(s) %s are not supported.' % str(term.protocol)
+                        f'Protocol(s) {term.protocol!s} are not supported.'
                     )
 
             term.protocol = ProtocolNameToNumber(
@@ -139,7 +145,7 @@ class Term:
             )
         self.term = term
 
-    def NormalizeAddressFamily(self, af):
+    def NormalizeAddressFamily(self, af: int | str) -> int:
         """Convert (if necessary) address family name to numeric value.
 
         Args:
@@ -159,11 +165,13 @@ class Term:
             af = self.AF_MAP[af]
         else:
             raise UnsupportedAFError(
-                'Address family %s is not supported, ' 'term %s.' % (af, self.term.name)
+                f'Address family {af} is not supported, term {self.term.name}.'
             )
         return af
 
-    def NormalizeIcmpTypes(self, icmp_types, protocols, af):
+    def NormalizeIcmpTypes(
+        self, icmp_types: list[str], protocols: list[str], af: int
+    ) -> list[int]:
         """Return verified list of appropriate icmp-types.
 
         Args:
@@ -189,7 +197,9 @@ class Term:
             and protocols != [self.PROTO_MAP['icmpv6']]
         ):
             raise UnsupportedFilterError(
-                '%s %s' % ('icmp-types specified for non-icmp protocols in term: ', self.term.name)
+                '{} {}'.format(
+                    'icmp-types specified for non-icmp protocols in term: ', self.term.name
+                )
             )
         # make sure we have a numeric address family (4 or 6)
         af = self.NormalizeAddressFamily(af)
@@ -230,6 +240,9 @@ class ACLGenerator:
     This class takes a policy object and renders the output into a syntax which
     is understood by a specific platform (eg. iptables, cisco, etc).
     """
+
+    SUFFIX: str = ''
+    # Subclasses must override this value.
 
     _PLATFORM = None
     # Default protocol to apply when no protocol is specified.
@@ -292,7 +305,7 @@ class ACLGenerator:
     # platform specific restrictions.
     _TERM_MAX_LENGTH = 62
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: policy.Policy, exp_info: int) -> None:
         """Initialise an ACLGenerator.  Store policy structure for processing."""
         supported_tokens, supported_sub_tokens = self._GetSupportedTokens()
 
@@ -346,12 +359,12 @@ class ACLGenerator:
             logging.debug('\n %s', '\n'.join(all_warn))
         self._TranslatePolicy(pol, exp_info)
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         # pylint: disable=unused-argument
         """Translate policy contents to platform specific data structures."""
-        raise Error('%s does not implement _TranslatePolicies()' % self._PLATFORM)
+        raise Error(f'{self._PLATFORM} does not implement _TranslatePolicies()')
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Provide a default for supported tokens and sub tokens.
 
         Returns:
@@ -404,7 +417,7 @@ class ACLGenerator:
         }
         return supported_tokens, supported_sub_tokens
 
-    def _GetSupportedTokens(self):
+    def _GetSupportedTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build our supported tokens and sub tokens.
 
         Returns:
@@ -425,7 +438,9 @@ class ACLGenerator:
         return supported_tokens, supported_sub_tokens
 
     # TODO(robankeny) Fix this function, it no longer does what it says.
-    def FixHighPorts(self, term, af='inet', all_protocols_stateful=False):
+    def FixHighPorts(
+        self, term: policy.Term, af: str = 'inet', all_protocols_stateful: bool = False
+    ):
         """Evaluate protocol and ports of term, return sane version of term.
 
         Args:
@@ -448,7 +463,7 @@ class ACLGenerator:
         if term.protocol:
             protocols = set(term.protocol)
         else:
-            protocols = set((self._DEFAULT_PROTOCOL,))
+            protocols = {self._DEFAULT_PROTOCOL}
 
         # Check that the address family matches the protocols.
         if af not in self._SUPPORTED_AF:
@@ -468,7 +483,7 @@ class ACLGenerator:
         # Many renders expect high ports for terms with the established option.
         for opt in [str(x) for x in term.option]:
             if opt.find('established') == 0:
-                unstateful_protocols = protocols.difference(set(('tcp', 'udp')))
+                unstateful_protocols = protocols.difference({'tcp', 'udp'})
                 if not unstateful_protocols:
                     # TCP/UDP: add in high ports then collapse to eliminate overlaps.
                     mod = copy.deepcopy(term)
@@ -477,14 +492,18 @@ class ACLGenerator:
                     mod.destination_port = mod.CollapsePortList(mod.destination_port)
                 elif not all_protocols_stateful:
                     errmsg = 'Established option supplied with inappropriate protocol(s)'
-                    raise EstablishedError(
-                        '%s %s %s %s' % (errmsg, unstateful_protocols, 'in term', term.name)
-                    )
+                    raise EstablishedError(f'{errmsg} {unstateful_protocols} in term {term.name}')
                 break
 
         return mod
 
-    def FixTermLength(self, term_name, abbreviate=False, truncate=False, override_max_length=None):
+    def FixTermLength(
+        self,
+        term_name: str,
+        abbreviate: bool = False,
+        truncate: bool = False,
+        override_max_length: int | None = None,
+    ):
         """Return a term name which is equal or shorter than _TERM_MAX_LENGTH.
 
            New term is obtained in two steps. First, if allowed, automatic
@@ -522,7 +541,7 @@ class ACLGenerator:
             'disabled.' % (new_term, term_name, override_max_length, len(new_term))
         )
 
-    def HexDigest(self, name, truncation_length=None):
+    def HexDigest(self, name: str, truncation_length: int | None = None):
         """Return a hexadecimal digest of the name object.
 
         Args:
@@ -539,10 +558,10 @@ class ACLGenerator:
         name_bytes = name.encode('UTF-8')
         return hashlib.sha256(name_bytes).hexdigest()[:truncation_length]
 
-    def _FilteredTerms(self, header, terms, exp_info):
+    def _FilteredTerms(self, header: policy.Header, terms: list[policy.Term], exp_info: int):
         new_terms = []
         filter_name = header.FilterName(self._PLATFORM)
-        current_date = datetime.datetime.utcnow().date()
+        current_date = datetime.datetime.now(datetime.timezone.utc).date()
         exp_info_date = current_date + datetime.timedelta(weeks=exp_info)
 
         for term in terms:
@@ -571,7 +590,9 @@ class ACLGenerator:
         return new_terms
 
 
-def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
+def ProtocolNameToNumber(
+    protocols: list[str], proto_to_num: list[str], name_to_num_map: dict[str, int]
+) -> list[str | int]:
     """Convert a protocol name to a numeric value.
 
     Args:
@@ -593,7 +614,13 @@ def ProtocolNameToNumber(protocols, proto_to_num, name_to_num_map):
     return return_proto
 
 
-def AddRepositoryTags(prefix='', rid=True, date=True, revision=True, wrap=False):
+def AddRepositoryTags(
+    prefix: str = '',
+    rid: bool = True,
+    date: bool = True,
+    revision: bool = True,
+    wrap: bool = False,
+) -> list[str]:
     """Add repository tagging into the output.
 
     Args:
@@ -608,21 +635,19 @@ def AddRepositoryTags(prefix='', rid=True, date=True, revision=True, wrap=False)
     tags = []
     wrapper = '"' if wrap else ''
 
-    # Format print the '$' into the RCS tags in order prevent the tags from
-    # being interpolated here.
-    p4_id = '%s%sId:%s%s' % (wrapper, '$', '$', wrapper)
-    p4_date = '%s%sDate:%s%s' % (wrapper, '$', '$', wrapper)
-    p4_revision = '%s%sRevision:%s%s' % (wrapper, '$', '$', wrapper)
+    p4_id = f'{wrapper}$Id:${wrapper}'
+    p4_date = f'{wrapper}$Date:${wrapper}'
+    p4_revision = f'{wrapper}$Revision:${wrapper}'
     if rid:
-        tags.append('%s%s' % (prefix, p4_id))
+        tags.append(f'{prefix}{p4_id}')
     if date:
-        tags.append('%s%s' % (prefix, p4_date))
+        tags.append(f'{prefix}{p4_date}')
     if revision:
-        tags.append('%s%s' % (prefix, p4_revision))
+        tags.append(f'{prefix}{p4_revision}')
     return tags
 
 
-def WrapWords(textlist, size, joiner='\n'):
+def WrapWords(textlist: list[str], size: int, joiner: str = '\n'):
     r"""Insert breaks into the listed strings at specified width.
 
     Args:

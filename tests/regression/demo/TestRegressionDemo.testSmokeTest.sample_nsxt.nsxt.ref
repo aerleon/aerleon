@@ -1,0 +1,735 @@
+{
+  "rules": [
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-icmp",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "protocol": "ICMPv4",
+          "resource_type": "ICMPTypeServiceEntry"
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-bgp-requests",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "Allow BGP requests from peers.",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "179-179"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-bgp-replies",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "Allow inbound replies to BGP requests.",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "179-179"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-ospf",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "Allow outbound OSPF traffic from other RFC1918 routers.",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": []
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-vrrp",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": []
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-ike",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "500-500"
+          ],
+          "destination_ports": [
+            "500-500"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-ipsec",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": []
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-pim",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": []
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-igmp",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": []
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-ssh-requests",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "22-22"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-ssh-replies",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "22-22"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-snmp-requests",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "161-161"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "accept-dns-replies",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "53-53"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-ntp-request",
+      "source_groups": [
+        "10.0.0.1/32",
+        "10.0.0.2/32"
+      ],
+      "destination_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "123-123"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-ntp-replies",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "10.0.0.1/32",
+        "10.0.0.2/32"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "123-123"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-radius-replies",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "1812-1812"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-tacacs-requests",
+      "source_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "destination_groups": [
+        "10.1.0.1/32",
+        "10.1.0.2/32"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "49-49"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-tacacs-replies",
+      "source_groups": [
+        "10.1.0.1/32",
+        "10.1.0.2/32"
+      ],
+      "destination_groups": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "source_ports": [
+            "49-49"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-dns-fragments",
+      "source_groups": [
+        "0.0.0.0/0"
+      ],
+      "destination_groups": [
+        "8.8.4.4/32",
+        "8.8.8.8/32",
+        "2001:4860:4860::8844/128",
+        "2001:4860:4860::8888/128"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "53-53"
+          ]
+        },
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "53-53"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "REJECT",
+      "resource_type": "Rule",
+      "display_name": "reject-large-dns",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "8.8.4.4/32",
+        "8.8.8.8/32",
+        "2001:4860:4860::8844/128",
+        "2001:4860:4860::8888/128"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "UDP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "53-53"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "REJECT",
+      "resource_type": "Rule",
+      "display_name": "reject-imap-requests",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "200.1.1.4/32",
+        "200.1.1.5/32"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "143-143"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "DROP",
+      "resource_type": "Rule",
+      "display_name": "discard-default",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6"
+    }
+  ],
+  "resource_type": "SecurityPolicy",
+  "display_name": "sample_nsxt_filter",
+  "id": "1234",
+  "category": "Application",
+  "is_default": "false",
+  "scope": [
+    "/infra/domains/default/groups/securitygroupId"
+  ]
+}

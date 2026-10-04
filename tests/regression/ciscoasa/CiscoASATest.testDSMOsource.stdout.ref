@@ -1,0 +1,8 @@
+clear configure access-list foo
+access-list foo remark $Id:$
+access-list foo remark $Date:$
+access-list foo remark $Revision:$
+
+
+access-list foo remark good-src-term-3
+access-list foo extended permit ip 128.168.0.0 191.255.255.128 any

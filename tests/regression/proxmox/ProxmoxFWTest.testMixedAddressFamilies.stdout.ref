@@ -1,0 +1,6 @@
+[OPTIONS]
+enable: 1
+[RULES]
+IN ACCEPT -proto icmp -source 10.0.0.1/32 -icmp-type echo-request
+IN ACCEPT -proto icmp -source 2001:db8::2af/128 -icmp-type echo-request
+

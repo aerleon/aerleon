@@ -15,8 +15,6 @@
 
 """Unittest for Srxlo rendering module."""
 
-from unittest import mock
-
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, srxlo
@@ -69,6 +67,14 @@ term good-term-5 {
 GOOD_TERM_6 = """
 term good-term-6 {
   protocol-except:: icmpv6
+  action:: accept
+}
+"""
+NOTSYNACK_TERM_1 = """
+term notsynack-term-1 {
+  protocol:: tcp
+  destination-port:: HTTPS
+  option:: not-syn-ack
   action:: accept
 }
 """
@@ -180,6 +186,7 @@ SUPPORTED_SUB_TOKENS = {
         'sample',
         'tcp-established',
         'tcp-initial',
+        'not-syn-ack',
     },
 }
 
@@ -191,7 +198,7 @@ EXP_INFO = 2
 class SRXloTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @capture.stdout
     def testIcmp(self):
@@ -280,6 +287,15 @@ class SRXloTest(absltest.TestCase):
         self.assertNotIn(
             'icmp;', output, 'missing or incorrect ICMPv6 specification in protocol-except'
         )
+        print(output)
+
+    @capture.stdout
+    def testNotSynAck(self):
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        policy_text = GOOD_HEADER_2 + NOTSYNACK_TERM_1
+        srx = srxlo.SRXlo(policy.ParsePolicy(policy_text, self.naming), EXP_INFO)
+        output = str(srx)
+        self.assertIn('tcp-flags "!(syn&ack)";', output, output)
         print(output)
 
 

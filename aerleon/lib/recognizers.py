@@ -16,6 +16,7 @@ and extract normalized data from within.
 
 This class uses recognizers to parse, validate and normalize all built-in fields in the Policy.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -37,12 +38,12 @@ if typing.TYPE_CHECKING:
 @dataclass
 class RecognizerContext:
     policy: RawPolicy
-    filter: RawFilter = None
-    header: RawFilterHeader = None
-    target: RawTarget = None
-    term: RawTerm = None
-    keyword: str = None
-    value: str = None
+    filter: RawFilter | None = None
+    header: RawFilterHeader | None = None
+    target: RawTarget | None = None
+    term: RawTerm | None = None
+    keyword: str | None = None
+    value: str | None = None
 
 
 @dataclass
@@ -55,13 +56,13 @@ class RecognizerKeywordResult:
 class RecognizerValueResult:
     recognized: bool
     securityCritical: bool = False
-    valueKV: dict = None
+    valueKV: dict | None = None
 
 
 @dataclass
 class RecognizerOptionResult:
     securityCritical: bool
-    valueKV: dict = None
+    valueKV: dict | None = None
 
 
 class TValue(enum.Enum):
@@ -88,7 +89,7 @@ class TValue(enum.Enum):
     LogLimit = enum.auto()  # Integer '/' Str
     TargetResourceTuple = enum.auto()  # '(' Str ',' Str ')'
 
-    def Recognize(self, value: typing.Any):
+    def Recognize(self, value: typing.Any) -> str:
         """Match and parse the input value.
 
         Arguments:
@@ -116,7 +117,7 @@ class TValue(enum.Enum):
         elif self == TValue.WordString:
             if not isinstance(value, str):
                 raise TypeError("Expected string.")
-            match = re.fullmatch(r'\w+([-_+.@/]\w*)*', value.strip())
+            match = re.fullmatch(r'-?\w+([-_+.@/]\w*)*', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'String'.")
             return match[0]
@@ -126,7 +127,7 @@ class TValue(enum.Enum):
                 return value
             if not isinstance(value, str):
                 raise TypeError("Expected integer or string.")
-            match = re.fullmatch(r'\d+', value.strip())
+            match = re.fullmatch(r'-?\d+', value.strip())
             if match is None:
                 raise TypeError("Expected value class 'Integer'.")
             return int(match[0])
@@ -224,7 +225,7 @@ class TUnion(TComposition):
         of: A list of allowed types. The input must match one of these types.
     """
 
-    of: "list[TValue | TComposition]"
+    of: list[TValue | TComposition]
 
     def Recognize(self, value):
         """Match and parse the input value using the list of sub-recognizers given in the 'of'
@@ -256,10 +257,10 @@ class TList(TComposition):
         collapsible: Whether a list with a single item can be given directly.
     """
 
-    of: "TValue | TComposition"
+    of: TValue | TComposition
     collapsible: bool = False
 
-    def Recognize(self, value):
+    def Recognize(self, value: str) -> list[str]:
         """Match and parse the input value using the recognizer given in the 'of' class attribute.
 
         Arguments:
@@ -302,7 +303,7 @@ class TList(TComposition):
         if (
             isinstance(value, str)
             and isinstance(self.of, TUnion)
-            and all((_isSpaceFreeValue(value_type) for value_type in self.of.of))
+            and all(_isSpaceFreeValue(value_type) for value_type in self.of.of)
         ):
             return list(map(self.of.Recognize, value.split()))
 
@@ -343,9 +344,9 @@ class TSection(TComposition):
             any value recognized by the given recognizer.
     """
 
-    of: "list[typing.Tuple[str | TValue | TUnion, TValue | TComposition]]"
+    of: list[tuple[str | TValue | TUnion, TValue | TComposition]]
 
-    def Recognize(self, value: dict):
+    def Recognize(self, value: dict) -> dict[str, list[str]]:
         """Match and parse the input value using the list of rules given in the 'of' class attribute.
         See class docstring for more details on how to specify the rules list.
 

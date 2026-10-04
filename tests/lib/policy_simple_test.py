@@ -65,7 +65,7 @@ class FieldTest(absltest.TestCase):
                 logging.debug('Testing good "%s".', good)
                 _ = policy_simple.NamingField(good)
             except ValueError:
-                self.fail('Rejected good NamingField value "%s".' % good)
+                self.fail(f'Rejected good NamingField value "{good}".')
 
     def testNamingFieldAppendRejectsBad(self):
         f = policy_simple.NamingField('RFC1918')
@@ -89,13 +89,13 @@ class FieldTest(absltest.TestCase):
                 logging.debug('Testing good "%s".', good)
                 _ = f.Append(good)
             except ValueError:
-                self.fail('Rejected good NamingField value "%s".' % good)
+                self.fail(f'Rejected good NamingField value "{good}".')
 
     def testNamingFieldDedupes(self):
         f = policy_simple.NamingField('RFC1918 CORP_INTERNAL RFC1918')
         f.Append('RFC1918')
         f.Append('CORP_INTERNAL RFC1918')
-        self.assertEqual(set(['RFC1918', 'CORP_INTERNAL']), f.value)
+        self.assertEqual({'RFC1918', 'CORP_INTERNAL'}, f.value)
 
     def testNamingFieldStr(self):
         f = policy_simple.NamingField(' '.join(str(x) for x in range(25)))
@@ -158,7 +158,7 @@ class PolicyTest(absltest.TestCase):
             try:
                 p.AddMember(member)
             except TypeError:
-                self.fail('Policy should accept member "%s"' % member)
+                self.fail(f'Policy should accept member "{member}"')
         self.assertEqual(good, p.members)
 
         for member in bad:

@@ -5,3 +5,6 @@ Aerleon is a fork of the Capirca project, which was originally intended to be na
 
 ## Pronunciation?
 The origins of the name Capirca may not be familiar to everyone, and as a result, we have heard various pronunciations. These words are made up, so there is no one correct way to pronounce them. The maintainers of the project, however, pronounce Capirca as "Cap-irr-ca" and Aerleon as "Air-leon".
+
+## How To Convert Capirca Policy Files to YAML?
+The [pol2yaml](https://github.com/aerleon/pol2yaml) program, maintained by the Aerleon team, converts Capirca policy files to YAML policy files.

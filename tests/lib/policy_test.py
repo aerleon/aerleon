@@ -21,6 +21,7 @@ from absl import logging
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import nacaddr, naming, policy
+from aerleon.lib import yaml as yaml_frontend
 
 HEADER = """
 header {
@@ -438,6 +439,12 @@ term good-term-48 {
   protocol:: icmp
   source-zone:: zone1 zone2
   destination-zone:: zone1 zone2
+  action:: accept
+}
+"""
+GOOD_TERM_49 = """
+term good-term-49 {
+  destination-fqdn:: GOOGLE_DNS
   action:: accept
 }
 """
@@ -870,18 +877,18 @@ class PolicyTest(parameterized.TestCase):
     def testGoodAddrExcludesFlatten(self):
         expected = sorted(
             [
-                nacaddr.IPv4(u'10.0.0.0/11'),
-                nacaddr.IPv4(u'10.32.0.0/12'),
-                nacaddr.IPv4(u'10.48.0.0/13'),
-                nacaddr.IPv4(u'10.56.0.0/14'),
-                nacaddr.IPv4(u'10.60.0.0/15'),
-                nacaddr.IPv4(u'10.64.0.0/10'),
-                nacaddr.IPv4(u'10.130.0.0/15'),
-                nacaddr.IPv4(u'10.132.0.0/14'),
-                nacaddr.IPv4(u'10.136.0.0/13'),
-                nacaddr.IPv4(u'10.144.0.0/12'),
-                nacaddr.IPv4(u'10.160.0.0/11'),
-                nacaddr.IPv4(u'10.192.0.0/10'),
+                nacaddr.IPv4('10.0.0.0/11'),
+                nacaddr.IPv4('10.32.0.0/12'),
+                nacaddr.IPv4('10.48.0.0/13'),
+                nacaddr.IPv4('10.56.0.0/14'),
+                nacaddr.IPv4('10.60.0.0/15'),
+                nacaddr.IPv4('10.64.0.0/10'),
+                nacaddr.IPv4('10.130.0.0/15'),
+                nacaddr.IPv4('10.132.0.0/14'),
+                nacaddr.IPv4('10.136.0.0/13'),
+                nacaddr.IPv4('10.144.0.0/12'),
+                nacaddr.IPv4('10.160.0.0/11'),
+                nacaddr.IPv4('10.192.0.0/10'),
             ]
         )
         pol = HEADER + GOOD_TERM_27
@@ -982,7 +989,7 @@ class PolicyTest(parameterized.TestCase):
         pol = HEADER + TERM_UNSORTED_ICMP_TYPE
         ret = policy.ParsePolicy(pol, self.naming)
         icmp_types = ['echo-reply', 'echo-request', 'unreachable']
-        expected = 'icmp_type: %s' % icmp_types
+        expected = f'icmp_type: {icmp_types}'
         self.assertIn(expected, str(ret))
 
     def testICMPCodesSorting(self):
@@ -1300,8 +1307,8 @@ class PolicyTest(parameterized.TestCase):
         pol = HEADER + GOOD_TERM_48
         result = policy.ParsePolicy(pol, self.naming)
         zones = ['zone1', 'zone2']
-        expected_source = 'source_zone: %s' % zones
-        expected_destination = 'destination_zone: %s' % zones
+        expected_source = f'source_zone: {zones}'
+        expected_destination = f'destination_zone: {zones}'
         self.assertIn(expected_source, str(result))
         self.assertIn(expected_destination, str(result))
 
@@ -1342,7 +1349,7 @@ class PolicyTest(parameterized.TestCase):
     def testLogLimit(self):
         pol = policy.ParsePolicy(HEADER_4 + GOOD_TERM_44, self.naming)
         term = pol.filters[0][1][0]
-        self.assertEqual((u'999', u'day'), term.log_limit)
+        self.assertEqual(('999', 'day'), term.log_limit)
 
     def testGREandTCPUDPError(self):
         pol = HEADER + BAD_TERM_16
@@ -1777,6 +1784,37 @@ class PolicyTest(parameterized.TestCase):
             ('proj4', 'vpc4'),
         ]
         self.assertListEqual(expected_target_resources, terms[0].target_resources)
+
+    def testFQDN(self):
+        pol = '''
+filters:
+  - header:
+      comment: |
+        this is a sample policy to generate Juniper SRX filter
+        from zone Untrust to zone DMZ.
+      targets:
+        srx: from-zone Untrust to-zone DMZ
+    terms:
+      - name: test-tcp
+        destination-address: RFC1918
+        protocol: tcp udp
+        logging: log-both
+        action: accept
+
+      - name: google-dns-fqdn
+        destination-fqdn: GOOGLE_PUBLIC_DNS_ANYCAST
+        action: accept
+        '''
+        self.naming.GetFQDN.return_value = ['FOO']
+        p = yaml_frontend.ParsePolicy(
+            pol,
+            filename='',
+            base_dir='',
+            definitions=self.naming,
+            optimize=True,
+            shade_check=False,
+        )
+        print(p)
 
     @parameterized.named_parameters(
         ('TestLowestValid', ['0'], True),

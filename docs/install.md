@@ -1,11 +1,13 @@
 # Installation
 
 ## Prerequisites
-* [Python 3.7+](https://www.python.org/downloads/)
+* [Python 3.10+](https://www.python.org/downloads/)
     * If your system Python does not meet that requirement you can leverage [pyenv](https://github.com/pyenv/pyenv) to maintain one or more Python versions that can be set on a per directory basis.
 * [pip](https://pip.pypa.io/en/stable/getting-started/)
 
-**_NOTE:_** It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package. 
+!!! tip
+
+    It is recommended to use a virtual environment such as the Python built-in [venv](https://docs.python.org/3/library/venv.html) module or the [virtualenv](https://virtualenv.pypa.io/en/latest/) package.
 
 Option 1: Install from PyPI.
 
@@ -23,7 +25,7 @@ At this point you should be able to verify `aclgen` was installed. The path may 
 
 ```bash
 which aclgen
-/home/rob/.cache/pypoetry/virtualenvs/aerleon-1XT7bGG2-py3.10/bin/aclgen
+/home/user/.cache/pypoetry/virtualenvs/aerleon-1XT7bGG2-py3.13/bin/aclgen
 ```
 If you do not see a path it is possible the installation did not work successfully. Please reach out to us by filing an [issue](https://github.com/aerleon/aerleon/issues).
 

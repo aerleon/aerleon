@@ -26,7 +26,7 @@ groups {
                                 /* this is a very descriptive comment  this
                                  ** is a very descriptive comment  this is a
                                  ** very descriptive comment  this is a very
-                                 ** descript */
+                                 ** descripti */
                                 10.0.0.0/8;
                             }
                             application-sets test-filtergood-term-2-app;

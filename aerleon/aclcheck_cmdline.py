@@ -32,31 +32,40 @@ def main():
     _parser.add_argument(
         '-p',
         '--policy-file',
+        '--policy_file',
         dest='pol',
         help='The policy file to examine.',
         required=True,
     )
     _parser.add_argument(
         '--definitions-directory',
+        '--definitions_directory',
         dest='definitions_directory',
         help='The directory where network and service definition files can be found.',
     )
     _parser.add_argument(
         '--base-directory',
+        '--base_directory',
         dest='base_directory',
         help='The base directory to use when resolving policy include paths.',
     )
     _parser.add_argument(
         '--config-file',
+        '--config_file',
         dest='config_file',
         help='Change the location searched for the configuration YAML file.',
     )
-    _parser.add_argument('-d', '--destination', dest='destination_ip', help='Destination IP.')
+    _parser.add_argument(
+        '-d',
+        '--destination',
+        dest='destination_ip',
+        help='Destination IP address or network.',
+    )
     _parser.add_argument(
         '-s',
         '--source',
         dest='source_ip',
-        help='Source IP.',
+        help='Source IP address or network.',
     )
     _parser.add_argument(
         '--proto',
@@ -65,9 +74,27 @@ def main():
         help='Protocol (tcp, udp, icmp, etc.)',
     )
     _parser.add_argument(
-        '--dport', '--destination-port', dest='destination_port', help='Destination port.'
+        '--dport',
+        '--destination-port',
+        '--destination_port',
+        dest='destination_port',
+        help='Destination port.',
     )
-    _parser.add_argument('--sport', '--source-port', dest='source_port', help='Source port.')
+    _parser.add_argument(
+        '--sport', '--source-port', '--source_port', dest='source_port', help='Source port.'
+    )
+    _parser.add_argument(
+        '--source-zone',
+        '--source_zone',
+        dest='source_zone',
+        help='Source security/zone identifier. When provided, `AclCheck` will only match terms that either have no `source-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).',
+    )
+    _parser.add_argument(
+        '--destination-zone',
+        '--destination_zone',
+        dest='destination_zone',
+        help='Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).',
+    )
     FLAGS = _parser.parse_args()
 
     default_flags = {
@@ -80,6 +107,8 @@ def main():
         'protocol': 'any',
         'destination_port': '80',
         'source_port': '1025',
+        'source_zone': None,
+        'destination_zone': None,
     }
 
     configs = {}
@@ -121,6 +150,8 @@ def main():
         sport=configs['source_port'],
         dport=configs['destination_port'],
         proto=configs['protocol'],
+        source_zone=configs.get('source_zone'),
+        destination_zone=configs.get('destination_zone'),
     )
     print(str(check))
 

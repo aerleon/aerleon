@@ -15,13 +15,14 @@
 #
 """Windows IP security policy generator."""
 
-
 # pylint: disable=g-importing-member
 from string import Template
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, windows
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Header
 
 
 class Term(windows.Term):
@@ -74,7 +75,9 @@ class Term(windows.Term):
         'reject': 'block',
     }
 
-    def _HandleIcmpTypes(self, icmp_types, protocols):
+    def _HandleIcmpTypes(
+        self, icmp_types: list[str], protocols: list[str]
+    ) -> tuple[list[str], list[str]]:
         if icmp_types:
             raise aclgenerator.UnsupportedFilterError(
                 '\n%s %s %s %s'
@@ -82,18 +85,26 @@ class Term(windows.Term):
             )
         return ([''], protocols)
 
-    def _HandlePorts(self, src_ports, dst_ports):
+    def _HandlePorts(
+        self, src_ports: list[tuple[int, int]], dst_ports: list[tuple[int, int]]
+    ) -> tuple[list[str], list[str]]:
         # ports = Map the ports in a straight list since multiports aren't supported
         return (self._CollapsePortTuples(src_ports), self._CollapsePortTuples(dst_ports))
 
-    def _HandlePreRule(self, ret_str):
+    def _HandlePreRule(self, ret_str: list[str]) -> None:
         ret_str.append(self._ComposeFilterList())
         ret_str.append(self._ComposeFilterAction(self._ACTION_TABLE[self.term.action[0]]))
 
     def _CartesianProduct(
-        self, src_addr, dst_addr, protocol, unused_icmp_types, src_port, dst_port, ret_str
-    ):
-        # yup, the full cartesian product... this makes me cry on the inside.
+        self,
+        src_addr: list[IPv4 | IPv6],
+        dst_addr: list[IPv4 | IPv6],
+        protocol: list[str],
+        unused_icmp_types: list[str],
+        src_port: list[str],
+        dst_port: list[str],
+        ret_str: list[str],
+    ) -> None:
         for saddr in src_addr:
             if saddr.version != 4:
                 logging.warning(
@@ -129,25 +140,34 @@ class Term(windows.Term):
                                 )
                             )
 
-    def _CollapsePortTuples(self, port_tuples):
+    def _CollapsePortTuples(self, port_tuples: tuple[int, int]) -> list[str | int]:
         ports = ['']
         for tpl in port_tuples:
             if tpl:
-                (port_start, port_end) = tpl
+                port_start, port_end = tpl
                 ports = list(range(port_start, port_end + 1))
         return ports
 
-    def _ComposeFilterList(self):
+    def _ComposeFilterList(self) -> str:
         return self.CMD_PREFIX + self._FILTERLIST_FORMAT.substitute(
             name=self.term_name + self._LIST_SUFFIX
         )
 
-    def _ComposeFilterAction(self, action):
+    def _ComposeFilterAction(self, action) -> str:
         return self.CMD_PREFIX + self._FILTERACTION_FORMAT.substitute(
             name=self.term_name + self._ACTION_SUFFIX, action=action
         )
 
-    def _ComposeFilter(self, srcaddr, dstaddr, proto, srcmask, dstmask, srcport, dstport):
+    def _ComposeFilter(
+        self,
+        srcaddr: IPv4 | IPv6,
+        dstaddr: IPv4 | IPv6,
+        proto: str,
+        srcmask: int,
+        dstmask: int,
+        srcport: str,
+        dstport: str,
+    ):
         """Convert the given parameters to a netsh filter rule string."""
         atoms = []
 
@@ -175,9 +195,9 @@ class Term(windows.Term):
             name=self.term_name + self._LIST_SUFFIX, atoms=' '.join(atoms)
         )
 
-    def ComposeRule(self, policy):
+    def ComposeRule(self, policy: str):
         return self.CMD_PREFIX + self._RULE_FORMAT.substitute(
-            name=self.term_name + '-rule',
+            name=f"{self.term_name}-rule",
             policy=policy,
             filterlist=self.term_name + self._LIST_SUFFIX,
             filteraction=self.term_name + self._ACTION_SUFFIX,
@@ -195,7 +215,7 @@ class WindowsIPSec(windows.WindowsGenerator):
 
     _GOOD_AFS = ['inet']
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -207,9 +227,9 @@ class WindowsIPSec(windows.WindowsGenerator):
         del supported_sub_tokens['icmp_type']
         return supported_tokens, supported_sub_tokens
 
-    def _HandlePolicyHeader(self, header, target):
+    def _HandlePolicyHeader(self, header: Header, target: list[str]) -> None:
         policy_name = header.FilterName(self._PLATFORM) + self._POLICY_SUFFIX
-        target.append(Term.CMD_PREFIX + self._POLICY_FORMAT.substitute(name=policy_name) + '\n')
+        target.append(f"{Term.CMD_PREFIX}{self._POLICY_FORMAT.substitute(name=policy_name)}\n")
 
-    def _HandleTermFooter(self, header, term, target):
-        target.append(term.ComposeRule(header.FilterName(self._PLATFORM)) + '\n')
+    def _HandleTermFooter(self, header: Header, term: Term, target: list[str]):
+        target.append(f"{term.ComposeRule(header.FilterName(self._PLATFORM))}\n")

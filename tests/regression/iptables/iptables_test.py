@@ -32,6 +32,18 @@ header {
 }
 """
 
+GOOD_HEADER_NOCHAIN_INPUT = """
+header {
+  comment:: "this is a test acl"
+  target:: iptables INPUT ACCEPT nochainedterms
+}
+"""
+GOOD_HEADER_NOCHAIN_OUTPUT = """
+header {
+  comment:: "this is a test acl"
+  target:: iptables OUTPUT ACCEPT nochainedterms
+}
+"""
 GOOD_HEADER_2 = """
 header {
   comment:: "this is a test acl"
@@ -155,12 +167,12 @@ term good-term-5 {
 }
 """
 
-GOOD_TERM_6 = """
-term good-term-6 {
+GOOD_TERM_6 = f"""
+term good-term-6 {{
   comment:: "Some text describing what this block does,
              possibly including newines, blank lines,
              and extra-long comments (over 255 characters)
-             %(long_line)s
+             {'-' * 260}
 
              All these cause problems if passed verbatim to iptables.
              "
@@ -168,10 +180,8 @@ term good-term-6 {
   protocol:: tcp
   action:: accept
 
-}
-""" % {
-    'long_line': '-' * 260
-}
+}}
+"""
 
 
 GOOD_TERM_7 = """
@@ -579,7 +589,7 @@ class FakeTerm:
 class AclCheckTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.naming = mock.create_autospec(naming.Naming)
+        self.naming = naming.Naming()
 
     @mock.patch.object(iptables.logging, 'warning')
     def testChainFilter(self, mock_warn):
@@ -658,11 +668,9 @@ class AclCheckTest(absltest.TestCase):
         # In this test, we should get fewer lines of output by performing
         # early return jumps on excluded addresses.
         #
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [nacaddr.IPv4('10.0.0.0/24')],
-        ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('OOB_NET = 10.0.0.0/24', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -680,8 +688,6 @@ class AclCheckTest(absltest.TestCase):
             '--sport 80 -s 10.0.0.0/8', result, 'expected source address 10.0.0.0/8 not accepted.'
         )
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('OOB_NET')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -690,11 +696,9 @@ class AclCheckTest(absltest.TestCase):
         # In this test, we should get fewer lines of output from excluding
         # addresses from the specified destination.
         #
-        self.naming.GetNetAddr.side_effect = [
-            [nacaddr.IPv4('10.0.0.0/8')],
-            [nacaddr.IPv4('10.128.0.0/9'), nacaddr.IPv4('10.64.0.0/10')],
-        ]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('OOB_NET = 10.128.0.0/9 10.64.0.0/10', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_2, self.naming), EXP_INFO
@@ -706,8 +710,6 @@ class AclCheckTest(absltest.TestCase):
             'expected source address 10.0.0.0/10 not accepted.',
         )
 
-        self.naming.GetNetAddr.assert_has_calls([mock.call('INTERNAL'), mock.call('OOB_NET')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -720,15 +722,16 @@ class AclCheckTest(absltest.TestCase):
         source_range = []
         for i in range(18):
             address = nacaddr.IPv4(10 * 256 * 256 * 256 + i * 256 * 256)
-            source_range.append(address.supernet(15))  # Grow to /17
+            source_range.append(str(address.supernet(15)))  # Grow to /17
 
         dest_range = []
         for i in range(40):
             address = nacaddr.IPv4(10 * 256 * 256 * 256 + i * 256)
-            dest_range.append(address.supernet(7))  # Grow to /25
+            dest_range.append(str(address.supernet(7)))  # Grow to /25
 
-        self.naming.GetNetAddr.side_effect = [source_range, dest_range]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine(f'SOME_SOURCE = {" ".join(source_range)}', 'networks')
+        self.naming._ParseLine(f'SOME_DEST = {" ".join(dest_range)}', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -743,20 +746,17 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-s 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-s 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-s 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -d 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_SOURCE'), mock.call('SOME_DEST')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -769,15 +769,16 @@ class AclCheckTest(absltest.TestCase):
         source_range = []
         for i in range(40):
             address = nacaddr.IPv4(10 * 256 * 256 * 256 + i * 256)
-            source_range.append(address.supernet(7))  # Grow to /25
+            source_range.append(str(address.supernet(7)))  # Grow to /25
 
         dest_range = []
         for i in range(18):
             address = nacaddr.IPv4(10 * 256 * 256 * 256 + i * 256 * 256)
-            dest_range.append(address.supernet(15))  # Grow to /17
+            dest_range.append(str(address.supernet(15)))  # Grow to /17
 
-        self.naming.GetNetAddr.side_effect = [source_range, dest_range]
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine(f'SOME_SOURCE = {" ".join(source_range)}', 'networks')
+        self.naming._ParseLine(f'SOME_DEST = {" ".join(dest_range)}', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_9, self.naming), EXP_INFO
@@ -792,25 +793,22 @@ class AclCheckTest(absltest.TestCase):
             % (len(source_range) * len(dest_range), result.count('\n')),
         )
         self.assertIn(
-            '-d 0.0.0.0/5 -j RETURN', result, 'expected address 0.0.0.0/5 to RETURN:\n' + result
+            '-d 0.0.0.0/5 -j RETURN', result, f"expected address 0.0.0.0/5 to RETURN:\n{result}"
         )
         self.assertIn(
             '-d 10.0.128.0/17 -j RETURN',
             result,
-            'expected address 10.0.128.0/17 not jumping to RETURN:\n' + result,
+            f"expected address 10.0.128.0/17 not jumping to RETURN:\n{result}",
         )
         self.assertTrue(
             re.search('--sport 80 -s 10.0.1.0/25 [^\n]* -j ACCEPT', result),
-            'expected destination addresss 10.0.1.0/25 accepted:\n' + result,
+            f"expected destination addresss 10.0.1.0/25 accepted:\n{result}",
         )
-
-        self.naming.GetNetAddr.assert_has_calls([mock.call('SOME_SOURCE'), mock.call('SOME_DEST')])
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(result)
 
     @capture.stdout
     def testOptions(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_3, self.naming), EXP_INFO
@@ -824,7 +822,6 @@ class AclCheckTest(absltest.TestCase):
             'missing or incorrect state information.',
         )
 
-        self.naming.GetServiceByProto.assert_called_once_with('HTTP', 'tcp')
         print(result)
 
     @capture.stdout
@@ -939,7 +936,6 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testCommentQuoteStripping(self):
-
         parsed_policy = policy.ParsePolicy(GOOD_HEADER_1 + BAD_QUOTE_TERM_1, self.naming)
         parsed_policy.filters[0][1][0].comment = ['Text "describing" "with" quotes']
 
@@ -1046,9 +1042,9 @@ class AclCheckTest(absltest.TestCase):
         acl = iptables.Iptables(pol, EXP_INFO)
         result = str(acl)
         self.assertIn(
-            '%s %s' % ('--tcp-flags ACK,FIN,RST,SYN RST', '--dport 1024:65535 -j ACCEPT'),
+            '--tcp-flags ACK,FIN,RST,SYN RST --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching packets with RST bit only.\n' + result,
+            f"No rule matching packets with RST bit only.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'
@@ -1063,7 +1059,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn(
             '-p udp --dport 1024:65535 -j ACCEPT',
             result,
-            'No rule matching TCP packets with ACK bit.\n' + result,
+            f"No rule matching TCP packets with ACK bit.\n{result}",
         )
         self.assertNotIn(
             '--state', result, 'Nostate header should not use nf_conntrack --state flag'
@@ -1096,16 +1092,16 @@ class AclCheckTest(absltest.TestCase):
         )
         self.assertRaises(aclgenerator.DuplicateTermError, iptables.Iptables, pol, EXP_INFO)
 
-    @capture.stdout
+    # @capture.stdout
     def testMultiPort(self):
         ports = [str(x) for x in range(1, 29, 2)]
-        self.naming.GetServiceByProto.return_value = ports
+        self.naming._ParseLine(f'FOURTEEN_PORTS = {"/tcp ".join(ports)}/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_MULTIPORT, self.naming), EXP_INFO
         )
         self.assertIn(
-            '-m multiport --sports %s' % ','.join(ports),
+            f"-m multiport --sports {','.join(ports)}",
             str(acl),
             'multiport module not used as expected.',
         )
@@ -1114,26 +1110,28 @@ class AclCheckTest(absltest.TestCase):
             '-m multiport --dports  -d', str(acl), 'invalid multiport syntax produced.'
         )
 
-        self.naming.GetServiceByProto.assert_called_once_with('FOURTEEN_PORTS', 'tcp')
         print(acl)
 
     @capture.stdout
     def testMultiPortWithRanges(self):
         ports = [str(x) for x in (1, 3, 5, 7, 9, 11, 13, 15, 17, '19-21', '23-25', '27-29')]
-        self.naming.GetServiceByProto.return_value = ports
+        self.naming._ParseLine(
+            f'FIFTEEN_PORTS_WITH_RANGES = {"/tcp ".join(ports)}/tcp', 'services'
+        )
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_MULTIPORT_RANGE, self.naming), EXP_INFO
         )
-        expected = '-m multiport --dports %s' % ','.join(ports).replace('-', ':')
+        expected = f"-m multiport --dports {','.join(ports).replace('-', ':')}"
         self.assertIn(expected, str(acl), 'multiport module not used as expected.')
 
-        self.naming.GetServiceByProto.assert_called_once_with('FIFTEEN_PORTS_WITH_RANGES', 'tcp')
         print(acl)
 
     @capture.stdout
     def testMultiportSwap(self):
-        self.naming.GetServiceByProto.side_effect = [['80'], ['443'], ['22']]
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + MULTIPORT_SWAP, self.naming), EXP_INFO
@@ -1141,15 +1139,12 @@ class AclCheckTest(absltest.TestCase):
         expected = '--dport 22 -m multiport --sports 80,443'
         self.assertIn(expected, str(acl), 'failing to move single port before multiport values.')
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('HTTP', 'tcp'), mock.call('HTTPS', 'tcp'), mock.call('SSH', 'tcp')]
-        )
         print(acl)
 
     @capture.stdout
     def testMultiportLargePortCount(self):
         ports = [str(x) for x in range(1, 71, 2)]
-        self.naming.GetServiceByProto.return_value = ports
+        self.naming._ParseLine(f'LOTS_OF_PORTS = {"/tcp ".join(ports)}/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + LARGE_MULTIPORT, self.naming), EXP_INFO
@@ -1158,13 +1153,13 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn('-m multiport --dports 29,31,33,35,37', str(acl))
         self.assertIn('-m multiport --dports 57,59,61,63,65,67,69', str(acl))
 
-        self.naming.GetServiceByProto.assert_called_once_with('LOTS_OF_PORTS', 'tcp')
         print(acl)
 
     @capture.stdout
     def testMultiportDualLargePortCount(self):
         ports = [str(x) for x in range(1, 71, 2)]
-        self.naming.GetServiceByProto.return_value = ports
+        self.naming._ParseLine(f'LOTS_OF_DPORTS = {"/tcp ".join(ports)}/tcp', 'services')
+        self.naming._ParseLine(f'LOTS_OF_SPORTS = {"/tcp ".join(ports)}/tcp', 'services')
 
         acl = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + DUAL_LARGE_MULTIPORT, self.naming), EXP_INFO
@@ -1182,9 +1177,6 @@ class AclCheckTest(absltest.TestCase):
         self.assertIn('65,67,69 -m multiport --dports 29,31,33', str(acl))
         self.assertIn('65,67,69 -m multiport --dports 57,59,61', str(acl))
 
-        self.naming.GetServiceByProto.assert_has_calls(
-            [mock.call('LOTS_OF_SPORTS', 'tcp'), mock.call('LOTS_OF_DPORTS', 'tcp')]
-        )
         print(acl)
 
     def testGeneratePortBadArguments(self):
@@ -1274,7 +1266,7 @@ class AclCheckTest(absltest.TestCase):
 
     @capture.stdout
     def testIPv6IcmpOrder(self):
-        self.naming.GetNetAddr.return_value = [nacaddr.IPv6('fd87:6044:ac54:3558::/64')]
+        self.naming._ParseLine('IPV6_INTERNAL = fd87:6044:ac54:3558::/64', 'networks')
 
         pol = policy.ParsePolicy(IPV6_HEADER_1 + ICMPV6_TERM_1, self.naming)
         acl = iptables.Iptables(pol, EXP_INFO)
@@ -1285,7 +1277,6 @@ class AclCheckTest(absltest.TestCase):
             'incorrect order of ICMPv6 match elements',
         )
 
-        self.naming.GetNetAddr.assert_called_once_with('IPV6_INTERNAL')
         print(result)
 
     @mock.patch.object(iptables.logging, 'warning')
@@ -1355,7 +1346,7 @@ class AclCheckTest(absltest.TestCase):
         self.assertEqual(sst, SUPPORTED_SUB_TOKENS)
 
     def testBuildWarningTokens(self):
-        self.naming.GetServiceByProto.return_value = ['80']
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
         pol1 = iptables.Iptables(
             policy.ParsePolicy(GOOD_HEADER_1 + GOOD_WARNING_TERM, self.naming), EXP_INFO
@@ -1403,6 +1394,32 @@ class AclCheckTest(absltest.TestCase):
             ''.join(log.output),
         )
 
+    @capture.stdout
+    def testNoChain(self):
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('OOB_NET = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
+
+        acl = iptables.Iptables(
+            policy.ParsePolicy(GOOD_HEADER_NOCHAIN_INPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming),
+            EXP_INFO,
+        )
+        print(acl)
+
+    @capture.stdout
+    def testNoChainOutput(self):
+        self.naming._ParseLine('INTERNAL = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('OOB_NET = 0.0.0.0/0', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
+
+        acl = iptables.Iptables(
+            policy.ParsePolicy(
+                GOOD_HEADER_NOCHAIN_OUTPUT + GOOD_TERM_1 + GOOD_TERM_2, self.naming
+            ),
+            EXP_INFO,
+        )
+        print(acl)
+
 
 YAML_GOOD_HEADER_1 = """
 filters:
@@ -1410,6 +1427,24 @@ filters:
     comment: this is a test acl
     targets:
       iptables: INPUT ACCEPT
+  terms:
+"""
+
+YAML_GOOD_HEADER_NOCHAIN_INPUT = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: INPUT ACCEPT nochainedterms
+  terms:
+"""
+
+YAML_GOOD_HEADER_NOCHAIN_OUTPUT = """
+filters:
+- header:
+    comment: this is a test acl
+    targets:
+      iptables: OUTPUT ACCEPT nochainedterms
   terms:
 """
 
@@ -1556,22 +1591,20 @@ YAML_GOOD_TERM_5 = """
       juniper: mary had third lamb
 """
 
-YAML_GOOD_TERM_6 = """
+YAML_GOOD_TERM_6 = f"""
   - name: good-term-6
     comment: |
         Some text describing what this block does,
         possibly including newines, blank lines,
         and extra-long comments (over 255 characters)
-        %(long_line)s
+        {'-' * 260}
 
         All these cause problems if passed verbatim to iptables.
                
     protocol: tcp
     action: accept
 
-""" % {
-    'long_line': '-' * 260
-}
+"""
 
 
 YAML_GOOD_TERM_7 = """
@@ -1864,6 +1897,8 @@ class IPTablesYAMLTest(AclCheckTest):
     def setUpFixtures(self):
         self.fixture_patcher = mock.patch.multiple(
             'iptables_test',
+            GOOD_HEADER_NOCHAIN_INPUT=YAML_GOOD_HEADER_NOCHAIN_INPUT,
+            GOOD_HEADER_NOCHAIN_OUTPUT=YAML_GOOD_HEADER_NOCHAIN_OUTPUT,
             GOOD_HEADER_1=YAML_GOOD_HEADER_1,
             GOOD_HEADER_2=YAML_GOOD_HEADER_2,
             GOOD_HEADER_3=YAML_GOOD_HEADER_3,

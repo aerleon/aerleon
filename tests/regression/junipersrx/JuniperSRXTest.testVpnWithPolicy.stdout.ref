@@ -1,11 +1,11 @@
 security {
     replace: address-book {
         global {
-                address _0 10.0.0.0/8;
-                address _1 2001:4860:8000::/33;
-                address-set  {
-                    address _0;
-                    address _1;
+                address SOME_HOST_0 10.0.0.0/8;
+                address SOME_HOST_1 2001:4860:8000::/33;
+                address-set SOME_HOST {
+                    address SOME_HOST_0;
+                    address SOME_HOST_1;
                 }
         }
     }
@@ -22,7 +22,7 @@ security {
             policy good-term-4 {
                 match {
                     source-address any;
-                    destination-address [  ];
+                    destination-address [ SOME_HOST ];
                     application good-term-4-app;
                 }
                 then {

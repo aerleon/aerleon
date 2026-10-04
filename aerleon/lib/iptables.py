@@ -22,6 +22,8 @@ from string import Template  # pylint: disable=g-importing-member
 from absl import logging
 
 from aerleon.lib import aclgenerator, nacaddr
+from aerleon.lib.nacaddr import IPv4, IPv6
+from aerleon.lib.policy import Policy, Term
 
 
 class Term(aclgenerator.Term):
@@ -65,7 +67,16 @@ class Term(aclgenerator.Term):
         'sample': '',
     }
 
-    def __init__(self, term, filter_name, trackstate, filter_action, af='inet', verbose=True):
+    def __init__(
+        self,
+        term: Term,
+        filter_name: str,
+        trackstate: bool,
+        filter_action: str | None,
+        af: str = 'inet',
+        verbose: bool = True,
+        chained_terms: bool = True,
+    ) -> None:
         """Setup a new term.
 
         Args:
@@ -94,16 +105,19 @@ class Term(aclgenerator.Term):
         self.options = []
         self.af = af
         self.verbose = verbose
+        self.chained_terms = chained_terms
         if af == 'inet6':
             self._all_ips = nacaddr.IPv6('::/0')
             self._action_table['reject'] = '-j REJECT --reject-with ' 'icmp6-adm-prohibited'
         else:
             self._all_ips = nacaddr.IPv4('0.0.0.0/0')
             self._action_table['reject'] = '-j REJECT --reject-with ' 'icmp-host-prohibited'
+        if self.chained_terms:
+            self.term_name = f'{self.filter[:1]}_{self.term.name}'
+        else:
+            self.term_name = self.filter
 
-        self.term_name = '%s_%s' % (self.filter[:1], self.term.name)
-
-    def __str__(self):
+    def __str__(self) -> str:
         ret_str = []
 
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -127,17 +141,17 @@ class Term(aclgenerator.Term):
 
         # Create a new term
         self._SetDefaultAction()
-        if self._TERM_FORMAT:
-            ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
 
-        if self._PREJUMP_FORMAT:
+        if self.chained_terms and self._TERM_FORMAT:
+            ret_str.append(self._TERM_FORMAT.substitute(term=self.term_name))
+        if self.chained_terms and self._PREJUMP_FORMAT:
             ret_str.append(
                 self._PREJUMP_FORMAT.substitute(filter=self.filter, term=self.term_name)
             )
 
         if self.verbose:
             if self.term.owner:
-                self.term.comment.append('Owner: %s' % self.term.owner)
+                self.term.comment.append(f'Owner: {self.term.owner}')
             # reformat long comments, if needed
             #
             # iptables allows individual comments up to 256 chars.
@@ -166,7 +180,7 @@ class Term(aclgenerator.Term):
         # skip the rule.  In other cases, we blow up (raise an exception)
         # to ensure that this is not considered valid configuration.
         if self.term.source_prefix or self.term.destination_prefix:
-            if str(self.term.action[0]) not in set(['accept', 'next']):
+            if str(self.term.action[0]) not in {'accept', 'next'}:
                 raise UnsupportedFilterError(
                     '%s %s %s %s %s %s %s %s'
                     % (
@@ -180,7 +194,7 @@ class Term(aclgenerator.Term):
                         'iptables output.',
                     )
                 )
-            return '# skipped %s due to source or destination prefix rule' % self.term.name
+            return f'# skipped {self.term.name} due to source or destination prefix rule'
 
         # protocol
         if self.term.protocol:
@@ -191,7 +205,7 @@ class Term(aclgenerator.Term):
             logging.warning('Term %s is using hopopt in IPv4 context.', self.term_name)
             return ''
 
-        (term_saddr, exclude_saddr, term_daddr, exclude_daddr) = self._CalculateAddresses(
+        term_saddr, exclude_saddr, term_daddr, exclude_daddr = self._CalculateAddresses(
             self.term.source_address,
             self.term.source_address_exclude,
             self.term.destination_address,
@@ -221,7 +235,6 @@ class Term(aclgenerator.Term):
         # icmp-types
         icmp_types = ['']
         if self.term.icmp_type:
-
             icmp_types = self.NormalizeIcmpTypes(self.term.icmp_type, protocol, self.af)
 
         source_interface = ''
@@ -279,12 +292,10 @@ class Term(aclgenerator.Term):
                 self.options.append(self._KNOWN_OPTIONS_MATCHERS[next_opt])
         if self.term.packet_length:
             # Policy format is "#-#", but iptables format is "#:#"
-            self.options.append(
-                '-m length --length %s' % self.term.packet_length.replace('-', ':')
-            )
+            self.options.append(f"-m length --length {self.term.packet_length.replace('-', ':')}")
         if self.term.fragment_offset:
             self.options.append(
-                '-m u32 --u32 4&0x1FFF=%s' % self.term.fragment_offset.replace('-', ':')
+                f"-m u32 --u32 4&0x1FFF={self.term.fragment_offset.replace('-', ':')}"
             )
         icmp_code = ['']
         if self.term.icmp_code:
@@ -354,14 +365,45 @@ class Term(aclgenerator.Term):
                                     )
                                 )
 
-        if self._POSTJUMP_FORMAT:
+        if self._POSTJUMP_FORMAT and self.chained_terms:
             ret_str.append(
                 self._POSTJUMP_FORMAT.substitute(filter=self.filter, term=self.term_name)
             )
 
         return '\n'.join(str(v) for v in ret_str if v)
 
-    def _CalculateAddresses(self, term_saddr, exclude_saddr, term_daddr, exclude_daddr):
+    def _CalculateAddresses(
+        self,
+        term_saddr: list[IPv4 | IPv6],
+        exclude_saddr: list[IPv4 | IPv6],
+        term_daddr: list[IPv4 | IPv6],
+        exclude_daddr: list[IPv4 | IPv6],
+    ) -> (
+        tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+        | tuple[
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+            list[IPv4 | IPv6],
+        ]
+    ):
         """Calculate source and destination address list for a term.
 
         Args:
@@ -438,21 +480,21 @@ class Term(aclgenerator.Term):
 
     def _FormatPart(
         self,
-        protocol,
-        saddr,
-        sport,
-        daddr,
-        dport,
-        options,
-        tcp_flags,
-        icmp_type,
-        code,
-        track_flags,
-        sint,
-        dint,
-        log_hits,
-        action,
-    ):
+        protocol: str,
+        saddr: IPv6 | IPv4 | str,
+        sport: list[tuple[int, int]] | str,
+        daddr: IPv6 | IPv4 | str,
+        dport: list[tuple[int, int]] | str,
+        options: str | list[str],
+        tcp_flags: str | list[str],
+        icmp_type: int | str,
+        code: int | str,
+        track_flags: tuple[list[str], list[str]] | str,
+        sint: str,
+        dint: str,
+        log_hits: str | bool,
+        action: str,
+    ) -> list[str]:
         """Compose one iteration of the term parts into a string.
 
         Args:
@@ -479,11 +521,11 @@ class Term(aclgenerator.Term):
 
         source_int = ''
         if sint:
-            source_int = '-i %s' % sint
+            source_int = f'-i {sint}'
 
         destination_int = ''
         if dint:
-            destination_int = '-o %s' % dint
+            destination_int = f'-o {dint}'
 
         log_jump = ''
         if log_hits:
@@ -499,11 +541,8 @@ class Term(aclgenerator.Term):
         proto = self._PROTO_TABLE.get(str(protocol))
         # Don't drop protocol if we don't recognize it
         if protocol and not proto:
-            proto = '-p %s' % str(protocol)
+            proto = f'-p {protocol!s}'
 
-        # TODO(vklimovs): generalize to all v6 special cases
-        # Use u32 module as named modules are not available
-        # everywhere.
         if protocol == 'hopopt':
             proto = ''
             # Select 4 bytes at offset 0x3, mask out all but
@@ -535,7 +574,7 @@ class Term(aclgenerator.Term):
         if tcp_flags or (track_flags and track_flags[0]):
             check_fields = ','.join(sorted(set(tcp_flags + track_flags[0])))
             set_fields = ','.join(sorted(set(tcp_flags + track_flags[1])))
-            flags = '--tcp-flags %s %s' % (check_fields, set_fields)
+            flags = f'--tcp-flags {check_fields} {set_fields}'
         else:
             flags = ''
 
@@ -543,9 +582,9 @@ class Term(aclgenerator.Term):
         if not icmp_type:
             icmp = ''
         elif str(protocol) == 'icmpv6':
-            icmp = '-m icmp6 --icmpv6-type %s' % icmp_type
+            icmp = f'-m icmp6 --icmpv6-type {icmp_type}'
         else:
-            icmp = '--icmp-type %s' % icmp_type
+            icmp = f'--icmp-type {icmp_type}'
         if code:
             icmp += r'/%d' % code
 
@@ -598,7 +637,7 @@ class Term(aclgenerator.Term):
                 ret_lines.append(' '.join(rval + [action]))
         return ret_lines
 
-    def _GenerateAddressStatement(self, saddr, daddr):
+    def _GenerateAddressStatement(self, saddr: IPv6 | IPv4, daddr: IPv6 | IPv4) -> tuple[str, str]:
         """Return the address section of an individual iptables rule.
 
         Args:
@@ -622,7 +661,9 @@ class Term(aclgenerator.Term):
             dst = '-d %s/%d' % (daddr.network_address, daddr.prefixlen)
         return (src, dst)
 
-    def _GeneratePortStatement(self, ports, source=False, dest=False):
+    def _GeneratePortStatement(
+        self, ports: list[tuple[int, int]], source: bool = False, dest: bool = False
+    ) -> list[str]:
         """Return the 'port' section of an individual iptables rule.
 
         Args:
@@ -667,16 +708,16 @@ class Term(aclgenerator.Term):
                 count += 2
             if count >= max_ports:
                 count = 0
-                portstrings.append('-m multiport --%sports %s' % (direction, ','.join(norm_ports)))
+                portstrings.append(f"-m multiport --{direction}ports {','.join(norm_ports)}")
                 norm_ports = []
         if norm_ports:
             if len(norm_ports) == 1:
-                portstrings.append('--%sport %s' % (direction, norm_ports[0]))
+                portstrings.append(f'--{direction}port {norm_ports[0]}')
             else:
-                portstrings.append('-m multiport --%sports %s' % (direction, ','.join(norm_ports)))
+                portstrings.append(f"-m multiport --{direction}ports {','.join(norm_ports)}")
         return portstrings
 
-    def _SetDefaultAction(self):
+    def _SetDefaultAction(self) -> None:
         """If term does not specify action, use filter default action."""
         if not self.term.action:
             self.term.action[0].value = self.default_action
@@ -696,13 +737,13 @@ class Iptables(aclgenerator.ACLGenerator):
     _TERM = Term
     _TERM_MAX_LENGTH = 24
     _GOOD_FILTERS = ['INPUT', 'OUTPUT', 'FORWARD']
-    _GOOD_OPTIONS = ['nostate', 'abbreviateterms', 'truncateterms', 'noverbose']
+    _GOOD_OPTIONS = ['nostate', 'abbreviateterms', 'truncateterms', 'noverbose', 'nochainedterms']
 
-    def __init__(self, pol, exp_info):
+    def __init__(self, pol: Policy, exp_info: int) -> None:
         self.iptables_policies = []
         super().__init__(pol, exp_info)
 
-    def _BuildTokens(self):
+    def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
 
         Returns:
@@ -747,7 +788,7 @@ class Iptables(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _WarnIfCustomTarget(self, target):
+    def _WarnIfCustomTarget(self, target: str) -> None:
         """Emit a warning if a policy's default target is not a built-in chain."""
         if target not in self._GOOD_FILTERS:
             logging.warning(
@@ -757,11 +798,12 @@ class Iptables(aclgenerator.ACLGenerator):
                 target,
             )
 
-    def _TranslatePolicy(self, pol, exp_info):
+    def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Translate a policy from objects into strings."""
         default_action = None
         good_default_actions = ['ACCEPT', 'DROP']
         good_afs = ['inet', 'inet6']
+        chained_terms = True
         all_protocols_stateful = True
         self.verbose = True
 
@@ -790,6 +832,8 @@ class Iptables(aclgenerator.ACLGenerator):
                 all_protocols_stateful = False
             if 'noverbose' in self.filter_options:
                 self.verbose = False
+            if 'nochainedterms' in self.filter_options:
+                chained_terms = False
 
             # Check for matching af
             for address_family in good_afs:
@@ -842,13 +886,15 @@ class Iptables(aclgenerator.ACLGenerator):
                 )
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
-                        'You have a duplicate term: %s' % term.name
+                        f'You have a duplicate term: {term.name}'
                     )
                 term_names.add(term.name)
                 if not term.logging and term.log_limit:
                     raise LimitButNoLogError(
-                        'Term %s: Cannoy use log-limit without logging' % term.name
+                        f'Term {term.name}: Cannoy use log-limit without logging'
                     )
+                if not chained_terms:
+                    term.name = filter_name
 
                 term = self.FixHighPorts(
                     term, af=filter_type, all_protocols_stateful=all_protocols_stateful
@@ -864,6 +910,7 @@ class Iptables(aclgenerator.ACLGenerator):
                         default_action,
                         filter_type,
                         self.verbose,
+                        chained_terms,
                     )
                 )
 
@@ -871,7 +918,7 @@ class Iptables(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_type, default_action, new_terms)
             )
 
-    def SetTarget(self, target, action=None):
+    def SetTarget(self, target: str, action: str | None = None) -> None:
         """Sets policy's target and default action.
 
         Args:
@@ -886,26 +933,26 @@ class Iptables(aclgenerator.ACLGenerator):
             pol[3] = action
         self.iptables_policies[0] = tuple(pol)
 
-    def __str__(self):
+    def __str__(self) -> str:
         target = []
-        pretty_platform = '%s%s' % (self._PLATFORM[0].upper(), self._PLATFORM[1:])
+        pretty_platform = f'{self._PLATFORM[0].upper()}{self._PLATFORM[1:]}'
 
         if self._RENDER_PREFIX:
             target.append(self._RENDER_PREFIX)
 
-        for (header, filter_name, filter_type, default_action, terms) in self.iptables_policies:
+        for header, filter_name, filter_type, default_action, terms in self.iptables_policies:
             # Add comments for this filter
-            target.append('# %s %s Policy' % (pretty_platform, header.FilterName(self._PLATFORM)))
+            target.append(f'# {pretty_platform} {header.FilterName(self._PLATFORM)} Policy')
 
             # reformat long text comments, if needed
             comments = aclgenerator.WrapWords(header.comment, 70)
             if comments and comments[0]:
                 for line in comments:
-                    target.append('# %s' % line)
+                    target.append(f'# {line}')
                 target.append('#')
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags('# '))
-            target.append('# ' + filter_type)
+            target.append(f"# {filter_type}")
 
             if filter_name in self._GOOD_FILTERS:
                 if default_action:
