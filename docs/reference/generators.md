@@ -1152,6 +1152,130 @@ targets:
 
 ***
 
+## Nokia SR OS
+
+The Nokia SR OS generator produces JSON for the `nokia-conf` YANG model. It renders
+IP filters (`configure filter ip-filter` / `ipv6-filter`) and CPM filters
+(`configure system security cpm-filter ip-filter` / `ipv6-filter`). The output file
+uses the `.sros_acl` extension.
+
+### Header Format
+
+The Nokia SR OS header designation has the following formats:
+
+```yaml
+targets:
+    nokiasros: {filter_name} {inet|inet6|mixed} {accept|drop} {pktlenfilter} {syslog-profile N}
+    nokiasros: {name} cpm {inet|inet6} {syslog-profile N}
+```
+
+IP filter options:
+
+* _filter_name_: the `filter-name` of the filter. The name is always rendered as `filter-name`, even when it is numeric; the `filter-id` is left for the device to assign. Dynamic filter id generation must be enabled on the devices.
+* _inet_: render an IPv4 `ip-filter`. This is the default.
+* _inet6_: render an IPv6 `ipv6-filter`.
+* _mixed_: render both an `ip-filter` and an `ipv6-filter` with the same name. Each term is rendered into the filter of the matching address family.
+* _accept_: set `default-action` to `accept`.
+* _drop_: set `default-action` to `drop`. This is the default.
+* _pktlenfilter_: set the filter `type` to `packet-length`.
+* _syslog-profile N_: syslog profile used by entries with `logging`. Defaults to `102`.
+
+CPM filter options:
+
+* _cpm_: render a CPM filter instead of an IP filter. A header whose filter name is `cpm` is also treated as a CPM filter. The name is not rendered, since the device has a single CPM filter per address family.
+* _inet_: render the IPv4 CPM filter. This is the default.
+* _inet6_: render the IPv6 CPM filter.
+* _syslog-profile N_: syslog profile used by entries with `logging`. Defaults to `102`.
+
+The CPM YANG model has no filter description, so a header comment is prepended to
+the description of the first entry as `<comment> | <term description>`.
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+* _hop-limit_: Match IPv6 hop-limit, rendered as `hop-limit {lt: N}`.
+* _icmp-code_: Match the ICMP code, together with `icmp-type`.
+* _logging_: Log matching packets to the header's syslog profile.
+* _policer_: Rate-limit matching packets with the named policer (`action rate-limit policer`).
+* _ttl_: Match IPv4 TTL, rendered as `ttl {lt: N}` (`hop-limit {lt: N}` in an IPv6 filter).
+
+(`verbatim` is not supported.)
+
+### Sub Tokens
+
+### Actions
+
+* _accept_
+* _deny_: rendered as `drop`.
+
+### Option
+
+* _established_: Rendered as _tcp-established_ when `tcp` is the only protocol, ignored otherwise.
+* _tcp-established_: Match established TCP sessions. Rendered as the `tcp-established` leaf in IP filters and as `tcp-flags {ack: true}` in CPM filters. Can only be used with the `tcp` protocol.
+* _fragments_, _is-fragment_: Match fragmented packets (`fragment true`).
+* _first-fragment_: Match only the first fragment (`fragment first-only`). Not supported in CPM filters, whose model only has `fragment true|false`.
+
+### Output Format
+
+The output is always a JSON list with one item per filter. Each item is keyed by its
+filter type, so the consumer knows where to load it:
+
+| Key               | Configuration path                                           |
+|-------------------|--------------------------------------------------------------|
+| `ip-filter`       | `/nokia-conf:configure/filter/ip-filter[filter-name=NAME]`   |
+| `ipv6-filter`     | `/nokia-conf:configure/filter/ipv6-filter[filter-name=NAME]` |
+| `cpm-ip-filter`   | `/nokia-conf:configure/system/security/cpm-filter/ip-filter` |
+| `cpm-ipv6-filter` | `/nokia-conf:configure/system/security/cpm-filter/ipv6-filter` |
+
+```json
+[
+    {
+        "ip-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:default-action": "drop",
+            "nokia-conf:filter-name": "edge-in",
+            "nokia-conf:entry": [
+                {
+                    "description": "accept-dns",
+                    "action": {"accept": [null]},
+                    "match": {"dst-port": {"eq": 53}, "protocol": "udp"},
+                    "entry-id": 1000
+                }
+            ]
+        }
+    }
+]
+```
+
+### Entry IDs
+
+SR OS filter entries match a single prefix, port and protocol, so each term is
+expanded into one entry per combination of source address, destination address,
+source port, destination port, protocol and ICMP type.
+
+Each term gets a fixed block of 1000 entry IDs: the entries of term N are numbered
+`N * 1000`, `N * 1000 + 1`, and so on. A term that is not rendered still uses its
+block, so the IDs of the following terms do not change. Generation fails if:
+
+* a term expands to more than 1000 entries, or
+* an entry ID exceeds the maximum allowed by the model: 2097151 for IP filters
+  (about 2097 terms) and 131072 for CPM filters (131 terms).
+
+### Address Families
+
+A term is skipped, with a warning, when it cannot be expressed in the filter's
+address family:
+
+* it has source or destination addresses, but none of the filter's address family, or
+* it uses `icmp` in an IPv6 filter, or `icmpv6` in an IPv4 filter.
+
+In `mixed` filters these terms are rendered only in the filter of the matching
+address family, without a warning. Matching on protocol uses `protocol` in IPv4
+filters and `next-header` in IPv6 filters.
+
+***
+
 ## NSXv
 
 ### Header Format
