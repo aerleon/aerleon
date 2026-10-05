@@ -67,6 +67,10 @@ class TcpEstablishedWithNonTcpError(Error):
     pass
 
 
+class FirstFragmentInCpmError(Error):
+    pass
+
+
 class SROSTerm(aclgenerator.Term):
     """Converts a policy term into SROS filter entry dicts."""
 
@@ -119,6 +123,8 @@ class SROSTerm(aclgenerator.Term):
         icmp_codes: list[int | None] = self.term.icmp_code or [None]
 
         opts = [str(x) for x in self.term.option]
+        if 'established' in opts and self.term.protocol == ['tcp']:
+            opts.append('tcp-established')
         if 'tcp-established' in opts:
             if self.term.protocol and self.term.protocol != ['tcp']:
                 raise TcpEstablishedWithNonTcpError(
@@ -235,7 +241,13 @@ class SROSTerm(aclgenerator.Term):
             else:
                 match['tcp-established'] = [None]
 
-        if any(x in opts for x in ('is-fragment', 'fragments', 'first-fragment')):
+        if 'first-fragment' in opts:
+            if self.cpm_mode:
+                raise FirstFragmentInCpmError(
+                    f'first-fragment is not supported in CPM filters in term {self.term.name}'
+                )
+            match['fragment'] = 'first-only'
+        elif 'is-fragment' in opts or 'fragments' in opts:
             match['fragment'] = 'true'
 
         return match
@@ -253,7 +265,13 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
         supported_tokens |= {'logging', 'hop_limit', 'icmp_code', 'policer', 'ttl'}
         supported_sub_tokens['action'] = {'accept', 'deny'}
-        supported_sub_tokens['option'] |= {'fragments'}
+        supported_sub_tokens['option'] = {
+            'established',
+            'tcp-established',
+            'is-fragment',
+            'first-fragment',
+            'fragments',
+        }
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Any, exp_info: int) -> None:

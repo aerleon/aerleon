@@ -18,7 +18,7 @@ import json
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, nokiasros, policy
+from aerleon.lib import aclgenerator, naming, nokiasros, policy
 from tests.regression_utils import capture
 
 # ---------------------------------------------------------------------------
@@ -222,9 +222,39 @@ term term-tcp-est {
 }
 """
 
+TERM_EST_TCP = """
+term term-est-tcp {
+  protocol:: tcp
+  option:: established
+  action:: accept
+}
+"""
+
+TERM_EST_UDP = """
+term term-est-udp {
+  protocol:: udp
+  option:: established
+  action:: accept
+}
+"""
+
 TERM_FRAGMENT = """
 term term-fragment {
   option:: fragments
+  action:: deny
+}
+"""
+
+TERM_IS_FRAGMENT = """
+term term-is-fragment {
+  option:: is-fragment
+  action:: deny
+}
+"""
+
+TERM_FIRST_FRAGMENT = """
+term term-first-fragment {
+  option:: first-fragment
   action:: deny
 }
 """
@@ -247,6 +277,14 @@ BAD_TERM_TCP_EST = """
 term bad-term-tcp-est {
   protocol:: udp
   option:: tcp-established
+  action:: accept
+}
+"""
+
+BAD_TERM_UNSUPPORTED_OPTION = """
+term bad-term-option {
+  protocol:: tcp
+  option:: rst
   action:: accept
 }
 """
@@ -530,8 +568,37 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertTrue(entries[0]['match']['tcp-flags']['ack'])
         self.assertNotIn('tcp-established', entries[0]['match'])
 
+    def testEstablishedTcpRendersTcpEstablished(self):
+        entries = self._entries(HEADER_INET, TERM_EST_TCP)
+        self.assertIn('tcp-established', entries[0]['match'])
+
+    def testEstablishedTcpCpmMode(self):
+        entries = self._entries(HEADER_CPM, TERM_EST_TCP)
+        self.assertTrue(entries[0]['match']['tcp-flags']['ack'])
+
+    def testEstablishedNonTcpIgnored(self):
+        entries = self._entries(HEADER_INET, TERM_EST_UDP)
+        self.assertNotIn('tcp-established', entries[0]['match'])
+        self.assertNotIn('tcp-flags', entries[0]['match'])
+
     def testFragment(self):
         entries = self._entries(HEADER_INET, TERM_FRAGMENT)
+        self.assertEqual(entries[0]['match']['fragment'], 'true')
+
+    def testIsFragment(self):
+        entries = self._entries(HEADER_INET6, TERM_IS_FRAGMENT)
+        self.assertEqual(entries[0]['match']['fragment'], 'true')
+
+    def testFirstFragment(self):
+        entries = self._entries(HEADER_INET, TERM_FIRST_FRAGMENT)
+        self.assertEqual(entries[0]['match']['fragment'], 'first-only')
+
+    def testFirstFragmentInet6(self):
+        entries = self._entries(HEADER_INET6, TERM_FIRST_FRAGMENT)
+        self.assertEqual(entries[0]['match']['fragment'], 'first-only')
+
+    def testFragmentCpmMode(self):
+        entries = self._entries(HEADER_CPM, TERM_FRAGMENT)
         self.assertEqual(entries[0]['match']['fragment'], 'true')
 
     # -----------------------------------------------------------------------
@@ -602,6 +669,16 @@ class NokiaSROSTest(absltest.TestCase):
     def testTcpEstablishedWithNonTcpError(self):
         acl = policy.ParsePolicy(HEADER_INET + BAD_TERM_TCP_EST, self.naming)
         with self.assertRaises(nokiasros.TcpEstablishedWithNonTcpError):
+            _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def testFirstFragmentInCpmError(self):
+        acl = policy.ParsePolicy(HEADER_CPM + TERM_FIRST_FRAGMENT, self.naming)
+        with self.assertRaises(nokiasros.FirstFragmentInCpmError):
+            _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def testUnsupportedOptionError(self):
+        acl = policy.ParsePolicy(HEADER_INET + BAD_TERM_UNSUPPORTED_OPTION, self.naming)
+        with self.assertRaises(aclgenerator.UnsupportedFilterError):
             _ = nokiasros.NokiaSROS(acl, EXP_INFO)
 
 
