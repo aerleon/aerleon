@@ -460,9 +460,7 @@ class NokiaSROSTest(absltest.TestCase):
 
     def testEntryIdOverflowCpm(self):
         # CPM entry-id max is 131072: the 132nd term would start at 132000.
-        terms = ''.join(
-            f'term t{i} {{\n  action:: accept\n}}\n' for i in range(132)
-        )
+        terms = ''.join(f'term t{i} {{\n  action:: accept\n}}\n' for i in range(132))        )
         acl = policy.ParsePolicy(HEADER_CPM + terms, self.naming)
         with self.assertRaises(nokiasros.EntryIdOverflowError):
             _ = nokiasros.NokiaSROS(acl, EXP_INFO)
@@ -605,9 +603,7 @@ class NokiaSROSTest(absltest.TestCase):
         v6 = output[1]['ipv6-filter']
         self.assertEqual(v4['nokia-conf:filter-name'], 'my-filter')
         self.assertEqual(v6['nokia-conf:filter-name'], 'my-filter')
-        self.assertEqual(
-            v4['nokia-conf:entry'][0]['match']['src-ip'], {'address': '10.2.3.4/32'}
-        )
+        self.assertEqual(v4['nokia-conf:entry'][0]['match']['src-ip'], {'address': '10.2.3.4/32'})
         self.assertEqual(
             v6['nokia-conf:entry'][0]['match']['src-ip'],
             {'address': '2001:4860:8000::5/128'},
