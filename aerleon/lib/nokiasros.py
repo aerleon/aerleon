@@ -52,6 +52,8 @@ import copy
 import json
 from typing import Any
 
+from absl import logging
+
 from aerleon.lib import aclgenerator
 from aerleon.lib import policy as policy_module
 from aerleon.lib.policy import Term as PolicyTerm
@@ -78,11 +80,13 @@ class SROSTerm(aclgenerator.Term):
         inet_version: str = 'inet',
         syslog_profile: int = 102,
         cpm_mode: bool = False,
+        mixed: bool = False,
     ) -> None:
         super().__init__(term)
         self.inet_version = inet_version
         self.syslog_profile = syslog_profile
         self.cpm_mode = cpm_mode
+        self.mixed = mixed
         self.term.FlattenAll()
 
     def ConvertToEntries(self) -> list[dict[str, Any]]:
@@ -90,8 +94,16 @@ class SROSTerm(aclgenerator.Term):
         action_key = self.ACTION_MAP[self.term.action[0]]
         term_af = self.AF_MAP[self.inet_version]
 
-        saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af) or ['any']
-        daddrs = self.term.GetAddressOfVersion('flattened_daddr', term_af) or ['any']
+        saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
+        if self.term.flattened_saddr and not saddrs:
+            self._LogNoAF('source')
+            return []
+        daddrs = self.term.GetAddressOfVersion('flattened_daddr', term_af)
+        if self.term.flattened_daddr and not daddrs:
+            self._LogNoAF('destination')
+            return []
+        saddrs = saddrs or ['any']
+        daddrs = daddrs or ['any']
         sports = self.term.source_port or [(0, 0)]
         dports = self.term.destination_port or [(0, 0)]
         protos = self.term.protocol or [None]
@@ -150,6 +162,14 @@ class SROSTerm(aclgenerator.Term):
                                         entry['log'] = self.syslog_profile
                                     entries.append(entry)
         return entries
+
+    def _LogNoAF(self, direction: str) -> None:
+        if not self.mixed:
+            logging.warning(
+                self.NO_AF_LOG_ADDR.substitute(
+                    term=self.term.name, direction=direction, af=self.inet_version
+                )
+            )
 
     def _BuildMatch(
         self,
@@ -290,7 +310,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
             base_id = term_idx * 10000
             entry_offset = 0
             for af in afs:
-                t = SROSTerm(term, af, syslog_profile)
+                t = SROSTerm(term, af, syslog_profile, mixed=address_family == 'mixed')
                 for entry in t.ConvertToEntries():
                     self.total_rule_count += 1
                     entry['entry-id'] = base_id + entry_offset

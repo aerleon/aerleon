@@ -123,6 +123,20 @@ term term-daddr {
 }
 """
 
+TERM_SADDR_V4_ONLY = """
+term term-saddr-v4 {
+  source-address:: V4_ONLY
+  action:: accept
+}
+"""
+
+TERM_DADDR_V4_ONLY = """
+term term-daddr-v4 {
+  destination-address:: V4_ONLY
+  action:: accept
+}
+"""
+
 TERM_SPORT = """
 term term-sport {
   protocol:: tcp
@@ -245,6 +259,7 @@ class NokiaSROSTest(absltest.TestCase):
         super().setUp()
         self.naming = naming.Naming()
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('V4_ONLY = 10.2.3.4/32', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         self.naming._ParseLine('BGP = 179/tcp', 'services')
         self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp 1024-65535/udp', 'services')
@@ -366,6 +381,20 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['src-ip'], {'address': '2001:4860:8000::5/128'})
         print(acl)
+
+    def testInet6SaddrNoMatchingAFSkipsTerm(self):
+        """inet6 filter skips a term whose source addresses are all IPv4."""
+        self.assertEqual(self._entries(HEADER_INET6, TERM_SADDR_V4_ONLY), [])
+
+    def testInet6DaddrNoMatchingAFSkipsTerm(self):
+        """inet6 filter skips a term whose destination addresses are all IPv4."""
+        self.assertEqual(self._entries(HEADER_INET6, TERM_DADDR_V4_ONLY), [])
+
+    def testMixedSaddrSingleAF(self):
+        """Mixed filter only renders the AF the term's addresses belong to."""
+        entries = self._entries(HEADER_MIXED, TERM_SADDR_V4_ONLY)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]['match']['src-ip'], {'address': '10.2.3.4/32'})
 
     @capture.stdout
     def testMixedFilter(self):
