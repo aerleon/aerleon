@@ -305,8 +305,14 @@ class NokiaSROSTest(absltest.TestCase):
     def _make_acl(self, header, term):
         return nokiasros.NokiaSROS(policy.ParsePolicy(header + term, self.naming), EXP_INFO)
 
+    def _filter(self, acl):
+        """Return the body of the single filter in the output list."""
+        output = json.loads(str(acl))
+        self.assertEqual(len(output), 1)
+        return next(iter(output[0].values()))
+
     def _entries(self, header, term):
-        return json.loads(str(self._make_acl(header, term)))['nokia-conf:entry']
+        return self._filter(self._make_acl(header, term))['nokia-conf:entry']
 
     # -----------------------------------------------------------------------
     # Filter-level structure
@@ -315,7 +321,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testInetFilter(self):
         acl = self._make_acl(HEADER_INET, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertEqual(output['nokia-conf:scope'], 'template')
         self.assertEqual(output['nokia-conf:default-action'], 'drop')
         self.assertEqual(output['nokia-conf:filter-name'], 'my-filter')
@@ -323,25 +329,40 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertNotIn('nokia-conf:type', output)
         print(acl)
 
-    @capture.stdout
-    def testInetFilterNumericId(self):
-        acl = self._make_acl(HEADER_INET_ID, TERM_DENY)
-        output = json.loads(str(acl))
-        self.assertEqual(output['nokia-conf:filter-id'], 100)
-        self.assertNotIn('nokia-conf:filter-name', output)
-        print(acl)
+    def testInetFilterNumericName(self):
+        """A numeric filter name is still a filter-name, never a filter-id."""
+        output = self._filter(self._make_acl(HEADER_INET_ID, TERM_DENY))
+        self.assertEqual(output['nokia-conf:filter-name'], '100')
+        self.assertNotIn('nokia-conf:filter-id', output)
+
+    def testOutputIsAlwaysList(self):
+        output = json.loads(str(self._make_acl(HEADER_INET, TERM_DENY)))
+        self.assertIsInstance(output, list)
+        self.assertEqual(list(output[0]), ['ip-filter'])
+
+    def testFilterTypeKeys(self):
+        cases = [
+            (HEADER_INET, 'ip-filter'),
+            (HEADER_INET6, 'ipv6-filter'),
+            (HEADER_CPM, 'cpm-ip-filter'),
+            (HEADER_CPM_INET6, 'cpm-ipv6-filter'),
+        ]
+        for header, key in cases:
+            with self.subTest(key=key):
+                output = json.loads(str(self._make_acl(header, TERM_DENY)))
+                self.assertEqual(list(output[0]), [key])
 
     @capture.stdout
     def testDefaultActionAccept(self):
         acl = self._make_acl(HEADER_ACCEPT, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertEqual(output['nokia-conf:default-action'], 'accept')
         print(acl)
 
     @capture.stdout
     def testPktlenfilter(self):
         acl = self._make_acl(HEADER_PKTLEN, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertEqual(output['nokia-conf:scope'], 'template')
         self.assertEqual(output['nokia-conf:type'], 'packet-length')
         print(acl)
@@ -349,7 +370,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testCpmFilter(self):
         acl = self._make_acl(HEADER_CPM, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertEqual(output['nokia-conf:admin-state'], 'enable')
         self.assertNotIn('nokia-conf:scope', output)
         self.assertNotIn('nokia-conf:default-action', output)
@@ -357,17 +378,17 @@ class NokiaSROSTest(absltest.TestCase):
 
     def testFilterDescriptionFromComment(self):
         acl = self._make_acl(HEADER_INET_COMMENT, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertEqual(output['nokia-conf:description'], 'my filter description')
 
     def testFilterNoDescriptionWithoutComment(self):
         acl = self._make_acl(HEADER_INET, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertNotIn('nokia-conf:description', output)
 
     def testCpmFilterDescriptionFromComment(self):
         acl = self._make_acl(HEADER_CPM_COMMENT, TERM_DENY)
-        output = json.loads(str(acl))
+        output = self._filter(acl)
         self.assertNotIn('nokia-conf:description', output)
         entries = output['nokia-conf:entry']
         self.assertEqual(entries[0]['description'], 'my cpm description | term-deny')
@@ -423,7 +444,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testInetSaddr(self):
         acl = self._make_acl(HEADER_INET, TERM_SADDR)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['src-ip'], {'address': '10.2.3.4/32'})
         print(acl)
@@ -431,7 +452,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testInetDaddr(self):
         acl = self._make_acl(HEADER_INET, TERM_DADDR)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['dst-ip'], {'address': '10.2.3.4/32'})
         print(acl)
@@ -440,7 +461,7 @@ class NokiaSROSTest(absltest.TestCase):
     def testInet6Saddr(self):
         """inet6 filter selects only IPv6 addresses."""
         acl = self._make_acl(HEADER_INET6, TERM_SADDR)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['src-ip'], {'address': '2001:4860:8000::5/128'})
         print(acl)
@@ -454,20 +475,33 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertEqual(self._entries(HEADER_INET6, TERM_DADDR_V4_ONLY), [])
 
     def testMixedSaddrSingleAF(self):
-        """Mixed filter only renders the AF the term's addresses belong to."""
-        entries = self._entries(HEADER_MIXED, TERM_SADDR_V4_ONLY)
-        self.assertEqual(len(entries), 1)
-        self.assertEqual(entries[0]['match']['src-ip'], {'address': '10.2.3.4/32'})
+        """Mixed filter only renders the term in the AF its addresses belong to."""
+        output = json.loads(str(self._make_acl(HEADER_MIXED, TERM_SADDR_V4_ONLY)))
+        v4 = output[0]['ip-filter']['nokia-conf:entry']
+        v6 = output[1]['ipv6-filter']['nokia-conf:entry']
+        self.assertEqual(len(v4), 1)
+        self.assertEqual(v4[0]['match']['src-ip'], {'address': '10.2.3.4/32'})
+        self.assertEqual(v6, [])
 
     @capture.stdout
     def testMixedFilter(self):
-        """Mixed filter produces one entry for each address family."""
+        """Mixed filter produces a separate ip-filter and ipv6-filter."""
         acl = self._make_acl(HEADER_MIXED, TERM_SADDR)
-        entries = json.loads(str(acl))['nokia-conf:entry']
-        self.assertEqual(len(entries), 2)
-        addrs = {e['match']['src-ip']['address'] for e in entries}
-        self.assertIn('10.2.3.4/32', addrs)
-        self.assertIn('2001:4860:8000::5/128', addrs)
+        output = json.loads(str(acl))
+        self.assertEqual([list(f) for f in output], [['ip-filter'], ['ipv6-filter']])
+        v4 = output[0]['ip-filter']
+        v6 = output[1]['ipv6-filter']
+        self.assertEqual(v4['nokia-conf:filter-name'], 'my-filter')
+        self.assertEqual(v6['nokia-conf:filter-name'], 'my-filter')
+        self.assertEqual(
+            v4['nokia-conf:entry'][0]['match']['src-ip'], {'address': '10.2.3.4/32'}
+        )
+        self.assertEqual(
+            v6['nokia-conf:entry'][0]['match']['src-ip'],
+            {'address': '2001:4860:8000::5/128'},
+        )
+        self.assertEqual(v4['nokia-conf:entry'][0]['entry-id'], 1000)
+        self.assertEqual(v6['nokia-conf:entry'][0]['entry-id'], 1000)
         print(acl)
 
     # -----------------------------------------------------------------------
@@ -477,7 +511,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testSport(self):
         acl = self._make_acl(HEADER_INET, TERM_SPORT)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['src-port'], {'eq': 53})
         print(acl)
@@ -485,7 +519,7 @@ class NokiaSROSTest(absltest.TestCase):
     @capture.stdout
     def testDport(self):
         acl = self._make_acl(HEADER_INET, TERM_DPORT)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries[0]['match']['dst-port'], {'eq': 53})
         print(acl)
@@ -533,7 +567,7 @@ class NokiaSROSTest(absltest.TestCase):
     def testIcmp(self):
         """ICMPv4 type names resolve to correct numeric codes."""
         acl = self._make_acl(HEADER_INET, TERM_ICMP)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         types = {e['match']['icmp']['type'] for e in entries}
         self.assertEqual(types, {8, 0})  # echo-request=8, echo-reply=0
         print(acl)
@@ -542,7 +576,7 @@ class NokiaSROSTest(absltest.TestCase):
     def testIcmpV6(self):
         """ICMPv6 type names resolve to correct numeric codes."""
         acl = self._make_acl(HEADER_INET6, TERM_ICMPV6)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         types = {e['match']['icmp']['type'] for e in entries}
         self.assertEqual(types, {135, 136})  # neighbor-solicit=135, neighbor-advertisement=136
         print(acl)
@@ -559,7 +593,7 @@ class NokiaSROSTest(absltest.TestCase):
     def testTtlInet(self):
         """ttl renders as 'ttl' key for IPv4."""
         acl = self._make_acl(HEADER_INET, TERM_TTL)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(entries[0]['match']['ttl'], {'lt': 5})
         self.assertNotIn('hop-limit', entries[0]['match'])
         print(acl)
@@ -568,7 +602,7 @@ class NokiaSROSTest(absltest.TestCase):
     def testTtlInet6(self):
         """ttl renders as 'hop-limit' key for IPv6."""
         acl = self._make_acl(HEADER_INET6, TERM_TTL)
-        entries = json.loads(str(acl))['nokia-conf:entry']
+        entries = self._filter(acl)['nokia-conf:entry']
         self.assertEqual(entries[0]['match']['hop-limit'], {'lt': 5})
         self.assertNotIn('ttl', entries[0]['match'])
         print(acl)
@@ -685,7 +719,7 @@ class NokiaSROSTest(absltest.TestCase):
         acl = nokiasros.NokiaSROS(policy.ParsePolicy(pol_str, self.naming), EXP_INFO)
         output = json.loads(str(acl))
         self.assertIsInstance(output, list)
-        self.assertEqual(len(output), 2)
+        self.assertEqual([list(f) for f in output], [['ip-filter'], ['ipv6-filter']])
 
     # -----------------------------------------------------------------------
     # Error cases

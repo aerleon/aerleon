@@ -1,15 +1,19 @@
-{
-    "nokia-conf:admin-state": "enable",
-    "nokia-conf:entry": [
-        {
-            "description": "term-deny",
-            "action": {
-                "drop": [
-                    null
-                ]
-            },
-            "entry-id": 1000
+[
+    {
+        "cpm-ip-filter": {
+            "nokia-conf:admin-state": "enable",
+            "nokia-conf:entry": [
+                {
+                    "description": "term-deny",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "entry-id": 1000
+                }
+            ]
         }
-    ]
-}
+    }
+]
 

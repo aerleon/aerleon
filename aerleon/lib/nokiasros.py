@@ -18,20 +18,18 @@ Generates ACL filters for Nokia SROS devices in the YANG JSON format
 used by the nokia-conf model.
 
 Target syntax:
-  target:: nokiasros <filter-id-or-name> [inet|inet6|mixed] [accept|drop] [syslog-profile <N>]
+  target:: nokiasros <filter-name> [inet|inet6|mixed] [accept|drop] [syslog-profile <N>]
   target:: nokiasros <any-name> cpm [inet|inet6] [syslog-profile <N>]
 
 Filter options (ip-filter mode):
   inet             - generate IPv4 filter (default)
   inet6            - generate IPv6 filter
-  mixed            - generate entries for both IPv4 and IPv6
+  mixed            - generate an IPv4 and an IPv6 filter with the same name
   accept           - set default-action to accept (default: drop)
   drop             - set default-action to drop
   pktlenfilter     - set filter type to packet-length
 
   syslog-profile N - syslog profile ID for log entries (default: 102)
-  (filter name may be numeric → nokia-conf:filter-id, or string →
-   nokia-conf:filter-name)
 
 Filter options (cpm mode):
   cpm              - render as a CPM filter (nokia-conf:admin-state wrapper)
@@ -46,6 +44,9 @@ tcp-flags {ack: true} instead of the ip-filter tcp-established leaf.
 CPM filter comments: the CPM YANG model has no top-level description leaf, so
 a header comment is prepended to the first entry's description field as
 "<comment> | <term-description>".
+
+Output is always a JSON list with one item per filter, keyed by its type:
+ip-filter, ipv6-filter, cpm-ip-filter or cpm-ipv6-filter.
 """
 
 import copy
@@ -266,6 +267,8 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     _ENTRY_ID_BLOCK = 1000
     _IP_FILTER_MAX_ENTRY_ID = 2097151
     _CPM_FILTER_MAX_ENTRY_ID = 131072
+    _IP_FILTER_KEY = {'inet': 'ip-filter', 'inet6': 'ipv6-filter'}
+    _CPM_FILTER_KEY = {'inet': 'cpm-ip-filter', 'inet6': 'cpm-ipv6-filter'}
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
@@ -305,13 +308,6 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         terms: list[Any],
         comment: str | None = None,
     ) -> None:
-        try:
-            filter_key: str = 'nokia-conf:filter-id'
-            filter_value: int | str = int(filter_name)
-        except ValueError:
-            filter_key = 'nokia-conf:filter-name'
-            filter_value = filter_name
-
         address_family = 'inet'
         for af in self._SUPPORTED_AF:
             if af in filter_options:
@@ -330,24 +326,24 @@ class NokiaSROS(aclgenerator.ACLGenerator):
 
         syslog_profile = self._parse_common_options(filter_options)
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
-        term_entries = []
-        for term in terms:
-            per_term: list[dict[str, Any]] = []
-            for af in afs:
-                t = SROSTerm(term, af, syslog_profile, mixed=address_family == 'mixed')
-                per_term.extend(t.ConvertToEntries())
-            term_entries.append(per_term)
-        entries = self._NumberEntries(term_entries, self._IP_FILTER_MAX_ENTRY_ID)
+        for af in afs:
+            term_entries = [
+                SROSTerm(
+                    term, af, syslog_profile, mixed=address_family == 'mixed'
+                ).ConvertToEntries()
+                for term in terms
+            ]
+            entries = self._NumberEntries(term_entries, self._IP_FILTER_MAX_ENTRY_ID)
 
-        filter_dict: dict[str, Any] = {'nokia-conf:scope': 'template'}
-        if packet_length:
-            filter_dict['nokia-conf:type'] = 'packet-length'
-        if comment:
-            filter_dict['nokia-conf:description'] = comment
-        filter_dict['nokia-conf:default-action'] = default_action
-        filter_dict[filter_key] = filter_value
-        filter_dict['nokia-conf:entry'] = entries
-        self.ip_filters.append(filter_dict)
+            filter_dict: dict[str, Any] = {'nokia-conf:scope': 'template'}
+            if packet_length:
+                filter_dict['nokia-conf:type'] = 'packet-length'
+            if comment:
+                filter_dict['nokia-conf:description'] = comment
+            filter_dict['nokia-conf:default-action'] = default_action
+            filter_dict['nokia-conf:filter-name'] = filter_name
+            filter_dict['nokia-conf:entry'] = entries
+            self.ip_filters.append({self._IP_FILTER_KEY[af]: filter_dict})
 
     def _TranslateCPMFilter(
         self,
@@ -373,7 +369,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
 
         cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
         cpm_dict['nokia-conf:entry'] = entries
-        self.ip_filters.append(cpm_dict)
+        self.ip_filters.append({self._CPM_FILTER_KEY[address_family]: cpm_dict})
 
     def _NumberEntries(
         self, term_entries: list[list[dict[str, Any]]], max_entry_id: int
@@ -413,5 +409,4 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         return syslog_profile
 
     def __str__(self) -> str:
-        output = self.ip_filters[0] if len(self.ip_filters) == 1 else self.ip_filters
-        return json.dumps(output, indent=4) + '\n'
+        return json.dumps(self.ip_filters, indent=4) + '\n'

@@ -1,23 +1,27 @@
-{
-    "nokia-conf:scope": "template",
-    "nokia-conf:default-action": "drop",
-    "nokia-conf:filter-name": "my-filter",
-    "nokia-conf:entry": [
-        {
-            "description": "term-dport",
-            "action": {
-                "accept": [
-                    null
-                ]
-            },
-            "match": {
-                "dst-port": {
-                    "eq": 53
-                },
-                "protocol": "tcp"
-            },
-            "entry-id": 1000
+[
+    {
+        "ip-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:default-action": "drop",
+            "nokia-conf:filter-name": "my-filter",
+            "nokia-conf:entry": [
+                {
+                    "description": "term-dport",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-port": {
+                            "eq": 53
+                        },
+                        "protocol": "tcp"
+                    },
+                    "entry-id": 1000
+                }
+            ]
         }
-    ]
-}
+    }
+]
 

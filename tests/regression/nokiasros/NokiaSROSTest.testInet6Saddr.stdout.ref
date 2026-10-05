@@ -1,22 +1,26 @@
-{
-    "nokia-conf:scope": "template",
-    "nokia-conf:default-action": "drop",
-    "nokia-conf:filter-name": "my-filter",
-    "nokia-conf:entry": [
-        {
-            "description": "term-saddr",
-            "action": {
-                "accept": [
-                    null
-                ]
-            },
-            "match": {
-                "src-ip": {
-                    "address": "2001:4860:8000::5/128"
+[
+    {
+        "ipv6-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:default-action": "drop",
+            "nokia-conf:filter-name": "my-filter",
+            "nokia-conf:entry": [
+                {
+                    "description": "term-saddr",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "2001:4860:8000::5/128"
+                        }
+                    },
+                    "entry-id": 1000
                 }
-            },
-            "entry-id": 1000
+            ]
         }
-    ]
-}
+    }
+]
 

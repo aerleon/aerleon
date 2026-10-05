@@ -1,38 +1,42 @@
-{
-    "nokia-conf:scope": "template",
-    "nokia-conf:default-action": "drop",
-    "nokia-conf:filter-name": "my-filter",
-    "nokia-conf:entry": [
-        {
-            "description": "term-icmp",
-            "action": {
-                "accept": [
-                    null
-                ]
-            },
-            "match": {
-                "protocol": "icmp",
-                "icmp": {
-                    "type": 8
+[
+    {
+        "ip-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:default-action": "drop",
+            "nokia-conf:filter-name": "my-filter",
+            "nokia-conf:entry": [
+                {
+                    "description": "term-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 8
+                        }
+                    },
+                    "entry-id": 1000
+                },
+                {
+                    "description": "term-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 0
+                        }
+                    },
+                    "entry-id": 1001
                 }
-            },
-            "entry-id": 1000
-        },
-        {
-            "description": "term-icmp",
-            "action": {
-                "accept": [
-                    null
-                ]
-            },
-            "match": {
-                "protocol": "icmp",
-                "icmp": {
-                    "type": 0
-                }
-            },
-            "entry-id": 1001
+            ]
         }
-    ]
-}
+    }
+]
 
