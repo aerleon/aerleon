@@ -71,6 +71,10 @@ class FirstFragmentInCpmError(Error):
     pass
 
 
+class EntryIdOverflowError(Error):
+    pass
+
+
 class SROSTerm(aclgenerator.Term):
     """Converts a policy term into SROS filter entry dicts."""
 
@@ -259,6 +263,9 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     _PLATFORM = 'nokiasros'
     SUFFIX = '.sros_acl'
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
+    _ENTRY_ID_BLOCK = 1000
+    _IP_FILTER_MAX_ENTRY_ID = 2097151
+    _CPM_FILTER_MAX_ENTRY_ID = 131072
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
@@ -323,17 +330,14 @@ class NokiaSROS(aclgenerator.ACLGenerator):
 
         syslog_profile = self._parse_common_options(filter_options)
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
-        entries: list[dict[str, Any]] = []
-        for term_idx, term in enumerate(terms, start=1):
-            base_id = term_idx * 10000
-            entry_offset = 0
+        term_entries = []
+        for term in terms:
+            per_term: list[dict[str, Any]] = []
             for af in afs:
                 t = SROSTerm(term, af, syslog_profile, mixed=address_family == 'mixed')
-                for entry in t.ConvertToEntries():
-                    self.total_rule_count += 1
-                    entry['entry-id'] = base_id + entry_offset
-                    entry_offset += 1
-                    entries.append(entry)
+                per_term.extend(t.ConvertToEntries())
+            term_entries.append(per_term)
+        entries = self._NumberEntries(term_entries, self._IP_FILTER_MAX_ENTRY_ID)
 
         filter_dict: dict[str, Any] = {'nokia-conf:scope': 'template'}
         if packet_length:
@@ -358,16 +362,11 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 filter_options.remove(af)
 
         syslog_profile = self._parse_common_options(filter_options)
-        entries: list[dict[str, Any]] = []
-        for term_idx, term in enumerate(terms, start=1):
-            base_id = term_idx * 10000
-            entry_offset = 0
-            t = SROSTerm(term, address_family, syslog_profile, cpm_mode=True)
-            for entry in t.ConvertToEntries():
-                self.total_rule_count += 1
-                entry['entry-id'] = base_id + entry_offset
-                entry_offset += 1
-                entries.append(entry)
+        term_entries = [
+            SROSTerm(term, address_family, syslog_profile, cpm_mode=True).ConvertToEntries()
+            for term in terms
+        ]
+        entries = self._NumberEntries(term_entries, self._CPM_FILTER_MAX_ENTRY_ID)
 
         if comment and entries:
             entries[0]['description'] = f"{comment} | {entries[0]['description']}"
@@ -375,6 +374,30 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         cpm_dict: dict[str, Any] = {'nokia-conf:admin-state': 'enable'}
         cpm_dict['nokia-conf:entry'] = entries
         self.ip_filters.append(cpm_dict)
+
+    def _NumberEntries(
+        self, term_entries: list[list[dict[str, Any]]], max_entry_id: int
+    ) -> list[dict[str, Any]]:
+        """Assign entry-ids in fixed per-term blocks."""
+        block = self._ENTRY_ID_BLOCK
+        entries = []
+        for term_idx, per_term in enumerate(term_entries, start=1):
+            if len(per_term) > block:
+                raise EntryIdOverflowError(
+                    f'term {term_idx} expands to {len(per_term)} entries,'
+                    f' more than the {block} allowed per term'
+                )
+            for offset, entry in enumerate(per_term):
+                entry_id = term_idx * block + offset
+                if entry_id > max_entry_id:
+                    raise EntryIdOverflowError(
+                        f'entry-id {entry_id} exceeds the maximum of {max_entry_id}'
+                        f' ({len(term_entries)} terms)'
+                    )
+                entry['entry-id'] = entry_id
+                entries.append(entry)
+        self.total_rule_count += len(entries)
+        return entries
 
     def _parse_common_options(self, filter_options: list[str]) -> int:
         """Extract syslog-profile from remaining options."""

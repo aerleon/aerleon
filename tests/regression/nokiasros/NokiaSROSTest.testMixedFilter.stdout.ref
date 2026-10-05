@@ -15,7 +15,7 @@
                     "address": "10.2.3.4/32"
                 }
             },
-            "entry-id": 10000
+            "entry-id": 1000
         },
         {
             "description": "term-saddr",
@@ -29,7 +29,7 @@
                     "address": "2001:4860:8000::5/128"
                 }
             },
-            "entry-id": 10001
+            "entry-id": 1001
         }
     ]
 }

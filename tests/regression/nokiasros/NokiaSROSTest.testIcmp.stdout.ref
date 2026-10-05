@@ -16,7 +16,7 @@
                     "type": 8
                 }
             },
-            "entry-id": 10000
+            "entry-id": 1000
         },
         {
             "description": "term-icmp",
@@ -31,7 +31,7 @@
                     "type": 0
                 }
             },
-            "entry-id": 10001
+            "entry-id": 1001
         }
     ]
 }

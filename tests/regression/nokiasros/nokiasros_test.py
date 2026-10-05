@@ -378,18 +378,43 @@ class NokiaSROSTest(absltest.TestCase):
 
     def testEntryIdFirstTerm(self):
         entries = self._entries(HEADER_INET, TERM_DENY)
-        self.assertEqual(entries[0]['entry-id'], 10000)
+        self.assertEqual(entries[0]['entry-id'], 1000)
 
     def testEntryIdSecondTerm(self):
         entries = self._entries(HEADER_INET, TERM_DENY + TERM_LOGGING)
-        self.assertEqual(entries[0]['entry-id'], 10000)
-        self.assertEqual(entries[1]['entry-id'], 20000)
+        self.assertEqual(entries[0]['entry-id'], 1000)
+        self.assertEqual(entries[1]['entry-id'], 2000)
 
     def testEntryIdMultipleEntriesPerTerm(self):
         # ICMP with two types → two entries, both within term 1's block.
         entries = self._entries(HEADER_INET, TERM_ICMP)
-        self.assertEqual(entries[0]['entry-id'], 10000)
-        self.assertEqual(entries[1]['entry-id'], 10001)
+        self.assertEqual(entries[0]['entry-id'], 1000)
+        self.assertEqual(entries[1]['entry-id'], 1001)
+
+    def testEntryIdSkippedTermKeepsSlot(self):
+        entries = self._entries(HEADER_INET6, TERM_SADDR_V4_ONLY + TERM_DENY)
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]['entry-id'], 2000)
+
+    def testEntryIdTermTooLarge(self):
+        # 1001 source prefixes in one term overflows its 1000-entry block.
+        self.naming._ParseLine(
+            'BIG_NETS = ' + ' '.join(f'10.{i // 250}.{i % 250}.1/32' for i in range(1001)),
+            'networks',
+        )
+        term = 'term big {\n  source-address:: BIG_NETS\n  action:: accept\n}\n'
+        acl = policy.ParsePolicy(HEADER_INET + term, self.naming)
+        with self.assertRaises(nokiasros.EntryIdOverflowError):
+            _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def testEntryIdOverflowCpm(self):
+        # CPM entry-id max is 131072: the 132nd term would start at 132000.
+        terms = ''.join(
+            f'term t{i} {{\n  action:: accept\n}}\n' for i in range(132)
+        )
+        acl = policy.ParsePolicy(HEADER_CPM + terms, self.naming)
+        with self.assertRaises(nokiasros.EntryIdOverflowError):
+            _ = nokiasros.NokiaSROS(acl, EXP_INFO)
 
     # -----------------------------------------------------------------------
     # Match: addresses

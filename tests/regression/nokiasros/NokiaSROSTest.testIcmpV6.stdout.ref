@@ -16,7 +16,7 @@
                     "type": 135
                 }
             },
-            "entry-id": 10000
+            "entry-id": 1000
         },
         {
             "description": "term-icmpv6",
@@ -31,7 +31,7 @@
                     "type": 136
                 }
             },
-            "entry-id": 10001
+            "entry-id": 1001
         }
     ]
 }
