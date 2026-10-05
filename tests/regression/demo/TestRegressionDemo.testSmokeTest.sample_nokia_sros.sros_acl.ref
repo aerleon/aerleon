@@ -1,0 +1,671 @@
+[
+    {
+        "ip-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:description": "Edge ingress filter: drops bogons, allows replies to internal hosts and DNS, then permits the rest. mixed renders a separate ip-filter and ipv6-filter named edge-in.",
+            "nokia-conf:default-action": "accept",
+            "nokia-conf:filter-name": "edge-in",
+            "nokia-conf:entry": [
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "0.0.0.0/8"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1000
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "192.0.0.0/24"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1001
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "192.0.2.0/24"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1002
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "198.18.0.0/15"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1003
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "198.51.100.0/24"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1004
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "203.0.113.0/24"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1005
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "224.0.0.0/4"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1006
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "240.0.0.0/4"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1007
+                },
+                {
+                    "description": "Allow name resolution using honestdns.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "8.8.4.4/32"
+                        },
+                        "dst-port": {
+                            "eq": 53
+                        },
+                        "protocol": "udp"
+                    },
+                    "entry-id": 2000
+                },
+                {
+                    "description": "Allow name resolution using honestdns.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "8.8.8.8/32"
+                        },
+                        "dst-port": {
+                            "eq": 53
+                        },
+                        "protocol": "udp"
+                    },
+                    "entry-id": 2001
+                },
+                {
+                    "description": "Allow tcp replies to internal hosts (IPv4 only).",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "10.0.0.0/8"
+                        },
+                        "protocol": "tcp",
+                        "tcp-established": [
+                            null
+                        ]
+                    },
+                    "entry-id": 3000
+                },
+                {
+                    "description": "Allow tcp replies to internal hosts (IPv4 only).",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "172.16.0.0/12"
+                        },
+                        "protocol": "tcp",
+                        "tcp-established": [
+                            null
+                        ]
+                    },
+                    "entry-id": 3001
+                },
+                {
+                    "description": "Allow tcp replies to internal hosts (IPv4 only).",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "192.168.0.0/16"
+                        },
+                        "protocol": "tcp",
+                        "tcp-established": [
+                            null
+                        ]
+                    },
+                    "entry-id": 3002
+                },
+                {
+                    "description": "Deny access to specified public servers.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "200.1.1.1/32"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 4000
+                },
+                {
+                    "description": "Deny access to specified public servers.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "200.1.1.2/32"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 4001
+                },
+                {
+                    "description": "Deny access to specified public servers.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "200.1.1.4/32"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 4002
+                },
+                {
+                    "description": "Deny access to specified public servers.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "200.1.1.5/32"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 4003
+                },
+                {
+                    "description": "Drop fragmented packets.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "fragment": "true"
+                    },
+                    "entry-id": 5000
+                }
+            ]
+        }
+    },
+    {
+        "ipv6-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:description": "Edge ingress filter: drops bogons, allows replies to internal hosts and DNS, then permits the rest. mixed renders a separate ip-filter and ipv6-filter named edge-in.",
+            "nokia-conf:default-action": "accept",
+            "nokia-conf:filter-name": "edge-in",
+            "nokia-conf:entry": [
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "2001:db8::/32"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1000
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "3ffe::/16"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1001
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "5f00::/8"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1002
+                },
+                {
+                    "description": "Drop traffic sourced from bogon space.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "ff00::/8"
+                        }
+                    },
+                    "log": 102,
+                    "entry-id": 1003
+                },
+                {
+                    "description": "Allow name resolution using honestdns.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "2001:4860:4860::8844/128"
+                        },
+                        "dst-port": {
+                            "eq": 53
+                        },
+                        "next-header": "udp"
+                    },
+                    "entry-id": 2000
+                },
+                {
+                    "description": "Allow name resolution using honestdns.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "dst-ip": {
+                            "address": "2001:4860:4860::8888/128"
+                        },
+                        "dst-port": {
+                            "eq": 53
+                        },
+                        "next-header": "udp"
+                    },
+                    "entry-id": 2001
+                },
+                {
+                    "description": "Drop fragmented packets.",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "fragment": "true"
+                    },
+                    "entry-id": 5000
+                }
+            ]
+        }
+    },
+    {
+        "cpm-ip-filter": {
+            "nokia-conf:admin-state": "enable",
+            "nokia-conf:entry": [
+                {
+                    "description": "IPv4 CPM filter protecting the control plane. | Allow management SSH from internal networks.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "10.0.0.0/8"
+                        },
+                        "dst-port": {
+                            "eq": 22
+                        },
+                        "protocol": "tcp"
+                    },
+                    "entry-id": 1000
+                },
+                {
+                    "description": "Allow management SSH from internal networks.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "172.16.0.0/12"
+                        },
+                        "dst-port": {
+                            "eq": 22
+                        },
+                        "protocol": "tcp"
+                    },
+                    "entry-id": 1001
+                },
+                {
+                    "description": "Allow management SSH from internal networks.",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "192.168.0.0/16"
+                        },
+                        "dst-port": {
+                            "eq": 22
+                        },
+                        "protocol": "tcp"
+                    },
+                    "entry-id": 1002
+                },
+                {
+                    "description": "accept-ntp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "10.0.0.1/32"
+                        },
+                        "src-port": {
+                            "eq": 123
+                        },
+                        "protocol": "udp"
+                    },
+                    "entry-id": 2000
+                },
+                {
+                    "description": "accept-ntp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "src-ip": {
+                            "address": "10.0.0.2/32"
+                        },
+                        "src-port": {
+                            "eq": 123
+                        },
+                        "protocol": "udp"
+                    },
+                    "entry-id": 2001
+                },
+                {
+                    "description": "accept-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 8
+                        }
+                    },
+                    "entry-id": 3000
+                },
+                {
+                    "description": "accept-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 0
+                        }
+                    },
+                    "entry-id": 3001
+                },
+                {
+                    "description": "accept-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 3
+                        }
+                    },
+                    "entry-id": 3002
+                },
+                {
+                    "description": "accept-icmp",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "protocol": "icmp",
+                        "icmp": {
+                            "type": 11
+                        }
+                    },
+                    "entry-id": 3003
+                },
+                {
+                    "description": "deny-all",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "log": 101,
+                    "entry-id": 4000
+                }
+            ]
+        }
+    },
+    {
+        "cpm-ipv6-filter": {
+            "nokia-conf:admin-state": "enable",
+            "nokia-conf:entry": [
+                {
+                    "description": "IPv6 CPM filter protecting the control plane. | accept-neighbor-discovery",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "next-header": "ipv6-icmp",
+                        "icmp": {
+                            "type": 135
+                        }
+                    },
+                    "entry-id": 1000
+                },
+                {
+                    "description": "accept-neighbor-discovery",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "next-header": "ipv6-icmp",
+                        "icmp": {
+                            "type": 136
+                        }
+                    },
+                    "entry-id": 1001
+                },
+                {
+                    "description": "accept-neighbor-discovery",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "next-header": "ipv6-icmp",
+                        "icmp": {
+                            "type": 133
+                        }
+                    },
+                    "entry-id": 1002
+                },
+                {
+                    "description": "accept-neighbor-discovery",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "next-header": "ipv6-icmp",
+                        "icmp": {
+                            "type": 134
+                        }
+                    },
+                    "entry-id": 1003
+                },
+                {
+                    "description": "accept-tcp-established",
+                    "action": {
+                        "accept": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "next-header": "tcp",
+                        "tcp-flags": {
+                            "ack": true
+                        }
+                    },
+                    "entry-id": 2000
+                },
+                {
+                    "description": "deny-all",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "log": 101,
+                    "entry-id": 3000
+                }
+            ]
+        }
+    }
+]
