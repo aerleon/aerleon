@@ -15,6 +15,7 @@
 """Regression tests for the Nokia SR OS JSON filter generator."""
 
 import json
+from unittest import mock
 
 from absl.testing import absltest
 
@@ -273,6 +274,34 @@ term term-esp {
 }
 """
 
+TERM_PLATFORM_SROS = """
+term term-platform-sros {
+  platform:: nokiasros juniper
+  action:: accept
+}
+"""
+
+TERM_PLATFORM_OTHER = """
+term term-platform-other {
+  platform:: juniper
+  action:: accept
+}
+"""
+
+TERM_PLATFORM_EXCLUDE_OTHER = """
+term term-platform-exclude-other {
+  platform-exclude:: juniper
+  action:: accept
+}
+"""
+
+TERM_PLATFORM_EXCLUDE_SROS = """
+term term-platform-exclude-sros {
+  platform-exclude:: nokiasros
+  action:: accept
+}
+"""
+
 BAD_TERM_TCP_EST = """
 term bad-term-tcp-est {
   protocol:: udp
@@ -298,6 +327,7 @@ class NokiaSROSTest(absltest.TestCase):
         self.naming = naming.Naming()
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('V4_ONLY = 10.2.3.4/32', 'networks')
+        self.naming._ParseLine('V6_ONLY = 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         self.naming._ParseLine('BGP = 179/tcp', 'services')
         self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp 1024-65535/udp', 'services')
@@ -482,6 +512,88 @@ class NokiaSROSTest(absltest.TestCase):
         self.assertEqual(len(v4), 1)
         self.assertEqual(v4[0]['match']['src-ip'], {'address': '10.2.3.4/32'})
         self.assertEqual(v6, [])
+
+    def testAddressFamilyMatrix(self):
+        """Every filter AF against v4-only, v6-only, dual-stack and ICMP terms.
+
+        Each case lists the expected match of every entry, per output filter.
+        """
+        v4 = {'address': '10.2.3.4/32'}
+        v6 = {'address': '2001:4860:8000::5/128'}
+        terms = {
+            'src-v4': 'source-address:: V4_ONLY',
+            'src-v6': 'source-address:: V6_ONLY',
+            'src-both': 'source-address:: CORP_EXTERNAL',
+            'dst-v4': 'destination-address:: V4_ONLY',
+            'dst-v6': 'destination-address:: V6_ONLY',
+            'src-v4-dst-v6': 'source-address:: V4_ONLY\n  destination-address:: V6_ONLY',
+            'icmp': 'protocol:: icmp\n  icmp-type:: echo-request',
+            'icmpv6': 'protocol:: icmpv6\n  icmp-type:: echo-request',
+            'icmp-src-both': 'protocol:: icmp\n  source-address:: CORP_EXTERNAL',
+        }
+        v4_icmp = {'protocol': 'icmp', 'icmp': {'type': 8}}
+        v6_icmp = {'next-header': 'ipv6-icmp', 'icmp': {'type': 128}}
+        expected = {
+            'inet': {
+                'src-v4': {'ip-filter': [{'src-ip': v4}]},
+                'src-v6': {'ip-filter': []},
+                'src-both': {'ip-filter': [{'src-ip': v4}]},
+                'dst-v4': {'ip-filter': [{'dst-ip': v4}]},
+                'dst-v6': {'ip-filter': []},
+                'src-v4-dst-v6': {'ip-filter': []},
+                'icmp': {'ip-filter': [v4_icmp]},
+                'icmpv6': {'ip-filter': []},
+                'icmp-src-both': {'ip-filter': [{'src-ip': v4, 'protocol': 'icmp'}]},
+            },
+            'inet6': {
+                'src-v4': {'ipv6-filter': []},
+                'src-v6': {'ipv6-filter': [{'src-ip': v6}]},
+                'src-both': {'ipv6-filter': [{'src-ip': v6}]},
+                'dst-v4': {'ipv6-filter': []},
+                'dst-v6': {'ipv6-filter': [{'dst-ip': v6}]},
+                'src-v4-dst-v6': {'ipv6-filter': []},
+                'icmp': {'ipv6-filter': []},
+                'icmpv6': {'ipv6-filter': [v6_icmp]},
+                'icmp-src-both': {'ipv6-filter': []},
+            },
+            'mixed': {
+                'src-v4': {'ip-filter': [{'src-ip': v4}], 'ipv6-filter': []},
+                'src-v6': {'ip-filter': [], 'ipv6-filter': [{'src-ip': v6}]},
+                'src-both': {'ip-filter': [{'src-ip': v4}], 'ipv6-filter': [{'src-ip': v6}]},
+                'dst-v4': {'ip-filter': [{'dst-ip': v4}], 'ipv6-filter': []},
+                'dst-v6': {'ip-filter': [], 'ipv6-filter': [{'dst-ip': v6}]},
+                'src-v4-dst-v6': {'ip-filter': [], 'ipv6-filter': []},
+                'icmp': {'ip-filter': [v4_icmp], 'ipv6-filter': []},
+                'icmpv6': {'ip-filter': [], 'ipv6-filter': [v6_icmp]},
+                'icmp-src-both': {
+                    'ip-filter': [{'src-ip': v4, 'protocol': 'icmp'}],
+                    'ipv6-filter': [],
+                },
+            },
+        }
+        for af, cases in expected.items():
+            header = f'header {{\n  target:: nokiasros my-filter {af}\n}}\n'
+            for term_name, want in cases.items():
+                with self.subTest(af=af, term=term_name):
+                    term = (
+                        f'term {term_name} {{\n  {terms[term_name]}\n  action:: accept\n}}\n'
+                    )
+                    output = json.loads(str(self._make_acl(header, term)))
+                    got = {
+                        key: [e.get('match', {}) for e in body['nokia-conf:entry']]
+                        for f in output
+                        for key, body in f.items()
+                    }
+                    self.assertEqual(got, want)
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testNoAFWarningOnlyOutsideMixed(self, mock_warning):
+        self._make_acl(HEADER_INET6, TERM_SADDR_V4_ONLY)
+        self._make_acl(HEADER_INET, TERM_ICMPV6)
+        self.assertEqual(mock_warning.call_count, 2)
+        mock_warning.reset_mock()
+        self._make_acl(HEADER_MIXED, TERM_SADDR_V4_ONLY + TERM_ICMPV6)
+        mock_warning.assert_not_called()
 
     @capture.stdout
     def testMixedFilter(self):
@@ -705,6 +817,22 @@ class NokiaSROSTest(absltest.TestCase):
     # -----------------------------------------------------------------------
     # No-match entry (no match block when term has no match conditions)
     # -----------------------------------------------------------------------
+
+    def testPlatformIncludingSros(self):
+        entries = self._entries(HEADER_INET, TERM_PLATFORM_SROS)
+        self.assertEqual([e['description'] for e in entries], ['term-platform-sros'])
+
+    def testPlatformExcludeOther(self):
+        entries = self._entries(HEADER_INET, TERM_PLATFORM_EXCLUDE_OTHER)
+        self.assertEqual([e['description'] for e in entries], ['term-platform-exclude-other'])
+
+    def testPlatformOtherSkipped(self):
+        entries = self._entries(HEADER_INET, TERM_PLATFORM_OTHER + TERM_DENY)
+        self.assertEqual([e['description'] for e in entries], ['term-deny'])
+
+    def testPlatformExcludeSrosSkipped(self):
+        entries = self._entries(HEADER_INET, TERM_PLATFORM_EXCLUDE_SROS + TERM_DENY)
+        self.assertEqual([e['description'] for e in entries], ['term-deny'])
 
     def testNoMatchBlock(self):
         entries = self._entries(HEADER_INET, TERM_DENY)

@@ -103,6 +103,18 @@ class SROSTerm(aclgenerator.Term):
         action_key = self.ACTION_MAP[self.term.action[0]]
         term_af = self.AF_MAP[self.inet_version]
 
+        protos_of_other_af = {'icmpv6', 'icmp6'} if self.inet_version == 'inet' else {'icmp'}
+        if protos_of_other_af & set(self.term.protocol):
+            if not self.mixed:
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name,
+                        proto=', '.join(self.term.protocol),
+                        af=self.inet_version,
+                    )
+                )
+            return []
+
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
         if self.term.flattened_saddr and not saddrs:
             self._LogNoAF('source')
@@ -272,7 +284,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
-        supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
+        supported_tokens -= {'verbatim'}
         supported_tokens |= {'logging', 'hop_limit', 'icmp_code', 'policer', 'ttl'}
         supported_sub_tokens['action'] = {'accept', 'deny'}
         supported_sub_tokens['option'] = {
