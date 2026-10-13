@@ -1116,6 +1116,109 @@ _source:_ https://www.netfilter.org/projects/nftables/manpage.html
 
 ***
 
+## Nokia EDA
+
+The Nokia EDA generator produces native Nokia Event Driven Automation resources from
+the `filters.eda.nokia.com/v1` API: a `Filter` or a `ControlPlaneFilter` per header.
+The output is multi-document YAML, one document per header, ready to be applied to
+EDA with replace semantics. The output file uses the `.eda.yaml` extension.
+
+### Header Format
+
+The Nokia EDA header designation has the following formats:
+
+```yaml
+targets:
+    nokiaeda: {name} {inet|inet6|mixed} {stats} namespace {ns}
+    nokiaeda: {name} cpm {inet|inet6|mixed} {stats} namespace {ns} {node-selector KEY VALUE}... {node NODE}...
+```
+
+* _name_: the `metadata.name` of the resource. Must be a valid Kubernetes name: lowercase alphanumerics, `-` and `.`.
+* _inet_: render IPv4 entries only. This is the default.
+* _inet6_: render IPv6 entries only.
+* _mixed_: render IPv4 and IPv6 entries in the same resource. Each term is rendered for both address families before the next term.
+* _stats_: enable per-entry statistics (`statisticsPerEntry: true`).
+* _namespace ns_: the EDA namespace of the resource (`metadata.namespace`). Required.
+* _cpm_: render a `ControlPlaneFilter` instead of a `Filter`.
+* _node-selector KEY VALUE_: TopoNode label selector, rendered as `KEY=VALUE` in `nodeSelectors`. Key and value are separate words, as policy files do not accept `=` in a target. `ControlPlaneFilter` only, can be repeated.
+* _node NODE_: TopoNode name, rendered in `nodes`. `ControlPlaneFilter` only, can be repeated.
+
+A `ControlPlaneFilter` needs at least one _node-selector_ or _node_. Any other option
+is an error.
+
+### Term Format
+
+* for common keys see the [common](#common) section above.
+
+* _icmp-code_: Match ICMP codes, together with `icmp-type` (`icmpCodes`).
+* _logging_: Log matching packets (`log: true`). `logging:: disable` turns it off.
+
+`policer` and `counter` are accepted but not rendered. `verbatim` is not supported.
+
+### Sub Tokens
+
+### Actions
+
+* _accept_: rendered as `Accept`.
+* _deny_: rendered as `Drop`.
+
+### Option
+
+* _tcp-established_: Match established TCP sessions (`tcpFlags: ACK|RST`). Sets the protocol to TCP. Can only be used with the `tcp` protocol.
+* _established_: Same as _tcp-established_ with `tcp`. With `udp`, matches destination ports 1024-65535 unless the term sets destination ports. Fails with other protocols or no protocol.
+* _tcp-initial_: Match TCP SYN (`tcpFlags: SYN`).
+* _not-syn-ack_: Match TCP packets without both SYN and ACK (`tcpFlags: '!(SYN&ACK)'`).
+* _fragments_, _is-fragment_: Match fragmented packets (`fragment: true`).
+* _first-fragment_: Match only the first fragment (`firstFragment: true`).
+
+### Output Format
+
+```yaml
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: Filter
+metadata:
+  name: edge-in
+  namespace: eda
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+    aerleon/comment: Edge ingress filter
+spec:
+  statisticsPerEntry: true
+  entries:
+  # Allow name resolution using honestdns.
+  - description: accept-to-honestdns
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 8.8.4.4/32
+      protocolNumber: 17
+      destinationPortOperator: Equals
+      destinationPortNumber: 53
+```
+
+* EDA numbers the entries from their order in the list, so entries have no sequence number.
+* The entry `description` is the term name. Term comments are written as YAML comments above the first entry of the term: they show in the file but are not sent to EDA.
+* Repository tags are in the `aerleon/revision` annotation, header comments in the `aerleon/comment` annotation.
+* Protocols are always rendered as `protocolNumber`, ports as `PortOperator: Equals` with `PortNumber`, or as `PortRange` (`start-end`).
+
+EDA entries match a single prefix, port, protocol and ICMP type, so each term is
+expanded into one entry per combination of source address, destination address,
+source port, destination port, protocol and ICMP type.
+
+### Address Families
+
+A term is skipped, with a warning, when it cannot be expressed in the filter's
+address family:
+
+* it has source or destination addresses, but none of the filter's address family, or
+* it uses `icmp` in an IPv6 filter, or `icmpv6` in an IPv4 filter.
+
+In `mixed` filters these terms are rendered only for the matching address family,
+without a warning.
+
+***
+
 ## Nokia SR Linux
 
 ### Header Format

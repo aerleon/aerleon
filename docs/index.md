@@ -40,6 +40,7 @@ The data primarily consists of:
 * Kubernetes
 * NFTables
 * Nokia
+    * Nokia EDA (nokiaeda)
     * Nokia SR Linux (nokiasrl)
 * VMWare NSXV
 * Packet Filter

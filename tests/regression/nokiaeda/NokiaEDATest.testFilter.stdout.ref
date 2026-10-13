@@ -1,0 +1,15 @@
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: Filter
+metadata:
+  name: my-filter
+  namespace: my-ns
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+spec:
+  entries:
+  - description: term-deny
+    type: IPv4
+    ipEntry:
+      action: Drop
+
