@@ -1142,6 +1142,8 @@ targets:
 * for common keys see the [common](#common) section above.
 * _source-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
 * _destination-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _icmp-type_: rendered as `icmp type` (`icmp6 type` in IPv6 filters), with one entry per ICMP type. In mixed filters, a term with `icmp` or `icmpv6` and ICMP types is only rendered in the filter of the matching address family.
+* _icmp-code_: rendered as `icmp code` (`icmp6 code`), together with _icmp-type_.
 
 ### Sub Tokens
 
