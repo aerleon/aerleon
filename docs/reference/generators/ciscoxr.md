@@ -1,45 +1,45 @@
 # CiscoXR
 
+The ciscoxr generator is built on the [Cisco](cisco.md) generator. It supports the same tokens, actions and options, plus `next-ip`.
+
 ## Header Format
 
 The ciscoxr header designation has the following format:
 
 ```yaml
 targets:
-    ciscoxr: [filter name] {inet6} {noverbose}
+    ciscoxr: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
-* _filter name_: defines the name or number of the cisco filter.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _noverbose_: omit additional term and address comments. (optional)
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the access list. | |
+| `extended` | Render an IPv4 access list. | Default. Rendered as `ipv4 access-list`. |
+| `object-group` | Render an IPv4 access list that uses object-groups for ports and addresses. | |
+| `inet6` | Render an IPv6 access list. | |
+| `mixed` | Render an IPv4 list and an IPv6 list together. | |
+| `enable_dsmo` | Turn on discontinuous subnet mask summarization. | Optional. |
+| `noverbose` | Leave out extra term and address comments. | Optional. |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [common](common.md) section, and for `address`, `restrict-address-family`, `dscp-match`, `icmp-code`, `logging` and `owner` see [Cisco](cisco.md). ciscoxr adds:
 
-* _address_: One or more network address tokens, matches source or destination.
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp-match_: Match a DSCP number.
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _next_ip_: next hop (address token -> single IP) for ACL based forwarding
-* _owner_: Owner of the term, used for organizational purposes.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `next-ip` | Forward matching packets to a next hop (ACL-based forwarding). | `next-ip: NEXTHOP_ROUTER` | Only used when the term has **no** `action`; the rule is rendered as `permit … nexthop1 ipv4 <ip>`. Must resolve to exactly one host address. |
 
-## Sub Tokens
+??? example "ACL-based forwarding"
+    ```yaml
+    - name: send-to-scrubber
+      destination-address: DDOS_TARGETS
+      next-ip: SCRUBBER_NEXTHOP
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+Same as [Cisco](cisco.md): `accept` → `permit`; `deny`, `reject` and `reject-with-tcp-rst` → `deny`; `next` → `! next`.
 
 ## Option
 
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
+Same as [Cisco](cisco.md): `established`, `tcp-established`, `is-fragment` and `fragments`.

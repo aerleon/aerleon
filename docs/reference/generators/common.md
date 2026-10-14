@@ -1,41 +1,41 @@
 # Common
 
-This lists contains all the common keys that are used across all generators (with a few highlighted exceptions).
+These keys are accepted by every generator unless a generator's page says otherwise. Each generator page only lists the tokens it adds on top of these.
+
+!!! note "Where these lists come from"
+    Supported tokens are defined in code. The base set lives in `ACLGenerator._BuildTokens()` (`aerleon/lib/aclgenerator.py`), and each generator extends or trims it in its own `_BuildTokens()`. A term that uses a token outside that set is rejected with an `UnsupportedFilterError` (a few tokens, such as `counter`, `logging` and `owner`, only log a warning instead).
 
 ## Term Format
 
-* _action_: The action to take when matched. See the Actions section for each generator.
-* _comment_: A text comment enclosed in double-quotes.  The comment can extend over multiple lines if desired, until a closing quote is encountered.
-* _destination-address_: One or more destination address tokens.
-* _destination-port_: One or more service definition tokens.
-* _expiration_: Stop rendering this term after specified date in YYYY-MM-DD format. E.g. 2000-12-31.
-* _icmp-type_: Specify icmp-type code to match, see [ICMP types](icmp_types.md) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**)
-* _name_: Name of the term.
-* _option_: See platforms supported Options section. (**Not** supported on: **k8s**, **gce**, **windows_advfirewall**, **windows_ipsec**)
-* _platform_: one or more target platforms for which this term should ONLY be rendered.
-* _platform-exclude_: one or more target platforms for which this term should NEVER be rendered.
-* _protocol_: the network protocols this term will match, such as tcp, udp, icmp, or a numeric value.
-* _source-address_: one or more source address tokens.
-* _source-port_: one or more service definition tokens. (**Note** supported on: **aruba**, **k8s**)
+| Token | Description | Example | Not supported on | Notes |
+|---|---|---|---|---|
+| `action` | What to do with matching traffic. | `action: accept` |  | Valid values are listed in each generator's Actions table. |
+| `comment` | Free-text comment rendered with the term. | `comment: "Allow SSH from bastions"` |  | Use a YAML block scalar for multi-line comments. |
+| `destination-address` | One or more destination address tokens. | `destination-address: WEB_SERVERS` | cloudarmor |  |
+| `destination-exclude` | Address tokens to remove from `destination-address`. | `destination-exclude: MAIL_SERVERS` | aruba, cloudarmor, gcp_hf, nvueapi, windows_advfirewall, windows_ipsec |  |
+| `destination-port` | One or more destination service tokens. | `destination-port: HTTP HTTPS` | cloudarmor |  |
+| `expiration` | Stop rendering the term after this date (`YYYY-MM-DD`). | `expiration: 2026-12-31` | cloudarmor, gcp_hf | Expired terms are skipped with a warning. Use `--exp_info` to be told about terms that expire soon. |
+| `icmp-type` | ICMP types to match. | `icmp-type: echo-request echo-reply` | aruba, cloudarmor, gce, gcp_hf, k8s, windows_ipsec | See [ICMP Types](icmp_types.md) for valid values. Silently ignored on nokiasrl, openconfig and sonic (known issue). |
+| `name` | Name of the term. | `name: accept-ssh` |  | Must be unique within a filter. Some platforms shorten long names. |
+| `option` | Extra match options. | `option: tcp-established` | cloudarmor, gce, gcp_hf, k8s | Valid values are listed in each generator's Options table. |
+| `platform` | Render this term **only** for the listed targets. | `platform: juniper cisco` | cloudarmor, nokiasrl, openconfig, sonic |  |
+| `platform-exclude` | **Never** render this term for the listed targets. | `platform-exclude: gce` | cloudarmor, nokiasrl, openconfig, sonic |  |
+| `protocol` | Protocols to match, by name or number. | `protocol: tcp udp` | cloudarmor |  |
+| `source-address` | One or more source address tokens. | `source-address: INTERNAL` |  | Tokens are resolved from the naming definitions. |
+| `source-exclude` | Address tokens to remove from `source-address`. | `source-exclude: RFC1918` | aruba, cloudarmor, gcp_hf, nvueapi, windows_advfirewall, windows_ipsec |  |
+| `source-port` | One or more source service tokens. | `source-port: DNS` | aruba, cloudarmor, gce, gcp_hf, k8s |  |
+| `verbatim` | Text copied into the output unchanged, keyed by target. | `verbatim: {juniper: "count my-counter;"}` | cloudarmor, gce, gcp_hf, k8s, nftables, nokiasrl, nvueapi, openconfig, paloalto, pcap, sonic, windows_advfirewall, windows_ipsec | Only the entry for the target being generated is used. Handy as a stop-gap for features Aerleon doesn't support yet. A verbatim term can't contain other match tokens. |
 
-<!--
-build_in tokens:
-            #'action',
-            #'comment',
-            #'destination_address',
-            'destination_address_exclude',
-            #'destination_port',
-            #'expiration',
-            #'icmp_type',
-            'stateless_reply',
-            #'name',  # obj attribute, not token
-            #'option',
-            #'protocol',
-            #'platform',
-            #'platform_exclude',
-            #'source_address',
-            'source_address_exclude',
-            #'source_port',
-            'translated',  # obj attribute, not token
-            #'verbatim', -> too many exceptions
--->
+??? example "A term using the common keys"
+    ```yaml
+    - name: accept-ssh
+      comment: "Allow SSH from bastions to internal hosts."
+      source-address: BASTIONS
+      destination-address: INTERNAL
+      destination-exclude: MAIL_SERVERS
+      destination-port: SSH
+      protocol: tcp
+      expiration: 2026-12-31
+      platform-exclude: gce
+      action: accept
+    ```

@@ -1,49 +1,73 @@
 # PacketFilter
 
+Renders OpenBSD/FreeBSD `pf.conf` rules. Address tokens become `pf` tables (`table <NAME> { … }`) that the rules reference.
+
 ## Header Format
 
 ```yaml
 targets:
-    packetfilter: filter-name {inet|inet6|mixed} {in|out} {nostate}
+    packetfilter: [filter name] {inet|inet6|mixed} {in|out} {nostate}
 ```
 
-* _filter-name_: a short, descriptive policy identifier
-* _inet_: specifies that the resulting filter should only render IPv4 addresses.
-* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
-* _mixed_: specifies that the resulting filter should only render IPv4 and IPv6 addresses (default).
-* _in_: match ingoing packets (default: both directions).
-* _out_: match outgoing packets (default: both directions).
-* _nostate_: do not keep state on connections (default: keep state).
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | A short, descriptive policy identifier. | Used in the header comment. |
+| `inet` | IPv4 only. | Default. |
+| `inet6` | IPv6 only. | |
+| `mixed` | IPv4 and IPv6. | |
+| `in`, `out` | Only match packets in this direction. | Default: both directions. |
+| `nostate` | Don't keep state (`no state`). | Default: `keep state`, with `flags S/SA` for TCP. Leaks into later filters; see [Known Issues](#known-issues). |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. The following tokens are specific to packetfilter:
 
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination-interface_: Specify the destination interface. Implicitly changes the term direction to **out** for this term. Mutually exclusive with _source-interface_:.
-* _source-interface_: Specify the source interface. Implicitly changes the term direction to **in** for this term. Mutually exclusive with _destination-interface_:.
-* _logging_: Specify that this packet should be logged via syslog.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `destination-interface` | Match packets leaving on this interface. | `destination-interface: em1` | Renders `out … on em1`. Can't be combined with `source-interface`. |
+| `logging` | Log matching packets. | `logging: true` | Adds `log`. |
+| `source-interface` | Match packets arriving on this interface. | `source-interface: em0` | Renders `in … on em0`. Can't be combined with `destination-interface`. |
 
-## Sub Tokens
+* Table names are the address token names, cut to the platform's length limit. Two tokens that shorten to the same name raise `DuplicateShortenedTableNameError`.
+* A term without an `action` uses `block drop`.
+
+??? example "A term and its output"
+    With header `packetfilter: test`:
+
+    ```yaml
+    - name: allow-ssh
+      source-address: V4ONLY        # 192.168.0.0/16
+      protocol: tcp
+      destination-port: SSH
+      logging: true
+      action: accept
+    ```
+
+    ```text
+    table <V4ONLY> {192.168.0.0/16}
+    # term allow-ssh
+    pass quick log inet proto { tcp } from { <V4ONLY> } to { any } port { 22 } flags S/SA keep state
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `pass quick` | |
+| `deny` | `block drop quick` | |
+| `next` | `pass` | Without `quick`, so later rules can still match. |
+| `reject` | `block return quick` | |
 
 ## Option
 
-* _ack_: Match on ACK flag being present.
-* _all_: Matches all protocols.
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _fin_: Match on FIN flag being present.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _psh_: Match on PSH flag being present.
-* _rst_: Match on RST flag being present.
-* _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _urg_: Match on URG flag being present.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `all` | All TCP flags (`SAFRUP`). | `option: all` | A TCP flag set, not a protocol. |
+| `established`, `tcp-established` | Match established TCP connections. | `option: tcp-established` | Renders `flags A/A`. Can't be combined with TCP flag options. |
+| `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with these TCP flags set. | `option: syn` | Combined into one `flags X/Y` match. TCP only. |
+
+## Known Issues
+
+!!! bug "Known issues"
+    * **`nostate` leaks between filters.** `nostate` isn't reset between headers. If a policy has several packetfilter filters, every filter after one with `nostate` is also stateless.
+    * **`verbatim`-only terms crash.** A term that only has `verbatim` (and so no `action`) fails with `IndexError` while setting the default action.

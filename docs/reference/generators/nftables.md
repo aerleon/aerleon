@@ -1,139 +1,156 @@
 # Nftables
 
+Renders an nftables ruleset for the `nft` command. Each term becomes its own chain, and a base chain jumps to each one in order.
+
 ## Header Format
 
 The NFTables header designation has the following format:
 
 ```yaml
 targets:
-    nftables: [nf_address_family] [nf_hook] {default_policy_override} {int: base chain priority} {noverbose}
+    nftables: [inet|inet6|mixed] [input|output|forward] {ACCEPT} {priority} {noverbose}
 ```
 
-Unless otherwise stated, all fields are required unless they're marked optional.
+There is no filter name: the address family must come first and the hook second.
 
-* nf_address_family: defines the IP address family for the policies. (inet, inet6, mixed)
-* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output, forward)
-* default_policy_override: **OPTIONAL** defines the default action (ACCEPT, DROP) for non-matching packets. Default behavior is DROP.
-* priority: **OPTIONAL** By default, this generator creates base chains with a starting priority of 0. Defining an integer value will override this behavior.
-* noverbose: **OPTIONAL** Disable header and term comments in final ACL output. Default behavior is verbose.
+| Option | Description | Notes |
+|---|---|---|
+| `inet` | IPv4 only. | Renders `table ip filtering_policies`. |
+| `inet6` | IPv6 only. | Renders `table ip6 filtering_policies`. |
+| `mixed` | IPv4 and IPv6. | Renders `table inet filtering_policies`. Every rule is currently rendered twice; see [Known Issues](#known-issues). |
+| `input`, `output`, `forward` | Netfilter hook for the base chain. | `forward` is for routed/transit traffic; pair it with `source-interface` / `destination-interface`. |
+| `ACCEPT` | Default policy `accept` for unmatched packets. | Without it the default policy is `drop`. Must be uppercase. |
+| `priority` | An integer: the base chain priority. | Optional. Defaults to `0`. Only one integer is allowed. |
+| `noverbose` | Leave out header and term comments. | Optional. |
 
-## Important: stateful firewall only
+## Stateful firewall only
 
-This NFTables ACL generator generates stateful policies via  [conntrack](https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation). Each NFTables base chain will accept valid return packets via (`ct state established,related accept`).
+This generator always builds a stateful ruleset using [conntrack](https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation):
 
-When a non-deny term is processed for ACL generation, the `ct state new` is added to the resulting policy to ensure only valid incoming connections for that term is accepted. This means invalid state packets are dropped by default.
-
-An implementation design for this generator is that terms with options 'established', 'tcp-established' will not rendered in the final NFT configuration.
-
-## Transit (forward) policies
-
-The `forward` hook renders a base chain of `type filter hook forward`, for policy applied to routed/transit traffic rather than to traffic terminating on (or originating from) the host. Terms in a forward filter typically pair with the `source-interface` and `destination-interface` keywords to express which way traffic is crossing the box.
-
-## Reporting bugs
-
-When reporting bugs about this generator ensure to include:
-
-1. Example policy (.pol file)
-1. Observed output (.nft file)
-1. Expected (correct) output in Nftables syntax (.nft syntax)
+* Every base chain starts with `ct state established,related accept`, so return traffic is always allowed.
+* Every non-deny rule gets `ct state new`, so only new connections match. Invalid packets fall through to the default policy.
+* Terms that use `established` or `tcp-established`, and stateless reply terms, are skipped with a warning, because the base chain already allows return traffic.
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. Nftables does **not** support `verbatim`, `owner` or the other generator-specific tokens. It also reads:
 
-* _logging_: NFTables system logging (host-based).
-* _counter_: NFTables counter for specific term.
-* _source-interface_: match the interface the packet arrived on, rendered as `iifname`.
-* _destination-interface_: match the interface the packet is leaving by, rendered as `oifname`.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter` | Count matching packets. | `counter: ssh-hits` | Renders an anonymous `counter`. The name is ignored: named counters aren't used, since each term already has its own chain. |
+| `destination-interface` | Match the outgoing interface. | `destination-interface: eth1` | Renders `oifname "eth1"`. |
+| `logging` | Log matching packets. | `logging: true` | Renders `log prefix "<term>"`. `true`, `syslog` and `local` all do the same; `disable` turns it off. |
+| `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `iifname "eth0"`. |
 
-## Sub-tokens
+??? example "A term and its output"
+    With header `nftables: inet input`:
+
+    ```yaml
+    - name: allow-ssh
+      source-address: INTERNAL
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
+
+    ```text
+    table ip filtering_policies {
+        chain allow-ssh {
+            ip saddr 10.0.0.0/8 tcp dport 22 ct state new accept
+        }
+        chain root0 {
+            type filter hook input priority 0; policy drop;
+            ct state established,related accept
+            jump allow-ssh
+        }
+    }
+    ```
 
 ## Actions
 
-* _accept_
-* _drop_
-
-## Logging
-
-* _disable_ no packets will be logged on syslog.
-
-All of the below values are accepted, but outcome is exactly the same.
-
-* _true_
-* _syslog_
-* _local_
-
-## Counter
-
-Any string sub-token in `counter` is accepted. Do note this generator _does not_ implement NFTables `named counters` - this is primarily due to original design decisions to keep each Term into its own chain structure, any support of named counters would simply make the configuration .nft file longer without any additional benefit with the possible exception of the ability to use a single counter-name for multiple terms.
-
-## ICMP Types
-
-This generator normalizes certain aerleon policy.py string types to NFTables semantically correct values. The below tables summarize the supported ICMP type codes, the policy.py parent class definition and the NFtables specific value for the same type.
-
-### IPv4
-
-```text
-| ICMPv4 type code | Aerleon (policy.py)  | NFtables manual         |
-|------------------|----------------------|-------------------------|
-| 0                | echo-reply           | echo-reply              |
-| 3                | unreachable          | destination-unreachable |
-| 4                | source-quench        | source-quench           |
-| 5                | redirect             | redirect                |
-| 6                | alternate-address    |                         |
-| 8                | echo-request         | echo-request            |
-| 9                | router-advertisement | router-advertisement    |
-| 10               | router-solicitation  | router-solicitation     |
-| 11               | time-exceeded        | time-exceeded           |
-| 12               | parameter-problem    | parameter-problem       |
-| 13               | timestamp-request    | timestamp-request       |
-| 14               | timestamp-reply      | timestamp-reply         |
-| 15               | information-request  | info-request            |
-| 16               | information-reply    | info-reply              |
-| 17               | mask-request         | address-mask-request    |
-| 18               | mask-reply           | address-mask-reply      |
-| 31               | conversion-error     |                         |
-| 32               | mobile-redirect      |                         |
-```
-
-### IPv6
-
-```text
-| ICMPv6 type code | Aerleon (policy.py)                      | NFtables manual                             |
-|------------------|------------------------------------------|---------------------------------------------|
-| 1                | destination-unreachable                  | destination-unreachable                     |
-| 2                | packet-too-big                           | packet-too-big                              |
-| 3                | time-exceeded                            | time-exceeded                               |
-| 4                | parameter-problem                        | parameter-problem                           |
-| 128              | echo-request                             | echo-request                                |
-| 129              | echo-reply                               | echo-reply                                  |
-| 130              | multicast-listener-query                 | mld-listener-query                          |
-| 131              | multicast-listener-report                | mld-listener-report                         |
-| 132              | multicast-listener-done                  | mld-listener-done OR mld-listener-reduction |
-| 133              | router-solicit                           | nd-router-solicit                           |
-| 134              | router-advertisement                     | nd-router-advert                            |
-| 135              | neighbor-solicit                         | nd-neighbor-solicit                         |
-| 136              | neighbor-advertisement                   | nd-neighbor-advert                          |
-| 137              | redirect-message                         | nd-redirect                                 |
-| 138              | router-renumbering                       | router-renumbering                          |
-| 139              | icmp-node-information-query              |                                             |
-| 140              | icmp-node-information-response           |                                             |
-| 141              | inverse-neighbor-discovery-solicitation  | ind-neighbor-solicit                        |
-| 142              | inverse-neighbor-discovery-advertisement | ind-neighbor-advert                         |
-| 143              | version-2-multicast-listener-report      | mld2-listener-report                        |
-| 144              | home-agent-address-discovery-request     |                                             |
-| 145              | home-agent-address-discovery-reply       |                                             |
-| 146              | mobile-prefix-solicitation               |                                             |
-| 147              | mobile-prefix-advertisement              |                                             |
-| 148              | certification-path-solicitation          |                                             |
-| 149              | certification-path-advertisement         |                                             |
-| 151              | multicast-router-advertisement           |                                             |
-| 152              | multicast-router-solicitation            |                                             |
-| 153              | multicast-router-termination             |                                             |
-```
-
-_source:_ https://www.netfilter.org/projects/nftables/manpage.html
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `accept` | Adds `ct state new`. |
+| `deny` | `drop` | |
 
 ## Option
 
-* _tcp-established_ and _established_ will cause the term to not be rendered in the final NFT configuration. See 'Important' section above.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established`, `tcp-established` | — | | The term is skipped with a warning. See [Stateful firewall only](#stateful-firewall-only). |
+
+## ICMP Types
+
+Some Aerleon ICMP type names are changed to the names nftables expects. Names with no nftables equivalent are passed through unchanged, and `nft` will reject them.
+
+### IPv4
+
+| Type | Aerleon name | nftables name |
+|---|---|---|
+| 0 | `echo-reply` | `echo-reply` |
+| 3 | `unreachable` | `destination-unreachable` |
+| 4 | `source-quench` | `source-quench` |
+| 5 | `redirect` | `redirect` |
+| 6 | `alternate-address` | *none*: passed through unchanged |
+| 8 | `echo-request` | `echo-request` |
+| 9 | `router-advertisement` | `router-advertisement` |
+| 10 | `router-solicitation` | `router-solicitation` |
+| 11 | `time-exceeded` | `time-exceeded` |
+| 12 | `parameter-problem` | `parameter-problem` |
+| 13 | `timestamp-request` | `timestamp-request` |
+| 14 | `timestamp-reply` | `timestamp-reply` |
+| 15 | `information-request` | `info-request` |
+| 16 | `information-reply` | `info-reply` |
+| 17 | `mask-request` | `address-mask-request` |
+| 18 | `mask-reply` | `address-mask-reply` |
+| 31 | `conversion-error` | *none*: passed through unchanged |
+| 32 | `mobile-redirect` | *none*: passed through unchanged |
+
+### IPv6
+
+| Type | Aerleon name | nftables name |
+|---|---|---|
+| 1 | `destination-unreachable` | `destination-unreachable` |
+| 2 | `packet-too-big` | `packet-too-big` |
+| 3 | `time-exceeded` | `time-exceeded` |
+| 4 | `parameter-problem` | `parameter-problem` |
+| 128 | `echo-request` | `echo-request` |
+| 129 | `echo-reply` | `echo-reply` |
+| 130 | `multicast-listener-query` | `mld-listener-query` |
+| 131 | `multicast-listener-report` | `mld-listener-report` |
+| 132 | `multicast-listener-done` | `mld-listener-done` or `mld-listener-reduction` |
+| 133 | `router-solicit` | `nd-router-solicit` |
+| 134 | `router-advertisement` | `nd-router-advert` |
+| 135 | `neighbor-solicit` | `nd-neighbor-solicit` |
+| 136 | `neighbor-advertisement` | `nd-neighbor-advert` |
+| 137 | `redirect-message` | `nd-redirect` |
+| 138 | `router-renumbering` | `router-renumbering` |
+| 139 | `icmp-node-information-query` | *none*: passed through unchanged |
+| 140 | `icmp-node-information-response` | *none*: passed through unchanged |
+| 141 | `inverse-neighbor-discovery-solicitation` | `ind-neighbor-solicit` |
+| 142 | `inverse-neighbor-discovery-advertisement` | `ind-neighbor-advert` |
+| 143 | `version-2-multicast-listener-report` | `mld2-listener-report` |
+| 144 | `home-agent-address-discovery-request` | *none*: passed through unchanged |
+| 145 | `home-agent-address-discovery-reply` | *none*: passed through unchanged |
+| 146 | `mobile-prefix-solicitation` | *none*: passed through unchanged |
+| 147 | `mobile-prefix-advertisement` | *none*: passed through unchanged |
+| 148 | `certification-path-solicitation` | *none*: passed through unchanged |
+| 149 | `certification-path-advertisement` | *none*: passed through unchanged |
+| 151 | `multicast-router-advertisement` | *none*: passed through unchanged |
+| 152 | `multicast-router-solicitation` | *none*: passed through unchanged |
+| 153 | `multicast-router-termination` | *none*: passed through unchanged |
+
+_source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
+
+## Reporting bugs
+
+When reporting bugs about this generator, please include:
+
+1. Example policy (.pol or .yaml file)
+1. Observed output (.nft file)
+1. Expected (correct) output in nftables syntax
+
+## Known Issues
+
+!!! bug "Known issues"
+    * **`mixed` filters render every rule twice.** With a `mixed` header, each address is combined with the protocol/port statements from both address families. Every rule appears twice, and a term with a protocol but no ports also gets both an `ip protocol` and a `meta l4proto` rule.

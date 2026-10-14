@@ -8,63 +8,81 @@ The Iptables header designation has the following format:
 
 ```yaml
 targets:
-    iptables: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
+    iptables: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {inet|inet6} {nostate} {abbreviateterms} {truncateterms} {noverbose} {nochainedterms}
 ```
 
-* _INPUT_: apply the terms to the input filter.
-* _OUTPUT_: apply the terms to the output filter.
-* _FORWARD_: apply the terms to the forwarding filter.
-* _custom_: create the terms under a custom filter name, which must then be linked/jumped to from one of the default filters (e.g. iptables -A input -j custom)
-* _ACCEPT_: specifies that the default policy on the filter should be 'accept'.
-* _DROP_: specifies that the default policy on the filter should be to 'drop'.
-* _inet_: specifies that the resulting filter should only render IPv4 addresses.
-* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
-* _truncatenames_: specifies to abbreviate term names if necessary (see lib/iptables.py:_CheckTerMLength for abbreviation table)
-* _nostate_: specifies to produce 'stateless' filter output (e.g. no connection tracking)
+| Option | Description | Notes |
+|---|---|---|
+| `INPUT`, `OUTPUT`, `FORWARD` | Built-in chain to attach the terms to. | |
+| `custom` | Any other name creates a custom chain. | Logs a warning: the chain does nothing until you jump to it from a built-in chain (e.g. `iptables -A INPUT -j custom`). |
+| `ACCEPT`, `DROP` | Default policy for a built-in chain (`-P <chain> <policy>`). | `FORWARD` defaults to `DROP`. Other chains get no `-P` line unless one is given. |
+| `inet` | IPv4 only. | Default. |
+| `inet6` | IPv6 only. | |
+| `nostate` | Don't use connection tracking. | `established` then only works for TCP, using TCP flags. Leaks into later filters; see [Known Issues](#known-issues). |
+| `abbreviateterms` | Shorten long term names using a built-in abbreviation table. | Names longer than 24 characters raise an error unless this or `truncateterms` is set. |
+| `truncateterms` | Cut long term names to 24 characters. | Applied after `abbreviateterms`. |
+| `noverbose` | Leave out term comments and owner. | |
+| `nochainedterms` | Put every rule directly in the filter's chain instead of one chain per term. | |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. The following tokens are specific to iptables:
 
-* _counter_: Update a counter for matching packets
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
-* _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragment-offset_: specify a fragment offset of a fragmented packet
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _packet-length_: specify packet length.
-* _routing-instance_: specify routing instance for matching packets.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _source-interface_: specify specific interface a term should apply to (e.g. source-interface:: eth3).
-* _source-prefix_: specify source-prefix matching (e.g. source-prefix:: configured-neighbors-only).
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter`, `routing-instance` | — | | Accepted, but ignored. |
+| `destination-interface` | Match the outgoing interface. | `destination-interface: eth1` | Renders `-o eth1`. |
+| `fragment-offset` | Match fragment offset. | `fragment-offset: 1-8191` | Renders a `-m u32` match. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
+| `log-limit` | Rate-limit the log rule. | `log-limit: 10/minute` | Requires `logging`. Currently renders invalid syntax; see [Known Issues](#known-issues). |
+| `logging` | Log matching packets. | `logging: true` | Adds a `-j LOG --log-prefix <term>` rule before the action rule. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the comment unless the header uses `noverbose`. |
+| `packet-length` | Match packet length. | `packet-length: 64-1500` | Renders `-m length --length 64:1500`. |
+| `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `-i eth0`. |
+| `source-prefix`, `destination-prefix` | — | | Not supported by iptables. An `accept` or `next` term is replaced by a `# skipped` comment; any other action raises an error. |
 
-## Sub Tokens
+??? example "A term and its output"
+    With header `iptables: INPUT ACCEPT`:
+
+    ```yaml
+    - name: allow-ssh
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
+
+    ```text
+    -P INPUT ACCEPT
+    -N I_allow-ssh
+    -A INPUT -j I_allow-ssh
+    -A I_allow-ssh -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `-j ACCEPT` | With state tracking, also adds `-m state --state NEW,ESTABLISHED,RELATED`. |
+| `deny` | `-j DROP` | |
+| `next` | `-j RETURN` | |
+| `reject` | `-j REJECT --reject-with icmp-host-prohibited` | `icmp6-adm-prohibited` for `inet6`. |
+| `reject-with-tcp-rst` | `-j REJECT --reject-with tcp-reset` | |
 
 ## Option
 
-* _ack_: Match on ACK flag being present.
-* _all_: Matches all protocols.
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _fin_: Match on FIN flag being present.
-* _first-fragment_: Only match on first fragment of a fragmented pakcet.
-* _initial_: Only matches on initial packet.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _none_: Matches none.
-* _psh_: Match on PSH flag being present.
-* _rst_: Match on RST flag being present.
-* _sample_: Samples traffic for netflow.
-* _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
-* _urg_: Match on URG flag being present.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `all`, `none` | TCP flag sets `ALL` and `NONE`. | `option: none` | Used in the `--tcp-flags` match, e.g. to catch null scans. These are TCP flags, not protocols. |
+| `established` | Match established connections. | `option: established` | Renders `-m state --state ESTABLISHED,RELATED`. With `nostate`, TCP-only terms use ACK/RST flags instead. For TCP/UDP, also sets the destination port to 1024-65535 if none is given. |
+| `first-fragment` | Match the first fragment of a fragmented packet. | `option: first-fragment` | Renders `-m u32 --u32 4&0x3FFF=0x2000`. |
+| `initial` | Match the first packet of a TCP connection. | `option: initial` | Renders `--syn`. |
+| `sample` | — | | Accepted, but ignored. |
+| `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with this TCP flag set. | `option: syn` | Combined into one `--tcp-flags` match. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Same as `established`, but raises an error if the term matches anything other than `tcp`. |
+| `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | Renders `--syn`. |
+
+## Known Issues
+
+!!! bug "Known issues"
+    * **Header options leak between filters.** `nostate`, `noverbose`, `nochainedterms` and the default policy aren't reset between headers. If a policy has several iptables filters, later filters inherit these settings from earlier ones.
+    * **`log-limit` renders invalid syntax.** The log rule is rendered as `-m --limit 10/minute …`, which iptables rejects. It should be `-m limit --limit 10/minute …`.

@@ -1,61 +1,55 @@
 # Arista
 
+The arista generator is built on the [Cisco](cisco.md) generator, so its terms, actions and options work the same way.
+
 ## Header Format
 
 The arista header designation has the following format:
 
 ```yaml
 targets:
-    arista: [filter name] {standard|extended|object-group|inet6} {noverbose}
+    arista: [filter name] {standard|extended|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
-<!--
-```text
-target:: arista [filter name] {standard|extended|object-group|inet6}
-```
--->
-* _filter name_: defines the name of the arista filter.
-* _standard_: specifies that the output should be a standard access list
-* _extended_: specifies that the output should be an extended access list
-* _object-group_: specifies this is a arista extended access list, and that object-groups should be used for ports and addresses.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _noverbose_: omit additional term and address comments. (optional)
-* _mixed_: #TODO: does this exist on all Cisco inherited platforms?
-* _enable_dsmo_: #TODO: does this exist on all Cisco inherited platforms?
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the access list. | |
+| `standard` | Render a standard access list. | Numeric names must be in 1-99 or 1300-1999. |
+| `extended` | Render an extended access list. | Default. |
+| `object-group` | Render an extended access list that uses object-groups for ports and addresses. | |
+| `inet6` | Render an IPv6-only access list. | |
+| `mixed` | Render an IPv4 (extended) list and an IPv6 list together. | |
+| `enable_dsmo` | Turn on discontinuous subnet mask summarization. | Optional. |
+| `noverbose` | Leave out extra term and address comments. | Optional. |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. The following tokens are specific to arista:
 
-* _address_: One or more network address tokens, matches source or destination.
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp-match_: Match a DSCP number.
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
-
-## Sub Tokens
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `address` | Address tokens matched as source **or** destination. | `address: INTERNAL` | Standard ACLs must use `address`; they reject `source-address`/`destination-address`. |
+| `dscp-match` | Match a DSCP value. | `dscp-match: af41` | Only one value is allowed in extended ACLs. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
+| `logging` | Log matching packets. | `logging: true` | Adds `log` to the rule. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added as a comment. |
+| `restrict-address-family` | Only render the term in the matching address family. | `restrict-address-family: inet` | Useful in `mixed` filters. |
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `permit` | |
+| `deny` | `deny` | |
+| `next` | `! next` | Rendered as a comment. |
+| `reject` | `deny` | |
+| `reject-with-tcp-rst` | `deny` | TCP reset is not supported. |
 
 ## Option
 
-```yaml
-option: {established|is-fragment|tcp-established}
-```
-<!--
-```text
-option:: {established|is-fragment|tcp-established}
-```
--->
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established` | Match established connections. | `option: established` | Adds `established` for TCP. For UDP, sets the destination port to 1024-65535 if none is given. |
+| `fragments` | Match fragments. | `option: fragments` | Same as `is-fragment`. |
+| `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragments`. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `established`. TCP only. |

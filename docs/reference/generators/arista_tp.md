@@ -6,96 +6,187 @@ The arista_tp header designation has the following format:
 
 ```yaml
 targets:
-    arista_tp: [filter name] {inet|inet6|mixed}
+    arista_tp: [filter name] {inet|inet6|mixed} {noverbose}
 ```
 
-* _inet_: specifies that the resulting filter should only render IPv4 addresses.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _mixed_: specifies output will include both IPv6 and IPv4 filters. (default)
-
-## Filter types
-
-Traffic-policies are dual-address-family by default (i.e.: mixed). A term may be either of type ipv4 or ipv6. If the filter type is defined as mixed (the default), then match/action statements for each address family will be generated.
-
-If the operator wishes to create an ipv4 or ipv6 only filter, the inet and inet6 tokens within the header will be honored and only addresses from the respective address family will be rendered. However, EOS will still, by default, create an 'ipvX-default-all' term for the alternate address family. (see below)
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the traffic-policy. | |
+| `inet` | Render IPv4 addresses only. | |
+| `inet6` | Render IPv6 addresses only. | |
+| `mixed` | Render both IPv4 and IPv6 match statements. | Default. |
+| `noverbose` | Leave out term comments and owner. | Optional. |
 
 ## Term Format
 
-The following tokens are supported:
+For common keys see the [Common](common.md) page. The following tokens are specific to arista_tp:
 
-* for common keys see the [Common](common.md) page.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter` | Count matching packets in a named counter. | `counter: ssh-replies` | Adds `count <name>` to the term's actions and lists the name in the policy's `counter` line. A `.` in the name is replaced with `-`. |
+| `destination-prefix` | Match a field-set already configured on the device. | `destination-prefix: DC-NETS` | Renders as `destination prefix field-set …`. |
+| `dscp-set` | Set a DSCP value. | `dscp-set: af41` | Accepted, but not currently rendered in the output. |
+| `fragment-offset` | Match on fragment offset. | `fragment-offset: 1-8191` | Renders as `fragment offset …`. |
+| `hop-limit` | Match on IPv6 hop limit. | `hop-limit: 255` | Also renders as `ttl …`. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | Only applied when the term has a single `icmp-type`. |
+| `logging` | Log matching packets. | `logging: true` | Only rendered for non-accept actions. On an `accept` term it is skipped with a warning. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the term comment unless the header uses `noverbose`. |
+| `packet-length` | Match on IP packet length. | `packet-length: 1-1500` | Renders as `ip length …`. |
+| `protocol-except` | Match every protocol except the ones listed. | `protocol-except: tcp udp` | Renders as a protocol number range with the listed protocols removed. |
+| `source-prefix` | Match a field-set already configured on the device. | `source-prefix: CORP-NETS` | Renders as `source prefix field-set …`. Aerleon does not create the field-set. |
+| `ttl` | Match on TTL. | `ttl: 1` | Renders as `ttl …`. |
 
-* _counter_:
-* _destination-exclude_:
-* _destination-prefix_: this should resolve to a configured field-set in traffic-policy format.
-* _fragment-offset_:
-* _icmp-type_:
-* _logging_:
-* _packet-length_:
-* _source-exclude_:
-* _source-prefix_: this should resolve to a configured field-set in traffic-policy format.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+!!! warning "Accepted but not rendered"
+    A term that uses `port`, `dscp-match`, `dscp-except`, `ether-type`, `flexible-match-range`, `forwarding-class`, `forwarding-class-except`, `next-ip` or `traffic-type` is skipped with a warning.
 
-## Sub Tokens
+??? example "A term using arista_tp tokens"
+    From `policies/pol/sample_arista_tp_yaml.yaml`:
+
+    ```yaml
+    - name: accept-ssh-replies
+      source-port: SSH
+      protocol: tcp
+      option: tcp-established
+      counter: ssh-replies
+      action: accept
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _reject_
-* _reject-with-tcp-rst_
-
-The fully supported actions are: `accept`, and `deny`. Use of `reject`, or `reject-with-tcp-rst` will result in the generation of deny actions in the rendered traffic policy.
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | *(no action)* | Traffic-policies allow by default, so no `actions` block is written unless `counter` or `logging` is set. |
+| `deny` | `drop` | |
+| `next` | — | Not supported; the term is skipped with a warning. |
+| `reject` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
+| `reject-with-tcp-rst` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
 
 Note, within traffic-policies not configuring an explicit `deny` action (or `reject` variant) will result in an implicit allow for a term.
 
-## Counter
-
-* If counter are specified in a term, a traffic-policy named-counter stanza will be generated in the rendered output.
-* Counter names should not contain a (`.`). If a (`.`) is embedded in a counter name it will be replaced w/ a dash (`-`).
-
-## (source|destination)-address-exclude
-
-Currently, (as of Jan-2021), EOS does not support the use of 'except' inline within match statements. If an exclude/except token is used, a traffic-policy field-set will be generated and referenced in the match-term output. This field-set will be named `<direction>-<term.name>` where direction is either **src** or **dst** depending on the direction of the token in use.
-
-If the filter type is mixed, both address-families will have the respective field-sets generated. The field-set for the ipv4 address family will have the field-set generated with no prefix, while the ipv6 field-set will have `ipv6` inserted into the field-set name after the direction and before the name. (form: `src|dst-ipv6-term_name`)
-
 ## Option
 
-```yaml
-option: {established|tcp-established|initial|rst|first-fragment}
-```
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established` | Match established connections. | `option: established` | Adds the `established` flag for TCP-only terms. |
+| `first-fragment` | — | | Not supported; the term is skipped with a warning. |
+| `initial` | Match the initial packet of a TCP connection. | `option: initial` | TCP-only terms. |
+| `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragment`. Raises an error in an `inet6` filter. In a `mixed` filter the IPv6 version of the term is skipped. Can't be combined with port matches (term is skipped). |
+| `rst` | Match TCP packets with RST set. | `option: rst` | TCP-only terms. |
+| `sample` | — | | Not supported; the term is skipped with a warning. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
 
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _initial_
-* _rst_
-* _first-fragment_: this will be rendered as a _fragment_ match.
+Any other option value is accepted but ignored.
 
-## Ports
+## How terms are rendered
 
-In EOS traffic-policies, ports can be configured using:
+### Address families
 
-* `source [ all | port-list | field-set ]`
-* `destination [ all | port-list | field-set ]`
+A traffic-policy holds IPv4 and IPv6 matches side by side. What Aerleon renders depends on the header:
 
-Currently, all and field-sets are not supported for ports. Only port-lists are supported.
+| Header | What is rendered | Term names in the output |
+|---|---|---|
+| `mixed` (default) | Each term twice: once for IPv4, once for IPv6. | `<term>` for IPv4, `ipv6-<term>` for IPv6. |
+| `inet` | IPv4 only. | `<term>` |
+| `inet6` | IPv6 only. | `<term>` |
 
-## default-terms
+If a term's `source-address` or `destination-address` has no addresses in a family, the term is skipped for that family. With `inet` or `inet6`, EOS still adds its own default term for the other family (see [Default terms](#default-terms)).
 
-EOS has (2) default terms per traffic-policy, one for each address family:
+### Address exclusions
 
-* `ipv4-default-all`
-* `ipv6-default-all`
+EOS can't use `except` inside a match statement. So when a term uses `source-exclude` or `destination-exclude`, Aerleon writes a **field-set** that holds the included and excluded prefixes, and the term matches on that field-set.
 
-If there is no match criteria associated with a term _and_ the term name in the policy begins with `default-`, the contents will be rendered into the default terms for the appropriate address family.
+| Token | IPv4 field-set name | IPv6 field-set name (`mixed`) | IPv6 field-set name (`inet6`) |
+|---|---|---|---|
+| `source-exclude` | `src-<term>` | `src-ipv6-<term>` | `src-<term>` |
+| `destination-exclude` | `dst-<term>` | `dst-ipv6-<term>` | `dst-<term>` |
 
-## Empty match criteria
+Destination field-sets currently mix address families; see [Known Issues](#known-issues).
 
-If there is no match criteria specified, and the term name does _not_ start with `default-` the term will not be rendered and a warning will be logged.
+Excluded prefixes that don't fall inside any included prefix are dropped.
+
+??? example "Source exclusion in a mixed filter"
+    Policy (`INTERNAL` holds IPv4 and IPv6 ranges, `SOME_HOST` holds hosts inside them):
+
+    ```yaml
+    - name: FS_MIXED
+      source-address: INTERNAL
+      source-exclude: SOME_HOST
+      action: accept
+    ```
+
+    Output (from the `testSrcFsMixed` regression test):
+
+    ```text
+    traffic-policies
+       field-set ipv4 prefix src-FS_MIXED
+          8.8.4.0/24
+          8.8.8.0/24
+          except 8.8.4.4/32
+          except 8.8.8.8/32
+       !
+       field-set ipv6 prefix src-ipv6-FS_MIXED
+          2001:4860:4860::/64
+          2001:4860:4861::/64
+          except 2001:4860:4860::8844/128
+          except 2001:4860:4861::8888/128
+       !
+       no traffic-policy test-filter
+       traffic-policy test-filter
+          match FS_MIXED ipv4
+             source prefix field-set src-FS_MIXED
+          !
+          match ipv6-FS_MIXED ipv6
+             source prefix field-set src-ipv6-FS_MIXED
+          !
+    ```
+
+### Ports
+
+Ports are rendered inline as port lists, for example `source port 53` or `destination port 22 1024-65535`. EOS also allows `all` or a port field-set, but Aerleon doesn't generate either. A term that uses the `port` token (source **or** destination) is skipped with a warning.
+
+### Default terms
+
+EOS adds two built-in terms to every traffic-policy, one per address family: `ipv4-default-all` and `ipv6-default-all`. They match whatever no other term matched.
+
+To set what these terms do, write a term whose name starts with `default-`. Aerleon renames it to `ipv4-default-all` and/or `ipv6-default-all`, according to the header's address family. Give it an action (and optionally `counter` or `logging`) but no match criteria. Only one `default-` term is allowed per filter; a second one causes a duplicate-term error.
+
+??? example "Default deny"
+    Policy:
+
+    ```yaml
+    - name: default-term-1
+      action: deny
+    ```
+
+    Output in a `mixed` filter (from the `testDefaultDeny` regression test):
+
+    ```text
+    traffic-policies
+       no traffic-policy test-filter
+       traffic-policy test-filter
+          match ipv4-default-all ipv4
+             actions
+                drop
+          !
+          match ipv6-default-all ipv6
+             actions
+                drop
+          !
+    ```
+
+### Terms with no match criteria
+
+A term that isn't a [default term](#default-terms) must match on at least one of these, or it is skipped with a warning:
+
+`source-address`, `source-exclude`, `source-port`, `source-prefix`, `destination-address`, `destination-exclude`, `destination-port`, `destination-prefix`, `protocol`, `protocol-except`, `port`, `fragment-offset`, `ttl`, `hop-limit`
+
+Other match tokens, such as `packet-length` or `option`, don't count on their own. For example, a term that only sets `packet-length` is skipped.
 
 ## Documentation
 
-The official documentation for traffic-policies can be found at the following URL.
+* [Arista EOS: Support for traffic-policy on interfaces](https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/)
 
-* <https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/>
+## Known Issues
+
+!!! bug "Known issues"
+    * **`destination-exclude` field-sets mix address families.** Unlike source field-sets, destination field-sets are not split by address family. Each one lists **every** IPv4 and IPv6 prefix and exclusion, so `field-set ipv4 prefix dst-<term>` can contain IPv6 prefixes. Excluded prefixes outside the included ones are not dropped either. See the `testDstFsMixed` regression test output.

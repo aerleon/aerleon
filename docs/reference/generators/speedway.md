@@ -2,69 +2,40 @@
 
 > NOTE: Speedway produces Iptables filtering output that is suitable for passing to the 'iptables-restore' command.
 
-## Header Format
+The speedway generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options (including the known issues), so see the IpTables tables.
 
-The Speedway header designation has the following format:
+## Header Format
 
 ```yaml
 targets:
-    speedway: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
+    speedway: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {inet|inet6} {nostate} {abbreviateterms} {truncateterms} {noverbose} {nochainedterms}
 ```
 
-* _INPUT_: apply the terms to the input filter.
-* _OUTPUT_: apply the terms to the output filter.
-* _FORWARD_: apply the terms to the forwarding filter.
-* _custom_: create the terms under a custom filter name, which must then be linked/jumped to from one of the default filters (e.g. iptables -A input -j custom)
-* _ACCEPT_: specifies that the default policy on the filter should be 'accept'.
-* _DROP_: specifies that the default policy on the filter should be to 'drop'.
-* _inet_: specifies that the resulting filter should only render IPv4 addresses.
-* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
-* _truncatenames_: specifies to abbreviate term names if necessary (see lib/iptables.py: CheckTermLength for abbreviation table)
-* _nostate_: specifies to produce 'stateless' filter output (e.g. no connection tracking)
+## Differences from IpTables
 
-## Term Format
+| Area | IpTables | Speedway |
+|---|---|---|
+| Output format | One `iptables` command per line | `iptables-restore` format, wrapped in `*filter` … `COMMIT` |
+| Default policy line | `-P INPUT ACCEPT` | `:INPUT ACCEPT [0:0]` |
+| `FORWARD` default policy | `DROP` if none is given | None unless given |
+| Jump to term chain | Before the term's rules | After the term's rules |
+| File suffix | none | `.ipt` |
 
-* for common keys see the [Common](common.md) page.
+??? example "A term and its output"
+    With header `speedway: INPUT ACCEPT`:
 
-* _counter_: Update a counter for matching packets
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
-* _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragment-offset_: specify a fragment offset of a fragmented packet
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _packet-length_: specify packet length.
-* _routing-instance_: specify routing instance for matching packets.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _source-interface_: specify specific interface a term should apply to (e.g. source-interface:: eth3).
-* _source-prefix_: specify source-prefix matching (e.g. source-prefix:: configured-neighbors-only).
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+    ```yaml
+    - name: allow-ssh
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
 
-## Sub Tokens
-
-## Actions
-
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
-
-## Option
-
-* _ack_: Match on ACK flag being present.
-* _all_: Matches all protocols.
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _fin_: Match on FIN flag being present.
-* _first-fragment_: Only match on first fragment of a fragmented pakcet.
-* _initial_: Only matches on initial packet.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _none_: Matches none.
-* _psh_: Match on PSH flag being present.
-* _rst_: Match on RST flag being present.
-* _sample_: Samples traffic for netflow.
-* _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
-* _urg_: Match on URG flag being present.
+    ```text
+    *filter
+    :INPUT ACCEPT [0:0]
+    -N I_allow-ssh
+    -A I_allow-ssh -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    -A INPUT -j I_allow-ssh
+    COMMIT
+    ```

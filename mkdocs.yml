@@ -89,6 +89,8 @@ nav:
       - Fortigate: reference/generators/fortigate.md
       - Google Cloud:
         - GCE: reference/generators/gce.md
+        - GCP Hierarchical Firewall: reference/generators/gcp_hf.md
+        - Cloud Armor: reference/generators/cloudarmor.md
       - Juniper:
         - Juniper: reference/generators/juniper.md
         - Juniper EVO: reference/generators/juniperevo.md
@@ -103,10 +105,12 @@ nav:
         - Nftables: reference/generators/nftables.md
       - Nokia SR Linux: reference/generators/nokiasrl.md
       - NVUE API: reference/generators/nvueapi.md
+      - OpenConfig: reference/generators/openconfig.md
       - PacketFilter: reference/generators/packetfilter.md
       - PaloAltoFW: reference/generators/paloalto.md
       - PcapFilter: reference/generators/pcap.md
       - Proxmox: reference/generators/proxmox.md
+      - SONiC: reference/generators/sonic.md
       - VMware NSX:
         - NSXv: reference/generators/nsxv.md
         - NSXt: reference/generators/nsxt.md

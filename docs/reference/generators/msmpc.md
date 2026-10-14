@@ -6,29 +6,51 @@ The Juniper MSMPC header designation has the following format:
 
 ```yaml
 targets:
-    msmpc: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress} [no-apply-groups]
+    msmpc: [filter name] {inet|inet6|mixed} {noverbose} {ingress|egress} {no-apply-groups}
 ```
 
-* _filter name_: defines the name of the Juniper msmpc filter.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _mixed_: specifies the output be for IPv4 and IPv6 filters. This is the default format.
-* _noverbose_: omit additional term and address comments. (optional)
-* _ingress_: filter will be applied in the input direction.
-* _egress_: filter will be appliced in the output direction.
-* _no-apply-groups_: generate configuration without `apply-groups` (optional)
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the filter. | |
+| `inet` | Render IPv4 only. | |
+| `inet6` | Render IPv6 only. | |
+| `mixed` | Render IPv4 and IPv6. | Default. |
+| `noverbose` | Leave out term comments and owner. | Optional. |
+| `ingress` | Apply the filter in the input direction. | Optional. |
+| `egress` | Apply the filter in the output direction. | Optional. Without `ingress` or `egress`, the filter applies in both directions. |
+| `no-apply-groups` | Leave `apply-groups` out of the configuration. | Optional. |
 
-When inet4 or inet6 is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
-
-When neither ingress or egress is specified, the filter will be applied in both (input-output) directions. This is the default.
+Only one address family and one direction can be given. When `inet` or `inet6` is specified, naming tokens that contain both IPv4 and IPv6 addresses are rendered using only the matching addresses.
 
 ## Term Format
 
-TBD
+For common keys see the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. The following tokens are specific to msmpc:
 
-## Sub Tokens
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `destination-prefix` | Match a prefix-list already configured on the device. | `destination-prefix: local-addrs` | Renders as `destination-prefix-list`. |
+| `destination-prefix-except` | Exclude a configured prefix-list. | `destination-prefix-except: vip-addrs` | Renders as `destination-prefix-list … except`. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
+| `logging` | Log matching packets. | `logging: true` | Adds `syslog`. `logging: disable` turns it off. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the term comment unless the header uses `noverbose`. |
+| `source-prefix` | Match a prefix-list already configured on the device. | `source-prefix: configured-neighbors-only` | Renders as `source-prefix-list`. |
+| `source-prefix-except` | Exclude a configured prefix-list. | `source-prefix-except: bad-neighbors` | Renders as `source-prefix-list … except`. |
 
 ## Actions
 
-* _accept_
-* _deny_
-* _reject_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `accept` | |
+| `deny` | `discard` | |
+| `next` | `None;` | **Broken:** passes validation but has no MSMPC mapping. Don't use. |
+| `reject` | `reject` | |
+| `reject-with-tcp-rst` | `None;` | **Broken:** passes validation but has no MSMPC mapping. Don't use. |
+
+## Option
+
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established`, `tcp-established` | — | | The term is skipped with a warning, because MSMPC is stateful. |
+| `inactive` | Render the term but mark it inactive. | `option: inactive` | Prefixes the term with `inactive:`. |
+
+Any other option value is accepted but ignored.

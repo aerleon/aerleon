@@ -1,29 +1,59 @@
 # Windows Advanced Firewall
 
+Renders `netsh advfirewall firewall add rule …` commands.
+
 ## Header Format
 
 The Windows Advanced Firewall header designation has the following format:
 
 ```yaml
 targets:
-    windows_advfirewall: {out|in} {inet|inet6|mixed}
+    windows_advfirewall: [out|in] {inet|inet6}
 ```
 
-* _out_: Specifies that the direction of packet flow is out. (default)
-* _in_: Specifies that the direction of packet flow is in.
-* _inet_: specifies that the resulting filter should only render IPv4 addresses.
-* _inet6_: specifies that the resulting filter should only render IPv6 addresses.
+| Option | Description | Notes |
+|---|---|---|
+| `out` | Outbound rules (`dir=out`). | |
+| `in` | Inbound rules (`dir=in`). | |
+| `inet` | IPv4 only. | Default. |
+| `inet6` | IPv6 only. | `mixed` is not accepted. |
+
+The header also accepts `permit` or `block` as a default action, but the generator then raises "Windows generator does not support default actions", so don't use them.
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. Windows Advanced Firewall does **not** support `source-exclude`, `destination-exclude` (they raise an error) or `verbatim`.
 
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
+* Rule names are `<first letter of direction>_<term>`, e.g. `o_allow-ssh`.
+* For outbound rules, source is `local*` and destination is `remote*`; inbound is the reverse.
+* ICMP types render as `icmpv4:<type>,any` (or `icmpv6:…`).
 
-## Sub Tokens
+??? example "A term and its output"
+    With header `windows_advfirewall: out inet`:
+
+    ```yaml
+    - name: allow-ssh
+      destination-address: V4ONLY   # 192.168.0.0/16
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
+
+    ```text
+    netsh advfirewall firewall add rule name=o_allow-ssh enable=yes interfacetype=any dir=out localip=any remoteip=192.168.0.0/16 remoteport=22 protocol=tcp action=allow
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `action=allow` | |
+| `deny` | `action=block` | |
+
+## Option
+
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established`, `tcp-established` | — | | The term is skipped, without a warning. |
+
+Any other option value is accepted but ignored, which makes the rule broader than intended (e.g. `option: syn` still allows all TCP).

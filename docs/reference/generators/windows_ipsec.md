@@ -1,25 +1,36 @@
 # WindowsIPSec
 
+!!! warning "Not available"
+    The `windows_ipsec` generator (`aerleon/lib/windows_ipsec.py`) is not registered as a built-in generator, so `windows_ipsec` targets are not rendered. This section describes the module as written.
+
+Renders `netsh ipsec static add …` commands.
+
 ## Header Format
 
 The Windows IPSec header designation has the following format:
 
 ```yaml
 targets:
-    windows_ipsec: [filter_name]
+    windows_ipsec: [filter name] {inet|inet6}
 ```
 
-* _filter name_: defines the name of the Windows IPSec filter.
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the IPSec filter list. | |
+| `inet` | IPv4 only. | Default. |
+| `inet6` | IPv6 only. | |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-
-## Sub Tokens
+For common keys see the [Common](common.md) page. WindowsIPSec does **not** support `icmp-type`, `source-exclude`, `destination-exclude` (they raise an error) or `verbatim`.
 
 ## Actions
 
-* _accept_
-* _deny_
+| Action | Notes |
+|---|---|
+| `accept` | |
+| `deny` | |
+
+## Option
+
+`established` and `tcp-established` terms are skipped without a warning. Other option values are accepted but ignored.

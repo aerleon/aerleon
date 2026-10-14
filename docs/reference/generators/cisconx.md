@@ -1,5 +1,7 @@
 # CiscoNX
 
+The cisconx generator is built on the [Cisco](cisco.md) generator. It supports exactly the same tokens, actions and options, so see the Cisco [Term Format](cisco.md#term-format), Actions and Option tables. The differences are listed below.
+
 ## Header Format
 
 The cisconx header designation has the following format:
@@ -9,42 +11,20 @@ targets:
     cisconx: [filter name] {extended|object-group|inet6|mixed} {enable_dsmo} {noverbose}
 ```
 
-* _filter name_: defines the name or number of the cisconx filter.
-* _extended_: specifies that the output should be an extended access list, and the filter name should be non-numeric.  This is the default option.
-* _object-group_: specifies this is a cisconx extended access list, and that object-groups should be used for ports and addresses.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _noverbose_: omit additional term and address comments. (optional)
-* _mixed_: specifies output will include both IPv6 and IPv4 filters.
-* _enable_dsmo_: Enable discontinuous subnet mask summarization.
-When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses.
-The default format is _inet4_, and is implied if not other argument is given.
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the access list. | |
+| `extended` | Render an extended access list. | Default. |
+| `object-group` | Render an extended access list that uses object-groups for ports and addresses. | |
+| `inet6` | Render an IPv6-only access list. | |
+| `mixed` | Render an IPv4 list and an IPv6 list together. | |
+| `enable_dsmo` | Turn on discontinuous subnet mask summarization. | Optional. |
+| `noverbose` | Leave out extra term and address comments. | Optional. |
 
-## Term Format
+## Differences from Cisco
 
-* for common keys see the [Common](common.md) page.
-
-* _address_: One or more network address tokens, matches source or destination.
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _dscp-match_: Match a DSCP number.
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
-
-## Sub Tokens
-
-## Actions
-
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
-
-## Option
-
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
+| Area | Cisco | CiscoNX |
+|---|---|---|
+| `standard` access lists | Supported | Not supported (raises an error) |
+| `extended` keyword in output | `ip access-list extended NAME` | `ip access-list NAME` |
+| Protocols | Rendered as numbers where possible | Rendered by name, as written in the policy |

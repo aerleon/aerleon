@@ -6,76 +6,116 @@ The Juniper header designation has the following format:
 
 ```yaml
 targets:
-    juniper: [filter name] {inet|inet6|bridge} {dsmo} {not-interface-specific}
+    juniper: [filter name] {inet|inet6|mixed|bridge|ethernet-switching} {enable_dsmo} {not-interface-specific} {filter_enhanced_mode} {noverbose} {ingress|egress} {physical|loopback}
 ```
 
-* _filter name_: defines the name of the Juniper filter.
-* _inet_: specifies the output should be for IPv4 only filters. This is the default format.
-* _inet6_: specifies the output be for IPv6 only filters.
-* _bridge_: specifies the output should render a Juniper bridge filter.
-* _dsmo_: Enable discontinuous subnet mask summarization.
-* _not-interface-specific_: Toggles "interface-specific" inside of a term.
-* _direction_: The direction of the filter on an interface (optional). Use when a term needs this signal.
-* _interface_: The type of interface on which the filter will be applied (optional). Use when a term needs this signal.
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the firewall filter. | |
+| `inet` | Render an IPv4 filter. | Default. |
+| `inet6` | Render an IPv6 filter. | |
+| `mixed` | Render an IPv4 and an IPv6 filter. | The filter names get a `4` or `6` suffix. |
+| `bridge` | Render a bridge filter. | |
+| `ethernet-switching` | Render an ethernet-switching filter. | |
+| `enable_dsmo` | Turn on discontinuous subnet mask summarization. | Optional. |
+| `not-interface-specific` | Leave `interface-specific` out of the filter. | Optional. |
+| `filter_enhanced_mode` | Add `enhanced-mode` to the filter. | Optional. |
+| `noverbose` | Leave out term comments and owner. | Optional. |
+| `ingress`, `egress` | Direction the filter is applied in. | Optional. Used by subclasses such as Juniper EVO. |
+| `physical`, `loopback` | Type of interface the filter is applied to. | Optional. Used by subclasses such as Juniper EVO. |
 
-When _inet4_ or _inet6_ is specified, naming tokens with both IPv4 and IPv6 filters will be rendered using only the specified addresses. The default format is _inet4_, and is implied if not other argument is given.
+The address family must come straight after the filter name. When `inet` or `inet6` is specified, naming tokens that contain both IPv4 and IPv6 addresses are rendered using only the matching addresses.
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. The following tokens are specific to juniper.
 
-* _address_: One or more network address tokens, matches source or destination.
-* _restrict-address-family_: Only include the term in the matching address family filter (eg. for mixed filters).
-* _counter_: Update a counter for matching packets
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _destination-prefix-except_: Specify destination-prefix exception(TODO:cmas Fill in more).
-* _dscp-except_: Do not match the DSCP number.
-* _dscp-match_: Match a DSCP number.
-* _dscp-set_: Match a DSCP set.
-* _ether-type_: Match EtherType field.
-* _filter-term_: Include another filter
-* _flexible-match-range_: Filter based on flexible match options.
-* _forwarding-class_: Specify the forwarding class to match.
-* _forwarding-class-except_: Do not match the specified forwarding classes.
-* _fragment-offset_: specify a fragment offset of a fragmented packet
-* _hop-limit_: Match the hop limit to the specified hop limit or set of hop limits.
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _loss-priority_: Specify loss priority.
-* _next-ip_: Used in filter based forwarding.
-* _owner_: Owner of the term, used for organizational purposes.
-* _packet-length_: specify packet length.
-* _policer_: specify which policer to apply to matching packets.
-* _port_: Matches on source or destination ports. Takes a service token.
-* _port-mirror_: Sends copies of the packets to a remote port, boolean value is used to render this config.
-* _precedence_: specify precedence of range 0-7.  May be a single integer, or a space separated list.
-* _protocol-except_: allow all protocol "except" specified.
-* _qos_: apply quality of service classification to matching packets (e.g. qos:: af4)
-* _routing-instance_: specify routing instance for matching packets.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _source-prefix_: specify source-prefix matching (e.g. source-prefix:: configured-neighbors-only).
-* _source-prefix-except_: specify destination-prefix exception(TODO:cmas Fill in more).
-* _traffic-class-count_:
-* _traffic-type_: specify traffic-type
-* _ttl_: Matches on TTL.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+**Match conditions** (rendered under `from`):
 
-## Sub Tokens
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `address` | Address tokens matched as source **or** destination. | `address: INTERNAL` | |
+| `destination-prefix` | Match a prefix-list already configured on the device. | `destination-prefix: local-addrs` | Renders as `destination-prefix-list`. |
+| `destination-prefix-except` | Exclude a configured prefix-list. | `destination-prefix-except: vip-addrs` | Rendered as `… except;` inside `destination-prefix-list`. |
+| `dscp-except` | Match anything except these DSCP values. | `dscp-except: be` | Renders as `traffic-class-except` in IPv6 filters. |
+| `dscp-match` | Match DSCP values. | `dscp-match: af41 af42` | Renders as `traffic-class` in IPv6 filters. |
+| `ether-type` | Match EtherType. | `ether-type: arp` | |
+| `flexible-match-range` | Match on raw packet bytes. | see example below | Keys: `match-start` (`layer-3`, `layer-4`, `payload`), `byte-offset`, `bit-offset`, `bit-length`, `range`, `range-except`, `flexible-range-name`. Quote hex values. |
+| `forwarding-class` | Match forwarding classes. | `forwarding-class: [best-effort]` | |
+| `forwarding-class-except` | Match anything except these forwarding classes. | `forwarding-class-except: [network-control]` | |
+| `fragment-offset` | Match fragment offset. | `fragment-offset: 1-8191` | |
+| `hop-limit` | Match hop limit. | `hop-limit: 255` | IPv6 filters only. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
+| `packet-length` | Match packet length. | `packet-length: 64-1500` | |
+| `port` | Service tokens matched as source **or** destination port. | `port: DNS` | |
+| `precedence` | Match IP precedence. | `precedence: 5 6` | Values must be 0-7. |
+| `protocol-except` | Match every protocol except the ones listed. | `protocol-except: tcp` | |
+| `restrict-address-family` | Only render the term in the matching address family. | `restrict-address-family: inet6` | Useful in `mixed` filters. |
+| `source-prefix` | Match a prefix-list already configured on the device. | `source-prefix: configured-neighbors-only` | Renders as `source-prefix-list`. |
+| `source-prefix-except` | Exclude a configured prefix-list. | `source-prefix-except: bad-neighbors` | Rendered as `… except;` inside `source-prefix-list`. |
+| `traffic-type` | Match traffic type. | `traffic-type: broadcast` | |
+| `ttl` | Match TTL. | `ttl: 1` | IPv4 filters only. |
+
+**Actions and modifiers** (rendered under `then`):
+
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter` | Count matching packets. | `counter: ssh-hits` | Renders `count <name>`. |
+| `dscp-set` | Rewrite the DSCP value. | `dscp-set: af41` | Renders as `traffic-class` in IPv6 filters. |
+| `encapsulate` | Encapsulate matching packets using a tunnel profile. | `encapsulate: gre-profile` | |
+| `filter-term` | Call another filter from this term. | `filter-term: common-filter` | Renders `filter <name>;` and nothing else. |
+| `logging` | Log matching packets. | `logging: true` | `local` renders `log`; any other value renders `syslog`. |
+| `loss-priority` | Set loss priority. | `loss-priority: low` | |
+| `next-ip` | Forward matching packets to a next hop (filter-based forwarding). | `next-ip: NEXTHOP_ROUTER` | Must resolve to a single host address. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the term comment unless the header uses `noverbose`. |
+| `policer` | Police matching packets. | `policer: rate-limit-1m` | The policer must exist on the device. |
+| `port-mirror` | Send a copy of matching packets to the port mirror. | `port-mirror: true` | |
+| `qos` | Set the forwarding class. | `qos: af4` | Renders `forwarding-class <value>`. |
+| `routing-instance` | Send matching packets to a routing instance. | `routing-instance: scrubbing` | Replaces the normal action. |
+| `traffic-class-count` | Count by traffic class. | `traffic-class-count: tcc` | |
+
+??? example "Terms using juniper tokens"
+    ```yaml
+    - name: police-bgp
+      source-prefix: configured-neighbors-only
+      protocol: tcp
+      destination-port: BGP
+      counter: bgp-hits
+      policer: bgp-policer
+      action: accept
+
+    - name: match-flex
+      flexible-match-range:
+        match-start: payload
+        byte-offset: 16
+        bit-offset: 7
+        bit-length: 8
+        range: "0x08"
+      action: deny
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `accept` | |
+| `deny` | `discard` | |
+| `next` | `next term` | |
+| `reject` | `reject` | |
+| `reject-with-tcp-rst` | `reject tcp-reset` | |
 
 ## Option
 
-* _.*_: wat
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024-65535 for udp if destination port is not defined.
-* _first-fragment_: Only match on first fragment of a fragmented pakcet.
-* _sample_: Samples traffic for netflow.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| *any other value* | Passed through as-is. | `option: syn-flag` | Rendered as `<value>;` under `from`. Aerleon does not check it. |
+| `established` | Match established connections. | `option: established` | Adds `tcp-established` for TCP-only terms. For UDP, sets the destination port to 1024-65535 if none is given. |
+| `first-fragment` | Match the first fragment of a fragmented packet. | `option: first-fragment` | |
+| `inactive` | Render the term but mark it inactive. | `option: inactive` | Prefixes the term with `inactive:`. |
+| `initial` | Match the first packet of a TCP connection. | `option: initial` | Renders `tcp-initial`. Only applied when the term matches `tcp`. |
+| `is-fragment` | Match fragments. | `option: is-fragment` | Raises an error in IPv6 filters. |
+| `not-syn-ack` | Match TCP packets that are not SYN+ACK. | `option: not-syn-ack` | Renders `tcp-flags "!(syn&ack)"`. |
+| `rst` | Match TCP packets with RST set. | `option: rst` | Renders `tcp-flags "rst"`. |
+| `sample` | Sample matching traffic. | `option: sample` | Adds `sample` to the term's actions. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
+| `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | |

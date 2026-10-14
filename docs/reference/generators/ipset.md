@@ -2,58 +2,52 @@
 
 Ipset is a system inside the Linux kernel, which can very efficiently store and match IPv4 and IPv6 addresses. This can be used to dramatically increase performance of iptables firewall.
 
-## Header Format
+The ipset generator is built on the [IpTables](iptables.md) generator. Terms, actions and options work the same way; the differences are below.
 
-The Ipset header designation follows the Iptables format above, but uses the target platform of 'ipset':
+## Header Format
 
 ```yaml
 targets:
-    ipset: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {truncatenames} {nostate} {inet|inet6}
+    ipset: [INPUT|OUTPUT|FORWARD|custom] {ACCEPT|DROP} {inet|inet6} {nostate} {abbreviateterms} {truncateterms} {noverbose} {exists}
 ```
 
-## Term Format
+All options work as described for [IpTables](iptables.md), except:
 
-* for common keys see the [Common](common.md) page.
+| Option | Description | Notes |
+|---|---|---|
+| `exists` | Add `-exist` to the `create` and `add` commands, so re-running them doesn't fail. | ipset only. |
+| `nochainedterms` | — | Not accepted (raises an error). ipset never uses per-term chains anyway: rules always go directly in the filter's chain. |
 
-* _counter_: Update a counter for matching packets
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _destination-interface_: Specify specific interface a term should apply to (e.g. destination-interface:: eth3)
-* _destination-prefix_: Specify destination-prefix matching (e.g. source-prefix:: configured-neighbors-only)
-* _fragment-offset_: specify a fragment offset of a fragmented packet
-* _icmp-code_: Specifies the ICMP code to filter on.
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _packet-length_: specify packet length.
-* _routing-instance_: specify routing instance for matching packets.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _source-interface_: specify specific interface a term should apply to (e.g. source-interface:: eth3).
-* _source-prefix_: specify source-prefix matching (e.g. source-prefix:: configured-neighbors-only).
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+## Differences from IpTables
 
-## Sub Tokens
+When a term has more than one source or destination address, the addresses are put in an ipset instead of one rule per address. The output starts with the set commands, between `# begin:ipset-rules` and `# end:ipset-rules`, followed by the iptables rules.
 
-## Actions
+| Item | Format | Notes |
+|---|---|---|
+| Set name | `<term>-src`, `<term>-dst` | `-v6` is added for `inet6`. Names are cut to 31 characters. |
+| Set type | `hash:net` | `hashsize` and `maxelem` are sized to the number of addresses. |
+| Rule match | `-m set --match-set <set> src` (or `dst`) | A single address uses plain `-s`/`-d`. |
+| Exclusions | Applied before the set is built | The set only holds the remaining addresses. |
+| Chains | Rules go directly in the filter's chain | No `-N <term>` chain per term, unlike iptables. |
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+??? example "A term and its output"
+    With header `ipset: INPUT ACCEPT`, and `INTERNAL = 10.0.0.0/8 192.168.0.0/16`:
 
-## Option
+    ```yaml
+    - name: allow-ssh
+      source-address: INTERNAL
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
 
-* _ack_: Match on ACK flag being present.
-* _all_: Matches all protocols.
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _fin_: Match on FIN flag being present.
-* _first-fragment_: Only match on first fragment of a fragmented pakcet.
-* _initial_: Only matches on initial packet.
-* _is-fragment_: Matches on if a packet is a fragment.
-* _none_: Matches none.
-* _psh_: Match on PSH flag being present.
-* _rst_: Match on RST flag being present.
-* _sample_: Samples traffic for netflow.
-* _syn_: Match on SYN flag being present.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
-* _tcp-initial_: Only match initial packet for TCP protocol.
-* _urg_: Match on URG flag being present.
+    ```text
+    # begin:ipset-rules
+    create allow-ssh-src hash:net family inet hashsize 4 maxelem 4
+    add allow-ssh-src 10.0.0.0/8
+    add allow-ssh-src 192.168.0.0/16
+    # end:ipset-rules
+    ...
+    -P INPUT ACCEPT
+    -A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    ```

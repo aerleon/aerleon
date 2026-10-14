@@ -6,30 +6,38 @@ The ciscoasa header designation has the following format:
 
 ```yaml
 targets:
-    ciscoasa: [filter name]
+    ciscoasa: [filter name] {enable_dsmo}
 ```
+
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the access list. | |
+| `enable_dsmo` | Turn on discontinuous subnet mask summarization. | Optional. |
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. The following tokens are specific to ciscoasa:
 
-* _destination-exclude_: Exclude one or more address tokens from the specified destination-address
-* _logging_: Specify that this packet should be logged via syslog.
-* _owner_: Owner of the term, used for organizational purposes.
-* _source-exclude_: exclude one or more address tokens from the specified source-address.
-* _verbatim_: this specifies that the text enclosed within quotes should be rendered into the output without interpretation or modification.  This is sometimes used as a temporary workaround while new required features are being added.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `logging` | Log matching packets. | `logging: true` | Adds `log`. Use `logging: disable` to render `log disable`. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added as a `remark`. |
 
-## Sub Tokens
+Unlike [Cisco](cisco.md), ciscoasa does not support `address`, `restrict-address-family`, `dscp-match` or `icmp-code`.
 
 ## Actions
 
-* _accept_
-* _deny_
-* _next_
-* _reject_
-* _reject-with-tcp-rst_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `permit` | |
+| `deny` | `deny` | |
+| `next` | `! next` | Rendered as a comment. |
+| `reject` | `deny` | |
+| `reject-with-tcp-rst` | `deny` | TCP reset is not supported. |
 
 ## Option
 
-* _established_: Only match established connections, implements tcp-established for tcp and sets destination port to 1024- 65535 for udp if destination port is not defined.
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags. Not supported for other protocols.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established` | Match established TCP connections. | `option: established` | Adds `established` to TCP rules only. Unlike Cisco, no high ports are added for UDP. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `established` to TCP rules. |

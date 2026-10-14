@@ -1,51 +1,82 @@
 # NVUE API
 
+Renders JSON configuration for NVIDIA Cumulus Linux switches, in the NVUE (NVIDIA User Experience) REST API format. Like iptables, one rule is created for every combination of source address, destination address, protocol and port.
+
 ## Header Format
 
 The NVUE API header designation has the following format:
 
 ```yaml
 targets:
-    nvueapi: [filter name] {ipv4|ipv6}
+    nvueapi: [filter name] [ipv4|ipv6]
 ```
 
-* _filter name_: defines the name of the NVUE ACL.
-* _ipv4_: specifies that the resulting filter should only render IPv4 addresses. This is the default format.
-* _ipv6_: specifies that the resulting filter should only render IPv6 addresses.
+| Option | Description | Notes |
+|---|---|---|
+| `filter name` | Name of the NVUE ACL. | |
+| `ipv4` | IPv4 ACL. | `inet` also works. |
+| `ipv6` | IPv6 ACL. | `inet6` also works. |
 
-The NVUE API generator produces JSON configuration for NVIDIA Cumulus Linux switches using the NVUE (NVIDIA User Experience) REST API format. This generator follows iptables patterns for multiple address expansion, creating separate rules for each combination of source and destination addresses.
+`mixed` and `mac` ACLs are not supported and raise an error. Use separate IPv4 and IPv6 ACLs. Always give the address family; see [Known Issues](#known-issues).
 
 ## Term Format
 
-* for common keys see the [Common](common.md) page.
+For common keys see the [Common](common.md) page. NVUE does **not** support `source-exclude`, `destination-exclude` or `verbatim`. It also reads:
 
-* _logging_: Specify that this packet should be logged via syslog.
-* _option_: Supports TCP state matching with 'tcp-established' option.
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `logging` | Log matching packets. | `logging: true` | Adds `log` to the rule's action. |
 
-## Sub Tokens
+* Rules are numbered 10, 20, 30, …
+* `comment` becomes the rule's `remark`.
+* Terms with no addresses in the ACL's family are skipped.
+* Port ranges are rendered as `start:end`.
+
+??? example "A term and its output"
+    With header `nvueapi: myacl ipv4`:
+
+    ```yaml
+    - name: allow-ssh
+      source-address: INTERNAL
+      protocol: tcp
+      destination-port: SSH
+      action: accept
+    ```
+
+    ```json
+    {
+      "acl": {
+        "myacl": {
+          "type": "ipv4",
+          "rule": {
+            "10": {
+              "action": {"permit": {}},
+              "match": {"ip": {"protocol": "tcp", "source-ip": "10.0.0.0/8", "dest-port": "22"}}
+            }
+          }
+        }
+      }
+    }
+    ```
 
 ## Actions
 
-* _accept_
-* _deny_
-* _reject_
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `permit` | |
+| `deny` | `deny` | |
+| `reject` | `deny` | |
 
 ## Option
 
-* _tcp-established_: Only match established tcp connections, based on stateful match or TCP flags.
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established`, `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `tcp: {state: established}`. Only applied to `tcp`; on other protocols it is silently ignored, so the rule is broader than intended. |
 
-## Supported Features
+Any other option value is accepted but ignored.
 
-* IPv4 and IPv6 address families (separate ACLs)
-* TCP, UDP, ICMP, and ICMPv6 protocols
-* Source and destination address matching (single CIDR per rule)
-* Source and destination port matching (ranges supported in porta:portz format)
-* ICMP type matching (converted to iptables format)
-* TCP state matching (established connections)
-* Action logging
+## Known Issues
 
-## Limitations
-
-* Does not support address exclusions (source-address-exclude, destination-address-exclude)
-* Does not support MAC address filtering rules
-* Does not support mixed address family ACLs (use separate IPv4 and IPv6 ACLs)
+!!! bug "Known issues"
+    * **The address family is required.** Leaving out the address family crashes with `IndexError`, even though IPv4 is meant to be the default. Always give `ipv4` or `ipv6`.
+    * **`expiration` crashes the generator.** Any term with an `expiration` date fails with `TypeError: '<=' not supported between instances of 'datetime.date' and 'int'`.
