@@ -1,5 +1,7 @@
 # Juniper MSMPC
 
+Renders Junos MS-MPC service filters.
+
 ## Header Format
 
 The Juniper MSMPC header designation has the following format:
@@ -24,7 +26,7 @@ Only one address family and one direction can be given. When `inet` or `inet6` i
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. The following tokens are specific to msmpc:
+For common keys see the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. The following tokens are specific to Juniper MSMPC:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

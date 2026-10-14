@@ -1,5 +1,7 @@
 # Fortigate
 
+Renders FortiOS firewall policies.
+
 ## Header Format
 
 The Fortigate header designation has the following format:
@@ -44,10 +46,10 @@ Policy comments (owner plus `comment`) are cut to Fortigate's length limit, with
 
 ## Actions
 
-| Action | Notes |
-|---|---|
-| `accept` | |
-| `deny` | |
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `set action accept` | |
+| `deny` | — | No `set action` line is written, so the policy uses the FortiOS default, `deny`. |
 
 Other actions are rejected.
 

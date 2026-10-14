@@ -4,6 +4,8 @@ Renders OpenBSD/FreeBSD `pf.conf` rules. Address tokens become `pf` tables (`tab
 
 ## Header Format
 
+The PacketFilter header designation has the following format:
+
 ```yaml
 targets:
     packetfilter: [filter name] {inet|inet6|mixed} {in|out} {nostate}
@@ -20,7 +22,7 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to packetfilter:
+For common keys see the [Common](common.md) page. The following tokens are specific to PacketFilter:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

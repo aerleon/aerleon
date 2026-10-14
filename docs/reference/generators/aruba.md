@@ -1,8 +1,10 @@
 # Aruba
 
+Renders ArubaOS access lists.
+
 ## Header Format
 
-The aruba header designation has the following format:
+The Aruba header designation has the following format:
 
 ```yaml
 targets:

@@ -1,6 +1,10 @@
 # JuniperSRX
 
+Renders Juniper SRX security policies.
+
 ## Header Format
+
+The JuniperSRX header designation has the following format:
 
 ```yaml
 targets:
@@ -23,7 +27,7 @@ Zone names can't be any of the option keywords above.
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored. The following tokens are specific to srx:
+For common keys see the [Common](common.md) page. SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored. The following tokens are specific to JuniperSRX:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

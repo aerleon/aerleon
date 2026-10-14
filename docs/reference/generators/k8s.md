@@ -40,10 +40,10 @@ For common keys see the [Common](common.md) page. K8s does **not** support `sour
 
 ## Actions
 
-| Action | Notes |
-|---|---|
-| `accept` | |
-| `deny` | Only allowed for a default deny: a `deny` term with no match criteria. It renders a policy with no rules, which blocks all traffic in that direction. Any other `deny` term raises an error. |
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | An `ingress` or `egress` rule | |
+| `deny` | A `NetworkPolicy` with no rules | Only allowed for a default deny: a `deny` term with no match criteria. The empty policy blocks all traffic in that direction. Any other `deny` term raises an error. |
 
 ## Output
 

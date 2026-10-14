@@ -7,6 +7,8 @@ Renders ACL sets for [SONiC](https://sonicfoundation.dev/) switches as JSON. The
 
 ## Header Format
 
+The SONiC header designation has the following format:
+
 ```yaml
 targets:
     sonic: [filter name] {inet|inet6|mixed}

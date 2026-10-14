@@ -2,12 +2,14 @@
 
 Ipset is a system inside the Linux kernel, which can very efficiently store and match IPv4 and IPv6 addresses. This can be used to dramatically increase performance of iptables firewall.
 
-The ipset generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
+The Ipset generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
 
 !!! info "Tables included from IpTables"
     The shared tables under Term Format, Actions and Option are included from the [IpTables](iptables.md) page, so they always match it. Anything that differs on Ipset is called out on this page.
 
 ## Header Format
+
+The Ipset header designation has the following format:
 
 ```yaml
 targets:

@@ -1,5 +1,7 @@
 # Juniper
 
+Renders Junos firewall filters.
+
 ## Header Format
 
 The Juniper header designation has the following format:
@@ -28,7 +30,7 @@ The address family must come straight after the filter name. When `inet` or `ine
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to juniper.
+For common keys see the [Common](common.md) page. The following tokens are specific to Juniper.
 
 <!-- --8<-- [start:term-format] -->
 

@@ -1,8 +1,10 @@
 # CiscoASA
 
+Renders Cisco ASA access lists.
+
 ## Header Format
 
-The ciscoasa header designation has the following format:
+The CiscoASA header designation has the following format:
 
 ```yaml
 targets:
@@ -16,7 +18,7 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to ciscoasa:
+For common keys see the [Common](common.md) page. The following tokens are specific to CiscoASA:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

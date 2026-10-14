@@ -7,7 +7,7 @@ Renders `netsh ipsec static add …` commands.
 
 ## Header Format
 
-The Windows IPSec header designation has the following format:
+The WindowsIPSec header designation has the following format:
 
 ```yaml
 targets:
@@ -26,10 +26,10 @@ For common keys see the [Common](common.md) page. WindowsIPSec does **not** supp
 
 ## Actions
 
-| Action | Notes |
-|---|---|
-| `accept` | |
-| `deny` | |
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `action=permit` | |
+| `deny` | `action=block` | |
 
 ## Option
 

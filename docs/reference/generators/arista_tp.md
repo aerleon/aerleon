@@ -1,8 +1,10 @@
 # Arista Traffic-Policy
 
+Renders Arista EOS traffic-policies. See [Arista EOS: Support for traffic-policy on interfaces](https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/).
+
 ## Header Format
 
-The arista_tp header designation has the following format:
+The Arista Traffic-Policy header designation has the following format:
 
 ```yaml
 targets:
@@ -16,66 +18,6 @@ targets:
 | `inet6` | Render IPv6 addresses only. | |
 | `mixed` | Render both IPv4 and IPv6 match statements. | Default. |
 | `noverbose` | Leave out term comments and owner. | Optional. |
-
-## Term Format
-
-For common keys see the [Common](common.md) page. The following tokens are specific to arista_tp:
-
-| Token | Description | Example | Notes |
-|---|---|---|---|
-| `counter` | Count matching packets in a named counter. | `counter: ssh-replies` | Adds `count <name>` to the term's actions and lists the name in the policy's `counter` line. A `.` in the name is replaced with `-`. |
-| `destination-prefix` | Match a field-set already configured on the device. | `destination-prefix: DC-NETS` | Renders as `destination prefix field-set …`. |
-| `dscp-set` | Set a DSCP value. | `dscp-set: af41` | Accepted, but not currently rendered in the output. |
-| `fragment-offset` | Match on fragment offset. | `fragment-offset: 1-8191` | Renders as `fragment offset …`. |
-| `hop-limit` | Match on IPv6 hop limit. | `hop-limit: 255` | Also renders as `ttl …`. |
-| `icmp-code` | ICMP code to match. | `icmp-code: 0` | Only applied when the term has a single `icmp-type`. |
-| `logging` | Log matching packets. | `logging: true` | Only rendered for non-accept actions. On an `accept` term it is skipped with a warning. |
-| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the term comment unless the header uses `noverbose`. |
-| `packet-length` | Match on IP packet length. | `packet-length: 1-1500` | Renders as `ip length …`. |
-| `protocol-except` | Match every protocol except the ones listed. | `protocol-except: tcp udp` | Renders as a protocol number range with the listed protocols removed. |
-| `source-prefix` | Match a field-set already configured on the device. | `source-prefix: CORP-NETS` | Renders as `source prefix field-set …`. Aerleon does not create the field-set. |
-| `ttl` | Match on TTL. | `ttl: 1` | Renders as `ttl …`. |
-
-!!! warning "Accepted but not rendered"
-    A term that uses `port`, `dscp-match`, `dscp-except`, `ether-type`, `flexible-match-range`, `forwarding-class`, `forwarding-class-except`, `next-ip` or `traffic-type` is skipped with a warning.
-
-??? example "A term using arista_tp tokens"
-    From `policies/pol/sample_arista_tp_yaml.yaml`:
-
-    ```yaml
-    - name: accept-ssh-replies
-      source-port: SSH
-      protocol: tcp
-      option: tcp-established
-      counter: ssh-replies
-      action: accept
-    ```
-
-## Actions
-
-| Action | Rendered as | Notes |
-|---|---|---|
-| `accept` | *(no action)* | Traffic-policies allow by default, so no `actions` block is written unless `counter` or `logging` is set. |
-| `deny` | `drop` | |
-| `next` | — | Not supported; the term is skipped with a warning. |
-| `reject` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
-| `reject-with-tcp-rst` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
-
-Note, within traffic-policies not configuring an explicit `deny` action (or `reject` variant) will result in an implicit allow for a term.
-
-## Option
-
-| Option | Description | Example | Notes |
-|---|---|---|---|
-| `established` | Match established connections. | `option: established` | Adds the `established` flag for TCP-only terms. |
-| `first-fragment` | — | | Not supported; the term is skipped with a warning. |
-| `initial` | Match the initial packet of a TCP connection. | `option: initial` | TCP-only terms. |
-| `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragment`. Raises an error in an `inet6` filter. In a `mixed` filter the IPv6 version of the term is skipped. Can't be combined with port matches (term is skipped). |
-| `rst` | Match TCP packets with RST set. | `option: rst` | TCP-only terms. |
-| `sample` | — | | Not supported; the term is skipped with a warning. |
-| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
-
-Any other option value is accepted but ignored.
 
 ## How terms are rendered
 
@@ -182,9 +124,65 @@ A term that isn't a [default term](#default-terms) must match on at least one of
 
 Other match tokens, such as `packet-length` or `option`, don't count on their own. For example, a term that only sets `packet-length` is skipped.
 
-## Documentation
+## Term Format
 
-* [Arista EOS: Support for traffic-policy on interfaces](https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/)
+For common keys see the [Common](common.md) page. The following tokens are specific to Arista Traffic-Policy:
+
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter` | Count matching packets in a named counter. | `counter: ssh-replies` | Adds `count <name>` to the term's actions and lists the name in the policy's `counter` line. A `.` in the name is replaced with `-`. |
+| `destination-prefix` | Match a field-set already configured on the device. | `destination-prefix: DC-NETS` | Renders as `destination prefix field-set …`. |
+| `dscp-set` | Set a DSCP value. | `dscp-set: af41` | Accepted, but not currently rendered in the output. |
+| `fragment-offset` | Match on fragment offset. | `fragment-offset: 1-8191` | Renders as `fragment offset …`. |
+| `hop-limit` | Match on IPv6 hop limit. | `hop-limit: 255` | Also renders as `ttl …`. |
+| `icmp-code` | ICMP code to match. | `icmp-code: 0` | Only applied when the term has a single `icmp-type`. |
+| `logging` | Log matching packets. | `logging: true` | Only rendered for non-accept actions. On an `accept` term it is skipped with a warning. |
+| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the term comment unless the header uses `noverbose`. |
+| `packet-length` | Match on IP packet length. | `packet-length: 1-1500` | Renders as `ip length …`. |
+| `protocol-except` | Match every protocol except the ones listed. | `protocol-except: tcp udp` | Renders as a protocol number range with the listed protocols removed. |
+| `source-prefix` | Match a field-set already configured on the device. | `source-prefix: CORP-NETS` | Renders as `source prefix field-set …`. Aerleon does not create the field-set. |
+| `ttl` | Match on TTL. | `ttl: 1` | Renders as `ttl …`. |
+
+!!! warning "Accepted but not rendered"
+    A term that uses `port`, `dscp-match`, `dscp-except`, `ether-type`, `flexible-match-range`, `forwarding-class`, `forwarding-class-except`, `next-ip` or `traffic-type` is skipped with a warning.
+
+??? example "A term using arista_tp tokens"
+    From `policies/pol/sample_arista_tp_yaml.yaml`:
+
+    ```yaml
+    - name: accept-ssh-replies
+      source-port: SSH
+      protocol: tcp
+      option: tcp-established
+      counter: ssh-replies
+      action: accept
+    ```
+
+## Actions
+
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | *(no action)* | Traffic-policies allow by default, so no `actions` block is written unless `counter` or `logging` is set. |
+| `deny` | `drop` | |
+| `next` | — | Not supported; the term is skipped with a warning. |
+| `reject` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
+| `reject-with-tcp-rst` | `drop` | Not supported by traffic-policies; rendered as `drop`. |
+
+Note, within traffic-policies not configuring an explicit `deny` action (or `reject` variant) will result in an implicit allow for a term.
+
+## Option
+
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established` | Match established connections. | `option: established` | Adds the `established` flag for TCP-only terms. |
+| `first-fragment` | — | | Not supported; the term is skipped with a warning. |
+| `initial` | Match the initial packet of a TCP connection. | `option: initial` | TCP-only terms. |
+| `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragment`. Raises an error in an `inet6` filter. In a `mixed` filter the IPv6 version of the term is skipped. Can't be combined with port matches (term is skipped). |
+| `rst` | Match TCP packets with RST set. | `option: rst` | TCP-only terms. |
+| `sample` | — | | Not supported; the term is skipped with a warning. |
+| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
+
+Any other option value is accepted but ignored.
 
 ## Output
 

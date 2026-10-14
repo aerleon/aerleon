@@ -4,6 +4,8 @@ Renders a pcap/BPF filter expression (for `tcpdump`, Wireshark, etc.) that match
 
 ## Header Format
 
+The PcapFilter header designation has the following format:
+
 ```yaml
 targets:
     pcap: [filter name] {inet|inet6|mixed} {in|out}
@@ -35,11 +37,11 @@ For common keys see the [Common](common.md) page. PcapFilter does **not** suppor
 
 ## Actions
 
-| Action | Notes |
-|---|---|
-| `accept` | Added to the "match" side of the filter. |
-| `deny`, `reject` | Added to the "and not" side of the filter. |
-| `next` | Accepted, but the term is dropped. |
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | The "match" side of the filter | |
+| `deny`, `reject` | The "and not" side of the filter | |
+| `next` | — | Accepted, but the term is dropped. |
 
 ## Option
 

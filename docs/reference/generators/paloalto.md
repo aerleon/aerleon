@@ -4,7 +4,7 @@ Renders a Palo Alto Networks firewall configuration (security rules, address obj
 
 ## Header Format
 
-The paloalto header designation has the following format:
+The PaloAltoFW header designation has the following format:
 
 ```yaml
 targets:

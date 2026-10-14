@@ -36,7 +36,7 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to proxmox:
+For common keys see the [Common](common.md) page. The following tokens are specific to Proxmox:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
@@ -61,17 +61,17 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 Options set the log level used when the term has `logging`.
 
-| Option | Log level |
-|---|---|
-| `log_alert` | `alert` |
-| `log_critical` | `crit` |
-| `log_debug` | `debug` |
-| `log_emergency` | `emerg` |
-| `log_error` | `err` |
-| `log_info` | `info` |
-| `log_nolog` | `nolog` |
-| `log_notice` | `notice` |
-| `log_warning` | `warning` |
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `log_alert` | Log at the `alert` level. | `option: log_alert` | |
+| `log_critical` | Log at the `crit` level. | `option: log_critical` | |
+| `log_debug` | Log at the `debug` level. | `option: log_debug` | |
+| `log_emergency` | Log at the `emerg` level. | `option: log_emergency` | |
+| `log_error` | Log at the `err` level. | `option: log_error` | |
+| `log_info` | Log at the `info` level. | `option: log_info` | |
+| `log_nolog` | Log at the `nolog` level. | `option: log_nolog` | Turns logging off for the term. |
+| `log_notice` | Log at the `notice` level. | `option: log_notice` | |
+| `log_warning` | Log at the `warning` level. | `option: log_warning` | |
 
 ## Output
 

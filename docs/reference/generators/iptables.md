@@ -1,10 +1,11 @@
 # IpTables
 
-> NOTE: Iptables produces output that must be passed, line by line, to the 'iptables/ip6tables' command line.  For 'iptables-restore' compatible output, please use the [Speedway](speedway.md) generator.
+!!! note
+    IpTables produces output that must be passed, line by line, to the `iptables`/`ip6tables` command line. For `iptables-restore` compatible output, use the [Speedway](speedway.md) generator.
 
 ## Header Format
 
-The Iptables header designation has the following format:
+The IpTables header designation has the following format:
 
 ```yaml
 targets:
@@ -26,7 +27,7 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to iptables:
+For common keys see the [Common](common.md) page. The following tokens are specific to IpTables:
 
 <!-- --8<-- [start:term-format] -->
 

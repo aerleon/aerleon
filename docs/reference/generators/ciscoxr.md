@@ -1,13 +1,13 @@
 # CiscoXR
 
-The ciscoxr generator is built on the [Cisco](cisco.md) generator. It supports the same tokens, actions and options, plus `next-ip`.
+The CiscoXR generator is built on the [Cisco](cisco.md) generator. It supports the same tokens, actions and options, plus `next-ip`.
 
 !!! info "Tables included from Cisco"
     The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on CiscoXR is called out on this page.
 
 ## Header Format
 
-The ciscoxr header designation has the following format:
+The CiscoXR header designation has the following format:
 
 ```yaml
 targets:

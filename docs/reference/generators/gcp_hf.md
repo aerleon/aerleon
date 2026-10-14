@@ -4,7 +4,7 @@ Renders a Google Cloud [hierarchical firewall policy](https://cloud.google.com/f
 
 ## Header Format
 
-The gcp_hf header designation has the following format:
+The GCP Hierarchical Firewall header designation has the following format:
 
 ```yaml
 targets:

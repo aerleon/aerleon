@@ -1,11 +1,13 @@
 # Brocade
 
-The brocade generator is built on the [Cisco](cisco.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
+The Brocade generator is built on the [Cisco](cisco.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
 
 !!! info "Tables included from Cisco"
     The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on Brocade is called out on this page.
 
 ## Header Format
+
+The Brocade header designation has the following format:
 
 ```yaml
 targets:

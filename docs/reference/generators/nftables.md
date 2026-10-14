@@ -4,7 +4,7 @@ Renders an nftables ruleset for the `nft` command. Each term becomes its own cha
 
 ## Header Format
 
-The NFTables header designation has the following format:
+The Nftables header designation has the following format:
 
 ```yaml
 targets:
@@ -30,30 +30,6 @@ This generator always builds a stateful ruleset using [conntrack](https://wiki.n
 * Every base chain starts with `ct state established,related accept`, so return traffic is always allowed.
 * Every non-deny rule gets `ct state new`, so only new connections match. Invalid packets fall through to the default policy.
 * Terms that use `established` or `tcp-established`, and stateless reply terms, are skipped with a warning, because the base chain already allows return traffic.
-
-## Term Format
-
-For common keys see the [Common](common.md) page. Nftables does **not** support `verbatim`, `owner` or the other generator-specific tokens. It also reads:
-
-| Token | Description | Example | Notes |
-|---|---|---|---|
-| `counter` | Count matching packets. | `counter: ssh-hits` | Renders an anonymous `counter`. The name is ignored: named counters aren't used, since each term already has its own chain. |
-| `destination-interface` | Match the outgoing interface. | `destination-interface: eth1` | Renders `oifname "eth1"`. |
-| `logging` | Log matching packets. | `logging: true` | Renders `log prefix "<term>"`. `true`, `syslog` and `local` all do the same; `disable` turns it off. |
-| `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `iifname "eth0"`. |
-
-## Actions
-
-| Action | Rendered as | Notes |
-|---|---|---|
-| `accept` | `accept` | Adds `ct state new`. |
-| `deny` | `drop` | |
-
-## Option
-
-| Option | Description | Example | Notes |
-|---|---|---|---|
-| `established`, `tcp-established` | — | | The term is skipped with a warning. See [Stateful firewall only](#stateful-firewall-only). |
 
 ## ICMP Types
 
@@ -118,13 +94,29 @@ Some Aerleon ICMP type names are changed to the names nftables expects. Names wi
 
 _source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
 
-## Reporting bugs
+## Term Format
 
-When reporting bugs about this generator, please include:
+For common keys see the [Common](common.md) page. Nftables does **not** support `verbatim`, `owner` or the other generator-specific tokens. It also reads:
 
-1. Example policy (.pol or .yaml file)
-1. Observed output (.nft file)
-1. Expected (correct) output in nftables syntax
+| Token | Description | Example | Notes |
+|---|---|---|---|
+| `counter` | Count matching packets. | `counter: ssh-hits` | Renders an anonymous `counter`. The name is ignored: named counters aren't used, since each term already has its own chain. |
+| `destination-interface` | Match the outgoing interface. | `destination-interface: eth1` | Renders `oifname "eth1"`. |
+| `logging` | Log matching packets. | `logging: true` | Renders `log prefix "<term>"`. `true`, `syslog` and `local` all do the same; `disable` turns it off. |
+| `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `iifname "eth0"`. |
+
+## Actions
+
+| Action | Rendered as | Notes |
+|---|---|---|
+| `accept` | `accept` | Adds `ct state new`. |
+| `deny` | `drop` | |
+
+## Option
+
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `established`, `tcp-established` | — | | The term is skipped with a warning. See [Stateful firewall only](#stateful-firewall-only). |
 
 ## Output
 
@@ -172,3 +164,9 @@ table ip filtering_policies {
 
 !!! bug "Known issues"
     * **`mixed` filters render every rule twice.** With a `mixed` header, each address is combined with the protocol/port statements from both address families. Every rule appears twice, and a term with a protocol but no ports also gets both an `ip protocol` and a `meta l4proto` rule.
+
+When reporting a bug about this generator, include:
+
+1. Example policy (.pol or .yaml file)
+1. Observed output (.nft file)
+1. Expected (correct) output in nftables syntax

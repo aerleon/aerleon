@@ -7,6 +7,8 @@ SRX Loopback renders a stateless Juniper firewall filter for an SRX loopback int
 
 ## Header Format
 
+The SRXlo header designation has the following format:
+
 ```yaml
 targets:
     srxlo: [filter name] {inet|inet6|mixed|bridge|ethernet-switching} {enable_dsmo} {not-interface-specific} {filter_enhanced_mode} {noverbose} {ingress|egress} {physical|loopback}

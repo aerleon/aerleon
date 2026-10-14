@@ -1,6 +1,6 @@
 # Juniper EVO
 
-The juniperevo generator is built on the [Juniper](juniper.md) generator. It supports exactly the same header options, tokens, actions and options. The only difference is how IPv6 protocols are matched (below).
+The Juniper EVO generator is built on the [Juniper](juniper.md) generator. It supports exactly the same header options, tokens, actions and options. The only difference is how IPv6 protocols are matched (below).
 
 !!! info "Tables included from Juniper"
     The shared tables under Term Format, Actions and Option are included from the [Juniper](juniper.md) page, so they always match it. Anything that differs on Juniper EVO is called out on this page.

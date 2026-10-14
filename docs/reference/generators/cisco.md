@@ -1,8 +1,10 @@
 # Cisco
 
+Renders Cisco IOS access lists.
+
 ## Header Format
 
-The cisco header designation has the following format:
+The Cisco header designation has the following format:
 
 ```yaml
 targets:
@@ -24,7 +26,7 @@ When `inet6` is specified, naming tokens that contain both IPv4 and IPv6 address
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to cisco:
+For common keys see the [Common](common.md) page. The following tokens are specific to Cisco:
 
 <!-- --8<-- [start:term-format] -->
 
