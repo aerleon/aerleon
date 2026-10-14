@@ -778,9 +778,11 @@ class NokiaSRLTest(absltest.TestCase):
         with self.assertRaises(nokiasrl.PrefixListWithAddressError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
-    def _Entries(self, header, terms):
+    def _Acl(self, header, terms):
+        return nokiasrl.NokiaSRLinux(policy.ParsePolicy(header + terms, self.naming), EXP_INFO)
+
+    def _Entries(self, acl):
         """Return the entries of each filter, keyed by filter key and type."""
-        acl = nokiasrl.NokiaSRLinux(policy.ParsePolicy(header + terms, self.naming), EXP_INFO)
         filters = {}
         for ip_filter in json.loads(str(acl)):
             key, body = next(iter(ip_filter.items()))
@@ -790,10 +792,8 @@ class NokiaSRLTest(absltest.TestCase):
     @capture.stdout
     def testIcmpType(self):
         """One entry per ICMP type, in the r24.3.2 nested syntax."""
-        acl = nokiasrl.NokiaSRLinux(
-            policy.ParsePolicy(GOOD_HEADER_R24_3_2 + GOOD_ICMP_TYPE, self.naming), EXP_INFO
-        )
-        entries = self._Entries(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE)
+        acl = self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE)
+        entries = self._Entries(acl)
         self.assertEqual(
             [e['match'] for e in entries['ipv4']],
             [
@@ -807,21 +807,21 @@ class NokiaSRLTest(absltest.TestCase):
 
     def testIcmpTypePre2024(self):
         """The ICMP container is directly under match in the flat syntax."""
-        entries = self._Entries(GOOD_HEADER_PRE2024, GOOD_ICMP_TYPE)
+        entries = self._Entries(self._Acl(GOOD_HEADER_PRE2024, GOOD_ICMP_TYPE))
         self.assertEqual(
             [e['match'] for e in entries['ipv4-filter']],
             [{'protocol': 1, 'icmp': {'type': 0}}, {'protocol': 1, 'icmp': {'type': 8}}],
         )
 
     def testIcmpCode(self):
-        entries = self._Entries(GOOD_HEADER_R24_3_2, GOOD_ICMP_CODE)
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_CODE))
         self.assertEqual(
             [e['match'] for e in entries['ipv4']],
             [{'ipv4': {'protocol': 1, 'icmp': {'type': 3, 'code': [3, 4]}}}],
         )
 
     def testIcmpv6Type(self):
-        entries = self._Entries(GOOD_HEADER_INET6, GOOD_ICMPV6_TYPE)
+        entries = self._Entries(self._Acl(GOOD_HEADER_INET6, GOOD_ICMPV6_TYPE))
         self.assertEqual(
             [e['match'] for e in entries['ipv6']],
             [{'next-header': 58, 'icmp6': {'type': 128}}],
@@ -829,7 +829,7 @@ class NokiaSRLTest(absltest.TestCase):
 
     def testIcmpTypeMixed(self):
         """In a mixed filter, ICMP and ICMPv6 terms only render in their own filter."""
-        entries = self._Entries(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE + GOOD_ICMPV6_TYPE)
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE + GOOD_ICMPV6_TYPE))
         self.assertEqual(
             [e['description'] for e in entries['ipv4']], ['good-icmp-type', 'good-icmp-type']
         )
