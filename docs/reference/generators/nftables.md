@@ -164,6 +164,7 @@ table ip filtering_policies {
 
 !!! bug "Known issues"
     * **`mixed` filters render every rule twice.** With a `mixed` header, each address is combined with the protocol/port statements from both address families. Every rule appears twice, and a term with a protocol but no ports also gets both an `ip protocol` and a `meta l4proto` rule.
+    * **A single `icmp-type` value crashes the generator.** A term such as `icmp-type: echo-request` fails with `TypeError: can only concatenate str (not "list") to str`, for both `icmp` and `icmpv6`. Two or more values work.
 
 When reporting a bug about this generator, include:
 

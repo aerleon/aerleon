@@ -132,7 +132,7 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 |---|---|---|---|
 | `counter` | Count matching packets in a named counter. | `counter: ssh-replies` | Adds `count <name>` to the term's actions and lists the name in the policy's `counter` line. A `.` in the name is replaced with `-`. |
 | `destination-prefix` | Match a field-set already configured on the device. | `destination-prefix: DC-NETS` | Renders as `destination prefix field-set …`. |
-| `dscp-set` | Set a DSCP value. | `dscp-set: af41` | Accepted, but not currently rendered in the output. |
+| `dscp-set` | Set a DSCP value. | `dscp-set: af41` | Accepted, but not currently rendered in the output; see [Known Issues](#known-issues). |
 | `fragment-offset` | Match on fragment offset. | `fragment-offset: 1-8191` | Renders as `fragment offset …`. |
 | `hop-limit` | Match on IPv6 hop limit. | `hop-limit: 255` | Also renders as `ttl …`. |
 | `icmp-code` | ICMP code to match. | `icmp-code: 0` | Only applied when the term has a single `icmp-type`. |
@@ -181,6 +181,7 @@ Note, within traffic-policies not configuring an explicit `deny` action (or `rej
 | `rst` | Match TCP packets with RST set. | `option: rst` | TCP-only terms. |
 | `sample` | — | | Not supported; the term is skipped with a warning. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
+| `tcp-initial` | — | `option: tcp-initial` | Accepted, but ignored: no `initial` flag is rendered, so the term matches every packet of the connection. Use `initial` instead; see [Known Issues](#known-issues). |
 
 Any other option value is accepted but ignored.
 
@@ -231,3 +232,5 @@ traffic-policies
 
 !!! bug "Known issues"
     * **`destination-exclude` field-sets mix address families.** Unlike source field-sets, destination field-sets are not split by address family. Each one lists **every** IPv4 and IPv6 prefix and exclusion, so `field-set ipv4 prefix dst-<term>` can contain IPv6 prefixes. Excluded prefixes outside the included ones are not dropped either. See the `testDstFsMixed` regression test output.
+    * **`option: tcp-initial` is silently ignored.** The term renders without the `initial` flag, so it matches every packet of the TCP connection, not just the first. `option: initial` works.
+    * **`dscp-set` is silently dropped.** The term renders an empty `actions` block and the DSCP value is lost.

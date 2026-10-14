@@ -15,7 +15,7 @@ These keys are accepted by every generator unless a generator's page says otherw
 | `destination-exclude` | Address tokens to remove from `destination-address`. | `destination-exclude: MAIL_SERVERS` | aruba, cloudarmor, gcp_hf, nvueapi, windows_advfirewall, windows_ipsec |  |
 | `destination-port` | One or more destination service tokens. | `destination-port: HTTP HTTPS` | cloudarmor |  |
 | `expiration` | Stop rendering the term after this date (`YYYY-MM-DD`). | `expiration: 2026-12-31` | cloudarmor, gcp_hf | Expired terms are skipped with a warning. Use `--exp_info` to be told about terms that expire soon. |
-| `icmp-type` | ICMP types to match. | `icmp-type: echo-request echo-reply` | aruba, cloudarmor, gce, gcp_hf, k8s, windows_ipsec | See [ICMP Types](icmp_types.md) for valid values. Silently ignored on nokiasrl, openconfig and sonic (known issue). |
+| `icmp-type` | ICMP types to match. | `icmp-type: echo-request echo-reply` | aruba, cloudarmor, gce, gcp_hf, k8s, windows_ipsec | See [ICMP Types](icmp_types.md) for valid values. Silently ignored on nokiasrl, openconfig and sonic (known issue). On nftables, a single value crashes the generator (known issue). |
 | `name` | Name of the term. | `name: accept-ssh` |  | Must be unique within a filter. Some platforms shorten long names. |
 | `option` | Extra match options. | `option: tcp-established` | cloudarmor, gce, gcp_hf, k8s | Valid values are listed in each generator's Options table. |
 | `platform` | Render this term **only** for the listed targets. | `platform: juniper cisco` | cloudarmor, nokiasrl, openconfig, sonic |  |

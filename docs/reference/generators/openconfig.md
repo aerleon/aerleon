@@ -30,7 +30,7 @@ For common keys see the [Common](common.md) page. OpenConfig does **not** suppor
 |---|---|---|
 | `comment` | — | Accepted, but not rendered. |
 | `protocol` | `ipv4.config.protocol` (or `ipv6.…`) | Always rendered as a number. A name Aerleon doesn't know raises `OcFirewallError`; use the number instead. |
-| `source-address`, `destination-address` | `ipv4.config.source-address` / `destination-address` (or `ipv6.…`) | Only addresses of the family being rendered are used. Exclusions are applied before rendering. |
+| `source-address`, `destination-address` | `ipv4.config.source-address` / `destination-address` (or `ipv6.…`) | Only addresses of the family being rendered are used. Exclusions are applied before rendering, but an exclusion on only one side crashes; see [Known Issues](openconfig.md#known-issues). |
 | `source-port`, `destination-port` | `transport.config.source-port` / `destination-port` | A single port renders as a number, a range as `"start..end"`. |
 
 One ACL entry is written for every combination of source address, destination address, source port, destination port and protocol. Entries get sequence IDs 5, 10, 15, …, and the numbering carries on across filters in the same policy.
@@ -149,3 +149,4 @@ filters:
     * **`icmp-type` is silently ignored.** It is accepted, but not rendered, so a term meant to allow only `echo-request` allows all ICMP.
     * Exclusions crash with mixed-family address tokens (`TypeError: … are not of the same version`), as in [GCE](gce.md).
     * Because `platform-exclude` raises an error, a shared policy that uses `platform-exclude` to skip a term on another vendor can't be rendered for OpenConfig at all.
+    * **An exclusion on only one side crashes the generator.** A term with `source-exclude` but no `destination-exclude`, or the reverse, fails with `TypeError: 'NoneType' object is not iterable`. Exclusions only work when both sides have one.
