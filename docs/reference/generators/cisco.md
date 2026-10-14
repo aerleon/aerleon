@@ -26,6 +26,8 @@ When `inet6` is specified, naming tokens that contain both IPv4 and IPv6 address
 
 For common keys see the [Common](common.md) page. The following tokens are specific to cisco:
 
+<!-- --8<-- [start:term-format] -->
+
 | Token | Description | Example | Notes |
 |---|---|---|---|
 | `address` | Address tokens matched as source **or** destination. | `address: INTERNAL` | Standard ACLs must use `address`; they reject `source-address`/`destination-address`. |
@@ -34,6 +36,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `logging` | Log matching packets. | `logging: true` | Adds `log` to the rule. |
 | `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added as a comment. |
 | `restrict-address-family` | Only render the term in the matching address family. | `restrict-address-family: inet` | Useful in `mixed` filters. |
+
+<!-- --8<-- [end:term-format] -->
 
 ??? example "A term using cisco tokens"
     ```yaml
@@ -49,6 +53,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 ## Actions
 
+<!-- --8<-- [start:actions] -->
+
 | Action | Rendered as | Notes |
 |---|---|---|
 | `accept` | `permit` | |
@@ -57,7 +63,11 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `reject` | `deny` | |
 | `reject-with-tcp-rst` | `deny` | TCP reset is not supported. |
 
+<!-- --8<-- [end:actions] -->
+
 ## Option
+
+<!-- --8<-- [start:option] -->
 
 | Option | Description | Example | Notes |
 |---|---|---|---|
@@ -65,6 +75,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `fragments` | Match fragments. | `option: fragments` | Same as `is-fragment`. |
 | `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragments`. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `established`. TCP only. |
+
+<!-- --8<-- [end:option] -->
 
 ## Output
 

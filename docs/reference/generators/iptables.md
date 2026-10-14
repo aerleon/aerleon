@@ -28,20 +28,26 @@ targets:
 
 For common keys see the [Common](common.md) page. The following tokens are specific to iptables:
 
+<!-- --8<-- [start:term-format] -->
+
 | Token | Description | Example | Notes |
 |---|---|---|---|
 | `counter`, `routing-instance` | — | | Accepted, but ignored. |
 | `destination-interface` | Match the outgoing interface. | `destination-interface: eth1` | Renders `-o eth1`. |
 | `fragment-offset` | Match fragment offset. | `fragment-offset: 1-8191` | Renders a `-m u32` match. |
 | `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
-| `log-limit` | Rate-limit the log rule. | `log-limit: 10/minute` | Requires `logging`. Currently renders invalid syntax; see [Known Issues](#known-issues). |
+| `log-limit` | Rate-limit the log rule. | `log-limit: 10/minute` | Requires `logging`. Currently renders invalid syntax; see [Known Issues](iptables.md#known-issues). |
 | `logging` | Log matching packets. | `logging: true` | Adds a `-j LOG --log-prefix <term>` rule before the action rule. |
 | `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added to the comment unless the header uses `noverbose`. |
 | `packet-length` | Match packet length. | `packet-length: 64-1500` | Renders `-m length --length 64:1500`. |
 | `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `-i eth0`. |
 | `source-prefix`, `destination-prefix` | — | | Not supported by iptables. An `accept` or `next` term is replaced by a `# skipped` comment; any other action raises an error. |
 
+<!-- --8<-- [end:term-format] -->
+
 ## Actions
+
+<!-- --8<-- [start:actions] -->
 
 | Action | Rendered as | Notes |
 |---|---|---|
@@ -51,7 +57,11 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `reject` | `-j REJECT --reject-with icmp-host-prohibited` | `icmp6-adm-prohibited` for `inet6`. |
 | `reject-with-tcp-rst` | `-j REJECT --reject-with tcp-reset` | |
 
+<!-- --8<-- [end:actions] -->
+
 ## Option
+
+<!-- --8<-- [start:option] -->
 
 | Option | Description | Example | Notes |
 |---|---|---|---|
@@ -63,6 +73,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with this TCP flag set. | `option: syn` | Combined into one `--tcp-flags` match. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Same as `established`, but raises an error if the term matches anything other than `tcp`. |
 | `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | Renders `--syn`. |
+
+<!-- --8<-- [end:option] -->
 
 ## Output
 

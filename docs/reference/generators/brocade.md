@@ -1,6 +1,9 @@
 # Brocade
 
-The brocade generator is built on the [Cisco](cisco.md) generator. It supports exactly the same header options, tokens, actions and options, so see the Cisco tables.
+The brocade generator is built on the [Cisco](cisco.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
+
+!!! info "Tables included from Cisco"
+    The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on Brocade is called out on this page.
 
 ## Header Format
 
@@ -17,6 +20,24 @@ All options work as described for [Cisco](cisco.md).
 |---|---|---|
 | Protocols | Rendered as numbers where possible | Rendered by name, as written in the policy |
 | Term name remark | Each term starts with `remark <term name>` | Not written; only the term's `comment` is |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [Cisco](cisco.md#term-format):
+
+--8<-- "docs/reference/generators/cisco.md:term-format"
+
+## Actions
+
+Same as [Cisco](cisco.md#actions):
+
+--8<-- "docs/reference/generators/cisco.md:actions"
+
+## Option
+
+Same as [Cisco](cisco.md#option):
+
+--8<-- "docs/reference/generators/cisco.md:option"
 
 ## Output
 

@@ -24,6 +24,8 @@ Any other header option is silently ignored.
 
 For common keys see the [Common](common.md) page. OpenConfig does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error). It adds no tokens of its own.
 
+<!-- --8<-- [start:term-format] -->
+
 | Token | How it's rendered | Notes |
 |---|---|---|
 | `comment` | — | Accepted, but not rendered. |
@@ -33,13 +35,19 @@ For common keys see the [Common](common.md) page. OpenConfig does **not** suppor
 
 One ACL entry is written for every combination of source address, destination address, source port, destination port and protocol. Entries get sequence IDs 5, 10, 15, …, and the numbering carries on across filters in the same policy.
 
+<!-- --8<-- [end:term-format] -->
+
 ## Actions
+
+<!-- --8<-- [start:actions] -->
 
 | Action | Rendered as | Notes |
 |---|---|---|
 | `accept` | `ACCEPT` | |
 | `deny` | `DROP` | |
 | `reject` | `REJECT` | |
+
+<!-- --8<-- [end:actions] -->
 
 ## Option
 

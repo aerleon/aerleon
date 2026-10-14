@@ -2,6 +2,9 @@
 
 The ciscoxr generator is built on the [Cisco](cisco.md) generator. It supports the same tokens, actions and options, plus `next-ip`.
 
+!!! info "Tables included from Cisco"
+    The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on CiscoXR is called out on this page.
+
 ## Header Format
 
 The ciscoxr header designation has the following format:
@@ -23,7 +26,7 @@ targets:
 
 ## Term Format
 
-For common keys see the [common](common.md) section, and for `address`, `restrict-address-family`, `dscp-match`, `icmp-code`, `logging` and `owner` see [Cisco](cisco.md). ciscoxr adds:
+For common keys see the [Common](common.md) page. CiscoXR adds:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
@@ -36,13 +39,21 @@ For common keys see the [common](common.md) section, and for `address`, `restric
       next-ip: SCRUBBER_NEXTHOP
     ```
 
+The other tokens are the same as for [Cisco](cisco.md#term-format):
+
+--8<-- "docs/reference/generators/cisco.md:term-format"
+
 ## Actions
 
-Same as [Cisco](cisco.md): `accept` → `permit`; `deny`, `reject` and `reject-with-tcp-rst` → `deny`; `next` → `! next`.
+Same as [Cisco](cisco.md#actions):
+
+--8<-- "docs/reference/generators/cisco.md:actions"
 
 ## Option
 
-Same as [Cisco](cisco.md): `established`, `tcp-established`, `is-fragment` and `fragments`.
+Same as [Cisco](cisco.md#option):
+
+--8<-- "docs/reference/generators/cisco.md:option"
 
 ## Output
 

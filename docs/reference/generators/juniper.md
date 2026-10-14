@@ -30,6 +30,8 @@ The address family must come straight after the filter name. When `inet` or `ine
 
 For common keys see the [Common](common.md) page. The following tokens are specific to juniper.
 
+<!-- --8<-- [start:term-format] -->
+
 **Match conditions** (rendered under `from`):
 
 | Token | Description | Example | Notes |
@@ -74,6 +76,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `routing-instance` | Send matching packets to a routing instance. | `routing-instance: scrubbing` | Replaces the normal action. |
 | `traffic-class-count` | Count by traffic class. | `traffic-class-count: tcc` | |
 
+<!-- --8<-- [end:term-format] -->
+
 ??? example "Terms using juniper tokens"
     ```yaml
     - name: police-bgp
@@ -96,6 +100,8 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 ## Actions
 
+<!-- --8<-- [start:actions] -->
+
 | Action | Rendered as | Notes |
 |---|---|---|
 | `accept` | `accept` | |
@@ -104,11 +110,14 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `reject` | `reject` | |
 | `reject-with-tcp-rst` | `reject tcp-reset` | |
 
+<!-- --8<-- [end:actions] -->
+
 ## Option
+
+<!-- --8<-- [start:option] -->
 
 | Option | Description | Example | Notes |
 |---|---|---|---|
-| *any other value* | Passed through as-is. | `option: syn-flag` | Rendered as `<value>;` under `from`. Aerleon does not check it. |
 | `established` | Match established connections. | `option: established` | Adds `tcp-established` for TCP-only terms. For UDP, sets the destination port to 1024-65535 if none is given. |
 | `first-fragment` | Match the first fragment of a fragmented packet. | `option: first-fragment` | |
 | `inactive` | Render the term but mark it inactive. | `option: inactive` | Prefixes the term with `inactive:`. |
@@ -119,6 +128,9 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `sample` | Sample matching traffic. | `option: sample` | Adds `sample` to the term's actions. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
 | `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | |
+| *any other value* | Passed through as-is. | `option: syn-flag` | Rendered as `<value>;` under `from`. Aerleon does not check it. |
+
+<!-- --8<-- [end:option] -->
 
 ## Output
 

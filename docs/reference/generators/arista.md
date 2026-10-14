@@ -2,6 +2,9 @@
 
 The arista generator is built on the [Cisco](cisco.md) generator, so its terms, actions and options work the same way.
 
+!!! info "Tables included from Cisco"
+    The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on Arista is called out on this page.
+
 ## Header Format
 
 The arista header designation has the following format:
@@ -24,35 +27,21 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to arista:
+For common keys see the [Common](common.md) page. The following tokens are the same as for [Cisco](cisco.md#term-format):
 
-| Token | Description | Example | Notes |
-|---|---|---|---|
-| `address` | Address tokens matched as source **or** destination. | `address: INTERNAL` | Standard ACLs must use `address`; they reject `source-address`/`destination-address`. |
-| `dscp-match` | Match a DSCP value. | `dscp-match: af41` | Only one value is allowed in extended ACLs. |
-| `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
-| `logging` | Log matching packets. | `logging: true` | Adds `log` to the rule. |
-| `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added as a comment. |
-| `restrict-address-family` | Only render the term in the matching address family. | `restrict-address-family: inet` | Useful in `mixed` filters. |
+--8<-- "docs/reference/generators/cisco.md:term-format"
 
 ## Actions
 
-| Action | Rendered as | Notes |
-|---|---|---|
-| `accept` | `permit` | |
-| `deny` | `deny` | |
-| `next` | `! next` | Rendered as a comment. |
-| `reject` | `deny` | |
-| `reject-with-tcp-rst` | `deny` | TCP reset is not supported. |
+Same as [Cisco](cisco.md#actions):
+
+--8<-- "docs/reference/generators/cisco.md:actions"
 
 ## Option
 
-| Option | Description | Example | Notes |
-|---|---|---|---|
-| `established` | Match established connections. | `option: established` | Adds `established` for TCP. For UDP, sets the destination port to 1024-65535 if none is given. |
-| `fragments` | Match fragments. | `option: fragments` | Same as `is-fragment`. |
-| `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragments`. |
-| `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `established`. TCP only. |
+Same as [Cisco](cisco.md#option):
+
+--8<-- "docs/reference/generators/cisco.md:option"
 
 ## Output
 

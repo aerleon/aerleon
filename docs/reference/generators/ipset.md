@@ -2,7 +2,10 @@
 
 Ipset is a system inside the Linux kernel, which can very efficiently store and match IPv4 and IPv6 addresses. This can be used to dramatically increase performance of iptables firewall.
 
-The ipset generator is built on the [IpTables](iptables.md) generator. Terms, actions and options work the same way; the differences are below.
+The ipset generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
+
+!!! info "Tables included from IpTables"
+    The shared tables under Term Format, Actions and Option are included from the [IpTables](iptables.md) page, so they always match it. Anything that differs on Ipset is called out on this page.
 
 ## Header Format
 
@@ -29,6 +32,24 @@ When a term has more than one source or destination address, the addresses are p
 | Rule match | `-m set --match-set <set> src` (or `dst`) | A single address uses plain `-s`/`-d`. |
 | Exclusions | Applied before the set is built | The set only holds the remaining addresses. |
 | Chains | Rules go directly in the filter's chain | No `-N <term>` chain per term, unlike iptables. |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [IpTables](iptables.md#term-format):
+
+--8<-- "docs/reference/generators/iptables.md:term-format"
+
+## Actions
+
+Same as [IpTables](iptables.md#actions):
+
+--8<-- "docs/reference/generators/iptables.md:actions"
+
+## Option
+
+Same as [IpTables](iptables.md#option):
+
+--8<-- "docs/reference/generators/iptables.md:option"
 
 ## Output
 
@@ -70,3 +91,7 @@ add allow-ssh-src 192.168.10.0/24
 -A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -p all -j DROP
 ```
+
+## Known Issues
+
+Ipset has the same known issues as [IpTables](iptables.md#known-issues).

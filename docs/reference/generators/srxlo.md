@@ -2,6 +2,9 @@
 
 SRX Loopback renders a stateless Juniper firewall filter for an SRX loopback interface. It is built on the [Juniper](juniper.md) generator and supports the same header options, tokens, actions and options, with the differences below.
 
+!!! info "Tables included from Juniper"
+    The shared tables under Term Format, Actions and Option are included from the [Juniper](juniper.md) page, so they always match it. Anything that differs on SRXlo is called out on this page.
+
 ## Header Format
 
 ```yaml
@@ -20,6 +23,27 @@ All options work as described for [Juniper](juniper.md).
 | `port-mirror` | Supported | Not supported |
 | ICMPv6 protocol name | `icmpv6` | `icmp6` |
 | File suffix | `.jcl` | `.jsl` |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [Juniper](juniper.md#term-format):
+
+!!! warning "Not supported on SRXlo"
+    `encapsulate`, `flexible-match-range` and `port-mirror` are listed in the Juniper table below, but SRXlo doesn't support them. A term that uses any of them raises an error.
+
+--8<-- "docs/reference/generators/juniper.md:term-format"
+
+## Actions
+
+Same as [Juniper](juniper.md#actions):
+
+--8<-- "docs/reference/generators/juniper.md:actions"
+
+## Option
+
+Same as [Juniper](juniper.md#option):
+
+--8<-- "docs/reference/generators/juniper.md:option"
 
 ## Output
 

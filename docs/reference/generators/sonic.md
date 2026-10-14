@@ -1,6 +1,9 @@
 # SONiC
 
-Renders ACL sets for [SONiC](https://sonicfoundation.dev/) switches as JSON. The sonic generator is built on the [OpenConfig](openconfig.md) generator and supports exactly the same header options, tokens, actions and options, including the known issues. See the OpenConfig tables.
+Renders ACL sets for [SONiC](https://sonicfoundation.dev/) switches as JSON. The sonic generator is built on the [OpenConfig](openconfig.md) generator and supports exactly the same header options, tokens and actions. The only difference is how `tcp-established` is rendered.
+
+!!! info "Tables included from OpenConfig"
+    The shared tables under Term Format and Actions are included from the [OpenConfig](openconfig.md) page, so they always match it. Anything that differs on SONiC is called out on this page.
 
 ## Header Format
 
@@ -11,13 +14,23 @@ targets:
 
 All options work as described for [OpenConfig](openconfig.md#header-format).
 
-## Differences from OpenConfig
+## Term Format
 
-| Area | OpenConfig | SONiC |
-|---|---|---|
-| `option: tcp-established` | `"detail-mode": "BUILTIN", "builtin-detail": "TCP_ESTABLISHED"` | `"tcp-session-established": true` |
+For common keys see the [Common](common.md) page. Like OpenConfig, SONiC does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error). The following tokens are the same as for [OpenConfig](openconfig.md#term-format):
 
-The file suffix is `.oacl` for both, so rendering the same policy for `openconfig` and `sonic` writes both to the same output file.
+--8<-- "docs/reference/generators/openconfig.md:term-format"
+
+## Actions
+
+Same as [OpenConfig](openconfig.md#actions):
+
+--8<-- "docs/reference/generators/openconfig.md:actions"
+
+## Option
+
+| Option | Description | Example | Notes |
+|---|---|---|---|
+| `tcp-established` | Match established TCP sessions. | `option: tcp-established` | Renders `"tcp-session-established": true` under `transport.config`, instead of OpenConfig's `"detail-mode": "BUILTIN", "builtin-detail": "TCP_ESTABLISHED"`. The term's `protocol` must be exactly `tcp`, otherwise `TcpEstablishedWithNonTcpError` is raised. |
 
 ??? example "`tcp-established` and its output"
     With header `sonic: edge inet`:
@@ -40,7 +53,7 @@ The file suffix is `.oacl` for both, so rendering the same policy for `openconfi
 
 ## Output
 
-Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`.
+Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`. OpenConfig uses the same extension, so rendering one policy for both `openconfig` and `sonic` writes both to the same file.
 
 ### Example
 

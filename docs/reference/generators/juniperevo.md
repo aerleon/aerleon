@@ -1,6 +1,9 @@
 # Juniper EVO
 
-The juniperevo generator is built on the [Juniper](juniper.md) generator. It supports exactly the same header options, tokens, actions and options, so see the Juniper tables. The only difference is how IPv6 protocols are matched (below).
+The juniperevo generator is built on the [Juniper](juniper.md) generator. It supports exactly the same header options, tokens, actions and options. The only difference is how IPv6 protocols are matched (below).
+
+!!! info "Tables included from Juniper"
+    The shared tables under Term Format, Actions and Option are included from the [Juniper](juniper.md) page, so they always match it. Anything that differs on Juniper EVO is called out on this page.
 
 ## Header Format
 
@@ -34,6 +37,24 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 | Ingress | Loopback | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
 | Egress | Physical | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
 | Egress | Loopback | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [Juniper](juniper.md#term-format):
+
+--8<-- "docs/reference/generators/juniper.md:term-format"
+
+## Actions
+
+Same as [Juniper](juniper.md#actions):
+
+--8<-- "docs/reference/generators/juniper.md:actions"
+
+## Option
+
+Same as [Juniper](juniper.md#option):
+
+--8<-- "docs/reference/generators/juniper.md:option"
 
 ## Output
 

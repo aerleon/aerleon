@@ -1,6 +1,9 @@
 # CiscoNX
 
-The cisconx generator is built on the [Cisco](cisco.md) generator. It supports exactly the same tokens, actions and options, so see the Cisco [Term Format](cisco.md#term-format), Actions and Option tables. The differences are listed below.
+The cisconx generator is built on the [Cisco](cisco.md) generator. It supports exactly the same tokens, actions and options. The differences are listed below.
+
+!!! info "Tables included from Cisco"
+    The shared tables under Term Format, Actions and Option are included from the [Cisco](cisco.md) page, so they always match it. Anything that differs on CiscoNX is called out on this page.
 
 ## Header Format
 
@@ -28,6 +31,24 @@ targets:
 | `standard` access lists | Supported | Not supported (raises an error) |
 | `extended` keyword in output | `ip access-list extended NAME` | `ip access-list NAME` |
 | Protocols | Rendered as numbers where possible | Rendered by name, as written in the policy |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [Cisco](cisco.md#term-format):
+
+--8<-- "docs/reference/generators/cisco.md:term-format"
+
+## Actions
+
+Same as [Cisco](cisco.md#actions):
+
+--8<-- "docs/reference/generators/cisco.md:actions"
+
+## Option
+
+Same as [Cisco](cisco.md#option):
+
+--8<-- "docs/reference/generators/cisco.md:option"
 
 ## Output
 

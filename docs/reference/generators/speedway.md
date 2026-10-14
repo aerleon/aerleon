@@ -2,7 +2,10 @@
 
 > NOTE: Speedway produces Iptables filtering output that is suitable for passing to the 'iptables-restore' command.
 
-The speedway generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options (including the known issues), so see the IpTables tables.
+The speedway generator is built on the [IpTables](iptables.md) generator. It supports exactly the same header options, tokens, actions and options. The differences are listed below.
+
+!!! info "Tables included from IpTables"
+    The shared tables under Term Format, Actions and Option are included from the [IpTables](iptables.md) page, so they always match it. Anything that differs on Speedway is called out on this page.
 
 ## Header Format
 
@@ -20,6 +23,24 @@ targets:
 | `FORWARD` default policy | `DROP` if none is given | None unless given |
 | Jump to term chain | Before the term's rules | After the term's rules |
 | File suffix | none | `.ipt` |
+
+## Term Format
+
+For common keys see the [Common](common.md) page. The following tokens are the same as for [IpTables](iptables.md#term-format):
+
+--8<-- "docs/reference/generators/iptables.md:term-format"
+
+## Actions
+
+Same as [IpTables](iptables.md#actions):
+
+--8<-- "docs/reference/generators/iptables.md:actions"
+
+## Option
+
+Same as [IpTables](iptables.md#option):
+
+--8<-- "docs/reference/generators/iptables.md:option"
 
 ## Output
 
@@ -63,3 +84,7 @@ filters:
 -A INPUT -j I_default-deny
 COMMIT
 ```
+
+## Known Issues
+
+Speedway has the same known issues as [IpTables](iptables.md#known-issues).
