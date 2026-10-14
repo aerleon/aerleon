@@ -50,36 +50,76 @@ So `source-exclude` only works on ingress terms and `destination-exclude` only o
 * A term with more than 256 addresses is split into several rules (`-1`, `-2`, …). More than 256 ports raises an error.
 * If the last term is a plain `deny` with no match criteria, it becomes a default deny: priority 65534, protocol `all`, and any source (ingress) or destination (egress).
 
-??? example "A term and its output"
-    With header `gce: global/networks/default inet`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: INTERNAL
-      protocol: tcp
-      destination-port: SSH
-      priority: 1000
-      action: accept
-    ```
-
-    ```json
-    {
-      "allowed": [{"IPProtocol": "tcp", "ports": ["22"]}],
-      "description": "",
-      "direction": "INGRESS",
-      "name": "default-allow-ssh",
-      "network": "global/networks/default",
-      "priority": "1000",
-      "sourceRanges": ["10.0.0.0/8"]
-    }
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
 |---|---|---|
 | `accept` | `allowed` | |
 | `deny` | `denied` | |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.gce` extension, so `sample.yaml` renders `sample.gce`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `priority` to show gce-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        gce: global/networks/default
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        priority: 1000
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.gce"
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "22"
+        ]
+      }
+    ],
+    "description": "Allow SSH from the management network.",
+    "direction": "INGRESS",
+    "name": "default-allow-ssh",
+    "network": "global/networks/default",
+    "priority": "1000",
+    "sourceRanges": [
+      "10.0.0.0/24",
+      "192.168.10.0/24"
+    ]
+  },
+  {
+    "denied": [
+      {
+        "IPProtocol": "all"
+      }
+    ],
+    "description": "",
+    "direction": "INGRESS",
+    "name": "default-default-deny",
+    "network": "global/networks/default",
+    "priority": 65534,
+    "sourceRanges": [
+      "0.0.0.0/0"
+    ]
+  }
+]
+```
 
 ## Known Issues
 

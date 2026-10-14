@@ -28,3 +28,49 @@ targets:
 | `standard` access lists | Supported | Not supported (raises an error) |
 | `extended` keyword in output | `ip access-list extended NAME` | `ip access-list NAME` |
 | Protocols | Rendered as numbers where possible | Rendered by name, as written in the policy |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.nxacl` extension, so `sample.yaml` renders `sample.nxacl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        cisconx: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.nxacl"
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list edge-inbound
+ip access-list edge-inbound
+ remark "$Date:$"
+ remark "$Revision:$"
+
+
+ remark allow-ssh
+ remark Allow SSH from the management network.
+ permit tcp 10.0.0.0/24 any eq 22
+ permit tcp 192.168.10.0/24 any eq 22
+
+
+ remark default-deny
+ deny ip any any
+
+exit
+```

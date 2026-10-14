@@ -28,21 +28,6 @@ For common keys see the [Common](common.md) page. Windows Advanced Firewall does
 * For outbound rules, source is `local*` and destination is `remote*`; inbound is the reverse.
 * ICMP types render as `icmpv4:<type>,any` (or `icmpv6:…`).
 
-??? example "A term and its output"
-    With header `windows_advfirewall: out inet`:
-
-    ```yaml
-    - name: allow-ssh
-      destination-address: V4ONLY   # 192.168.0.0/16
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```text
-    netsh advfirewall firewall add rule name=o_allow-ssh enable=yes interfacetype=any dir=out localip=any remoteip=192.168.0.0/16 remoteport=22 protocol=tcp action=allow
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -57,3 +42,37 @@ For common keys see the [Common](common.md) page. Windows Advanced Firewall does
 | `established`, `tcp-established` | — | | The term is skipped, without a warning. |
 
 Any other option value is accepted but ignored, which makes the rule broader than intended (e.g. `option: syn` still allows all TCP).
+
+## Output
+
+Each policy file renders to one file with the same name and a `.bat` extension, so `sample.yaml` renders `sample.bat`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        windows_advfirewall: in inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.bat"
+: Windows_advfirewall in Policy
+: $Id:$
+: $Date:$
+: $Revision:$
+: inet
+netsh advfirewall firewall add rule name=i_allow-ssh enable=yes interfacetype=any dir=in remoteip=10.0.0.0/24,192.168.10.0/24 localip=any localport=22 protocol=tcp action=allow
+netsh advfirewall firewall add rule name=i_default-deny enable=yes interfacetype=any dir=in remoteip=any localip=any protocol=any action=block
+```

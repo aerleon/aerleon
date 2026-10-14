@@ -38,6 +38,93 @@ The file suffix is `.oacl` for both, so rendering the same policy for `openconfi
     }
     ```
 
+## Output
+
+Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        sonic: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.oacl"
+[
+  {
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6,
+              "source-address": "10.0.0.0/24"
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "destination-port": 22
+            }
+          }
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6,
+              "source-address": "192.168.10.0/24"
+            }
+          },
+          "sequence-id": 10,
+          "transport": {
+            "config": {
+              "destination-port": 22
+            }
+          }
+        },
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "DROP"
+            }
+          },
+          "sequence-id": 15
+        }
+      ]
+    },
+    "config": {
+      "name": "edge-inbound",
+      "type": "ACL_IPV4"
+    },
+    "name": "edge-inbound",
+    "type": "ACL_IPV4"
+  }
+]
+```
+
 ## Known Issues
 
 SONiC has the same known issues as [OpenConfig](openconfig.md#known-issues).

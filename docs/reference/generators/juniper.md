@@ -119,3 +119,62 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `sample` | Sample matching traffic. | `option: sample` | Adds `sample` to the term's actions. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Raises an error if the term matches anything other than `tcp`. |
 | `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.jcl` extension, so `sample.yaml` renders `sample.jcl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        juniper: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.jcl"
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter edge-inbound {
+            interface-specific;
+            /*
+             ** Allow SSH from the management network.
+             */
+            term allow-ssh {
+                from {
+                    source-address {
+                        10.0.0.0/24;
+                        192.168.10.0/24;
+                    }
+                    protocol tcp;
+                    destination-port 22;
+                }
+                then accept;
+            }
+            term default-deny {
+                then {
+                    discard;
+                }
+            }
+        }
+    }
+}
+```

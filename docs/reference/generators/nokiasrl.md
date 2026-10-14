@@ -33,33 +33,6 @@ For common keys see the [Common](common.md) page. Nokia SR Linux does **not** su
 
 The term name becomes the entry `description`, and `comment` becomes `_annotate_description` (max 255 characters). Entries get sequence IDs 5, 10, 15, …
 
-??? example "A term and its output"
-    With header `nokiasrl: test inet`:
-
-    ```yaml
-    - name: allow-ping
-      source-address: V4ONLY        # 192.168.0.0/16
-      protocol: icmp
-      action: accept
-    ```
-
-    ```json
-    {
-      "ipv4-filter": {
-        "name": "test",
-        "description": "",
-        "entry": [
-          {
-            "action": {"accept": {}},
-            "description": "allow-ping",
-            "match": {"protocol": 1, "source-ip": {"prefix": "192.168.0.0/16"}},
-            "sequence-id": 5
-          }
-        ]
-      }
-    }
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -79,6 +52,86 @@ The term name becomes the entry `description`, and `comment` becomes `_annotate_
 | `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | `tcp-flags: syn`. |
 
 Options that set `tcp-flags` also set the protocol to TCP.
+
+## Output
+
+Each policy file renders to one file with the same name and a `.srl_acl` extension, so `sample.yaml` renders `sample.srl_acl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        nokiasrl: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.srl_acl"
+[
+  {
+    "ipv4-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "",
+      "entry": [
+        {
+          "_annotate_description": "Allow SSH from the management network.",
+          "action": {
+            "accept": {}
+          },
+          "description": "allow-ssh",
+          "match": {
+            "destination-port": {
+              "value": 22
+            },
+            "protocol": 6,
+            "source-ip": {
+              "prefix": "10.0.0.0/24"
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "_annotate_description": "Allow SSH from the management network.",
+          "action": {
+            "accept": {}
+          },
+          "description": "allow-ssh",
+          "match": {
+            "destination-port": {
+              "value": 22
+            },
+            "protocol": 6,
+            "source-ip": {
+              "prefix": "192.168.10.0/24"
+            }
+          },
+          "sequence-id": 10
+        },
+        {
+          "action": {
+            "drop": {}
+          },
+          "description": "default-deny",
+          "match": {},
+          "sequence-id": 15
+        }
+      ],
+      "name": "edge-inbound"
+    }
+  }
+]
+```
 
 ## Known Issues
 

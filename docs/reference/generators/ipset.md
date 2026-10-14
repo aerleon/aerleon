@@ -30,24 +30,43 @@ When a term has more than one source or destination address, the addresses are p
 | Exclusions | Applied before the set is built | The set only holds the remaining addresses. |
 | Chains | Rules go directly in the filter's chain | No `-N <term>` chain per term, unlike iptables. |
 
-??? example "A term and its output"
-    With header `ipset: INPUT ACCEPT`, and `INTERNAL = 10.0.0.0/8 192.168.0.0/16`:
+## Output
 
-    ```yaml
-    - name: allow-ssh
-      source-address: INTERNAL
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
+Each policy file renders to one file with the same name and a `.ips` extension, so `sample.yaml` renders `sample.ips`.
 
-    ```text
-    # begin:ipset-rules
-    create allow-ssh-src hash:net family inet hashsize 4 maxelem 4
-    add allow-ssh-src 10.0.0.0/8
-    add allow-ssh-src 192.168.0.0/16
-    # end:ipset-rules
-    ...
-    -P INPUT ACCEPT
-    -A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-    ```
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        ipset: INPUT DROP
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.ips"
+# begin:ipset-rules
+create allow-ssh-src hash:net family inet hashsize 4 maxelem 4
+add allow-ssh-src 10.0.0.0/24
+add allow-ssh-src 192.168.10.0/24
+# end:ipset-rules
+# Ipset INPUT Policy
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT DROP
+-A INPUT -m comment --comment "Allow SSH from the management network."
+-A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p all -j DROP
+```

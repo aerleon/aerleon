@@ -33,47 +33,6 @@ For common keys see the [Common](common.md) page. Some common tokens are silentl
 * `comment` becomes the rule's `notes`.
 * Every rule has `"direction": "IN_OUT"` and `"ip_protocol": "IPV4_IPV6"`.
 
-??? example "A term and its output"
-    With header `nsxt: sec inet`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: V4ONLY        # 192.168.0.0/16
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```json
-    {
-      "rules": [
-        {
-          "action": "ALLOW",
-          "resource_type": "Rule",
-          "display_name": "allow-ssh",
-          "source_groups": ["192.168.0.0/16"],
-          "destination_groups": ["ANY"],
-          "services": ["ANY"],
-          "profiles": ["ANY"],
-          "scope": ["ANY"],
-          "logged": false,
-          "notes": "",
-          "direction": "IN_OUT",
-          "ip_protocol": "IPV4_IPV6",
-          "service_entries": [
-            {"l4_protocol": "TCP", "resource_type": "L4PortSetServiceEntry", "destination_ports": ["22-22"]}
-          ]
-        }
-      ],
-      "resource_type": "SecurityPolicy",
-      "display_name": "sec",
-      "id": "sec",
-      "category": "Application",
-      "is_default": "false",
-      "scope": ["ANY"]
-    }
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -83,6 +42,103 @@ For common keys see the [Common](common.md) page. Some common tokens are silentl
 | `next` | — | Accepted, but has no mapping (renders `null`). |
 | `reject` | `REJECT` | |
 | `reject-with-tcp-rst` | `REJECT` | TCP reset is not supported. |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.nsxt` extension, so `sample.yaml` renders `sample.nsxt`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        nsxt: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.nsxt"
+{
+  "rules": [
+    {
+      "action": "ALLOW",
+      "resource_type": "Rule",
+      "display_name": "allow-ssh",
+      "source_groups": [
+        "10.0.0.0/24",
+        "192.168.10.0/24"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "Allow SSH from the management network.",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6",
+      "service_entries": [
+        {
+          "l4_protocol": "TCP",
+          "resource_type": "L4PortSetServiceEntry",
+          "destination_ports": [
+            "22-22"
+          ]
+        }
+      ]
+    },
+    {
+      "action": "DROP",
+      "resource_type": "Rule",
+      "display_name": "default-deny",
+      "source_groups": [
+        "ANY"
+      ],
+      "destination_groups": [
+        "ANY"
+      ],
+      "services": [
+        "ANY"
+      ],
+      "profiles": [
+        "ANY"
+      ],
+      "scope": [
+        "ANY"
+      ],
+      "logged": false,
+      "notes": "",
+      "direction": "IN_OUT",
+      "ip_protocol": "IPV4_IPV6"
+    }
+  ],
+  "resource_type": "SecurityPolicy",
+  "display_name": "edge-inbound",
+  "id": "edge-inbound",
+  "category": "Application",
+  "is_default": "false",
+  "scope": [
+    "ANY"
+  ]
+}
+```
 
 ## Known Issues
 

@@ -43,6 +43,61 @@ For common keys see the [Common](common.md) page. Cloud Armor only supports `nam
 | `accept` | `allow` | |
 | `deny` | `deny(404)` | Clients get an HTTP 404. |
 
+## Output
+
+Each policy file renders to one file with the same name and a `.gca` extension, so `sample.yaml` renders `sample.gca`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. Cloud Armor only matches on source addresses, so `protocol` and `destination-port` are left out.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        cloudarmor: inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.gca"
+[
+  {
+    "action": "allow",
+    "description": "Allow SSH from the management network.",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "10.0.0.0/24",
+          "192.168.10.0/24"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 1
+  },
+  {
+    "action": "deny(404)",
+    "match": {
+      "config": {
+        "srcIpRanges": [
+          "*"
+        ]
+      },
+      "versionedExpr": "SRC_IPS_V1"
+    },
+    "preview": false,
+    "priority": 2
+  }
+]
+```
+
 ## Known Issues
 
 !!! bug "Known issues"

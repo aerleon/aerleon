@@ -33,21 +33,6 @@ For common keys see the [Common](common.md) page. PcapFilter does **not** suppor
 * Exclusions render as `not src net …` / `not dst net …`.
 * Port ranges render as `portrange <start>-<end>`.
 
-??? example "A term and its output"
-    With header `pcap: test inet`:
-
-    ```yaml
-    - name: allow-ssh
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```text
-    ((((proto \tcp) and (dst port 22))
-    ))
-    ```
-
 ## Actions
 
 | Action | Notes |
@@ -65,9 +50,46 @@ For common keys see the [Common](common.md) page. PcapFilter does **not** suppor
 | `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with these TCP flags set. | `option: syn` | Combined into one `tcp[tcpflags]` test. |
 | `tcp-established` | Match TCP packets with ACK set. | `option: tcp-established` | `tcp[tcpflags] & (tcp-ack) == (tcp-ack)`. |
 
+## Output
+
+Each policy file renders to `-accept.pcap` and `-deny.pcap` files, so `sample.yaml` renders `sample-accept.pcap` and `sample-deny.pcap`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by the Python API (`aerleon.api.Generate`).
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        pcap: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample-accept.pcap"
+((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
+))
+```
+
+```text title="sample-deny.pcap"
+((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
+))
+```
+
 ## Known Issues
 
 !!! bug "Known issues"
+    * **`aclgen` can't render pcap.** It crashes with `ValueError: Invalid suffix '-accept.pcap'`. The Python API (`aerleon.api.Generate`) works.
+    * **Source addresses are rendered as destinations.** Both `source-address` and `destination-address` render as `dst net …`.
+    * **The `-deny` file can be identical to the `-accept` file.** A deny term with no match criteria (such as `default-deny`) renders to nothing, so the inverted filter is just the accept clause again.
     * **Multiple accept terms never match.** Accept terms are joined with `and` instead of `or`, so a policy that accepts SSH and HTTP renders `(dst port 22) and (dst port 80)`.
     * Duplicate term names aren't detected.
     * `in`/`out` leaks from one header to the next.

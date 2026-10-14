@@ -25,23 +25,6 @@ For common keys see the [Common](common.md) page. Aruba does **not** support `so
 
 Addresses are written into `netdestination` (or `netdestination6`) blocks named `<term>_src` and `<term>_dst`, which the rule references with `alias`.
 
-??? example "A term and its output"
-    ```yaml
-    - name: allow-dns
-      destination-address: INTERNAL
-      destination-port: DNS
-      protocol: udp
-      action: accept
-    ```
-
-    ```text
-    netdestination allow-dns_dst
-      network 10.0.0.0 255.0.0.0
-    !
-    ip access-list session test
-      any alias allow-dns_dst udp 53 permit
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -56,6 +39,46 @@ Addresses are written into `netdestination` (or `netdestination6`) blocks named 
 | `destination-is-user` | Use `user` as the destination instead of an address. | `option: destination-is-user` | `destination-address` is ignored. |
 | `negate` | Negate the rule. | `option: negate` | Prefixes the rule with `no`. |
 | `source-is-user` | Use `user` as the source instead of an address. | `option: source-is-user` | `source-address` is ignored. |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.aacl` extension, so `sample.yaml` renders `sample.aacl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        aruba: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.aacl"
+# $Id:$
+# $Date:$
+# $Revision:$
+netdestination allow-ssh_src
+  network 10.0.0.0 255.255.255.0
+  network 192.168.10.0 255.255.255.0
+!
+
+ip access-list session edge-inbound
+  # Allow SSH from the management network.
+  alias allow-ssh_src any tcp 22 permit
+  any any any deny
+!
+```
 
 ## Known Issues
 

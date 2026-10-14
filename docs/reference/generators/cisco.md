@@ -65,3 +65,48 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `fragments` | Match fragments. | `option: fragments` | Same as `is-fragment`. |
 | `is-fragment` | Match fragments. | `option: is-fragment` | Renders as `fragments`. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `established`. TCP only. |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.acl` extension, so `sample.yaml` renders `sample.acl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        cisco: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.acl"
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended edge-inbound
+ip access-list extended edge-inbound
+ remark $Id:$
+
+
+ remark allow-ssh
+ remark Allow SSH from the management network.
+ permit tcp 10.0.0.0 0.0.0.255 any eq 22
+ permit tcp 192.168.10.0 0.0.0.255 any eq 22
+
+
+ remark default-deny
+ deny ip any any
+
+exit
+```

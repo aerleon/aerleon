@@ -54,3 +54,78 @@ For common keys see the [Common](common.md) page. MSMPC is stateful, so terms th
 | `inactive` | Render the term but mark it inactive. | `option: inactive` | Prefixes the term with `inactive:`. |
 
 Any other option value is accepted but ignored.
+
+## Output
+
+Each policy file renders to one file with the same name and a `.msmpc` extension, so `sample.yaml` renders `sample.msmpc`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        msmpc: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.msmpc"
+groups {
+    replace:
+    /*
+     ** $Id:$
+     ** $Date:$
+     ** $Revision:$
+     **
+     */
+    edge-inbound {
+        services {
+            stateful-firewall {
+                rule edge-inbound {
+                    match-direction input-output;
+                    /*
+                     ** Allow SSH from the management network.
+                     */
+                    term allow-ssh {
+                        from {
+                            source-address {
+                                10.0.0.0/24;
+                                192.168.10.0/24;
+                            }
+                            application-sets edge-inboundallow-ssh-app;
+                        }
+                        then {
+                            accept;
+                        }
+                    }
+                    term default-deny {
+                        then {
+                            discard;
+                        }
+                    }
+                }
+            }
+        }
+        applications {
+            application edge-inboundallow-ssh-app1 {
+                protocol tcp;
+                destination-port 22;
+            }
+            application-set edge-inboundallow-ssh-app {
+                application edge-inboundallow-ssh-app1;
+            }
+        }
+    }
+}
+apply-groups edge-inbound;
+```

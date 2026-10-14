@@ -47,32 +47,6 @@ For common keys see the [Common](common.md) page. PaloAltoFW does **not** suppor
 | `protocol: tcp`/`udp`, no ports | Custom service objects for the protocols and all ports (0-65535) |
 | `protocol: tcp`/`udp` with ports | Custom service objects for the protocols and ports |
 
-??? example "A term and its output"
-    With header `paloalto: from-zone trust to-zone untrust`:
-
-    ```yaml
-    - name: allow-ping
-      source-address: V4ONLY
-      protocol: icmp
-      icmp-type: echo-request
-      action: accept
-    ```
-
-    ```xml
-    <entry name="allow-ping">
-      <to><member>untrust</member></to>
-      <from><member>trust</member></from>
-      <source><member>V4ONLY</member></source>
-      <destination><member>any</member></destination>
-      <service><member>application-default</member></service>
-      <action>allow</action>
-      <rule-type>interzone</rule-type>
-      <application><member>icmp-echo-request</member></application>
-    </entry>
-    ```
-
-    A matching custom application `icmp-echo-request` (`ident-by-icmp-type`, type 8) is also generated.
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -87,3 +61,169 @@ For common keys see the [Common](common.md) page. PaloAltoFW does **not** suppor
 | Option | Description | Example | Notes |
 |---|---|---|---|
 | `established`, `tcp-established` | — | | The term is skipped with a warning (the firewall is stateful). |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.xml` extension, so `sample.yaml` renders `sample.xml`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `icmp-type` to show paloalto-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        paloalto: from-zone trust to-zone untrust
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: allow-ping
+        protocol: icmp
+        icmp-type: echo-request
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```xml title="sample.xml"
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application>
+            <entry name="icmp-echo-request">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp-echo-request</description>
+              <default>
+                <ident-by-icmp-type>
+                  <type>8</type>
+                </ident-by-icmp-type>
+              </default>
+              <risk>4</risk>
+            </entry>
+          </application>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="service-allow-ssh-tcp">
+              <protocol>
+                <tcp>
+                  <port>22</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="allow-ssh">
+                  <description>Allow SSH from the management network.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>MGMT</member>
+                  </source>
+                  <destination>
+                    <member>any</member>
+                  </destination>
+                  <service>
+                    <member>service-allow-ssh-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+                <entry name="allow-ping">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp-echo-request</member>
+                  </application>
+                </entry>
+                <entry name="default-deny">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>deny</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="MGMT">
+              <static>
+                <member>MGMT_0</member>
+                <member>MGMT_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="MGMT_0">
+              <description>MGMT_0</description>
+              <ip-netmask>10.0.0.0/24</ip-netmask>
+            </entry>
+            <entry name="MGMT_1">
+              <description>MGMT_1</description>
+              <ip-netmask>192.168.10.0/24</ip-netmask>
+            </entry>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+```

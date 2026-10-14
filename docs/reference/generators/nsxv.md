@@ -30,38 +30,6 @@ For common keys see the [Common](common.md) page. NSXv does **not** support `opt
 * Exclusions are applied before rendering: the remaining address space is written out as a list of CIDRs, which can be long.
 * ICMP types are rendered as `<subProtocol>`.
 
-??? example "A term and its output"
-    With header `nsxv: sec inet`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: V4ONLY        # 192.168.0.0/16
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```xml
-    <section name="sec">
-      <rule logged="false">
-        <name>allow-ssh</name>
-        <action>allow</action>
-        <sources excluded="false">
-          <source>
-            <type>Ipv4Address</type>
-            <value>192.168.0.0/16</value>
-          </source>
-        </sources>
-        <services>
-          <service>
-            <protocol>6</protocol>
-            <destinationPort>22</destinationPort>
-          </service>
-        </services>
-      </rule>
-    </section>
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -78,3 +46,63 @@ For common keys see the [Common](common.md) page. NSXv does **not** support `opt
 | `established`, `tcp-established` | — | | The term is skipped, **without** a warning. |
 
 Any other option raises an `NsxvAclTermError`.
+
+## Output
+
+Each policy file renders to one file with the same name and a `.nsx` extension, so `sample.yaml` renders `sample.nsx`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        nsxv: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```xml title="sample.nsx"
+<?xml version="1.0" ?>
+<!--
+$Id:$
+$Date:$
+$Revision:$
+-->
+<section name="edge-inbound">
+  <rule logged="false">
+    <name>allow-ssh</name>
+    <action>allow</action>
+    <sources excluded="false">
+      <source>
+        <type>Ipv4Address</type>
+        <value>10.0.0.0/24</value>
+      </source>
+      <source>
+        <type>Ipv4Address</type>
+        <value>192.168.10.0/24</value>
+      </source>
+    </sources>
+    <services>
+      <service>
+        <protocol>6</protocol>
+        <destinationPort>22</destinationPort>
+      </service>
+    </services>
+    <notes>Allow SSH from the management network.</notes>
+  </rule>
+  <rule logged="false">
+    <name>default-deny</name>
+    <action>deny</action>
+  </rule>
+</section>
+```

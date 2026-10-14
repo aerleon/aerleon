@@ -34,3 +34,62 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 | Ingress | Loopback | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
 | Egress | Physical | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
 | Egress | Loopback | `payload-protocol 0`, `payload-protocol 44`, `payload-protocol 43` | `payload-protocol <proto>` |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.evojcl` extension, so `sample.yaml` renders `sample.evojcl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        juniperevo: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.evojcl"
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter edge-inbound {
+            interface-specific;
+            /*
+             ** Allow SSH from the management network.
+             */
+            term allow-ssh {
+                from {
+                    source-address {
+                        10.0.0.0/24;
+                        192.168.10.0/24;
+                    }
+                    protocol tcp;
+                    destination-port 22;
+                }
+                then accept;
+            }
+            term default-deny {
+                then {
+                    discard;
+                }
+            }
+        }
+    }
+}
+```

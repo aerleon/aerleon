@@ -16,6 +16,7 @@ Each generator has its own page with:
 * **Header Format**: the options that can follow the target name.
 * **Term Format**: the tokens the generator adds to the [Common](common.md) set, or drops from it.
 * **Actions** and **Option**: the `action` and `option` values the generator accepts, and how each one is rendered.
+* **Output**: the output file's name and extension, and the [sample policy](#sample-policy) rendered by the generator.
 * **Known Issues**: bugs that affect the generated output. Always the last section, and left out when there are none.
 
 ## Generators
@@ -58,6 +59,40 @@ Address families are listed as they are written in the header. The default is in
 | [SRXlo](srxlo.md) | `srxlo` | Junos filters for SRX loopbacks | as Juniper | `.jsl` | Juniper |
 | [Windows Advanced Firewall](windows_advfirewall.md) | `windows_advfirewall` | `netsh advfirewall` commands | **`inet`**, `inet6` | `.bat` | |
 | [WindowsIPSec](windows_ipsec.md) | `windows_ipsec` | `netsh ipsec` commands. **Not available:** the generator isn't registered. | **`inet`**, `inet6` | `.bat` | |
+
+## Sample policy
+
+Every generator page ends with this policy rendered by that generator, so you can compare the output across platforms. Only the `targets` line changes, plus an extra token or two on pages where the generator has notable tokens of its own.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        juniper: edge-inbound inet
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT
+        protocol: tcp
+        destination-port: SSH
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```yaml title="definitions.yaml"
+networks:
+  MGMT:
+    values:
+      - address: 10.0.0.0/24
+      - address: 192.168.10.0/24
+services:
+  SSH:
+    - port: 22
+      protocol: tcp
+```
+
+Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exceptions are [PcapFilter](pcap.md), which `aclgen` currently can't render, and [WindowsIPSec](windows_ipsec.md), which isn't registered. Their pages say how their output was produced.
 
 ## Reference
 

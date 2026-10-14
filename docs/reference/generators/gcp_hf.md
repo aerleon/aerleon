@@ -63,6 +63,86 @@ The other address is ignored without a warning; see [Known Issues](#known-issues
 | `deny` | `deny` | |
 | `next` | `goto_next` | Hands the decision to the next policy in the hierarchy. |
 
+## Output
+
+Each policy file renders to one file with the same name and a `.gcphf` extension, so `sample.yaml` renders `sample.gcphf`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `logging` to show gcp_hf-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        gcp_hf: org-policy
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        logging: true
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.gcphf"
+[
+  {
+    "displayName": "org-policy",
+    "rules": [
+      {
+        "action": "allow",
+        "description": "allow-ssh: Allow SSH from the management network.",
+        "direction": "INGRESS",
+        "enableLogging": true,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "tcp",
+                "ports": [
+                  "22"
+                ]
+              }
+            ],
+            "srcIpRanges": [
+              "10.0.0.0/24",
+              "192.168.10.0/24"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 1
+      },
+      {
+        "action": "deny",
+        "description": "default-deny: ",
+        "direction": "INGRESS",
+        "enableLogging": false,
+        "match": {
+          "config": {
+            "layer4Configs": [
+              {
+                "ipProtocol": "all"
+              }
+            ],
+            "srcIpRanges": [
+              "0.0.0.0/0"
+            ]
+          },
+          "versionedExpr": "FIREWALL"
+        },
+        "priority": 2
+      }
+    ],
+    "type": "FIREWALL"
+  }
+]
+```
+
 ## Known Issues
 
 !!! bug "Known issues"

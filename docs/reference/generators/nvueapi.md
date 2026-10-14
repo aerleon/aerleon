@@ -32,33 +32,6 @@ For common keys see the [Common](common.md) page. NVUE does **not** support `sou
 * Terms with no addresses in the ACL's family are skipped.
 * Port ranges are rendered as `start:end`.
 
-??? example "A term and its output"
-    With header `nvueapi: myacl ipv4`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: INTERNAL
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```json
-    {
-      "acl": {
-        "myacl": {
-          "type": "ipv4",
-          "rule": {
-            "10": {
-              "action": {"permit": {}},
-              "match": {"ip": {"protocol": "tcp", "source-ip": "10.0.0.0/8", "dest-port": "22"}}
-            }
-          }
-        }
-      }
-    }
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -74,6 +47,73 @@ For common keys see the [Common](common.md) page. NVUE does **not** support `sou
 | `established`, `tcp-established` | Match established TCP connections. | `option: tcp-established` | Adds `tcp: {state: established}`. Only applied to `tcp`; on other protocols it is silently ignored, so the rule is broader than intended. |
 
 Any other option value is accepted but ignored.
+
+## Output
+
+Each policy file renders to one file with the same name and a `.nvueapi.json` extension, so `sample.yaml` renders `sample.nvueapi.json`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        nvueapi: edge-inbound ipv4
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```json title="sample.nvueapi.json"
+{
+  "acl": {
+    "edge-inbound": {
+      "type": "ipv4",
+      "rule": {
+        "10": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "Allow SSH from the management network.",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "source-ip": "10.0.0.0/24",
+              "dest-port": "22"
+            }
+          }
+        },
+        "20": {
+          "action": {
+            "permit": {}
+          },
+          "remark": "Allow SSH from the management network.",
+          "match": {
+            "ip": {
+              "protocol": "tcp",
+              "source-ip": "192.168.10.0/24",
+              "dest-port": "22"
+            }
+          }
+        },
+        "30": {
+          "action": {
+            "deny": {}
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ## Known Issues
 

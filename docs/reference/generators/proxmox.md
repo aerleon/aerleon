@@ -48,31 +48,6 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 * Addresses are written as literal prefixes (`-source`, `-dest`), not IP sets, because IP sets live in a different file.
 * `comment` is appended to the rule as `# <comment>`.
 
-??? example "A term and its output"
-    With header `proxmox: vm IN dhcp log_level_in info`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: INTERNAL      # 10.0.0.0/8, 2001:db8::/32
-      source-interface: net0
-      protocol: tcp
-      destination-port: SSH
-      logging: true
-      option: log_warning
-      comment: "ssh in"
-      action: accept
-    ```
-
-    ```text
-    [OPTIONS]
-    enable: 1
-    dhcp: 1
-    log_level_in: info
-    [RULES]
-    IN ACCEPT -proto tcp -iface net0 -source 10.0.0.0/8 -dport 22 -log warning # ssh in
-    IN ACCEPT -proto tcp -iface net0 -source 2001:db8::/32 -dport 22 -log warning # ssh in
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -97,3 +72,37 @@ Options set the log level used when the term has `logging`.
 | `log_nolog` | `nolog` |
 | `log_notice` | `notice` |
 | `log_warning` | `warning` |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.prxmxfw` extension, so `sample.yaml` renders `sample.prxmxfw`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `logging`, `source-interface` to show proxmox-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        proxmox: vm IN
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        source-interface: net0
+        logging: true
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.prxmxfw"
+[OPTIONS]
+enable: 1
+[RULES]
+IN ACCEPT -proto tcp -iface net0 -source 10.0.0.0/24,192.168.10.0/24 -dport 22 -log warning # Allow SSH from the management network.
+IN DROP
+```

@@ -43,3 +43,48 @@ Same as [Cisco](cisco.md): `accept` → `permit`; `deny`, `reject` and `reject-w
 ## Option
 
 Same as [Cisco](cisco.md): `established`, `tcp-established`, `is-fragment` and `fragments`.
+
+## Output
+
+Each policy file renders to one file with the same name and a `.xacl` extension, so `sample.yaml` renders `sample.xacl`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        ciscoxr: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.xacl"
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv4 access-list edge-inbound
+ipv4 access-list edge-inbound
+ remark $Id:$
+
+
+ remark allow-ssh
+ remark Allow SSH from the management network.
+ permit tcp 10.0.0.0 0.0.0.255 any eq 22
+ permit tcp 192.168.10.0 0.0.0.255 any eq 22
+
+
+ remark default-deny
+ deny ipv4 any any
+
+exit
+```

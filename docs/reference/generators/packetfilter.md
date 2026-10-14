@@ -31,24 +31,6 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 * Table names are the address token names, cut to the platform's length limit. Two tokens that shorten to the same name raise `DuplicateShortenedTableNameError`.
 * A term without an `action` uses `block drop`.
 
-??? example "A term and its output"
-    With header `packetfilter: test`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: V4ONLY        # 192.168.0.0/16
-      protocol: tcp
-      destination-port: SSH
-      logging: true
-      action: accept
-    ```
-
-    ```text
-    table <V4ONLY> {192.168.0.0/16}
-    # term allow-ssh
-    pass quick log inet proto { tcp } from { <V4ONLY> } to { any } port { 22 } flags S/SA keep state
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -65,6 +47,48 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `all` | All TCP flags (`SAFRUP`). | `option: all` | A TCP flag set, not a protocol. |
 | `established`, `tcp-established` | Match established TCP connections. | `option: tcp-established` | Renders `flags A/A`. Can't be combined with TCP flag options. |
 | `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with these TCP flags set. | `option: syn` | Combined into one `flags X/Y` match. TCP only. |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.pf` extension, so `sample.yaml` renders `sample.pf`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `logging` to show packetfilter-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        packetfilter: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        logging: true
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.pf"
+table <MGMT> {10.0.0.0/24,\
+192.168.10.0/24}
+# Packetfilter edge-inbound Policy
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+
+# term allow-ssh
+# Allow SSH from the management network.
+pass quick log inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
+
+# term default-deny
+block drop quick inet from { any } to { any } flags S/SA
+```
 
 ## Known Issues
 

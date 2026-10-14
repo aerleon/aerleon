@@ -42,30 +42,6 @@ For common keys see the [Common](common.md) page. Nftables does **not** support 
 | `logging` | Log matching packets. | `logging: true` | Renders `log prefix "<term>"`. `true`, `syslog` and `local` all do the same; `disable` turns it off. |
 | `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `iifname "eth0"`. |
 
-??? example "A term and its output"
-    With header `nftables: inet input`:
-
-    ```yaml
-    - name: allow-ssh
-      source-address: INTERNAL
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```text
-    table ip filtering_policies {
-        chain allow-ssh {
-            ip saddr 10.0.0.0/8 tcp dport 22 ct state new accept
-        }
-        chain root0 {
-            type filter hook input priority 0; policy drop;
-            ct state established,related accept
-            jump allow-ssh
-        }
-    }
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -149,6 +125,48 @@ When reporting bugs about this generator, please include:
 1. Example policy (.pol or .yaml file)
 1. Observed output (.nft file)
 1. Expected (correct) output in nftables syntax
+
+## Output
+
+Each policy file renders to one file with the same name and a `.nft` extension, so `sample.yaml` renders `sample.nft`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        nftables: inet input
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.nft"
+table ip filtering_policies {
+    chain allow-ssh {
+        comment "Allow SSH from the management network."
+        ip saddr { 10.0.0.0/24, 192.168.10.0/24 } tcp dport 22 ct state new accept
+    }
+    chain default-deny {
+        drop
+    }
+    chain root0 {
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        jump allow-ssh
+        jump default-deny
+    }
+}
+```
 
 ## Known Issues
 

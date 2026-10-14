@@ -68,3 +68,84 @@ For common keys see the [Common](common.md) page. SRX is stateful, so terms that
 | `dscp` | `dscp` | |
 | `log` | `log` | |
 | `reject` | `reject` | |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.srx` extension, so `sample.yaml` renders `sample.srx`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        srx: from-zone trust to-zone untrust
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.srx"
+security {
+    replace: address-book {
+        global {
+                address MGMT_0 10.0.0.0/24;
+                address MGMT_1 192.168.10.0/24;
+                address-set MGMT {
+                    address MGMT_0;
+                    address MGMT_1;
+                }
+        }
+    }
+    /*
+    $Id:$
+    $Date:$
+    $Revision:$
+    */
+    replace: policies {
+        /*
+        */
+        from-zone trust to-zone untrust {
+            /*
+            Allow SSH from the management network.
+            */
+            policy allow-ssh {
+                match {
+                    source-address [ MGMT ];
+                    destination-address any;
+                    application allow-ssh-app;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy default-deny {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+    }
+}
+replace: applications {
+    application allow-ssh-app1 {
+        term t1 protocol tcp destination-port 22;
+    }
+    application-set allow-ssh-app {
+        application allow-ssh-app1;
+    }
+}
+```

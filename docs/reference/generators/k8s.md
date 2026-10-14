@@ -38,45 +38,72 @@ For common keys see the [Common](common.md) page. K8s does **not** support `sour
 * Term names must be valid Kubernetes object names (lowercase letters, digits and dashes).
 * If excluding addresses leaves none, the term is skipped with an error message.
 
-??? example "A term and its output"
-    ```yaml
-    - name: allow-ssh
-      source-address: V4NET          # 10.0.0.0/8
-      source-exclude: V4HOST         # 10.1.1.1/32
-      protocol: tcp
-      destination-port: SSH
-      owner: netops
-      action: accept
-    ```
-
-    ```yaml
-    - apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata:
-        annotations:
-          owner: netops
-        name: allow-ssh
-      spec:
-        ingress:
-        - from:
-          - ipBlock:
-              cidr: 10.0.0.0/8
-              except:
-              - 10.1.1.1/32
-          ports:
-          - port: 22
-            protocol: TCP
-        podSelector: {}
-        policyTypes:
-        - Ingress
-    ```
-
 ## Actions
 
 | Action | Notes |
 |---|---|
 | `accept` | |
 | `deny` | Only allowed for a default deny: a `deny` term with no match criteria. It renders a policy with no rules, which blocks all traffic in that direction. Any other `deny` term raises an error. |
+
+## Output
+
+Each policy file renders to one file with the same name and a `.yml` extension, so `sample.yaml` renders `sample.yml`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `owner` to show k8s-specific tokens.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        k8s: INGRESS
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        owner: netops@example.com
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```yaml title="sample.yml"
+apiVersion: networking.k8s.io/v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+      comment: Allow SSH from the management network.
+      owner: netops@example.com
+    name: allow-ssh
+  spec:
+    ingress:
+    - from:
+      - ipBlock:
+          cidr: 10.0.0.0/24
+      - ipBlock:
+          cidr: 192.168.10.0/24
+      ports:
+      - port: 22
+        protocol: TCP
+    podSelector: {}
+    policyTypes:
+    - Ingress
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations: {}
+    name: default-deny
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Ingress
+kind: NetworkPolicyList
+```
 
 ## Known Issues
 

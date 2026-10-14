@@ -186,6 +186,49 @@ Other match tokens, such as `packet-length` or `option`, don't count on their ow
 
 * [Arista EOS: Support for traffic-policy on interfaces](https://eos.arista.com/eos-4-25-0f/support-for-traffic-policy-on-interfaces/)
 
+## Output
+
+Each policy file renders to one file with the same name and a `.atp` extension, so `sample.yaml` renders `sample.atp`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        arista_tp: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample.atp"
+traffic-policies
+   no traffic-policy edge-inbound
+   traffic-policy edge-inbound
+      match allow-ssh ipv4
+         !! Allow SSH from the management network.
+         source prefix 10.0.0.0/24 192.168.10.0/24
+         protocol tcp destination port 22
+      !
+      match ipv4-default-all ipv4
+         actions
+            drop
+      !
+      match ipv6-default-all ipv6
+         actions
+            drop
+      !
+```
+
 ## Known Issues
 
 !!! bug "Known issues"

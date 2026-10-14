@@ -41,23 +41,6 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `source-interface` | Match the incoming interface. | `source-interface: eth0` | Renders `-i eth0`. |
 | `source-prefix`, `destination-prefix` | — | | Not supported by iptables. An `accept` or `next` term is replaced by a `# skipped` comment; any other action raises an error. |
 
-??? example "A term and its output"
-    With header `iptables: INPUT ACCEPT`:
-
-    ```yaml
-    - name: allow-ssh
-      protocol: tcp
-      destination-port: SSH
-      action: accept
-    ```
-
-    ```text
-    -P INPUT ACCEPT
-    -N I_allow-ssh
-    -A INPUT -j I_allow-ssh
-    -A I_allow-ssh -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
-    ```
-
 ## Actions
 
 | Action | Rendered as | Notes |
@@ -80,6 +63,47 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 | `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with this TCP flag set. | `option: syn` | Combined into one `--tcp-flags` match. |
 | `tcp-established` | Match established TCP connections. | `option: tcp-established` | Same as `established`, but raises an error if the term matches anything other than `tcp`. |
 | `tcp-initial` | Match the first packet of a TCP connection. | `option: tcp-initial` | Renders `--syn`. |
+
+## Output
+
+Each policy file renders to one file with the same name and **no extension**, so `sample.yaml` renders `sample`.
+
+### Example
+
+The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+
+```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        iptables: INPUT DROP
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        protocol: tcp
+        destination-port: SSH           # 22/tcp
+        action: accept
+      - name: default-deny
+        action: deny
+```
+
+```text title="sample"
+# Iptables INPUT Policy
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+-P INPUT DROP
+-N I_allow-ssh
+-A INPUT -j I_allow-ssh
+-A I_allow-ssh -m comment --comment "Allow SSH from the management network."
+-A I_allow-ssh -p tcp --dport 22 -s 10.0.0.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-A I_allow-ssh -p tcp --dport 22 -s 192.168.10.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+-N I_default-deny
+-A INPUT -j I_default-deny
+-A I_default-deny -p all -j DROP
+```
 
 ## Known Issues
 
