@@ -154,6 +154,35 @@ header {
 }
 """
 
+GOOD_HEADER_INET_INPUT = """
+header {
+  target:: nftables inet INPUT
+}
+"""
+
+ICMPV6_ONLY_TERM = """
+term icmpv6-only {
+  protocol:: icmpv6
+  icmp-type:: router-solicit router-advertisement
+  action:: accept
+}
+"""
+
+ICMP_ONLY_TERM = """
+term icmp-only {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+ICMPV6_PLUS_TCP_TERM = """
+term icmpv6-plus-tcp {
+  protocol:: icmpv6 tcp
+  action:: accept
+}
+"""
+
 ESTABLISHED_OPTION_TERM = """
 term established-term {
   protocol:: udp
@@ -441,6 +470,46 @@ class NftablesTest(parameterized.TestCase):
     def testPortsAndProtocols(self, af, proto, src_p, dst_p, icmp_type, expected):
         result = self.dummyterm.PortsAndProtocols(af, proto, src_p, dst_p, icmp_type)
         self.assertEqual(result, expected)
+
+    def testIcmpv6OnlyTermSkippedInIPv4Table(self):
+        """An icmpv6-only term must not render in an inet (IPv4) filter.
+
+        PortsAndProtocols drops icmpv6 in an IPv4 table, which previously left
+        the term with no match statement -- rendering a bare verdict that
+        matched every packet reaching the chain.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + ICMPV6_ONLY_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertNotIn('icmpv6-only', nft, f'AF-incompatible term was rendered:\n{nft}')
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
+
+    def testIcmpOnlyTermSkippedInIPv6Table(self):
+        """The symmetric case: an icmp-only term must not render in inet6."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + ICMP_ONLY_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertNotIn('icmp-only', nft, f'AF-incompatible term was rendered:\n{nft}')
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
+
+    def testPartiallyCompatibleTermStillRenders(self):
+        """A term keeping at least one compatible protocol must still render."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + ICMPV6_PLUS_TCP_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmpv6-plus-tcp', nft, f'compatible term was dropped:\n{nft}')
+        self.assertIn('ip protocol tcp', nft, f'tcp match missing:\n{nft}')
+        self.assertNotIn('icmpv6', nft.split('chain icmpv6-plus-tcp')[1].split('}')[0])
 
     @parameterized.parameters(
         'chain_name input 0 inet extraneous_target_option',
