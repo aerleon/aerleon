@@ -648,6 +648,12 @@
                         ]
                     },
                     "match": {
+                        "dst-port": {
+                            "range": {
+                                "start": 1024,
+                                "end": 65535
+                            }
+                        },
                         "next-header": "tcp",
                         "tcp-flags": {
                             "ack": true

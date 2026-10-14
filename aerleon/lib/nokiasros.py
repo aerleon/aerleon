@@ -143,7 +143,7 @@ class SROSTerm(aclgenerator.Term):
         if 'established' in opts and self.term.protocol == ['tcp']:
             opts.append('tcp-established')
         if 'tcp-established' in opts:
-            if self.term.protocol and self.term.protocol != ['tcp']:
+            if self.term.protocol != ['tcp']:
                 raise TcpEstablishedWithNonTcpError(
                     f'tcp-established can only be used with tcp protocol in term {self.term.name}'
                 )
@@ -341,7 +341,10 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         for af in afs:
             term_entries = [
                 SROSTerm(
-                    term, af, syslog_profile, mixed=address_family == 'mixed'
+                    self.FixHighPorts(term, af=af),
+                    af,
+                    syslog_profile,
+                    mixed=address_family == 'mixed',
                 ).ConvertToEntries()
                 for term in terms
             ]
@@ -371,7 +374,12 @@ class NokiaSROS(aclgenerator.ACLGenerator):
 
         syslog_profile = self._parse_common_options(filter_options)
         term_entries = [
-            SROSTerm(term, address_family, syslog_profile, cpm_mode=True).ConvertToEntries()
+            SROSTerm(
+                self.FixHighPorts(term, af=address_family),
+                address_family,
+                syslog_profile,
+                cpm_mode=True,
+            ).ConvertToEntries()
             for term in terms
         ]
         entries = self._NumberEntries(term_entries, self._CPM_FILTER_MAX_ENTRY_ID)

@@ -1203,8 +1203,8 @@ the description of the first entry as `<comment> | <term description>`.
 
 ### Option
 
-* _established_: Rendered as _tcp-established_ when `tcp` is the only protocol, ignored otherwise.
-* _tcp-established_: Match established TCP sessions. Rendered as the `tcp-established` leaf in IP filters and as `tcp-flags {ack: true}` in CPM filters. Can only be used with the `tcp` protocol.
+* _established_: Match replies, as in the Juniper generator: destination ports 1024-65535 are added, plus _tcp-established_ when `tcp` is the only protocol. Can only be used with the `tcp` and `udp` protocols.
+* _tcp-established_: Match established TCP sessions. Rendered as the `tcp-established` leaf in IP filters and as `tcp-flags {ack: true}` in CPM filters. No ports are added. Can only be used with the `tcp` protocol.
 * _fragments_, _is-fragment_: Match fragmented packets (`fragment true`).
 * _first-fragment_: Match only the first fragment (`fragment first-only`). Not supported in CPM filters, whose model only has `fragment true|false`.
 
