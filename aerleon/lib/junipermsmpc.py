@@ -372,7 +372,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         ]
     )
 
-    def __init__(self, pol: policy.Policy, exp_info: int):
+    def __init__(self, pol: policy.Policy, exp_info: int) -> None:
         self.applications = {}
         super().__init__(pol, exp_info)
 
@@ -406,7 +406,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _BuildPort(self, ports: list[tuple[int, int]]):
+    def _BuildPort(self, ports: list[tuple[int, int]]) -> list[str]:
         """Transform specified ports into list and ranges.
 
         Args:
@@ -423,7 +423,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 port_list.append(f'{str(p[0])}-{str(p[1])}')
         return port_list
 
-    def _GenerateApplications(self, filter_name: str):
+    def _GenerateApplications(self, filter_name: str) -> list[str]:
         target = []
         apps_set_list = []
         target.append('applications {')
@@ -505,7 +505,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
         else:
             return []
 
-    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.junipermsmpc_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -614,7 +614,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 # ports
                 if 'udp' in term.protocol or 'tcp' in term.protocol:
                     if not term.source_port and not term.destination_port:
-                        term.destination_port = [[1, 65535]]
+                        term.destination_port = [(1, 65535)]
                 new_application_set = {
                     'sport': self._BuildPort(term.source_port),
                     'dport': self._BuildPort(term.destination_port),
@@ -648,7 +648,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 (header, filter_name, filter_direction, new_terms, apply_groups)
             )
 
-    def _Group(self, group: list[str], lc: bool = True):
+    def _Group(self, group: list[str | int | tuple[int, int]], lc: bool = True) -> str:
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -661,7 +661,7 @@ class JuniperMSMPC(aclgenerator.ACLGenerator):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: list[str], lc: bool = True):
+        def _FormattedGroup(el: str | int | tuple[int, int], lc: bool = True) -> str:
             """Return the actual formatting of an individual element.
 
             Args:
