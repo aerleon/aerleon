@@ -27,15 +27,17 @@ These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
-### How tokens are rendered
+### Inherited tokens
 
-These are the same as for [OpenConfig](openconfig.md#how-tokens-are-rendered):
+These tokens are included from the [OpenConfig](openconfig.md#how-tokens-are-rendered) page.
 
 --8<-- "docs/reference/generators/openconfig.md:term-format"
 
 ## Actions
 
-Same as [OpenConfig](openconfig.md#actions):
+### Inherited actions
+
+These actions are included from the [OpenConfig](openconfig.md#actions) page.
 
 --8<-- "docs/reference/generators/openconfig.md:actions"
 

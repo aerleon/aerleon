@@ -38,25 +38,29 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Juniper EVO supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
-### Juniper EVO tokens
+### Inherited tokens
 
-These are the same as for [Juniper](juniper.md#juniper-tokens):
+These tokens are included from the [Juniper](juniper.md#juniper-tokens) page.
 
 --8<-- "docs/reference/generators/juniper.md:term-format"
 
 ## Actions
 
-Same as [Juniper](juniper.md#actions):
+### Inherited actions
+
+These actions are included from the [Juniper](juniper.md#actions) page.
 
 --8<-- "docs/reference/generators/juniper.md:actions"
 
 ## Option
 
-Same as [Juniper](juniper.md#option):
+### Inherited options
+
+These options are included from the [Juniper](juniper.md#option) page.
 
 --8<-- "docs/reference/generators/juniper.md:option"
 

@@ -28,9 +28,15 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. CiscoXR supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Inherited tokens
+
+These tokens are included from the [Cisco](cisco.md#cisco-tokens) page.
+
+--8<-- "docs/reference/generators/cisco.md:term-format"
 
 ### CiscoXR tokens
 
@@ -42,19 +48,19 @@ CiscoXR adds:
 
 For an example, see [ACL-based forwarding](#acl-based-forwarding).
 
-The other tokens are the same as for [Cisco](cisco.md#cisco-tokens):
-
---8<-- "docs/reference/generators/cisco.md:term-format"
-
 ## Actions
 
-Same as [Cisco](cisco.md#actions):
+### Inherited actions
+
+These actions are included from the [Cisco](cisco.md#actions) page.
 
 --8<-- "docs/reference/generators/cisco.md:actions"
 
 ## Option
 
-Same as [Cisco](cisco.md#option):
+### Inherited options
+
+These options are included from the [Cisco](cisco.md#option) page.
 
 --8<-- "docs/reference/generators/cisco.md:option"
 

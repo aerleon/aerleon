@@ -32,7 +32,7 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Proxmox supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

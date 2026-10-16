@@ -30,7 +30,7 @@ Address families are listed as they are written in the header. The default is in
 | [Aruba](generators/aruba.md) | `aruba` | ArubaOS access lists | **IPv4**, `inet6` | `.aacl` | |
 | [Brocade](generators/brocade.md) | `brocade` | Brocade access lists | **`inet`**, `inet6`, `mixed` | `.bacl` | Cisco |
 | [Cisco](generators/cisco.md) | `cisco` | IOS access lists | **`inet`**, `inet6`, `mixed` | `.acl` | |
-| [CiscoASA](generators/ciscoasa.md) | `ciscoasa` | ASA access lists | IPv4 only | `.asa` | Cisco |
+| [CiscoASA](generators/ciscoasa.md) | `ciscoasa` | ASA access lists | IPv4 only | `.asa` |  |
 | [CiscoNX](generators/cisconx.md) | `cisconx` | NX-OS access lists | **`inet`**, `inet6`, `mixed` | `.nxacl` | Cisco |
 | [CiscoXR](generators/ciscoxr.md) | `ciscoxr` | IOS XR access lists | **`inet`**, `inet6`, `mixed` | `.xacl` | Cisco |
 | [Cloud Armor](generators/cloudarmor.md) | `cloudarmor` | Google Cloud Armor security policy rules (JSON) | **`inet`**, `inet6`, `mixed` | `.gca` | |

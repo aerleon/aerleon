@@ -39,25 +39,29 @@ When a term has more than one source or destination address, the addresses are p
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Ipset supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
-### Ipset tokens
+### Inherited tokens
 
-These are the same as for [IpTables](iptables.md#iptables-tokens):
+These tokens are included from the [IpTables](iptables.md#iptables-tokens) page.
 
 --8<-- "docs/reference/generators/iptables.md:term-format"
 
 ## Actions
 
-Same as [IpTables](iptables.md#actions):
+### Inherited actions
+
+These actions are included from the [IpTables](iptables.md#actions) page.
 
 --8<-- "docs/reference/generators/iptables.md:actions"
 
 ## Option
 
-Same as [IpTables](iptables.md#option):
+### Inherited options
+
+These options are included from the [IpTables](iptables.md#option) page.
 
 --8<-- "docs/reference/generators/iptables.md:option"
 

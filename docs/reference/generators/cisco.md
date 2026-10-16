@@ -28,7 +28,7 @@ When `inet6` is specified, naming tokens that contain both IPv4 and IPv6 address
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Cisco supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

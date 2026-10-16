@@ -25,7 +25,7 @@ Only one address family can be given.
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Fortigate supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

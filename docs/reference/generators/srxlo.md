@@ -30,13 +30,13 @@ All options work as described for [Juniper](juniper.md).
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. SRXlo supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
-### SRXlo tokens
+### Inherited tokens
 
-These are the same as for [Juniper](juniper.md#juniper-tokens):
+These tokens are included from the [Juniper](juniper.md#juniper-tokens) page.
 
 !!! warning "Not supported on SRXlo"
     `encapsulate`, `flexible-match-range` and `port-mirror` are listed in the Juniper table below, but SRXlo doesn't support them. A term that uses any of them raises an error.
@@ -45,13 +45,17 @@ These are the same as for [Juniper](juniper.md#juniper-tokens):
 
 ## Actions
 
-Same as [Juniper](juniper.md#actions):
+### Inherited actions
+
+These actions are included from the [Juniper](juniper.md#actions) page.
 
 --8<-- "docs/reference/generators/juniper.md:actions"
 
 ## Option
 
-Same as [Juniper](juniper.md#option):
+### Inherited options
+
+These options are included from the [Juniper](juniper.md#option) page.
 
 --8<-- "docs/reference/generators/juniper.md:option"
 

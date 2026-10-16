@@ -32,7 +32,7 @@ The address family must come straight after the filter name. When `inet` or `ine
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Juniper supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
