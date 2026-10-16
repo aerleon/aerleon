@@ -61,25 +61,18 @@ So `source-exclude` only works on ingress terms and `destination-exclude` only o
 
 Each policy file renders to one file with the same name and a `.gce` extension, so `sample.yaml` renders `sample.gce`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `priority` to show gce-specific tokens.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         gce: global/networks/default
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        priority: 1000
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```json title="sample.gce"
@@ -97,7 +90,6 @@ filters:
     "direction": "INGRESS",
     "name": "default-allow-ssh",
     "network": "global/networks/default",
-    "priority": "1000",
     "sourceRanges": [
       "10.0.0.0/24",
       "192.168.10.0/24"
@@ -116,6 +108,49 @@ filters:
     "priority": 65534,
     "sourceRanges": [
       "0.0.0.0/0"
+    ]
+  }
+]
+```
+
+#### Rule priority
+
+The sample `allow-ssh` term with `priority`. It uses the sample definitions.
+
+```yaml title="priority.yaml"
+filters:
+  - header:
+      targets:
+        gce: global/networks/default
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT
+        protocol: tcp
+        destination-port: SSH
+        priority: 1000
+        action: accept
+```
+
+```json title="priority.gce"
+[
+  {
+    "allowed": [
+      {
+        "IPProtocol": "tcp",
+        "ports": [
+          "22"
+        ]
+      }
+    ],
+    "description": "Allow SSH from the management network.",
+    "direction": "INGRESS",
+    "name": "default-allow-ssh",
+    "network": "global/networks/default",
+    "priority": "1000",
+    "sourceRanges": [
+      "10.0.0.0/24",
+      "192.168.10.0/24"
     ]
   }
 ]

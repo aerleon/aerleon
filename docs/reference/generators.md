@@ -16,7 +16,7 @@ Each generator has its own page with:
 * **Header Format**: the options that can follow the target name.
 * **Term Format**: the tokens the generator adds to the [Common](generators/common.md) set, or drops from it.
 * **Actions** and **Option**: the `action` and `option` values the generator accepts, and how each one is rendered.
-* **Output**: the output file's name and extension, and the [sample policy](#sample-policy) rendered by the generator.
+* **Output**: the output file's name and extension, then examples: the [sample policy](#sample-policy) rendered by the generator, and examples of the generator's own tokens, each with its rendered output.
 * **Known Issues**: bugs that affect the generated output. Always the last section, and left out when there are none.
 
 ## Generators
@@ -62,13 +62,14 @@ Address families are listed as they are written in the header. The default is in
 
 ## Sample policy
 
-Every generator page ends with this policy rendered by that generator, so you can compare the output across platforms. Only the `targets` line changes, plus an extra token or two on pages where the generator has notable tokens of its own.
+Every generator page's Examples section starts with this policy rendered by that generator, so you can compare the output across platforms. Only the `targets` line changes; the terms are included from this page. The exception is [Cloud Armor](generators/cloudarmor.md), which only matches on source addresses, so its sample leaves out `protocol` and `destination-port`. Examples after the sample show generator-specific tokens.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         juniper: edge-inbound inet
+# --8<-- [start:sample-terms]
     terms:
       - name: allow-ssh
         comment: "Allow SSH from the management network."
@@ -78,6 +79,7 @@ filters:
         action: accept
       - name: default-deny
         action: deny
+# --8<-- [end:sample-terms]
 ```
 
 ```yaml title="definitions.yaml"
@@ -92,7 +94,7 @@ services:
       protocol: tcp
 ```
 
-Each output file is named after the policy file, with the generator's extension (generators/see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exceptions are [PcapFilter](pcap.md), which `aclgen` currently can't render, and [WindowsIPSec](windows_ipsec.md), which isn't registered. Their pages say how their output was produced.
+Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exceptions are [PcapFilter](generators/pcap.md), which `aclgen` currently can't render, and [WindowsIPSec](generators/windows_ipsec.md), which isn't registered. Their pages say how their output was produced.
 
 ## Reference
 

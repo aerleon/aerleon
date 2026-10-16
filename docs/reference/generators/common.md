@@ -26,16 +26,70 @@ These keys are accepted by every generator unless a generator's page says otherw
 | `source-port` | One or more source service tokens. | `source-port: DNS` | aruba, cloudarmor, gce, gcp_hf, k8s |  |
 | `verbatim` | Text copied into the output unchanged, keyed by target. | `verbatim: {juniper: "count my-counter;"}` | cloudarmor, gce, gcp_hf, k8s, nftables, nokiasrl, nvueapi, openconfig, paloalto, pcap, sonic, windows_advfirewall, windows_ipsec | Only the entry for the target being generated is used. Handy as a stop-gap for features Aerleon doesn't support yet. A verbatim term can't contain other match tokens. |
 
-??? example "A term using the common keys"
-    ```yaml
-    - name: accept-ssh
-      comment: "Allow SSH from bastions to internal hosts."
-      source-address: BASTIONS
-      destination-address: INTERNAL
-      destination-exclude: MAIL_SERVERS
-      destination-port: SSH
-      protocol: tcp
-      expiration: 2026-12-31
-      platform-exclude: gce
-      action: accept
-    ```
+## Example
+
+A term that uses most of the common keys, rendered by the [Juniper](juniper.md) generator. Because of `platform-exclude: gce`, the term would be left out of a `gce` filter.
+
+```yaml title="common.yaml"
+filters:
+  - header:
+      targets:
+        juniper: edge-inbound inet
+    terms:
+      - name: accept-ssh
+        comment: "Allow SSH from bastions to internal hosts."
+        source-address: BASTIONS
+        destination-address: INTERNAL
+        destination-exclude: MAIL_SERVERS
+        destination-port: SSH
+        protocol: tcp
+        expiration: 2030-12-31
+        platform-exclude: gce
+        action: accept
+```
+
+```yaml title="definitions.yaml"
+networks:
+  BASTIONS:
+    values:
+      - address: 10.0.0.10/32
+  INTERNAL:
+    values:
+      - address: 10.1.0.0/16
+  MAIL_SERVERS:
+    values:
+      - address: 10.1.2.25/32
+```
+
+```text title="common.jcl"
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter edge-inbound {
+            interface-specific;
+            /*
+             ** Allow SSH from bastions to internal hosts.
+             */
+            term accept-ssh {
+                from {
+                    source-address {
+                        10.0.0.10/32;
+                    }
+                    destination-address {
+                        10.1.0.0/16;
+                        10.1.2.25/32 except;
+                    }
+                    protocol tcp;
+                    destination-port 22;
+                }
+                then accept;
+            }
+        }
+    }
+}
+```

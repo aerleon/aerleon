@@ -34,47 +34,24 @@ Same as [OpenConfig](openconfig.md#actions):
 |---|---|---|---|
 | `tcp-established` | Match established TCP sessions. | `option: tcp-established` | Renders `"tcp-session-established": true` under `transport.config`, instead of OpenConfig's `"detail-mode": "BUILTIN", "builtin-detail": "TCP_ESTABLISHED"`. The term's `protocol` must be exactly `tcp`, otherwise `TcpEstablishedWithNonTcpError` is raised. |
 
-??? example "`tcp-established` and its output"
-    With header `sonic: edge inet`:
-
-    ```yaml
-    - name: established
-      protocol: tcp
-      option: tcp-established
-      action: accept
-    ```
-
-    ```json
-    {
-      "actions": {"config": {"forwarding-action": "ACCEPT"}},
-      "ipv4": {"config": {"protocol": 6}},
-      "sequence-id": 5,
-      "transport": {"config": {"tcp-session-established": true}}
-    }
-    ```
+For an example, see [`tcp-established`](#tcp-established).
 
 ## Output
 
 Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`. OpenConfig uses the same extension, so rendering one policy for both `openconfig` and `sonic` writes both to the same file.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         sonic: edge-inbound inet
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```json title="sample.oacl"
@@ -135,6 +112,57 @@ filters:
       "type": "ACL_IPV4"
     },
     "name": "edge-inbound",
+    "type": "ACL_IPV4"
+  }
+]
+```
+
+#### `tcp-established`
+
+A term with `option: tcp-established`. SONiC renders it as `tcp-session-established` (see [Option](#option)).
+
+```yaml title="established.yaml"
+filters:
+  - header:
+      targets:
+        sonic: edge inet
+    terms:
+      - name: established
+        protocol: tcp
+        option: tcp-established
+        action: accept
+```
+
+```json title="established.oacl"
+[
+  {
+    "acl-entries": {
+      "acl-entry": [
+        {
+          "actions": {
+            "config": {
+              "forwarding-action": "ACCEPT"
+            }
+          },
+          "ipv4": {
+            "config": {
+              "protocol": 6
+            }
+          },
+          "sequence-id": 5,
+          "transport": {
+            "config": {
+              "tcp-session-established": true
+            }
+          }
+        }
+      ]
+    },
+    "config": {
+      "name": "edge",
+      "type": "ACL_IPV4"
+    },
+    "name": "edge",
     "type": "ACL_IPV4"
   }
 ]

@@ -21,11 +21,7 @@ All options work as described for [Juniper](juniper.md), except:
 | `ingress`, `egress` | Direction the filter is applied in. | **Required** for `inet6` and `mixed` filters; an error is raised without it. |
 | `physical`, `loopback` | Type of interface the filter is applied to. | Optional. Defaults to `physical`. |
 
-??? example "Header for an IPv6 loopback filter"
-    ```yaml
-    targets:
-        juniperevo: LOOPBACK-V6 inet6 ingress loopback
-    ```
+For an example, see [IPv6 loopback filter](#ipv6-loopback-filter).
 
 ## IPv6 Protocol Match
 
@@ -60,24 +56,18 @@ Same as [Juniper](juniper.md#option):
 
 Each policy file renders to one file with the same name and a `.evojcl` extension, so `sample.yaml` renders `sample.evojcl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         juniperevo: edge-inbound inet
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.evojcl"
@@ -109,6 +99,45 @@ firewall {
                 then {
                     discard;
                 }
+            }
+        }
+    }
+}
+```
+
+#### IPv6 loopback filter
+
+An `inet6` filter for a loopback interface, applied `ingress`. See [IPv6 Protocol Match](#ipv6-protocol-match) for how the protocol is matched. It uses `SSH` from the sample definitions.
+
+```yaml title="loopback.yaml"
+filters:
+  - header:
+      targets:
+        juniperevo: LOOPBACK-V6 inet6 ingress loopback
+    terms:
+      - name: allow-ssh
+        protocol: tcp
+        destination-port: SSH
+        action: accept
+```
+
+```text title="loopback.evojcl"
+firewall {
+    family inet6 {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter LOOPBACK-V6 {
+            interface-specific;
+            term allow-ssh {
+                from {
+                    payload-protocol tcp;
+                    destination-port 22;
+                }
+                then accept;
             }
         }
     }

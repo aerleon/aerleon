@@ -32,12 +32,7 @@ For common keys see the [Common](common.md) page. CiscoXR adds:
 |---|---|---|---|
 | `next-ip` | Forward matching packets to a next hop (ACL-based forwarding). | `next-ip: NEXTHOP_ROUTER` | Only used when the term has **no** `action`; the rule is rendered as `permit … nexthop1 ipv4 <ip>`. Must resolve to exactly one host address. |
 
-??? example "ACL-based forwarding"
-    ```yaml
-    - name: send-to-scrubber
-      destination-address: DDOS_TARGETS
-      next-ip: SCRUBBER_NEXTHOP
-    ```
+For an example, see [ACL-based forwarding](#acl-based-forwarding).
 
 The other tokens are the same as for [Cisco](cisco.md#term-format):
 
@@ -59,24 +54,18 @@ Same as [Cisco](cisco.md#option):
 
 Each policy file renders to one file with the same name and a `.xacl` extension, so `sample.yaml` renders `sample.xacl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         ciscoxr: edge-inbound
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.xacl"
@@ -99,3 +88,49 @@ ipv4 access-list edge-inbound
 
 exit
 ```
+
+#### ACL-based forwarding
+
+A term with `next-ip` and no `action` forwards matching traffic to the next hop.
+
+```yaml title="forwarding.yaml"
+filters:
+  - header:
+      targets:
+        ciscoxr: edge-inbound
+    terms:
+      - name: send-to-scrubber
+        destination-address: DDOS_TARGETS
+        next-ip: SCRUBBER_NEXTHOP
+```
+
+```yaml title="definitions.yaml"
+networks:
+  DDOS_TARGETS:
+    values:
+      - address: 203.0.113.0/24
+  SCRUBBER_NEXTHOP:
+    values:
+      - address: 192.0.2.1/32
+```
+
+```text title="forwarding.xacl"
+! $Id:$
+! $Date:$
+! $Revision:$
+no ipv4 access-list edge-inbound
+ipv4 access-list edge-inbound
+ remark $Id:$
+
+
+ remark send-to-scrubber
+ permit ipv4 any 203.0.113.0 0.0.0.255 nexthop1 ipv4 192.0.2.1
+
+exit
+```
+
+## Known Issues
+
+These known issues are included from [Cisco](cisco.md#known-issues):
+
+--8<-- "docs/reference/generators/cisco.md:known-issues"

@@ -46,24 +46,18 @@ Addresses are written into `netdestination` (or `netdestination6`) blocks named 
 
 Each policy file renders to one file with the same name and a `.aacl` extension, so `sample.yaml` renders `sample.aacl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         aruba: edge-inbound
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.aacl"

@@ -28,12 +28,6 @@ targets:
 
 `policy_*` options take `ACCEPT`, `DROP` or `REJECT`; `log_level_*` options take a log level (`emerg` … `debug`, `nolog`).
 
-??? example "Header"
-    ```yaml
-    targets:
-       proxmox: vm IN dhcp log_level_in info ndp radv
-    ```
-
 ## Term Format
 
 For common keys see the [Common](common.md) page. The following tokens are specific to Proxmox:
@@ -77,11 +71,33 @@ Options set the log level used when the term has `logging`.
 
 Each policy file renders to one file with the same name and a `.prxmxfw` extension, so `sample.yaml` renders `sample.prxmxfw`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `logging`, `source-interface` to show proxmox-specific tokens.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
+filters:
+  - header:
+      targets:
+        proxmox: vm IN
+--8<-- "docs/reference/generators.md:sample-terms"
+```
+
+```text title="sample.prxmxfw"
+[OPTIONS]
+enable: 1
+[RULES]
+IN ACCEPT -proto tcp -source 10.0.0.0/24,192.168.10.0/24 -dport 22 # Allow SSH from the management network.
+IN DROP
+```
+
+#### Interface and logging
+
+The sample `allow-ssh` term with `source-interface` and `logging`. It uses the sample definitions.
+
+```yaml title="interface.yaml"
 filters:
   - header:
       targets:
@@ -89,20 +105,17 @@ filters:
     terms:
       - name: allow-ssh
         comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
+        source-address: MGMT
         protocol: tcp
-        destination-port: SSH           # 22/tcp
+        destination-port: SSH
         source-interface: net0
         logging: true
         action: accept
-      - name: default-deny
-        action: deny
 ```
 
-```text title="sample.prxmxfw"
+```text title="interface.prxmxfw"
 [OPTIONS]
 enable: 1
 [RULES]
 IN ACCEPT -proto tcp -iface net0 -source 10.0.0.0/24,192.168.10.0/24 -dport 22 -log warning # Allow SSH from the management network.
-IN DROP
 ```

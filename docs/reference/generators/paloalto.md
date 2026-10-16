@@ -66,28 +66,18 @@ For common keys see the [Common](common.md) page. PaloAltoFW does **not** suppor
 
 Each policy file renders to one file with the same name and a `.xml` extension, so `sample.yaml` renders `sample.xml`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `icmp-type` to show paloalto-specific tokens.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         paloalto: from-zone trust to-zone untrust
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: allow-ping
-        protocol: icmp
-        icmp-type: echo-request
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```xml title="sample.xml"
@@ -97,20 +87,7 @@ filters:
     <entry name="localhost.localdomain">
       <vsys>
         <entry name="vsys1">
-          <application>
-            <entry name="icmp-echo-request">
-              <category>networking</category>
-              <subcategory>ip-protocol</subcategory>
-              <technology>network-protocol</technology>
-              <description>icmp-echo-request</description>
-              <default>
-                <ident-by-icmp-type>
-                  <type>8</type>
-                </ident-by-icmp-type>
-              </default>
-              <risk>4</risk>
-            </entry>
-          </application>
+          <application/>
           <application-group/>
           <!-- Services -->
           <service>
@@ -147,28 +124,6 @@ filters:
                   <rule-type>interzone</rule-type>
                   <application>
                     <member>any</member>
-                  </application>
-                </entry>
-                <entry name="allow-ping">
-                  <to>
-                    <member>untrust</member>
-                  </to>
-                  <from>
-                    <member>trust</member>
-                  </from>
-                  <source>
-                    <member>any-ipv4</member>
-                  </source>
-                  <destination>
-                    <member>any-ipv4</member>
-                  </destination>
-                  <service>
-                    <member>application-default</member>
-                  </service>
-                  <action>allow</action>
-                  <rule-type>interzone</rule-type>
-                  <application>
-                    <member>icmp-echo-request</member>
                   </application>
                 </entry>
                 <entry name="default-deny">
@@ -215,6 +170,92 @@ filters:
               <description>MGMT_1</description>
               <ip-netmask>192.168.10.0/24</ip-netmask>
             </entry>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+```
+
+#### ICMP type
+
+A term that allows ping with `icmp-type`.
+
+```yaml title="icmp.yaml"
+filters:
+  - header:
+      targets:
+        paloalto: from-zone trust to-zone untrust
+    terms:
+      - name: allow-ping
+        protocol: icmp
+        icmp-type: echo-request
+        action: accept
+```
+
+```xml title="icmp.xml"
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application>
+            <entry name="icmp-echo-request">
+              <category>networking</category>
+              <subcategory>ip-protocol</subcategory>
+              <technology>network-protocol</technology>
+              <description>icmp-echo-request</description>
+              <default>
+                <ident-by-icmp-type>
+                  <type>8</type>
+                </ident-by-icmp-type>
+              </default>
+              <risk>4</risk>
+            </entry>
+          </application>
+          <application-group/>
+          <!-- Services -->
+          <service/>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="allow-ping">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>icmp-echo-request</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
             <entry name="any-ipv4">
               <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
               <ip-range>0.0.0.0-255.255.255.255</ip-range>

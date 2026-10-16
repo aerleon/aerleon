@@ -80,25 +80,7 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 <!-- --8<-- [end:term-format] -->
 
-??? example "Terms using juniper tokens"
-    ```yaml
-    - name: police-bgp
-      source-prefix: configured-neighbors-only
-      protocol: tcp
-      destination-port: BGP
-      counter: bgp-hits
-      policer: bgp-policer
-      action: accept
-
-    - name: match-flex
-      flexible-match-range:
-        match-start: payload
-        byte-offset: 16
-        bit-offset: 7
-        bit-length: 8
-        range: "0x08"
-      action: deny
-    ```
+For an example, see [Juniper tokens](#juniper-tokens).
 
 ## Actions
 
@@ -138,24 +120,18 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 Each policy file renders to one file with the same name and a `.jcl` extension, so `sample.yaml` renders `sample.jcl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         juniper: edge-inbound inet
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.jcl"
@@ -184,6 +160,84 @@ firewall {
                 then accept;
             }
             term default-deny {
+                then {
+                    discard;
+                }
+            }
+        }
+    }
+}
+```
+
+#### Juniper tokens
+
+A term that matches a prefix-list configured on the device, then counts and polices the traffic, and a term that uses `flexible-match-range`.
+
+```yaml title="tokens.yaml"
+filters:
+  - header:
+      targets:
+        juniper: edge-inbound inet
+    terms:
+      - name: police-bgp
+        source-prefix: configured-neighbors-only
+        protocol: tcp
+        destination-port: BGP
+        counter: bgp-hits
+        policer: bgp-policer
+        action: accept
+      - name: match-flex
+        flexible-match-range:
+          match-start: payload
+          byte-offset: 16
+          bit-offset: 7
+          bit-length: 8
+          range: "0x08"
+        action: deny
+```
+
+```yaml title="definitions.yaml"
+services:
+  BGP:
+    - port: 179
+      protocol: tcp
+```
+
+```text title="tokens.jcl"
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         */
+        replace: filter edge-inbound {
+            interface-specific;
+            term police-bgp {
+                from {
+                    source-prefix-list {
+                        configured-neighbors-only;
+                    }
+                    protocol tcp;
+                    destination-port 179;
+                }
+                then {
+                    count bgp-hits;
+                    policer bgp-policer;
+                    accept;
+                }
+            }
+            term match-flex {
+                from {
+                    flexible-match-range {
+                        match-start payload;
+                        byte-offset 16;
+                        bit-offset 7;
+                        bit-length 8;
+                        range 0x08;
+                    }
+                }
                 then {
                     discard;
                 }

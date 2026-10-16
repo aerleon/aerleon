@@ -47,9 +47,11 @@ For common keys see the [Common](common.md) page. Cloud Armor only supports `nam
 
 Each policy file renders to one file with the same name and a `.gca` extension, so `sample.yaml` renders `sample.gca`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. Cloud Armor only matches on source addresses, so `protocol` and `destination-port` are left out.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`. Cloud Armor only matches on source addresses, so `protocol` and `destination-port` are left out.
 
 ```yaml title="sample.yaml"
 filters:

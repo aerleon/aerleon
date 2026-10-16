@@ -32,17 +32,7 @@ For common keys see the [Common](common.md) page. Fortigate accepts all of them.
 
 Policy comments (owner plus `comment`) are cut to Fortigate's length limit, with a warning.
 
-??? example "A term with logging options"
-    From `policies/pol/sample_fortigate.yaml`:
-
-    ```yaml
-    - name: deny-to-specific_hosts
-      comment: "Deny access to specified public."
-      destination-address: WEB_SERVERS MAIL_SERVERS
-      logging: true
-      option: log_traffic_mode_all log_traffic_start_session
-      action: deny
-    ```
+For an example, see [Logging options](#logging-options).
 
 ## Actions
 
@@ -67,24 +57,18 @@ Options only take effect when the term also sets `logging`.
 
 Each policy file renders to one file with the same name and a `.fgacl` extension, so `sample.yaml` renders `sample.fgacl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         fortigate: from-zone internal to-zone wan
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.fgacl"
@@ -132,6 +116,69 @@ config firewall policy
         set schedule "always"
         set service "ALL"
         set logtraffic disable
+    next
+end
+```
+
+#### Logging options
+
+A term that turns on `logging` and uses `log_traffic_*` options to log all traffic from the start of the session.
+
+```yaml title="logging.yaml"
+filters:
+  - header:
+      targets:
+        fortigate: from-zone internal to-zone wan
+    terms:
+      - name: deny-to-specific-hosts
+        comment: "Deny access to specified public."
+        destination-address: WEB_SERVERS MAIL_SERVERS
+        logging: true
+        option: log_traffic_mode_all log_traffic_start_session
+        action: deny
+```
+
+```yaml title="definitions.yaml"
+networks:
+  WEB_SERVERS:
+    values:
+      - address: 203.0.113.10/32
+  MAIL_SERVERS:
+    values:
+      - address: 203.0.113.25/32
+```
+
+```text title="logging.fgacl"
+config firewall address
+    edit MAIL_SERVERS_0
+        set type ipmask
+        set subnet 203.0.113.25 255.255.255.255
+    next
+    edit WEB_SERVERS_0
+        set type ipmask
+        set subnet 203.0.113.10 255.255.255.255
+    next
+end
+config firewall addrgrp
+    edit MAIL_SERVERS
+        set member "MAIL_SERVERS_0"
+    next
+    edit WEB_SERVERS
+        set member "WEB_SERVERS_0"
+    next
+end
+config firewall policy
+    edit 1
+        set name "deny-to-specific-hosts"
+        set srcintf "internal"
+        set dstintf "wan"
+        set srcaddr "all"
+        set dstaddr "MAIL_SERVERS" "WEB_SERVERS"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+        set logtraffic-start enable
+        set comments "Deny access to specified public."
     next
 end
 ```

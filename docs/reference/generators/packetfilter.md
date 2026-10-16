@@ -54,25 +54,18 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 Each policy file renders to one file with the same name and a `.pf` extension, so `sample.yaml` renders `sample.pf`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `logging` to show packetfilter-specific tokens.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         packetfilter: edge-inbound
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        logging: true
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.pf"
@@ -86,10 +79,43 @@ table <MGMT> {10.0.0.0/24,\
 
 # term allow-ssh
 # Allow SSH from the management network.
-pass quick log inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
+pass quick inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
 
 # term default-deny
 block drop quick inet from { any } to { any } flags S/SA
+```
+
+#### Logging
+
+The sample `allow-ssh` term with `logging`. It uses the sample definitions.
+
+```yaml title="logging.yaml"
+filters:
+  - header:
+      targets:
+        packetfilter: edge-inbound
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT
+        protocol: tcp
+        destination-port: SSH
+        logging: true
+        action: accept
+```
+
+```text title="logging.pf"
+table <MGMT> {10.0.0.0/24,\
+192.168.10.0/24}
+# Packetfilter edge-inbound Policy
+# $Id:$
+# $Date:$
+# $Revision:$
+# inet
+
+# term allow-ssh
+# Allow SSH from the management network.
+pass quick log inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
 ```
 
 ## Known Issues

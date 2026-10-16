@@ -39,24 +39,18 @@ For common keys see the [Common](common.md) page. WindowsIPSec does **not** supp
 
 `windows_ipsec` isn't registered, so `aclgen` doesn't write a file for it. If it were registered, the file would get the `.bat` extension (inherited from the Windows generator), so `sample.yaml` would render `sample.bat`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by calling `WindowsIPSec` directly:
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by calling `WindowsIPSec` directly:
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         windows_ipsec: edge-inbound inet
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.bat"

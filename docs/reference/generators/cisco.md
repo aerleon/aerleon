@@ -32,7 +32,7 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
-| `address` | Address tokens matched as source **or** destination. | `address: INTERNAL` | Standard ACLs must use `address`; they reject `source-address`/`destination-address`. |
+| `address` | Address tokens for a `standard` ACL. | `address: INTERNAL` | Standard ACLs must use `address`; they reject `source-address`/`destination-address`. Extended and object-group ACLs ignore `address` without a warning; see [Known Issues](cisco.md#known-issues). |
 | `dscp-match` | Match a DSCP value. | `dscp-match: af41` | Only one value is allowed in extended ACLs. |
 | `icmp-code` | ICMP code to match. | `icmp-code: 0` | |
 | `logging` | Log matching packets. | `logging: true` | Adds `log` to the rule. |
@@ -41,17 +41,7 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 <!-- --8<-- [end:term-format] -->
 
-??? example "A term using cisco tokens"
-    ```yaml
-    - name: permit-mgmt-v4-only
-      address: MGMT_NETS
-      restrict-address-family: inet
-      protocol: tcp
-      destination-port: SSH
-      logging: true
-      owner: netops@example.com
-      action: accept
-    ```
+For an example, see [Cisco tokens in a mixed filter](#cisco-tokens-in-a-mixed-filter).
 
 ## Actions
 
@@ -84,24 +74,18 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 Each policy file renders to one file with the same name and a `.acl` extension, so `sample.yaml` renders `sample.acl`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         cisco: edge-inbound
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```text title="sample.acl"
@@ -124,3 +108,62 @@ ip access-list extended edge-inbound
 
 exit
 ```
+
+#### Cisco tokens in a mixed filter
+
+A term that uses `restrict-address-family`, `logging` and `owner`. Because of `restrict-address-family: inet`, the term is only rendered in the IPv4 access list, although `MGMT_NETS` also holds an IPv6 range. It uses `SSH` from the sample definitions.
+
+```yaml title="tokens.yaml"
+filters:
+  - header:
+      targets:
+        cisco: edge-inbound mixed
+    terms:
+      - name: permit-mgmt-v4-only
+        source-address: MGMT_NETS
+        restrict-address-family: inet
+        protocol: tcp
+        destination-port: SSH
+        logging: true
+        owner: netops@example.com
+        action: accept
+```
+
+```yaml title="definitions.yaml"
+networks:
+  MGMT_NETS:
+    values:
+      - address: 10.0.0.0/24
+      - address: 2001:db8:10::/64
+```
+
+```text title="tokens.acl"
+! $Id:$
+! $Date:$
+! $Revision:$
+no ip access-list extended edge-inbound
+ip access-list extended edge-inbound
+ remark $Id:$
+
+
+ remark permit-mgmt-v4-only
+ remark Owner: netops@example.com
+ permit tcp 10.0.0.0 0.0.0.255 any eq 22 log
+
+exit
+
+no ipv6 access-list ipv6-edge-inbound
+ipv6 access-list ipv6-edge-inbound
+ remark $Id:$
+
+exit
+```
+
+## Known Issues
+
+<!-- --8<-- [start:known-issues] -->
+
+!!! bug "Known issues"
+    * **`address` is silently dropped outside standard ACLs.** In `extended` and `object-group` ACLs, a term's `address` is ignored without a warning, so `address: MGMT` with `protocol: tcp` renders `permit tcp any any …`. Use `source-address` or `destination-address` instead.
+
+<!-- --8<-- [end:known-issues] -->

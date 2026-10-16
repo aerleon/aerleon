@@ -49,25 +49,18 @@ For common keys see the [Common](common.md) page. K8s does **not** support `sour
 
 Each policy file renders to one file with the same name and a `.yml` extension, so `sample.yaml` renders `sample.yml`.
 
-### Example
+### Examples
 
-The [sample policy](index.md#sample-policy) used on every generator page, rendered by `aclgen`. This page adds `owner` to show k8s-specific tokens.
+#### Sample policy
+
+The [sample policy](../generators.md#sample-policy) used on every generator page, rendered by `aclgen`.
 
 ```yaml title="sample.yaml"
 filters:
   - header:
       targets:
         k8s: INGRESS
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT            # 10.0.0.0/24, 192.168.10.0/24
-        protocol: tcp
-        destination-port: SSH           # 22/tcp
-        owner: netops@example.com
-        action: accept
-      - name: default-deny
-        action: deny
+--8<-- "docs/reference/generators.md:sample-terms"
 ```
 
 ```yaml title="sample.yml"
@@ -78,7 +71,6 @@ items:
   metadata:
     annotations:
       comment: Allow SSH from the management network.
-      owner: netops@example.com
     name: allow-ssh
   spec:
     ingress:
@@ -99,6 +91,51 @@ items:
     annotations: {}
     name: default-deny
   spec:
+    podSelector: {}
+    policyTypes:
+    - Ingress
+kind: NetworkPolicyList
+```
+
+#### Owner
+
+The sample `allow-ssh` term with `owner`. It uses the sample definitions.
+
+```yaml title="owner.yaml"
+filters:
+  - header:
+      targets:
+        k8s: INGRESS
+    terms:
+      - name: allow-ssh
+        comment: "Allow SSH from the management network."
+        source-address: MGMT
+        protocol: tcp
+        destination-port: SSH
+        owner: netops@example.com
+        action: accept
+```
+
+```yaml title="owner.yml"
+apiVersion: networking.k8s.io/v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    annotations:
+      comment: Allow SSH from the management network.
+      owner: netops@example.com
+    name: allow-ssh
+  spec:
+    ingress:
+    - from:
+      - ipBlock:
+          cidr: 10.0.0.0/24
+      - ipBlock:
+          cidr: 192.168.10.0/24
+      ports:
+      - port: 22
+        protocol: TCP
     podSelector: {}
     policyTypes:
     - Ingress
