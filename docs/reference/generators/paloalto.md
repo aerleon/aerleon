@@ -30,7 +30,7 @@ For common keys see the [Common](common.md) page. PaloAltoFW does **not** suppor
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
-| `logging` | Log sessions. | `logging: true` | `true`, `syslog` or `local`: `log-end`. `log-both`: `log-start` and `log-end`. `disable`: no logging. |
+| `logging` | Log sessions. | `logging: true` | `true`, `syslog` or `local`: `log-end`. `log-both`: `log-start` and `log-end`. `disable`: both set to `no`. Without `logging`, neither is written and PAN-OS uses its default. See the [Logging](#logging) example. |
 | `owner`, `timeout` | — | | Accepted, but ignored. |
 | `pan-application` | Palo Alto applications to match. | `pan-application: ssl web-browsing` | Predefined applications (<https://applipedia.paloaltonetworks.com/>) or custom application objects. Only allowed with no `protocol`, or with `tcp`/`udp`. See the service table below. |
 | `profile-settings` | Security profile group(s) for the rule. | `profile-settings: default-profile` | Rendered as `profile-setting` → `group`. |
@@ -247,6 +247,229 @@ filters:
                   <rule-type>interzone</rule-type>
                   <application>
                     <member>icmp-echo-request</member>
+                  </application>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group/>
+          <!-- Addresses -->
+          <address>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag/>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
+```
+
+#### Logging
+
+One term for each `logging` value, and one without `logging`. `true`, `syslog` and `local` all render `log-end`. `disable` turns off both `log-start` and `log-end`. A term without `logging` gets neither element, so PAN-OS uses its default. The terms have the same ports, so they share one service object, named after the first term. It uses `SSH` from the sample definitions.
+
+```yaml title="logging.yaml"
+filters:
+  - header:
+      targets:
+        paloalto: from-zone trust to-zone untrust
+    terms:
+      - name: log-true
+        protocol: tcp
+        destination-port: SSH
+        logging: true
+        action: accept
+      - name: log-syslog
+        protocol: tcp
+        destination-port: SSH
+        logging: syslog
+        action: accept
+      - name: log-local
+        protocol: tcp
+        destination-port: SSH
+        logging: local
+        action: accept
+      - name: log-both
+        protocol: tcp
+        destination-port: SSH
+        logging: log-both
+        action: accept
+      - name: log-disable
+        protocol: tcp
+        destination-port: SSH
+        logging: disable
+        action: accept
+      - name: no-logging
+        protocol: tcp
+        destination-port: SSH
+        action: accept
+```
+
+```xml title="logging.xml"
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="service-log-true-tcp">
+              <protocol>
+                <tcp>
+                  <port>22</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="log-true">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="log-syslog">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="log-local">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="log-both">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <log-start>yes</log-start>
+                  <log-end>yes</log-end>
+                </entry>
+                <entry name="log-disable">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <log-start>no</log-start>
+                  <log-end>no</log-end>
+                </entry>
+                <entry name="no-logging">
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>service-log-true-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
                   </application>
                 </entry>
               </rules>
