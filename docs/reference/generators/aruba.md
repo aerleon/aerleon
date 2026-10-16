@@ -19,7 +19,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Aruba does **not** support `source-port`, `source-exclude`, `destination-exclude` or `icmp-type`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Aruba does **not** support `source-port`, `source-exclude`, `destination-exclude` or `icmp-type`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Aruba tokens
+
+Aruba also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

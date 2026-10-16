@@ -96,7 +96,15 @@ _source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Nftables does **not** support `verbatim`, `owner` or the other generator-specific tokens. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Nftables does **not** support `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Nftables tokens
+
+Nftables also reads the following tokens. It does **not** support `owner` or other generator-specific tokens.
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

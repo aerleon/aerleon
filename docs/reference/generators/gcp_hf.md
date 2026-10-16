@@ -29,7 +29,15 @@ The **cost** of a rule is its number of addresses, plus its number of protocols 
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. gcp_hf does **not** support `source-port`, `icmp-type`, `option`, `source-exclude`, `destination-exclude`, `expiration` or `verbatim` (they raise an error). It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. gcp_hf does **not** support `source-port`, `icmp-type`, `option`, `source-exclude`, `destination-exclude`, `expiration` or `verbatim` (they raise an error).
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### GCP Hierarchical Firewall tokens
+
+GCP Hierarchical Firewall also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

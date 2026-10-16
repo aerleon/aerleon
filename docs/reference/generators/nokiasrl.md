@@ -23,7 +23,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Nokia SR Linux does **not** support `platform`, `platform-exclude` or `verbatim`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Nokia SR Linux does **not** support `platform`, `platform-exclude` or `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Nokia SR Linux tokens
+
+Nokia SR Linux also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

@@ -23,7 +23,15 @@ Only one address family can be given.
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Fortigate accepts all of them. It also reads these tokens:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Fortigate supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Fortigate tokens
+
+Fortigate also reads these tokens:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

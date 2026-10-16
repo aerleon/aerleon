@@ -22,7 +22,13 @@ The header also accepts `permit` or `block` as a default action, but the generat
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Windows Advanced Firewall does **not** support `source-exclude`, `destination-exclude` (they raise an error) or `verbatim`.
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Windows Advanced Firewall does **not** support `source-exclude`, `destination-exclude` (they raise an error) or `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### How tokens are rendered
 
 * Rule names are `<first letter of direction>_<term>`, e.g. `o_allow-ssh`.
 * For outbound rules, source is `local*` and destination is `remote*`; inbound is the reverse.

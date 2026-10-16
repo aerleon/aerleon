@@ -14,7 +14,7 @@ filters:
 Each generator has its own page with:
 
 * **Header Format**: the options that can follow the target name.
-* **Term Format**: the tokens the generator adds to the [Common](generators/common.md) set, or drops from it.
+* **Term Format**: the [Common](generators/common.md) tokens, with the ones the generator doesn't support, then the tokens the generator adds.
 * **Actions** and **Option**: the `action` and `option` values the generator accepts, and how each one is rendered.
 * **Output**: the output file's name and extension, then examples: the [sample policy](#sample-policy) rendered by the generator, and examples of the generator's own tokens, each with its rendered output.
 * **Known Issues**: bugs that affect the generated output. Always the last section, and left out when there are none.

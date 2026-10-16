@@ -29,7 +29,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are the same as for [IpTables](iptables.md#term-format):
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Speedway supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Speedway tokens
+
+These are the same as for [IpTables](iptables.md#iptables-tokens):
 
 --8<-- "docs/reference/generators/iptables.md:term-format"
 

@@ -27,7 +27,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are the same as for [Cisco](cisco.md#term-format):
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Arista supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Arista tokens
+
+These are the same as for [Cisco](cisco.md#cisco-tokens):
 
 --8<-- "docs/reference/generators/cisco.md:term-format"
 

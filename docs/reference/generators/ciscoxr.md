@@ -26,7 +26,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. CiscoXR adds:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. CiscoXR supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### CiscoXR tokens
+
+CiscoXR adds:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
@@ -34,7 +42,7 @@ For common keys see the [Common](common.md) page. CiscoXR adds:
 
 For an example, see [ACL-based forwarding](#acl-based-forwarding).
 
-The other tokens are the same as for [Cisco](cisco.md#term-format):
+The other tokens are the same as for [Cisco](cisco.md#cisco-tokens):
 
 --8<-- "docs/reference/generators/cisco.md:term-format"
 

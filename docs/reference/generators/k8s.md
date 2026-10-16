@@ -18,7 +18,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. K8s does **not** support `source-port`, `icmp-type`, `option` or `verbatim`, and only matches the protocols `tcp`, `udp` and `sctp`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. K8s does **not** support `source-port`, `icmp-type`, `option` or `verbatim`, and only matches the protocols `tcp`, `udp` and `sctp`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### K8s tokens
+
+K8s also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

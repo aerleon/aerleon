@@ -18,7 +18,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to CiscoASA:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. CiscoASA supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### CiscoASA tokens
+
+The following tokens are specific to CiscoASA:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

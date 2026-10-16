@@ -20,7 +20,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. NSXv does **not** support `option` (except as below) or `verbatim`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. NSXv does **not** support `option` (except as described below) or `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### NSXv tokens
+
+NSXv also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

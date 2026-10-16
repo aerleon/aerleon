@@ -25,7 +25,15 @@ All options work as described for [Cisco](cisco.md).
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are the same as for [Cisco](cisco.md#term-format):
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Brocade supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Brocade tokens
+
+These are the same as for [Cisco](cisco.md#cisco-tokens):
 
 --8<-- "docs/reference/generators/cisco.md:term-format"
 

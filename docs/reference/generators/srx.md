@@ -27,7 +27,15 @@ Zone names can't be any of the option keywords above.
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored. The following tokens are specific to JuniperSRX:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### JuniperSRX tokens
+
+The following tokens are specific to JuniperSRX:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

@@ -22,7 +22,15 @@ Only one nsxt header is allowed per policy file; more raise `NsxtUnsupportedMany
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Some common tokens are silently ignored; see [Known Issues](#known-issues). NSXt also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Some common tokens are silently ignored; see [Known Issues](#known-issues).
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### NSXt tokens
+
+NSXt also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

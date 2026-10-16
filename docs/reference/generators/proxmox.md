@@ -30,7 +30,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to Proxmox:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Proxmox supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Proxmox tokens
+
+The following tokens are specific to Proxmox:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

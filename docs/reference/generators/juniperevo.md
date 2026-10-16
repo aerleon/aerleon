@@ -36,7 +36,15 @@ For Juniper EVO, the direction of the filter on an interface and the interface t
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are the same as for [Juniper](juniper.md#term-format):
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Juniper EVO supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Juniper EVO tokens
+
+These are the same as for [Juniper](juniper.md#juniper-tokens):
 
 --8<-- "docs/reference/generators/juniper.md:term-format"
 

@@ -24,7 +24,15 @@ Several headers are joined with `or`.
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. PcapFilter does **not** support `verbatim`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. PcapFilter does **not** support `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### PcapFilter tokens
+
+PcapFilter also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

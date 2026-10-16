@@ -30,7 +30,15 @@ The address family must come straight after the filter name. When `inet` or `ine
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to Juniper.
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Juniper supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Juniper tokens
+
+The following tokens are specific to Juniper.
 
 <!-- --8<-- [start:term-format] -->
 
@@ -80,7 +88,7 @@ For common keys see the [Common](common.md) page. The following tokens are speci
 
 <!-- --8<-- [end:term-format] -->
 
-For an example, see [Juniper tokens](#juniper-tokens).
+For an example, see [Prefix lists, policers and flexible match](#prefix-lists-policers-and-flexible-match).
 
 ## Actions
 
@@ -169,7 +177,7 @@ firewall {
 }
 ```
 
-#### Juniper tokens
+#### Prefix lists, policers and flexible match
 
 A term that matches a prefix-list configured on the device, then counts and polices the traffic, and a term that uses `flexible-match-range`.
 

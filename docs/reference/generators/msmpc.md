@@ -26,7 +26,15 @@ Only one address family and one direction can be given. When `inet` or `inet6` i
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. The following tokens are specific to Juniper MSMPC:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Juniper MSMPC tokens
+
+The following tokens are specific to Juniper MSMPC:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

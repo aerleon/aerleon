@@ -22,7 +22,15 @@ Any other header option is silently ignored.
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. OpenConfig does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error). It adds no tokens of its own.
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. OpenConfig does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error).
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### How tokens are rendered
+
+OpenConfig adds no tokens of its own.
 
 <!-- --8<-- [start:term-format] -->
 

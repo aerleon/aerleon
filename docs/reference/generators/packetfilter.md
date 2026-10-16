@@ -22,7 +22,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to PacketFilter:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. PacketFilter supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### PacketFilter tokens
+
+The following tokens are specific to PacketFilter:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

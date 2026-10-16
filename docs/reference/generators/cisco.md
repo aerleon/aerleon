@@ -26,7 +26,15 @@ When `inet6` is specified, naming tokens that contain both IPv4 and IPv6 address
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to Cisco:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Cisco supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Cisco tokens
+
+The following tokens are specific to Cisco:
 
 <!-- --8<-- [start:term-format] -->
 

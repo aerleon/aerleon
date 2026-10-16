@@ -26,7 +26,15 @@ The options are positional: to use `unique-term-prefixes` you must also give the
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. PaloAltoFW does **not** support `verbatim`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. PaloAltoFW does **not** support `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### PaloAltoFW tokens
+
+PaloAltoFW also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

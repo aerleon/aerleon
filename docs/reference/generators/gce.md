@@ -23,7 +23,15 @@ targets:
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. GCE does **not** support `source-port`, `icmp-type`, `option` or `verbatim`. It also reads:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. GCE does **not** support `source-port`, `icmp-type`, `option` or `verbatim`.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### GCE tokens
+
+GCE also reads:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

@@ -18,7 +18,15 @@ All options work as described for [OpenConfig](openconfig.md#header-format).
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. Like OpenConfig, SONiC does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error). The following tokens are the same as for [OpenConfig](openconfig.md#term-format):
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Like OpenConfig, SONiC does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error).
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### How tokens are rendered
+
+These are the same as for [OpenConfig](openconfig.md#how-tokens-are-rendered):
 
 --8<-- "docs/reference/generators/openconfig.md:term-format"
 

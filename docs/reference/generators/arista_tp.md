@@ -70,7 +70,15 @@ Other match tokens, such as `packet-length` or `option`, don't count on their ow
 
 ## Term Format
 
-For common keys see the [Common](common.md) page. The following tokens are specific to Arista Traffic-Policy:
+### Common tokens
+
+These tokens are included from the [Common](common.md) page. Arista Traffic-Policy supports all of them.
+
+--8<-- "docs/reference/generators/common.md:common-tokens"
+
+### Arista Traffic-Policy tokens
+
+The following tokens are specific to Arista Traffic-Policy:
 
 | Token | Description | Example | Notes |
 |---|---|---|---|
