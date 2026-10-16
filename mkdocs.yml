@@ -73,7 +73,7 @@ nav:
     - AclCheck API: aclcheck_api.md
   - Reference:
     - Generators:
-      - reference/generators/index.md
+      - reference/generators.md
       - Common: reference/generators/common.md
       - ICMP Types: reference/generators/icmp_types.md
       - Arista:
