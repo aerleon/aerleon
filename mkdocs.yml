@@ -72,5 +72,49 @@ nav:
     - Generate API: api.md
     - AclCheck API: aclcheck_api.md
   - Reference:
-    - Generators: reference/generators.md
+    - Generators:
+      - reference/generators.md
+      - Common: reference/generators/common.md
+      - ICMP Types: reference/generators/icmp_types.md
+      - Arista:
+        - Arista: reference/generators/arista.md
+        - Arista Traffic-Policy: reference/generators/arista_tp.md
+      - Aruba: reference/generators/aruba.md
+      - Brocade: reference/generators/brocade.md
+      - Cisco:
+        - Cisco: reference/generators/cisco.md
+        - CiscoASA: reference/generators/ciscoasa.md
+        - CiscoNX: reference/generators/cisconx.md
+        - CiscoXR: reference/generators/ciscoxr.md
+      - Fortigate: reference/generators/fortigate.md
+      - Google Cloud:
+        - GCE: reference/generators/gce.md
+        - GCP Hierarchical Firewall: reference/generators/gcp_hf.md
+        - Cloud Armor: reference/generators/cloudarmor.md
+      - Juniper:
+        - Juniper: reference/generators/juniper.md
+        - Juniper EVO: reference/generators/juniperevo.md
+        - Juniper MSMPC: reference/generators/msmpc.md
+        - JuniperSRX: reference/generators/srx.md
+        - SRXlo: reference/generators/srxlo.md
+      - K8s: reference/generators/k8s.md
+      - Linux:
+        - IpTables: reference/generators/iptables.md
+        - Ipset: reference/generators/ipset.md
+        - Speedway: reference/generators/speedway.md
+        - Nftables: reference/generators/nftables.md
+      - Nokia SR Linux: reference/generators/nokiasrl.md
+      - NVUE API: reference/generators/nvueapi.md
+      - OpenConfig: reference/generators/openconfig.md
+      - PacketFilter: reference/generators/packetfilter.md
+      - PaloAltoFW: reference/generators/paloalto.md
+      - PcapFilter: reference/generators/pcap.md
+      - Proxmox: reference/generators/proxmox.md
+      - SONiC: reference/generators/sonic.md
+      - VMware NSX:
+        - NSXv: reference/generators/nsxv.md
+        - NSXt: reference/generators/nsxt.md
+      - Windows:
+        - Windows Advanced Firewall: reference/generators/windows_advfirewall.md
+        - WindowsIPSec: reference/generators/windows_ipsec.md
     - Generator Development: reference/generator_patterns.md
