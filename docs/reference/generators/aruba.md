@@ -21,7 +21,10 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Aruba does **not** support `source-port`, `source-exclude`, `destination-exclude` or `icmp-type`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Aruba"
+    Aruba doesn't support `source-port`, `source-exclude`, `destination-exclude` or `icmp-type`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

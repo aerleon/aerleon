@@ -28,7 +28,10 @@ Only one address family and one direction can be given. When `inet` or `inet6` i
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Juniper MSMPC"
+    MSMPC is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

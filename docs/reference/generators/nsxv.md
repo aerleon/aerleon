@@ -22,7 +22,10 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. NSXv does **not** support `option` (except as described below) or `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on NSXv"
+    NSXv doesn't support `option` (except as described below) or `verbatim`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

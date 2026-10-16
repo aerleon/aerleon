@@ -24,7 +24,10 @@ Only one nsxt header is allowed per policy file; more raise `NsxtUnsupportedMany
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Some common tokens are silently ignored; see [Known Issues](#known-issues).
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on NSXt"
+    Some common tokens are accepted but silently ignored; see [Known Issues](#known-issues).
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

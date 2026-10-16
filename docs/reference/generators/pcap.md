@@ -26,7 +26,10 @@ Several headers are joined with `or`.
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. PcapFilter does **not** support `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on PcapFilter"
+    PcapFilter doesn't support `verbatim`. A term that uses it raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

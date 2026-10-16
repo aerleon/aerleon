@@ -20,7 +20,7 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. CiscoASA supports all of them.
+These tokens are included from the [Common](common.md) page.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
@@ -32,8 +32,6 @@ The following tokens are specific to CiscoASA:
 |---|---|---|---|
 | `logging` | Log matching packets. | `logging: true` | Adds `log`. Use `logging: disable` to render `log disable`. |
 | `owner` | Owner of the term, for record-keeping. | `owner: netops@example.com` | Added as a `remark`. |
-
-Unlike [Cisco](cisco.md), ciscoasa does not support `address`, `restrict-address-family`, `dscp-match` or `icmp-code`.
 
 ## Actions
 

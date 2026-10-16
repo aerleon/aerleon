@@ -26,7 +26,10 @@ The address family must be the first option after `noverbose` is removed. Any ot
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Cloud Armor only supports `name`, `comment`, `source-address` and `action`. Every other common token raises an error, including `destination-address`, `protocol`, the ports, exclusions, `option`, `expiration`, `platform`, `platform-exclude` and `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Cloud Armor"
+    Cloud Armor only supports `name`, `comment`, `source-address` and `action`. Every other common token raises an error, including `destination-address`, `protocol`, the ports, exclusions, `option`, `expiration`, `platform`, `platform-exclude` and `verbatim`.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

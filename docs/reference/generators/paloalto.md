@@ -28,7 +28,10 @@ The options are positional: to use `unique-term-prefixes` you must also give the
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. PaloAltoFW does **not** support `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on PaloAltoFW"
+    PaloAltoFW doesn't support `verbatim`. A term that uses it raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

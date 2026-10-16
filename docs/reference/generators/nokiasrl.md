@@ -25,7 +25,10 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Nokia SR Linux does **not** support `platform`, `platform-exclude` or `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Nokia SR Linux"
+    Nokia SR Linux doesn't support `platform`, `platform-exclude` or `verbatim`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

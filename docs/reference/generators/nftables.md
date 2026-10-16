@@ -98,13 +98,19 @@ _source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Nftables does **not** support `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Nftables"
+    Nftables doesn't support `verbatim`. A term that uses it raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
 ### Nftables tokens
 
-Nftables also reads the following tokens. It does **not** support `owner` or other generator-specific tokens.
+Nftables also reads the following tokens.
+
+!!! warning "Not supported on Nftables"
+    Nftables doesn't support `owner` or other generator-specific tokens. A few, such as `owner`, `policer` and `qos`, are ignored with a warning; the others, such as `dscp-match` and `next-ip`, raise an error.
 
 | Token | Description | Example | Notes |
 |---|---|---|---|

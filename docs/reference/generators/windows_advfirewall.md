@@ -18,13 +18,17 @@ targets:
 | `inet` | IPv4 only. | Default. |
 | `inet6` | IPv6 only. | `mixed` is not accepted. |
 
-The header also accepts `permit` or `block` as a default action, but the generator then raises "Windows generator does not support default actions", so don't use them.
+!!! warning "Not supported on Windows Advanced Firewall"
+    The header also accepts `permit` or `block` as a default action, but the generator then raises "Windows generator does not support default actions", so don't use them.
 
 ## Term Format
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. Windows Advanced Firewall does **not** support `source-exclude`, `destination-exclude` (they raise an error) or `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on Windows Advanced Firewall"
+    Windows Advanced Firewall doesn't support `source-exclude`, `destination-exclude` or `verbatim`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

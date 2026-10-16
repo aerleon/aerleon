@@ -17,13 +17,17 @@ targets:
 | `ipv4` | IPv4 ACL. | `inet` also works. |
 | `ipv6` | IPv6 ACL. | `inet6` also works. |
 
-`mixed` and `mac` ACLs are not supported and raise an error. Use separate IPv4 and IPv6 ACLs. Always give the address family; see [Known Issues](#known-issues).
+!!! warning "Not supported on NVUE API"
+    `mixed` and `mac` ACLs are not supported and raise an error. Use separate IPv4 and IPv6 ACLs. Always give the address family; see [Known Issues](#known-issues).
 
 ## Term Format
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. NVUE does **not** support `source-exclude`, `destination-exclude` or `verbatim`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on NVUE API"
+    NVUE API doesn't support `source-exclude`, `destination-exclude` or `verbatim`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

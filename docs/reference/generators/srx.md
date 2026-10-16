@@ -29,7 +29,10 @@ Zone names can't be any of the option keywords above.
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on JuniperSRX"
+    SRX is stateful, so terms that use `established`/`tcp-established` or are stateless replies are skipped with a warning. Other `option` values are accepted but ignored.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

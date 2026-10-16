@@ -24,7 +24,10 @@ Any other header option is silently ignored.
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. OpenConfig does **not** support `platform`, `platform-exclude` or `verbatim` (they raise an error).
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on OpenConfig"
+    OpenConfig doesn't support `platform`, `platform-exclude` or `verbatim`. A term that uses any of them raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 

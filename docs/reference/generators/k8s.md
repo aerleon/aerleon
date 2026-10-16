@@ -20,7 +20,10 @@ targets:
 
 ### Common tokens
 
-These tokens are included from the [Common](common.md) page. K8s does **not** support `source-port`, `icmp-type`, `option` or `verbatim`, and only matches the protocols `tcp`, `udp` and `sctp`.
+These tokens are included from the [Common](common.md) page.
+
+!!! warning "Not supported on K8s"
+    K8s doesn't support `source-port`, `icmp-type`, `option` or `verbatim`. A term that uses any of them raises an error. K8s also only matches the protocols `tcp`, `udp` and `sctp`.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
