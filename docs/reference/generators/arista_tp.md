@@ -50,7 +50,7 @@ For an example, see [Source exclusion in a mixed filter](#source-exclusion-in-a-
 
 ### Ports
 
-Ports are rendered inline as port lists, for example `source port 53` or `destination port 22 1024-65535`. EOS also allows `all` or a port field-set, but Aerleon doesn't generate either. A term that uses the `port` token (source **or** destination) is skipped with a warning.
+Ports are rendered inline as port lists, for example `source port 53` or `destination port 22 1024-65535`. EOS also allows `all` or a port field-set, but Aerleon doesn't generate either.
 
 ### Default terms
 
@@ -64,7 +64,7 @@ For an example, see [Default deny with a counter](#default-deny-with-a-counter).
 
 A term that isn't a [default term](#default-terms) must match on at least one of these, or it is skipped with a warning:
 
-`source-address`, `source-exclude`, `source-port`, `source-prefix`, `destination-address`, `destination-exclude`, `destination-port`, `destination-prefix`, `protocol`, `protocol-except`, `port`, `fragment-offset`, `ttl`, `hop-limit`
+`source-address`, `source-exclude`, `source-port`, `source-prefix`, `destination-address`, `destination-exclude`, `destination-port`, `destination-prefix`, `protocol`, `protocol-except`, `fragment-offset`, `ttl`, `hop-limit`
 
 Other match tokens, such as `packet-length` or `option`, don't count on their own. For example, a term that only sets `packet-length` is skipped.
 
@@ -94,9 +94,6 @@ The following tokens are specific to Arista Traffic-Policy:
 | `protocol-except` | Match every protocol except the ones listed. | `protocol-except: tcp udp` | Renders as a protocol number range with the listed protocols removed. |
 | `source-prefix` | Match a field-set already configured on the device. | `source-prefix: CORP-NETS` | Renders as `source prefix field-set …`. Aerleon does not create the field-set. |
 | `ttl` | Match on TTL. | `ttl: 1` | Renders as `ttl …`. |
-
-!!! warning "Accepted but not rendered"
-    A term that uses `port`, `dscp-match`, `dscp-except`, `ether-type`, `flexible-match-range`, `forwarding-class`, `forwarding-class-except`, `next-ip` or `traffic-type` is skipped with a warning.
 
 For an example, see [Counting established replies](#counting-established-replies).
 
