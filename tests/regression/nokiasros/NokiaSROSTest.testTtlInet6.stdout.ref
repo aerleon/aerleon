@@ -1,0 +1,26 @@
+[
+    {
+        "ipv6-filter": {
+            "nokia-conf:scope": "template",
+            "nokia-conf:default-action": "drop",
+            "nokia-conf:filter-name": "my-filter",
+            "nokia-conf:entry": [
+                {
+                    "description": "term-ttl",
+                    "action": {
+                        "drop": [
+                            null
+                        ]
+                    },
+                    "match": {
+                        "hop-limit": {
+                            "lt": 5
+                        }
+                    },
+                    "entry-id": 1000
+                }
+            ]
+        }
+    }
+]
+
