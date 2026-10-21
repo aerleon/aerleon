@@ -312,6 +312,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
     _PLATFORM = 'nokiasrl'
     SUFFIX = '.srl_acl'
+    _SUPPORTS_ICMP_TYPE = True
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
@@ -322,7 +323,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
-        supported_tokens |= {'source_prefix', 'destination_prefix', 'icmp_code', 'icmp_type'}
+        supported_tokens |= {'source_prefix', 'destination_prefix', 'icmp_code'}
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {

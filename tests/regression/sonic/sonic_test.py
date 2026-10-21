@@ -17,7 +17,7 @@
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, policy, sonic
+from aerleon.lib import aclgenerator, naming, policy, sonic
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -32,6 +32,13 @@ term good-tcp-est {
   destination-address:: CORP_EXTERNAL
   source-port:: HTTP
   option:: tcp-established
+  action:: accept
+}
+"""
+BAD_ICMP_TYPE = """
+term bad-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request
   action:: accept
 }
 """
@@ -65,6 +72,11 @@ class SONiCTest(absltest.TestCase):
         output = str(acl)
         self.assertIn('tcp-session-established', output, output)
         print(acl)
+
+    def testIcmpTypeUnsupported(self):
+        """icmp-type is rejected rather than dropped, which would match every ICMP type."""
+        pol = policy.ParsePolicy(GOOD_HEADER + BAD_ICMP_TYPE, self.naming)
+        self.assertRaises(aclgenerator.UnsupportedFilterError, sonic.SONiC, pol, EXP_INFO)
 
 
 if __name__ == '__main__':

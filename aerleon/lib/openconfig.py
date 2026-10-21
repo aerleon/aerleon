@@ -287,6 +287,8 @@ class OpenConfig(aclgenerator.ACLGenerator):
     _SUPPORTED_AF = frozenset(('inet', 'inet6', 'mixed'))
     FAMILY_MAP = {'mixed': 'ACL_MIXED', 'inet6': 'ACL_IPV6', 'inet': 'ACL_IPV4'}
     _TERM = Term
+    # Subclasses that render ICMP types set this to keep the icmp-type keyword.
+    _SUPPORTS_ICMP_TYPE = False
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
@@ -297,7 +299,10 @@ class OpenConfig(aclgenerator.ACLGenerator):
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
         # Remove unsupported things
-        supported_tokens -= {'platform', 'platform_exclude', 'icmp-type', 'verbatim'}
+        supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
+        if not self._SUPPORTS_ICMP_TYPE:
+            supported_tokens.remove('icmp_type')
+            del supported_sub_tokens['icmp_type']
 
         # OpenConfig ACL model only supports these three forwarding actions.
         supported_sub_tokens['action'] = {'accept', 'deny', 'reject'}
