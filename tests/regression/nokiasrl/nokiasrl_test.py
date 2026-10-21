@@ -19,7 +19,7 @@ import json
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, nokiasrl, policy
+from aerleon.lib import aclgenerator, naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -468,6 +468,31 @@ GOOD_JSON_MULTI_SPFX = """
 ]
 """
 
+GOOD_ICMP_TYPE = """
+term good-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+GOOD_ICMP_CODE = """
+term good-icmp-code {
+  protocol:: icmp
+  icmp-type:: unreachable
+  icmp-code:: 4 3
+  action:: accept
+}
+"""
+
+GOOD_ICMPV6_TYPE = """
+term good-icmpv6-type {
+  protocol:: icmpv6
+  icmp-type:: echo-request
+  action:: accept
+}
+"""
+
 BAD_TERM_1 = """
 term bad-term-1 {
   protocol:: tcp udp
@@ -753,12 +778,73 @@ class NokiaSRLTest(absltest.TestCase):
         with self.assertRaises(nokiasrl.PrefixListWithAddressError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
+    def _Acl(self, header, terms):
+        return nokiasrl.NokiaSRLinux(policy.ParsePolicy(header + terms, self.naming), EXP_INFO)
+
+    def _Entries(self, acl):
+        """Return the entries of each filter, keyed by filter key and type."""
+        filters = {}
+        for ip_filter in json.loads(str(acl)):
+            key, body = next(iter(ip_filter.items()))
+            filters[body.get('type', key)] = body['entry']
+        return filters
+
+    @capture.stdout
+    def testIcmpType(self):
+        """One entry per ICMP type, in the r24.3.2 nested syntax."""
+        acl = self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE)
+        entries = self._Entries(acl)
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4']],
+            [
+                {'ipv4': {'protocol': 1, 'icmp': {'type': 0}}},
+                {'ipv4': {'protocol': 1, 'icmp': {'type': 8}}},
+            ],
+        )
+        self.assertEqual([e['sequence-id'] for e in entries['ipv4']], [5, 10])
+
+        print(acl)
+
+    def testIcmpTypePre2024(self):
+        """The ICMP container is directly under match in the flat syntax."""
+        entries = self._Entries(self._Acl(GOOD_HEADER_PRE2024, GOOD_ICMP_TYPE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4-filter']],
+            [{'protocol': 1, 'icmp': {'type': 0}}, {'protocol': 1, 'icmp': {'type': 8}}],
+        )
+
+    def testIcmpCode(self):
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_CODE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4']],
+            [{'ipv4': {'protocol': 1, 'icmp': {'type': 3, 'code': [3, 4]}}}],
+        )
+
+    def testIcmpv6Type(self):
+        entries = self._Entries(self._Acl(GOOD_HEADER_INET6, GOOD_ICMPV6_TYPE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv6']],
+            [{'next-header': 58, 'icmp6': {'type': 128}}],
+        )
+
+    def testIcmpTypeMixed(self):
+        """In a mixed filter, ICMP and ICMPv6 terms only render in their own filter."""
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE + GOOD_ICMPV6_TYPE))
+        self.assertEqual(
+            [e['description'] for e in entries['ipv4']], ['good-icmp-type', 'good-icmp-type']
+        )
+        self.assertEqual([e['description'] for e in entries['ipv6']], ['good-icmpv6-type'])
+
+    def testIcmpTypeAddressFamilyMismatch(self):
+        acl = policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_ICMP_TYPE, self.naming)
+        with self.assertRaises(aclgenerator.MismatchIcmpInetError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
 
 #
 # TODO:
 # - Fragments
 # - TCP flags
-# - ICMP type codes
 #
 
 if __name__ == '__main__':

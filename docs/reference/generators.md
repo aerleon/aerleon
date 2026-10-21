@@ -11,7 +11,7 @@ This lists contains all the common keys that are used across all generators (wit
 * _destination-address_: One or more destination address tokens.
 * _destination-port_: One or more service definition tokens.
 * _expiration_: Stop rendering this term after specified date in YYYY-MM-DD format. E.g. 2000-12-31.
-* _icmp-type_: Specify icmp-type code to match, see [ICMP types](#icmp-types_1) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**)
+* _icmp-type_: Specify icmp-type code to match, see [ICMP types](#icmp-types_1) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**, **openconfig**, **sonic**)
 * _name_: Name of the term.
 * _option_: See platforms supported Options section. (**Not** supported on: **k8s**, **gce**, **windows_advfirewall**, **windows_ipsec**)
 * _platform_: one or more target platforms for which this term should ONLY be rendered.
@@ -1142,6 +1142,8 @@ targets:
 * for common keys see the [common](#common) section above.
 * _source-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
 * _destination-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _icmp-type_: rendered as `icmp type` (`icmp6 type` in IPv6 filters), with one entry per ICMP type. In mixed filters, a term with `icmp` or `icmpv6` and ICMP types is only rendered in the filter of the matching address family.
+* _icmp-code_: rendered as `icmp code` (`icmp6 code`), together with _icmp-type_.
 
 ### Sub Tokens
 
