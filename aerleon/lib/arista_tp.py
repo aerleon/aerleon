@@ -896,8 +896,8 @@ class AristaTrafficPolicy(aclgenerator.ACLGenerator):
                             fs = self._GenPrefixFieldset(
                                 "dst",
                                 f"{term.name}",
-                                term.destination_address,
-                                term.destination_address_exclude,
+                                dst_addr,
+                                dst_addr_ex,
                                 af_map_txt[ft],
                             )
                             policy_field_sets.append(fs)
