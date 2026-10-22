@@ -540,7 +540,7 @@ class ApiTest(absltest.TestCase):
         expected_summary_structure = {
             "test-filter": {
                 "allow-web-traffic": {
-                    "possibles": [],
+                    "possibles": frozenset(),
                     "message": "          term: allow-web-traffic\n                accept",
                 }
             }
