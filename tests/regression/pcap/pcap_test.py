@@ -15,11 +15,14 @@
 """Unittest for pcap rendering module."""
 
 import datetime
+import pathlib
+import tempfile
 from unittest import mock
 
 from absl.testing import absltest
 
-from aerleon.lib import aclgenerator, naming, pcap, policy
+from aerleon import aclgen
+from aerleon.lib import aclgenerator, naming, pcap, plugin_supervisor, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -172,6 +175,72 @@ term unicast-term {
 }
 """
 
+ACCEPT_HTTP_TERM = """
+term accept-http {
+  protocol:: tcp
+  destination-port:: HTTP
+  action:: accept
+}
+"""
+
+ACCEPT_MGMT_SMTP_TERM = """
+term accept-mgmt-smtp {
+  source-address:: MGMT
+  protocol:: tcp
+  destination-port:: SMTP
+  action:: accept
+}
+"""
+
+ACCEPT_SMTP_TERM = """
+term accept-smtp {
+  protocol:: tcp
+  destination-port:: SMTP
+  action:: accept
+}
+"""
+
+DENY_PROD_TCP_TERM = """
+term deny-prod-tcp {
+  source-address:: PROD_NETWRK
+  protocol:: tcp
+  action:: deny
+}
+"""
+
+DEFAULT_DENY_TERM = """
+term default-deny {
+  action:: deny
+}
+"""
+
+SOURCE_EXCLUDE_TERM = """
+term accept-prod-except-mgmt {
+  source-address:: PROD_NETWRK
+  source-exclude:: MGMT
+  action:: accept
+}
+"""
+
+ESTABLISHED_OPTION_TERM = """
+term accept-established {
+  protocol:: tcp
+  option:: established
+  action:: accept
+}
+"""
+
+DUPLICATE_TERMS = """
+term dup {
+  protocol:: tcp
+  action:: accept
+}
+term dup {
+  protocol:: udp
+  action:: accept
+}
+"""
+
 GOOD_TERM_HBH = """
 term good-term-hbh {
   protocol:: hopopt
@@ -189,7 +258,6 @@ SUPPORTED_TOKENS = {
     'icmp_code',
     'icmp_type',
     'stateless_reply',
-    'logging',
     'name',
     'option',
     'platform',
@@ -273,6 +341,8 @@ class PcapFilter(absltest.TestCase):
         self.naming._ParseLine('PROD_NETWRK = 10.0.0.0/8', 'networks')
         self.naming._ParseLine('ANY = ::/0', 'networks')
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        self.naming._ParseLine('MGMT = 10.1.0.0/24', 'networks')
+        self.naming._ParseLine('HTTP = 80/tcp', 'services')
 
     @capture.stdout
     def testTcp(self):
@@ -319,7 +389,9 @@ class PcapFilter(absltest.TestCase):
     @capture.stdout
     def testIcmpTypes(self):
         acl = pcap.PcapFilter(
-            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ICMP_TYPES, self.naming), EXP_INFO
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ICMP_TYPES, self.naming),
+            EXP_INFO,
+            invert=True,
         )
         result = str(acl)
         self.assertIn(
@@ -419,7 +491,7 @@ class PcapFilter(absltest.TestCase):
         )
         result = str(acl)
         self.assertIn(
-            '((((proto \\tcp))\n))\nor\n((((proto \\icmp))\n))',
+            '((proto \\tcp))\nor\n((proto \\icmp))',
             result,
             'did not find actual terms for multi-header',
         )
@@ -435,8 +507,8 @@ class PcapFilter(absltest.TestCase):
         )
         result = str(acl)
         self.assertIn(
-            '(((dst net localhost and ((proto \\tcp)))\n))\nor\n'
-            '(((src net localhost and ((proto \\icmp)))\n))',
+            '(dst net localhost and ((proto \\tcp)))\nor\n'
+            '(src net localhost and ((proto \\icmp)))',
             result,
             'did not find actual terms for directional',
         )
@@ -464,6 +536,93 @@ class PcapFilter(absltest.TestCase):
 
         self.assertIn('(ip6 protochain 0)', result, 'did not find actual terms for unicast-term')
         print(result)
+
+    def _Render(self, policy_text, invert=False):
+        pol = policy.ParsePolicy(policy_text, self.naming)
+        return str(pcap.PcapFilter(pol, EXP_INFO, invert=invert))
+
+    def testAcceptTermsMatchAny(self):
+        self.assertEqual(
+            self._Render(GOOD_HEADER + ACCEPT_SMTP_TERM + ACCEPT_HTTP_TERM),
+            '(((proto \\tcp) and (dst port 25)) or ((proto \\tcp) and (dst port 80)))\n',
+        )
+
+    def testFirstMatchingTermWins(self):
+        policy_text = GOOD_HEADER + ACCEPT_MGMT_SMTP_TERM + DENY_PROD_TCP_TERM
+        self.assertEqual(
+            self._Render(policy_text),
+            '((src net 10.1.0.0/24) and (proto \\tcp) and (dst port 25))\n',
+        )
+        self.assertEqual(
+            self._Render(policy_text, invert=True),
+            '(((src net 10.0.0.0/8) and (proto \\tcp)) and not '
+            '((src net 10.1.0.0/24) and (proto \\tcp) and (dst port 25)))\n',
+        )
+
+    def testDenyFileExcludesAcceptedTraffic(self):
+        policy_text = GOOD_HEADER + ACCEPT_SMTP_TERM + DEFAULT_DENY_TERM
+        self.assertEqual(self._Render(policy_text), '((proto \\tcp) and (dst port 25))\n')
+        self.assertEqual(
+            self._Render(policy_text, invert=True), 'not ((proto \\tcp) and (dst port 25))\n'
+        )
+
+    def testFilterWithoutMatchesOmitted(self):
+        self.assertEqual(
+            self._Render(
+                GOOD_HEADER + ACCEPT_SMTP_TERM + DEFAULT_DENY_TERM + GOOD_HEADER + GOOD_TERM_ICMP,
+                invert=True,
+            ),
+            'not ((proto \\tcp) and (dst port 25))\n',
+        )
+
+    def testNoMatchesRendersMatchNothing(self):
+        self.assertEqual(self._Render(GOOD_HEADER + GOOD_TERM_ICMP, invert=True), '(len < 0)\n')
+
+    def testSourceAddress(self):
+        self.assertIn('(src net 10.1.0.0/24)', self._Render(GOOD_HEADER + ACCEPT_MGMT_SMTP_TERM))
+
+    def testSourceAddressExclude(self):
+        self.assertEqual(
+            self._Render(GOOD_HEADER + SOURCE_EXCLUDE_TERM),
+            '(((src net 10.0.0.0/8) and not (src net 10.1.0.0/24)))\n',
+        )
+
+    def testDuplicateTermNames(self):
+        with self.assertRaises(aclgenerator.DuplicateTermError):
+            self._Render(GOOD_HEADER + DUPLICATE_TERMS)
+
+    def testEstablishedOption(self):
+        self.assertIn(
+            '(tcp[tcpflags] & (tcp-ack) == (tcp-ack))',
+            self._Render(GOOD_HEADER + ESTABLISHED_OPTION_TERM),
+        )
+
+    def testDirectionDoesNotLeakIntoNextFilter(self):
+        result = self._Render(GOOD_HEADER_IN + GOOD_TERM_LOG + GOOD_HEADER + GOOD_TERM_ICMP)
+        self.assertEqual(result.count('net localhost'), 1)
+
+    def testRegisteredOnce(self):
+        targets = [entry[0] for entry in plugin_supervisor.BUILTIN_GENERATORS]
+        self.assertEqual(targets.count('pcap'), 1)
+
+    def testAclgenWritesAcceptAndDenyFiles(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy_file = pathlib.Path(tmp) / 'pcap.pol'
+            policy_file.write_text(GOOD_HEADER + ACCEPT_SMTP_TERM)
+            write_files = []
+            aclgen.RenderFile(
+                tmp,
+                policy_file,
+                pathlib.Path(tmp),
+                self.naming,
+                EXP_INFO,
+                False,
+                False,
+                write_files,
+            )
+        self.assertEqual(
+            sorted(path.name for path, _ in write_files), ['pcap-accept.pcap', 'pcap-deny.pcap']
+        )
 
     def testBuildTokens(self):
         pol1 = pcap.PcapFilter(

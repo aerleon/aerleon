@@ -134,7 +134,7 @@ class Term(aclgenerator.Term):
             return ''
 
         conditions.append(
-            self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude)
+            self._GenerateAddrStatement(term_saddrs, self.term.source_address_exclude, 'src')
         )
 
         # destination address
@@ -149,7 +149,7 @@ class Term(aclgenerator.Term):
             return ''
 
         conditions.append(
-            self._GenerateAddrStatement(term_daddrs, self.term.destination_address_exclude)
+            self._GenerateAddrStatement(term_daddrs, self.term.destination_address_exclude, 'dst')
         )
 
         # protocol
@@ -236,18 +236,22 @@ class Term(aclgenerator.Term):
         return res
 
     def _GenerateAddrStatement(
-        self, addrs: list[str | IPv6 | IPv4], exclude_addrs: list[str | IPv6 | IPv4]
+        self,
+        addrs: list[str | IPv6 | IPv4],
+        exclude_addrs: list[str | IPv6 | IPv4],
+        direction: str,
     ) -> str:
         addrlist = []
         for d in addrs:
             if d != 'any' and str(d) != '::/0':
-                addrlist.append(f'dst net {d}')
+                addrlist.append(f'{direction} net {d}')
 
+        # the excludes are joined to the addresses with 'and not' below
         excludes = []
         if exclude_addrs:
             for d in exclude_addrs:
                 if d != 'any' and str(d) != '::/0':
-                    excludes.append(f'not dst net {d}')
+                    excludes.append(f'{direction} net {d}')
                 else:
                     # excluding 'any' doesn't really make sense ...
                     return ''
@@ -280,7 +284,7 @@ class Term(aclgenerator.Term):
         tcp_flags_set = []
         tcp_flags_check = []
         for next_opt in opts:
-            if next_opt == 'tcp-established':
+            if next_opt in ('established', 'tcp-established'):
                 tcp_flags_set.append(self._TCP_FLAGS_TABLE['ack'])
                 tcp_flags_check.extend([self._TCP_FLAGS_TABLE['ack']])
 
@@ -349,7 +353,7 @@ class PcapFilter(aclgenerator.ACLGenerator):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-        supported_tokens |= {'logging', 'icmp_code'}
+        supported_tokens |= {'icmp_code'}
         supported_tokens -= {'verbatim'}
 
         supported_sub_tokens.update(
@@ -376,10 +380,10 @@ class PcapFilter(aclgenerator.ACLGenerator):
         self.pcap_policies = []
         good_afs = ['inet', 'inet6', 'mixed']
         good_options = ['in', 'out']
-        direction = ''
 
         for header, terms in pol.filters:
             filter_type = None
+            direction = ''
             filter_options = header.FilterOptions(self._PLATFORM)[1:]
             filter_name = header.FilterName(self._PLATFORM)
 
@@ -419,54 +423,87 @@ class PcapFilter(aclgenerator.ACLGenerator):
             if filter_type is None:
                 filter_type = 'mixed'
 
-            # add the terms
-            accept_terms = []
-            deny_terms = []
+            # add the terms, in policy order
+            new_terms = []
             term_names = set()
             for term in terms:
                 if term.name in term_names:
                     raise aclgenerator.DuplicateTermError(
                         f'You have a duplicate term: {term.name}'
                     )
+                term_names.add(term.name)
 
                 if not term:
                     continue
 
-                if term.action[0] == 'accept':
-                    accept_terms.append(self._TERM(term, filter_name, filter_type, direction))
-                elif term.action[0] == 'deny' or term.action[0] == 'reject':
-                    deny_terms.append(self._TERM(term, filter_name, filter_type, direction))
+                if term.action[0] in ('accept', 'deny', 'reject'):
+                    new_terms.append(self._TERM(term, filter_name, filter_type, direction))
 
-            self.pcap_policies.append((header, filter_name, filter_type, accept_terms, deny_terms))
+            self.pcap_policies.append((header, filter_name, filter_type, new_terms))
+
+    # libpcap has no "false" literal, so this stands in for an expression that
+    # matches no packets.
+    _MATCH_NOTHING = '(len < 0)'
+
+    @staticmethod
+    def _Or(conditions: list[str]) -> str:
+        if len(conditions) == 1:
+            return conditions[0]
+        return Term.JoinConditionals(conditions, 'or')
+
+    def _FirstMatch(self, terms: list[Term], actions: set[str]) -> str:
+        """Build an expression matching packets whose first matching term has one of actions.
+
+        Returns the empty string, which libpcap treats as matching every packet,
+        if every packet's first matching term has one of actions.
+        """
+        matched = []
+        earlier = []  # conditions of earlier terms with other actions
+        for term in terms:
+            term_str = str(term)
+            if not term_str:
+                # the term doesn't apply to this address family
+                continue
+            condition = term_str.strip()  # an empty condition matches everything
+            if str(term.term.action[0]) in actions:
+                if not condition:
+                    if not earlier:
+                        return ''
+                    matched.append(f'not {self._Or(earlier)}')
+                    break
+                if earlier:
+                    condition = Term.JoinConditionals([condition, self._Or(earlier)], 'and not')
+                matched.append(condition)
+            else:
+                if not condition:
+                    break
+                earlier.append(condition)
+
+        if not matched:
+            return self._MATCH_NOTHING
+        return self._Or(matched)
 
     def __str__(self) -> str:
         """Render the output of the PF policy into config."""
-        target = []
+        if self._invert:
+            actions = {'deny', 'reject'}
+        else:
+            actions = {'accept'}
 
+        target = []
         for (
             unused_header,
             unused_filter_name,
             unused_filter_type,
-            accept_terms,
-            deny_terms,
+            terms,
         ) in self.pcap_policies:
-            accept = []
-            for term in accept_terms:
-                term_str = str(term)
-                if term_str:
-                    accept.append(str(term))
-            accept_clause = Term.JoinConditionals(accept, 'and')
+            filter_str = self._FirstMatch(terms, actions)
+            if not filter_str:
+                # this filter matches every packet, so the whole expression does
+                return '\n'
+            if filter_str != self._MATCH_NOTHING:
+                target.append(filter_str)
 
-            deny = []
-            for term in deny_terms:
-                term_str = str(term)
-                if term_str:
-                    deny.append(str(term))
-            deny_clause = Term.JoinConditionals(deny, 'and')
-
-            if self._invert:
-                target.append(Term.JoinConditionals([deny_clause, accept_clause], 'and not'))
-            else:
-                target.append(Term.JoinConditionals([accept_clause, deny_clause], 'and not'))
-
+        if not target:
+            return self._MATCH_NOTHING + '\n'
         return '\nor\n'.join(target) + '\n'

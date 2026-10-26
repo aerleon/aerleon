@@ -1,3 +1,2 @@
-((((proto \tcp or proto \udp or proto \icmp))
-))
+((proto \tcp or proto \udp or proto \icmp))
 
