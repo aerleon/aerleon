@@ -260,8 +260,13 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
         supported_tokens |= {'option'}
         supported_tokens -= {'verbatim'}
 
-        supported_sub_tokens.update({'action': {'accept', 'deny'}})
-        del supported_sub_tokens['option']
+        supported_sub_tokens.update(
+            {
+                'action': {'accept', 'deny'},
+                # Terms with these options are skipped; no other option is rendered.
+                'option': {'established', 'tcp-established'},
+            }
+        )
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:

@@ -76,6 +76,14 @@ term udp-established-term {
 }
 """
 
+SYN_OPTION_TERM = """
+term syn-only {
+  protocol:: tcp
+  option:: syn
+  action:: accept
+}
+"""
+
 SUPPORTED_TOKENS = {
     'action',
     'comment',
@@ -98,6 +106,7 @@ SUPPORTED_TOKENS = {
 
 SUPPORTED_SUB_TOKENS = {
     'action': {'accept', 'deny'},
+    'option': {'established', 'tcp-established'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
@@ -191,6 +200,12 @@ class WindowsGeneratorTest(absltest.TestCase):
             windows.WindowsGenerator(
                 policy.ParsePolicy(DEFAULT_ACTION_HEADER + MULTIPLE_PROTOCOLS_TERM, self.naming),
                 EXP_INFO,
+            )
+
+    def testUnsupportedOptionRejected(self):
+        with self.assertRaisesRegex(aclgenerator.UnsupportedFilterError, 'syn'):
+            windows.WindowsGenerator(
+                policy.ParsePolicy(GOOD_HEADER + SYN_OPTION_TERM, self.naming), EXP_INFO
             )
 
 

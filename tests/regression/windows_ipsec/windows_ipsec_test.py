@@ -112,7 +112,10 @@ SUPPORTED_TOKENS = {
     'translated',
 }
 
-SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny'}}
+SUPPORTED_SUB_TOKENS = {
+    'action': {'accept', 'deny'},
+    'option': {'established', 'tcp-established'},
+}
 
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
