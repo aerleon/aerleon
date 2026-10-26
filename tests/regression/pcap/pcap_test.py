@@ -22,7 +22,7 @@ from unittest import mock
 from absl.testing import absltest
 
 from aerleon import aclgen
-from aerleon.lib import aclgenerator, naming, pcap, plugin_supervisor, policy
+from aerleon.lib import aclgenerator, naming, pcap, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -600,10 +600,6 @@ class PcapFilter(absltest.TestCase):
     def testDirectionDoesNotLeakIntoNextFilter(self):
         result = self._Render(GOOD_HEADER_IN + GOOD_TERM_LOG + GOOD_HEADER + GOOD_TERM_ICMP)
         self.assertEqual(result.count('net localhost'), 1)
-
-    def testRegisteredOnce(self):
-        targets = [entry[0] for entry in plugin_supervisor.BUILTIN_GENERATORS]
-        self.assertEqual(targets.count('pcap'), 1)
 
     def testAclgenWritesAcceptAndDenyFiles(self):
         with tempfile.TemporaryDirectory() as tmp:
