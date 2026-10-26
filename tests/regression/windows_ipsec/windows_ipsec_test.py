@@ -20,6 +20,10 @@ from unittest import mock
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, windows_ipsec
+from aerleon.lib.plugin_supervisor import (
+    PluginSupervisorConfiguration,
+    _PluginSupervisor,
+)
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -150,7 +154,7 @@ class WindowsIPSecTest(absltest.TestCase):
                 'filteraction name=t_good-term-tcp-action action=permit',
                 'filter filterlist=t_good-term-tcp-list mirrored=yes srcaddr=any '
                 ' dstaddr=10.0.0.0 dstmask=8 dstport=25',
-                'rule name=t_good-term-tcp-rule policy=test-filter'
+                'rule name=t_good-term-tcp-rule policy=test-filter-policy'
                 ' filterlist=t_good-term-tcp-list'
                 ' filteraction=t_good-term-tcp-action',
             ],
@@ -170,7 +174,7 @@ class WindowsIPSecTest(absltest.TestCase):
                 'filterlist name=t_good-term-icmp-list',
                 'filteraction name=t_good-term-icmp-action action=permit',
                 'filter filterlist=t_good-term-icmp-list mirrored=yes srcaddr=any ' ' dstaddr=any',
-                'rule name=t_good-term-icmp-rule policy=test-filter'
+                'rule name=t_good-term-icmp-rule policy=test-filter-policy'
                 ' filterlist=t_good-term-icmp-list'
                 ' filteraction=t_good-term-icmp-action',
             ],
@@ -223,13 +227,34 @@ class WindowsIPSecTest(absltest.TestCase):
                 ' dstaddr=any  protocol=udp',
                 'filter filterlist=t_multi-proto-list mirrored=yes srcaddr=any '
                 ' dstaddr=any  protocol=icmp',
-                'rule name=t_multi-proto-rule policy=test-filter'
+                'rule name=t_multi-proto-rule policy=test-filter-policy'
                 ' filterlist=t_multi-proto-list filteraction=t_multi-proto-action',
             ],
             result,
             'multi-proto',
         )
         print(result)
+
+    def testRulesUsePolicyName(self):
+        acl = windows_ipsec.WindowsIPSec(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SIMPLE, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertIn('policy name=test-filter-policy assign=yes', result)
+        self.assertIn('rule name=t_good-simple-rule policy=test-filter-policy ', result)
+
+    def testFilterListAndActionAddedOnce(self):
+        acl = windows_ipsec.WindowsIPSec(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SIMPLE, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertEqual(result.count('add filterlist name=t_good-simple-list'), 1)
+        self.assertEqual(result.count('add filteraction name=t_good-simple-action'), 1)
+
+    def testRegisteredAsBuiltinGenerator(self):
+        supervisor = _PluginSupervisor()
+        supervisor.Start(PluginSupervisorConfiguration(disable_discovery=True))
+        self.assertIs(supervisor.generators['windows_ipsec'], windows_ipsec.WindowsIPSec)
 
     def testBuildTokens(self):
         pol1 = windows_ipsec.WindowsIPSec(

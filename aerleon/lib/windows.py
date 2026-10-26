@@ -157,7 +157,6 @@ class Term(aclgenerator.Term):
         self._CartesianProduct(
             src_addr, dst_addr, protocols, icmp_types, src_ports, dst_ports, ret_str
         )
-        self._HandlePreRule(ret_str)
 
         return '\n'.join(str(v) for v in ret_str if v)
 
