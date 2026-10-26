@@ -240,7 +240,7 @@ def RenderACL(
       write_files: A list of file tuples, (output_file, acl_text), to write.
       binary: Boolean if the rendered ACL is in binary format.
     """
-    input_filename = input_file.with_suffix(acl_suffix).name
+    input_filename = input_file.stem + acl_suffix
     output_file = output_directory / input_filename
 
     if FilesUpdated(output_file, acl_text, binary):
