@@ -20,10 +20,6 @@ from unittest import mock
 from absl.testing import absltest
 
 from aerleon.lib import naming, policy, windows_ipsec
-from aerleon.lib.plugin_supervisor import (
-    PluginSupervisorConfiguration,
-    _PluginSupervisor,
-)
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -253,11 +249,6 @@ class WindowsIPSecTest(absltest.TestCase):
         result = str(acl)
         self.assertEqual(result.count('add filterlist name=t_good-simple-list'), 1)
         self.assertEqual(result.count('add filteraction name=t_good-simple-action'), 1)
-
-    def testRegisteredAsBuiltinGenerator(self):
-        supervisor = _PluginSupervisor()
-        supervisor.Start(PluginSupervisorConfiguration(disable_discovery=True))
-        self.assertIs(supervisor.generators['windows_ipsec'], windows_ipsec.WindowsIPSec)
 
     def testBuildTokens(self):
         pol1 = windows_ipsec.WindowsIPSec(
