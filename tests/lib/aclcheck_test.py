@@ -77,6 +77,51 @@ term default-term {
 }
 """
 
+NON_FLOW_POLICY_TEST = """
+header {
+  comment:: "ip-options and ttl test acl"
+  target:: juniper test-filter
+}
+term drop-low-ttl {
+  ttl:: 5
+  action:: deny
+}
+term drop-ip-options {
+  protocol:: tcp
+  option:: ip-options
+  action:: deny
+}
+term allow-ssh {
+  destination-address:: NET10
+  protocol:: tcp
+  destination-port:: SSH
+  action:: accept
+}
+term default-term {
+  action:: deny
+}
+"""
+
+HOP_LIMIT_POLICY_TEST = """
+header {
+  comment:: "hop-limit test acl"
+  target:: juniper test-filter inet6
+}
+term drop-low-hop-limit {
+  hop-limit:: 1-5
+  action:: deny
+}
+term allow-ssh {
+  destination-address:: NET6
+  protocol:: tcp
+  destination-port:: SSH
+  action:: accept
+}
+term default-term {
+  action:: deny
+}
+"""
+
 PARTIAL_POLICY_TEST: Final[
     str
 ] = """
@@ -356,6 +401,38 @@ class AclCheckTest(absltest.TestCase):
         self.assertLen(matches, 1)
         self.assertEqual(matches[0].term, 'term-small')
         self.assertEmpty(matches[0].possibles)
+
+    def test_ip_options_and_ttl_are_possible_matches(self) -> None:
+        pol = policy.ParsePolicy(NON_FLOW_POLICY_TEST, self.defs)
+        check = aclcheck.AclCheck(
+            pol, src='172.16.1.1', dst='10.1.1.1', sport='1025', dport='22', proto='tcp'
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 3)
+        self.assertEqual(matches[0].term, 'drop-low-ttl')
+        self.assertEqual(matches[0].possibles, ['ttl'])
+        self.assertEqual(matches[1].term, 'drop-ip-options')
+        self.assertEqual(matches[1].possibles, ['ip-opts'])
+        self.assertEqual(matches[2].term, 'allow-ssh')
+        self.assertEmpty(matches[2].possibles)
+        # the flow must reach the allow term, not stop at the ttl/ip-options denies
+        self.assertEqual([m.term for m in check.ExactMatches()], ['allow-ssh'])
+        self.assertEqual([m.term for m in check.ActionMatch('accept')], ['allow-ssh'])
+        self.assertEmpty(check.ActionMatch('deny'))
+
+    def test_hop_limit_is_possible_match(self) -> None:
+        self.defs.ParseNetworkList(['NET6 = 2001:db8::/32'])
+        pol = policy.ParsePolicy(HOP_LIMIT_POLICY_TEST, self.defs)
+        check = aclcheck.AclCheck(
+            pol, src='2001:db8:1::1', dst='2001:db8:2::1', sport='1025', dport='22', proto='tcp'
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 2)
+        self.assertEqual(matches[0].term, 'drop-low-hop-limit')
+        self.assertEqual(matches[0].possibles, ['hop-limit'])
+        self.assertEqual(matches[1].term, 'allow-ssh')
+        self.assertEmpty(matches[1].possibles)
+        self.assertEqual([m.term for m in check.ExactMatches()], ['allow-ssh'])
 
 
 @pytest.mark.parametrize(

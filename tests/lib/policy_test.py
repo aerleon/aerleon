@@ -1458,6 +1458,22 @@ class PolicyTest(parameterized.TestCase):
         self.assertIn(tcp_est_term, tcp_udp_est_term)
         self.assertNotIn(tcp_udp_est_term, tcp_est_term)
 
+    def testTtlContains(self):
+        # A ttl term only contains terms with the same ttl; a term without ttl
+        # still contains one that sets it.
+        pol = policy.ParsePolicy(
+            HEADER
+            + 'term ttl-5 { ttl:: 5 action:: deny }\n'
+            + 'term ttl-10 { ttl:: 10 action:: deny }\n'
+            + 'term no-ttl { action:: deny }\n',
+            self.naming,
+        )
+        _, (ttl_term, other_ttl_term, no_ttl_term) = pol.filters[0]
+        self.assertIn(ttl_term, ttl_term)
+        self.assertNotIn(no_ttl_term, ttl_term)
+        self.assertNotIn(other_ttl_term, ttl_term)
+        self.assertIn(ttl_term, no_ttl_term)
+
     def testPrecedenceContains(self):
         # Tests 'contains' testing of the precedence field. A term without set
         # precedence contains one which has them set.

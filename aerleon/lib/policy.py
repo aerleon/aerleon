@@ -664,6 +664,9 @@ class Term:
                         return False
             else:
                 return False
+        # ttl is a single integer; a ttl term only contains terms with the same ttl
+        if self.ttl and self.ttl != other.ttl:
+            return False
         if self.packet_length:
             # packet_length looks like 'integer-integer' or just, 'integer'
             spl = [int(x) for x in self.packet_length.split('-')]
