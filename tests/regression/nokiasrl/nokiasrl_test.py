@@ -19,7 +19,7 @@ import json
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, nokiasrl, policy
+from aerleon.lib import aclgenerator, naming, nokiasrl, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -111,6 +111,53 @@ term good-term-1 {
   protocol:: udp tcp
   action:: deny
   logging:: True
+}
+"""
+
+GOOD_SPFX = """
+term good-term-1 {
+  comment:: "Allow from named prefix-list."
+  source-prefix:: CORP_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+GOOD_DPFX = """
+term good-term-1 {
+  comment:: "Allow to named prefix-list."
+  destination-prefix:: CORP_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+GOOD_MULTI_SPFX = """
+term good-term-1 {
+  comment:: "Allow from multiple prefix-lists."
+  source-prefix:: CORP_PREFIXES EXTERNAL_PREFIXES
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+BAD_SPFX_AND_SADDR = """
+term bad-term-6 {
+  comment:: "source-prefix and source-address together."
+  source-prefix:: CORP_PREFIXES
+  source-address:: CORP_EXTERNAL
+  protocol:: tcp
+  action:: accept
+}
+"""
+
+BAD_DPFX_AND_DADDR = """
+term bad-term-7 {
+  comment:: "destination-prefix and destination-address together."
+  destination-prefix:: CORP_PREFIXES
+  destination-address:: CORP_EXTERNAL
+  protocol:: tcp
+  action:: accept
 }
 """
 
@@ -326,6 +373,124 @@ GOOD_JSON_MULTI_PROTO_DPORT = """
     }
 }
 ]
+"""
+
+GOOD_JSON_SPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow from named prefix-list.",
+          "match": {
+            "protocol": 6,
+            "source-ip": {
+              "prefix-list": [ { "name": "CORP_PREFIXES" } ]
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_JSON_DPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow to named prefix-list.",
+          "match": {
+            "protocol": 6,
+            "destination-ip": {
+              "prefix-list": [ { "name": "CORP_PREFIXES" } ]
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_JSON_MULTI_SPFX = """
+[
+{
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "name": "good-name-v4",
+      "description": "The general policy comment.",
+      "type": "ipv4",
+      "statistics-per-entry": true,
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-term-1",
+          "_annotate_description": "Allow from multiple prefix-lists.",
+          "match": {
+            "protocol": 6,
+            "source-ip": {
+              "prefix-list": [
+                { "name": "CORP_PREFIXES" },
+                { "name": "EXTERNAL_PREFIXES" }
+              ]
+            }
+          },
+          "sequence-id": 5
+        }
+      ]
+    }
+}
+]
+"""
+
+GOOD_ICMP_TYPE = """
+term good-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+GOOD_ICMP_CODE = """
+term good-icmp-code {
+  protocol:: icmp
+  icmp-type:: unreachable
+  icmp-code:: 4 3
+  action:: accept
+}
+"""
+
+GOOD_ICMPV6_TYPE = """
+term good-icmpv6-type {
+  protocol:: icmpv6
+  icmp-type:: echo-request
+  action:: accept
+}
 """
 
 BAD_TERM_1 = """
@@ -573,12 +738,113 @@ class NokiaSRLTest(absltest.TestCase):
         with self.assertRaises(nokiasrl.EstablishedWithNoProtocolError):
             _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
 
+    @capture.stdout
+    def testSourcePrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_SPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    @capture.stdout
+    def testDestinationPrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_DPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_DPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    @capture.stdout
+    def testMultiSourcePrefixList(self):
+        acl = nokiasrl.NokiaSRLinux(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_MULTI_SPFX, self.naming), EXP_INFO
+        )
+        expected = json.loads(GOOD_JSON_MULTI_SPFX)
+        self.assertEqual(expected, json.loads(str(acl)))
+
+        print(acl)
+
+    def testSourcePrefixListWithAddressError(self):
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_SPFX_AND_SADDR, self.naming)
+        with self.assertRaises(nokiasrl.PrefixListWithAddressError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def testDestinationPrefixListWithAddressError(self):
+        acl = policy.ParsePolicy(GOOD_HEADER + BAD_DPFX_AND_DADDR, self.naming)
+        with self.assertRaises(nokiasrl.PrefixListWithAddressError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
+    def _Acl(self, header, terms):
+        return nokiasrl.NokiaSRLinux(policy.ParsePolicy(header + terms, self.naming), EXP_INFO)
+
+    def _Entries(self, acl):
+        """Return the entries of each filter, keyed by filter key and type."""
+        filters = {}
+        for ip_filter in json.loads(str(acl)):
+            key, body = next(iter(ip_filter.items()))
+            filters[body.get('type', key)] = body['entry']
+        return filters
+
+    @capture.stdout
+    def testIcmpType(self):
+        """One entry per ICMP type, in the r24.3.2 nested syntax."""
+        acl = self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE)
+        entries = self._Entries(acl)
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4']],
+            [
+                {'ipv4': {'protocol': 1, 'icmp': {'type': 0}}},
+                {'ipv4': {'protocol': 1, 'icmp': {'type': 8}}},
+            ],
+        )
+        self.assertEqual([e['sequence-id'] for e in entries['ipv4']], [5, 10])
+
+        print(acl)
+
+    def testIcmpTypePre2024(self):
+        """The ICMP container is directly under match in the flat syntax."""
+        entries = self._Entries(self._Acl(GOOD_HEADER_PRE2024, GOOD_ICMP_TYPE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4-filter']],
+            [{'protocol': 1, 'icmp': {'type': 0}}, {'protocol': 1, 'icmp': {'type': 8}}],
+        )
+
+    def testIcmpCode(self):
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_CODE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv4']],
+            [{'ipv4': {'protocol': 1, 'icmp': {'type': 3, 'code': [3, 4]}}}],
+        )
+
+    def testIcmpv6Type(self):
+        entries = self._Entries(self._Acl(GOOD_HEADER_INET6, GOOD_ICMPV6_TYPE))
+        self.assertEqual(
+            [e['match'] for e in entries['ipv6']],
+            [{'next-header': 58, 'icmp6': {'type': 128}}],
+        )
+
+    def testIcmpTypeMixed(self):
+        """In a mixed filter, ICMP and ICMPv6 terms only render in their own filter."""
+        entries = self._Entries(self._Acl(GOOD_HEADER_R24_3_2, GOOD_ICMP_TYPE + GOOD_ICMPV6_TYPE))
+        self.assertEqual(
+            [e['description'] for e in entries['ipv4']], ['good-icmp-type', 'good-icmp-type']
+        )
+        self.assertEqual([e['description'] for e in entries['ipv6']], ['good-icmpv6-type'])
+
+    def testIcmpTypeAddressFamilyMismatch(self):
+        acl = policy.ParsePolicy(GOOD_HEADER_INET6 + GOOD_ICMP_TYPE, self.naming)
+        with self.assertRaises(aclgenerator.MismatchIcmpInetError):
+            _ = nokiasrl.NokiaSRLinux(acl, EXP_INFO)
+
 
 #
 # TODO:
 # - Fragments
 # - TCP flags
-# - ICMP type codes
 #
 
 if __name__ == '__main__':

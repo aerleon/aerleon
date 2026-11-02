@@ -490,9 +490,7 @@ term bad-term-source-tags-count {{
   protocol:: tcp
   action:: accept
   source-tag:: {many_source_tags}
-}}""".format(
-    many_source_tags=SAMPLE_TAG * (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1)
-)
+}}""".format(many_source_tags=SAMPLE_TAG * (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1))
 
 BAD_TERM_TARGET_TAGS_COUNT = """
 term bad-term-target-tags-count {{
@@ -501,9 +499,7 @@ term bad-term-target-tags-count {{
   protocol:: tcp
   action:: accept
   destination-tag:: {many_target_tags}
-}}""".format(
-    many_target_tags=SAMPLE_TAG * (gce.Term._TERM_TARGET_TAGS_LIMIT + 1)
-)
+}}""".format(many_target_tags=SAMPLE_TAG * (gce.Term._TERM_TARGET_TAGS_LIMIT + 1))
 
 GOOD_TERM_EXCLUDE_RANGE = """
 [
@@ -2007,9 +2003,7 @@ YAML_BAD_TERM_SOURCE_TAGS_COUNT = """
     protocol: tcp
     action: accept
     source-tag: {many_source_tags}
-""".format(
-    many_source_tags=SAMPLE_TAG * (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1)
-)
+""".format(many_source_tags=SAMPLE_TAG * (gce.Term._TERM_SOURCE_TAGS_LIMIT + 1))
 
 YAML_BAD_TERM_TARGET_TAGS_COUNT = """
   - name: bad-term-target-tags-count
@@ -2018,9 +2012,7 @@ YAML_BAD_TERM_TARGET_TAGS_COUNT = """
     protocol: tcp
     action: accept
     destination-tag: {many_target_tags}
-""".format(
-    many_target_tags=SAMPLE_TAG * (gce.Term._TERM_TARGET_TAGS_LIMIT + 1)
-)
+""".format(many_target_tags=SAMPLE_TAG * (gce.Term._TERM_TARGET_TAGS_LIMIT + 1))
 
 YAML_DEFAULT_DENY = """
   - name: default-deny

@@ -20,7 +20,6 @@ jobs:
       - name: deps
         run: |
           python -m pip install -U build
-          python -m pip install -U sigstore
       - name: build
         run: python -m build
       - name: sign

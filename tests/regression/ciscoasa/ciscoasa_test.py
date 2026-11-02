@@ -15,7 +15,6 @@
 
 """Unittest for ciscoasa acl rendering module."""
 
-
 from absl.testing import absltest, parameterized
 
 from aerleon.lib import ciscoasa, naming, policy

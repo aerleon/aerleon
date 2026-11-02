@@ -19,7 +19,7 @@ import json
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, openconfig, policy
+from aerleon.lib import aclgenerator, naming, openconfig, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -86,6 +86,13 @@ term bad-tcp-est {
   protocol:: tcp udp
   source-port:: DNS
   option:: tcp-established
+  action:: accept
+}
+"""
+BAD_ICMP_TYPE = """
+term bad-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request
   action:: accept
 }
 """
@@ -569,6 +576,13 @@ class OpenConfigTest(absltest.TestCase):
         pol = policy.ParsePolicy(policy_text, self.naming)
         self.assertRaises(
             openconfig.TcpEstablishedWithNonTcpError, openconfig.OpenConfig, pol, EXP_INFO
+        )
+
+    def testIcmpTypeUnsupported(self):
+        """icmp-type is rejected rather than dropped, which would match every ICMP type."""
+        pol = policy.ParsePolicy(GOOD_HEADER + BAD_ICMP_TYPE, self.naming)
+        self.assertRaises(
+            aclgenerator.UnsupportedFilterError, openconfig.OpenConfig, pol, EXP_INFO
         )
 
 

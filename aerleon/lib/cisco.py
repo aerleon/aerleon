@@ -508,6 +508,8 @@ class Term(aclgenerator.Term):
                 protocol = [x if x != 'esp' else '50' for x in protocol]
             if 'ah' in protocol:
                 protocol = [x if x != 'ah' else '51' for x in protocol]
+        if self.platform == 'cisconx' and 'vrrp' in protocol:
+            protocol = [x if x != 'vrrp' else str(self.PROTO_MAP['vrrp']) for x in protocol]
 
         # addresses
         # source address

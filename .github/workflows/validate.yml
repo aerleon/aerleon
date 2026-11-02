@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -87,7 +87,8 @@ jobs:
         uses: ./.github/actions/setup
         id: project-setup
         with:
-          python-version: "3.13"
+          # must be >= highest [tool.black] target-version
+          python-version: "3.15"
       #----------------------------------------------
       # run 'black', will use installed version
       #----------------------------------------------
@@ -95,7 +96,7 @@ jobs:
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
         with:
-          version: "25.9.0"
+          version: "26.5.1"
           src: "aerleon tests noxfile.py"
       #----------------------------------------------
       # run isort

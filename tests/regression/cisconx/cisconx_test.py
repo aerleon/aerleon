@@ -124,6 +124,13 @@ term good-term-11 {
 }
 """
 
+GOOD_TERM_12 = """
+term good-term-12 {
+  protocol:: vrrp
+  action:: accept
+}
+"""
+
 SUPPORTED_TOKENS = {
     'action',
     'address',
@@ -312,6 +319,13 @@ class CiscoNXTest(absltest.TestCase):
         expected = 'permit icmp any any 3'
         self.assertIn(expected, str(acl), str(acl))
         print(acl)
+
+    def testVrrpUsesProtocolNumber(self):
+        acl = cisconx.CiscoNX(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_12, self.naming), EXP_INFO
+        )
+        self.assertIn('permit 112 any any', str(acl))
+        self.assertNotIn('permit vrrp any any', str(acl))
 
 
 if __name__ == '__main__':

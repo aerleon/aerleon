@@ -1,0 +1,45 @@
+[
+  {
+    "acl-filter": {
+      "_annotate": "$Id:$ $Date:$ $Revision:$",
+      "description": "R24.3.2 and beyond release syntax",
+      "entry": [
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-icmp-type",
+          "match": {
+            "ipv4": {
+              "icmp": {
+                "type": 0
+              },
+              "protocol": 1
+            }
+          },
+          "sequence-id": 5
+        },
+        {
+          "action": {
+            "accept": {}
+          },
+          "description": "good-icmp-type",
+          "match": {
+            "ipv4": {
+              "icmp": {
+                "type": 8
+              },
+              "protocol": 1
+            }
+          },
+          "sequence-id": 10
+        }
+      ],
+      "name": "good-name-mixed",
+      "statistics-per-entry": true,
+      "type": "ipv4"
+    }
+  }
+]
+
+

@@ -11,7 +11,7 @@ This lists contains all the common keys that are used across all generators (wit
 * _destination-address_: One or more destination address tokens.
 * _destination-port_: One or more service definition tokens.
 * _expiration_: Stop rendering this term after specified date in YYYY-MM-DD format. E.g. 2000-12-31.
-* _icmp-type_: Specify icmp-type code to match, see [ICMP types](#icmp-types_1) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**)
+* _icmp-type_: Specify icmp-type code to match, see [ICMP types](#icmp-types_1) for list of valid arguments (**Not** supported on: **aruba**, **gce**, **k8s**, **openconfig**, **sonic**)
 * _name_: Name of the term.
 * _option_: See platforms supported Options section. (**Not** supported on: **k8s**, **gce**, **windows_advfirewall**, **windows_ipsec**)
 * _platform_: one or more target platforms for which this term should ONLY be rendered.
@@ -988,7 +988,7 @@ targets:
 Unless otherwise stated, all fields are required unless they're marked optional.
 
 * nf_address_family: defines the IP address family for the policies. (inet, inet6, mixed)
-* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output)
+* nf_hook: defines the traffic direction and the nftables hook for the rules. (input, output, forward)
 * default_policy_override: **OPTIONAL** defines the default action (ACCEPT, DROP) for non-matching packets. Default behavior is DROP.
 * priority: **OPTIONAL** By default, this generator creates base chains with a starting priority of 0. Defining an integer value will override this behavior.
 * noverbose: **OPTIONAL** Disable header and term comments in final ACL output. Default behavior is verbose.
@@ -1000,6 +1000,10 @@ This NFTables ACL generator generates stateful policies via  [conntrack](https:/
 When a non-deny term is processed for ACL generation, the `ct state new` is added to the resulting policy to ensure only valid incoming connections for that term is accepted. This means invalid state packets are dropped by default.
 
 An implementation design for this generator is that terms with options 'established', 'tcp-established' will not rendered in the final NFT configuration.
+
+### Transit (forward) policies
+
+The `forward` hook renders a base chain of `type filter hook forward`, for policy applied to routed/transit traffic rather than to traffic terminating on (or originating from) the host. Terms in a forward filter typically pair with the `source-interface` and `destination-interface` keywords to express which way traffic is crossing the box.
 
 ### Reporting bugs
 
@@ -1015,6 +1019,8 @@ When reporting bugs about this generator ensure to include:
 
 * _logging_: NFTables system logging (host-based).
 * _counter_: NFTables counter for specific term.
+* _source-interface_: match the interface the packet arrived on, rendered as `iifname`.
+* _destination-interface_: match the interface the packet is leaving by, rendered as `oifname`.
 
 ### Sub-tokens
 
@@ -1134,6 +1140,10 @@ targets:
 ### Term Format
 
 * for common keys see the [common](#common) section above.
+* _source-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _destination-prefix_: this should resolve to a named ipv4 or ipv6 prefix list under 'acl match-list'
+* _icmp-type_: rendered as `icmp type` (`icmp6 type` in IPv6 filters), with one entry per ICMP type. In mixed filters, a term with `icmp` or `icmpv6` and ICMP types is only rendered in the filter of the matching address family.
+* _icmp-code_: rendered as `icmp code` (`icmp6 code`), together with _icmp-type_.
 
 ### Sub Tokens
 

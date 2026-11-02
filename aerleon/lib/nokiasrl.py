@@ -19,6 +19,7 @@ More information about the SR Linux ACL model schema: https://yang.srlinux.dev/
 
 """
 
+import copy
 from typing import TypedDict
 
 from aerleon.lib import aclgenerator, openconfig
@@ -27,8 +28,18 @@ from aerleon.lib.policy import Term
 R24_3_2 = "r24.3.2"  # Option flag to generate release >= 24.3.2 syntax
 
 
-class IPPrefix(TypedDict):
-    prefix: str
+class PrefixListRef(TypedDict):
+    name: str
+
+
+IPPrefix = TypedDict(
+    "IPPrefix",
+    {
+        "prefix": str,
+        "prefix-list": list[PrefixListRef],
+    },
+    total=False,
+)
 
 
 class PortRange(TypedDict):
@@ -39,6 +50,11 @@ class PortRange(TypedDict):
 class Port(TypedDict):
     value: int
     range: PortRange
+
+
+class ICMP(TypedDict, total=False):
+    type: int
+    code: list[int]
 
 
 Match = TypedDict(
@@ -52,6 +68,8 @@ Match = TypedDict(
         "destination-ip": IPPrefix,
         "source-port": Port,
         "destination-port": Port,
+        "icmp": ICMP,
+        "icmp6": ICMP,
     },
 )
 
@@ -106,10 +124,49 @@ class UnsupportedLogging(Error):
     pass
 
 
+class PrefixListWithAddressError(Error):
+    pass
+
+
 class SRLTerm(openconfig.Term):
     """Creates the term for the SR Linux ACL."""
 
     ACTION_MAP = {'accept': 'accept', 'deny': 'drop', 'reject': 'drop'}
+
+    def __init__(self, term: Term, inet_version: str = 'inet', mixed: bool = False) -> None:
+        super().__init__(term, inet_version)
+        self.mixed = mixed
+
+    def ConvertToDict(self, filter_options: list[str]) -> list[ACLEntry]:
+        """Convert term to a list of entries, one per ICMP type if the term has any."""
+        if not self.term.icmp_type:
+            return super().ConvertToDict(filter_options)
+
+        try:
+            icmp_types = self.NormalizeIcmpTypes(
+                self.term.icmp_type, self.term.protocol, self.inet_version
+            )
+        except aclgenerator.MismatchIcmpInetError:
+            # In a mixed filter, an ICMP term only applies to its own address family.
+            if self.mixed:
+                return []
+            raise
+
+        family = self.AF_RENAME[self.AF_MAP[self.inet_version]]
+        icmp_key = 'icmp' if family == 'ipv4' else 'icmp6'
+        rules = []
+        for rule in super().ConvertToDict(filter_options):
+            for icmp_type in icmp_types:
+                rule_with_type = copy.deepcopy(rule)
+                icmp: ICMP = {'type': icmp_type}
+                if self.term.icmp_code:
+                    icmp['code'] = sorted(self.term.icmp_code)
+                if R24_3_2 in filter_options:
+                    rule_with_type['match'][family][icmp_key] = icmp
+                else:
+                    rule_with_type['match'][icmp_key] = icmp
+                rules.append(rule_with_type)
+        return rules
 
     def SetName(self, name: str) -> None:
         # Put name in description field
@@ -194,11 +251,42 @@ class SRLTerm(openconfig.Term):
         ):
             self.SetProtocol(family=family, protocol="tcp", filter_options=filter_options)
 
+        # Named prefix-list references. prefix-list and a literal prefix are
+        # mutually exclusive in the SR Linux YANG model.
+        if self.term.source_prefix:
+            if self.term.GetAddressOfVersion(
+                'flattened_saddr', self.AF_MAP.get(self.inet_version)
+            ):
+                raise PrefixListWithAddressError(
+                    f'source-prefix excludes source-address in term {self.term.name}'
+                )
+            self.SetSourcePrefixList(family, self.term.source_prefix, filter_options)
+        if self.term.destination_prefix:
+            if self.term.GetAddressOfVersion(
+                'flattened_daddr', self.AF_MAP.get(self.inet_version)
+            ):
+                raise PrefixListWithAddressError(
+                    f'destination-prefix excludes destination-address in term {self.term.name}'
+                )
+            self.SetDestPrefixList(family, self.term.destination_prefix, filter_options)
+
     def SetSourceAddress(self, family: str, saddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['source-ip'] = {'prefix': saddr}
 
     def SetDestAddress(self, family: str, daddr: str, filter_options: list[str]) -> None:
         self._field(family, filter_options)['destination-ip'] = {'prefix': daddr}
+
+    def SetSourcePrefixList(
+        self, family: str, names: list[str], filter_options: list[str]
+    ) -> None:
+        self._field(family, filter_options)['source-ip'] = {
+            'prefix-list': [{'name': n} for n in names]
+        }
+
+    def SetDestPrefixList(self, family: str, names: list[str], filter_options: list[str]) -> None:
+        self._field(family, filter_options)['destination-ip'] = {
+            'prefix-list': [{'name': n} for n in names]
+        }
 
     def SetSourcePorts(self, start: int, end: int, filter_options: list[str]) -> None:
         if start == end:
@@ -224,6 +312,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
 
     _PLATFORM = 'nokiasrl'
     SUFFIX = '.srl_acl'
+    _SUPPORTS_ICMP_TYPE = True
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
@@ -233,7 +322,8 @@ class NokiaSRLinux(openconfig.OpenConfig):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
 
-        supported_tokens -= {'platform', 'platform_exclude', 'verbatim', 'icmp-type'}
+        supported_tokens -= {'platform', 'platform_exclude', 'verbatim'}
+        supported_tokens |= {'source_prefix', 'destination_prefix', 'icmp_code'}
 
         supported_sub_tokens['action'] = {'accept', 'deny'}  # excludes 'reject'
         supported_sub_tokens['option'] = {
@@ -265,7 +355,7 @@ class NokiaSRLinux(openconfig.OpenConfig):
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for term in terms:
             for term_af in afs:
-                t = SRLTerm(term, term_af)
+                t = SRLTerm(term, term_af, mixed=address_family == 'mixed')
                 for rule in t.ConvertToDict(filter_options):
                     self.total_rule_count += 1
                     rule['sequence-id'] = (len(srl_acl_entries[term_af]) + 1) * 5

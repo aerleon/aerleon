@@ -12,7 +12,7 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@session(python=["3.10", "3.11", "3.12", "3.13", "3.14", "python3.14t"])
+@session(python=["3.10", "3.11", "3.12", "3.13", "3.14", "python3.14t", "3.15", "python3.15t"])
 def test(session):
     """Runs pytest"""
     session.run_always("poetry", "install", external=True)
@@ -86,7 +86,8 @@ def benchmark_tuned(session):
     session.notify('benchmark', ['__benchmark_tune'])
 
 
-@session
+# must be >= highest [tool.black] target-version
+@session(python="3.15")
 def format(session):
     """Runs black and isort"""
     session.run_always("poetry", "install", external=True)

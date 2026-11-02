@@ -45,7 +45,6 @@ DNS = 53/tcp
 
 """
 
-
 import re
 from pathlib import Path
 from typing import Any
@@ -547,14 +546,14 @@ class Naming:
                     services_set.add(parts[0])
         return sorted(services_set)
 
-    def GetFQDN(self, query: str) -> list[str]:
+    def GetFQDN(self, query: str) -> list[FQDN]:
         """Expand a network token into a list of FQDN objects.
 
         Args:
           query: Network definition token. May include comment text
 
         Returns:
-          List of nacaddr.IPv4 or nacaddr.IPv6 objects
+          List of FQDN objects
 
         Raises:
           UndefinedAddressError: Network token not defined
@@ -565,8 +564,8 @@ class Naming:
             raise EmptyDefinitionError(f"No FQDN values found for network: {query}")
         return results
 
-    def _GetFQDN(self, query: str, level=0) -> list[str]:
-        returnlist = []
+    def _GetFQDN(self, query: str, level=0) -> list[FQDN]:
+        returnlist: list[FQDN] = []
         data = query.split('#')
         token = data[0].split()[0]
         if token not in self.fqdn:
@@ -574,7 +573,7 @@ class Naming:
         for i in self.fqdn[token].items:
             comment = ''
             if i.find('#') > -1:
-                (name, comment) = i.split('#', 1)
+                name, comment = i.split('#', 1)
             else:
                 name = i
 
@@ -625,7 +624,7 @@ class Naming:
         for i in self.networks[token].items:
             comment = ''
             if i.find('#') > -1:
-                (net, comment) = i.split('#', 1)
+                net, comment = i.split('#', 1)
             else:
                 net = i
 
@@ -736,7 +735,7 @@ class Naming:
             return
         comment = ''
         if line.find('#') > -1:  # if there is a comment, save it
-            (line, comment) = line.split('#', 1)
+            line, comment = line.split('#', 1)
         line_parts = line.split('=')  # Split on var = val lines.
         # the value field still has the comment at this point
         # If there was '=', then do var and value

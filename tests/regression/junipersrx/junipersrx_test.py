@@ -1358,8 +1358,37 @@ class JuniperSRXTest(absltest.TestCase):
         print(srx)
 
     @capture.stdout
-    def testNakedExclude(self):
+    def testNakedExcludeIPv4(self):
         self.naming._ParseLine('SMALL = 10.0.0.0/24', 'networks')
+
+        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_18, self.naming)
+        output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_2 10.0.1.0/24;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_3 10.0.2.0/23;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_4 10.0.4.0/22;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_5 10.0.8.0/21;', output, output)
+        self.assertNotIn('10.0.0.0', output)
+        self.assertNotIn('::/', output)
+        print(output)
+
+    @capture.stdout
+    def testNakedExcludeIPv6(self):
+        self.naming._ParseLine('SMALL = 2001:db8::/64', 'networks')
+
+        pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_18, self.naming)
+        output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
+        self.assertIn('policy good_term_18 {', output, output)
+        self.assertNotIn('0.0.0.0/0', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_9 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_10 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_11 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_12 2001:db8:0:8::/61;', output, output)
+        self.assertNotIn('2001:db8::/64', output, output)
+        print(output)
+
+    @capture.stdout
+    def testNakedExcludeMixed(self):
+        self.naming._ParseLine('SMALL = 10.0.0.0/24 2001:db8::/64', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_18, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1367,13 +1396,47 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_3 10.0.2.0/23;', output, output)
         self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_4 10.0.4.0/22;', output, output)
         self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_5 10.0.8.0/21;', output, output)
-        self.assertNotIn('10.0.0.0', output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_33 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_34 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_35 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_36 2001:db8:0:8::/61;', output, output)
+        self.assertNotIn('10.0.0.0/24', output, output)
+        self.assertNotIn('2001:db8::/64', output, output)
         print(output)
 
     @capture.stdout
-    def testSourceExclude(self):
+    def testSourceExcludeIPv4(self):
         self.naming._ParseLine('SMALL = 10.0.0.0/24', 'networks')
         self.naming._ParseLine('LARGE = 10.0.0.0/20', 'networks')
+
+        pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_19, self.naming)
+        output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 10.0.1.0/24;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;', output, output)
+        self.assertNotIn('10.0.0.0/24', output)
+        self.assertNotIn('::/', output)
+        print(output)
+
+    @capture.stdout
+    def testSourceExcludeIPv6(self):
+        self.naming._ParseLine('SMALL = 2001:db8::/64', 'networks')
+        self.naming._ParseLine('LARGE = 2001:db8::/32', 'networks')
+
+        pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_19, self.naming)
+        output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 2001:db8:0:8::/61;', output, output)
+        self.assertNotIn('2001:db8::/64', output, output)
+        print(output)
+
+    @capture.stdout
+    def testSourceExcludeMixed(self):
+        self.naming._ParseLine('SMALL = 10.0.0.0/24 2001:db8::/64', 'networks')
+        self.naming._ParseLine('LARGE = 10.0.0.0/20 2001:db8::/32', 'networks')
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_19, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
@@ -1381,7 +1444,12 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;', output, output)
         self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;', output, output)
         self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;', output, output)
-        self.assertNotIn('10.0.0.0/24', output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_4 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_5 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_6 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_7 2001:db8:0:8::/61;', output, output)
+        self.assertNotIn('10.0.0.0/24', output, output)
+        self.assertNotIn('2001:db8::/64', output, output)
         print(output)
 
     @capture.stdout
