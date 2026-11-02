@@ -246,6 +246,14 @@ term term-fragment {
 }
 """
 
+TERM_IP_OPTIONS = """
+term term-ip-options {
+  protocol:: tcp
+  option:: ip-options
+  action:: deny
+}
+"""
+
 TERM_IS_FRAGMENT = """
 term term-is-fragment {
   option:: is-fragment
@@ -810,6 +818,45 @@ class NokiaSROSTest(absltest.TestCase):
     def testFragmentCpmMode(self):
         entries = self._entries(HEADER_CPM, TERM_FRAGMENT)
         self.assertEqual(entries[0]['match']['fragment'], 'true')
+
+    def testIpOptions(self):
+        entries = self._entries(HEADER_INET, TERM_IP_OPTIONS)
+        self.assertEqual(entries[0]['match'], {'protocol': 'tcp', 'option-present': True})
+
+    def testIpOptionsCpmMode(self):
+        entries = self._entries(HEADER_CPM, TERM_IP_OPTIONS)
+        self.assertEqual(entries[0]['match'], {'protocol': 'tcp', 'option-present': True})
+
+    def testIpOptionsWithTcpEstablished(self):
+        term = (
+            'term t {\n  protocol:: tcp\n  option:: ip-options tcp-established\n'
+            '  action:: deny\n}\n'
+        )
+        entries = self._entries(HEADER_INET, term)
+        self.assertEqual(
+            entries[0]['match'],
+            {'protocol': 'tcp', 'tcp-established': [None], 'option-present': True},
+        )
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testIpOptionsSkippedInInet6(self, mock_warning):
+        """IPv6 has no IP options: the term is skipped rather than widened to all tcp."""
+        for header in (HEADER_INET6, HEADER_CPM_INET6):
+            with self.subTest(header=header.strip()):
+                mock_warning.reset_mock()
+                entries = self._entries(header, TERM_IP_OPTIONS + TERM_DENY)
+                self.assertEqual([e['description'] for e in entries], ['term-deny'])
+                mock_warning.assert_called_once()
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testIpOptionsMixed(self, mock_warning):
+        output = json.loads(str(self._make_acl(HEADER_MIXED, TERM_IP_OPTIONS)))
+        self.assertEqual(
+            output[0]['ip-filter']['nokia-conf:entry'][0]['match'],
+            {'protocol': 'tcp', 'option-present': True},
+        )
+        self.assertEqual(output[1]['ipv6-filter']['nokia-conf:entry'], [])
+        mock_warning.assert_not_called()
 
     # -----------------------------------------------------------------------
     # Action

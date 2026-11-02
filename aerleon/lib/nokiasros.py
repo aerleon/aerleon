@@ -115,6 +115,17 @@ class SROSTerm(aclgenerator.Term):
                 )
             return []
 
+        # IP options only exist in the IPv4 header. Skip the term rather than drop
+        # the match, which would widen it to every packet.
+        if self.inet_version == 'inet6' and 'ip-options' in map(str, self.term.option):
+            if not self.mixed:
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name, proto='ip-options', af=self.inet_version
+                    )
+                )
+            return []
+
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
         if self.term.flattened_saddr and not saddrs:
             self._LogNoAF('source')
@@ -267,6 +278,9 @@ class SROSTerm(aclgenerator.Term):
         elif 'is-fragment' in opts or 'fragments' in opts:
             match['fragment'] = 'true'
 
+        if 'ip-options' in opts:
+            match['option-present'] = True
+
         return match
 
 
@@ -293,6 +307,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
             'is-fragment',
             'first-fragment',
             'fragments',
+            'ip-options',
         }
         return supported_tokens, supported_sub_tokens
 

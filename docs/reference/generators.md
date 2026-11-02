@@ -1207,6 +1207,7 @@ the description of the first entry as `<comment> | <term description>`.
 * _tcp-established_: Match established TCP sessions. Rendered as the `tcp-established` leaf in IP filters and as `tcp-flags {ack: true}` in CPM filters. No ports are added. Can only be used with the `tcp` protocol.
 * _fragments_, _is-fragment_: Match fragmented packets (`fragment true`).
 * _first-fragment_: Match only the first fragment (`fragment first-only`). Not supported in CPM filters, whose model only has `fragment true|false`.
+* _ip-options_: Match IPv4 packets with any IP header option present (`option-present true`), in IP and CPM filters. IPv6 has no IP options, so the term is skipped in IPv6 filters, with a warning unless the filter is `mixed`.
 
 ### Output Format
 
