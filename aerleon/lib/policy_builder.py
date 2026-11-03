@@ -487,7 +487,7 @@ BUILTIN_SPEC: dict[str, TValue | TComposition] = {
     'source-fqdn':            TListStrCollapsible,
     'source-port':                TListStrCollapsible,
     'source-prefix':              TListStrCollapsible,
-    'ttl':                        TValue.Integer,
+    'ttl':                        TUnion(of=[TValue.Integer, TValue.IntegerRange]),
     'verbatim':                   TSection(of=[(TValue.WordString, TValue.AnyString)]),
     # juniper specific.           
     'packet-length':              TUnion(of=[TValue.Integer, TValue.IntegerRange]),

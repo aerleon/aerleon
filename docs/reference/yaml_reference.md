@@ -391,6 +391,7 @@ A Term must contain a `name` field naming the term.
 | terms[].source-tag                |            | list of words                | `source-tag: ["[TAG]", ...]`                                                                               |
 | terms[].source-tag                |            | list of words                | `source-tag: ["[TAG]", ...]`                                                                               |
 | terms[].source-interface          |            | word                         | `source-interface: "[INTERFACE_NAME]"`                                                                     |
+| terms[].ttl                       |            | number range                 | `ttl: "[MIN]-[MAX]"`                                                                                       |
 | terms[].ttl                       |            | number                       | `ttl: "[TTL]"`                                                                                             |
 | terms[].ttl                       |            | number                       | `ttl: [TTL]`                                                                                               |
 | terms[].verbatim                  |            | mapping from word to strings | `verbatim: {"[TARGET_NAME]": "Verbatim content"}`                                                          |

@@ -1321,6 +1321,23 @@ class PolicyTest(parameterized.TestCase):
         pol = HEADER + BAD_TERM_15
         self.assertRaises(policy.InvalidTermTTLValue, policy.ParsePolicy, pol, self.naming)
 
+    def testTTLRange(self):
+        pol = HEADER + 'term t { ttl:: 1-4 action:: deny }\n'
+        _, (term,) = policy.ParsePolicy(pol, self.naming).filters[0]
+        self.assertEqual(term.ttl, '1-4')
+        self.assertIn('ttl: 1-4', str(term))
+
+    def testTTLSingleValueIsInt(self):
+        """A single ttl stays an int, so generators without range support are unchanged."""
+        _, (term,) = policy.ParsePolicy(HEADER + GOOD_TERM_43, self.naming).filters[0]
+        self.assertEqual(term.ttl, 10)
+
+    def testInvalidTTLRange(self):
+        for value in ('10-5', '1-300'):
+            with self.subTest(value=value):
+                pol = HEADER + f'term t {{ ttl:: {value} action:: deny }}\n'
+                self.assertRaises(policy.InvalidTermTTLValue, policy.ParsePolicy, pol, self.naming)
+
     def testNeedAddressBook(self):
         pol1 = policy.ParsePolicy(HEADER + GOOD_TERM_1, self.naming)
         pol2 = policy.ParsePolicy(HEADER_SRX + GOOD_TERM_1, self.naming)
@@ -1473,6 +1490,26 @@ class PolicyTest(parameterized.TestCase):
         self.assertNotIn(no_ttl_term, ttl_term)
         self.assertNotIn(other_ttl_term, ttl_term)
         self.assertIn(ttl_term, no_ttl_term)
+
+    def testTtlRangeContains(self):
+        # A ttl range contains the terms whose ttl lies within it.
+        pol = policy.ParsePolicy(
+            HEADER
+            + 'term ttl-1-4 { ttl:: 1-4 action:: deny }\n'
+            + 'term ttl-2-3 { ttl:: 2-3 action:: deny }\n'
+            + 'term ttl-4 { ttl:: 4 action:: deny }\n'
+            + 'term ttl-3-5 { ttl:: 3-5 action:: deny }\n'
+            + 'term ttl-0 { ttl:: 0 action:: deny }\n',
+            self.naming,
+        )
+        _, (wide, inner, single, overlap, zero) = pol.filters[0]
+        self.assertIn(inner, wide)
+        self.assertIn(single, wide)
+        self.assertNotIn(overlap, wide)
+        self.assertNotIn(zero, wide)
+        self.assertNotIn(wide, inner)
+        self.assertNotIn(wide, single)
+        self.assertIn(zero, zero)
 
     def testPrecedenceContains(self):
         # Tests 'contains' testing of the precedence field. A term without set

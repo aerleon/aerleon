@@ -62,6 +62,18 @@ header {
 }
 """
 
+HEADER_PKTLEN_INET6 = """
+header {
+  target:: nokiasros my-filter inet6 pktlenfilter
+}
+"""
+
+HEADER_PKTLEN_MIXED = """
+header {
+  target:: nokiasros my-filter mixed pktlenfilter
+}
+"""
+
 HEADER_SYSLOG = """
 header {
   target:: nokiasros my-filter inet syslog-profile 200
@@ -727,25 +739,101 @@ class NokiaSROSTest(absltest.TestCase):
 
     @capture.stdout
     def testTtlInet(self):
-        """ttl renders as 'ttl' key for IPv4."""
-        acl = self._make_acl(HEADER_INET, TERM_TTL)
+        """ttl is an exact match in IPv4 filters."""
+        acl = self._make_acl(HEADER_PKTLEN, TERM_TTL)
         entries = self._filter(acl)['nokia-conf:entry']
-        self.assertEqual(entries[0]['match']['ttl'], {'lt': 5})
-        self.assertNotIn('hop-limit', entries[0]['match'])
+        self.assertEqual(entries[0]['match'], {'ttl': {'eq': 5}})
         print(acl)
 
+    @mock.patch.object(nokiasros.logging, 'warning')
     @capture.stdout
-    def testTtlInet6(self):
-        """ttl renders as 'hop-limit' key for IPv6."""
-        acl = self._make_acl(HEADER_INET6, TERM_TTL)
+    def testTtlInet6(self, mock_warning):
+        """IPv6 has no ttl: the term is skipped rather than widened to every packet."""
+        acl = self._make_acl(HEADER_PKTLEN_INET6, TERM_TTL + TERM_ACCEPT)
         entries = self._filter(acl)['nokia-conf:entry']
-        self.assertEqual(entries[0]['match']['hop-limit'], {'lt': 5})
-        self.assertNotIn('ttl', entries[0]['match'])
+        self.assertEqual([e['description'] for e in entries], ['term-accept'])
+        mock_warning.assert_called_once()
         print(acl)
+
+    def testTtlRange(self):
+        term = 'term t {\n  ttl:: 1-4\n  action:: deny\n}\n'
+        entries = self._entries(HEADER_PKTLEN, term)
+        self.assertEqual(entries[0]['match'], {'ttl': {'range': {'start': 1, 'end': 4}}})
+
+    def testTtlSingleValueRange(self):
+        term = 'term t {\n  ttl:: 7-7\n  action:: deny\n}\n'
+        entries = self._entries(HEADER_PKTLEN, term)
+        self.assertEqual(entries[0]['match'], {'ttl': {'eq': 7}})
 
     def testHopLimit(self):
-        entries = self._entries(HEADER_INET6, TERM_HOP_LIMIT)
-        self.assertEqual(entries[0]['match']['hop-limit'], {'lt': 10})
+        entries = self._entries(HEADER_PKTLEN_INET6, TERM_HOP_LIMIT)
+        self.assertEqual(entries[0]['match'], {'hop-limit': {'eq': 10}})
+
+    def testHopLimitRange(self):
+        term = 'term t {\n  hop-limit:: 5-10\n  action:: accept\n}\n'
+        entries = self._entries(HEADER_PKTLEN_INET6, term)
+        self.assertEqual(entries[0]['match'], {'hop-limit': {'range': {'start': 5, 'end': 10}}})
+
+    def testHopLimitSingleValueRange(self):
+        term = 'term t {\n  hop-limit:: 7-7\n  action:: accept\n}\n'
+        entries = self._entries(HEADER_PKTLEN_INET6, term)
+        self.assertEqual(entries[0]['match'], {'hop-limit': {'eq': 7}})
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testHopLimitSkippedInInet(self, mock_warning):
+        """IPv4 has no hop-limit: the term is skipped rather than widened to every packet."""
+        entries = self._entries(HEADER_PKTLEN, TERM_HOP_LIMIT + TERM_ACCEPT)
+        self.assertEqual([e['description'] for e in entries], ['term-accept'])
+        mock_warning.assert_called_once()
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testTtlAndHopLimitSkippedInOtherFamilyMixed(self, mock_warning):
+        """In a mixed filter each term only lands in the family it can match."""
+        output = json.loads(str(self._make_acl(HEADER_PKTLEN_MIXED, TERM_TTL + TERM_HOP_LIMIT)))
+        ipv4 = output[0]['ip-filter']['nokia-conf:entry']
+        ipv6 = output[1]['ipv6-filter']['nokia-conf:entry']
+        self.assertEqual(
+            [(e['description'], e['match']) for e in ipv4], [('term-ttl', {'ttl': {'eq': 5}})]
+        )
+        self.assertEqual(
+            [(e['description'], e['match']) for e in ipv6],
+            [('term-hop-limit', {'hop-limit': {'eq': 10}})],
+        )
+        mock_warning.assert_not_called()
+
+    def testTtlAndHopLimitMixed(self):
+        term = 'term t {\n  ttl:: 255\n  hop-limit:: 255\n  action:: accept\n}\n'
+        output = json.loads(str(self._make_acl(HEADER_PKTLEN_MIXED, term)))
+        self.assertEqual(
+            output[0]['ip-filter']['nokia-conf:entry'][0]['match'], {'ttl': {'eq': 255}}
+        )
+        self.assertEqual(
+            output[1]['ipv6-filter']['nokia-conf:entry'][0]['match'], {'hop-limit': {'eq': 255}}
+        )
+
+    def testInvalidHopLimitError(self):
+        for value in ('10-5', '256'):
+            with self.subTest(value=value):
+                term = f'term t {{\n  hop-limit:: {value}\n  action:: accept\n}}\n'
+                acl = policy.ParsePolicy(HEADER_PKTLEN_INET6 + term, self.naming)
+                with self.assertRaises(nokiasros.InvalidHopLimitError):
+                    _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def testTtlHopLimitWithoutPacketLengthError(self):
+        """SR OS only matches ttl/hop-limit in packet-length filters, never in CPM filters."""
+        cases = [
+            (HEADER_INET, TERM_TTL),
+            (HEADER_INET6, TERM_HOP_LIMIT),
+            (HEADER_INET6, TERM_TTL),
+            (HEADER_MIXED, TERM_HOP_LIMIT),
+            (HEADER_CPM, TERM_TTL),
+            (HEADER_CPM_INET6, TERM_HOP_LIMIT),
+        ]
+        for header, term in cases:
+            with self.subTest(header=header.strip(), term=term.strip()):
+                acl = policy.ParsePolicy(header + term, self.naming)
+                with self.assertRaises(nokiasros.TtlHopLimitWithoutPacketLengthError):
+                    _ = nokiasros.NokiaSROS(acl, EXP_INFO)
 
     # -----------------------------------------------------------------------
     # Match: options

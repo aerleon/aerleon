@@ -76,6 +76,14 @@ class EntryIdOverflowError(Error):
     pass
 
 
+class TtlHopLimitWithoutPacketLengthError(Error):
+    pass
+
+
+class InvalidHopLimitError(Error):
+    pass
+
+
 class SROSTerm(aclgenerator.Term):
     """Converts a policy term into SROS filter entry dicts."""
 
@@ -90,12 +98,14 @@ class SROSTerm(aclgenerator.Term):
         syslog_profile: int = 102,
         cpm_mode: bool = False,
         mixed: bool = False,
+        packet_length: bool = False,
     ) -> None:
         super().__init__(term)
         self.inet_version = inet_version
         self.syslog_profile = syslog_profile
         self.cpm_mode = cpm_mode
         self.mixed = mixed
+        self.packet_length = packet_length
         self.term.FlattenAll()
 
     def ConvertToEntries(self) -> list[dict[str, Any]]:
@@ -122,6 +132,21 @@ class SROSTerm(aclgenerator.Term):
                 logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
                         term=self.term.name, proto='ip-options', af=self.inet_version
+                    )
+                )
+            return []
+
+        # ttl only exists in the IPv4 header and hop-limit in the IPv6 one. Skip a
+        # term that only matches on the other family's field rather than drop the
+        # match, which would widen it to every packet.
+        self.hop_key, self.hop_match = self._HopMatch()
+        if self.hop_key is None and (self.term.ttl is not None or self.term.hop_limit is not None):
+            if not self.mixed:
+                logging.warning(
+                    self.NO_AF_LOG_PROTO.substitute(
+                        term=self.term.name,
+                        proto='hop-limit' if self.inet_version == 'inet' else 'ttl',
+                        af=self.inet_version,
                     )
                 )
             return []
@@ -205,6 +230,35 @@ class SROSTerm(aclgenerator.Term):
                 )
             )
 
+    def _HopMatch(self) -> tuple[str | None, dict[str, Any] | None]:
+        """Return the ttl (IPv4) or hop-limit (IPv6) match of this filter's family.
+
+        ttl only applies to IPv4 filters and hop-limit only to IPv6 filters; returns
+        (None, None) if the term has no match for this family. A value is matched
+        exactly, an 'N-M' range as a range. SR OS only matches them in
+        packet-length filters, which CPM filters cannot be.
+        """
+        if self.term.ttl is None and self.term.hop_limit is None:
+            return None, None
+        if not self.packet_length:
+            raise TtlHopLimitWithoutPacketLengthError(
+                f'ttl and hop-limit require a packet-length filter (pktlenfilter option)'
+                f' in term {self.term.name}'
+            )
+        if self.inet_version == 'inet6':
+            key, value = 'hop-limit', self.term.hop_limit
+        else:
+            key, value = 'ttl', self.term.ttl
+        if value is None:
+            return None, None
+
+        low, high = policy_module.TtlRange(value)
+        if not 0 <= low <= high <= 255:
+            raise InvalidHopLimitError(f'invalid {key} {value} in term {self.term.name}')
+        if low == high:
+            return key, {'eq': low}
+        return key, {'range': {'start': low, 'end': high}}
+
     def _BuildMatch(
         self,
         saddr: Any,
@@ -256,12 +310,8 @@ class SROSTerm(aclgenerator.Term):
                 icmp['code'] = icmp_code
             match['icmp'] = icmp
 
-        if self.term.hop_limit:
-            match['hop-limit'] = {'lt': int(self.term.hop_limit)}
-
-        if self.term.ttl:
-            ttl_key = 'hop-limit' if self.inet_version == 'inet6' else 'ttl'
-            match[ttl_key] = {'lt': self.term.ttl}
+        if self.hop_key:
+            match[self.hop_key] = copy.deepcopy(self.hop_match)
 
         if 'tcp-established' in opts:
             if self.cpm_mode:
@@ -360,6 +410,7 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                     af,
                     syslog_profile,
                     mixed=address_family == 'mixed',
+                    packet_length=packet_length,
                 ).ConvertToEntries()
                 for term in terms
             ]

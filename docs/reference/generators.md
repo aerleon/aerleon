@@ -1179,7 +1179,7 @@ IP filter options:
 * _mixed_: render both an `ip-filter` and an `ipv6-filter` with the same name. Each term is rendered into the filter of the matching address family.
 * _accept_: set `default-action` to `accept`.
 * _drop_: set `default-action` to `drop`. This is the default.
-* _pktlenfilter_: set the filter `type` to `packet-length`.
+* _pktlenfilter_: set the filter `type` to `packet-length`. Required to match on `ttl` or `hop-limit`.
 * _syslog-profile N_: syslog profile used by entries with `logging`. Defaults to `102`.
 
 CPM filter options:
@@ -1196,11 +1196,11 @@ the description of the first entry as `<comment> | <term description>`.
 
 * for common keys see the [common](#common) section above.
 
-* _hop-limit_: Match IPv6 hop-limit, rendered as `hop-limit {lt: N}`.
+* _hop-limit_: Match the IPv6 hop limit: a value (`hop-limit {eq: N}`) or a range (`hop-limit:: N-M`, rendered as `hop-limit {range: {start: N, end: M}}`). IPv6 only: in an IPv4 filter a term with `hop-limit` and no `ttl` is not rendered. Requires `pktlenfilter`, so it cannot be used in CPM filters.
 * _icmp-code_: Match the ICMP code, together with `icmp-type`.
 * _logging_: Log matching packets to the header's syslog profile.
 * _policer_: Rate-limit matching packets with the named policer (`action rate-limit policer`).
-* _ttl_: Match IPv4 TTL, rendered as `ttl {lt: N}` (`hop-limit {lt: N}` in an IPv6 filter).
+* _ttl_: Match the IPv4 TTL: a value (`ttl {eq: N}`) or a range (`ttl:: N-M`, rendered as `ttl {range: {start: N, end: M}}`). IPv4 only: in an IPv6 filter a term with `ttl` and no `hop-limit` is not rendered. Requires `pktlenfilter`, so it cannot be used in CPM filters.
 
 (`verbatim` is not supported.)
 

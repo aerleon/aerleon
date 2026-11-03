@@ -1495,6 +1495,14 @@ class YAMLPolicyTermTest(absltest.TestCase):
         """
         self.assertTermRaises(policy.InvalidTermTTLValue)
 
+    def testInvalidTTLRange(self, mock_open, mock_warn):
+        mock_open.return_value.read.return_value = """terms:
+        - name: bad-ttl-range
+          ttl: 10-5
+          action: accept
+        """
+        self.assertTermRaises(policy.InvalidTermTTLValue)
+
     def testGREandTCPUDPError(self, mock_open, mock_warn):
         mock_open.return_value.read.return_value = """terms:
         - name: bad-term-16
@@ -1705,6 +1713,28 @@ class YAMLRepresentationsTest(absltest.TestCase):
           action: deny
         """
         self.assertEqualPolicyModel(mock_open, hop_limit_range_nospace, hop_limit_range_spaces)
+        ttl_single_int = """terms:
+        - name: ttl-term
+          ttl: 8
+          action: deny
+        """
+        ttl_single_int_str = """terms:
+        - name: ttl-term
+          ttl: "8"
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open, ttl_single_int, ttl_single_int_str)
+        ttl_range_nospace = """terms:
+        - name: ttl-term
+          ttl: 1-4
+          action: deny
+        """
+        ttl_range_spaces = """terms:
+        - name: ttl-term
+          ttl: 1 - 4
+          action: deny
+        """
+        self.assertEqualPolicyModel(mock_open, ttl_range_nospace, ttl_range_spaces)
 
     def testLogging(self, mock_open):
         logging_bool_lower = """terms:
