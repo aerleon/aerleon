@@ -595,9 +595,7 @@ class NokiaEDATest(absltest.TestCase):
         self.assertEqual(
             self._ip_entries(HEADER_INET, TERM_LOGGING), [{'action': 'Drop', 'log': True}]
         )
-        self.assertEqual(
-            self._ip_entries(HEADER_INET, TERM_LOGGING_DISABLE), [{'action': 'Drop'}]
-        )
+        self.assertEqual(self._ip_entries(HEADER_INET, TERM_LOGGING_DISABLE), [{'action': 'Drop'}])
 
     def testPolicerAndCounterIgnored(self):
         self.assertEqual(
