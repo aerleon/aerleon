@@ -429,12 +429,8 @@ class PacketConditionsTest(absltest.TestCase):
         )
 
     def test_icmp_type_selects_the_matching_terms(self):
-        self.assertEqual(
-            self.terms(proto="icmp", icmp_type="redirect"), [("drop-redirect", [])]
-        )
-        self.assertEqual(
-            self.terms(proto="icmp", icmp_type="echo-request"), [("allow-icmp", [])]
-        )
+        self.assertEqual(self.terms(proto="icmp", icmp_type="redirect"), [("drop-redirect", [])])
+        self.assertEqual(self.terms(proto="icmp", icmp_type="echo-request"), [("allow-icmp", [])])
 
     def test_icmp_code_selects_the_matching_terms(self):
         self.assertEqual(
@@ -465,7 +461,14 @@ class PacketConditionsTest(absltest.TestCase):
             self.assertNotIn("allow-http-initial", matched)
 
     def test_tcp_established_requires_ack_or_a_bare_rst(self):
-        established = ({"ack"}, {"syn", "ack"}, {"psh", "ack"}, {"rst"}, {"rst", "psh"}, {"rst", "ack"})
+        established = (
+            {"ack"},
+            {"syn", "ack"},
+            {"psh", "ack"},
+            {"rst"},
+            {"rst", "psh"},
+            {"rst", "ack"},
+        )
         for flags in established:
             self.assertEqual(
                 self.terms(proto="tcp", dport="443", tcp_flags=flags),
