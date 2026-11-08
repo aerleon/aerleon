@@ -29,13 +29,16 @@ Filter options (ip-filter mode):
   drop             - set default-action to drop
   pktlenfilter     - set filter type to packet-length
 
-  syslog-profile N - syslog profile ID for log entries (default: 102)
+  syslog-profile N - filter log ID for log entries, 101-199 (default: 102)
 
 Filter options (cpm mode):
   cpm              - render as a CPM filter (nokia-conf:admin-state wrapper)
   inet             - IPv4 CPM filter (default)
   inet6            - IPv6 CPM filter
-  syslog-profile N - syslog profile ID for log entries (default: 102)
+  syslog-profile N - filter log ID for log entries, 101-199 (default: 102)
+
+Unknown, repeated or conflicting options (e.g. both inet and inet6) are
+rejected.  Terms with logging:: disable are not logged.
 
 Both modes expand addresses to individual prefixes.  The only behavioural
 difference in CPM mode is that tcp-established is rendered as
@@ -50,6 +53,7 @@ ip-filter, ipv6-filter, cpm-ip-filter or cpm-ipv6-filter.
 """
 
 import copy
+import dataclasses
 import json
 from typing import Any
 
@@ -82,6 +86,24 @@ class TtlHopLimitWithoutPacketLengthError(Error):
 
 class InvalidHopLimitError(Error):
     pass
+
+
+class UnsupportedFilterOptionError(Error):
+    pass
+
+
+class InvalidSyslogProfileError(Error):
+    pass
+
+
+@dataclasses.dataclass
+class _FilterOptions:
+    """Parsed target options of one filter."""
+
+    address_family: str = 'inet'
+    default_action: str = 'drop'
+    packet_length: bool = False
+    syslog_profile: int = 102
 
 
 class SROSTerm(aclgenerator.Term):
@@ -188,6 +210,8 @@ class SROSTerm(aclgenerator.Term):
         if self.term.policer:
             action['rate-limit'] = {'policer': str(self.term.policer)}
 
+        log = bool(self.term.logging) and 'disable' not in [x.value for x in self.term.logging]
+
         entries = []
         for saddr in saddrs:
             for daddr in daddrs:
@@ -217,7 +241,7 @@ class SROSTerm(aclgenerator.Term):
                                     }
                                     if match:
                                         entry['match'] = match
-                                    if self.term.logging:
+                                    if log:
                                         entry['log'] = self.syslog_profile
                                     entries.append(entry)
         return entries
@@ -345,6 +369,23 @@ class NokiaSROS(aclgenerator.ACLGenerator):
     _CPM_FILTER_MAX_ENTRY_ID = 131072
     _IP_FILTER_KEY = {'inet': 'ip-filter', 'inet6': 'ipv6-filter'}
     _CPM_FILTER_KEY = {'inet': 'cpm-ip-filter', 'inet6': 'cpm-ipv6-filter'}
+    # types-filter:filter-log-id, referenced by the ip-filter and CPM filter log leaf.
+    _SYSLOG_PROFILE_MIN = 101
+    _SYSLOG_PROFILE_MAX = 199
+    # Option -> group; at most one option per group may be given.
+    _COMMON_OPTIONS = {
+        'inet': 'address family',
+        'inet6': 'address family',
+        'syslog-profile': 'syslog-profile',
+    }
+    _IP_FILTER_OPTIONS = {
+        **_COMMON_OPTIONS,
+        'mixed': 'address family',
+        'accept': 'default action',
+        'drop': 'default action',
+        'pktlenfilter': 'pktlenfilter',
+    }
+    _CPM_FILTER_OPTIONS = {**_COMMON_OPTIONS, 'cpm': 'cpm'}
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
@@ -366,49 +407,79 @@ class NokiaSROS(aclgenerator.ACLGenerator):
         self.ip_filters: list[dict[str, Any]] = []
 
         for header, terms in pol.filters:
-            filter_options = header.FilterOptions(self._PLATFORM)
             filter_name = header.FilterName(self._PLATFORM)
+            # Skip the filter name; slicing also leaves the header's list untouched.
+            options = header.FilterOptions(self._PLATFORM)[1:]
 
             comment = ' '.join(header.comment) if header.comment else None
-            is_cpm = filter_name == 'cpm' or 'cpm' in filter_options
-            if 'cpm' in filter_options:
-                filter_options.remove('cpm')
+            is_cpm = filter_name == 'cpm' or 'cpm' in options
+            filter_options = self._ParseFilterOptions(filter_name, options, is_cpm)
             if is_cpm:
                 self._TranslateCPMFilter(filter_options, terms, comment)
             else:
                 self._TranslateIPFilter(filter_name, filter_options, terms, comment)
 
+    def _ParseFilterOptions(
+        self, filter_name: str, options: list[str], is_cpm: bool
+    ) -> _FilterOptions:
+        """Parse the target options that follow the filter name."""
+        allowed = self._CPM_FILTER_OPTIONS if is_cpm else self._IP_FILTER_OPTIONS
+        kind = 'CPM' if is_cpm else 'IP'
+        parsed = _FilterOptions()
+        seen: dict[str, str] = {}
+        tokens = iter(options)
+        for opt in tokens:
+            group = allowed.get(opt)
+            if group is None:
+                raise UnsupportedFilterOptionError(
+                    f'unsupported option {opt!r} in {kind} filter {filter_name}'
+                )
+            if group in seen:
+                raise UnsupportedFilterOptionError(
+                    f'more than one {group} option ({seen[group]!r}, {opt!r})'
+                    f' in {kind} filter {filter_name}'
+                )
+            seen[group] = opt
+            if group == 'address family':
+                parsed.address_family = opt
+            elif group == 'default action':
+                parsed.default_action = opt
+            elif opt == 'pktlenfilter':
+                parsed.packet_length = True
+            elif opt == 'syslog-profile':
+                parsed.syslog_profile = self._ParseSyslogProfile(filter_name, next(tokens, None))
+        return parsed
+
+    def _ParseSyslogProfile(self, filter_name: str, value: str | None) -> int:
+        try:
+            profile = int(value)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            profile = None
+        if profile is None or not (
+            self._SYSLOG_PROFILE_MIN <= profile <= self._SYSLOG_PROFILE_MAX
+        ):
+            raise InvalidSyslogProfileError(
+                f'syslog-profile must be an integer from {self._SYSLOG_PROFILE_MIN}'
+                f' to {self._SYSLOG_PROFILE_MAX}, got {value!r} in filter {filter_name}'
+            )
+        return profile
+
     def _TranslateIPFilter(
         self,
         filter_name: str,
-        filter_options: list[str],
+        filter_options: _FilterOptions,
         terms: list[Any],
         comment: str | None = None,
     ) -> None:
-        address_family = 'inet'
-        for af in self._SUPPORTED_AF:
-            if af in filter_options:
-                address_family = af
-                filter_options.remove(af)
-
-        default_action = 'drop'
-        for opt in ('accept', 'drop'):
-            if opt in filter_options:
-                default_action = opt
-                filter_options.remove(opt)
-
-        packet_length = 'pktlenfilter' in filter_options
-        if packet_length:
-            filter_options.remove('pktlenfilter')
-
-        syslog_profile = self._parse_common_options(filter_options)
+        address_family = filter_options.address_family
+        packet_length = filter_options.packet_length
         afs = ['inet', 'inet6'] if address_family == 'mixed' else [address_family]
         for af in afs:
             term_entries = [
                 SROSTerm(
                     self.FixHighPorts(term, af=af),
                     af,
-                    syslog_profile,
+                    filter_options.syslog_profile,
                     mixed=address_family == 'mixed',
                     packet_length=packet_length,
                 ).ConvertToEntries()
@@ -421,29 +492,23 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 filter_dict['nokia-conf:type'] = 'packet-length'
             if comment:
                 filter_dict['nokia-conf:description'] = comment
-            filter_dict['nokia-conf:default-action'] = default_action
+            filter_dict['nokia-conf:default-action'] = filter_options.default_action
             filter_dict['nokia-conf:filter-name'] = filter_name
             filter_dict['nokia-conf:entry'] = entries
             self.ip_filters.append({self._IP_FILTER_KEY[af]: filter_dict})
 
     def _TranslateCPMFilter(
         self,
-        filter_options: list[str],
+        filter_options: _FilterOptions,
         terms: list[Any],
         comment: str | None = None,
     ) -> None:
-        address_family = 'inet'
-        for af in ('inet', 'inet6'):
-            if af in filter_options:
-                address_family = af
-                filter_options.remove(af)
-
-        syslog_profile = self._parse_common_options(filter_options)
+        address_family = filter_options.address_family
         term_entries = [
             SROSTerm(
                 self.FixHighPorts(term, af=address_family),
                 address_family,
-                syslog_profile,
+                filter_options.syslog_profile,
                 cpm_mode=True,
             ).ConvertToEntries()
             for term in terms
@@ -480,19 +545,6 @@ class NokiaSROS(aclgenerator.ACLGenerator):
                 entries.append(entry)
         self.total_rule_count += len(entries)
         return entries
-
-    def _parse_common_options(self, filter_options: list[str]) -> int:
-        """Extract syslog-profile from remaining options."""
-        syslog_profile = 102
-        if 'syslog-profile' in filter_options:
-            idx = filter_options.index('syslog-profile')
-            filter_options.pop(idx)
-            if idx < len(filter_options):
-                try:
-                    syslog_profile = int(filter_options.pop(idx))
-                except (ValueError, IndexError):
-                    pass
-        return syslog_profile
 
     def __str__(self) -> str:
         return json.dumps(self.ip_filters, indent=4) + '\n'

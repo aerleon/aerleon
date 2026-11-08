@@ -76,7 +76,7 @@ header {
 
 HEADER_SYSLOG = """
 header {
-  target:: nokiasros my-filter inet syslog-profile 200
+  target:: nokiasros my-filter inet syslog-profile 150
 }
 """
 
@@ -223,6 +223,13 @@ term term-hop-limit {
 TERM_LOGGING = """
 term term-logging {
   logging:: syslog
+  action:: deny
+}
+"""
+
+TERM_LOGGING_DISABLE = """
+term term-logging-disable {
+  logging:: disable
   action:: deny
 }
 """
@@ -970,10 +977,19 @@ class NokiaSROSTest(absltest.TestCase):
 
     def testLoggingCustomProfile(self):
         entries = self._entries(HEADER_SYSLOG, TERM_LOGGING)
-        self.assertEqual(entries[0]['log'], 200)
+        self.assertEqual(entries[0]['log'], 150)
+
+    def testLoggingCpmCustomProfile(self):
+        header = 'header {\n  target:: nokiasros my-cpm cpm syslog-profile 101\n}\n'
+        entries = self._entries(header, TERM_LOGGING)
+        self.assertEqual(entries[0]['log'], 101)
 
     def testNoLogFieldWithoutLogging(self):
         entries = self._entries(HEADER_INET, TERM_DENY)
+        self.assertNotIn('log', entries[0])
+
+    def testNoLogFieldWithLoggingDisable(self):
+        entries = self._entries(HEADER_INET, TERM_LOGGING_DISABLE)
         self.assertNotIn('log', entries[0])
 
     # -----------------------------------------------------------------------
@@ -1056,6 +1072,47 @@ class NokiaSROSTest(absltest.TestCase):
         acl = policy.ParsePolicy(HEADER_INET + BAD_TERM_UNSUPPORTED_OPTION, self.naming)
         with self.assertRaises(aclgenerator.UnsupportedFilterError):
             _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def _assert_target_raises(self, target, error):
+        header = f'header {{\n  target:: nokiasros {target}\n}}\n'
+        acl = policy.ParsePolicy(header + TERM_DENY, self.naming)
+        with self.assertRaises(error):
+            _ = nokiasros.NokiaSROS(acl, EXP_INFO)
+
+    def testUnsupportedFilterOptionError(self):
+        for target in (
+            'my-filter inet22',
+            'my-filter inet inet6',
+            'my-filter inet inet',
+            'my-filter accept drop',
+            'my-filter pktlenfilter pktlenfilter',
+            'my-filter syslog-profile 150 syslog-profile 160',
+            'my-cpm cpm mixed',
+            'my-cpm cpm accept',
+            'my-cpm cpm pktlenfilter',
+        ):
+            with self.subTest(target=target):
+                self._assert_target_raises(target, nokiasros.UnsupportedFilterOptionError)
+
+    def testInvalidSyslogProfileError(self):
+        for target in (
+            'my-filter inet syslog-profile a',
+            'my-filter inet syslog-profile',
+            'my-filter syslog-profile inet',
+            'my-filter inet syslog-profile 100',
+            'my-filter inet syslog-profile 200',
+            'my-cpm cpm syslog-profile a',
+        ):
+            with self.subTest(target=target):
+                self._assert_target_raises(target, nokiasros.InvalidSyslogProfileError)
+
+    def testFilterNameIsNotParsedAsOption(self):
+        """A filter named like an option keeps its name and the defaults."""
+        output = self._filter(
+            self._make_acl('header {\n  target:: nokiasros accept\n}\n', TERM_DENY)
+        )
+        self.assertEqual(output['nokia-conf:filter-name'], 'accept')
+        self.assertEqual(output['nokia-conf:default-action'], 'drop')
 
 
 if __name__ == '__main__':
