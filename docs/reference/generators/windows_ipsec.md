@@ -9,14 +9,13 @@ Renders `netsh ipsec static add …` commands.
 
 ```yaml
 targets:
-    windows_ipsec: [filter name] {inet|inet6}
+    windows_ipsec: [filter name] {inet}
 ```
 
 | Option | Description | Notes |
 |---|---|---|
 | `filter name` | Name of the IPSec filter list. | |
-| `inet` | IPv4 only. | Default. |
-| `inet6` | IPv6 only. | |
+| `inet` | IPv4 only. |  |
 
 ## Term Format
 

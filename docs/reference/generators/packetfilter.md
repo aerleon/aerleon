@@ -37,7 +37,6 @@ The following tokens are specific to PacketFilter:
 | `source-interface` | Match packets arriving on this interface. | `source-interface: em0` | Renders `in … on em0`. Can't be combined with `destination-interface`. |
 
 * Table names are the address token names, cut to the platform's length limit. Two tokens that shorten to the same name raise `DuplicateShortenedTableNameError`.
-* A term without an `action` uses `block drop`.
 
 ## Actions
 

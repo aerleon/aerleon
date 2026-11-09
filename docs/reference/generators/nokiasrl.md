@@ -9,12 +9,18 @@ targets:
     nokiasrl: [filter name] {inet|inet6|mixed} {stats} {r24.3|r24.3.2}
 ```
 
+### Inherited header options
+
+These header options are included from the _[OpenConfig](openconfig.md#header-format)_ page.
+
+--8<-- "docs/reference/generators/openconfig.md:header-options"
+
+### Nokia SR Linux header options
+
+The following header options are specific to Nokia SR Linux:
+
 | Option | Description | Notes |
 |---|---|---|
-| `filter name` | Name of the ACL filter. | |
-| `inet` | IPv4 only. | Default. |
-| `inet6` | IPv6 only. | |
-| `mixed` | IPv4 and IPv6. | Renders one IPv4 and one IPv6 filter. |
 | `stats` | Collect statistics per entry. | Adds `statistics-per-entry: true`. |
 | `r24.3` | Use the SR Linux 24.3.1 filter syntax. | Renders `acl-filter` with a `type`, instead of `ipv4-filter`/`ipv6-filter`. |
 | `r24.3.2` | Use the syntax for SR Linux 24.3.2 and later. | Same as `r24.3`, plus matches are nested under `ipv4`/`ipv6`/`transport`, and `logging` works with any action. |
@@ -71,7 +77,7 @@ Nokia SR Linux inherits the OpenConfig generator logic to process Aerleon polici
 
 | Area | OpenConfig | Nokia SR Linux |
 |---|---|---|
-| Filter | One `acl-set` per filter, with `type` `ACL_IPV4`, `ACL_IPV6` or `ACL_MIXED` | One `ipv4-filter` and/or `ipv6-filter` per filter (`acl-filter` with `r24.3`); `mixed` renders both |
+| Filter | One `acl-set` per filter, named in `name` and `config.name`, with `type` `ACL_IPV4`, `ACL_IPV6` or `ACL_MIXED` | One `ipv4-filter` and/or `ipv6-filter` per filter (`acl-filter` with `r24.3`), named in `name`; `mixed` renders both |
 | Matches | `ipv4.config.…`, `ipv6.config.…` and `transport.config.…` | `match.…`, e.g. `source-ip.prefix` and `destination-port.value`; with `r24.3.2`, nested under `match.ipv4`, `match.ipv6` or `match.transport` |
 | IPv6 protocol | `ipv6.config.protocol` | `match.next-header` |
 | `icmp-type`, `icmp-code` | Not supported (raises an error) | `match.icmp.type` and `match.icmp.code` (`match.icmp6` for IPv6), one entry per type; see _[ICMP types](#icmp-types)_ |

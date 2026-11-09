@@ -76,7 +76,7 @@ Address families are listed as they are written in the header. The default is in
 | [Speedway](generators/speedway.md) | `speedway` | `iptables-restore` rules | **`inet`**, `inet6` | `.ipt` | Iptables |
 | [SRXlo](generators/srxlo.md) | `srxlo` | Junos filters for SRX loopbacks | as Juniper | `.jsl` | Juniper |
 | [Windows Advanced Firewall](generators/windows_advfirewall.md) | `windows_advfirewall` | `netsh advfirewall` commands | **`inet`**, `inet6` | `.bat` | |
-| [WindowsIPSec](generators/windows_ipsec.md) | `windows_ipsec` | `netsh ipsec` commands. **Not available:** the generator isn't registered. | **`inet`**, `inet6` | `.bat` | |
+| [WindowsIPSec](generators/windows_ipsec.md) | `windows_ipsec` | `netsh ipsec` commands. **Not available:** the generator isn't registered. | **`inet`** | `.bat` | |
 
 ## Sample policy
 

@@ -52,6 +52,12 @@ For an example, see [`tcp-established`](#tcp-established).
 
 Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`. OpenConfig uses the same extension, so rendering one policy for both `openconfig` and `sonic` writes both to the same file.
 
+### ACL set
+
+This is included from the _[OpenConfig](openconfig.md#acl-set)_ page.
+
+--8<-- "docs/reference/generators/openconfig.md:acl-set"
+
 ### Examples
 
 #### Sample policy

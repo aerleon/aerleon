@@ -12,7 +12,7 @@ targets:
 | Option | Description | Notes |
 |---|---|---|
 | `section name` | Name of the firewall section. | Required. |
-| `inet`, `inet6`, `mixed` | Address family to render. | Required. `mixed` renders each term once per family. |
+| `inet`, `inet6`, `mixed` | Address family to render. | Required. `mixed` renders a single term with both families. |
 | `section id` | ID of an existing section to update. | Optional. Without it, a warning is logged that a new section will be created. |
 | `securitygroup [id]` | Apply the rules to this security group (`appliedTo`). | Optional. The ID is required if `securitygroup` is given. |
 

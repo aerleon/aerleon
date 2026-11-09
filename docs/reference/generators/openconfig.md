@@ -13,12 +13,12 @@ targets:
 
 | Option | Description | Notes |
 |---|---|---|
-| `filter name` | Name of the ACL set. | Rendered as `name` and `config.name`. If it's left out, both render as `null`. |
-| `inet` | IPv4 only. | Default. ACL type `ACL_IPV4`. |
-| `inet6` | IPv6 only. | ACL type `ACL_IPV6`. |
-| `mixed` | IPv4 and IPv6. | ACL type `ACL_MIXED`. Each term is rendered once for IPv4 and once for IPv6. A term with no addresses of one family matches everything in that family; see _[Known Issues](#known-issues)_. |
+| `filter name` | Name of the filter. | The first option is always the name. If unset, whichever option comes first takes its place and still takes effect, so a target of just `inet6` renders an IPv6 filter named `inet6`. With no options at all, the name renders as `null`. |
+| `inet` | IPv4 only. | Default. |
+| `inet6` | IPv6 only. | |
+| `mixed` | IPv4 and IPv6. | Each term is rendered once for IPv4 and once for IPv6. A term with no addresses of one family matches everything in that family; see _[Known Issues](#known-issues)_. |
 
-Any other header option is silently ignored.
+Any header option not listed on this page is silently ignored.
 
 <!-- --8<-- [end:header-options] -->
 
@@ -71,6 +71,19 @@ One ACL entry is written for every combination of source address, destination ad
 ## Output
 
 Each policy file renders to one file with the same name and a `.oacl` extension, so `sample.yaml` renders `sample.oacl`.
+
+### ACL set
+
+<!-- --8<-- [start:acl-set] -->
+
+Each filter renders as one `acl-set`:
+
+| Field | Value |
+|---|---|
+| `name`, `config.name` | The filter name. |
+| `type`, `config.type` | `ACL_IPV4` for `inet`, `ACL_IPV6` for `inet6`, `ACL_MIXED` for `mixed`. |
+
+<!-- --8<-- [end:acl-set] -->
 
 ### Examples
 
@@ -155,6 +168,7 @@ filters:
 
 !!! bug "Known issues"
     * **A term with no addresses of the family being rendered matches everything.** In a `mixed` filter, a term with only IPv4 sources also renders an IPv6 entry with no source address, so it matches all IPv6 sources. The same happens in an `inet6` filter. Aerleon should skip the entry instead.
+    * **More than one address family picks one unpredictably.** With `f1 inet inet6`, the family used can change from one run to the next, because the options are checked in an unordered set. Give only one of `inet`, `inet6` or `mixed`.
     * Exclusions crash with mixed-family address tokens (`TypeError: … are not of the same version`), as in _[GCE](gce.md)_.
     * Because `platform-exclude` raises an error, a shared policy that uses `platform-exclude` to skip a term on another vendor can't be rendered for OpenConfig at all.
     * **An exclusion on only one side crashes the generator.** A term with `source-exclude` but no `destination-exclude`, or the reverse, fails with `TypeError: 'NoneType' object is not iterable`. Exclusions only work when both sides have one.
