@@ -14,6 +14,8 @@
 
 """Regression tests for the Nokia EDA Filter generator."""
 
+from unittest import mock
+
 import yaml
 from absl.testing import absltest
 
@@ -286,6 +288,67 @@ term term-tcp-initial {
 }
 """
 
+TERM_TCP_INITIAL_UDP = """
+term term-tcp-initial-udp {
+  protocol:: udp
+  option:: tcp-initial
+  action:: accept
+}
+"""
+
+TERM_NOT_SYN_ACK_TCP_UDP = """
+term term-not-syn-ack-tcp-udp {
+  protocol:: tcp udp
+  option:: not-syn-ack
+  action:: accept
+}
+"""
+
+TERM_TCP_INITIAL_AND_EST = """
+term term-tcp-initial-and-est {
+  protocol:: tcp
+  option:: tcp-initial tcp-established
+  action:: accept
+}
+"""
+
+TERM_TCP_INITIAL_AND_EST_TCP = """
+term term-tcp-initial-and-est-tcp {
+  protocol:: tcp
+  option:: tcp-initial established
+  action:: accept
+}
+"""
+
+TERM_EST_AND_TCP_EST = """
+term term-est-and-tcp-est {
+  protocol:: tcp
+  option:: established tcp-established
+  action:: accept
+}
+"""
+
+TERM_FIRST_FRAGMENT_AND_FRAGMENTS = """
+term term-first-fragment-and-fragments {
+  option:: first-fragment fragments
+  action:: deny
+}
+"""
+
+TERM_ICMP_BOTH_AF = """
+term term-icmp-both-af {
+  protocol:: icmp icmpv6
+  action:: accept
+}
+"""
+
+TERM_TCP_ICMP = """
+term term-tcp-icmp {
+  protocol:: tcp icmp
+  action:: accept
+}
+"""
+
 TERM_FRAGMENTS = """
 term term-fragments {
   option:: fragments
@@ -432,10 +495,47 @@ class NokiaEDATest(absltest.TestCase):
             'uppercase name': (HEADER_UPPERCASE_NAME, nokiaeda.InvalidResourceNameError),
             'bad namespace': (HEADER_BAD_NAMESPACE, nokiaeda.InvalidResourceNameError),
         }
+        for options in (
+            'inet inet6 namespace my-ns',
+            'inet mixed namespace my-ns',
+            'inet inet namespace my-ns',
+            'namespace a namespace b',
+            'stats stats namespace my-ns',
+            'cpm cpm namespace my-ns node leaf1',
+        ):
+            header = f'header {{\n  target:: nokiaeda my-filter {options}\n}}\n'
+            cases[f'repeated: {options}'] = (header, nokiaeda.FilterOptionError)
         for case, (header, error) in cases.items():
             with self.subTest(case):
                 with self.assertRaises(error):
                     self._make_acl(header, TERM_DENY)
+
+    def testRepeatableOptions(self):
+        """node and node-selector may be repeated."""
+        header = (
+            'header {\n  target:: nokiaeda my-cpm cpm namespace my-ns'
+            ' node-selector a b node-selector c d node leaf1 node leaf2\n}\n'
+        )
+        spec = self._resource(self._make_acl(header, TERM_DENY))['spec']
+        self.assertEqual(spec['nodeSelectors'], ['a=b', 'c=d'])
+        self.assertEqual(spec['nodes'], ['leaf1', 'leaf2'])
+
+    def testDuplicateResourceError(self):
+        with self.assertRaises(nokiaeda.DuplicateResourceError):
+            self._make_acl(HEADER_INET + TERM_DENY + HEADER_INET6, TERM_ACCEPT)
+
+    def testSameNameDifferentKindOrNamespace(self):
+        other_ns = 'header {\n  target:: nokiaeda my-filter inet namespace other-ns\n}\n'
+        cpm_same_name = (
+            'header {\n  target:: nokiaeda my-filter cpm namespace my-ns node leaf1\n}\n'
+        )
+        acl = self._make_acl(
+            HEADER_INET + TERM_DENY + other_ns + TERM_DENY + cpm_same_name, TERM_ACCEPT
+        )
+        self.assertEqual(
+            [(r['kind'], r['metadata']['namespace']) for r in self._resources(acl)],
+            [('Filter', 'my-ns'), ('Filter', 'other-ns'), ('ControlPlaneFilter', 'my-ns')],
+        )
 
     def testUnsupportedTokens(self):
         for term in (TERM_REJECT, TERM_HOP_LIMIT):
@@ -454,12 +554,18 @@ class NokiaEDATest(absltest.TestCase):
         v6_dst = ('IPv6', {'action': 'Accept', 'destinationPrefix': '2001:4860:8000::5/128'})
         icmp = ('IPv4', {'action': 'Accept', 'protocolNumber': 1, 'icmpTypeNumber': 8})
         icmpv6 = ('IPv6', {'action': 'Accept', 'protocolNumber': 58, 'icmpTypeNumber': 128})
+        icmp_any = ('IPv4', {'action': 'Accept', 'protocolNumber': 1})
+        icmpv6_any = ('IPv6', {'action': 'Accept', 'protocolNumber': 58})
+        tcp_v4 = ('IPv4', {'action': 'Accept', 'protocolNumber': 6})
+        tcp_v6 = ('IPv6', {'action': 'Accept', 'protocolNumber': 6})
         expected = {
             'inet': {
                 TERM_SADDR: [v4],
                 TERM_SADDR_V4_ONLY: [v4],
                 TERM_DADDR_V6_ONLY: [],
                 TERM_ICMPV6: [],
+                TERM_ICMP_BOTH_AF: [icmp_any],
+                TERM_TCP_ICMP: [tcp_v4, icmp_any],
             },
             'inet6': {
                 TERM_SADDR: [v6],
@@ -467,6 +573,8 @@ class NokiaEDATest(absltest.TestCase):
                 TERM_DADDR_V6_ONLY: [v6_dst],
                 TERM_ICMP: [],
                 TERM_ICMPV6: [icmpv6],
+                TERM_ICMP_BOTH_AF: [icmpv6_any],
+                TERM_TCP_ICMP: [tcp_v6],
             },
             'mixed': {
                 TERM_SADDR: [v4, v6],
@@ -474,6 +582,8 @@ class NokiaEDATest(absltest.TestCase):
                 TERM_DADDR_V6_ONLY: [v6_dst],
                 TERM_ICMP: [icmp, icmp[:1] + ({**icmp[1], 'icmpTypeNumber': 0},)],
                 TERM_ICMPV6: [icmpv6],
+                TERM_ICMP_BOTH_AF: [icmp_any, icmpv6_any],
+                TERM_TCP_ICMP: [tcp_v4, icmp_any, tcp_v6],
             },
         }
         headers = {'inet': HEADER_INET, 'inet6': HEADER_INET6, 'mixed': HEADER_MIXED}
@@ -482,6 +592,16 @@ class NokiaEDATest(absltest.TestCase):
                 with self.subTest(af=af, term=term.split()[1]):
                     entries = self._entries(headers[af], term)
                     self.assertEqual([(e['type'], e['ipEntry']) for e in entries], want)
+
+    @mock.patch.object(nokiaeda.logging, 'warning')
+    def testOtherFamilyProtocolWarning(self, mock_warning):
+        """Dropping the other family's protocols warns, except in mixed filters."""
+        self._entries(HEADER_INET6, TERM_TCP_ICMP)
+        mock_warning.assert_called_once()
+        self.assertIn('icmp', mock_warning.call_args.args[2])
+        mock_warning.reset_mock()
+        self._entries(HEADER_MIXED, TERM_TCP_ICMP)
+        mock_warning.assert_not_called()
 
     def testMixedKeepsTermOrder(self):
         """mixed renders each term for both AFs before the next term."""
@@ -571,9 +691,21 @@ class NokiaEDATest(absltest.TestCase):
         self.assertEqual(entry['destinationPortNumber'], 53)
         self.assertNotIn('tcpFlags', entry)
 
+    def testEstablishedAndTcpEstablished(self):
+        """established and tcp-established on tcp are the same match, not a conflict."""
+        self.assertEqual(
+            self._ip_entries(HEADER_INET, TERM_EST_AND_TCP_EST),
+            [{'action': 'Accept', 'protocolNumber': 6, 'tcpFlags': 'ACK|RST'}],
+        )
+
     def testEstablishedErrors(self):
         cases = {
             TERM_TCP_EST_UDP: nokiaeda.TcpEstablishedWithNonTcpError,
+            TERM_TCP_INITIAL_UDP: nokiaeda.TcpFlagsWithNonTcpError,
+            TERM_NOT_SYN_ACK_TCP_UDP: nokiaeda.TcpFlagsWithNonTcpError,
+            TERM_TCP_INITIAL_AND_EST: nokiaeda.ConflictingOptionsError,
+            TERM_TCP_INITIAL_AND_EST_TCP: nokiaeda.ConflictingOptionsError,
+            TERM_FIRST_FRAGMENT_AND_FRAGMENTS: nokiaeda.ConflictingOptionsError,
             TERM_EST_NO_PROTO: nokiaeda.EstablishedWithNoProtocolError,
             TERM_EST_ICMP: nokiaeda.EstablishedWithNonTcpUdpError,
         }

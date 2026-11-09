@@ -36,7 +36,9 @@ Filter options:
                                accept "=" in a target.
   node <toponode>            - TopoNode name (ControlPlaneFilter only, repeatable)
 
-A ControlPlaneFilter needs at least one node-selector or node.
+A ControlPlaneFilter needs at least one node-selector or node. Every option
+other than node-selector and node may be given at most once, and the resulting
+resources must have unique names per kind and namespace.
 
 EDA numbers the entries itself from their order in the list, so entries carry
 no sequence number. The entry description holds the term name; term comments
@@ -83,7 +85,19 @@ class UnknownProtocolError(Error):
     pass
 
 
-class TcpEstablishedWithNonTcpError(Error):
+class DuplicateResourceError(Error):
+    pass
+
+
+class TcpFlagsWithNonTcpError(Error):
+    pass
+
+
+class TcpEstablishedWithNonTcpError(TcpFlagsWithNonTcpError):
+    pass
+
+
+class ConflictingOptionsError(Error):
     pass
 
 
@@ -100,6 +114,7 @@ class EDATerm(aclgenerator.Term):
 
     ACTION_MAP = {'accept': 'Accept', 'deny': 'Drop'}
     ENTRY_TYPE = {'inet': 'IPv4', 'inet6': 'IPv6'}
+    TCP_FLAGS = {'tcp-initial': 'SYN', 'not-syn-ack': '!(SYN&ACK)', 'tcp-established': 'ACK|RST'}
 
     def __init__(self, term: PolicyTerm, inet_version: str = 'inet', mixed: bool = False) -> None:
         super().__init__(term)
@@ -111,8 +126,12 @@ class EDATerm(aclgenerator.Term):
         """Explode this term into a list of EDA filter entries."""
         term_af = self.AF_MAP[self.inet_version]
 
+        # Keep only this family's protocols: a term for icmp and icmpv6 renders
+        # each in its own family, and tcp next to icmp still renders in inet6.
         protos_of_other_af = {'icmpv6', 'icmp6'} if self.inet_version == 'inet' else {'icmp'}
-        if protos_of_other_af & set(self.term.protocol):
+        other_protos = [p for p in self.term.protocol if p in protos_of_other_af]
+        own_protos = [p for p in self.term.protocol if p not in protos_of_other_af]
+        if other_protos and not own_protos:
             if not self.mixed:
                 logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
@@ -122,6 +141,13 @@ class EDATerm(aclgenerator.Term):
                     )
                 )
             return []
+        if other_protos and not self.mixed:
+            logging.warning(
+                'Term %s: protocol(s) %s not rendered, as the ACL is of %s address family.',
+                self.term.name,
+                ', '.join(other_protos),
+                self.inet_version,
+            )
 
         saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
         if self.term.flattened_saddr and not saddrs:
@@ -135,7 +161,7 @@ class EDATerm(aclgenerator.Term):
         daddrs = daddrs or ['any']
         sports = self.term.source_port or [(0, 0)]
         dports = self.term.destination_port or [(0, 0)]
-        protos: list[Any] = self.term.protocol or [None]
+        protos: list[Any] = own_protos or [None]
 
         icmp_types: list[int | None] = [None]
         if self.term.icmp_type:
@@ -146,17 +172,38 @@ class EDATerm(aclgenerator.Term):
             icmp_types = resolved  # type: ignore[assignment]
 
         opts = [str(x) for x in self.term.option]
+        flag_opts = [o for o in self.TCP_FLAGS if o in opts]
+        if (
+            'established' in opts
+            and self.term.protocol == ['tcp']
+            and 'tcp-established' not in flag_opts
+        ):
+            flag_opts.append('tcp-established')
+        if len(flag_opts) > 1:
+            raise ConflictingOptionsError(
+                f'options {", ".join(flag_opts)} match different TCP flags in term'
+                f' {self.term.name}; use one per term'
+            )
+        if 'first-fragment' in opts and ('is-fragment' in opts or 'fragments' in opts):
+            raise ConflictingOptionsError(
+                f'first-fragment conflicts with is-fragment/fragments in term {self.term.name}'
+            )
+
         tcp_flags = None
-        if 'tcp-initial' in opts:
-            tcp_flags = 'SYN'
-        if 'not-syn-ack' in opts:
-            tcp_flags = '!(SYN&ACK)'
-        if 'tcp-established' in opts or ('established' in opts and self.term.protocol == ['tcp']):
+        if flag_opts:
+            flag_opt = flag_opts[0]
+            # The flags force the protocol to tcp, so any other protocol would be
+            # silently replaced.
             if self.term.protocol and self.term.protocol != ['tcp']:
-                raise TcpEstablishedWithNonTcpError(
-                    f'tcp-established can only be used with tcp protocol in term {self.term.name}'
+                error = (
+                    TcpEstablishedWithNonTcpError
+                    if flag_opt == 'tcp-established'
+                    else TcpFlagsWithNonTcpError
                 )
-            tcp_flags = 'ACK|RST'
+                raise error(
+                    f'{flag_opt} can only be used with tcp protocol in term {self.term.name}'
+                )
+            tcp_flags = self.TCP_FLAGS[flag_opt]
         elif 'established' in opts:
             if not self.term.protocol:
                 raise EstablishedWithNoProtocolError(
@@ -289,13 +336,24 @@ class NokiaEDA(aclgenerator.ACLGenerator):
         # Each resource is (resource without entries, [(term comments, term entries)]).
         self.resources: list[tuple[dict[str, Any], list[tuple[list[str], list[dict]]]]] = []
 
+        seen: set[tuple[str, str, str]] = set()
         for header, terms in pol.filters:
             # Work on a copy: FilterOptions returns the header's own list.
             filter_options = list(header.FilterOptions(self._PLATFORM))
             filter_name = filter_options.pop(0) if filter_options else ''
-            self.resources.append(
-                self._TranslateFilter(filter_name, filter_options, terms, header.comment)
+            resource, term_blocks = self._TranslateFilter(
+                filter_name, filter_options, terms, header.comment
             )
+            # EDA applies with replace semantics: a second resource with the same
+            # identity would silently overwrite the first.
+            meta = resource['metadata']
+            key = (resource['kind'], meta['namespace'], meta['name'])
+            if key in seen:
+                raise DuplicateResourceError(
+                    f'{key[0]} {key[2]} in namespace {key[1]} is defined more than once'
+                )
+            seen.add(key)
+            self.resources.append((resource, term_blocks))
 
     def _TranslateFilter(
         self,
@@ -315,8 +373,17 @@ class NokiaEDA(aclgenerator.ACLGenerator):
         is_cpm = False
         namespace = None
         spec_lists: dict[str, list[str]] = {}
+        seen: dict[str, str] = {}
         options = iter(filter_options)
         for opt in options:
+            if opt not in self._REPEATABLE_OPTIONS:
+                group = 'address family' if opt in self._SUPPORTED_AF else opt
+                if group in seen:
+                    raise FilterOptionError(
+                        f'more than one {group} option ("{seen[group]}", "{opt}")'
+                        f' in filter {filter_name}'
+                    )
+                seen[group] = opt
             if opt in self._SUPPORTED_AF:
                 address_family = opt
             elif opt == 'stats':
