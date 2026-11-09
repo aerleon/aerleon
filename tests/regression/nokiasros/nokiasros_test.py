@@ -577,9 +577,13 @@ class NokiaSROSTest(absltest.TestCase):
             'icmp': 'protocol:: icmp\n  icmp-type:: echo-request',
             'icmpv6': 'protocol:: icmpv6\n  icmp-type:: echo-request',
             'icmp-src-both': 'protocol:: icmp\n  source-address:: CORP_EXTERNAL',
+            'icmp-both-af': 'protocol:: icmp icmpv6',
+            'tcp-icmp': 'protocol:: tcp icmp',
         }
         v4_icmp = {'protocol': 'icmp', 'icmp': {'type': 8}}
         v6_icmp = {'next-header': 'ipv6-icmp', 'icmp': {'type': 128}}
+        v4_tcp, v4_icmp_any = {'protocol': 'tcp'}, {'protocol': 'icmp'}
+        v6_tcp, v6_icmp_any = {'next-header': 'tcp'}, {'next-header': 'ipv6-icmp'}
         expected = {
             'inet': {
                 'src-v4': {'ip-filter': [{'src-ip': v4}]},
@@ -591,6 +595,8 @@ class NokiaSROSTest(absltest.TestCase):
                 'icmp': {'ip-filter': [v4_icmp]},
                 'icmpv6': {'ip-filter': []},
                 'icmp-src-both': {'ip-filter': [{'src-ip': v4, 'protocol': 'icmp'}]},
+                'icmp-both-af': {'ip-filter': [v4_icmp_any]},
+                'tcp-icmp': {'ip-filter': [v4_tcp, v4_icmp_any]},
             },
             'inet6': {
                 'src-v4': {'ipv6-filter': []},
@@ -602,6 +608,8 @@ class NokiaSROSTest(absltest.TestCase):
                 'icmp': {'ipv6-filter': []},
                 'icmpv6': {'ipv6-filter': [v6_icmp]},
                 'icmp-src-both': {'ipv6-filter': []},
+                'icmp-both-af': {'ipv6-filter': [v6_icmp_any]},
+                'tcp-icmp': {'ipv6-filter': [v6_tcp]},
             },
             'mixed': {
                 'src-v4': {'ip-filter': [{'src-ip': v4}], 'ipv6-filter': []},
@@ -616,6 +624,8 @@ class NokiaSROSTest(absltest.TestCase):
                     'ip-filter': [{'src-ip': v4, 'protocol': 'icmp'}],
                     'ipv6-filter': [],
                 },
+                'icmp-both-af': {'ip-filter': [v4_icmp_any], 'ipv6-filter': [v6_icmp_any]},
+                'tcp-icmp': {'ip-filter': [v4_tcp, v4_icmp_any], 'ipv6-filter': [v6_tcp]},
             },
         }
         for af, cases in expected.items():
@@ -630,6 +640,17 @@ class NokiaSROSTest(absltest.TestCase):
                         for key, body in f.items()
                     }
                     self.assertEqual(got, want)
+
+    @mock.patch.object(nokiasros.logging, 'warning')
+    def testOtherFamilyProtocolWarning(self, mock_warning):
+        """Dropping the other family's protocols warns, except in mixed filters."""
+        term = 'term tcp-icmp {\n  protocol:: tcp icmp\n  action:: accept\n}\n'
+        self._make_acl(HEADER_INET6, term)
+        mock_warning.assert_called_once()
+        self.assertIn('icmp', mock_warning.call_args.args[2])
+        mock_warning.reset_mock()
+        self._make_acl(HEADER_MIXED, term)
+        mock_warning.assert_not_called()
 
     @mock.patch.object(nokiasros.logging, 'warning')
     def testNoAFWarningOnlyOutsideMixed(self, mock_warning):

@@ -135,8 +135,12 @@ class SROSTerm(aclgenerator.Term):
         action_key = self.ACTION_MAP[self.term.action[0]]
         term_af = self.AF_MAP[self.inet_version]
 
+        # Keep only this family's protocols: a term for icmp and icmpv6 renders
+        # each in its own family, and tcp next to icmp still renders in inet6.
         protos_of_other_af = {'icmpv6', 'icmp6'} if self.inet_version == 'inet' else {'icmp'}
-        if protos_of_other_af & set(self.term.protocol):
+        other_protos = [p for p in self.term.protocol if p in protos_of_other_af]
+        own_protos = [p for p in self.term.protocol if p not in protos_of_other_af]
+        if other_protos and not own_protos:
             if not self.mixed:
                 logging.warning(
                     self.NO_AF_LOG_PROTO.substitute(
@@ -146,6 +150,13 @@ class SROSTerm(aclgenerator.Term):
                     )
                 )
             return []
+        if other_protos and not self.mixed:
+            logging.warning(
+                'Term %s: protocol(s) %s not rendered, as the ACL is of %s address family.',
+                self.term.name,
+                ', '.join(other_protos),
+                self.inet_version,
+            )
 
         # IP options only exist in the IPv4 header. Skip the term rather than drop
         # the match, which would widen it to every packet.
@@ -185,7 +196,7 @@ class SROSTerm(aclgenerator.Term):
         daddrs = daddrs or ['any']
         sports = self.term.source_port or [(0, 0)]
         dports = self.term.destination_port or [(0, 0)]
-        protos = self.term.protocol or [None]
+        protos = own_protos or [None]
 
         icmp_types: list[int | None] = [None]
         if self.term.icmp_type:
