@@ -82,49 +82,49 @@ Each policy file renders to one file with the same name and a `.prxmxfw` extensi
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        proxmox: vm IN
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            proxmox: vm IN
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.prxmxfw"
-[OPTIONS]
-enable: 1
-[RULES]
-IN ACCEPT -proto tcp -source 10.0.0.0/24,192.168.10.0/24 -dport 22 # Allow SSH from the management network.
-IN DROP
-```
+    ```text title="sample.prxmxfw"
+    [OPTIONS]
+    enable: 1
+    [RULES]
+    IN ACCEPT -proto tcp -source 10.0.0.0/24,192.168.10.0/24 -dport 22 # Allow SSH from the management network.
+    IN DROP
+    ```
 
-#### Interface and logging
+=== "Interface and logging"
 
-The sample `allow-ssh` term with `source-interface` and `logging`. It uses the sample definitions.
+    The sample `allow-ssh` term with `source-interface` and `logging`. It uses the sample definitions.
 
-```yaml title="interface.yaml"
-filters:
-  - header:
-      targets:
-        proxmox: vm IN
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT
-        protocol: tcp
-        destination-port: SSH
-        source-interface: net0
-        logging: true
-        action: accept
-```
+    ```yaml title="interface.yaml"
+    filters:
+      - header:
+          targets:
+            proxmox: vm IN
+        terms:
+          - name: allow-ssh
+            comment: "Allow SSH from the management network."
+            source-address: MGMT
+            protocol: tcp
+            destination-port: SSH
+            source-interface: net0
+            logging: true
+            action: accept
+    ```
 
-```text title="interface.prxmxfw"
-[OPTIONS]
-enable: 1
-[RULES]
-IN ACCEPT -proto tcp -iface net0 -source 10.0.0.0/24,192.168.10.0/24 -dport 22 -log warning # Allow SSH from the management network.
-```
+    ```text title="interface.prxmxfw"
+    [OPTIONS]
+    enable: 1
+    [RULES]
+    IN ACCEPT -proto tcp -iface net0 -source 10.0.0.0/24,192.168.10.0/24 -dport 22 -log warning # Allow SSH from the management network.
+    ```

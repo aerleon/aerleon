@@ -45,38 +45,38 @@ These tokens are included from the _[Common](common.md)_ page.
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by calling `WindowsIPSec` directly:
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by calling `WindowsIPSec` directly:
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        windows_ipsec: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            windows_ipsec: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.bat"
-: Windows_ipsec edge-inbound Policy
-netsh ipsec static add policy name=edge-inbound-policy assign=yes
+    ```text title="sample.bat"
+    : Windows_ipsec edge-inbound Policy
+    netsh ipsec static add policy name=edge-inbound-policy assign=yes
 
-: $Id:$
-: $Date:$
-: $Revision:$
-: inet
-netsh ipsec static add filterlist name=e_allow-ssh-list 
-netsh ipsec static add filteraction name=e_allow-ssh-action action=permit
-netsh ipsec static add filter filterlist=e_allow-ssh-list mirrored=yes srcaddr=10.0.0.0 srcmask=24 dstaddr=any  dstport=22 protocol=tcp
-netsh ipsec static add filter filterlist=e_allow-ssh-list mirrored=yes srcaddr=192.168.10.0 srcmask=24 dstaddr=any  dstport=22 protocol=tcp
-netsh ipsec static add filterlist name=e_allow-ssh-list 
-netsh ipsec static add filteraction name=e_allow-ssh-action action=permit
-netsh ipsec static add rule name=e_allow-ssh-rule policy=edge-inbound filterlist=e_allow-ssh-list filteraction=e_allow-ssh-action 
+    : $Id:$
+    : $Date:$
+    : $Revision:$
+    : inet
+    netsh ipsec static add filterlist name=e_allow-ssh-list 
+    netsh ipsec static add filteraction name=e_allow-ssh-action action=permit
+    netsh ipsec static add filter filterlist=e_allow-ssh-list mirrored=yes srcaddr=10.0.0.0 srcmask=24 dstaddr=any  dstport=22 protocol=tcp
+    netsh ipsec static add filter filterlist=e_allow-ssh-list mirrored=yes srcaddr=192.168.10.0 srcmask=24 dstaddr=any  dstport=22 protocol=tcp
+    netsh ipsec static add filterlist name=e_allow-ssh-list 
+    netsh ipsec static add filteraction name=e_allow-ssh-action action=permit
+    netsh ipsec static add rule name=e_allow-ssh-rule policy=edge-inbound filterlist=e_allow-ssh-list filteraction=e_allow-ssh-action 
 
-netsh ipsec static add filterlist name=e_default-deny-list 
-netsh ipsec static add filteraction name=e_default-deny-action action=block
-netsh ipsec static add filter filterlist=e_default-deny-list mirrored=yes srcaddr=any  dstaddr=any  protocol=any
-netsh ipsec static add filterlist name=e_default-deny-list 
-netsh ipsec static add filteraction name=e_default-deny-action action=block
-netsh ipsec static add rule name=e_default-deny-rule policy=edge-inbound filterlist=e_default-deny-list filteraction=e_default-deny-action
-```
+    netsh ipsec static add filterlist name=e_default-deny-list 
+    netsh ipsec static add filteraction name=e_default-deny-action action=block
+    netsh ipsec static add filter filterlist=e_default-deny-list mirrored=yes srcaddr=any  dstaddr=any  protocol=any
+    netsh ipsec static add filterlist name=e_default-deny-list 
+    netsh ipsec static add filteraction name=e_default-deny-action action=block
+    netsh ipsec static add rule name=e_default-deny-rule policy=edge-inbound filterlist=e_default-deny-list filteraction=e_default-deny-action
+    ```

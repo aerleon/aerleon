@@ -51,7 +51,7 @@ The following tokens are specific to Cisco:
 
 <!-- --8<-- [end:term-format] -->
 
-For an example, see _[Cisco tokens in a mixed filter](#cisco-tokens-in-a-mixed-filter)_.
+For an example, see _[Cisco tokens in a mixed filter](#examples-cisco-tokens-in-a-mixed-filter)_.
 
 ## Actions
 
@@ -86,88 +86,88 @@ Each policy file renders to one file with the same name and a `.acl` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        cisco: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            cisco: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.acl"
-! $Id:$
-! $Date:$
-! $Revision:$
-no ip access-list extended edge-inbound
-ip access-list extended edge-inbound
- remark $Id:$
-
-
- remark allow-ssh
- remark Allow SSH from the management network.
- permit tcp 10.0.0.0 0.0.0.255 any eq 22
- permit tcp 192.168.10.0 0.0.0.255 any eq 22
+    ```text title="sample.acl"
+    ! $Id:$
+    ! $Date:$
+    ! $Revision:$
+    no ip access-list extended edge-inbound
+    ip access-list extended edge-inbound
+     remark $Id:$
 
 
- remark default-deny
- deny ip any any
-
-exit
-```
-
-#### Cisco tokens in a mixed filter
-
-A term that uses `restrict-address-family`, `logging` and `owner`. Because of `restrict-address-family: inet`, the term is only rendered in the IPv4 access list, although `MGMT_NETS` also holds an IPv6 range. It uses `SSH` from the sample definitions.
-
-```yaml title="tokens.yaml"
-filters:
-  - header:
-      targets:
-        cisco: edge-inbound mixed
-    terms:
-      - name: permit-mgmt-v4-only
-        source-address: MGMT_NETS
-        restrict-address-family: inet
-        protocol: tcp
-        destination-port: SSH
-        logging: true
-        owner: netops@example.com
-        action: accept
-```
-
-```yaml title="definitions.yaml"
-networks:
-  MGMT_NETS:
-    values:
-      - address: 10.0.0.0/24
-      - address: 2001:db8:10::/64
-```
-
-```text title="tokens.acl"
-! $Id:$
-! $Date:$
-! $Revision:$
-no ip access-list extended edge-inbound
-ip access-list extended edge-inbound
- remark $Id:$
+     remark allow-ssh
+     remark Allow SSH from the management network.
+     permit tcp 10.0.0.0 0.0.0.255 any eq 22
+     permit tcp 192.168.10.0 0.0.0.255 any eq 22
 
 
- remark permit-mgmt-v4-only
- remark Owner: netops@example.com
- permit tcp 10.0.0.0 0.0.0.255 any eq 22 log
+     remark default-deny
+     deny ip any any
 
-exit
+    exit
+    ```
 
-no ipv6 access-list ipv6-edge-inbound
-ipv6 access-list ipv6-edge-inbound
- remark $Id:$
+=== "Cisco tokens in a mixed filter"
 
-exit
-```
+    A term that uses `restrict-address-family`, `logging` and `owner`. Because of `restrict-address-family: inet`, the term is only rendered in the IPv4 access list, although `MGMT_NETS` also holds an IPv6 range. It uses `SSH` from the sample definitions.
+
+    ```yaml title="tokens.yaml"
+    filters:
+      - header:
+          targets:
+            cisco: edge-inbound mixed
+        terms:
+          - name: permit-mgmt-v4-only
+            source-address: MGMT_NETS
+            restrict-address-family: inet
+            protocol: tcp
+            destination-port: SSH
+            logging: true
+            owner: netops@example.com
+            action: accept
+    ```
+
+    ```yaml title="definitions.yaml"
+    networks:
+      MGMT_NETS:
+        values:
+          - address: 10.0.0.0/24
+          - address: 2001:db8:10::/64
+    ```
+
+    ```text title="tokens.acl"
+    ! $Id:$
+    ! $Date:$
+    ! $Revision:$
+    no ip access-list extended edge-inbound
+    ip access-list extended edge-inbound
+     remark $Id:$
+
+
+     remark permit-mgmt-v4-only
+     remark Owner: netops@example.com
+     permit tcp 10.0.0.0 0.0.0.255 any eq 22 log
+
+    exit
+
+    no ipv6 access-list ipv6-edge-inbound
+    ipv6 access-list ipv6-edge-inbound
+     remark $Id:$
+
+    exit
+    ```
 
 ## Known Issues
 

@@ -56,7 +56,7 @@ The following tokens are specific to JuniperSRX:
 | `true` | `log { session-close; }` | `log { session-init; }` |
 | `log-both` | `log { session-init; session-close; }` | `log { session-init; session-close; }` |
 
-For an example, see _[Global policy](#global-policy)_.
+For an example, see _[Global policy](#examples-global-policy)_.
 
 ## Actions
 
@@ -86,157 +86,157 @@ Each policy file renders to one file with the same name and a `.srx` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        srx: from-zone trust to-zone untrust
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            srx: from-zone trust to-zone untrust
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.srx"
-security {
-    replace: address-book {
-        global {
-                address MGMT_0 10.0.0.0/24;
-                address MGMT_1 192.168.10.0/24;
-                address-set MGMT {
-                    address MGMT_0;
-                    address MGMT_1;
-                }
+    ```text title="sample.srx"
+    security {
+        replace: address-book {
+            global {
+                    address MGMT_0 10.0.0.0/24;
+                    address MGMT_1 192.168.10.0/24;
+                    address-set MGMT {
+                        address MGMT_0;
+                        address MGMT_1;
+                    }
+            }
         }
-    }
-    /*
-    $Id:$
-    $Date:$
-    $Revision:$
-    */
-    replace: policies {
         /*
+        $Id:$
+        $Date:$
+        $Revision:$
         */
-        from-zone trust to-zone untrust {
+        replace: policies {
             /*
-            Allow SSH from the management network.
             */
-            policy allow-ssh {
-                match {
-                    source-address [ MGMT ];
-                    destination-address any;
-                    application allow-ssh-app;
+            from-zone trust to-zone untrust {
+                /*
+                Allow SSH from the management network.
+                */
+                policy allow-ssh {
+                    match {
+                        source-address [ MGMT ];
+                        destination-address any;
+                        application allow-ssh-app;
+                    }
+                    then {
+                        permit;
+                    }
                 }
-                then {
-                    permit;
-                }
-            }
-            policy default-deny {
-                match {
-                    source-address any;
-                    destination-address any;
-                    application any;
-                }
-                then {
-                    deny;
-                }
-            }
-        }
-    }
-}
-replace: applications {
-    application allow-ssh-app1 {
-        term t1 protocol tcp destination-port 22;
-    }
-    application-set allow-ssh-app {
-        application allow-ssh-app1;
-    }
-}
-```
-
-#### Global policy
-
-A global policy (`from-zone all to-zone all`) that uses `source-zone`, `destination-zone` and `logging: log-both`.
-
-```yaml title="global.yaml"
-filters:
-  - header:
-      targets:
-        srx: from-zone all to-zone all
-    terms:
-      - name: allow-web-to-dmz
-        source-zone: trust
-        destination-zone: dmz
-        destination-address: WEB_SERVERS
-        destination-port: HTTP HTTPS
-        protocol: tcp
-        logging: log-both
-        action: accept
-```
-
-```yaml title="definitions.yaml"
-networks:
-  WEB_SERVERS:
-    values:
-      - address: 203.0.113.10/32
-services:
-  HTTP:
-    - port: 80
-      protocol: tcp
-  HTTPS:
-    - port: 443
-      protocol: tcp
-```
-
-```text title="global.srx"
-security {
-    replace: address-book {
-        global {
-                address WEB_SERVERS_0 203.0.113.10/32;
-                address-set WEB_SERVERS {
-                    address WEB_SERVERS_0;
-                }
-        }
-    }
-    /*
-    $Id:$
-    $Date:$
-    $Revision:$
-    */
-    replace: policies {
-        /*
-        */
-        global {
-            policy allow-web-to-dmz {
-                match {
-                    source-address any;
-                    destination-address [ WEB_SERVERS ];
-                    application allow-web-to-dmz-app;
-                    from-zone [ trust ];
-                    to-zone [ dmz ];
-                }
-                then {
-                    permit;
-                    log {
-                        session-init;
-                        session-close;
+                policy default-deny {
+                    match {
+                        source-address any;
+                        destination-address any;
+                        application any;
+                    }
+                    then {
+                        deny;
                     }
                 }
             }
         }
     }
-}
-replace: applications {
-    application allow-web-to-dmz-app1 {
-        term t1 protocol tcp destination-port 80;
+    replace: applications {
+        application allow-ssh-app1 {
+            term t1 protocol tcp destination-port 22;
+        }
+        application-set allow-ssh-app {
+            application allow-ssh-app1;
+        }
     }
-    application allow-web-to-dmz-app2 {
-        term t2 protocol tcp destination-port 443;
+    ```
+
+=== "Global policy"
+
+    A global policy (`from-zone all to-zone all`) that uses `source-zone`, `destination-zone` and `logging: log-both`.
+
+    ```yaml title="global.yaml"
+    filters:
+      - header:
+          targets:
+            srx: from-zone all to-zone all
+        terms:
+          - name: allow-web-to-dmz
+            source-zone: trust
+            destination-zone: dmz
+            destination-address: WEB_SERVERS
+            destination-port: HTTP HTTPS
+            protocol: tcp
+            logging: log-both
+            action: accept
+    ```
+
+    ```yaml title="definitions.yaml"
+    networks:
+      WEB_SERVERS:
+        values:
+          - address: 203.0.113.10/32
+    services:
+      HTTP:
+        - port: 80
+          protocol: tcp
+      HTTPS:
+        - port: 443
+          protocol: tcp
+    ```
+
+    ```text title="global.srx"
+    security {
+        replace: address-book {
+            global {
+                    address WEB_SERVERS_0 203.0.113.10/32;
+                    address-set WEB_SERVERS {
+                        address WEB_SERVERS_0;
+                    }
+            }
+        }
+        /*
+        $Id:$
+        $Date:$
+        $Revision:$
+        */
+        replace: policies {
+            /*
+            */
+            global {
+                policy allow-web-to-dmz {
+                    match {
+                        source-address any;
+                        destination-address [ WEB_SERVERS ];
+                        application allow-web-to-dmz-app;
+                        from-zone [ trust ];
+                        to-zone [ dmz ];
+                    }
+                    then {
+                        permit;
+                        log {
+                            session-init;
+                            session-close;
+                        }
+                    }
+                }
+            }
+        }
     }
-    application-set allow-web-to-dmz-app {
-        application allow-web-to-dmz-app1;
-        application allow-web-to-dmz-app2;
+    replace: applications {
+        application allow-web-to-dmz-app1 {
+            term t1 protocol tcp destination-port 80;
+        }
+        application allow-web-to-dmz-app2 {
+            term t2 protocol tcp destination-port 443;
+        }
+        application-set allow-web-to-dmz-app {
+            application allow-web-to-dmz-app1;
+            application allow-web-to-dmz-app2;
+        }
     }
-}
-```
+    ```

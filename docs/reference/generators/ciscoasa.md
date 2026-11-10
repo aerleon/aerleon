@@ -54,31 +54,31 @@ Each policy file renders to one file with the same name and a `.asa` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        ciscoasa: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            ciscoasa: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.asa"
-clear configure access-list edge-inbound
-access-list edge-inbound remark $Id:$
-access-list edge-inbound remark $Date:$
-access-list edge-inbound remark $Revision:$
-
-
-access-list edge-inbound remark allow-ssh
-access-list edge-inbound remark Allow SSH from the management network.
-access-list edge-inbound extended permit tcp 10.0.0.0 255.255.255.0 any eq ssh
-access-list edge-inbound extended permit tcp 192.168.10.0 255.255.255.0 any eq ssh
+    ```text title="sample.asa"
+    clear configure access-list edge-inbound
+    access-list edge-inbound remark $Id:$
+    access-list edge-inbound remark $Date:$
+    access-list edge-inbound remark $Revision:$
 
 
-access-list edge-inbound remark default-deny
-access-list edge-inbound extended deny ip any any
-```
+    access-list edge-inbound remark allow-ssh
+    access-list edge-inbound remark Allow SSH from the management network.
+    access-list edge-inbound extended permit tcp 10.0.0.0 255.255.255.0 any eq ssh
+    access-list edge-inbound extended permit tcp 192.168.10.0 255.255.255.0 any eq ssh
+
+
+    access-list edge-inbound remark default-deny
+    access-list edge-inbound extended deny ip any any
+    ```

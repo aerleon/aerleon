@@ -65,53 +65,53 @@ Each policy file renders to one file with the same name and a `.nsx` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        nsxv: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            nsxv: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```xml title="sample.nsx"
-<?xml version="1.0" ?>
-<!--
-$Id:$
-$Date:$
-$Revision:$
--->
-<section name="edge-inbound">
-  <rule logged="false">
-    <name>allow-ssh</name>
-    <action>allow</action>
-    <sources excluded="false">
-      <source>
-        <type>Ipv4Address</type>
-        <value>10.0.0.0/24</value>
-      </source>
-      <source>
-        <type>Ipv4Address</type>
-        <value>192.168.10.0/24</value>
-      </source>
-    </sources>
-    <services>
-      <service>
-        <protocol>6</protocol>
-        <destinationPort>22</destinationPort>
-      </service>
-    </services>
-    <notes>Allow SSH from the management network.</notes>
-  </rule>
-  <rule logged="false">
-    <name>default-deny</name>
-    <action>deny</action>
-  </rule>
-</section>
-```
+    ```xml title="sample.nsx"
+    <?xml version="1.0" ?>
+    <!--
+    $Id:$
+    $Date:$
+    $Revision:$
+    -->
+    <section name="edge-inbound">
+      <rule logged="false">
+        <name>allow-ssh</name>
+        <action>allow</action>
+        <sources excluded="false">
+          <source>
+            <type>Ipv4Address</type>
+            <value>10.0.0.0/24</value>
+          </source>
+          <source>
+            <type>Ipv4Address</type>
+            <value>192.168.10.0/24</value>
+          </source>
+        </sources>
+        <services>
+          <service>
+            <protocol>6</protocol>
+            <destinationPort>22</destinationPort>
+          </service>
+        </services>
+        <notes>Allow SSH from the management network.</notes>
+      </rule>
+      <rule logged="false">
+        <name>default-deny</name>
+        <action>deny</action>
+      </rule>
+    </section>
+    ```
 
 ## Known Issues
 

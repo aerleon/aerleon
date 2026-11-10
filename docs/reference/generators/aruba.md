@@ -60,33 +60,33 @@ Each policy file renders to one file with the same name and a `.aacl` extension,
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        aruba: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            aruba: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.aacl"
-# $Id:$
-# $Date:$
-# $Revision:$
-netdestination allow-ssh_src
-  network 10.0.0.0 255.255.255.0
-  network 192.168.10.0 255.255.255.0
-!
+    ```text title="sample.aacl"
+    # $Id:$
+    # $Date:$
+    # $Revision:$
+    netdestination allow-ssh_src
+      network 10.0.0.0 255.255.255.0
+      network 192.168.10.0 255.255.255.0
+    !
 
-ip access-list session edge-inbound
-  # Allow SSH from the management network.
-  alias allow-ssh_src any tcp 22 permit
-  any any any deny
-!
-```
+    ip access-list session edge-inbound
+      # Allow SSH from the management network.
+      alias allow-ssh_src any tcp 22 permit
+      any any any deny
+    !
+    ```
 
 ## Known Issues
 

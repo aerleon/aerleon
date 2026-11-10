@@ -71,66 +71,72 @@ These generators render for platforms that track sessions, so reply traffic is a
 
 A term that uses most of the common keys, rendered by the _[Juniper](juniper.md)_ generator. Because of `platform-exclude: gce`, the term would be left out of a `gce` filter.
 
-```yaml title="common.yaml"
-filters:
-  - header:
-      targets:
-        juniper: edge-inbound inet
-    terms:
-      - name: accept-ssh
-        comment: "Allow SSH from bastions to internal hosts."
-        source-address: BASTIONS
-        destination-address: INTERNAL
-        destination-exclude: MAIL_SERVERS
-        destination-port: SSH
-        protocol: tcp
-        expiration: 2030-12-31
-        platform-exclude: gce
-        action: accept
-```
+=== "Sample policy"
 
-```yaml title="definitions.yaml"
-networks:
-  BASTIONS:
-    values:
-      - address: 10.0.0.10/32
-  INTERNAL:
-    values:
-      - address: 10.1.0.0/16
-  MAIL_SERVERS:
-    values:
-      - address: 10.1.2.25/32
-```
+    ```yaml title="common.yaml"
+    filters:
+      - header:
+          targets:
+            juniper: edge-inbound inet
+        terms:
+          - name: accept-ssh
+            comment: "Allow SSH from bastions to internal hosts."
+            source-address: BASTIONS
+            destination-address: INTERNAL
+            destination-exclude: MAIL_SERVERS
+            destination-port: SSH
+            protocol: tcp
+            expiration: 2030-12-31
+            platform-exclude: gce
+            action: accept
+    ```
 
-```text title="common.jcl"
-firewall {
-    family inet {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter edge-inbound {
-            interface-specific;
+=== "Sample definitions"
+
+    ```yaml title="definitions.yaml"
+    networks:
+      BASTIONS:
+        values:
+          - address: 10.0.0.10/32
+      INTERNAL:
+        values:
+          - address: 10.1.0.0/16
+      MAIL_SERVERS:
+        values:
+          - address: 10.1.2.25/32
+    ```
+
+=== "Sample output"
+
+    ```text title="common.jcl"
+    firewall {
+        family inet {
             /*
-             ** Allow SSH from bastions to internal hosts.
-             */
-            term accept-ssh {
-                from {
-                    source-address {
-                        10.0.0.10/32;
+            ** $Id:$
+            ** $Date:$
+            ** $Revision:$
+            **
+            */
+            replace: filter edge-inbound {
+                interface-specific;
+                /*
+                ** Allow SSH from bastions to internal hosts.
+                */
+                term accept-ssh {
+                    from {
+                        source-address {
+                            10.0.0.10/32;
+                        }
+                        destination-address {
+                            10.1.0.0/16;
+                            10.1.2.25/32 except;
+                        }
+                        protocol tcp;
+                        destination-port 22;
                     }
-                    destination-address {
-                        10.1.0.0/16;
-                        10.1.2.25/32 except;
-                    }
-                    protocol tcp;
-                    destination-port 22;
+                    then accept;
                 }
-                then accept;
             }
         }
     }
-}
-```
+    ```

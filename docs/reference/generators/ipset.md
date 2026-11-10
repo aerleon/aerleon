@@ -74,34 +74,34 @@ When a term has more than one source or destination address, the addresses are p
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        ipset: INPUT DROP
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            ipset: INPUT DROP
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.ips"
-# begin:ipset-rules
-create allow-ssh-src hash:net family inet hashsize 4 maxelem 4
-add allow-ssh-src 10.0.0.0/24
-add allow-ssh-src 192.168.10.0/24
-# end:ipset-rules
-# Ipset INPUT Policy
-# $Id:$
-# $Date:$
-# $Revision:$
-# inet
--P INPUT DROP
--A INPUT -m comment --comment "Allow SSH from the management network."
--A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
--A INPUT -p all -j DROP
-```
+    ```text title="sample.ips"
+    # begin:ipset-rules
+    create allow-ssh-src hash:net family inet hashsize 4 maxelem 4
+    add allow-ssh-src 10.0.0.0/24
+    add allow-ssh-src 192.168.10.0/24
+    # end:ipset-rules
+    # Ipset INPUT Policy
+    # $Id:$
+    # $Date:$
+    # $Revision:$
+    # inet
+    -P INPUT DROP
+    -A INPUT -m comment --comment "Allow SSH from the management network."
+    -A INPUT -p tcp --dport 22 -m set --match-set allow-ssh-src src -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    -A INPUT -p all -j DROP
+    ```
 
 ## Known Issues
 

@@ -90,7 +90,7 @@ The following tokens are specific to Juniper.
 
 <!-- --8<-- [end:term-format] -->
 
-For an example, see _[Prefix lists, policers and flexible match](#prefix-lists-policers-and-flexible-match)_.
+For an example, see _[Prefix lists, policers and flexible match](#examples-prefix-lists-policers-and-flexible-match)_.
 
 ## Actions
 
@@ -132,130 +132,130 @@ Each policy file renders to one file with the same name and a `.jcl` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        juniper: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            juniper: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.jcl"
-firewall {
-    family inet {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter edge-inbound {
-            interface-specific;
+    ```text title="sample.jcl"
+    firewall {
+        family inet {
             /*
-             ** Allow SSH from the management network.
+             ** $Id:$
+             ** $Date:$
+             ** $Revision:$
+             **
              */
-            term allow-ssh {
-                from {
-                    source-address {
-                        10.0.0.0/24;
-                        192.168.10.0/24;
+            replace: filter edge-inbound {
+                interface-specific;
+                /*
+                 ** Allow SSH from the management network.
+                 */
+                term allow-ssh {
+                    from {
+                        source-address {
+                            10.0.0.0/24;
+                            192.168.10.0/24;
+                        }
+                        protocol tcp;
+                        destination-port 22;
                     }
-                    protocol tcp;
-                    destination-port 22;
+                    then accept;
                 }
-                then accept;
-            }
-            term default-deny {
-                then {
-                    discard;
+                term default-deny {
+                    then {
+                        discard;
+                    }
                 }
             }
         }
     }
-}
-```
+    ```
 
-#### Prefix lists, policers and flexible match
+=== "Prefix lists, policers and flexible match"
 
-A term that matches a prefix-list configured on the device, then counts and polices the traffic, and a term that uses `flexible-match-range`.
+    A term that matches a prefix-list configured on the device, then counts and polices the traffic, and a term that uses `flexible-match-range`.
 
-```yaml title="tokens.yaml"
-filters:
-  - header:
-      targets:
-        juniper: edge-inbound inet
-    terms:
-      - name: police-bgp
-        source-prefix: configured-neighbors-only
-        protocol: tcp
-        destination-port: BGP
-        counter: bgp-hits
-        policer: bgp-policer
-        action: accept
-      - name: match-flex
-        flexible-match-range:
-          match-start: payload
-          byte-offset: 16
-          bit-offset: 7
-          bit-length: 8
-          range: "0x08"
-        action: deny
-```
+    ```yaml title="tokens.yaml"
+    filters:
+      - header:
+          targets:
+            juniper: edge-inbound inet
+        terms:
+          - name: police-bgp
+            source-prefix: configured-neighbors-only
+            protocol: tcp
+            destination-port: BGP
+            counter: bgp-hits
+            policer: bgp-policer
+            action: accept
+          - name: match-flex
+            flexible-match-range:
+              match-start: payload
+              byte-offset: 16
+              bit-offset: 7
+              bit-length: 8
+              range: "0x08"
+            action: deny
+    ```
 
-```yaml title="definitions.yaml"
-services:
-  BGP:
-    - port: 179
-      protocol: tcp
-```
+    ```yaml title="definitions.yaml"
+    services:
+      BGP:
+        - port: 179
+          protocol: tcp
+    ```
 
-```text title="tokens.jcl"
-firewall {
-    family inet {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter edge-inbound {
-            interface-specific;
-            term police-bgp {
-                from {
-                    source-prefix-list {
-                        configured-neighbors-only;
+    ```text title="tokens.jcl"
+    firewall {
+        family inet {
+            /*
+             ** $Id:$
+             ** $Date:$
+             ** $Revision:$
+             **
+             */
+            replace: filter edge-inbound {
+                interface-specific;
+                term police-bgp {
+                    from {
+                        source-prefix-list {
+                            configured-neighbors-only;
+                        }
+                        protocol tcp;
+                        destination-port 179;
                     }
-                    protocol tcp;
-                    destination-port 179;
-                }
-                then {
-                    count bgp-hits;
-                    policer bgp-policer;
-                    accept;
-                }
-            }
-            term match-flex {
-                from {
-                    flexible-match-range {
-                        match-start payload;
-                        byte-offset 16;
-                        bit-offset 7;
-                        bit-length 8;
-                        range 0x08;
+                    then {
+                        count bgp-hits;
+                        policer bgp-policer;
+                        accept;
                     }
                 }
-                then {
-                    discard;
+                term match-flex {
+                    from {
+                        flexible-match-range {
+                            match-start payload;
+                            byte-offset 16;
+                            bit-offset 7;
+                            bit-length 8;
+                            range 0x08;
+                        }
+                    }
+                    then {
+                        discard;
+                    }
                 }
             }
         }
     }
-}
-```
+    ```
 
 ## Known Issues
 

@@ -24,7 +24,7 @@ The following header options are specific to Juniper EVO, or work differently th
 | `ingress`, `egress` | Direction the filter is applied in. | **Required** for `inet6` and `mixed` filters; an error is raised without it. Sets how IPv6 protocols are matched; see _[IPv6 protocol match](#ipv6-protocol-match)_. |
 | `physical`, `loopback` | Type of interface the filter is applied to. | Optional. Defaults to `physical`. Sets how IPv6 protocols are matched; see _[IPv6 protocol match](#ipv6-protocol-match)_. |
 
-For an example, see _[IPv6 loopback filter](#ipv6-loopback-filter)_.
+For an example, see _[IPv6 loopback filter](#examples-ipv6-loopback-filter)_.
 
 ## Term Format
 
@@ -81,91 +81,91 @@ On `ingress` (physical), a term that lists an extension header uses `next-header
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        juniperevo: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            juniperevo: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.evojcl"
-firewall {
-    family inet {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter edge-inbound {
-            interface-specific;
+    ```text title="sample.evojcl"
+    firewall {
+        family inet {
             /*
-             ** Allow SSH from the management network.
+             ** $Id:$
+             ** $Date:$
+             ** $Revision:$
+             **
              */
-            term allow-ssh {
-                from {
-                    source-address {
-                        10.0.0.0/24;
-                        192.168.10.0/24;
+            replace: filter edge-inbound {
+                interface-specific;
+                /*
+                 ** Allow SSH from the management network.
+                 */
+                term allow-ssh {
+                    from {
+                        source-address {
+                            10.0.0.0/24;
+                            192.168.10.0/24;
+                        }
+                        protocol tcp;
+                        destination-port 22;
                     }
-                    protocol tcp;
-                    destination-port 22;
+                    then accept;
                 }
-                then accept;
-            }
-            term default-deny {
-                then {
-                    discard;
+                term default-deny {
+                    then {
+                        discard;
+                    }
                 }
             }
         }
     }
-}
-```
+    ```
 
-#### IPv6 loopback filter
+=== "IPv6 loopback filter"
 
-An `inet6` filter for a loopback interface, applied `ingress`. See _[IPv6 Protocol Match](#ipv6-protocol-match)_ for how the protocol is matched. It uses `SSH` from the sample definitions.
+    An `inet6` filter for a loopback interface, applied `ingress`. See _[IPv6 Protocol Match](#ipv6-protocol-match)_ for how the protocol is matched. It uses `SSH` from the sample definitions.
 
-```yaml title="loopback.yaml"
-filters:
-  - header:
-      targets:
-        juniperevo: LOOPBACK-V6 inet6 ingress loopback
-    terms:
-      - name: allow-ssh
-        protocol: tcp
-        destination-port: SSH
-        action: accept
-```
+    ```yaml title="loopback.yaml"
+    filters:
+      - header:
+          targets:
+            juniperevo: LOOPBACK-V6 inet6 ingress loopback
+        terms:
+          - name: allow-ssh
+            protocol: tcp
+            destination-port: SSH
+            action: accept
+    ```
 
-```text title="loopback.evojcl"
-firewall {
-    family inet6 {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter LOOPBACK-V6 {
-            interface-specific;
-            term allow-ssh {
-                from {
-                    payload-protocol tcp;
-                    destination-port 22;
+    ```text title="loopback.evojcl"
+    firewall {
+        family inet6 {
+            /*
+             ** $Id:$
+             ** $Date:$
+             ** $Revision:$
+             **
+             */
+            replace: filter LOOPBACK-V6 {
+                interface-specific;
+                term allow-ssh {
+                    from {
+                        payload-protocol tcp;
+                        destination-port 22;
+                    }
+                    then accept;
                 }
-                then accept;
             }
         }
     }
-}
-```
+    ```
 
 ## Known Issues
 

@@ -60,27 +60,27 @@ Each policy file renders to one file with the same name and a `.bat` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        windows_advfirewall: in inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            windows_advfirewall: in inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.bat"
-: Windows_advfirewall in Policy
-: $Id:$
-: $Date:$
-: $Revision:$
-: inet
-netsh advfirewall firewall add rule name=i_allow-ssh enable=yes interfacetype=any dir=in remoteip=10.0.0.0/24,192.168.10.0/24 localip=any localport=22 protocol=tcp action=allow
-netsh advfirewall firewall add rule name=i_default-deny enable=yes interfacetype=any dir=in remoteip=any localip=any protocol=any action=block
-```
+    ```text title="sample.bat"
+    : Windows_advfirewall in Policy
+    : $Id:$
+    : $Date:$
+    : $Revision:$
+    : inet
+    netsh advfirewall firewall add rule name=i_allow-ssh enable=yes interfacetype=any dir=in remoteip=10.0.0.0/24,192.168.10.0/24 localip=any localport=22 protocol=tcp action=allow
+    netsh advfirewall firewall add rule name=i_default-deny enable=yes interfacetype=any dir=in remoteip=any localip=any protocol=any action=block
+    ```
 
 ## Known Issues
 

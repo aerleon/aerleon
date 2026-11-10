@@ -40,7 +40,7 @@ CiscoXR adds:
 |---|---|---|---|
 | `next-ip` | Forward matching packets to a next hop (ACL-based forwarding). | `next-ip: NEXTHOP_ROUTER` | Only used when the term has **no** `action`; the rule is rendered as `permit … nexthop1 ipv4 <ip>`. Must resolve to exactly one host address. |
 
-For an example, see _[ACL-based forwarding](#acl-based-forwarding)_.
+For an example, see _[ACL-based forwarding](#examples-acl-based-forwarding)_.
 
 ## Actions
 
@@ -72,78 +72,78 @@ Each policy file renders to one file with the same name and a `.xacl` extension,
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        ciscoxr: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            ciscoxr: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.xacl"
-! $Id:$
-! $Date:$
-! $Revision:$
-no ipv4 access-list edge-inbound
-ipv4 access-list edge-inbound
- remark $Id:$
-
-
- remark allow-ssh
- remark Allow SSH from the management network.
- permit tcp 10.0.0.0 0.0.0.255 any eq 22
- permit tcp 192.168.10.0 0.0.0.255 any eq 22
+    ```text title="sample.xacl"
+    ! $Id:$
+    ! $Date:$
+    ! $Revision:$
+    no ipv4 access-list edge-inbound
+    ipv4 access-list edge-inbound
+     remark $Id:$
 
 
- remark default-deny
- deny ipv4 any any
-
-exit
-```
-
-#### ACL-based forwarding
-
-A term with `next-ip` and no `action` forwards matching traffic to the next hop.
-
-```yaml title="forwarding.yaml"
-filters:
-  - header:
-      targets:
-        ciscoxr: edge-inbound
-    terms:
-      - name: send-to-scrubber
-        destination-address: DDOS_TARGETS
-        next-ip: SCRUBBER_NEXTHOP
-```
-
-```yaml title="definitions.yaml"
-networks:
-  DDOS_TARGETS:
-    values:
-      - address: 203.0.113.0/24
-  SCRUBBER_NEXTHOP:
-    values:
-      - address: 192.0.2.1/32
-```
-
-```text title="forwarding.xacl"
-! $Id:$
-! $Date:$
-! $Revision:$
-no ipv4 access-list edge-inbound
-ipv4 access-list edge-inbound
- remark $Id:$
+     remark allow-ssh
+     remark Allow SSH from the management network.
+     permit tcp 10.0.0.0 0.0.0.255 any eq 22
+     permit tcp 192.168.10.0 0.0.0.255 any eq 22
 
 
- remark send-to-scrubber
- permit ipv4 any 203.0.113.0 0.0.0.255 nexthop1 ipv4 192.0.2.1
+     remark default-deny
+     deny ipv4 any any
 
-exit
-```
+    exit
+    ```
+
+=== "ACL-based forwarding"
+
+    A term with `next-ip` and no `action` forwards matching traffic to the next hop.
+
+    ```yaml title="forwarding.yaml"
+    filters:
+      - header:
+          targets:
+            ciscoxr: edge-inbound
+        terms:
+          - name: send-to-scrubber
+            destination-address: DDOS_TARGETS
+            next-ip: SCRUBBER_NEXTHOP
+    ```
+
+    ```yaml title="definitions.yaml"
+    networks:
+      DDOS_TARGETS:
+        values:
+          - address: 203.0.113.0/24
+      SCRUBBER_NEXTHOP:
+        values:
+          - address: 192.0.2.1/32
+    ```
+
+    ```text title="forwarding.xacl"
+    ! $Id:$
+    ! $Date:$
+    ! $Revision:$
+    no ipv4 access-list edge-inbound
+    ipv4 access-list edge-inbound
+     remark $Id:$
+
+
+     remark send-to-scrubber
+     permit ipv4 any 203.0.113.0 0.0.0.255 nexthop1 ipv4 192.0.2.1
+
+    exit
+    ```
 
 ## Known Issues
 

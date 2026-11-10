@@ -60,52 +60,52 @@ Each policy file renders to one file with the same name and a `.jsl` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        srxlo: lo0-filter inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            srxlo: lo0-filter inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.jsl"
-firewall {
-    family inet {
-        /*
-         ** $Id:$
-         ** $Date:$
-         ** $Revision:$
-         **
-         */
-        replace: filter lo0-filter {
-            interface-specific;
+    ```text title="sample.jsl"
+    firewall {
+        family inet {
             /*
-             ** Allow SSH from the management network.
-             */
-            term allow-ssh {
-                from {
-                    source-address {
-                        10.0.0.0/24;
-                        192.168.10.0/24;
+            ** $Id:$
+            ** $Date:$
+            ** $Revision:$
+            **
+            */
+            replace: filter lo0-filter {
+                interface-specific;
+                /*
+                ** Allow SSH from the management network.
+                */
+                term allow-ssh {
+                    from {
+                        source-address {
+                            10.0.0.0/24;
+                            192.168.10.0/24;
+                        }
+                        protocol tcp;
+                        destination-port 22;
                     }
-                    protocol tcp;
-                    destination-port 22;
+                    then accept;
                 }
-                then accept;
-            }
-            term default-deny {
-                then {
-                    discard;
+                term default-deny {
+                    then {
+                        discard;
+                    }
                 }
             }
         }
     }
-}
-```
+    ```
 
 ## Known Issues
 

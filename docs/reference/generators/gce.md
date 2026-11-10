@@ -72,98 +72,98 @@ Each policy file renders to one file with the same name and a `.gce` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        gce: global/networks/default
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            gce: global/networks/default
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.gce"
-[
-  {
-    "allowed": [
+    ```json title="sample.gce"
+    [
       {
-        "IPProtocol": "tcp",
-        "ports": [
-          "22"
+        "allowed": [
+          {
+            "IPProtocol": "tcp",
+            "ports": [
+              "22"
+            ]
+          }
+        ],
+        "description": "Allow SSH from the management network.",
+        "direction": "INGRESS",
+        "name": "default-allow-ssh",
+        "network": "global/networks/default",
+        "sourceRanges": [
+          "10.0.0.0/24",
+          "192.168.10.0/24"
+        ]
+      },
+      {
+        "denied": [
+          {
+            "IPProtocol": "all"
+          }
+        ],
+        "description": "",
+        "direction": "INGRESS",
+        "name": "default-default-deny",
+        "network": "global/networks/default",
+        "priority": 65534,
+        "sourceRanges": [
+          "0.0.0.0/0"
         ]
       }
-    ],
-    "description": "Allow SSH from the management network.",
-    "direction": "INGRESS",
-    "name": "default-allow-ssh",
-    "network": "global/networks/default",
-    "sourceRanges": [
-      "10.0.0.0/24",
-      "192.168.10.0/24"
     ]
-  },
-  {
-    "denied": [
+    ```
+
+=== "Rule priority"
+
+    The sample `allow-ssh` term with `priority`. It uses the sample definitions.
+
+    ```yaml title="priority.yaml"
+    filters:
+      - header:
+          targets:
+            gce: global/networks/default
+        terms:
+          - name: allow-ssh
+            comment: "Allow SSH from the management network."
+            source-address: MGMT
+            protocol: tcp
+            destination-port: SSH
+            priority: 1000
+            action: accept
+    ```
+
+    ```json title="priority.gce"
+    [
       {
-        "IPProtocol": "all"
-      }
-    ],
-    "description": "",
-    "direction": "INGRESS",
-    "name": "default-default-deny",
-    "network": "global/networks/default",
-    "priority": 65534,
-    "sourceRanges": [
-      "0.0.0.0/0"
-    ]
-  }
-]
-```
-
-#### Rule priority
-
-The sample `allow-ssh` term with `priority`. It uses the sample definitions.
-
-```yaml title="priority.yaml"
-filters:
-  - header:
-      targets:
-        gce: global/networks/default
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT
-        protocol: tcp
-        destination-port: SSH
-        priority: 1000
-        action: accept
-```
-
-```json title="priority.gce"
-[
-  {
-    "allowed": [
-      {
-        "IPProtocol": "tcp",
-        "ports": [
-          "22"
+        "allowed": [
+          {
+            "IPProtocol": "tcp",
+            "ports": [
+              "22"
+            ]
+          }
+        ],
+        "description": "Allow SSH from the management network.",
+        "direction": "INGRESS",
+        "name": "default-allow-ssh",
+        "network": "global/networks/default",
+        "priority": "1000",
+        "sourceRanges": [
+          "10.0.0.0/24",
+          "192.168.10.0/24"
         ]
       }
-    ],
-    "description": "Allow SSH from the management network.",
-    "direction": "INGRESS",
-    "name": "default-allow-ssh",
-    "network": "global/networks/default",
-    "priority": "1000",
-    "sourceRanges": [
-      "10.0.0.0/24",
-      "192.168.10.0/24"
     ]
-  }
-]
-```
+    ```
 
 ## Known Issues
 

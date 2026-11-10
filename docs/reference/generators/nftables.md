@@ -25,64 +25,64 @@ There is no filter name: the address family must come first and the hook second.
 
 Some Aerleon ICMP type names are changed to the names nftables expects. Names with no nftables equivalent are passed through unchanged, and `nft` will reject them.
 
-### IPv4
+=== "IPv4"
 
-| Type | Aerleon name | nftables name |
-|---|---|---|
-| 0 | `echo-reply` | `echo-reply` |
-| 3 | `unreachable` | `destination-unreachable` |
-| 4 | `source-quench` | `source-quench` |
-| 5 | `redirect` | `redirect` |
-| 6 | `alternate-address` | *none*: passed through unchanged |
-| 8 | `echo-request` | `echo-request` |
-| 9 | `router-advertisement` | `router-advertisement` |
-| 10 | `router-solicitation` | `router-solicitation` |
-| 11 | `time-exceeded` | `time-exceeded` |
-| 12 | `parameter-problem` | `parameter-problem` |
-| 13 | `timestamp-request` | `timestamp-request` |
-| 14 | `timestamp-reply` | `timestamp-reply` |
-| 15 | `information-request` | `info-request` |
-| 16 | `information-reply` | `info-reply` |
-| 17 | `mask-request` | `address-mask-request` |
-| 18 | `mask-reply` | `address-mask-reply` |
-| 31 | `conversion-error` | *none*: passed through unchanged |
-| 32 | `mobile-redirect` | *none*: passed through unchanged |
+    | Type | Aerleon name | nftables name |
+    |---|---|---|
+    | 0 | `echo-reply` | `echo-reply` |
+    | 3 | `unreachable` | `destination-unreachable` |
+    | 4 | `source-quench` | `source-quench` |
+    | 5 | `redirect` | `redirect` |
+    | 6 | `alternate-address` | *none*: passed through unchanged |
+    | 8 | `echo-request` | `echo-request` |
+    | 9 | `router-advertisement` | `router-advertisement` |
+    | 10 | `router-solicitation` | `router-solicitation` |
+    | 11 | `time-exceeded` | `time-exceeded` |
+    | 12 | `parameter-problem` | `parameter-problem` |
+    | 13 | `timestamp-request` | `timestamp-request` |
+    | 14 | `timestamp-reply` | `timestamp-reply` |
+    | 15 | `information-request` | `info-request` |
+    | 16 | `information-reply` | `info-reply` |
+    | 17 | `mask-request` | `address-mask-request` |
+    | 18 | `mask-reply` | `address-mask-reply` |
+    | 31 | `conversion-error` | *none*: passed through unchanged |
+    | 32 | `mobile-redirect` | *none*: passed through unchanged |
 
-### IPv6
+=== "IPv6"
 
-| Type | Aerleon name | nftables name |
-|---|---|---|
-| 1 | `destination-unreachable` | `destination-unreachable` |
-| 2 | `packet-too-big` | `packet-too-big` |
-| 3 | `time-exceeded` | `time-exceeded` |
-| 4 | `parameter-problem` | `parameter-problem` |
-| 128 | `echo-request` | `echo-request` |
-| 129 | `echo-reply` | `echo-reply` |
-| 130 | `multicast-listener-query` | `mld-listener-query` |
-| 131 | `multicast-listener-report` | `mld-listener-report` |
-| 132 | `multicast-listener-done` | `mld-listener-done` or `mld-listener-reduction` |
-| 133 | `router-solicit` | `nd-router-solicit` |
-| 134 | `router-advertisement` | `nd-router-advert` |
-| 135 | `neighbor-solicit` | `nd-neighbor-solicit` |
-| 136 | `neighbor-advertisement` | `nd-neighbor-advert` |
-| 137 | `redirect-message` | `nd-redirect` |
-| 138 | `router-renumbering` | `router-renumbering` |
-| 139 | `icmp-node-information-query` | *none*: passed through unchanged |
-| 140 | `icmp-node-information-response` | *none*: passed through unchanged |
-| 141 | `inverse-neighbor-discovery-solicitation` | `ind-neighbor-solicit` |
-| 142 | `inverse-neighbor-discovery-advertisement` | `ind-neighbor-advert` |
-| 143 | `version-2-multicast-listener-report` | `mld2-listener-report` |
-| 144 | `home-agent-address-discovery-request` | *none*: passed through unchanged |
-| 145 | `home-agent-address-discovery-reply` | *none*: passed through unchanged |
-| 146 | `mobile-prefix-solicitation` | *none*: passed through unchanged |
-| 147 | `mobile-prefix-advertisement` | *none*: passed through unchanged |
-| 148 | `certification-path-solicitation` | *none*: passed through unchanged |
-| 149 | `certification-path-advertisement` | *none*: passed through unchanged |
-| 151 | `multicast-router-advertisement` | *none*: passed through unchanged |
-| 152 | `multicast-router-solicitation` | *none*: passed through unchanged |
-| 153 | `multicast-router-termination` | *none*: passed through unchanged |
+    | Type | Aerleon name | nftables name |
+    |---|---|---|
+    | 1 | `destination-unreachable` | `destination-unreachable` |
+    | 2 | `packet-too-big` | `packet-too-big` |
+    | 3 | `time-exceeded` | `time-exceeded` |
+    | 4 | `parameter-problem` | `parameter-problem` |
+    | 128 | `echo-request` | `echo-request` |
+    | 129 | `echo-reply` | `echo-reply` |
+    | 130 | `multicast-listener-query` | `mld-listener-query` |
+    | 131 | `multicast-listener-report` | `mld-listener-report` |
+    | 132 | `multicast-listener-done` | `mld-listener-done` or `mld-listener-reduction` |
+    | 133 | `router-solicit` | `nd-router-solicit` |
+    | 134 | `router-advertisement` | `nd-router-advert` |
+    | 135 | `neighbor-solicit` | `nd-neighbor-solicit` |
+    | 136 | `neighbor-advertisement` | `nd-neighbor-advert` |
+    | 137 | `redirect-message` | `nd-redirect` |
+    | 138 | `router-renumbering` | `router-renumbering` |
+    | 139 | `icmp-node-information-query` | *none*: passed through unchanged |
+    | 140 | `icmp-node-information-response` | *none*: passed through unchanged |
+    | 141 | `inverse-neighbor-discovery-solicitation` | `ind-neighbor-solicit` |
+    | 142 | `inverse-neighbor-discovery-advertisement` | `ind-neighbor-advert` |
+    | 143 | `version-2-multicast-listener-report` | `mld2-listener-report` |
+    | 144 | `home-agent-address-discovery-request` | *none*: passed through unchanged |
+    | 145 | `home-agent-address-discovery-reply` | *none*: passed through unchanged |
+    | 146 | `mobile-prefix-solicitation` | *none*: passed through unchanged |
+    | 147 | `mobile-prefix-advertisement` | *none*: passed through unchanged |
+    | 148 | `certification-path-solicitation` | *none*: passed through unchanged |
+    | 149 | `certification-path-advertisement` | *none*: passed through unchanged |
+    | 151 | `multicast-router-advertisement` | *none*: passed through unchanged |
+    | 152 | `multicast-router-solicitation` | *none*: passed through unchanged |
+    | 153 | `multicast-router-termination` | *none*: passed through unchanged |
 
-_source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
+_Source:_ <https://www.netfilter.org/projects/nftables/manpage.html>
 
 ## Term Format
 
@@ -131,35 +131,35 @@ Each policy file renders to one file with the same name and a `.nft` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        nftables: inet input
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            nftables: inet input
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.nft"
-table ip filtering_policies {
-    chain allow-ssh {
-        comment "Allow SSH from the management network."
-        ip saddr { 10.0.0.0/24, 192.168.10.0/24 } tcp dport 22 ct state new accept
+    ```text title="sample.nft"
+    table ip filtering_policies {
+        chain allow-ssh {
+            comment "Allow SSH from the management network."
+            ip saddr { 10.0.0.0/24, 192.168.10.0/24 } tcp dport 22 ct state new accept
+        }
+        chain default-deny {
+            drop
+        }
+        chain root0 {
+            type filter hook input priority 0; policy drop;
+            ct state established,related accept
+            jump allow-ssh
+            jump default-deny
+        }
     }
-    chain default-deny {
-        drop
-    }
-    chain root0 {
-        type filter hook input priority 0; policy drop;
-        ct state established,related accept
-        jump allow-ssh
-        jump default-deny
-    }
-}
-```
+    ```
 
 ## Known Issues
 

@@ -42,6 +42,12 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - toc:
       permalink: true
 plugins:
@@ -113,8 +119,8 @@ nav:
       - PcapFilter: reference/generators/pcap.md
       - Proxmox: reference/generators/proxmox.md
       - VMware NSX:
-        - NSXv: reference/generators/nsxv.md
         - NSXt: reference/generators/nsxt.md
+        - NSXv: reference/generators/nsxv.md
       - Windows:
         - Windows Advanced Firewall: reference/generators/windows_advfirewall.md
         - WindowsIPSec: reference/generators/windows_ipsec.md

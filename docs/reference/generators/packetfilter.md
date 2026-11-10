@@ -61,67 +61,67 @@ Each policy file renders to one file with the same name and a `.pf` extension, s
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        packetfilter: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            packetfilter: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.pf"
-table <MGMT> {10.0.0.0/24,\
-192.168.10.0/24}
-# Packetfilter edge-inbound Policy
-# $Id:$
-# $Date:$
-# $Revision:$
-# inet
+    ```text title="sample.pf"
+    table <MGMT> {10.0.0.0/24,\
+    192.168.10.0/24}
+    # Packetfilter edge-inbound Policy
+    # $Id:$
+    # $Date:$
+    # $Revision:$
+    # inet
 
-# term allow-ssh
-# Allow SSH from the management network.
-pass quick inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
+    # term allow-ssh
+    # Allow SSH from the management network.
+    pass quick inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
 
-# term default-deny
-block drop quick inet from { any } to { any } flags S/SA
-```
+    # term default-deny
+    block drop quick inet from { any } to { any } flags S/SA
+    ```
 
-#### Logging
+=== "Logging"
 
-The sample `allow-ssh` term with `logging`. It uses the sample definitions.
+    The sample `allow-ssh` term with `logging`. It uses the sample definitions.
 
-```yaml title="logging.yaml"
-filters:
-  - header:
-      targets:
-        packetfilter: edge-inbound
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT
-        protocol: tcp
-        destination-port: SSH
-        logging: true
-        action: accept
-```
+    ```yaml title="logging.yaml"
+    filters:
+      - header:
+          targets:
+            packetfilter: edge-inbound
+        terms:
+          - name: allow-ssh
+            comment: "Allow SSH from the management network."
+            source-address: MGMT
+            protocol: tcp
+            destination-port: SSH
+            logging: true
+            action: accept
+    ```
 
-```text title="logging.pf"
-table <MGMT> {10.0.0.0/24,\
-192.168.10.0/24}
-# Packetfilter edge-inbound Policy
-# $Id:$
-# $Date:$
-# $Revision:$
-# inet
+    ```text title="logging.pf"
+    table <MGMT> {10.0.0.0/24,\
+    192.168.10.0/24}
+    # Packetfilter edge-inbound Policy
+    # $Id:$
+    # $Date:$
+    # $Revision:$
+    # inet
 
-# term allow-ssh
-# Allow SSH from the management network.
-pass quick log inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
-```
+    # term allow-ssh
+    # Allow SSH from the management network.
+    pass quick log inet proto { tcp } from { <MGMT> } to { any } port { 22 } flags S/SA keep state
+    ```
 
 ## Known Issues
 

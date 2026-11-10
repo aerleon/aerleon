@@ -67,36 +67,36 @@ Each policy file renders to one file with the same name and a `.ipt` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        speedway: INPUT DROP
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            speedway: INPUT DROP
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.ipt"
-*filter
-# Speedway INPUT Policy
-# $Id:$
-# $Date:$
-# $Revision:$
-# inet
-:INPUT DROP [0:0]
--N I_allow-ssh
--A I_allow-ssh -m comment --comment "Allow SSH from the management network."
--A I_allow-ssh -p tcp --dport 22 -s 10.0.0.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
--A I_allow-ssh -p tcp --dport 22 -s 192.168.10.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
--A INPUT -j I_allow-ssh
--N I_default-deny
--A I_default-deny -p all -j DROP
--A INPUT -j I_default-deny
-COMMIT
-```
+    ```text title="sample.ipt"
+    *filter
+    # Speedway INPUT Policy
+    # $Id:$
+    # $Date:$
+    # $Revision:$
+    # inet
+    :INPUT DROP [0:0]
+    -N I_allow-ssh
+    -A I_allow-ssh -m comment --comment "Allow SSH from the management network."
+    -A I_allow-ssh -p tcp --dport 22 -s 10.0.0.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    -A I_allow-ssh -p tcp --dport 22 -s 192.168.10.0/24 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT
+    -A INPUT -j I_allow-ssh
+    -N I_default-deny
+    -A I_default-deny -p all -j DROP
+    -A INPUT -j I_default-deny
+    COMMIT
+    ```
 
 ## Known Issues
 

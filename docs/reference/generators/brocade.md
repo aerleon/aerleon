@@ -58,36 +58,36 @@ Each policy file renders to one file with the same name and a `.bacl` extension,
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        brocade: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            brocade: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.bacl"
-! $Id:$
-! $Date:$
-! $Revision:$
-no ip access-list extended edge-inbound
-ip access-list extended edge-inbound
- remark $Id:$
-
-
- remark Allow SSH from the management network.
- permit tcp 10.0.0.0 0.0.0.255 any eq 22
- permit tcp 192.168.10.0 0.0.0.255 any eq 22
+    ```text title="sample.bacl"
+    ! $Id:$
+    ! $Date:$
+    ! $Revision:$
+    no ip access-list extended edge-inbound
+    ip access-list extended edge-inbound
+    remark $Id:$
 
 
- deny ip any any
+    remark Allow SSH from the management network.
+    permit tcp 10.0.0.0 0.0.0.255 any eq 22
+    permit tcp 192.168.10.0 0.0.0.255 any eq 22
 
-exit
-```
+
+    deny ip any any
+
+    exit
+    ```
 
 ## Known Issues
 

@@ -46,7 +46,7 @@ These actions are included from the _[OpenConfig](openconfig.md#actions)_ page.
 |---|---|---|---|
 | `tcp-established` | Match established TCP sessions. | `option: tcp-established` | Renders `"tcp-session-established": true` under `transport.config`, instead of OpenConfig's `"detail-mode": "BUILTIN", "builtin-detail": "TCP_ESTABLISHED"`. The term's `protocol` must be exactly `tcp`, otherwise `TcpEstablishedWithNonTcpError` is raised. |
 
-For an example, see [`tcp-established`](#tcp-established).
+For an example, see _[`tcp-established`](#examples-tcp-established)_.
 
 ## Output
 
@@ -60,131 +60,131 @@ This is included from the _[OpenConfig](openconfig.md#acl-set)_ page.
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        sonic: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            sonic: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.oacl"
-[
-  {
-    "acl-entries": {
-      "acl-entry": [
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
+    ```json title="sample.oacl"
+    [
+      {
+        "acl-entries": {
+          "acl-entry": [
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "ACCEPT"
+                }
+              },
+              "ipv4": {
+                "config": {
+                  "protocol": 6,
+                  "source-address": "10.0.0.0/24"
+                }
+              },
+              "sequence-id": 5,
+              "transport": {
+                "config": {
+                  "destination-port": 22
+                }
+              }
+            },
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "ACCEPT"
+                }
+              },
+              "ipv4": {
+                "config": {
+                  "protocol": 6,
+                  "source-address": "192.168.10.0/24"
+                }
+              },
+              "sequence-id": 10,
+              "transport": {
+                "config": {
+                  "destination-port": 22
+                }
+              }
+            },
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "DROP"
+                }
+              },
+              "sequence-id": 15
             }
-          },
-          "ipv4": {
-            "config": {
-              "protocol": 6,
-              "source-address": "10.0.0.0/24"
-            }
-          },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "destination-port": 22
-            }
-          }
+          ]
         },
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
-          },
-          "ipv4": {
-            "config": {
-              "protocol": 6,
-              "source-address": "192.168.10.0/24"
-            }
-          },
-          "sequence-id": 10,
-          "transport": {
-            "config": {
-              "destination-port": 22
-            }
-          }
+        "config": {
+          "name": "edge-inbound",
+          "type": "ACL_IPV4"
         },
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "DROP"
-            }
-          },
-          "sequence-id": 15
-        }
-      ]
-    },
-    "config": {
-      "name": "edge-inbound",
-      "type": "ACL_IPV4"
-    },
-    "name": "edge-inbound",
-    "type": "ACL_IPV4"
-  }
-]
-```
+        "name": "edge-inbound",
+        "type": "ACL_IPV4"
+      }
+    ]
+    ```
 
-#### `tcp-established`
+=== "`tcp-established`"
 
-A term with `option: tcp-established`. SONiC renders it as `tcp-session-established` (see _[Option](#option)_).
+    A term with `option: tcp-established`. SONiC renders it as `tcp-session-established` (see _[Option](#option)_).
 
-```yaml title="established.yaml"
-filters:
-  - header:
-      targets:
-        sonic: edge inet
-    terms:
-      - name: established
-        protocol: tcp
-        option: tcp-established
-        action: accept
-```
+    ```yaml title="established.yaml"
+    filters:
+      - header:
+          targets:
+            sonic: edge inet
+        terms:
+          - name: established
+            protocol: tcp
+            option: tcp-established
+            action: accept
+    ```
 
-```json title="established.oacl"
-[
-  {
-    "acl-entries": {
-      "acl-entry": [
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
+    ```json title="established.oacl"
+    [
+      {
+        "acl-entries": {
+          "acl-entry": [
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "ACCEPT"
+                }
+              },
+              "ipv4": {
+                "config": {
+                  "protocol": 6
+                }
+              },
+              "sequence-id": 5,
+              "transport": {
+                "config": {
+                  "tcp-session-established": true
+                }
+              }
             }
-          },
-          "ipv4": {
-            "config": {
-              "protocol": 6
-            }
-          },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "tcp-session-established": true
-            }
-          }
-        }
-      ]
-    },
-    "config": {
-      "name": "edge",
-      "type": "ACL_IPV4"
-    },
-    "name": "edge",
-    "type": "ACL_IPV4"
-  }
-]
-```
+          ]
+        },
+        "config": {
+          "name": "edge",
+          "type": "ACL_IPV4"
+        },
+        "name": "edge",
+        "type": "ACL_IPV4"
+      }
+    ]
+    ```
 
 ## Known Issues
 

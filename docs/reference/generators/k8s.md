@@ -60,96 +60,96 @@ Each policy file renders to one file with the same name and a `.yml` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        k8s: INGRESS
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            k8s: INGRESS
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```yaml title="sample.yml"
-apiVersion: networking.k8s.io/v1
-items:
-- apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    annotations:
-      comment: Allow SSH from the management network.
-    name: allow-ssh
-  spec:
-    ingress:
-    - from:
-      - ipBlock:
-          cidr: 10.0.0.0/24
-      - ipBlock:
-          cidr: 192.168.10.0/24
-      ports:
-      - port: 22
-        protocol: TCP
-    podSelector: {}
-    policyTypes:
-    - Ingress
-- apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    annotations: {}
-    name: default-deny
-  spec:
-    podSelector: {}
-    policyTypes:
-    - Ingress
-kind: NetworkPolicyList
-```
+    ```yaml title="sample.yml"
+    apiVersion: networking.k8s.io/v1
+    items:
+    - apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        annotations:
+          comment: Allow SSH from the management network.
+        name: allow-ssh
+      spec:
+        ingress:
+        - from:
+          - ipBlock:
+              cidr: 10.0.0.0/24
+          - ipBlock:
+              cidr: 192.168.10.0/24
+          ports:
+          - port: 22
+            protocol: TCP
+        podSelector: {}
+        policyTypes:
+        - Ingress
+    - apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        annotations: {}
+        name: default-deny
+      spec:
+        podSelector: {}
+        policyTypes:
+        - Ingress
+    kind: NetworkPolicyList
+    ```
 
-#### Owner
+=== "Owner"
 
-The sample `allow-ssh` term with `owner`. It uses the sample definitions.
+    The sample `allow-ssh` term with `owner`. It uses the sample definitions.
 
-```yaml title="owner.yaml"
-filters:
-  - header:
-      targets:
-        k8s: INGRESS
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT
-        protocol: tcp
-        destination-port: SSH
-        owner: netops@example.com
-        action: accept
-```
+    ```yaml title="owner.yaml"
+    filters:
+      - header:
+          targets:
+            k8s: INGRESS
+        terms:
+          - name: allow-ssh
+            comment: "Allow SSH from the management network."
+            source-address: MGMT
+            protocol: tcp
+            destination-port: SSH
+            owner: netops@example.com
+            action: accept
+    ```
 
-```yaml title="owner.yml"
-apiVersion: networking.k8s.io/v1
-items:
-- apiVersion: networking.k8s.io/v1
-  kind: NetworkPolicy
-  metadata:
-    annotations:
-      comment: Allow SSH from the management network.
-      owner: netops@example.com
-    name: allow-ssh
-  spec:
-    ingress:
-    - from:
-      - ipBlock:
-          cidr: 10.0.0.0/24
-      - ipBlock:
-          cidr: 192.168.10.0/24
-      ports:
-      - port: 22
-        protocol: TCP
-    podSelector: {}
-    policyTypes:
-    - Ingress
-kind: NetworkPolicyList
-```
+    ```yaml title="owner.yml"
+    apiVersion: networking.k8s.io/v1
+    items:
+    - apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        annotations:
+          comment: Allow SSH from the management network.
+          owner: netops@example.com
+        name: allow-ssh
+      spec:
+        ingress:
+        - from:
+          - ipBlock:
+              cidr: 10.0.0.0/24
+          - ipBlock:
+              cidr: 192.168.10.0/24
+          ports:
+          - port: 22
+            protocol: TCP
+        podSelector: {}
+        policyTypes:
+        - Ingress
+    kind: NetworkPolicyList
+    ```
 
 ## Known Issues
 

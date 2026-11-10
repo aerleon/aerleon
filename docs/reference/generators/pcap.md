@@ -67,27 +67,27 @@ Each policy file renders to `-accept.pcap` and `-deny.pcap` files, so `sample.ya
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by the Python API (`aerleon.api.Generate`).
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by the Python API (`aerleon.api.Generate`).
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        pcap: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            pcap: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample-accept.pcap"
-((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
-))
-```
+    ```text title="sample-accept.pcap"
+    ((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
+    ))
+    ```
 
-```text title="sample-deny.pcap"
-((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
-))
-```
+    ```text title="sample-deny.pcap"
+    ((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
+    ))
+    ```
 
 ## Known Issues
 

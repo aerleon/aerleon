@@ -72,65 +72,65 @@ Each policy file renders to one file with the same name and a `.msmpc` extension
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        msmpc: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            msmpc: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.msmpc"
-groups {
-    replace:
-    /*
-     ** $Id:$
-     ** $Date:$
-     ** $Revision:$
-     **
-     */
-    edge-inbound {
-        services {
-            stateful-firewall {
-                rule edge-inbound {
-                    match-direction input-output;
-                    /*
-                     ** Allow SSH from the management network.
-                     */
-                    term allow-ssh {
-                        from {
-                            source-address {
-                                10.0.0.0/24;
-                                192.168.10.0/24;
+    ```text title="sample.msmpc"
+    groups {
+        replace:
+        /*
+        ** $Id:$
+        ** $Date:$
+        ** $Revision:$
+        **
+        */
+        edge-inbound {
+            services {
+                stateful-firewall {
+                    rule edge-inbound {
+                        match-direction input-output;
+                        /*
+                        ** Allow SSH from the management network.
+                        */
+                        term allow-ssh {
+                            from {
+                                source-address {
+                                    10.0.0.0/24;
+                                    192.168.10.0/24;
+                                }
+                                application-sets edge-inboundallow-ssh-app;
                             }
-                            application-sets edge-inboundallow-ssh-app;
+                            then {
+                                accept;
+                            }
                         }
-                        then {
-                            accept;
-                        }
-                    }
-                    term default-deny {
-                        then {
-                            discard;
+                        term default-deny {
+                            then {
+                                discard;
+                            }
                         }
                     }
                 }
             }
-        }
-        applications {
-            application edge-inboundallow-ssh-app1 {
-                protocol tcp;
-                destination-port 22;
-            }
-            application-set edge-inboundallow-ssh-app {
-                application edge-inboundallow-ssh-app1;
+            applications {
+                application edge-inboundallow-ssh-app1 {
+                    protocol tcp;
+                    destination-port 22;
+                }
+                application-set edge-inboundallow-ssh-app {
+                    application edge-inboundallow-ssh-app1;
+                }
             }
         }
     }
-}
-apply-groups edge-inbound;
-```
+    apply-groups edge-inbound;
+    ```

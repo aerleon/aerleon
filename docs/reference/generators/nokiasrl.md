@@ -99,73 +99,73 @@ Where an ICMP match goes depends on the filter's address family and the term's p
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        nokiasrl: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            nokiasrl: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.srl_acl"
-[
-  {
-    "ipv4-filter": {
-      "_annotate": "$Id:$ $Date:$ $Revision:$",
-      "description": "",
-      "entry": [
-        {
-          "_annotate_description": "Allow SSH from the management network.",
-          "action": {
-            "accept": {}
-          },
-          "description": "allow-ssh",
-          "match": {
-            "destination-port": {
-              "value": 22
+    ```json title="sample.srl_acl"
+    [
+      {
+        "ipv4-filter": {
+          "_annotate": "$Id:$ $Date:$ $Revision:$",
+          "description": "",
+          "entry": [
+            {
+              "_annotate_description": "Allow SSH from the management network.",
+              "action": {
+                "accept": {}
+              },
+              "description": "allow-ssh",
+              "match": {
+                "destination-port": {
+                  "value": 22
+                },
+                "protocol": 6,
+                "source-ip": {
+                  "prefix": "10.0.0.0/24"
+                }
+              },
+              "sequence-id": 5
             },
-            "protocol": 6,
-            "source-ip": {
-              "prefix": "10.0.0.0/24"
-            }
-          },
-          "sequence-id": 5
-        },
-        {
-          "_annotate_description": "Allow SSH from the management network.",
-          "action": {
-            "accept": {}
-          },
-          "description": "allow-ssh",
-          "match": {
-            "destination-port": {
-              "value": 22
+            {
+              "_annotate_description": "Allow SSH from the management network.",
+              "action": {
+                "accept": {}
+              },
+              "description": "allow-ssh",
+              "match": {
+                "destination-port": {
+                  "value": 22
+                },
+                "protocol": 6,
+                "source-ip": {
+                  "prefix": "192.168.10.0/24"
+                }
+              },
+              "sequence-id": 10
             },
-            "protocol": 6,
-            "source-ip": {
-              "prefix": "192.168.10.0/24"
+            {
+              "action": {
+                "drop": {}
+              },
+              "description": "default-deny",
+              "match": {},
+              "sequence-id": 15
             }
-          },
-          "sequence-id": 10
-        },
-        {
-          "action": {
-            "drop": {}
-          },
-          "description": "default-deny",
-          "match": {},
-          "sequence-id": 15
+          ],
+          "name": "edge-inbound"
         }
-      ],
-      "name": "edge-inbound"
-    }
-  }
-]
-```
+      }
+    ]
+    ```
 
 ## Known Issues
 

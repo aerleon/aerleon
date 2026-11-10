@@ -58,90 +58,90 @@ Each policy file renders to one file with the same name and a `.nsxt` extension,
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        nsxt: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            nsxt: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.nsxt"
-{
-  "rules": [
+    ```json title="sample.nsxt"
     {
-      "action": "ALLOW",
-      "resource_type": "Rule",
-      "display_name": "allow-ssh",
-      "source_groups": [
-        "10.0.0.0/24",
-        "192.168.10.0/24"
-      ],
-      "destination_groups": [
-        "ANY"
-      ],
-      "services": [
-        "ANY"
-      ],
-      "profiles": [
-        "ANY"
-      ],
-      "scope": [
-        "ANY"
-      ],
-      "logged": false,
-      "notes": "Allow SSH from the management network.",
-      "direction": "IN_OUT",
-      "ip_protocol": "IPV4_IPV6",
-      "service_entries": [
+      "rules": [
         {
-          "l4_protocol": "TCP",
-          "resource_type": "L4PortSetServiceEntry",
-          "destination_ports": [
-            "22-22"
+          "action": "ALLOW",
+          "resource_type": "Rule",
+          "display_name": "allow-ssh",
+          "source_groups": [
+            "10.0.0.0/24",
+            "192.168.10.0/24"
+          ],
+          "destination_groups": [
+            "ANY"
+          ],
+          "services": [
+            "ANY"
+          ],
+          "profiles": [
+            "ANY"
+          ],
+          "scope": [
+            "ANY"
+          ],
+          "logged": false,
+          "notes": "Allow SSH from the management network.",
+          "direction": "IN_OUT",
+          "ip_protocol": "IPV4_IPV6",
+          "service_entries": [
+            {
+              "l4_protocol": "TCP",
+              "resource_type": "L4PortSetServiceEntry",
+              "destination_ports": [
+                "22-22"
+              ]
+            }
           ]
+        },
+        {
+          "action": "DROP",
+          "resource_type": "Rule",
+          "display_name": "default-deny",
+          "source_groups": [
+            "ANY"
+          ],
+          "destination_groups": [
+            "ANY"
+          ],
+          "services": [
+            "ANY"
+          ],
+          "profiles": [
+            "ANY"
+          ],
+          "scope": [
+            "ANY"
+          ],
+          "logged": false,
+          "notes": "",
+          "direction": "IN_OUT",
+          "ip_protocol": "IPV4_IPV6"
         }
-      ]
-    },
-    {
-      "action": "DROP",
-      "resource_type": "Rule",
-      "display_name": "default-deny",
-      "source_groups": [
-        "ANY"
       ],
-      "destination_groups": [
-        "ANY"
-      ],
-      "services": [
-        "ANY"
-      ],
-      "profiles": [
-        "ANY"
-      ],
+      "resource_type": "SecurityPolicy",
+      "display_name": "edge-inbound",
+      "id": "edge-inbound",
+      "category": "Application",
+      "is_default": "false",
       "scope": [
         "ANY"
-      ],
-      "logged": false,
-      "notes": "",
-      "direction": "IN_OUT",
-      "ip_protocol": "IPV4_IPV6"
+      ]
     }
-  ],
-  "resource_type": "SecurityPolicy",
-  "display_name": "edge-inbound",
-  "id": "edge-inbound",
-  "category": "Application",
-  "is_default": "false",
-  "scope": [
-    "ANY"
-  ]
-}
-```
+    ```
 
 ## Known Issues
 

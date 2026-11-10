@@ -78,126 +78,126 @@ Each policy file renders to one file with the same name and a `.gcphf` extension
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        gcp_hf: org-policy
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            gcp_hf: org-policy
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.gcphf"
-[
-  {
-    "displayName": "org-policy",
-    "rules": [
+    ```json title="sample.gcphf"
+    [
       {
-        "action": "allow",
-        "description": "allow-ssh: Allow SSH from the management network.",
-        "direction": "INGRESS",
-        "enableLogging": false,
-        "match": {
-          "config": {
-            "layer4Configs": [
-              {
-                "ipProtocol": "tcp",
-                "ports": [
-                  "22"
+        "displayName": "org-policy",
+        "rules": [
+          {
+            "action": "allow",
+            "description": "allow-ssh: Allow SSH from the management network.",
+            "direction": "INGRESS",
+            "enableLogging": false,
+            "match": {
+              "config": {
+                "layer4Configs": [
+                  {
+                    "ipProtocol": "tcp",
+                    "ports": [
+                      "22"
+                    ]
+                  }
+                ],
+                "srcIpRanges": [
+                  "10.0.0.0/24",
+                  "192.168.10.0/24"
                 ]
-              }
-            ],
-            "srcIpRanges": [
-              "10.0.0.0/24",
-              "192.168.10.0/24"
-            ]
+              },
+              "versionedExpr": "FIREWALL"
+            },
+            "priority": 1
           },
-          "versionedExpr": "FIREWALL"
-        },
-        "priority": 1
-      },
-      {
-        "action": "deny",
-        "description": "default-deny: ",
-        "direction": "INGRESS",
-        "enableLogging": false,
-        "match": {
-          "config": {
-            "layer4Configs": [
-              {
-                "ipProtocol": "all"
-              }
-            ],
-            "srcIpRanges": [
-              "0.0.0.0/0"
-            ]
-          },
-          "versionedExpr": "FIREWALL"
-        },
-        "priority": 2
-      }
-    ],
-    "type": "FIREWALL"
-  }
-]
-```
-
-#### Logging
-
-The sample `allow-ssh` term with `logging`. It uses the sample definitions.
-
-```yaml title="logging.yaml"
-filters:
-  - header:
-      targets:
-        gcp_hf: org-policy
-    terms:
-      - name: allow-ssh
-        comment: "Allow SSH from the management network."
-        source-address: MGMT
-        protocol: tcp
-        destination-port: SSH
-        logging: true
-        action: accept
-```
-
-```json title="logging.gcphf"
-[
-  {
-    "displayName": "org-policy",
-    "rules": [
-      {
-        "action": "allow",
-        "description": "allow-ssh: Allow SSH from the management network.",
-        "direction": "INGRESS",
-        "enableLogging": true,
-        "match": {
-          "config": {
-            "layer4Configs": [
-              {
-                "ipProtocol": "tcp",
-                "ports": [
-                  "22"
+          {
+            "action": "deny",
+            "description": "default-deny: ",
+            "direction": "INGRESS",
+            "enableLogging": false,
+            "match": {
+              "config": {
+                "layer4Configs": [
+                  {
+                    "ipProtocol": "all"
+                  }
+                ],
+                "srcIpRanges": [
+                  "0.0.0.0/0"
                 ]
-              }
-            ],
-            "srcIpRanges": [
-              "10.0.0.0/24",
-              "192.168.10.0/24"
-            ]
-          },
-          "versionedExpr": "FIREWALL"
-        },
-        "priority": 1
+              },
+              "versionedExpr": "FIREWALL"
+            },
+            "priority": 2
+          }
+        ],
+        "type": "FIREWALL"
       }
-    ],
-    "type": "FIREWALL"
-  }
-]
-```
+    ]
+    ```
+
+=== "Logging"
+
+    The sample `allow-ssh` term with `logging`. It uses the sample definitions.
+
+    ```yaml title="logging.yaml"
+    filters:
+      - header:
+          targets:
+            gcp_hf: org-policy
+        terms:
+          - name: allow-ssh
+            comment: "Allow SSH from the management network."
+            source-address: MGMT
+            protocol: tcp
+            destination-port: SSH
+            logging: true
+            action: accept
+    ```
+
+    ```json title="logging.gcphf"
+    [
+      {
+        "displayName": "org-policy",
+        "rules": [
+          {
+            "action": "allow",
+            "description": "allow-ssh: Allow SSH from the management network.",
+            "direction": "INGRESS",
+            "enableLogging": true,
+            "match": {
+              "config": {
+                "layer4Configs": [
+                  {
+                    "ipProtocol": "tcp",
+                    "ports": [
+                      "22"
+                    ]
+                  }
+                ],
+                "srcIpRanges": [
+                  "10.0.0.0/24",
+                  "192.168.10.0/24"
+                ]
+              },
+              "versionedExpr": "FIREWALL"
+            },
+            "priority": 1
+          }
+        ],
+        "type": "FIREWALL"
+      }
+    ]
+    ```
 
 ## Known Issues
 

@@ -87,80 +87,80 @@ Each filter renders as one `acl-set`:
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        openconfig: edge-inbound inet
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            openconfig: edge-inbound inet
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```json title="sample.oacl"
-[
-  {
-    "acl-entries": {
-      "acl-entry": [
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
+    ```json title="sample.oacl"
+    [
+      {
+        "acl-entries": {
+          "acl-entry": [
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "ACCEPT"
+                }
+              },
+              "ipv4": {
+                "config": {
+                  "protocol": 6,
+                  "source-address": "10.0.0.0/24"
+                }
+              },
+              "sequence-id": 5,
+              "transport": {
+                "config": {
+                  "destination-port": 22
+                }
+              }
+            },
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "ACCEPT"
+                }
+              },
+              "ipv4": {
+                "config": {
+                  "protocol": 6,
+                  "source-address": "192.168.10.0/24"
+                }
+              },
+              "sequence-id": 10,
+              "transport": {
+                "config": {
+                  "destination-port": 22
+                }
+              }
+            },
+            {
+              "actions": {
+                "config": {
+                  "forwarding-action": "DROP"
+                }
+              },
+              "sequence-id": 15
             }
-          },
-          "ipv4": {
-            "config": {
-              "protocol": 6,
-              "source-address": "10.0.0.0/24"
-            }
-          },
-          "sequence-id": 5,
-          "transport": {
-            "config": {
-              "destination-port": 22
-            }
-          }
+          ]
         },
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "ACCEPT"
-            }
-          },
-          "ipv4": {
-            "config": {
-              "protocol": 6,
-              "source-address": "192.168.10.0/24"
-            }
-          },
-          "sequence-id": 10,
-          "transport": {
-            "config": {
-              "destination-port": 22
-            }
-          }
+        "config": {
+          "name": "edge-inbound",
+          "type": "ACL_IPV4"
         },
-        {
-          "actions": {
-            "config": {
-              "forwarding-action": "DROP"
-            }
-          },
-          "sequence-id": 15
-        }
-      ]
-    },
-    "config": {
-      "name": "edge-inbound",
-      "type": "ACL_IPV4"
-    },
-    "name": "edge-inbound",
-    "type": "ACL_IPV4"
-  }
-]
-```
+        "name": "edge-inbound",
+        "type": "ACL_IPV4"
+      }
+    ]
+    ```
 
 ## Known Issues
 

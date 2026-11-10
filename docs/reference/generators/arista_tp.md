@@ -44,7 +44,7 @@ Destination field-sets currently mix address families; see _[Known Issues](#know
 
 Excluded prefixes that don't fall inside any included prefix are dropped.
 
-For an example, see _[Source exclusion in a mixed filter](#source-exclusion-in-a-mixed-filter)_.
+For an example, see _[Source exclusion in a mixed filter](#examples-source-exclusion-in-a-mixed-filter)_.
 
 ### Ports
 
@@ -56,7 +56,7 @@ EOS adds two built-in terms to every traffic-policy, one per address family: `ip
 
 To set what these terms do, write a term whose name starts with `default-`. Aerleon renames it to `ipv4-default-all` and/or `ipv6-default-all`, according to the header's address family. Give it an action (and optionally `counter` or `logging`) but no match criteria. Only one `default-` term is allowed per filter; a second one causes a duplicate-term error.
 
-For an example, see _[Default deny with a counter](#default-deny-with-a-counter)_.
+For an example, see _[Default deny with a counter](#examples-default-deny-with-a-counter)_.
 
 ### Terms with no match criteria
 
@@ -93,7 +93,7 @@ The following tokens are specific to Arista Traffic-Policy:
 | `source-prefix` | Match a field-set already configured on the device. | `source-prefix: CORP-NETS` | Renders as `source prefix field-set …`. Aerleon does not create the field-set. |
 | `ttl` | Match on TTL. | `ttl: 1` | Renders as `ttl …`. |
 
-For an example, see _[Counting established replies](#counting-established-replies)_.
+For an example, see _[Counting established replies](#examples-counting-established-replies)_.
 
 ## Actions
 
@@ -128,158 +128,158 @@ Each policy file renders to one file with the same name and a `.atp` extension, 
 
 ### Examples
 
-#### Sample policy
+=== "Sample policy"
 
-The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
-```yaml title="sample.yaml"
-filters:
-  - header:
-      targets:
-        arista_tp: edge-inbound
---8<-- "docs/reference/generators.md:sample-terms"
-```
+    ```yaml title="sample.yaml"
+    filters:
+      - header:
+          targets:
+            arista_tp: edge-inbound
+    --8<-- "docs/reference/generators.md:sample-terms"
+    ```
 
-```text title="sample.atp"
-traffic-policies
-   no traffic-policy edge-inbound
-   traffic-policy edge-inbound
-      match allow-ssh ipv4
-         !! Allow SSH from the management network.
-         source prefix 10.0.0.0/24 192.168.10.0/24
-         protocol tcp destination port 22
-      !
-      match ipv4-default-all ipv4
-         actions
-            drop
-      !
-      match ipv6-default-all ipv6
-         actions
-            drop
-      !
-```
+    ```text title="sample.atp"
+    traffic-policies
+       no traffic-policy edge-inbound
+       traffic-policy edge-inbound
+          match allow-ssh ipv4
+             !! Allow SSH from the management network.
+             source prefix 10.0.0.0/24 192.168.10.0/24
+             protocol tcp destination port 22
+          !
+          match ipv4-default-all ipv4
+             actions
+                drop
+          !
+          match ipv6-default-all ipv6
+             actions
+                drop
+          !
+    ```
 
-#### Source exclusion in a mixed filter
+=== "Source exclusion in a mixed filter"
 
-A term with `source-exclude` in a `mixed` filter. Aerleon writes one field-set per address family, and each term matches on its field-set (see _[Address exclusions](#address-exclusions)_).
+    A term with `source-exclude` in a `mixed` filter. Aerleon writes one field-set per address family, and each term matches on its field-set (see _[Address exclusions](#address-exclusions)_).
 
-```yaml title="exclusion.yaml"
-filters:
-  - header:
-      targets:
-        arista_tp: edge-inbound mixed
-    terms:
-      - name: internal-except-host
-        source-address: INTERNAL
-        source-exclude: SOME_HOST
-        action: accept
-```
+    ```yaml title="exclusion.yaml"
+    filters:
+      - header:
+          targets:
+            arista_tp: edge-inbound mixed
+        terms:
+          - name: internal-except-host
+            source-address: INTERNAL
+            source-exclude: SOME_HOST
+            action: accept
+    ```
 
-```yaml title="definitions.yaml"
-networks:
-  INTERNAL:
-    values:
-      - address: 10.0.0.0/8
-      - address: 2001:db8::/32
-  SOME_HOST:
-    values:
-      - address: 10.1.1.1/32
-      - address: 2001:db8::1/128
-```
+    ```yaml title="definitions.yaml"
+    networks:
+      INTERNAL:
+        values:
+          - address: 10.0.0.0/8
+          - address: 2001:db8::/32
+      SOME_HOST:
+        values:
+          - address: 10.1.1.1/32
+          - address: 2001:db8::1/128
+    ```
 
-```text title="exclusion.atp"
-traffic-policies
-   field-set ipv4 prefix src-internal-except-host
-      10.0.0.0/8
-      except 10.1.1.1/32
-   !
-   field-set ipv6 prefix src-ipv6-internal-except-host
-      2001:db8::/32
-      except 2001:db8::1/128
-   !
-   no traffic-policy edge-inbound
-   traffic-policy edge-inbound
-      match internal-except-host ipv4
-         source prefix field-set src-internal-except-host
-      !
-      match ipv6-internal-except-host ipv6
-         source prefix field-set src-ipv6-internal-except-host
-      !
-```
+    ```text title="exclusion.atp"
+    traffic-policies
+       field-set ipv4 prefix src-internal-except-host
+          10.0.0.0/8
+          except 10.1.1.1/32
+       !
+       field-set ipv6 prefix src-ipv6-internal-except-host
+          2001:db8::/32
+          except 2001:db8::1/128
+       !
+       no traffic-policy edge-inbound
+       traffic-policy edge-inbound
+          match internal-except-host ipv4
+             source prefix field-set src-internal-except-host
+          !
+          match ipv6-internal-except-host ipv6
+             source prefix field-set src-ipv6-internal-except-host
+          !
+    ```
 
-#### Default deny with a counter
+=== "Default deny with a counter"
 
-A `default-` term in a `mixed` filter is rendered as both built-in default terms (see _[Default terms](#default-terms)_). `counter` and `logging` are allowed on it.
+    A `default-` term in a `mixed` filter is rendered as both built-in default terms (see _[Default terms](#default-terms)_). `counter` and `logging` are allowed on it.
 
-```yaml title="default.yaml"
-filters:
-  - header:
-      targets:
-        arista_tp: edge-inbound mixed
-    terms:
-      - name: default-deny
-        counter: default-denied
-        logging: true
-        action: deny
-```
+    ```yaml title="default.yaml"
+    filters:
+      - header:
+          targets:
+            arista_tp: edge-inbound mixed
+        terms:
+          - name: default-deny
+            counter: default-denied
+            logging: true
+            action: deny
+    ```
 
-```text title="default.atp"
-traffic-policies
-   no traffic-policy edge-inbound
-   traffic-policy edge-inbound
-   counter default-denied
-      match ipv4-default-all ipv4
-         actions
-            drop
-            log
-            count default-denied
-         !
-      !
-      match ipv6-default-all ipv6
-         actions
-            drop
-            log
-            count default-denied
-         !
-      !
-```
+    ```text title="default.atp"
+    traffic-policies
+       no traffic-policy edge-inbound
+       traffic-policy edge-inbound
+       counter default-denied
+          match ipv4-default-all ipv4
+             actions
+                drop
+                log
+                count default-denied
+             !
+          !
+          match ipv6-default-all ipv6
+             actions
+                drop
+                log
+                count default-denied
+             !
+          !
+    ```
 
-#### Counting established replies
+=== "Counting established replies"
 
-A term that counts SSH replies with `counter` and `option: tcp-established`. It uses `SSH` from the sample definitions.
+    A term that counts SSH replies with `counter` and `option: tcp-established`. It uses `SSH` from the sample definitions.
 
-```yaml title="counter.yaml"
-filters:
-  - header:
-      targets:
-        arista_tp: edge-inbound mixed
-    terms:
-      - name: accept-ssh-replies
-        source-port: SSH
-        protocol: tcp
-        option: tcp-established
-        counter: ssh-replies
-        action: accept
-```
+    ```yaml title="counter.yaml"
+    filters:
+      - header:
+          targets:
+            arista_tp: edge-inbound mixed
+        terms:
+          - name: accept-ssh-replies
+            source-port: SSH
+            protocol: tcp
+            option: tcp-established
+            counter: ssh-replies
+            action: accept
+    ```
 
-```text title="counter.atp"
-traffic-policies
-   no traffic-policy edge-inbound
-   traffic-policy edge-inbound
-   counter ssh-replies
-      match accept-ssh-replies ipv4
-         protocol tcp flags established source port 22
-         actions
-            count ssh-replies
-         !
-      !
-      match ipv6-accept-ssh-replies ipv6
-         protocol tcp flags established source port 22
-         actions
-            count ssh-replies
-         !
-      !
-```
+    ```text title="counter.atp"
+    traffic-policies
+       no traffic-policy edge-inbound
+       traffic-policy edge-inbound
+       counter ssh-replies
+          match accept-ssh-replies ipv4
+             protocol tcp flags established source port 22
+             actions
+                count ssh-replies
+             !
+          !
+          match ipv6-accept-ssh-replies ipv6
+             protocol tcp flags established source port 22
+             actions
+                count ssh-replies
+             !
+          !
+    ```
 
 ## Known Issues
 
