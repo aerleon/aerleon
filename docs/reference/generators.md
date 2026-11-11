@@ -76,7 +76,7 @@ Address families are listed as they are written in the header. The default is in
 | [Speedway](generators/speedway.md) | `speedway` | `iptables-restore` rules | **`inet`**, `inet6` | `.ipt` | Iptables |
 | [SRXlo](generators/srxlo.md) | `srxlo` | Junos filters for SRX loopbacks | as Juniper | `.jsl` | Juniper |
 | [Windows Advanced Firewall](generators/windows_advfirewall.md) | `windows_advfirewall` | `netsh advfirewall` commands | **`inet`**, `inet6` | `.bat` | |
-| [WindowsIPSec](generators/windows_ipsec.md) | `windows_ipsec` | `netsh ipsec` commands. **Not available:** the generator isn't registered. | **`inet`** | `.bat` | |
+| [WindowsIPSec](generators/windows_ipsec.md) | `windows_ipsec` | `netsh ipsec` commands | **`inet`** | `.bat` | |
 
 ## Sample policy
 
@@ -112,7 +112,7 @@ services:
       protocol: tcp
 ```
 
-Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exceptions are _[PcapFilter](generators/pcap.md)_, which `aclgen` currently can't render, and _[WindowsIPSec](generators/windows_ipsec.md)_, which isn't registered. Their pages say how their output was produced.
+Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exception is _[PcapFilter](generators/pcap.md)_, which `aclgen` currently can't render. Its page says how its output was produced.
 
 ## Reference
 
