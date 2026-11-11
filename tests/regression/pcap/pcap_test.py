@@ -110,6 +110,12 @@ term good-term-log {
   action:: accept
 }
 """
+GOOD_TERM_PROTO_TCP = """
+term good-term-proto-tcp {
+  protocol:: tcp
+  action:: accept
+}
+"""
 GOOD_ICMP_CODE = """
 term good_term {
   protocol:: icmp
@@ -359,15 +365,6 @@ class PcapFilter(absltest.TestCase):
         print(result)
 
     @capture.stdout
-    def testLog(self):
-        acl = pcap.PcapFilter(
-            policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_LOG, self.naming), EXP_INFO
-        )
-        result = str(acl)
-        self.assertIn('proto \\tcp', result, 'did not find actual term for good-term-log')
-        print(result)
-
-    @capture.stdout
     def testIcmp(self):
         acl = pcap.PcapFilter(
             policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_ICMP, self.naming), EXP_INFO
@@ -485,7 +482,7 @@ class PcapFilter(absltest.TestCase):
     def testMultiHeader(self):
         acl = pcap.PcapFilter(
             policy.ParsePolicy(
-                GOOD_HEADER + GOOD_TERM_LOG + GOOD_HEADER + GOOD_TERM_ICMP, self.naming
+                GOOD_HEADER + GOOD_TERM_PROTO_TCP + GOOD_HEADER + GOOD_TERM_ICMP, self.naming
             ),
             EXP_INFO,
         )
@@ -501,7 +498,7 @@ class PcapFilter(absltest.TestCase):
     def testDirectional(self):
         acl = pcap.PcapFilter(
             policy.ParsePolicy(
-                GOOD_HEADER_IN + GOOD_TERM_LOG + GOOD_HEADER_OUT + GOOD_TERM_ICMP, self.naming
+                GOOD_HEADER_IN + GOOD_TERM_PROTO_TCP + GOOD_HEADER_OUT + GOOD_TERM_ICMP, self.naming
             ),
             EXP_INFO,
         )
@@ -587,6 +584,10 @@ class PcapFilter(absltest.TestCase):
             '(((src net 10.0.0.0/8) and not (src net 10.1.0.0/24)))\n',
         )
 
+    def testLoggingRejected(self):
+        with self.assertRaises(aclgenerator.UnsupportedFilterError):
+            self._Render(GOOD_HEADER + GOOD_TERM_LOG)
+
     def testDuplicateTermNames(self):
         with self.assertRaises(aclgenerator.DuplicateTermError):
             self._Render(GOOD_HEADER + DUPLICATE_TERMS)
@@ -598,7 +599,7 @@ class PcapFilter(absltest.TestCase):
         )
 
     def testDirectionDoesNotLeakIntoNextFilter(self):
-        result = self._Render(GOOD_HEADER_IN + GOOD_TERM_LOG + GOOD_HEADER + GOOD_TERM_ICMP)
+        result = self._Render(GOOD_HEADER_IN + GOOD_TERM_PROTO_TCP + GOOD_HEADER + GOOD_TERM_ICMP)
         self.assertEqual(result.count('net localhost'), 1)
 
     def testAclgenWritesAcceptAndDenyFiles(self):

@@ -27,7 +27,7 @@ Several headers are joined with `or`.
 These tokens are included from the _[Common](common.md)_ page.
 
 !!! warning "Not supported on PcapFilter"
-    PcapFilter doesn't support `verbatim`. A term that uses it raises an error.
+    PcapFilter doesn't support `logging` or `verbatim`. A term that uses either raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
@@ -38,7 +38,6 @@ PcapFilter also reads:
 | Token | Description | Example | Notes |
 |---|---|---|---|
 | `icmp-code` | ICMP code to match. | `icmp-code: 0` | Adds `icmp[icmpcode] == <code>`. |
-| `logging` | — | | Accepted, but ignored. |
 
 * Terms are matched in order, and the first matching term decides, as on a firewall. The `-accept` file matches packets whose first matching term is `accept`; the `-deny` file matches packets whose first matching term is `deny` or `reject`.
 * A file that matches no packets renders `(len < 0)`, since libpcap has no keyword for false.

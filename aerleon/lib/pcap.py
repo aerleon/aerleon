@@ -326,6 +326,9 @@ class PcapFilter(aclgenerator.ACLGenerator):
     _DEFAULT_PROTOCOL = 'all'
     SUFFIX = '.pcap'
     _TERM = Term
+    # A pcap filter has nothing to log to, so reject logging instead of only
+    # warning about it at debug level.
+    WARN_IF_UNSUPPORTED = aclgenerator.ACLGenerator.WARN_IF_UNSUPPORTED - {'logging'}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize a PcapFilter generator.
