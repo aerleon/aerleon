@@ -48,7 +48,7 @@ test = [
     "pytest-cov>=6.3.0",
 ]
 lint = [
-    "black==26.5.1",
+    "black==26.10.1",
     "flake8",
     "Flake8-pyproject",
     "isort>=6.1.0",
@@ -62,6 +62,7 @@ docs = [
     "mkdocs-version-annotations>=1.0.0",
     "mkdocstrings>=0.29.1",
     "mkdocstrings-python>=1.16.12",
+    "pymdown-extensions>=10.4,<12.2",
 ]
 nox = [
     "nox>=2025.10.14",
