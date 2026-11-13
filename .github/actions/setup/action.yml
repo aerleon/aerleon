@@ -28,7 +28,7 @@ runs:
     - name: Install Poetry
       shell: bash
       run: |
-        pipx install poetry --python "${{ steps.setup-python.outputs.python-path }}"
+        env -u PYTHON_GIL pipx install poetry --python "${{ steps.setup-python.outputs.python-path }}"
         poetry config virtualenvs.create true
         poetry config virtualenvs.in-project true
     #----------------------------------------------
