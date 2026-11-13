@@ -26,10 +26,11 @@ runs:
     #  -----  install & configure poetry  -----
     #----------------------------------------------
     - name: Install Poetry
-      uses: snok/install-poetry@v1.4.1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
+      shell: bash
+      run: |
+        pipx install poetry --python "${{ steps.setup-python.outputs.python-path }}"
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
     #----------------------------------------------
     #       load cached venv if cache exists
     #----------------------------------------------
