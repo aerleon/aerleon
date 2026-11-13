@@ -111,6 +111,7 @@ BUILTIN_GENERATORS: list[tuple] = [
     ('cisconx',              'aerleon.lib.cisconx',              'CiscoNX'),
     ('ciscoxr',              'aerleon.lib.ciscoxr',              'CiscoXR'),
     ('nftables',             'aerleon.lib.nftables',             'Nftables'),
+    ('nokiaeda',             'aerleon.lib.nokiaeda',             'NokiaEDA'),
     ('nokiasrl',             'aerleon.lib.nokiasrl',             'NokiaSRLinux'),
     ('nvueapi',              'aerleon.lib.nvueapi',              'NvueApi'),
     ('gce',                  'aerleon.lib.gce',                  'GCE'),
