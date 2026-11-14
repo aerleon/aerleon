@@ -56,6 +56,12 @@ _MIN_TTL = 0
 ADDRESSBOOK_PLATFORMS = frozenset(['srx', 'fortigate'])
 
 
+def TtlRange(ttl: int | str) -> tuple[int, int]:
+    """Return the (low, high) bounds of a ttl value: an int N or a string 'N-M'."""
+    start, _, end = str(ttl).partition('-')
+    return int(start), int(end or start)
+
+
 class Error(Exception):
     """Generic error class."""
 
@@ -663,6 +669,15 @@ class Term:
                     if shl[0] > ohl[0]:
                         return False
             else:
+                return False
+        # ttl looks like 'integer-integer' or just 'integer'; a ttl term only
+        # contains terms whose ttl range lies within its own
+        if self.ttl is not None:
+            if other.ttl is None:
+                return False
+            s_low, s_high = TtlRange(self.ttl)
+            o_low, o_high = TtlRange(other.ttl)
+            if o_low < s_low or s_high < o_high:
                 return False
         if self.packet_length:
             # packet_length looks like 'integer-integer' or just, 'integer'
@@ -1289,7 +1304,9 @@ class Term:
             elif obj.var_type is VarType.VPN:
                 self.vpn = (obj.value[0], obj.value[1])
             elif obj.var_type is VarType.TTL:
-                self.ttl = int(obj.value)
+                # a single ttl stays an int, as before ranges were supported
+                ttl = str(obj.value)
+                self.ttl = ttl if '-' in ttl else int(ttl)
             elif obj.var_type is VarType.TARGET_RESOURCES:
                 self.target_resources.append(obj.value)
             elif obj.var_type is VarType.TARGET_SERVICE_ACCOUNTS:
@@ -1407,8 +1424,9 @@ class Term:
                         f'Term {self.name} contains an invalid icmp-type:{icmptype}'
                     )
 
-        if self.ttl:
-            if not _MIN_TTL <= self.ttl <= _MAX_TTL:
+        if self.ttl is not None:
+            low, high = TtlRange(self.ttl)
+            if not _MIN_TTL <= low <= high <= _MAX_TTL:
                 raise InvalidTermTTLValue(f'Term {self.name} contains invalid TTL: {self.ttl}')
         for proto in self.protocol:
             if proto.isnumeric():
@@ -2572,8 +2590,12 @@ def p_timeout_spec(p):
 
 
 def p_ttl_spec(p: YaccProduction) -> None:
-    """ttl_spec : TTL ':' ':' INTEGER"""
-    p[0] = VarType(VarType.TTL, p[4])
+    """ttl_spec : TTL ':' ':' INTEGER
+    | TTL ':' ':' INTEGER '-' INTEGER"""
+    if len(p) == 5:
+        p[0] = VarType(VarType.TTL, str(p[4]))
+    else:
+        p[0] = VarType(VarType.TTL, f"{p[4]!s}-{p[6]!s}")
 
 
 def p_filter_term_spec(p):

@@ -61,6 +61,7 @@ class TestRegressionDemo(absltest.TestCase):
             'sample_multitarget.msmpc',
             'sample_multitarget.xacl',
             'sample_multitarget.nxacl',
+            'sample_nokia_sros.sros_acl',
             'sample_nsxv.nsx',
             'sample_nsxt.nsxt',
             'sample_packetfilter.pf',
