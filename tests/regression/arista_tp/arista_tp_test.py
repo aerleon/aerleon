@@ -1292,6 +1292,19 @@ class AristaTpTest(absltest.TestCase):
         self.assertIn("destination prefix field-set dst-ipv6-FS_INET6", output, output)
         print(output)
 
+    def testDstFsMixedFiltersAddressFamily(self):
+        self.naming._ParseLine('INTERNAL = 10.0.0.0/8 2001:db8::/32', 'networks')
+        self.naming._ParseLine('SOME_HOST = 10.1.1.1/32 2001:db8::1/128', 'networks')
+        atp = arista_tp.AristaTrafficPolicy(
+            policy.ParsePolicy(GOOD_MIXED_HEADER + DST_FIELD_SET_MIXED, self.naming), EXP_INFO
+        )
+
+        output = str(atp)
+        self.assertEqual(output.count('10.0.0.0/8'), 1, output)
+        self.assertEqual(output.count('10.1.1.1/32'), 1, output)
+        self.assertEqual(output.count('2001:db8::/32'), 1, output)
+        self.assertEqual(output.count('2001:db8::1/128'), 1, output)
+
     @capture.stdout
     def testDstFsMixed(self):
         self.naming._ParseLine(
