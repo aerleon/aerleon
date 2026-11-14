@@ -20,7 +20,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Literal, TypeAlias, TypedDict
+from typing import Final, Literal, TypeAlias, TypedDict
 
 from typing_extensions import Self
 
@@ -45,12 +45,24 @@ class AddressError(Error):
     """Incorrect IP address or format."""
 
 
+class TcpFlagsError(Error):
+    """Unknown TCP flag name."""
+
+
 class BadPolicyError(Error):
     """Item is not a valid policy object."""
 
 
 class NoTargetError(Error):
     """Specified target platform not available in specified policy."""
+
+
+# Flags a packet can carry, as accepted by AclCheck(tcp_flags=...).
+TCP_FLAGS: Final = frozenset({"fin", "syn", "rst", "psh", "ack", "urg", "ece", "cwr"})
+
+# Term options that require the named flag to be set, as rendered by the iptables
+# generator (--tcp-flags FLAG FLAG).
+_TCP_FLAG_OPTIONS: Final = frozenset({"fin", "syn", "rst", "psh", "ack", "urg"})
 
 
 class AclCheck:
@@ -102,6 +114,9 @@ class AclCheck:
         proto: str | Literal["any"],
         source_zone: str | Literal["any"] | None = None,
         destination_zone: str | Literal["any"] | None = None,
+        icmp_type: str | None = None,
+        icmp_code: int | None = None,
+        tcp_flags: Collection[str] | None = None,
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
@@ -114,6 +129,9 @@ class AclCheck:
             proto,
             source_zone or 'any',
             destination_zone or 'any',
+            icmp_type,
+            icmp_code,
+            tcp_flags,
         )
 
     def __init__(
@@ -126,9 +144,28 @@ class AclCheck:
         proto: str | Literal["any"] = 'any',
         source_zone: str | Literal["any"] = 'any',
         destination_zone: str | Literal["any"] = 'any',
+        icmp_type: str | None = None,
+        icmp_code: int | None = None,
+        tcp_flags: Collection[str] | None = None,
     ) -> None:
 
         self.pol_obj = pol
+
+        # icmp type of the packet; terms with an icmp-type that excludes it do not match.
+        # None leaves icmp-type unevaluated: terms match whatever their icmp-type.
+        self.icmp_type = icmp_type
+
+        # icmp code of the packet; terms with an icmp-code that excludes it do not match.
+        self.icmp_code = None if icmp_code is None else int(icmp_code)
+
+        # tcp flags set on the packet; terms whose flag options it does not satisfy do not
+        # match. None leaves flag options unevaluated: terms match whatever their options.
+        if tcp_flags is None:
+            self.tcp_flags = None
+        else:
+            self.tcp_flags = frozenset(flag.lower() for flag in tcp_flags)
+            if unknown := self.tcp_flags - TCP_FLAGS:
+                raise TcpFlagsError(f'unknown tcp flags: {sorted(unknown)}')
 
         # validate proto
         if proto is None:
@@ -252,6 +289,26 @@ class AclCheck:
                     continue
                 logging.debug('proto matches: %s', self.proto)
 
+                if (
+                    self.icmp_type is not None
+                    and term.icmp_type
+                    and self.icmp_type not in term.icmp_type
+                ):
+                    logging.debug('icmp type does not match')
+                    continue
+
+                if (
+                    self.icmp_code is not None
+                    and term.icmp_code
+                    and self.icmp_code not in term.icmp_code
+                ):
+                    logging.debug('icmp code does not match')
+                    continue
+
+                if self.tcp_flags is not None and not self._TcpFlagsMatch(term.option):
+                    logging.debug('tcp flags do not satisfy term options')
+                    continue
+
                 if term.protocol_except and self.proto in term.protocol_except:
                     logging.debug('protocol excepted by term, no match.')
                     continue
@@ -367,11 +424,37 @@ class AclCheck:
             ret_str.append('frag-offset')
         if term.packet_length:
             ret_str.append('packet-length')
-        if 'established' in term.option:
+        # With tcp_flags, tcp-established is evaluated against the flags (see _TcpFlagsMatch),
+        # and so is established for a tcp packet.
+        tcp_flags_evaluated = self.tcp_flags is not None
+        if 'established' in term.option and not (tcp_flags_evaluated and self.proto == 'tcp'):
             ret_str.append('est')
-        if 'tcp-established' in term.option and 'tcp' in term.protocol:
+        if 'tcp-established' in term.option and 'tcp' in term.protocol and not tcp_flags_evaluated:
             ret_str.append('tcp-est')
         return ret_str
+
+    def _TcpFlagsMatch(self, options: Collection[str]) -> bool:
+        """Whether the packet's tcp flags satisfy the term's flag options.
+
+        Options that name a flag (syn, ack, ...) require it to be set. initial and
+        tcp-initial require SYN set and ACK, RST and FIN clear (iptables --syn).
+        tcp-established, and established for a tcp packet, require ACK set, or RST set with SYN,
+        FIN and ACK clear (the stateless match the iptables generator renders). The high
+        destination ports some generators add for established are not modeled.
+        """
+        assert self.tcp_flags is not None
+        flags = self.tcp_flags
+        for option in options:
+            if option in _TCP_FLAG_OPTIONS:
+                if option not in flags:
+                    return False
+            elif option in ('initial', 'tcp-initial'):
+                if 'syn' not in flags or flags & {'ack', 'rst', 'fin'}:
+                    return False
+            elif option == 'tcp-established' or (option == 'established' and self.proto == 'tcp'):
+                if 'ack' not in flags and not ('rst' in flags and not flags & {'syn', 'fin'}):
+                    return False
+        return True
 
     def _ZoneMatch(self, zone: str | Literal["any"], term_zone: Collection[str]) -> bool:
         """Check if zone matches term zone.

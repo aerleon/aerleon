@@ -33,6 +33,9 @@ The `aclcheck` tool accepts the following arguments:
 *   `--sport, --source-port PORT`: Source port. Defaults to `1025`.
 *   `--source-zone ZONE`: Source security/zone identifier. When provided, `AclCheck` will only match terms that either have no `source-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
 *   `--destination-zone ZONE`: Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).
+*   `--icmp-type TYPE`: ICMP type of the packet, e.g. `echo-request`. When provided, `AclCheck` will skip terms whose `icmp-type` does not include it. Without it, `icmp-type` is not evaluated and a term matches whatever its `icmp-type`.
+*   `--icmp-code CODE`: ICMP code of the packet. When provided, `AclCheck` will skip terms whose `icmp-code` does not include it.
+*   `--tcp-flags FLAGS`: Comma-separated TCP flags set on the packet, e.g. `syn,ack` (`fin`, `syn`, `rst`, `psh`, `ack`, `urg`, `ece`, `cwr`). When provided, `AclCheck` will skip terms whose flag options the packet does not satisfy: a flag option (`syn`, `ack`, `rst`, `fin`, `psh`, `urg`) requires that flag to be set, `initial` and `tcp-initial` require `syn` set with `ack`, `rst` and `fin` clear, and `tcp-established` (and `established` for a TCP packet) require `ack` set, or `rst` set with `syn`, `fin` and `ack` clear. Without it, these options are not evaluated and `tcp-established` is reported as a possible match.
 
 ### Detailed Example
 

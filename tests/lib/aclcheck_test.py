@@ -357,6 +357,155 @@ class AclCheckTest(absltest.TestCase):
         self.assertEmpty(matches[0].possibles)
 
 
+PACKET_CONDITIONS_POLICY_TEST: Final[str] = """
+header {
+  comment:: "icmp and tcp flag option test acl"
+  target:: juniper test-filter
+}
+term drop-redirect {
+  protocol:: icmp
+  icmp-type:: redirect
+  action:: deny
+}
+term drop-port-unreachable {
+  protocol:: icmp
+  icmp-type:: unreachable
+  icmp-code:: 3
+  action:: deny
+}
+term allow-icmp {
+  protocol:: icmp
+  action:: accept
+}
+term allow-ssh-syn {
+  protocol:: tcp
+  destination-port:: SSH
+  option:: syn
+  action:: accept
+}
+term allow-http-initial {
+  protocol:: tcp
+  destination-port:: HTTP
+  option:: tcp-initial
+  action:: accept
+}
+term allow-dns-established {
+  protocol:: tcp udp
+  destination-port:: DNS
+  option:: established
+  action:: accept
+}
+term allow-tcp-established {
+  protocol:: tcp
+  option:: tcp-established
+  action:: accept
+}
+term default-term {
+  action:: deny
+}
+"""
+
+
+class PacketConditionsTest(absltest.TestCase):
+    """icmp_type, icmp_code and tcp_flags evaluate the conditions they describe when given."""
+
+    def setUp(self):
+        super().setUp()
+        self.defs = naming.Naming(None)
+        self.defs.ParseServiceList(['SSH = 22/tcp', 'HTTP = 80/tcp', 'DNS = 53/tcp 53/udp'])
+        self.defs.ParseNetworkList(['NET10 = 10.0.0.0/8'])
+        self.pol = policy.ParsePolicy(PACKET_CONDITIONS_POLICY_TEST, self.defs)
+
+    def terms(self, **kwargs) -> list[tuple[str, list[str]]]:
+        check = aclcheck.AclCheck(self.pol, src="10.1.1.1", dst="10.2.2.2", **kwargs)
+        return [(m.term, m.possibles) for m in check.Matches()]
+
+    def test_conditions_are_not_evaluated_by_default(self):
+        self.assertEqual(self.terms(proto="icmp"), [("drop-redirect", [])])
+        self.assertEqual(self.terms(proto="tcp", dport="22"), [("allow-ssh-syn", [])])
+        self.assertEqual(
+            self.terms(proto="tcp", dport="443"),
+            [("allow-tcp-established", ["tcp-est"]), ("default-term", [])],
+        )
+
+    def test_icmp_type_selects_the_matching_terms(self):
+        self.assertEqual(self.terms(proto="icmp", icmp_type="redirect"), [("drop-redirect", [])])
+        self.assertEqual(self.terms(proto="icmp", icmp_type="echo-request"), [("allow-icmp", [])])
+
+    def test_icmp_code_selects_the_matching_terms(self):
+        self.assertEqual(
+            self.terms(proto="icmp", icmp_type="unreachable", icmp_code=3),
+            [("drop-port-unreachable", [])],
+        )
+        self.assertEqual(
+            self.terms(proto="icmp", icmp_type="unreachable", icmp_code=1), [("allow-icmp", [])]
+        )
+
+    def test_flag_option_requires_the_flag(self):
+        self.assertEqual(
+            self.terms(proto="tcp", dport="22", tcp_flags={"syn", "psh"}),
+            [("allow-ssh-syn", [])],
+        )
+        self.assertEqual(
+            self.terms(proto="tcp", dport="22", tcp_flags={"ack"}),
+            [("allow-tcp-established", [])],
+        )
+
+    def test_initial_requires_syn_without_ack_rst_fin(self):
+        for flags in ({"syn"}, {"syn", "psh"}, {"SYN"}):
+            self.assertEqual(
+                self.terms(proto="tcp", dport="80", tcp_flags=flags), [("allow-http-initial", [])]
+            )
+        for flags in ({"syn", "ack"}, {"syn", "rst"}, {"syn", "fin"}, {"ack"}, set()):
+            matched = [t for t, _ in self.terms(proto="tcp", dport="80", tcp_flags=flags)]
+            self.assertNotIn("allow-http-initial", matched)
+
+    def test_tcp_established_requires_ack_or_a_bare_rst(self):
+        established = (
+            {"ack"},
+            {"syn", "ack"},
+            {"psh", "ack"},
+            {"rst"},
+            {"rst", "psh"},
+            {"rst", "ack"},
+        )
+        for flags in established:
+            self.assertEqual(
+                self.terms(proto="tcp", dport="443", tcp_flags=flags),
+                [("allow-tcp-established", [])],
+                flags,
+            )
+        for flags in ({"syn"}, {"fin"}, {"psh"}, {"syn", "rst"}, {"rst", "fin"}, set()):
+            terms = self.terms(proto="tcp", dport="443", tcp_flags=flags)
+            self.assertEqual(terms, [("default-term", [])], flags)
+
+    def test_established_is_evaluated_for_tcp_and_possible_otherwise(self):
+        self.assertEqual(
+            self.terms(proto="tcp", dport="53", tcp_flags={"ack"}),
+            [("allow-dns-established", [])],
+        )
+        self.assertEqual(
+            self.terms(proto="tcp", dport="53", tcp_flags={"syn"}), [("default-term", [])]
+        )
+        self.assertEqual(
+            self.terms(proto="tcp", dport="53"),
+            [
+                ("allow-dns-established", ["est"]),
+                ("allow-tcp-established", ["tcp-est"]),
+                ("default-term", []),
+            ],
+        )
+        # no flags for a udp packet, so established stays a possible match
+        self.assertEqual(
+            self.terms(proto="udp", dport="53"),
+            [("allow-dns-established", ["est"]), ("default-term", [])],
+        )
+
+    def test_unknown_tcp_flag_is_rejected(self):
+        with self.assertRaises(aclcheck.TcpFlagsError):
+            self.terms(proto="tcp", tcp_flags={"syn", "bogus"})
+
+
 @pytest.mark.parametrize(
     "mode,source_zone,destination_zone,expected",
     [

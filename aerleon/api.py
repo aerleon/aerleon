@@ -214,7 +214,7 @@ import multiprocessing.managers
 import multiprocessing.pool
 import pathlib
 import sys
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import Collection, MutableMapping, MutableSequence
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal, Optional
 
@@ -498,6 +498,9 @@ def AclCheck(
     proto: str | Literal["any"] | None = "any",
     source_zone: str | Literal["any"] = "any",
     destination_zone: str | Literal["any"] = "any",
+    icmp_type: str | None = None,
+    icmp_code: int | None = None,
+    tcp_flags: Collection[str] | None = None,
 ):
     filename = input_policy.get("filename")
     try:
@@ -512,6 +515,9 @@ def AclCheck(
             proto if proto is not None else "any",
             source_zone,
             destination_zone,
+            icmp_type,
+            icmp_code,
+            tcp_flags,
         )
         return check.Summarize()
     except (policy.Error, naming.Error) as e:

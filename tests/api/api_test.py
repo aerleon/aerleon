@@ -278,6 +278,46 @@ class ApiTest(absltest.TestCase):
             msg=f"Unexpected log messages: {relevant_logs}",
         )
 
+    def testAclCheckPacketConditions(self):
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(
+            {"networks": {"NET10": {"values": [{"address": "10.0.0.0/8"}]}}}, "blah"
+        )
+        policy_dict = {
+            "filters": [
+                {
+                    "header": {"targets": {"juniper": "test-filter"}},
+                    "terms": [
+                        {
+                            "name": "drop-redirect",
+                            "protocol": "icmp",
+                            "icmp-type": "redirect",
+                            "action": "deny",
+                        },
+                        {"name": "allow-icmp", "protocol": "icmp", "action": "accept"},
+                        {
+                            "name": "allow-syn",
+                            "protocol": "tcp",
+                            "option": "syn",
+                            "action": "accept",
+                        },
+                        {"name": "default-term", "action": "deny"},
+                    ],
+                }
+            ]
+        }
+
+        summary = api.AclCheck(policy_dict, definitions, src="10.1.1.1", proto="icmp")
+        self.assertEqual(list(summary["test-filter"]), ["drop-redirect"])
+        summary = api.AclCheck(
+            policy_dict, definitions, src="10.1.1.1", proto="icmp", icmp_type="echo-request"
+        )
+        self.assertEqual(list(summary["test-filter"]), ["allow-icmp"])
+        summary = api.AclCheck(
+            policy_dict, definitions, src="10.1.1.1", proto="tcp", tcp_flags=["ack"]
+        )
+        self.assertEqual(list(summary["test-filter"]), ["default-term"])
+
     @capture.stdout
     def testDocsExample(self):
         USE_MAIL_SERVER_SET = 1
