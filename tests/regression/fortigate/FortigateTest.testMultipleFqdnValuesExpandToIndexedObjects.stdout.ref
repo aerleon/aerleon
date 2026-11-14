@@ -1,0 +1,25 @@
+config firewall address
+    edit MULTI_FQDN_0
+        set type fqdn
+        set fqdn "a.example.com"
+    next
+    edit MULTI_FQDN_1
+        set type fqdn
+        set fqdn "b.example.com"
+    next
+end
+config firewall addrgrp
+end
+config firewall policy
+    edit 1
+        set name "multi"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "MULTI_FQDN_0" "MULTI_FQDN_1"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic disable
+    next
+end
