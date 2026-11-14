@@ -103,6 +103,33 @@ term default-term {
 }
 """
 
+ALL_MATCH_POLICY_TEST: Final[
+    str
+] = """
+header {
+  comment:: "test for 'all' matching"
+  target:: juniper test-filter
+}
+term term-specific {
+  source-address:: NET10_1_1
+  destination-address:: NET10_1_1
+  source-port:: SSH
+  destination-port:: SSH
+  source-zone:: zone1
+  destination-zone:: zone1
+  protocol:: tcp
+  action:: accept
+}
+term term-broad {
+  source-address:: NET10
+  destination-address:: NET10
+  action:: accept
+}
+term default-term {
+  action:: reject
+}
+"""
+
 
 class AclCheckTest(absltest.TestCase):
     def setUp(self):
@@ -152,11 +179,11 @@ class AclCheckTest(absltest.TestCase):
         self.assertEqual(matches[2].action, 'accept')  # term-3
 
         # Check for correct 'possibles'
-        self.assertEqual(matches[0].possibles, [])  # term-1
+        self.assertEmpty(matches[0].possibles)  # term-1
         self.assertEqual(
-            matches[1].possibles, ['first-frag', 'frag-offset', 'packet-length', 'tcp-est']
+            matches[1].possibles, {'first-frag', 'frag-offset', 'packet-length', 'tcp-est'}
         )  # term-2
-        self.assertEqual(matches[2].possibles, [])  # term-3
+        self.assertEmpty(matches[2].possibles)  # term-3
 
         # Check which term names match
         self.assertEqual(matches[0].term, 'term-1')
@@ -291,11 +318,11 @@ class AclCheckTest(absltest.TestCase):
         matches = check.Matches()
         self.assertLen(matches, 4)
         self.assertEqual(matches[0].term, 'term-small')
-        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[0].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[1].term, 'term-medium')
-        self.assertEqual(matches[1].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[2].term, 'term-large')
-        self.assertEqual(matches[2].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[2].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[3].term, "default-term")
 
         check = aclcheck.AclCheck(
@@ -306,9 +333,9 @@ class AclCheckTest(absltest.TestCase):
         matches = check.Matches()
         self.assertLen(matches, 3)
         self.assertEqual(matches[0].term, 'term-small')
-        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[0].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[1].term, 'term-medium')
-        self.assertEqual(matches[1].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[1].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[2].term, 'term-large')
         self.assertEmpty(matches[2].possibles)
 
@@ -320,7 +347,7 @@ class AclCheckTest(absltest.TestCase):
         matches = check.Matches()
         self.assertLen(matches, 2)
         self.assertEqual(matches[0].term, 'term-small')
-        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[0].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[1].term, 'term-medium')
         self.assertEmpty(matches[1].possibles)
 
@@ -332,7 +359,7 @@ class AclCheckTest(absltest.TestCase):
         matches = check.Matches()
         self.assertLen(matches, 2)
         self.assertEqual(matches[0].term, 'term-small')
-        self.assertEqual(matches[0].possibles, ['source-ip', 'destination-ip'])
+        self.assertEqual(matches[0].possibles, {'source-ip', 'destination-ip'})
         self.assertEqual(matches[1].term, 'term-medium')
         self.assertEmpty(matches[1].possibles)
 
@@ -355,6 +382,66 @@ class AclCheckTest(absltest.TestCase):
         self.assertLen(matches, 1)
         self.assertEqual(matches[0].term, 'term-small')
         self.assertEmpty(matches[0].possibles)
+
+    def test_all_matching(self) -> None:
+        defs = naming.Naming(None)
+        networkdata = ["NET10_1_1 = 10.1.1.0/24", "NET10_1 = 10.1.0.0/16", "NET10 = 10.0.0.0/8"]
+        defs.ParseNetworkList(networkdata)
+        servicedata = ["SSH = 22/tcp"]
+        defs.ParseServiceList(servicedata)
+
+        pol = policy.ParsePolicy(ALL_MATCH_POLICY_TEST, defs)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="all",
+            dst="all",
+            sport="all",
+            dport="all",
+            proto="all",
+            source_zone="all",
+            destination_zone="all",
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 3)
+        self.assertEqual(matches[0].term, 'term-specific')
+        self.assertEqual(
+            matches[0].possibles,
+            {
+                'destination-ip',
+                'destination-port',
+                'destination-zone',
+                'protocol',
+                'source-ip',
+                'source-port',
+                'source-zone',
+            },
+        )
+        self.assertEqual(matches[1].term, 'term-broad')
+        self.assertEqual(matches[1].possibles, {'destination-ip', 'source-ip'})
+        self.assertEqual(matches[2].term, 'default-term')
+        self.assertEmpty(matches[2].possibles)
+
+        check = aclcheck.AclCheck(
+            pol,
+            src="10.1.1.5",
+            dst="10.1.1.5",
+            sport="all",
+            dport="all",
+            proto="tcp",
+        )
+        matches = check.Matches()
+        self.assertLen(matches, 2)
+        self.assertEqual(matches[0].term, 'term-specific')
+        self.assertEqual(
+            matches[0].possibles,
+            {
+                'destination-port',
+                'source-port',
+            },
+        )
+        self.assertEqual(matches[1].term, 'term-broad')
+        self.assertEmpty(matches[1].possibles)
 
 
 @pytest.mark.parametrize(

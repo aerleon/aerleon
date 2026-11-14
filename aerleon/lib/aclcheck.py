@@ -18,7 +18,7 @@
 
 import logging
 from collections import defaultdict
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Sequence, Set
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Literal, TypeAlias, TypedDict
 
@@ -29,6 +29,12 @@ from aerleon.lib import nacaddr, naming, policy, policy_builder, port
 PossibleMatchReason: TypeAlias = Literal[
     "source-ip",
     "destination-ip",
+    "source-port",
+    "destination-port",
+    "protocol",
+    "protocol-except",
+    "source-zone",
+    "destination-zone",
     "first-frag",
     "frag-offset",
     "packet-length",
@@ -51,6 +57,13 @@ class BadPolicyError(Error):
 
 class NoTargetError(Error):
     """Specified target platform not available in specified policy."""
+
+
+class UnreachableMatchCaseError(AssertionError):
+    """Unreachable match case hit - should be impossible"""
+
+    def __init__(self, value):
+        super().__init__(f"Unreachable match case hit: {value!r}")
 
 
 class AclCheck:
@@ -79,13 +92,13 @@ class AclCheck:
 
     pol_obj: policy.Policy
 
-    src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
-    dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"]
-    sport: int | Literal["any"]
-    dport: int | Literal["any"]
-    proto: str | Literal["any"]
-    source_zone: str | Literal["any"]
-    destination_zone: str | Literal["any"]
+    src: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any", "all"]
+    dst: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any", "all"]
+    sport: int | Literal["any", "all"]
+    dport: int | Literal["any", "all"]
+    proto: str | Literal["any", "all"]
+    source_zone: str | Literal["any", "all"]
+    destination_zone: str | Literal["any", "all"]
 
     matches: list["Match"]
     exact_matches: list["Match"]
@@ -95,13 +108,13 @@ class AclCheck:
         cls,
         policy_dict: policy_builder.PolicyDict,
         definitions: naming.Naming,
-        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
-        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"],
-        sport: int | str | Literal["any"],
-        dport: int | str | Literal["any"],
-        proto: str | Literal["any"],
-        source_zone: str | Literal["any"] | None = None,
-        destination_zone: str | Literal["any"] | None = None,
+        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any", "all"],
+        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any", "all"],
+        sport: int | str | Literal["any", "all"],
+        dport: int | str | Literal["any", "all"],
+        proto: str | Literal["any", "all"],
+        source_zone: str | Literal["any", "all"] | None = None,
+        destination_zone: str | Literal["any", "all"] | None = None,
     ) -> Self:
         """Construct an AclCheck object from a PolicyDict + Naming object."""
         policy_obj = policy.FromBuilder(policy_builder.PolicyBuilder(policy_dict, definitions))
@@ -119,13 +132,17 @@ class AclCheck:
     def __init__(
         self,
         pol: policy.Policy,
-        src: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
-        dst: IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any"] = 'any',
-        sport: int | str | Literal["any"] = 'any',
-        dport: int | str | Literal["any"] = 'any',
-        proto: str | Literal["any"] = 'any',
-        source_zone: str | Literal["any"] = 'any',
-        destination_zone: str | Literal["any"] = 'any',
+        src: (
+            IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any", "all"]
+        ) = 'any',
+        dst: (
+            IPv4Address | IPv6Address | IPv4Network | IPv6Network | str | Literal["any", "all"]
+        ) = 'any',
+        sport: int | str | Literal["any", "all"] = 'any',
+        dport: int | str | Literal["any", "all"] = 'any',
+        proto: str | Literal["any", "all"] = 'any',
+        source_zone: str | Literal["any", "all"] = 'any',
+        destination_zone: str | Literal["any", "all"] = 'any',
     ) -> None:
 
         self.pol_obj = pol
@@ -139,18 +156,24 @@ class AclCheck:
         # validate source port
         if not sport or sport == 'any':
             self.sport = 'any'
+        elif sport == 'all':
+            self.sport = 'all'
         else:
             self.sport = port.Port(sport)
 
         # validate destination port
         if not dport or dport == 'any':
             self.dport = 'any'
+        elif dport == 'all':
+            self.dport = 'all'
         else:
             self.dport = port.Port(dport)
 
         # validate source address
         if not src or src == 'any':
             self.src = 'any'
+        elif src == 'all':
+            self.src = 'all'
         else:
             try:
                 self.src = nacaddr.IP(src)
@@ -160,6 +183,8 @@ class AclCheck:
         # validate destination address
         if not dst or dst == 'any':
             self.dst = 'any'
+        elif dst == 'all':
+            self.dst = 'all'
         else:
             try:
                 self.dst = nacaddr.IP(dst)
@@ -186,83 +211,115 @@ class AclCheck:
         for header, terms in self.pol_obj.filters:
             filtername = header.target[0].options[0]
             for term in terms:
-                possible = []
+                possible: set[PossibleMatchReason] = set()
+                """Reasons a term may/may not match, depending on more specific information or context"""
+
                 logging.debug('checking term: %s', term.name)
 
                 match self._AddrMatch(self.src, term.source_address):
                     case "full":
-                        src_too_broad = False
                         logging.debug('srcaddr matches: %s', self.src)
                     case "partial":
-                        src_too_broad = True
+                        possible.add('source-ip')
                         logging.debug('srcaddr too broadly matches: %s', self.src)
                     case False:
                         logging.debug('srcaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 match self._AddrMatch(self.dst, term.destination_address):
                     case "full":
-                        dst_too_broad = False
                         logging.debug('dstaddr matches: %s', self.dst)
                     case "partial":
-                        dst_too_broad = True
+                        possible.add('destination-ip')
                         logging.debug('dstaddr too broadly matches: %s', self.dst)
                     case False:
                         logging.debug('dstaddr does not match')
                         continue
                     case _:
-                        raise AssertionError('unhandled switch case')
+                        raise UnreachableMatchCaseError
 
                 # source-zone matching if requested. If the term does not specify
                 # a source_zone, treat it as 'any' (match all zones).
-                if not self._ZoneMatch(self.source_zone, term.source_zone):
-                    logging.debug('source zone does not match')
-                    continue
-                logging.debug('source zone matches: %s', self.source_zone)
+                match self._ZoneMatch(self.source_zone, term.source_zone):
+                    case "full":
+                        logging.debug('source zone matches: %s', self.source_zone)
+                    case "partial":
+                        possible.add('source-zone')
+                        logging.debug('source zone too broadly matches: %s', self.source_zone)
+                    case False:
+                        logging.debug('source zone does not match')
+                        continue
+                    case _:
+                        raise UnreachableMatchCaseError
 
                 # destination-zone matching if requested. If the term does not specify
                 # a destination_zone, treat it as 'any' (match all zones).
-                if not self._ZoneMatch(self.destination_zone, term.destination_zone):
-                    logging.debug('destination zone does not match')
-                    continue
-                logging.debug('destination zone matches: %s', self.destination_zone)
+                match self._ZoneMatch(self.destination_zone, term.destination_zone):
+                    case "full":
+                        logging.debug('destination zone matches: %s', self.destination_zone)
+                    case "partial":
+                        possible.add('destination-zone')
+                        logging.debug(
+                            'destination zone too broadly matches: %s', self.destination_zone
+                        )
+                    case False:
+                        logging.debug('destination zone does not match')
+                        continue
+                    case _:
+                        raise UnreachableMatchCaseError
 
-                if (
-                    self.sport != 'any'
-                    and term.source_port
-                    and not self._PortInside(self.sport, term.source_port)
-                ):
-                    logging.debug('sport does not match')
-                    continue
-                logging.debug('sport matches: %s', self.sport)
+                match self._PortMatch(self.sport, term.source_port):
+                    case "full":
+                        logging.debug('sport matches: %s', self.sport)
+                    case "partial":
+                        possible.add('source-port')
+                        logging.debug('sport too broadly matches: %s', self.sport)
+                    case False:
+                        logging.debug('sport does not match')
+                        continue
+                    case _:
+                        raise UnreachableMatchCaseError
 
-                if (
-                    self.dport != 'any'
-                    and term.destination_port
-                    and not self._PortInside(self.dport, term.destination_port)
-                ):
-                    logging.debug('dport does not match')
-                    continue
-                logging.debug('dport matches: %s', self.dport)
+                match self._PortMatch(self.dport, term.destination_port):
+                    case "full":
+                        logging.debug('dport matches: %s', self.dport)
+                    case "partial":
+                        possible.add('destination-port')
+                        logging.debug('dport too broadly matches: %s', self.dport)
+                    case False:
+                        logging.debug('dport does not match')
+                        continue
+                    case _:
+                        raise UnreachableMatchCaseError
 
-                if self.proto != 'any' and term.protocol and self.proto not in term.protocol:
+                if not term.protocol or self.proto == "any":
+                    logging.debug('proto matches: %s', self.proto)
+                elif self.proto == "all":
+                    possible.add('protocol')
+                    logging.debug('proto too broadly matches: %s', self.proto)
+                elif self.proto not in term.protocol:
                     logging.debug('proto does not match')
                     continue
-                logging.debug('proto matches: %s', self.proto)
 
-                if term.protocol_except and self.proto in term.protocol_except:
+                if not term.protocol_except:
+                    logging.debug('proto not excepted: %s', self.proto)
+                elif self.proto == "all":
+                    possible.add('protocol-except')
+                    logging.debug(
+                        'proto partially excepted by term, too broadly matches: %s', self.proto
+                    )
+                elif self.proto in term.protocol_except:
                     logging.debug('protocol excepted by term, no match.')
                     continue
-                logging.debug('proto not excepted: %s', self.proto)
 
                 if not term.action:  # avoid any verbatim
                     logging.debug('term had no action (verbatim?), no match.')
                     continue
                 logging.debug('term has an action')
 
-                possible = self._PossibleMatch(term, src_too_broad, dst_too_broad)
+                possible.update(self._PossibleMatch(term))
                 self.matches.append(Match(filtername, term.name, possible, term.action, term.qos))
                 if possible:
                     logging.debug('term has options: %s, not treating as exact match', possible)
@@ -274,7 +331,7 @@ class AclCheck:
                 # we'll never get there we shouldn't report them)
                 if 'next' not in term.action:
                     self.exact_matches.append(
-                        Match(filtername, term.name, [], term.action, term.qos)
+                        Match(filtername, term.name, frozenset(), term.action, term.qos)
                     )
                     break
 
@@ -321,7 +378,7 @@ class AclCheck:
         return '\n'.join(text)
 
     class SummarizeMatchTermDetails(TypedDict):
-        possibles: list[PossibleMatchReason]
+        possibles: frozenset[PossibleMatchReason]
         message: str
 
     def Summarize(
@@ -334,7 +391,7 @@ class AclCheck:
             text: list[str] = []
             if match.possibles:
                 text.append(f"{' ' * 10}term: {match.term} (possible match)")
-                text.append(f"{' ' * 16}{match.action} if {match.possibles}")
+                text.append(f"{' ' * 16}{match.action} if {sorted(match.possibles)}")
             else:
                 text.append(f"{' ' * 10}term: {match.term}")
                 text.append(f"{' ' * 16}{match.action}")
@@ -343,37 +400,31 @@ class AclCheck:
             )
         return summary
 
-    def _PossibleMatch(
-        self, term, src_too_broad: bool, dst_too_broad: bool
-    ) -> list[PossibleMatchReason]:
+    def _PossibleMatch(self, term) -> frozenset[PossibleMatchReason]:
         """Address overly broad partial matches and ignore some options and keywords that are edge cases.
 
         Args:
           term: term object to examine for edge-cases
-          src_too_broad: boolean indicating if only a subnet of src matched the term
-          dst_too_broad: boolean indicating if only a subnet of dst matched the term
 
         Returns:
           ret_str: a list of reasons this term may possibly match
         """
-        ret_str = []
-        if src_too_broad:
-            ret_str.append('source-ip')
-        if dst_too_broad:
-            ret_str.append('destination-ip')
+        ret_str = set()
         if 'first-fragment' in term.option:
-            ret_str.append('first-frag')
+            ret_str.add('first-frag')
         if term.fragment_offset:
-            ret_str.append('frag-offset')
+            ret_str.add('frag-offset')
         if term.packet_length:
-            ret_str.append('packet-length')
+            ret_str.add('packet-length')
         if 'established' in term.option:
-            ret_str.append('est')
+            ret_str.add('est')
         if 'tcp-established' in term.option and 'tcp' in term.protocol:
-            ret_str.append('tcp-est')
-        return ret_str
+            ret_str.add('tcp-est')
+        return frozenset(ret_str)
 
-    def _ZoneMatch(self, zone: str | Literal["any"], term_zone: Collection[str]) -> bool:
+    def _ZoneMatch(
+        self, zone: str | Literal["any", "all"], term_zone: Collection[str]
+    ) -> Literal["full", "partial", False]:
         """Check if zone matches term zone.
 
         Args:
@@ -381,14 +432,30 @@ class AclCheck:
           term_zone: A collection of zones from the term
         """
         if not term_zone or zone == 'any':
-            return True
-        if zone not in term_zone:
+            return "full"
+        elif zone == 'all':
+            return "partial"
+        elif zone in term_zone:
+            return "full"
+        else:
             return False
-        return True
+
+    def _PortMatch(
+        self, port: int | Literal["any", "all"], term_ports: list[tuple[int, int]]
+    ) -> Literal["full", "partial", False]:
+        """Check if a port matches a port list"""
+        if not term_ports or port == 'any':
+            return "full"
+        elif port == 'all':
+            return "partial"
+        elif self._PortInside(port, term_ports):
+            return "full"
+        else:
+            return False
 
     def _AddrMatch(
         self,
-        addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any"],
+        addr: nacaddr.IPv4 | nacaddr.IPv6 | Literal["any", "all"],
         addresses: Sequence[nacaddr.IPv4 | nacaddr.IPv6],
     ) -> Literal["full", "partial", False]:
         """Check if an address matches another address or group of addresses,
@@ -408,6 +475,8 @@ class AclCheck:
         if addr == 'any':
             # note that "any" behaves differently than 0.0.0.0/0 or ::/0 (which will return "partial")
             return "full"
+        if addr == 'all':
+            return "partial"
 
         partial_match: bool = False
         for ip in addresses:
@@ -422,7 +491,7 @@ class AclCheck:
         else:
             return False
 
-    def _PortInside(self, myport: int | Literal["any"], port_list: list[tuple[int, int]]) -> bool:
+    def _PortInside(self, myport: int, port_list: list[tuple[int, int]]) -> bool:
         """Check if a port matches a port list
 
         Args:
@@ -432,8 +501,6 @@ class AclCheck:
         Returns:
           bool: True if `myport` is within any [start, end] port range in `port_list` (inclusive), otherwise False
         """
-        if myport == 'any':
-            return True
         if any(range_start <= myport <= range_end for range_start, range_end in port_list):
             return True
         return False
@@ -444,7 +511,7 @@ class Match:
 
     filter: str
     term: str
-    possibles: list[PossibleMatchReason]
+    possibles: frozenset[PossibleMatchReason]
     action: str
     qos: str | None
 
@@ -452,13 +519,13 @@ class Match:
         self,
         filtername: str,
         term: str,
-        possibles: list[PossibleMatchReason],
+        possibles: Set[PossibleMatchReason],
         action: Sequence[str],
         qos: str | None = None,
     ) -> None:
         self.filter = filtername
         self.term = term
-        self.possibles = possibles
+        self.possibles = frozenset(possibles)
         self.action = action[0]
         self.qos = qos
 
@@ -470,7 +537,7 @@ class Match:
             text += self.action
         text += f" in term {self.term} of filter {self.filter}"
         if self.possibles:
-            text += f" with factors: {', '.join(self.possibles)!s}"
+            text += f" with factors: {', '.join(sorted(self.possibles))!s}"
         return text
 
 
