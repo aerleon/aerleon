@@ -16,8 +16,7 @@ targets:
 | `inet` | IPv4 only. | Default. |
 | `inet6` | IPv6 only. | `mixed` is not accepted. |
 
-!!! warning "Not supported on Windows Advanced Firewall"
-    The header also accepts `permit` or `block` as a default action, but the generator then raises "Windows generator does not support default actions", so don't use them.
+A `permit` or `block` default action in the header raises "Windows generator does not support default actions".
 
 ## Term Format
 
@@ -52,7 +51,7 @@ These tokens are included from the _[Common](common.md)_ page.
 |---|---|---|---|
 | `established`, `tcp-established` | — | | The term is skipped, **without** a warning. |
 
-Any other option value is accepted but ignored, which makes the rule broader than intended (e.g. `option: syn` still allows all TCP).
+Any other option value raises an error (`<term> contains unsupported keywords (<option>)`).
 
 ## Output
 

@@ -222,6 +222,7 @@ SUPPORTED_TOKENS = {
 
 SUPPORTED_SUB_TOKENS = {
     'action': {'accept', 'deny'},
+    'option': {'established', 'tcp-established'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
