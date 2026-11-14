@@ -1,3 +1,2 @@
-(((dst net localhost and ((proto \tcp)))
-))
+(dst net localhost and ((proto \tcp)))
 

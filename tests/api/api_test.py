@@ -595,6 +595,34 @@ class ApiTest(absltest.TestCase):
         self.assertIn("pcap_policy-accept.pcap", configs)
         self.assertIn("pcap_policy-deny.pcap", configs)
 
+    def testGeneratePcapDottedFilename(self):
+        """Test that a dotted filename yields separate -accept and -deny files.
+
+        As for other generators, the part of the filename after the last dot is replaced.
+        """
+        pcap_policy: PolicyDict = {
+            "filename": "pcap.v2",
+            "filters": [
+                {
+                    "header": {
+                        "targets": {"pcap": "test-filter"},
+                    },
+                    "terms": [
+                        {
+                            "name": "term-1",
+                            "source-address": "NET1",
+                            "action": "accept",
+                        },
+                    ],
+                }
+            ],
+        }
+        definitions = naming.Naming()
+        definitions.ParseDefinitionsObject(NETWORKS_1, "")
+        configs = api.Generate([pcap_policy], definitions)
+        assert configs is not None
+        self.assertEqual(sorted(configs), ["pcap-accept.pcap", "pcap-deny.pcap"])
+
     def testGenerateMultiprocessing(self):
         """Test that _Generate works correctly when using multiprocessing."""
         definitions = naming.Naming()

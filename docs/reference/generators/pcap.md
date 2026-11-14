@@ -15,7 +15,7 @@ targets:
 | `inet` | IPv4 only. | |
 | `inet6` | IPv6 only. | |
 | `mixed` | IPv4 and IPv6. | Default. |
-| `in` | Only match traffic to this host. | Adds `dst net localhost`. Replace `localhost` with the host's real addresses before use. |
+| `in` | Only match traffic to this host. | Adds `dst net localhost`. Replace `localhost` with the host's real addresses before use; `tcpdump` rejects the filter until you do. |
 | `out` | Only match traffic from this host. | Adds `src net localhost`. Replace as above. |
 
 Several headers are joined with `or`.
@@ -27,7 +27,7 @@ Several headers are joined with `or`.
 These tokens are included from the _[Common](common.md)_ page.
 
 !!! warning "Not supported on PcapFilter"
-    PcapFilter doesn't support `verbatim`. A term that uses it raises an error.
+    PcapFilter doesn't support `logging` or `verbatim`. A term that uses either raises an error.
 
 --8<-- "docs/reference/generators/common.md:common-tokens"
 
@@ -38,10 +38,11 @@ PcapFilter also reads:
 | Token | Description | Example | Notes |
 |---|---|---|---|
 | `icmp-code` | ICMP code to match. | `icmp-code: 0` | Adds `icmp[icmpcode] == <code>`. |
-| `logging` | — | | Accepted, but ignored. |
 
-* The output is `(accept terms) and not (deny terms)`.
-* Exclusions render as `not src net …` / `not dst net …`.
+* Terms are matched in order, and the first matching term decides, as on a firewall. The `-accept` file matches packets whose first matching term is `accept`; the `-deny` file matches packets whose first matching term is `deny` or `reject`.
+* A file that matches no packets renders `(len < 0)`, since libpcap has no keyword for false.
+* Exclusions render as `and not (src net …)` / `and not (dst net …)`.
+* Duplicate term names raise `DuplicateTermError`.
 * Port ranges render as `portrange <start>-<end>`.
 
 ## Actions
@@ -57,9 +58,8 @@ PcapFilter also reads:
 | Option | Description | Example | Notes |
 |---|---|---|---|
 | `all`, `none` | TCP flag sets. | `option: none` | TCP flags, not protocols. |
-| `established` | — | | Accepted, but ignored: the filter matches all traffic for the protocol. |
 | `syn`, `ack`, `fin`, `rst`, `urg`, `psh` | Match packets with these TCP flags set. | `option: syn` | Combined into one `tcp[tcpflags]` test. |
-| `tcp-established` | Match TCP packets with ACK set. | `option: tcp-established` | `tcp[tcpflags] & (tcp-ack) == (tcp-ack)`. |
+| `established`, `tcp-established` | Match TCP packets with ACK set. | `option: tcp-established` | `tcp[tcpflags] & (tcp-ack) == (tcp-ack)`. |
 
 ## Output
 
@@ -69,7 +69,7 @@ Each policy file renders to `-accept.pcap` and `-deny.pcap` files, so `sample.ya
 
 === "Sample policy"
 
-    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by the Python API (`aerleon.api.Generate`).
+    The _[sample policy](../generators.md#sample-policy)_ used on every generator page, rendered by `aclgen`.
 
     ```yaml title="sample.yaml"
     filters:
@@ -80,21 +80,15 @@ Each policy file renders to `-accept.pcap` and `-deny.pcap` files, so `sample.ya
     ```
 
     ```text title="sample-accept.pcap"
-    ((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
-    ))
+    ((src net 10.0.0.0/24 or src net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
     ```
 
     ```text title="sample-deny.pcap"
-    ((((dst net 10.0.0.0/24 or dst net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
-    ))
+    not ((src net 10.0.0.0/24 or src net 192.168.10.0/24) and (proto \tcp) and (dst port 22))
     ```
 
 ## Known Issues
 
 !!! bug "Known issues"
-    * **`aclgen` can't render pcap.** It crashes with `ValueError: Invalid suffix '-accept.pcap'`. The Python API (`aerleon.api.Generate`) works.
-    * **Source addresses are rendered as destinations.** Both `source-address` and `destination-address` render as `dst net …`.
-    * **The `-deny` file can be identical to the `-accept` file.** A deny term with no match criteria (such as `default-deny`) renders to nothing, so the inverted filter is just the accept clause again.
-    * **Multiple accept terms never match.** Accept terms are joined with `and` instead of `or`, so a policy that accepts SSH and HTTP renders `(dst port 22) and (dst port 80)`.
-    * Duplicate term names aren't detected.
-    * `in`/`out` leaks from one header to the next.
+    * **Excluding all of IPv6 drops the address match.** A term with `source-exclude` set to `::/0` renders with no source condition, so it matches every source instead of none.
+    * **An exclusion without an address matches only the excluded range.** A term with `source-exclude` but no `source-address` renders `(src net <excluded>)` instead of `not (src net <excluded>)`. The same applies to `destination-exclude`.
