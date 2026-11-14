@@ -1,6 +1,4 @@
-((((proto \tcp))
-))
+((proto \tcp))
 or
-((((proto \icmp))
-))
+((proto \icmp))
 

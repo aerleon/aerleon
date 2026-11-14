@@ -1,3 +1,2 @@
-((((proto \icmp) and (icmp[icmptype] == 3 and icmp[icmpcode] == 3 or icmp[icmptype] == 3 and icmp[icmpcode] == 4))
-))
+((proto \icmp) and (icmp[icmptype] == 3 and icmp[icmpcode] == 3 or icmp[icmptype] == 3 and icmp[icmpcode] == 4))
 

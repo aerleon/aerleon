@@ -1,6 +1,4 @@
-(((dst net localhost and ((proto \tcp)))
-))
+(dst net localhost and ((proto \tcp)))
 or
-(((src net localhost and ((proto \icmp)))
-))
+(src net localhost and ((proto \icmp)))
 

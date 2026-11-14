@@ -436,20 +436,18 @@ def _GenerateACL(
         acl_suffix: str,
         write_files: MutableSequence[tuple[pathlib.Path, str]],
         binary: bool = False,
-        file_name_override: str | None = None,
     ):
-        base_name = file_name_override if file_name_override else filename
         if output_directory:
             RenderACL(
                 acl_text,
                 acl_suffix,
                 output_directory,
-                pathlib.Path(base_name),
+                pathlib.Path(filename),
                 write_files,
                 binary,
             )
         else:
-            output_file = pathlib.Path(base_name).with_suffix(acl_suffix).name
+            output_file = pathlib.Path(filename).stem + acl_suffix
             generated_configs[output_file] = acl_text
 
     for target in platforms:
@@ -463,19 +461,9 @@ def _GenerateACL(
             if target == 'pcap':
                 assert issubclass(generator, pcap.PcapFilter)
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
-                EmitACL(
-                    str(acl_obj),
-                    acl_obj.SUFFIX,
-                    write_files,
-                    file_name_override=f"{filename}-accept",
-                )
+                EmitACL(str(acl_obj), f"-accept{acl_obj.SUFFIX}", write_files)
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info, invert=True)
-                EmitACL(
-                    str(acl_obj),
-                    acl_obj.SUFFIX,
-                    write_files,
-                    file_name_override=f"{filename}-deny",
-                )
+                EmitACL(str(acl_obj), f"-deny{acl_obj.SUFFIX}", write_files)
             else:
                 acl_obj = generator(copy.deepcopy(policy_obj), exp_info)
                 EmitACL(str(acl_obj), acl_obj.SUFFIX, write_files)

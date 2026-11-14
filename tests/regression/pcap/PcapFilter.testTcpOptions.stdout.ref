@@ -1,3 +1,2 @@
-((((proto \tcp) and (tcp[tcpflags] & (tcp-ack) == (tcp-ack)))
-))
+((proto \tcp) and (tcp[tcpflags] & (tcp-ack) == (tcp-ack)))
 

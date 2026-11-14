@@ -104,7 +104,6 @@ BUILTIN_GENERATORS: list[tuple] = [
     ('sonic',                'aerleon.lib.sonic',                'SONiC'),
     ('speedway',             'aerleon.lib.speedway',             'Speedway'),
     ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
-    ('pcap',                 'aerleon.lib.pcap',                 'PcapFilter'),
     ('packetfilter',         'aerleon.lib.packetfilter',         'PacketFilter'),
     ('windows_advfirewall',  'aerleon.lib.windows_advfirewall',  'WindowsAdvFirewall'),
     ('srxlo',                'aerleon.lib.srxlo',                'SRXlo'),

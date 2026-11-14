@@ -112,7 +112,7 @@ services:
       protocol: tcp
 ```
 
-Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exceptions are _[PcapFilter](generators/pcap.md)_, which `aclgen` currently can't render, and _[WindowsIPSec](generators/windows_ipsec.md)_, which isn't registered. Their pages say how their output was produced.
+Each output file is named after the policy file, with the generator's extension (see the File suffix column above). The outputs are the files `aclgen` writes, unchanged. The exception is _[WindowsIPSec](generators/windows_ipsec.md)_, which isn't registered. Its page says how its output was produced.
 
 ## Reference
 
