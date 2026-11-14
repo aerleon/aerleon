@@ -215,6 +215,30 @@ class FortigateAddressGroup(FortigateObjectGroup):
         return iter(self.fortigate_addrs)
 
 
+class FortigateFqdnAddress(FortigateObjectGroup):
+    """A FortiGate ``config firewall address`` object of ``type fqdn``.
+
+    FortiGate models an FQDN as an address object (not as a per-policy field like
+    Junos ``dns-name``); it is referenced from a policy's ``srcaddr``/``dstaddr``
+    exactly like an IP address object.
+    """
+
+    def __init__(self, name: str, fqdn: str):
+        self.name = name
+        self.fqdn = fqdn
+
+    def __str__(self) -> str:
+        """Return string representation of a Fortigate fqdn address object."""
+        return '\n'.join(
+            [
+                f'    edit {self.name}',
+                '        set type fqdn',
+                f'        set fqdn "{self.fqdn}"',
+                '    next',
+            ]
+        )
+
+
 class Term(aclgenerator.Term):
     SADDR_V4 = 'srcaddr'
     DADDR_V4 = 'dstaddr'
@@ -229,6 +253,7 @@ class Term(aclgenerator.Term):
         addressgroups: FortigateDefaultDictionary,
         addressgroups_v6: FortigateDefaultDictionary,
         address_family: str,
+        fqdn_addresses: dict = None,
     ):
         """
         Initializes the Term object.
@@ -236,6 +261,9 @@ class Term(aclgenerator.Term):
             term: The term object from the policy.
             source_interface: The source interface for the term.
             destination_interface: The destination interface for the term.
+            fqdn_addresses: Shared name -> FortigateFqdnAddress map that collects
+                the `type fqdn` address objects referenced by source-fqdn /
+                destination-fqdn terms.
         """
         super().__init__(term)
         self.term = term
@@ -254,6 +282,7 @@ class Term(aclgenerator.Term):
 
         self.address_groups = addressgroups
         self.address_groups_v6 = addressgroups_v6
+        self.fqdn_addresses = fqdn_addresses if fqdn_addresses is not None else {}
         self.services = []
 
         self._TranslateAddresses(term.source_address)
@@ -270,6 +299,9 @@ class Term(aclgenerator.Term):
                 term.destination_address,
                 term.destination_address_exclude,
             )
+
+        self.source_fqdn_tokens = self._TranslateFqdns(term.source_fqdn)
+        self.destination_fqdn_tokens = self._TranslateFqdns(term.destination_fqdn)
 
         if term.destination_port or term.source_port:
             service = FortigateIPService(
@@ -341,6 +373,29 @@ class Term(aclgenerator.Term):
             else:
                 raise ValueError(f"Unsupported address version: {addr.version}")
 
+    def _TranslateFqdns(self, fqdns: list) -> list[str]:
+        """Register `type fqdn` address objects and return the names to reference.
+
+        Aerleon FQDN objects carry the naming ``parent_token`` and the resolved
+        ``fqdn`` string. One address object is emitted per distinct fqdn; a naming
+        object holding multiple fqdns is suffixed (``NAME_0``, ``NAME_1``, ...).
+        """
+        tokens: list[str] = []
+        by_parent: dict[str, list[str]] = {}
+        for f in fqdns:
+            by_parent.setdefault(f.parent_token, []).append(f.fqdn)
+        for parent, values in by_parent.items():
+            uniq = sorted(dict.fromkeys(values))
+            if len(uniq) == 1:
+                self.fqdn_addresses[parent] = FortigateFqdnAddress(parent, uniq[0])
+                tokens.append(parent)
+            else:
+                for i, val in enumerate(uniq):
+                    name = f"{parent}_{i}"
+                    self.fqdn_addresses[name] = FortigateFqdnAddress(name, val)
+                    tokens.append(name)
+        return tokens
+
     def _SetStrLogging(self, output):
         if self.term.logging:
             if self.logtraffic == 'log_traffic_mode_all':
@@ -387,14 +442,22 @@ class Term(aclgenerator.Term):
         destination_tokens_v4 = sorted(destination_tokens_v4)
         destination_tokens_v6 = sorted(destination_tokens_v6)
 
+        # FQDN address objects are referenced from the IPv4 srcaddr/dstaddr field
+        # (FortiGate resolves them via DNS; there is no separate FQDN field).
+        source_fqdn_tokens = [f'"{t}"' for t in self.source_fqdn_tokens]
+        destination_fqdn_tokens = [f'"{t}"' for t in self.destination_fqdn_tokens]
+
         has_v4_source_elements = bool(
-            source_tokens_v4 or any(ex.version == 4 for ex in self.term.source_address_exclude)
+            source_tokens_v4
+            or source_fqdn_tokens
+            or any(ex.version == 4 for ex in self.term.source_address_exclude)
         )
         has_v6_source_elements = bool(
             source_tokens_v6 or any(ex.version == 6 for ex in self.term.source_address_exclude)
         )
         has_v4_destination_elements = bool(
             destination_tokens_v4
+            or destination_fqdn_tokens
             or any(ex.version == 4 for ex in self.term.destination_address_exclude)
         )
         has_v6_destination_elements = bool(
@@ -470,8 +533,8 @@ class Term(aclgenerator.Term):
                 # Ensure the _TranslateExcludes created a V4 group for this term.
                 # The name needs to be consistently generated.
                 src_v4_to_set = f'"{self.term.name}-source"'  # Assumes _TranslateExcludes uses this name for the v4 version
-            elif source_tokens_v4:
-                src_v4_to_set = " ".join(source_tokens_v4)
+            elif source_tokens_v4 or source_fqdn_tokens:
+                src_v4_to_set = " ".join(source_tokens_v4 + source_fqdn_tokens)
             else:
                 src_v4_to_set = f'"{src_v4_effective_val}"'  # Use effective default (all or none)
 
@@ -480,8 +543,8 @@ class Term(aclgenerator.Term):
             )
             if destination_v4_exclude_exists:
                 dst_v4_to_set = f'"{self.term.name}-destination"'
-            elif destination_tokens_v4:
-                dst_v4_to_set = " ".join(destination_tokens_v4)
+            elif destination_tokens_v4 or destination_fqdn_tokens:
+                dst_v4_to_set = " ".join(destination_tokens_v4 + destination_fqdn_tokens)
             else:
                 dst_v4_to_set = f'"{dst_v4_effective_val}"'
 
@@ -575,6 +638,7 @@ class Fortigate(aclgenerator.ACLGenerator):
         self.term_names = set()
         self.address_groups = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
         self.address_groups_v6 = FortigateDefaultDictionary(FortigateAddressGroup, 'name')
+        self.fqdn_addresses = {}  # name -> FortigateFqdnAddress
         super().__init__(name, description)
 
     @staticmethod
@@ -595,6 +659,7 @@ class Fortigate(aclgenerator.ACLGenerator):
         """
         supported_tokens, supported_sub_tokens = super()._BuildTokens()
         supported_tokens.remove('stateless_reply')
+        supported_tokens |= {'source_fqdn', 'destination_fqdn'}
         supported_sub_tokens['action'] = SUPPORTED_ACTIONS
         supported_sub_tokens['option'] = (
             FORTIGATE_LOG_TRAFFIC_VALUES | FORTIGATE_LOG_TRAFFIC_START_VALUES
@@ -646,6 +711,7 @@ class Fortigate(aclgenerator.ACLGenerator):
                     self.address_groups,
                     self.address_groups_v6,
                     af,
+                    self.fqdn_addresses,
                 )
                 self.services.extend(fortigate_term.services)
                 self.term_names.add(term.name)
@@ -690,7 +756,7 @@ class Fortigate(aclgenerator.ACLGenerator):
         output = []
 
         # IPv4
-        if self.address_groups.values():
+        if self.address_groups.values() or self.fqdn_addresses:
             # IPv4 Addresses
             output.append('config firewall address')
             for group_name in sorted(self.address_groups):
@@ -699,6 +765,9 @@ class Fortigate(aclgenerator.ACLGenerator):
                 if isinstance(group, FortigateAddressGroup):
                     for addr in sorted(self.address_groups[group_name].fortigate_addrs):
                         output.append(str(addr))
+            # FQDN address objects (type fqdn) referenced by srcaddr/dstaddr.
+            for fqdn_name in sorted(self.fqdn_addresses):
+                output.append(str(self.fqdn_addresses[fqdn_name]))
             output.append('end')
             # Address Groups
             output.append('config firewall addrgrp')

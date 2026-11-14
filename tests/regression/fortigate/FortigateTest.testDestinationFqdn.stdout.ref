@@ -1,0 +1,21 @@
+config firewall address
+    edit GOOGLE_DNS
+        set type fqdn
+        set fqdn "dns.google.com"
+    next
+end
+config firewall addrgrp
+end
+config firewall policy
+    edit 1
+        set name "to-fqdn"
+        set srcintf "port1"
+        set dstintf "port2"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "GOOGLE_DNS"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic disable
+    next
+end
