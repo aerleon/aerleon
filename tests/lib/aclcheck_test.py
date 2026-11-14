@@ -501,6 +501,12 @@ class PacketConditionsTest(absltest.TestCase):
             [("allow-dns-established", ["est"]), ("default-term", [])],
         )
 
+    def test_tcp_flags_ignored_for_non_tcp_packet(self):
+        self.assertEqual(
+            self.terms(proto="udp", dport="53", tcp_flags={"syn"}),
+            [("allow-dns-established", ["est"]), ("default-term", [])],
+        )
+
     def test_unknown_tcp_flag_is_rejected(self):
         with self.assertRaises(aclcheck.TcpFlagsError):
             self.terms(proto="tcp", tcp_flags={"syn", "bogus"})

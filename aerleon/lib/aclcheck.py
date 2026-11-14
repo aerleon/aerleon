@@ -305,7 +305,7 @@ class AclCheck:
                     logging.debug('icmp code does not match')
                     continue
 
-                if self.tcp_flags is not None and not self._TcpFlagsMatch(term.option):
+                if self._tcp_flags_evaluated and not self._TcpFlagsMatch(term.option):
                     logging.debug('tcp flags do not satisfy term options')
                     continue
 
@@ -424,14 +424,21 @@ class AclCheck:
             ret_str.append('frag-offset')
         if term.packet_length:
             ret_str.append('packet-length')
-        # With tcp_flags, tcp-established is evaluated against the flags (see _TcpFlagsMatch),
-        # and so is established for a tcp packet.
-        tcp_flags_evaluated = self.tcp_flags is not None
-        if 'established' in term.option and not (tcp_flags_evaluated and self.proto == 'tcp'):
+        # With tcp_flags on a tcp packet, established options are evaluated against the flags
+        # (see _TcpFlagsMatch) rather than reported as possible matches.
+        if 'established' in term.option and not self._tcp_flags_evaluated:
             ret_str.append('est')
-        if 'tcp-established' in term.option and 'tcp' in term.protocol and not tcp_flags_evaluated:
+        if (
+            'tcp-established' in term.option
+            and 'tcp' in term.protocol
+            and not self._tcp_flags_evaluated
+        ):
             ret_str.append('tcp-est')
         return ret_str
+
+    @property
+    def _tcp_flags_evaluated(self) -> bool:
+        return self.tcp_flags is not None and self.proto == 'tcp'
 
     def _TcpFlagsMatch(self, options: Collection[str]) -> bool:
         """Whether the packet's tcp flags satisfy the term's flag options.
@@ -451,7 +458,7 @@ class AclCheck:
             elif option in ('initial', 'tcp-initial'):
                 if 'syn' not in flags or flags & {'ack', 'rst', 'fin'}:
                     return False
-            elif option == 'tcp-established' or (option == 'established' and self.proto == 'tcp'):
+            elif option in ('tcp-established', 'established'):
                 if 'ack' not in flags and not ('rst' in flags and not flags & {'syn', 'fin'}):
                     return False
         return True
