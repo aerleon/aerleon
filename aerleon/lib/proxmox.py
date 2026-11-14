@@ -2,7 +2,7 @@ import math
 from collections.abc import MutableMapping
 
 from aerleon.lib import aclgenerator, policy
-from aerleon.lib.nacaddr import ExcludeAddrs, IPv4, IPv6
+from aerleon.lib.nacaddr import AddressListExclude, IPv4, IPv6
 from aerleon.lib.policy import PROTOS_WITH_PORTS, Policy
 from aerleon.utils.options import BooleanKeywordOption as _BooleanKeywordOption
 from aerleon.utils.options import (
@@ -283,7 +283,7 @@ class Term(aclgenerator.Term):
     def _ComputeAddresses(addresses, exclude_addresses):
         addresses_with_exclude = addresses
         if exclude_addresses:
-            addresses_with_exclude = ExcludeAddrs(addresses, exclude_addresses)
+            addresses_with_exclude = AddressListExclude(addresses, exclude_addresses)
         return addresses_with_exclude
 
     def __str__(self) -> str:
