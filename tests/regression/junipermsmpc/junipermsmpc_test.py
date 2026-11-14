@@ -16,13 +16,14 @@
 """Unittest for junipermsmpc acl rendering module."""
 
 import datetime
+import ipaddress
 import re
 import textwrap
 from unittest import mock
 
 from absl.testing import absltest, parameterized
 
-from aerleon.lib import junipermsmpc, nacaddr, naming, policy
+from aerleon.lib import juniper, junipermsmpc, nacaddr, naming, policy
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -1946,6 +1947,74 @@ class JuniperMSMPCTest(parameterized.TestCase):
         all_supported_protocols = junipermsmpc.Term.PROTO_MAP.keys()
         for want in supported_as_names:
             self.assertIn(want, all_supported_protocols)
+
+    @parameterized.parameters('::/1', '8000::/1', '2000::/3', 'ff00::/8', '::/15', 'fffe::/15')
+    def testExpandedIPv6Subnets(self, network):
+        for exclude in (False, True):
+            with self.subTest(exclude=exclude):
+                expected = juniper.Config(indent=12)
+                actual = juniper.Config(indent=12)
+                expected.Append('source-address {')
+                actual.Append('source-address {')
+                suffix = ' except;' if exclude else ';'
+                for subnet in ipaddress.IPv6Network(network).subnets(new_prefix=16):
+                    expected.Append(f'{subnet}{suffix}')
+                junipermsmpc.Term._AppendIPv6Subnets(actual, nacaddr.IPv6(network), exclude)
+                expected.Append('}')
+                actual.Append('}')
+                self.assertEqual(str(actual), str(expected))
+
+    def testExpandedIPv6SubnetFallbacks(self):
+        class CustomIPv6(nacaddr.IPv6):
+            def subnets(self, **kwargs):
+                return iter([nacaddr.IPv6('cafe::/16')])
+
+        for address in (CustomIPv6('2000::/15'), nacaddr.IPv6('fe00::%eth0/8')):
+            with self.subTest(address=address):
+                expected = juniper.Config(indent=4)
+                actual = juniper.Config(indent=4)
+                for subnet in address.subnets(new_prefix=16):
+                    expected.Append(f'{subnet} except;')
+                junipermsmpc.Term._AppendIPv6Subnets(actual, address, exclude=True)
+                self.assertEqual(str(actual), str(expected))
+
+    @parameterized.product(apply_groups=(False, True), noverbose=(False, True))
+    def testExpandedIPv6AddressClauses(self, apply_groups, noverbose):
+        pol = policy.ParsePolicy(
+            GOOD_HEADER_V6 + '\nterm prefixes { action:: accept }', self.naming
+        )
+        term = pol.filters[0][1][0]
+        term.source_address.append(nacaddr.IPv6('::/13', comment='source network'))
+        term.source_address_exclude.append(nacaddr.IPv6('2::/15', comment='source exclusion'))
+        term.destination_address.append(nacaddr.IPv6('fff8::/13', comment='destination network'))
+        term.destination_address_exclude.append(
+            nacaddr.IPv6('fffa::/15', comment='destination exclusion')
+        )
+        output = str(junipermsmpc.Term(term, 'inet6', noverbose, 'test', apply_groups))
+        for name, included, excluded in (
+            ('source-address', '::/13', '2::/15'),
+            ('destination-address', 'fff8::/13', 'fffa::/15'),
+        ):
+            match = re.search(rf'{name} \{{(.*?)\}}', output, re.DOTALL)
+            assert match is not None, output
+            section = match.group(1)
+            expected = [
+                f'{subnet};' for subnet in ipaddress.IPv6Network(included).subnets(new_prefix=16)
+            ]
+            expected.extend(
+                f'{subnet} except;'
+                for subnet in ipaddress.IPv6Network(excluded).subnets(new_prefix=16)
+            )
+            self.assertEqual(
+                [line.strip() for line in section.splitlines() if ';' in line], expected
+            )
+        for comment in (
+            'source network',
+            'source exclusion',
+            'destination network',
+            'destination exclusion',
+        ):
+            self.assertEqual(comment in output, not noverbose)
 
 
 if __name__ == '__main__':

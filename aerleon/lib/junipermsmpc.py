@@ -76,6 +76,24 @@ class Term(juniper.Term):
                 loc = self.term.protocol.index(prot)
                 self.term.protocol[loc] = str(self.PROTO_MAP.get(prot, prot))
 
+    @staticmethod
+    def _AppendIPv6Subnets(config: juniper.Config, address: nacaddr.IPv6, exclude=False) -> None:
+        """Append /16 entries for an IPv6 network with prefix length between 1 and 15."""
+        suffix = ' except;' if exclude else ';'
+        if type(address) is not nacaddr.IPv6 or address.network_address.scope_id is not None:
+            for subnet in address.subnets(new_prefix=16):
+                config.Append(f'{subnet}{suffix}')
+            return
+
+        # Each /16 has only its first hextet set, and none of these lines changes indentation.
+        first = int(address.network_address) >> 112
+        stop = first + (1 << (16 - address.prefixlen))
+        spaces = ' ' * config.indent
+        config.lines.extend(
+            f'{spaces}{value:x}::/16{suffix}' if value else f'{spaces}::/16{suffix}'
+            for value in range(first, stop)
+        )
+
     def __str__(self) -> str:
         if self.enable_dsmo:
             raise NotImplementedError('enable_dsmo not implemented for msmpc')
@@ -242,8 +260,7 @@ class Term(juniper.Term):
                             for comment in self._Comment(saddr):
                                 ret_str.Append(f'{comment}')
                             if saddr.version == 6 and 0 < saddr.prefixlen < 16:
-                                for saddr2 in saddr.subnets(new_prefix=16):
-                                    ret_str.Append(f'{saddr2};')
+                                self._AppendIPv6Subnets(ret_str, saddr)
                             else:
                                 if saddr == nacaddr.IPv6('0::0/0'):
                                     saddr = 'any-ipv6'
@@ -257,8 +274,7 @@ class Term(juniper.Term):
                             for comment in self._Comment(ex):
                                 ret_str.Append(f'{comment}')
                             if ex.version == 6 and 0 < ex.prefixlen < 16:
-                                for ex2 in ex.subnets(new_prefix=16):
-                                    ret_str.Append(f'{ex2} except;')
+                                self._AppendIPv6Subnets(ret_str, ex, exclude=True)
                             else:
                                 if ex == nacaddr.IPv6('0::0/0'):
                                     ex = 'any-ipv6'
@@ -275,8 +291,7 @@ class Term(juniper.Term):
                             for comment in self._Comment(daddr):
                                 ret_str.Append(f'{comment}')
                             if daddr.version == 6 and 0 < daddr.prefixlen < 16:
-                                for daddr2 in daddr.subnets(new_prefix=16):
-                                    ret_str.Append(f'{daddr2};')
+                                self._AppendIPv6Subnets(ret_str, daddr)
                             else:
                                 if daddr == nacaddr.IPv6('0::0/0'):
                                     daddr = 'any-ipv6'
@@ -290,8 +305,7 @@ class Term(juniper.Term):
                             for comment in self._Comment(ex):
                                 ret_str.Append(f'{comment}')
                             if ex.version == 6 and 0 < ex.prefixlen < 16:
-                                for ex2 in ex.subnets(new_prefix=16):
-                                    ret_str.Append(f'{ex2} except;')
+                                self._AppendIPv6Subnets(ret_str, ex, exclude=True)
                             else:
                                 if ex == nacaddr.IPv6('0::0/0'):
                                     ex = 'any-ipv6'
