@@ -25,12 +25,13 @@ import itertools
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
+from aerleon.lib.fqdn import FQDN
 
 ICMP_TERM_LIMIT = 8
 FQDNSUFFIX = '_FQDN'
 
 
-def JunipersrxList(name, data):
+def JunipersrxList(name: str, data: list[str]) -> str:
     return f"{name} [ {' '.join(data)} ];"
 
 
@@ -71,11 +72,11 @@ class ConflictingApplicationSetsError(Error):
 
 
 class IndentList(list):
-    def __init__(self, indent: str, *args, **kwargs):
+    def __init__(self, indent: str, *args, **kwargs) -> None:
         self._indent = indent
         super().__init__(*args, **kwargs)
 
-    def IndentAppend(self, size, data):
+    def IndentAppend(self, size: int, data: str) -> None:
         self.append(f'{self._indent * size}{data}')
 
 
@@ -106,7 +107,7 @@ class Term(aclgenerator.Term):
         to_zone: str,
         expresspath: bool = False,
         verbose: bool = True,
-    ):
+    ) -> None:
         super().__init__(term)
         self.term = term
         self.from_zone = from_zone
@@ -227,7 +228,7 @@ class Term(aclgenerator.Term):
 
         return '\n'.join(ret_str)
 
-    def _Group(self, group: list[str]):
+    def _Group(self, group: list[str | int | tuple[int, int]]) -> str:
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -239,7 +240,7 @@ class Term(aclgenerator.Term):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: list[str]):
+        def _FormattedGroup(el: str | int | tuple[int, int]) -> str:
             """Return the actual formatting of an individual element.
 
             Args:
@@ -296,7 +297,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
     # IPv6 are 32 bytes compared to IPv4, this is used as a multiplier.
     _IPV6_SIZE = 4
 
-    def __init__(self, pol: policy.Policy, exp_info: int):
+    def __init__(self, pol: policy.Policy, exp_info: int) -> None:
         self.srx_policies = []
         self.addressbook = addressbook.Addressbook()
         self.applications = []
@@ -338,7 +339,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         del supported_sub_tokens['option']
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         # pylint: disable=attribute-defined-outside-init
         """Transform a policy object into a JuniperSRX object.
 
@@ -618,19 +619,21 @@ class JuniperSRX(aclgenerator.ACLGenerator):
 
             self.srx_policies.append((header, new_terms, filter_options))
 
-    def _FixLargePolices(self, terms: list[policy.Term], address_family: str):
+    def _FixLargePolices(self, terms: list[policy.Term], address_family: str) -> None:
         """Loops over all terms finding terms exceeding SRXs policy limit.
 
         Args:
           terms: List of terms from a policy.
-          address_family: Tuple containing address family versions.
+          address_family: the filter type; one of 'inet', 'inet6', or 'mixed'.
 
         See the following URL for more information
         http://www.juniper.net/techpubs/en_US/junos12.1x44/topics/reference/
         general/address-address-sets-limitations.html
         """
 
-        def Chunks(addresses: list[nacaddr.IPv4 | nacaddr.IPv6]):
+        def Chunks(
+            addresses: list[nacaddr.IPv4 | nacaddr.IPv6],
+        ) -> list[list[nacaddr.IPv4 | nacaddr.IPv6]]:
             """Splits a list of IP addresses into smaller lists based on byte size."""
             return_list = [[]]
             counter: int = 0
@@ -680,7 +683,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             del terms[:]
             terms.extend(expanded_terms)
 
-    def _BuildPort(self, ports: list[tuple[int, int]]):
+    def _BuildPort(self, ports: list[tuple[int, int]]) -> list[str]:
         """Transform specified ports into list and ranges.
 
         Args:
@@ -697,7 +700,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 port_list.append(f'{str(i[0])}-{str(i[1])}')
         return port_list
 
-    def _GenerateAddresses(self, token: str, ips, fqdns):
+    def _GenerateAddresses(
+        self, token: str, ips: list[nacaddr.IPv4 | nacaddr.IPv6], fqdns: list[FQDN]
+    ) -> IndentList:
         target = IndentList(self.INDENT)
         counter: int = 0
         ips = nacaddr.SortAddrList(ips)
@@ -712,7 +717,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             counter += 1
         return target
 
-    def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
+    def _GenerateAddressSets(
+        self, group: str, ips: list[nacaddr.IPv4 | nacaddr.IPv6], fqdns: list[FQDN]
+    ) -> IndentList:
         target = IndentList(self.INDENT)
         target.IndentAppend(4, f"address-set {group} {{")
         counter: int = 0

@@ -74,20 +74,20 @@ class Config:
       lines: the text lines of the configuration.
     """
 
-    def __init__(self, indent: int = 0, tabstop: int = 4):
+    def __init__(self, indent: int = 0, tabstop: int = 4) -> None:
         self.indent = indent
         self._initial_indent = indent
         self.tabstop = tabstop
         self.lines = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.indent != self._initial_indent:
             raise JuniperIndentationError(
                 'Expected indent %d but got %d' % (self._initial_indent, self.indent)
             )
         return '\n'.join(self.lines)
 
-    def Append(self, line: str, verbatim=False):
+    def Append(self, line: str, verbatim: bool = False) -> None:
         """Append one line to the configuration.
 
         Args:
@@ -198,7 +198,7 @@ class Term(aclgenerator.Term):
         filter_direction: str | None = None,
         interface_type: str | None = None,
         filter_type: str | None = None,
-    ):
+    ) -> None:
         super().__init__(term)
         self.term = term
         self.term_type = term_type
@@ -222,7 +222,7 @@ class Term(aclgenerator.Term):
             # some options need to modify the actions
             self.extra_actions = []
 
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config(indent=self._DEFAULT_INDENT)
         from_str = []
         # Don't render icmpv6 protocol terms under inet, or icmp under inet6
@@ -726,7 +726,7 @@ class Term(aclgenerator.Term):
         return str(config)
 
     @staticmethod
-    def NextIpCheck(next_ip: list[nacaddr.IPv4 | nacaddr.IPv6], term_name: str):
+    def NextIpCheck(next_ip: list[nacaddr.IPv4 | nacaddr.IPv6], term_name: str) -> None:
         if len(next_ip) > 1:
             raise JuniperNextIpError(
                 f'The following term has more than one next IP value: {term_name}'
@@ -736,7 +736,7 @@ class Term(aclgenerator.Term):
                 f'The following term has a subnet instead of a host: {term_name}'
             )
 
-    def CheckTerminatingAction(self):
+    def CheckTerminatingAction(self) -> None:
         action = set(self.term.action)
         if self.term.encapsulate:
             action.add(self.term.encapsulate)
@@ -751,7 +751,7 @@ class Term(aclgenerator.Term):
         self,
         include: list[nacaddr.IPv4 | nacaddr.IPv6],
         exclude: list[nacaddr.IPv4 | nacaddr.IPv6],
-    ):
+    ) -> tuple[list[nacaddr.IPv4 | nacaddr.IPv6], list[nacaddr.IPv4 | nacaddr.IPv6]]:
         """Calculate a minimal set of prefixes for Juniper match conditions.
 
         Args:
@@ -790,11 +790,11 @@ class Term(aclgenerator.Term):
         addr: nacaddr.IPv4 | nacaddr.IPv6 | summarizer.DSMNet,
         exclude: bool = False,
         line_length: int = 132,
-    ):
+    ) -> list[str]:
         """Returns address comment field if it exists.
 
         Args:
-          addr: nacaddr.IPv4 object (?)
+          addr: nacaddr.IPv4, nacaddr.IPv6, or DSMNet object
           exclude: bool - address excludes have different indentations
           line_length: integer - this is the length to which a comment will be
             truncated, no matter what.  ie, a 1000 character comment will be
@@ -880,7 +880,7 @@ class Term(aclgenerator.Term):
             logging.warning('Ignoring non IPv4 or IPv6 address: %s', addr)
         return rval
 
-    def _Group(self, group: list[str], lc: bool = True):
+    def _Group(self, group: list[str | int | tuple[int, int]], lc: bool = True) -> str:
         """If 1 item return it, else return [ item1 item2 ].
 
         Args:
@@ -893,7 +893,7 @@ class Term(aclgenerator.Term):
                 or with just ';' appended if len(group) == 1
         """
 
-        def _FormattedGroup(el: list[str], lc: bool = True):
+        def _FormattedGroup(el: str | int | tuple[int, int], lc: bool = True) -> str:
             """Return the actual formatting of an individual element.
 
             Args:
@@ -1002,7 +1002,7 @@ class Juniper(aclgenerator.ACLGenerator):
         )
         return supported_tokens, supported_sub_tokens
 
-    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int):
+    def _TranslatePolicy(self, pol: policy.Policy, exp_info: int) -> None:
         self.juniper_policies = []
         for header, terms in pol.filters:
             filter_options = header.FilterOptions(self._PLATFORM)
@@ -1107,7 +1107,7 @@ class Juniper(aclgenerator.ACLGenerator):
                     )
                 )
 
-    def __str__(self):
+    def __str__(self) -> str:
         config = Config()
 
         for (
