@@ -62,7 +62,7 @@ class Addressbook:
           zone: The zone to retrieve from.
         Returns:
           A list of address tokens."""
-        return [i for i in self._ip_addressbook[zone]]
+        return [*self._ip_addressbook[zone]]
 
     def GetFQDNTokensInZone(self, zone: str):
         """Gets all FQDN tokens in a zone.
@@ -71,7 +71,7 @@ class Addressbook:
         Returns:
           A list of FQDN tokens
         """
-        return [i for i in self._fqdn_addressbook[zone]]
+        return [*self._fqdn_addressbook[zone]]
 
     def AddFQDNs(self, zone: str, fqdn_list: list[FQDN], suffix=''):
         """Adds a list of FQDNs to the addressbook.

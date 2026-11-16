@@ -5,7 +5,7 @@ import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import TYPE_CHECKING, Annotated, Any, TypeAlias
+from typing import TYPE_CHECKING, Annotated, Any, NotRequired, Required, TypeAlias
 
 from absl import logging
 
@@ -30,11 +30,6 @@ from aerleon.lib.recognizers import (
     TUnion,
     TValue,
 )
-
-if sys.version_info < (3, 11):
-    from typing_extensions import NotRequired, Required
-else:
-    from typing import NotRequired, Required
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict

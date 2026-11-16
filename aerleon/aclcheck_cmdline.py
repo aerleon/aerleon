@@ -95,6 +95,25 @@ def main():
         dest='destination_zone',
         help='Destination security/zone identifier. When provided, `AclCheck` will only match terms that either have no `destination-zone` constraint or explicitly match this zone. Use the exact zone name as used in your policy (case-sensitive).',
     )
+    _parser.add_argument(
+        '--icmp-type',
+        '--icmp_type',
+        dest='icmp_type',
+        help='ICMP type of the packet, e.g. echo-request. When provided, `AclCheck` will skip terms whose `icmp-type` does not include it.',
+    )
+    _parser.add_argument(
+        '--icmp-code',
+        '--icmp_code',
+        dest='icmp_code',
+        type=int,
+        help='ICMP code of the packet. When provided, `AclCheck` will skip terms whose `icmp-code` does not include it.',
+    )
+    _parser.add_argument(
+        '--tcp-flags',
+        '--tcp_flags',
+        dest='tcp_flags',
+        help='Comma-separated TCP flags set on the packet, e.g. syn,ack. When provided, `AclCheck` will skip terms whose flag options (syn, ack, rst, fin, psh, urg, initial, tcp-initial) the packet does not satisfy.',
+    )
     FLAGS = _parser.parse_args()
 
     default_flags = {
@@ -109,6 +128,9 @@ def main():
         'source_port': '1025',
         'source_zone': None,
         'destination_zone': None,
+        'icmp_type': None,
+        'icmp_code': None,
+        'tcp_flags': None,
     }
 
     configs = {}
@@ -152,6 +174,9 @@ def main():
         proto=configs['protocol'],
         source_zone=configs.get('source_zone'),
         destination_zone=configs.get('destination_zone'),
+        icmp_type=configs.get('icmp_type'),
+        icmp_code=configs.get('icmp_code'),
+        tcp_flags=configs['tcp_flags'].split(',') if configs.get('tcp_flags') else None,
     )
     print(str(check))
 

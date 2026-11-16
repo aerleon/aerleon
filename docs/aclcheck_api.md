@@ -90,6 +90,21 @@ except Exception as e:
 
 ```
 
+### Matching on ICMP type and TCP flags
+
+`api.AclCheck` and `AclCheck.FromPolicyDict` also accept optional arguments describing the packet:
+
+*   `icmp_type` (str): the ICMP type, e.g. `"echo-request"`. Terms with an `icmp-type` that does not include it are skipped.
+*   `icmp_code` (int): the ICMP code. Terms with an `icmp-code` that does not include it are skipped.
+*   `tcp_flags` (collection of str): the TCP flags set on the packet, e.g. `{"syn", "ack"}`. Terms whose flag options the packet does not satisfy are skipped:
+    *   `syn`, `ack`, `rst`, `fin`, `psh` and `urg` require that flag to be set.
+    *   `initial` and `tcp-initial` require `syn` set with `ack`, `rst` and `fin` clear.
+    *   `tcp-established`, and `established` for a TCP packet, require `ack` set, or `rst` set with `syn`, `fin` and `ack` clear. This is the stateless match the iptables generator renders. The high destination ports some generators add for `established` are not modeled.
+
+    An unknown flag name raises `aclcheck.TcpFlagsError`.
+
+When an argument is omitted (the default), the matching conditions it describes are not evaluated and a term matches whatever its `icmp-type`, `icmp-code` or flag options. In particular, without `tcp_flags` a `tcp-established` term is reported as a possible match (`tcp-est`) and an `established` term as `est`, as before. `established` for a UDP packet is always reported as a possible match.
+
 ### Policy and Definitions Structure
 
 *   **`input_policy` (dict):** This dictionary represents the Aerleon policy.
