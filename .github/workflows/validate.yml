@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -96,7 +96,7 @@ jobs:
         if: steps.paths-filter.outputs.run_format == 'true'
         uses: psf/black@stable
         with:
-          version: "26.5.1"
+          version: "26.10.1"
           src: "aerleon tests noxfile.py"
       #----------------------------------------------
       # run isort
@@ -111,4 +111,4 @@ jobs:
       #----------------------------------------------
       - name: Check for modern Python syntax using pyupgrade
         if: steps.paths-filter.outputs.run_format == 'true'
-        run: poetry run pyupgrade --py310-plus $(git ls-files '*.py' | grep -v '^aerleon/_vendor/')
+        run: poetry run pyupgrade --py311-plus $(git ls-files '*.py' | grep -v '^aerleon/_vendor/')

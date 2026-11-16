@@ -284,6 +284,33 @@ loading process.
 | filter[].terms[].name   | Required, see [Configuring Terms](#configuring-terms)     |
 | filter[].terms[].\*     | See [Field Reference](#full-field-syntax-reference)       |
 
+### JSON Schema
+
+[`schemas/aerleon-policies.schema.json`](https://github.com/aerleon/aerleon/blob/main/schemas/aerleon-policies.schema.json)
+is a JSON Schema for YAML policy and include files. A file has one of three
+top-level keys:
+
+| Top-level key          | File                                                                        |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `filters`              | A policy file. `aclgen` renders each filter.                                |
+| `filters_include_only` | Filters that other policy files include. They aren't rendered on their own. |
+| `terms`                | Terms that other files include.                                             |
+
+The schema checks the structure in the File Structure table above, including the `include`
+forms described in [Includes](#includes): an `include` filter or term must have
+no other keys. It accepts any header option or term token, so it won't catch an
+option or token the generator doesn't support. For those, see the
+[Full Field Syntax Reference](#full-field-syntax-reference) and each
+generator's page.
+
+Editors that use [yaml-language-server](https://github.com/redhat-developer/yaml-language-server),
+such as VS Code with the Red Hat YAML extension, validate a file against the
+schema when its first line is:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/aerleon/aerleon/main/schemas/aerleon-policies.schema.json
+```
+
 ### Configuring Targets
 
 `filter[].header.targets` must be present in every filter. It must contain a

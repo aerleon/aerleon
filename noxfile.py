@@ -12,7 +12,7 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['test']
 
 
-@session(python=["3.10", "3.11", "3.12", "3.13", "3.14", "python3.14t", "3.15", "python3.15t"])
+@session(python=["3.11", "3.12", "3.13", "3.14", "python3.14t", "3.15", "python3.15t"])
 def test(session):
     """Runs pytest"""
     session.run_always("poetry", "install", external=True)
@@ -97,7 +97,7 @@ def format(session):
     vendor_path = Path("aerleon/_vendor")
     files = [f for f in files if not Path(f).is_relative_to(vendor_path)]
     if files:
-        session.run("pyupgrade", "--py310-plus", *files, success_codes=[0, 1])
+        session.run("pyupgrade", "--py311-plus", *files, success_codes=[0, 1])
 
     session.run("black", "aerleon", "tests", "noxfile.py")
     session.run("isort", ".")

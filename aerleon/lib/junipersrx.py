@@ -525,7 +525,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 if self._GLOBAL_ADDR_BOOK in self.addr_book_type:
                     for zone in self.addressbook._ip_addressbook:
                         for _, ips in sorted(self.addressbook._ip_addressbook[zone].items()):
-                            ips = [i for i in ips]
+                            ips = [*ips]
                             if term.source_address == ips:
                                 term.source_address = ips
                             if term.destination_address == ips:
