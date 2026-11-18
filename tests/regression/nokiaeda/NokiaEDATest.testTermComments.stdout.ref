@@ -1,0 +1,31 @@
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: Filter
+metadata:
+  name: my-filter
+  namespace: my-ns
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+spec:
+  entries:
+  # first comment - NET-1
+  # second comment
+  - description: term-comments
+    type: IPv4
+    ipEntry:
+      action: Accept
+      sourcePrefix: 10.2.3.4/32
+  - description: term-comments
+    type: IPv6
+    ipEntry:
+      action: Accept
+      sourcePrefix: 2001:4860:8000::5/128
+  - description: term-deny
+    type: IPv4
+    ipEntry:
+      action: Drop
+  - description: term-deny
+    type: IPv6
+    ipEntry:
+      action: Drop
+

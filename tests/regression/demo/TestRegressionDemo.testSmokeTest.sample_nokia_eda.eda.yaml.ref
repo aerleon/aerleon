@@ -1,0 +1,278 @@
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: Filter
+metadata:
+  name: edge-in
+  namespace: eda
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+    aerleon/comment: 'Edge ingress filter: drops bogons, allows replies to internal hosts and DNS, then drops the rest. mixed puts the IPv4 and IPv6 entries in a single Filter.'
+spec:
+  statisticsPerEntry: true
+  entries:
+  # Drop traffic sourced from bogon space.
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 0.0.0.0/8
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 192.0.0.0/24
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 192.0.2.0/24
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 198.18.0.0/15
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 198.51.100.0/24
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 203.0.113.0/24
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 224.0.0.0/4
+  - description: deny-bogons
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 240.0.0.0/4
+  - description: deny-bogons
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 2001:db8::/32
+  - description: deny-bogons
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 3ffe::/16
+  - description: deny-bogons
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: 5f00::/8
+  - description: deny-bogons
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true
+      sourcePrefix: ff00::/8
+  # Allow name resolution using honestdns.
+  - description: accept-to-honestdns
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 8.8.4.4/32
+      protocolNumber: 17
+      destinationPortOperator: Equals
+      destinationPortNumber: 53
+  - description: accept-to-honestdns
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 8.8.8.8/32
+      protocolNumber: 17
+      destinationPortOperator: Equals
+      destinationPortNumber: 53
+  - description: accept-to-honestdns
+    type: IPv6
+    ipEntry:
+      action: Accept
+      destinationPrefix: 2001:4860:4860::8844/128
+      protocolNumber: 17
+      destinationPortOperator: Equals
+      destinationPortNumber: 53
+  - description: accept-to-honestdns
+    type: IPv6
+    ipEntry:
+      action: Accept
+      destinationPrefix: 2001:4860:4860::8888/128
+      protocolNumber: 17
+      destinationPortOperator: Equals
+      destinationPortNumber: 53
+  # Allow tcp replies to internal hosts (IPv4 only).
+  - description: accept-tcp-replies
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 10.0.0.0/8
+      protocolNumber: 6
+      tcpFlags: ACK|RST
+  - description: accept-tcp-replies
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 172.16.0.0/12
+      protocolNumber: 6
+      tcpFlags: ACK|RST
+  - description: accept-tcp-replies
+    type: IPv4
+    ipEntry:
+      action: Accept
+      destinationPrefix: 192.168.0.0/16
+      protocolNumber: 6
+      tcpFlags: ACK|RST
+  # Drop fragmented packets.
+  - description: deny-fragments
+    type: IPv4
+    ipEntry:
+      action: Drop
+      fragment: true
+  - description: deny-fragments
+    type: IPv6
+    ipEntry:
+      action: Drop
+      fragment: true
+  - description: deny-all
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+  - description: deny-all
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: ControlPlaneFilter
+metadata:
+  name: leaf-cpm-v4
+  namespace: eda
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+    aerleon/comment: IPv4 control plane filter deployed on all leaf nodes.
+spec:
+  nodeSelectors:
+  - eda.nokia.com/role=leaf
+  statisticsPerEntry: true
+  entries:
+  # Allow management SSH from internal networks.
+  - description: accept-ssh-internal
+    type: IPv4
+    ipEntry:
+      action: Accept
+      sourcePrefix: 10.0.0.0/8
+      protocolNumber: 6
+      destinationPortOperator: Equals
+      destinationPortNumber: 22
+  - description: accept-ssh-internal
+    type: IPv4
+    ipEntry:
+      action: Accept
+      sourcePrefix: 172.16.0.0/12
+      protocolNumber: 6
+      destinationPortOperator: Equals
+      destinationPortNumber: 22
+  - description: accept-ssh-internal
+    type: IPv4
+    ipEntry:
+      action: Accept
+      sourcePrefix: 192.168.0.0/16
+      protocolNumber: 6
+      destinationPortOperator: Equals
+      destinationPortNumber: 22
+  - description: accept-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 8
+  - description: accept-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 0
+  - description: accept-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 3
+  - description: accept-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 11
+  - description: deny-all
+    type: IPv4
+    ipEntry:
+      action: Drop
+      log: true
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: ControlPlaneFilter
+metadata:
+  name: leaf-cpm-v6
+  namespace: eda
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+    aerleon/comment: IPv6 control plane filter deployed on two named nodes.
+spec:
+  nodes:
+  - leaf1
+  - leaf2
+  entries:
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 135
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 136
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 133
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 134
+  - description: accept-tcp-established
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 6
+      tcpFlags: ACK|RST
+  - description: deny-all
+    type: IPv6
+    ipEntry:
+      action: Drop
+      log: true

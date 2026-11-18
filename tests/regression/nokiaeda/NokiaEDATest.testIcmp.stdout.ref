@@ -1,0 +1,23 @@
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: Filter
+metadata:
+  name: my-filter
+  namespace: my-ns
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+spec:
+  entries:
+  - description: term-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 8
+  - description: term-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 0
+

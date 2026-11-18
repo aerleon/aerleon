@@ -109,6 +109,7 @@ nav:
         - Iptables: reference/generators/iptables.md
         - NFTables: reference/generators/nftables.md
         - Speedway: reference/generators/speedway.md
+      - Nokia EDA: reference/generators/nokiaeda.md
       - NVUE API: reference/generators/nvueapi.md
       - OpenConfig:
         - Nokia SR Linux: reference/generators/nokiasrl.md

@@ -63,6 +63,7 @@ Address families are listed as they are written in the header. The default is in
 | [JuniperSRX](generators/srx.md) | `srx` | SRX security policies | `inet`, `inet6`, **`mixed`** | `.srx` | |
 | [K8s](generators/k8s.md) | `k8s` | Kubernetes `NetworkPolicy` (YAML) | Both | `.yml` | |
 | [Nftables](generators/nftables.md) | `nftables` | `nft` rulesets | `inet`, `inet6`, `mixed` (required) | `.nft` | |
+| [Nokia EDA](generators/nokiaeda.md) | `nokiaeda` | EDA `Filter` and `ControlPlaneFilter` resources (YAML) | **`inet`**, `inet6`, `mixed` | `.eda.yaml` | |
 | [Nokia SR Linux](generators/nokiasrl.md) | `nokiasrl` | SR Linux ACL filters (JSON) | **`inet`**, `inet6`, `mixed` | `.srl_acl` | OpenConfig |
 | [NSXv](generators/nsxv.md) | `nsxv` | NSX-V distributed firewall section (XML) | `inet`, `inet6`, `mixed` (required) | `.nsx` | |
 | [NSXt](generators/nsxt.md) | `nsxt` | NSX-T security policy (JSON) | `inet`, `inet6`, `mixed` (required, but ignored) | `.nsxt` | |
