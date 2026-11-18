@@ -43,9 +43,9 @@ Nokia EDA also reads:
 | Token | Description | Example | Notes |
 |---|---|---|---|
 | `icmp-code` | ICMP codes to match. | `icmp-code: 3 4` | Requires exactly one `icmp-type`. Rendered as `icmpCodes`. |
-| `logging` | Log matching packets. | `logging: true` | Adds `log: true`. `logging: disable` and `logging: false` don't. |
+| `logging` | Log matching packets. | `logging: true` | Adds `log: true`, except for `logging: disable`. |
 
-`counter` and `policer` are accepted, with a warning, but not rendered.
+`counter` and `policer` are accepted but not rendered. They're only reported in the debug log.
 
 **Other behavior:**
 
