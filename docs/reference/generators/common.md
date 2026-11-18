@@ -49,7 +49,7 @@ Common tokens that some generators reject. Each generator page also lists the on
 | `protocol` | cloudarmor |  |
 | `source-exclude` | aruba, cloudarmor, gcp_hf, nvueapi, windows_advfirewall, windows_ipsec |  |
 | `source-port` | aruba, cloudarmor, gce, gcp_hf, k8s |  |
-| `verbatim` | cloudarmor, gce, gcp_hf, k8s, nftables, nokiasrl, nvueapi, openconfig, paloalto, pcap, sonic, windows_advfirewall, windows_ipsec |  |
+| `verbatim` | cloudarmor, gce, gcp_hf, k8s, nftables, nokiasrl, nokiasros, nvueapi, openconfig, paloalto, pcap, sonic, windows_advfirewall, windows_ipsec |  |
 
 ## Stateful firewalls
 

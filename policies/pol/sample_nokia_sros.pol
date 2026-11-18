@@ -1,0 +1,95 @@
+header {
+  comment:: "Edge ingress filter: drops bogons, allows replies to internal"
+  comment:: "hosts and DNS, then permits the rest."
+  comment:: "mixed renders a separate ip-filter and ipv6-filter named edge-in."
+  target:: nokiasros edge-in mixed accept
+}
+
+term deny-bogons {
+  comment:: "Drop traffic sourced from bogon space."
+  source-address:: BOGON
+  action:: deny
+  logging:: true
+}
+
+term accept-to-honestdns {
+  comment:: "Allow name resolution using honestdns."
+  destination-address:: GOOGLE_DNS
+  destination-port:: DNS
+  protocol:: udp
+  action:: accept
+}
+
+term accept-tcp-replies {
+  comment:: "Allow tcp replies to internal hosts (IPv4 only)."
+  destination-address:: INTERNAL
+  protocol:: tcp
+  option:: tcp-established
+  action:: accept
+}
+
+term deny-to-specific-hosts {
+  comment:: "Deny access to specified public servers."
+  destination-address:: WEB_SERVERS MAIL_SERVERS
+  action:: deny
+  logging:: true
+}
+
+term deny-fragments {
+  comment:: "Drop fragmented packets."
+  option:: fragments
+  action:: deny
+}
+
+header {
+  comment:: "IPv4 CPM filter protecting the control plane."
+  target:: nokiasros cpm-v4 cpm inet syslog-profile 101
+}
+
+term accept-ssh-internal {
+  comment:: "Allow management SSH from internal networks."
+  source-address:: INTERNAL
+  destination-port:: SSH
+  protocol:: tcp
+  action:: accept
+}
+
+term accept-ntp {
+  source-address:: NTP_SERVERS
+  source-port:: NTP
+  protocol:: udp
+  action:: accept
+}
+
+term accept-icmp {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply unreachable time-exceeded
+  action:: accept
+}
+
+term deny-all {
+  action:: deny
+  logging:: true
+}
+
+header {
+  comment:: "IPv6 CPM filter protecting the control plane."
+  target:: nokiasros cpm-v6 cpm inet6 syslog-profile 101
+}
+
+term accept-neighbor-discovery {
+  protocol:: icmpv6
+  icmp-type:: neighbor-solicit neighbor-advertisement router-solicit router-advertisement
+  action:: accept
+}
+
+term accept-tcp-established {
+  protocol:: tcp
+  option:: established
+  action:: accept
+}
+
+term deny-all {
+  action:: deny
+  logging:: true
+}

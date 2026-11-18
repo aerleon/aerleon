@@ -32,6 +32,9 @@ PossibleMatchReason: TypeAlias = Literal[
     "packet-length",
     "est",
     "tcp-est",
+    "ip-opts",
+    "ttl",
+    "hop-limit",
 ]
 
 
@@ -432,6 +435,15 @@ class AclCheck:
             and not self._tcp_flags_evaluated
         ):
             ret_str.append('tcp-est')
+        # ip-options only matches packets carrying IP options; a flow check
+        # can't express that, so never treat such a term as an exact match.
+        if 'ip-options' in term.option:
+            ret_str.append('ip-opts')
+        # likewise a flow check has no TTL / hop limit, so such terms only possibly match
+        if term.ttl:
+            ret_str.append('ttl')
+        if term.hop_limit:
+            ret_str.append('hop-limit')
         return ret_str
 
     @property
