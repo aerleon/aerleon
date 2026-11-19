@@ -1,9 +1,9 @@
 security {
     replace: address-book {
         global {
-                address SOME_HOST_0 2001:4860:8000::/33;
+                address ip_2001:4860:8000::/33 2001:4860:8000::/33;
                 address-set SOME_HOST {
-                    address SOME_HOST_0;
+                    address ip_2001:4860:8000::/33;
                 }
         }
     }

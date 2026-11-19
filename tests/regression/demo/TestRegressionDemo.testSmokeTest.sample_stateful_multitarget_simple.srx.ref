@@ -1,89 +1,81 @@
 security {
     replace: address-book {
         global {
-                address BOGON_0 0.0.0.0/8;
-                address BOGON_1 192.0.0.0/24;
-                address BOGON_2 192.0.2.0/24;
-                address BOGON_3 198.18.0.0/15;
-                address BOGON_4 198.51.100.0/24;
-                address BOGON_5 203.0.113.0/24;
-                address BOGON_6 224.0.0.0/3;
-                address BOGON_7 2001:db8::/32;
-                address BOGON_8 3ffe::/16;
-                address BOGON_9 5f00::/8;
-                address BOGON_10 ff00::/8;
-                address GOOGLE_DNS_0 8.8.4.4/32;
-                address GOOGLE_DNS_1 8.8.8.8/32;
-                address GOOGLE_DNS_2 2001:4860:4860::8844/128;
-                address GOOGLE_DNS_3 2001:4860:4860::8888/128;
-                address INTERNAL_0 10.0.0.0/8;
-                address INTERNAL_1 172.16.0.0/12;
-                address INTERNAL_2 192.168.0.0/16;
-                address RESERVED_0 0.0.0.0/8;
-                address RESERVED_1 10.0.0.0/8;
-                address RESERVED_2 100.64.0.0/10;
-                address RESERVED_3 127.0.0.0/8;
-                address RESERVED_4 169.254.0.0/16;
-                address RESERVED_5 172.16.0.0/12;
-                address RESERVED_6 192.168.0.0/16;
-                address RESERVED_7 224.0.0.0/3;
-                address RESERVED_8 ::/3;
-                address RESERVED_9 4000::/2;
-                address RESERVED_10 8000::/1;
-                address RFC1918_0 10.0.0.0/8;
-                address RFC1918_1 172.16.0.0/12;
-                address RFC1918_2 192.168.0.0/16;
-                address WEB_IPV6_SERVERS_0 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128;
-                address WEB_SERVERS_0 200.1.1.1/32;
-                address WEB_SERVERS_1 200.1.1.2/32;
+                address ip_0.0.0.0/8 0.0.0.0/8;
+                address ip_8.8.4.4/32 8.8.4.4/32;
+                address ip_8.8.8.8/32 8.8.8.8/32;
+                address ip_10.0.0.0/8 10.0.0.0/8;
+                address ip_100.64.0.0/10 100.64.0.0/10;
+                address ip_127.0.0.0/8 127.0.0.0/8;
+                address ip_169.254.0.0/16 169.254.0.0/16;
+                address ip_172.16.0.0/12 172.16.0.0/12;
+                address ip_192.0.0.0/24 192.0.0.0/24;
+                address ip_192.0.2.0/24 192.0.2.0/24;
+                address ip_192.168.0.0/16 192.168.0.0/16;
+                address ip_198.18.0.0/15 198.18.0.0/15;
+                address ip_198.51.100.0/24 198.51.100.0/24;
+                address ip_200.1.1.1/32 200.1.1.1/32;
+                address ip_200.1.1.2/32 200.1.1.2/32;
+                address ip_203.0.113.0/24 203.0.113.0/24;
+                address ip_224.0.0.0/3 224.0.0.0/3;
+                address ip_::/3 ::/3;
+                address ip_2001:db8::/32 2001:db8::/32;
+                address ip_2001:4860:4860::8844/128 2001:4860:4860::8844/128;
+                address ip_2001:4860:4860::8888/128 2001:4860:4860::8888/128;
+                address ip_2620:15c:2c4:202:b0e7:158f:6a7a:3188/128 2620:15c:2c4:202:b0e7:158f:6a7a:3188/128;
+                address ip_3ffe::/16 3ffe::/16;
+                address ip_4000::/2 4000::/2;
+                address ip_5f00::/8 5f00::/8;
+                address ip_8000::/1 8000::/1;
+                address ip_ff00::/8 ff00::/8;
                 address-set BOGON {
-                    address BOGON_0;
-                    address BOGON_1;
-                    address BOGON_2;
-                    address BOGON_3;
-                    address BOGON_4;
-                    address BOGON_5;
-                    address BOGON_6;
-                    address BOGON_7;
-                    address BOGON_8;
-                    address BOGON_9;
-                    address BOGON_10;
+                    address ip_0.0.0.0/8;
+                    address ip_192.0.0.0/24;
+                    address ip_192.0.2.0/24;
+                    address ip_198.18.0.0/15;
+                    address ip_198.51.100.0/24;
+                    address ip_203.0.113.0/24;
+                    address ip_224.0.0.0/3;
+                    address ip_2001:db8::/32;
+                    address ip_3ffe::/16;
+                    address ip_5f00::/8;
+                    address ip_ff00::/8;
                 }
                 address-set GOOGLE_DNS {
-                    address GOOGLE_DNS_0;
-                    address GOOGLE_DNS_1;
-                    address GOOGLE_DNS_2;
-                    address GOOGLE_DNS_3;
+                    address ip_8.8.4.4/32;
+                    address ip_8.8.8.8/32;
+                    address ip_2001:4860:4860::8844/128;
+                    address ip_2001:4860:4860::8888/128;
                 }
                 address-set INTERNAL {
-                    address INTERNAL_0;
-                    address INTERNAL_1;
-                    address INTERNAL_2;
+                    address ip_10.0.0.0/8;
+                    address ip_172.16.0.0/12;
+                    address ip_192.168.0.0/16;
                 }
                 address-set RESERVED {
-                    address RESERVED_0;
-                    address RESERVED_1;
-                    address RESERVED_2;
-                    address RESERVED_3;
-                    address RESERVED_4;
-                    address RESERVED_5;
-                    address RESERVED_6;
-                    address RESERVED_7;
-                    address RESERVED_8;
-                    address RESERVED_9;
-                    address RESERVED_10;
+                    address ip_0.0.0.0/8;
+                    address ip_10.0.0.0/8;
+                    address ip_100.64.0.0/10;
+                    address ip_127.0.0.0/8;
+                    address ip_169.254.0.0/16;
+                    address ip_172.16.0.0/12;
+                    address ip_192.168.0.0/16;
+                    address ip_224.0.0.0/3;
+                    address ip_::/3;
+                    address ip_4000::/2;
+                    address ip_8000::/1;
                 }
                 address-set RFC1918 {
-                    address RFC1918_0;
-                    address RFC1918_1;
-                    address RFC1918_2;
+                    address ip_10.0.0.0/8;
+                    address ip_172.16.0.0/12;
+                    address ip_192.168.0.0/16;
                 }
                 address-set WEB_IPV6_SERVERS {
-                    address WEB_IPV6_SERVERS_0;
+                    address ip_2620:15c:2c4:202:b0e7:158f:6a7a:3188/128;
                 }
                 address-set WEB_SERVERS {
-                    address WEB_SERVERS_0;
-                    address WEB_SERVERS_1;
+                    address ip_200.1.1.1/32;
+                    address ip_200.1.1.2/32;
                 }
         }
     }
