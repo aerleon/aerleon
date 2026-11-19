@@ -84,6 +84,8 @@ Any other option value is accepted but ignored.
 
 Each policy file renders to one file with the same name and a `.srx` extension, so `sample.yaml` renders `sample.srx`.
 
+Address objects are named after their content: `ip_<prefix>` for addresses and `fqdn_<name>` for FQDNs. FQDN names longer than 63 characters, or containing characters other than letters, digits, `-`, `_` and `.`, become `fqdn-hash_`, a short hash, and as many whole labels from the end of the name as fit, e.g. `fqdn-hash_43c9a14c_.example.com`. Each object is defined once per address book and shared by every address-set that uses it, so adding an address does not rename other objects.
+
 ### Examples
 
 === "Sample policy"
@@ -102,11 +104,11 @@ Each policy file renders to one file with the same name and a `.srx` extension, 
     security {
         replace: address-book {
             global {
-                    address MGMT_0 10.0.0.0/24;
-                    address MGMT_1 192.168.10.0/24;
+                    address ip_10.0.0.0/24 10.0.0.0/24;
+                    address ip_192.168.10.0/24 192.168.10.0/24;
                     address-set MGMT {
-                        address MGMT_0;
-                        address MGMT_1;
+                        address ip_10.0.0.0/24;
+                        address ip_192.168.10.0/24;
                     }
             }
         }
@@ -193,9 +195,9 @@ Each policy file renders to one file with the same name and a `.srx` extension, 
     security {
         replace: address-book {
             global {
-                    address WEB_SERVERS_0 203.0.113.10/32;
+                    address ip_203.0.113.10/32 203.0.113.10/32;
                     address-set WEB_SERVERS {
-                        address WEB_SERVERS_0;
+                        address ip_203.0.113.10/32;
                     }
             }
         }

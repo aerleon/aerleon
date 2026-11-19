@@ -1,17 +1,17 @@
 security {
     replace: address-book {
         global {
-                address FOO_0 10.0.0.2/32;
-                address FOOBAR_0 10.0.0.3/32;
-                address SOME_HOST_0 10.0.0.1/32;
+                address ip_10.0.0.1/32 10.0.0.1/32;
+                address ip_10.0.0.2/32 10.0.0.2/32;
+                address ip_10.0.0.3/32 10.0.0.3/32;
                 address-set FOO {
-                    address FOO_0;
+                    address ip_10.0.0.2/32;
                 }
                 address-set FOOBAR {
-                    address FOOBAR_0;
+                    address ip_10.0.0.3/32;
                 }
                 address-set SOME_HOST {
-                    address SOME_HOST_0;
+                    address ip_10.0.0.1/32;
                 }
         }
     }

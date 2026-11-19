@@ -1,11 +1,11 @@
 security {
     replace: address-book {
         global {
-                address SOME_HOST_0 1.0.0.0/8;
-                address SOME_HOST_1 10.0.0.0/8;
+                address ip_1.0.0.0/8 1.0.0.0/8;
+                address ip_10.0.0.0/8 10.0.0.0/8;
                 address-set SOME_HOST {
-                    address SOME_HOST_0;
-                    address SOME_HOST_1;
+                    address ip_1.0.0.0/8;
+                    address ip_10.0.0.0/8;
                 }
         }
     }
