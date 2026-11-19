@@ -121,9 +121,10 @@ class Term(aclgenerator.Term):
 
         # COMMENTS
         comment_max_width = 68
+        comment = list(self.term.comment)
         if self.term.owner and self.verbose:
-            self.term.comment.append(f'Owner: {self.term.owner}')
-        comments = aclgenerator.WrapWords(self.term.comment, comment_max_width)
+            comment.append(f'Owner: {self.term.owner}')
+        comments = aclgenerator.WrapWords(comment, comment_max_width)
         if comments and comments[0] and self.verbose:
             ret_str.IndentAppend(3, '/*')
             for line in comments:
