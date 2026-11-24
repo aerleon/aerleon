@@ -41,6 +41,7 @@ The data primarily consists of:
 * NFTables
 * Nokia
     * Nokia SR Linux (nokiasrl)
+    * Nokia SR OS (nokiasros)
 * VMWare NSXV
 * Packet Filter
 * Palo Alto
