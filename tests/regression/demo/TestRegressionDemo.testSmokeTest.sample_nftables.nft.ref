@@ -12,10 +12,8 @@ table inet filtering_policies {
     }
     chain full-tuple-term {
         ip saddr { 200.1.1.1/32, 200.1.1.2/32 } ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 53 tcp dport 53 ct state new accept
-        ip saddr { 200.1.1.1/32, 200.1.1.2/32 } ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 53 tcp dport 53 ct state new accept
     }
     chain ssh-deny {
-        tcp dport { 22, 53 } drop
         tcp dport { 22, 53 } drop
     }
     chain source-address-term {

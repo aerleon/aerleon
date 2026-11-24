@@ -42,8 +42,6 @@ table inet filtering_policies {
     chain full-combo-term {
         comment "Test src/dest 80 - with addresses"
         ip saddr 1.1.1.1/32 ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 80 tcp dport 80 ct state new accept
-        ip saddr 1.1.1.1/32 ip daddr { 8.8.4.4/32, 8.8.8.8/32 } tcp sport 80 tcp dport 80 ct state new accept
-        ip6 saddr 2606:4700:4700::1111/128 ip6 daddr { 2001:4860:4860::8844/128, 2001:4860:4860::8888/128 } tcp sport 80 tcp dport 80 ct state new accept
         ip6 saddr 2606:4700:4700::1111/128 ip6 daddr { 2001:4860:4860::8844/128, 2001:4860:4860::8888/128 } tcp sport 80 tcp dport 80 ct state new accept
     }
     chain multi-all-families {
@@ -53,7 +51,6 @@ table inet filtering_policies {
     }
     chain base-traceroute-in {
         comment "Ensure we can output a port-range."
-        udp sport 33434-33534 udp dport 1024-65535 ct state new accept
         udp sport 33434-33534 udp dport 1024-65535 ct state new accept
     }
     chain root2 {

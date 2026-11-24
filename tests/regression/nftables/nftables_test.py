@@ -391,6 +391,62 @@ class NftablesTest(parameterized.TestCase):
         )
         self.assertEqual(result, expected_output)
 
+    def testMixedRendersEachRuleOnce(self):
+        """A mixed filter renders each rule once.
+
+        PortsAndProtocols builds the protocol and port statements for IPv4 and
+        IPv6 and combined both lists with every address, so a port match came
+        out twice per address, and a protocol without ports came out as both
+        "ip protocol" and "meta l4proto" -- pairing "ip6 saddr" with "ip
+        protocol", which matches nothing.
+        """
+        self.naming.ParseServiceList(['SSH = 22/tcp'])
+        self.naming.ParseNetworkList(['DUAL = 192.0.2.10/32', '       2001:db8::10/128'])
+        terms = """
+term ssh-dual {
+  protocol:: tcp
+  destination-port:: SSH
+  source-address:: DUAL
+  action:: accept
+}
+term tcp-dual {
+  protocol:: tcp
+  source-address:: DUAL
+  action:: accept
+}
+term ssh-any {
+  protocol:: tcp
+  destination-port:: SSH
+  action:: accept
+}
+"""
+        header = """
+header {
+  target:: nftables mixed INPUT
+}
+"""
+        nft = str(nftables.Nftables(policy.ParsePolicy(header + terms, self.naming), EXP_INFO))
+
+        def rules(name):
+            body = nft.split(f'chain {name} {{')[1].split('}')[0]
+            return [line.strip() for line in body.splitlines() if line.strip()]
+
+        self.assertEqual(
+            rules('ssh-dual'),
+            [
+                'ip saddr 192.0.2.10/32 tcp dport 22 ct state new accept',
+                'ip6 saddr 2001:db8::10/128 tcp dport 22 ct state new accept',
+            ],
+        )
+        self.assertEqual(
+            rules('tcp-dual'),
+            [
+                'ip saddr 192.0.2.10/32 meta l4proto tcp ct state new accept',
+                'ip6 saddr 2001:db8::10/128 meta l4proto tcp ct state new accept',
+            ],
+        )
+        self.assertEqual(rules('ssh-any'), ['tcp dport 22 ct state new accept'])
+
     def testDuplicateTerm(self):
         pol = policy.ParsePolicy(GOOD_HEADER_1 + GOOD_TERM_1 + GOOD_TERM_1, self.naming)
         with self.assertRaises(nftables.TermError):
@@ -409,7 +465,7 @@ class NftablesTest(parameterized.TestCase):
             [(3199, 3199)],
             [(80, 80)],
             [],
-            ['tcp sport 3199 tcp dport 80', 'tcp sport 3199 tcp dport 80'],
+            ['tcp sport 3199 tcp dport 80'],
         ),
         (
             'inet',
@@ -417,7 +473,7 @@ class NftablesTest(parameterized.TestCase):
             [(3199, 3199)],
             [],
             [],
-            ['tcp sport 3199', 'tcp sport 3199'],
+            ['tcp sport 3199'],
         ),
         (
             'inet',
@@ -425,9 +481,9 @@ class NftablesTest(parameterized.TestCase):
             [],
             [(80, 80)],
             [],
-            ['tcp dport 80', 'tcp dport 80'],
+            ['tcp dport 80'],
         ),
-        ('inet', ['tcp'], [], [], [], ['ip protocol tcp', 'meta l4proto tcp']),
+        ('inet', ['tcp'], [], [], [], ['meta l4proto tcp']),
         ('ip6', ['tcp'], [], [], [], ['meta l4proto tcp']),
         (
             'inet',
@@ -435,7 +491,7 @@ class NftablesTest(parameterized.TestCase):
             [],
             [],
             [],
-            ['ip protocol { tcp, udp }', 'meta l4proto { tcp, udp }'],
+            ['meta l4proto { tcp, udp }'],
         ),
     )
     def testPortsAndProtocols(self, af, proto, src_p, dst_p, icmp_type, expected):
