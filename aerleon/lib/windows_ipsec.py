@@ -232,4 +232,5 @@ class WindowsIPSec(windows.WindowsGenerator):
         target.append(f"{Term.CMD_PREFIX}{self._POLICY_FORMAT.substitute(name=policy_name)}\n")
 
     def _HandleTermFooter(self, header: Header, term: Term, target: list[str]):
-        target.append(f"{term.ComposeRule(header.FilterName(self._PLATFORM))}\n")
+        policy_name = header.FilterName(self._PLATFORM) + self._POLICY_SUFFIX
+        target.append(f"{term.ComposeRule(policy_name)}\n")

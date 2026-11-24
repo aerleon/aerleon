@@ -120,6 +120,7 @@ BUILTIN_GENERATORS: list[tuple] = [
     ('k8s',                  'aerleon.lib.k8s',                  'K8s'),
     ('fortigate',            'aerleon.lib.fortigate',            'Fortigate'),
     ('proxmox',              'aerleon.lib.proxmox',              'Proxmox'),
+    ('windows_ipsec',        'aerleon.lib.windows_ipsec',        'WindowsIPSec'),
     # fmt: on
 ]
 

@@ -157,7 +157,6 @@ class Term(aclgenerator.Term):
         self._CartesianProduct(
             src_addr, dst_addr, protocols, icmp_types, src_ports, dst_ports, ret_str
         )
-        self._HandlePreRule(ret_str)
 
         return '\n'.join(str(v) for v in ret_str if v)
 
@@ -261,15 +260,20 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
         supported_tokens |= {'option'}
         supported_tokens -= {'verbatim'}
 
-        supported_sub_tokens.update({'action': {'accept', 'deny'}})
-        del supported_sub_tokens['option']
+        supported_sub_tokens.update(
+            {
+                'action': {'accept', 'deny'},
+                # Terms with these options are skipped; no other option is rendered.
+                'option': {'established', 'tcp-established'},
+            }
+        )
         return supported_tokens, supported_sub_tokens
 
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Translate a policy from objects into strings."""
         self.windows_policies = []
         default_action = None
-        good_default_actions = ['permit', 'block']
+        unsupported_default_actions = ['permit', 'block']
         good_options = []
 
         for header, terms in pol.filters:
@@ -279,7 +283,11 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
             # ensure all options after the filter name are expected
             for opt in filter_options:
-                if opt not in good_default_actions + self._GOOD_AFS + good_options:
+                if opt in unsupported_default_actions:
+                    raise aclgenerator.UnsupportedTargetOptionError(
+                        'Windows generator does not support default actions'
+                    )
+                if opt not in self._GOOD_AFS + good_options:
                     raise aclgenerator.UnsupportedTargetOptionError(
                         '%s %s %s %s'
                         % (
@@ -307,25 +315,6 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
                     filter_type = address_family
             if filter_type is None:
                 filter_type = 'inet'
-
-            # does this policy override the default filter actions?
-            for next_target in header.target:
-                if next_target.platform == self._PLATFORM:
-                    if len(next_target.options) > 1:
-                        for arg in next_target.options:
-                            if arg in good_default_actions:
-                                default_action = arg
-            if default_action and default_action not in good_default_actions:
-                raise aclgenerator.UnsupportedTargetOptionError(
-                    '%s %s %s %s %s'
-                    % (
-                        '\nOnly',
-                        ', '.join(good_default_actions),
-                        'default filter action allowed;',
-                        default_action,
-                        'used.',
-                    )
-                )
 
             # add the terms
             new_terms = []
@@ -367,11 +356,6 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             # add the p4 tags
             target.extend(aclgenerator.AddRepositoryTags(': '))
             target.append(f": {filter_type}")
-
-            if default_action:
-                raise aclgenerator.UnsupportedTargetOptionError(
-                    'Windows generator does not support default actions'
-                )
 
             # add the terms
             for term in terms:
