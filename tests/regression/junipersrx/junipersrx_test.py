@@ -476,6 +476,17 @@ term owner-test {
 }
 """
 
+OWNER_TERM_TO_SPLIT = """
+term term_to_split {
+  owner:: foo@example.com
+  source-address:: FOOBAR
+  destination-address:: SOME_HOST
+  destination-port:: SMTP
+  protocol:: tcp
+  action:: accept
+}
+"""
+
 MULTIPLE_PROTOCOLS_TERM = """
 term multi-proto {
   protocol:: tcp udp icmp
@@ -1255,6 +1266,25 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertEqual(len(srx.policy.filters[0][1]), 4)
 
         print(srx)
+
+    @capture.stdout
+    def testLargeTermSplittingOwner(self):
+        # 1024 non-contiguous /32s on each side forces a split into 4 policies.
+        src_ips = [str(ip) for ip in nacaddr.IP('10.0.8.0/21').subnets(new_prefix=32)][::2]
+        dst_ips = [str(ip) for ip in nacaddr.IP('10.0.0.0/21').subnets(new_prefix=32)][::2]
+        self.naming._ParseLine(f'FOOBAR = {" ".join(src_ips)}', 'networks')
+        self.naming._ParseLine(f'SOME_HOST = {" ".join(dst_ips)}', 'networks')
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+
+        pol = policy.ParsePolicy(GOOD_HEADER_2 + OWNER_TERM_TO_SPLIT, self.naming)
+        srx = junipersrx.JuniperSRX(pol, EXP_INFO)
+        output = str(srx)
+        print(output)
+        self.assertEqual(len(srx.policy.filters[0][1]), 4)
+
+        # Each split policy gets exactly one owner line.
+        owner_comment = '            /*\n            Owner: foo@example.com\n            */'
+        self.assertEqual(output.count(owner_comment), 4, output)
 
     @capture.stdout
     def testLargeTermSplittingV6(self):
@@ -2553,6 +2583,16 @@ YAML_OWNER_TERM = """
     action: accept
 """
 
+YAML_OWNER_TERM_TO_SPLIT = """
+  - name: term_to_split
+    owner: foo@example.com
+    source-address: FOOBAR
+    destination-address: SOME_HOST
+    destination-port: SMTP
+    protocol: tcp
+    action: accept
+"""
+
 YAML_MULTIPLE_PROTOCOLS_TERM = """
   - name: multi-proto
     protocol: tcp udp icmp
@@ -2722,6 +2762,7 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             BAD_ICMP_TERM_1=YAML_BAD_ICMP_TERM_1,
             ICMP_ONLY_TERM_1=YAML_ICMP_ONLY_TERM_1,
             OWNER_TERM=YAML_OWNER_TERM,
+            OWNER_TERM_TO_SPLIT=YAML_OWNER_TERM_TO_SPLIT,
             MULTIPLE_PROTOCOLS_TERM=YAML_MULTIPLE_PROTOCOLS_TERM,
             DEFAULT_TERM_1=YAML_DEFAULT_TERM_1,
             TIMEOUT_TERM=YAML_TIMEOUT_TERM,
