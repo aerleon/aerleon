@@ -2705,6 +2705,33 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
         )
 
+    # FQDNs are YAML-only, so these tests live here rather than in the base class.
+    def testWrongFamilyAddressesKeepFqdn(self):
+        self.naming._ParseLine('V4 = 10.0.0.0/24', 'networks')
+        self.naming._ParseLine('V6 = 2001:db8::/64', 'networks')
+        self.naming.ParseYaml(
+            'networks:\n  DNS:\n    values:\n      - fqdn: dns.google.com\n', file_name=''
+        )
+        # Each filter family gets only the other family's address.
+        for header, token, address in (
+            (YAML_GOOD_HEADER_3, 'V6', '2001:db8::/64'),
+            (YAML_GOOD_HEADER_4, 'V4', '10.0.0.0/24'),
+        ):
+            for side in ('source', 'destination'):
+                with self.subTest(side=side, address=address):
+                    term = f"""
+  - name: fqdn-af-term
+    {side}-address: {token}
+    {side}-fqdn: DNS
+    protocol: tcp
+    action: accept
+"""
+                    pol = policy.ParsePolicy(header + term, self.naming)
+                    output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
+                    self.assertIn('policy fqdn-af-term {', output, output)
+                    self.assertIn(f'{side}-address [ DNS_FQDN ];', output, output)
+                    self.assertNotIn(address, output, output)
+
 
 #     @capture.stdout
 #     def testFQDN(self):
