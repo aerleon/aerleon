@@ -621,6 +621,36 @@ class Nftables(aclgenerator.ACLGenerator):
     # Protocols that cannot appear in a single-family nftables table.
     # 'inet' (mixed) is absent: it renders each family separately.
     _AF_INCOMPATIBLE_PROTOCOLS = {'ip': frozenset(['icmpv6']), 'ip6': frozenset(['icmp'])}
+    _AF_VERSIONS = {'ip': (4,), 'ip6': (6,), 'inet': (4, 6)}
+
+    @classmethod
+    def _AddressFamilyMismatch(
+        cls, term: policy.Term, nf_af: str, had_src: bool, had_dst: bool
+    ) -> str | None:
+        """Why a term has no address family left to render in, or None.
+
+        A term renders in a family when, for each direction it names
+        addresses for, it has an address of that family left after excludes.
+        """
+        named = [
+            (direction, addrs)
+            for direction, had, addrs in (
+                ('source', had_src, term.source_address),
+                ('destination', had_dst, term.destination_address),
+            )
+            if had
+        ]
+        for version in cls._AF_VERSIONS[nf_af]:
+            if all(any(a.version == version for a in addrs) for _, addrs in named):
+                return None
+        if len(named) == 1:
+            return aclgenerator.Term.NO_AF_LOG_ADDR.substitute(
+                term=term.name, direction=named[0][0], af=nf_af
+            )
+        return (
+            f'Term {term.name} will not be rendered, as no address family of '
+            f'the {nf_af} table has both its source and destination addresses.'
+        )
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """NFTables generator list of supported tokens and sub tokens.
@@ -745,12 +775,21 @@ class Nftables(aclgenerator.ACLGenerator):
                     )
                     continue
                 # Handle address excludes before building nft address book dict.
+                had_src, had_dst = bool(term.source_address), bool(term.destination_address)
                 for i in term.source_address_exclude:
                     term.source_address = nacaddr.RemoveAddressFromList(term.source_address, i)
                 for i in term.destination_address_exclude:
                     term.destination_address = nacaddr.RemoveAddressFromList(
                         term.destination_address, i
                     )
+                # Skip terms whose addresses leave nothing to match in this
+                # table's address family. _AddrStatement emits a match only for
+                # the families present, so such a term would otherwise render
+                # with no address match at all and match every address.
+                skip = self._AddressFamilyMismatch(term, nf_af, had_src, had_dst)
+                if skip:
+                    logging.warning(skip)
+                    continue
                 new_terms.append(Term(term, nf_af, nf_hook, verbose))
                 # Instantiate object to call function from Term()
                 term_object = Term(term, nf_af, nf_hook, verbose)
