@@ -108,7 +108,10 @@ SUPPORTED_TOKENS = {
     'translated',
 }
 
-SUPPORTED_SUB_TOKENS = {'action': {'accept', 'deny'}}
+SUPPORTED_SUB_TOKENS = {
+    'action': {'accept', 'deny'},
+    'option': {'established', 'tcp-established'},
+}
 
 # Print a info message when a term is set to expire in that many weeks.
 # This is normally passed from command line.
@@ -150,7 +153,7 @@ class WindowsIPSecTest(absltest.TestCase):
                 'filteraction name=t_good-term-tcp-action action=permit',
                 'filter filterlist=t_good-term-tcp-list mirrored=yes srcaddr=any '
                 ' dstaddr=10.0.0.0 dstmask=8 dstport=25',
-                'rule name=t_good-term-tcp-rule policy=test-filter'
+                'rule name=t_good-term-tcp-rule policy=test-filter-policy'
                 ' filterlist=t_good-term-tcp-list'
                 ' filteraction=t_good-term-tcp-action',
             ],
@@ -170,7 +173,7 @@ class WindowsIPSecTest(absltest.TestCase):
                 'filterlist name=t_good-term-icmp-list',
                 'filteraction name=t_good-term-icmp-action action=permit',
                 'filter filterlist=t_good-term-icmp-list mirrored=yes srcaddr=any ' ' dstaddr=any',
-                'rule name=t_good-term-icmp-rule policy=test-filter'
+                'rule name=t_good-term-icmp-rule policy=test-filter-policy'
                 ' filterlist=t_good-term-icmp-list'
                 ' filteraction=t_good-term-icmp-action',
             ],
@@ -223,13 +226,29 @@ class WindowsIPSecTest(absltest.TestCase):
                 ' dstaddr=any  protocol=udp',
                 'filter filterlist=t_multi-proto-list mirrored=yes srcaddr=any '
                 ' dstaddr=any  protocol=icmp',
-                'rule name=t_multi-proto-rule policy=test-filter'
+                'rule name=t_multi-proto-rule policy=test-filter-policy'
                 ' filterlist=t_multi-proto-list filteraction=t_multi-proto-action',
             ],
             result,
             'multi-proto',
         )
         print(result)
+
+    def testRulesUsePolicyName(self):
+        acl = windows_ipsec.WindowsIPSec(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SIMPLE, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertIn('policy name=test-filter-policy assign=yes', result)
+        self.assertIn('rule name=t_good-simple-rule policy=test-filter-policy ', result)
+
+    def testFilterListAndActionAddedOnce(self):
+        acl = windows_ipsec.WindowsIPSec(
+            policy.ParsePolicy(GOOD_HEADER + GOOD_SIMPLE, self.naming), EXP_INFO
+        )
+        result = str(acl)
+        self.assertEqual(result.count('add filterlist name=t_good-simple-list'), 1)
+        self.assertEqual(result.count('add filteraction name=t_good-simple-action'), 1)
 
     def testBuildTokens(self):
         pol1 = windows_ipsec.WindowsIPSec(

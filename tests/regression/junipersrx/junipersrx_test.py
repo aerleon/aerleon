@@ -25,6 +25,7 @@ from absl.testing import absltest
 
 from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy
 from aerleon.lib import yaml as yaml_frontend
+from aerleon.lib.fqdn import FQDN
 from tests.regression_utils import capture
 
 GOOD_HEADER = """
@@ -1152,6 +1153,29 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertFalseUnorderedAddressBook(p._GenerateAddressBook())
 
         print(p)
+
+    def testCollapsedAddressSetMembers(self):
+        self.naming._ParseLine(
+            'SOME_HOST = 10.0.0.128/25 10.0.0.0/25 2001:db8:0:0:8000::/65 2001:db8::/65',
+            'networks',
+        )
+        self.naming._ParseLine('SMTP = 25/tcp', 'services')
+        for label, header in (('global', GOOD_HEADER), ('zone', GOOD_HEADER_9)):
+            with self.subTest(address_book=label):
+                pol = policy.ParsePolicy(header + GOOD_TERM_1, self.naming, optimize=False)
+                renderer = junipersrx.JuniperSRX(pol, EXP_INFO)
+                renderer.addressbook.AddFQDNs('untrust', [FQDN('example.test', 'SOME_HOST')])
+                output = str(renderer)
+                self.assertIn('address ip_10.0.0.0/24 10.0.0.0/24;', output)
+                self.assertIn('address ip_2001:db8::/64 2001:db8::/64;', output)
+                self.assertIn('address ip_10.0.0.0/24;', output)
+                self.assertIn('address ip_2001:db8::/64;', output)
+                self.assertIn('address fqdn_example.test {', output)
+                self.assertIn('address fqdn_example.test;', output)
+                self.assertIn('dns-name example.test;', output)
+                self.assertNotIn('/25', output)
+                self.assertNotIn('/65', output)
+                self.assertEqual(str(renderer), output)
 
     def _AssertOrder(self, strings, expected_order):
         order = copy.copy(expected_order)
