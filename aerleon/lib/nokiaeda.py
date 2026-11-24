@@ -81,10 +81,6 @@ class InvalidResourceNameError(Error):
     pass
 
 
-class UnknownProtocolError(Error):
-    pass
-
-
 class DuplicateResourceError(Error):
     pass
 
@@ -124,6 +120,16 @@ class EDATerm(aclgenerator.Term):
         super().__init__(term)
         self.inet_version = inet_version
         self.mixed = mixed
+        # Policies keep protocols as written ('6' or 'tcp'), and the base class
+        # turns ipip into 4. Use names from here on, so that a number gets the
+        # same family split, tcp/udp checks and icmp-type handling as its name.
+        # The base class has already rejected numbers without a name.
+        self.term.protocol = list(
+            dict.fromkeys(
+                self.PROTO_MAP_BY_NUMBER[int(p)] if str(p).isdigit() else p
+                for p in self.term.protocol
+            )
+        )
         # EDA entries cannot match "any except", so an exclude needs a list of
         # addresses to subtract it from.
         for direction in ('source', 'destination'):
@@ -290,7 +296,7 @@ class EDATerm(aclgenerator.Term):
         daddr: Any,
         sport: tuple[int, int],
         dport: tuple[int, int],
-        proto: int | str | None,
+        proto: str | None,
         icmp_type: int | None,
         tcp_flags: str | None,
         opts: list[str],
@@ -305,13 +311,7 @@ class EDATerm(aclgenerator.Term):
             ip_entry['destinationPrefix'] = str(daddr)
 
         if proto is not None:
-            if isinstance(proto, str):
-                if proto not in self.PROTO_MAP:
-                    raise UnknownProtocolError(
-                        f'protocol {proto} unknown in term {self.term.name}, use an integer'
-                    )
-                proto = self.PROTO_MAP[proto]
-            ip_entry['protocolNumber'] = int(proto)
+            ip_entry['protocolNumber'] = self.PROTO_MAP[proto]
 
         self._SetPort(ip_entry, 'source', sport)
         self._SetPort(ip_entry, 'destination', dport)

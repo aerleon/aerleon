@@ -788,6 +788,38 @@ class NokiaEDATest(absltest.TestCase):
             self.assertEqual(entry['destinationPortNumber'], 53)
         print(acl)
 
+    def testNumericProtocols(self):
+        """Protocol numbers render like their names, including the per-family split."""
+        cases = {
+            (HEADER_INET, 'protocol:: 50'): [('IPv4', {'action': 'Accept', 'protocolNumber': 50})],
+            (HEADER_INET, 'protocol:: esp'): [
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 50})
+            ],
+            (HEADER_INET, 'protocol:: ipip'): [
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 4})
+            ],
+            (HEADER_INET, 'protocol:: tcp 6 17'): [
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 6}),
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 17}),
+            ],
+            (HEADER_INET, 'protocol:: 58'): [],
+            (HEADER_MIXED, 'protocol:: 1 58'): [
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 1}),
+                ('IPv6', {'action': 'Accept', 'protocolNumber': 58}),
+            ],
+            (HEADER_INET6, 'protocol:: 58\n  icmp-type:: echo-request'): [
+                ('IPv6', {'action': 'Accept', 'protocolNumber': 58, 'icmpTypeNumber': 128})
+            ],
+            (HEADER_INET, 'protocol:: 6\n  option:: tcp-established'): [
+                ('IPv4', {'action': 'Accept', 'protocolNumber': 6, 'tcpFlags': 'ACK|RST'})
+            ],
+        }
+        for (header, body), want in cases.items():
+            with self.subTest(body):
+                term = f'term t {{\n  {body}\n  action:: accept\n}}\n'
+                entries = self._entries(header, term)
+                self.assertEqual([(e['type'], e['ipEntry']) for e in entries], want)
+
     def testPortRange(self):
         entries = self._ip_entries(HEADER_INET, TERM_PORT_RANGE)
         self.assertEqual(entries[0]['destinationPortRange'], '1024-65535')
