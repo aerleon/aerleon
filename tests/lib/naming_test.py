@@ -276,6 +276,14 @@ networks:
   BAD_IP_PARENT:
     values:
       - CHILD_FQDN
+  IP_PARENT_WITH_FQDN_CHILD:
+    values:
+      - CHILD_FQDN
+      - address: 198.51.100.0/24
+  GRANDPARENT_WITH_EMPTY_IP_CHILD:
+    values:
+      - BAD_IP_PARENT
+      - CHILD_IP
 """
         self.defs = naming.Naming(None)
         self.defs.ParseYaml(defs_yaml, "example_defs.yaml")
@@ -295,6 +303,34 @@ networks:
 
     def testIPwithFQDNOnlyChildren(self):
         self.assertRaises(naming.EmptyDefinitionError, self.defs.GetNet, 'BAD_IP_PARENT')
+
+    def testGetNetSkipsFQDNOnlyChild(self):
+        self.assertListEqual(
+            [nacaddr.IP('198.51.100.0/24')], self.defs.GetNet('IP_PARENT_WITH_FQDN_CHILD')
+        )
+
+    def testGetNetWithOnlyChildrenSkipsFQDNOnlyChild(self):
+        self.assertListEqual(
+            [nacaddr.IP('192.168.0.1/32')], self.defs.GetNet('PARENT_WITH_ONLY_CHILDREN')
+        )
+
+    def testGetNetSkipsNestedEmptyGroup(self):
+        self.assertListEqual(
+            [nacaddr.IP('192.168.0.1/32')], self.defs.GetNet('GRANDPARENT_WITH_EMPTY_IP_CHILD')
+        )
+
+    def testGetNetEmptyErrorNamesQueriedToken(self):
+        with self.assertRaisesRegex(naming.EmptyDefinitionError, 'network: BAD_IP_PARENT$'):
+            self.defs.GetNet('BAD_IP_PARENT')
+
+    def testGetNetUndefinedNestedToken(self):
+        defs = naming.Naming(None)
+        defs.ParseDefinitionsObject(
+            {'networks': {'PARENT': {'values': ['MISSING', {'address': '198.51.100.0/24'}]}}},
+            'example_defs.yaml',
+        )
+        with self.assertRaisesRegex(naming.UndefinedAddressError, 'MISSING'):
+            defs.GetNet('PARENT')
 
     def testFQDNWithIPOnlyChildren(self):
         self.assertRaises(naming.EmptyDefinitionError, self.defs.GetFQDN, 'BAD_FQDN_PARENT')
