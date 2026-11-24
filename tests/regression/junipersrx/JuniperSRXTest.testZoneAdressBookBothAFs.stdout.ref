@@ -2,11 +2,11 @@ security {
     zones {
         security-zone untrust {
             replace: address-book {
-                address SOME_HOST_0 10.0.0.0/8;
-                address SOME_HOST_1 2001:4860:8000::/33;
+                address ip_10.0.0.0/8 10.0.0.0/8;
+                address ip_2001:4860:8000::/33 2001:4860:8000::/33;
                 address-set SOME_HOST {
-                    address SOME_HOST_0;
-                    address SOME_HOST_1;
+                    address ip_10.0.0.0/8;
+                    address ip_2001:4860:8000::/33;
                 }
             }
         }

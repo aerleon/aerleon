@@ -1,13 +1,13 @@
 security {
     replace: address-book {
         global {
-                address RFC1918_0 10.0.0.0/8;
-                address RFC1918_1 172.16.0.0/12;
-                address RFC1918_2 192.168.0.0/16;
+                address ip_10.0.0.0/8 10.0.0.0/8;
+                address ip_172.16.0.0/12 172.16.0.0/12;
+                address ip_192.168.0.0/16 192.168.0.0/16;
                 address-set RFC1918 {
-                    address RFC1918_0;
-                    address RFC1918_1;
-                    address RFC1918_2;
+                    address ip_10.0.0.0/8;
+                    address ip_172.16.0.0/12;
+                    address ip_192.168.0.0/16;
                 }
         }
     }

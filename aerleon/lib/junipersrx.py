@@ -20,14 +20,48 @@
 
 
 import copy
+import hashlib
+import ipaddress
 import itertools
+import re
+from collections.abc import Iterable
+from typing import Final
 
 from absl import logging
 
 from aerleon.lib import aclgenerator, addressbook, nacaddr, policy
+from aerleon.lib.fqdn import FQDN
 
 ICMP_TERM_LIMIT = 8
 FQDNSUFFIX = '_FQDN'
+# Junos limits address book object names to 63 characters.
+MAX_ADDRESS_NAME_LENGTH: Final[int] = 63
+# Characters that force a hashed FQDN address name.
+NONSTANDARD_FQDN_CHAR: Final[re.Pattern[str]] = re.compile(r'[^A-Za-z0-9_.-]')
+
+
+def NameAddress(ip: nacaddr.IPv4 | nacaddr.IPv6) -> str:
+    return f'ip_{ip}'
+
+
+def NameFQDN(fqdn: str) -> str:
+    """Names an FQDN address object.
+
+    Names over the length limit or with a NONSTANDARD_FQDN_CHAR become a hash
+    of the FQDN followed by as many whole standard labels from the right as
+    fit, keeping the domain readable. Their fqdn-hash_ prefix keeps them from
+    colliding with unhashed names.
+    """
+    name = f'fqdn_{fqdn}'
+    if len(name) <= MAX_ADDRESS_NAME_LENGTH and not NONSTANDARD_FQDN_CHAR.search(fqdn):
+        return name
+    prefix = f'fqdn-hash_{hashlib.sha256(fqdn.encode()).hexdigest()[:8]}_'
+    tail = fqdn[len(prefix) - MAX_ADDRESS_NAME_LENGTH :]
+    tail = NONSTANDARD_FQDN_CHAR.split(tail)[-1]
+    # Start at a label boundary, keeping its dot, unless no whole label fits.
+    if '.' in tail:
+        tail = tail[tail.index('.') :]
+    return prefix + tail
 
 
 def JunipersrxList(name, data):
@@ -63,6 +97,10 @@ class MixedAddrBookTypesError(Error):
 
 
 class ConflictingTargetOptionsError(Error):
+    pass
+
+
+class AddressNameCollisionError(Error):
     pass
 
 
@@ -697,32 +735,45 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 port_list.append(f'{str(i[0])}-{str(i[1])}')
         return port_list
 
-    def _GenerateAddresses(self, token: str, ips, fqdns):
-        """Render addresses from an already collapsed IP list."""
-        target = IndentList(self.INDENT)
-        counter: int = 0
-        for ip in ips:
-            target.IndentAppend(4, f"address {token}_{counter!s} {ip!s};")
-            counter += 1
-        for fqdn in fqdns:
-            target.IndentAppend(4, f'address {token}_{counter} {{')
-            target.IndentAppend(5, f'dns-name {fqdn.fqdn};')
-            target.IndentAppend(4, '}')
-            counter += 1
-        return target
+    def _GenerateAddressBookEntries(
+        self, groups: Iterable[tuple[str, list[nacaddr.IPv4 | nacaddr.IPv6], list[FQDN]]]
+    ) -> IndentList:
+        """Creates address objects, each defined once, followed by address sets.
 
-    def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
-        """Render members using the same collapsed IP list as the address definitions."""
+        Address objects are named by content so adding an address does not
+        rename others.
+
+        Args:
+          groups: address-set names with the IPs and FQDNs each contains.
+        """
         target = IndentList(self.INDENT)
-        target.IndentAppend(4, f"address-set {group} {{")
-        counter: int = 0
-        for _ in ips:
-            target.IndentAppend(5, f"address {group}_{counter!s};")
-            counter += 1
-        for _ in fqdns:
-            target.IndentAppend(5, f"address {group}_{counter!s};")
-            counter += 1
-        target.IndentAppend(4, '}')
+        addresses: dict[str, nacaddr.IPv4 | nacaddr.IPv6] = {}
+        dns_names: dict[str, str] = {}
+        addr_sets = IndentList(self.INDENT)
+        for group, ips, fqdns in groups:
+            addr_sets.IndentAppend(4, f"address-set {group} {{")
+            for ip in nacaddr.CollapseAddrList(ips):
+                name = NameAddress(ip)
+                addresses[name] = ip
+                addr_sets.IndentAppend(5, f"address {name};")
+            for dns_name in dict.fromkeys(fqdn.fqdn for fqdn in fqdns):
+                name = NameFQDN(dns_name)
+                if dns_names.setdefault(name, dns_name) != dns_name:
+                    raise AddressNameCollisionError(
+                        f'FQDNs {dns_names[name]} and {dns_name} share address name {name}'
+                    )
+                addr_sets.IndentAppend(5, f"address {name};")
+            addr_sets.IndentAppend(4, '}')
+
+        for name, ip in sorted(
+            addresses.items(), key=lambda item: ipaddress.get_mixed_type_key(item[1])
+        ):
+            target.IndentAppend(4, f"address {name} {ip!s};")
+        for name, dns_name in sorted(dns_names.items(), key=lambda item: item[1]):
+            target.IndentAppend(4, f'address {name} {{')
+            target.IndentAppend(5, f'dns-name {dns_name};')
+            target.IndentAppend(4, '}')
+        target.extend(addr_sets)
         return target
 
     def _GenerateAddressBook(self) -> IndentList:
@@ -738,14 +789,12 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 global_addressbook.AddAddresses('global', ips)
                 global_addressbook.AddFQDNs('global', fqdns, suffix=FQDNSUFFIX)
             if 'global' in global_addressbook.GetZoneNames():
-                addrs = []
-                addr_sets = []
-                for _, group, ips, fqdns in global_addressbook.Walk('global'):
-                    ips = nacaddr.CollapseAddrList(ips)
-                    addrs.extend(self._GenerateAddresses(group, ips, fqdns))
-                    addr_sets.extend(self._GenerateAddressSets(group, ips, fqdns))
-                target.extend(addrs)
-                target.extend(addr_sets)
+                target.extend(
+                    self._GenerateAddressBookEntries(
+                        (group, ips, fqdns)
+                        for _, group, ips, fqdns in global_addressbook.Walk('global')
+                    )
+                )
 
             target.IndentAppend(2, '}')
             target.IndentAppend(1, '}')
@@ -756,10 +805,11 @@ class JuniperSRX(aclgenerator.ACLGenerator):
             for zone in zones:
                 target.IndentAppend(2, f"security-zone {zone} {{")
                 target.IndentAppend(3, 'replace: address-book {')
-                for _, group, ips, fqdns in self.addressbook.Walk(zone):
-                    ips = nacaddr.CollapseAddrList(ips)
-                    target.extend(self._GenerateAddresses(group, ips, fqdns))
-                    target.extend(self._GenerateAddressSets(group, ips, fqdns))
+                target.extend(
+                    self._GenerateAddressBookEntries(
+                        (group, ips, fqdns) for _, group, ips, fqdns in self.addressbook.Walk(zone)
+                    )
+                )
                 target.IndentAppend(3, '}')
                 target.IndentAppend(2, '}')
             target.IndentAppend(1, '}')

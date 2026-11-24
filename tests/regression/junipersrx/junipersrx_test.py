@@ -17,6 +17,7 @@
 
 import copy
 import datetime
+import difflib
 import re
 from unittest import mock
 
@@ -1159,23 +1160,21 @@ class JuniperSRXTest(absltest.TestCase):
             'networks',
         )
         self.naming._ParseLine('SMTP = 25/tcp', 'services')
-        for header, fqdn_name in (
-            (GOOD_HEADER, 'SOME_HOST_FQDN_0'),
-            (GOOD_HEADER_9, 'SOME_HOST_2'),
-        ):
-            with self.subTest(fqdn_name=fqdn_name):
+        for label, header in (('global', GOOD_HEADER), ('zone', GOOD_HEADER_9)):
+            with self.subTest(address_book=label):
                 pol = policy.ParsePolicy(header + GOOD_TERM_1, self.naming, optimize=False)
                 renderer = junipersrx.JuniperSRX(pol, EXP_INFO)
                 renderer.addressbook.AddFQDNs('untrust', [FQDN('example.test', 'SOME_HOST')])
                 output = str(renderer)
-                self.assertIn('address SOME_HOST_0 10.0.0.0/24;', output)
-                self.assertIn('address SOME_HOST_1 2001:db8::/64;', output)
-                self.assertIn('address SOME_HOST_0;', output)
-                self.assertIn('address SOME_HOST_1;', output)
-                self.assertIn(f'address {fqdn_name} {{', output)
-                self.assertIn(f'address {fqdn_name};', output)
+                self.assertIn('address ip_10.0.0.0/24 10.0.0.0/24;', output)
+                self.assertIn('address ip_2001:db8::/64 2001:db8::/64;', output)
+                self.assertIn('address ip_10.0.0.0/24;', output)
+                self.assertIn('address ip_2001:db8::/64;', output)
+                self.assertIn('address fqdn_example.test {', output)
+                self.assertIn('address fqdn_example.test;', output)
                 self.assertIn('dns-name example.test;', output)
-                self.assertNotIn('address SOME_HOST_3', output)
+                self.assertNotIn('/25', output)
+                self.assertNotIn('/65', output)
                 self.assertEqual(str(renderer), output)
 
     def _AssertOrder(self, strings, expected_order):
@@ -1375,11 +1374,11 @@ class JuniperSRXTest(absltest.TestCase):
             GOOD_HEADER + GOOD_TERM_17 + GOOD_HEADER_2 + GOOD_TERM_15, self.naming
         )
         srx = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address FOOBAR_0 172.16.0.0/14', srx, srx)
-        self.assertIn('address FOOBAR_1 172.22.0.0/15;', srx, srx)
-        self.assertIn('address FOOBAR_2 172.24.0.0/13;', srx, srx)
-        self.assertIn('address SOME_HOST_0 10.0.0.0/8;', srx, srx)
-        self.assertIn('address SOME_HOST_1 172.20.0.0/15;', srx, srx)
+        self.assertIn('address ip_172.16.0.0/14 172.16.0.0/14', srx, srx)
+        self.assertIn('address ip_172.22.0.0/15 172.22.0.0/15;', srx, srx)
+        self.assertIn('address ip_172.24.0.0/13 172.24.0.0/13;', srx, srx)
+        self.assertIn('address ip_10.0.0.0/8 10.0.0.0/8;', srx, srx)
+        self.assertIn('address ip_172.20.0.0/15 172.20.0.0/15;', srx, srx)
         self.assertNotIn('/16', srx, srx)
         print(srx)
 
@@ -1389,10 +1388,10 @@ class JuniperSRXTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_18, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_2 10.0.1.0/24;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_3 10.0.2.0/23;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_4 10.0.4.0/22;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_5 10.0.8.0/21;', output, output)
+        self.assertIn('address ip_10.0.1.0/24 10.0.1.0/24;', output, output)
+        self.assertIn('address ip_10.0.2.0/23 10.0.2.0/23;', output, output)
+        self.assertIn('address ip_10.0.4.0/22 10.0.4.0/22;', output, output)
+        self.assertIn('address ip_10.0.8.0/21 10.0.8.0/21;', output, output)
         self.assertNotIn('10.0.0.0', output)
         self.assertNotIn('::/', output)
         print(output)
@@ -1405,10 +1404,10 @@ class JuniperSRXTest(absltest.TestCase):
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
         self.assertIn('policy good_term_18 {', output, output)
         self.assertNotIn('0.0.0.0/0', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_9 2001:db8:0:1::/64;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_10 2001:db8:0:2::/63;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_11 2001:db8:0:4::/62;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_12 2001:db8:0:8::/61;', output, output)
+        self.assertIn('address ip_2001:db8:0:1::/64 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address ip_2001:db8:0:2::/63 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address ip_2001:db8:0:4::/62 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address ip_2001:db8:0:8::/61 2001:db8:0:8::/61;', output, output)
         self.assertNotIn('2001:db8::/64', output, output)
         print(output)
 
@@ -1418,14 +1417,14 @@ class JuniperSRXTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_18, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_2 10.0.1.0/24;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_3 10.0.2.0/23;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_4 10.0.4.0/22;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_5 10.0.8.0/21;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_33 2001:db8:0:1::/64;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_34 2001:db8:0:2::/63;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_35 2001:db8:0:4::/62;', output, output)
-        self.assertIn('address GOOD_TERM_18_SRC_EXCLUDE_36 2001:db8:0:8::/61;', output, output)
+        self.assertIn('address ip_10.0.1.0/24 10.0.1.0/24;', output, output)
+        self.assertIn('address ip_10.0.2.0/23 10.0.2.0/23;', output, output)
+        self.assertIn('address ip_10.0.4.0/22 10.0.4.0/22;', output, output)
+        self.assertIn('address ip_10.0.8.0/21 10.0.8.0/21;', output, output)
+        self.assertIn('address ip_2001:db8:0:1::/64 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address ip_2001:db8:0:2::/63 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address ip_2001:db8:0:4::/62 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address ip_2001:db8:0:8::/61 2001:db8:0:8::/61;', output, output)
         self.assertNotIn('10.0.0.0/24', output, output)
         self.assertNotIn('2001:db8::/64', output, output)
         print(output)
@@ -1437,10 +1436,10 @@ class JuniperSRXTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_HEADER_3 + GOOD_TERM_19, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 10.0.1.0/24;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;', output, output)
+        self.assertIn('address ip_10.0.1.0/24 10.0.1.0/24;', output, output)
+        self.assertIn('address ip_10.0.2.0/23 10.0.2.0/23;', output, output)
+        self.assertIn('address ip_10.0.4.0/22 10.0.4.0/22;', output, output)
+        self.assertIn('address ip_10.0.8.0/21 10.0.8.0/21;', output, output)
         self.assertNotIn('10.0.0.0/24', output)
         self.assertNotIn('::/', output)
         print(output)
@@ -1452,10 +1451,10 @@ class JuniperSRXTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_HEADER_4 + GOOD_TERM_19, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 2001:db8:0:1::/64;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 2001:db8:0:2::/63;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 2001:db8:0:4::/62;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 2001:db8:0:8::/61;', output, output)
+        self.assertIn('address ip_2001:db8:0:1::/64 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address ip_2001:db8:0:2::/63 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address ip_2001:db8:0:4::/62 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address ip_2001:db8:0:8::/61 2001:db8:0:8::/61;', output, output)
         self.assertNotIn('2001:db8::/64', output, output)
         print(output)
 
@@ -1466,14 +1465,14 @@ class JuniperSRXTest(absltest.TestCase):
 
         pol = policy.ParsePolicy(GOOD_HEADER + GOOD_TERM_19, self.naming)
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 10.0.1.0/24;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_4 2001:db8:0:1::/64;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_5 2001:db8:0:2::/63;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_6 2001:db8:0:4::/62;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_7 2001:db8:0:8::/61;', output, output)
+        self.assertIn('address ip_10.0.1.0/24 10.0.1.0/24;', output, output)
+        self.assertIn('address ip_10.0.2.0/23 10.0.2.0/23;', output, output)
+        self.assertIn('address ip_10.0.4.0/22 10.0.4.0/22;', output, output)
+        self.assertIn('address ip_10.0.8.0/21 10.0.8.0/21;', output, output)
+        self.assertIn('address ip_2001:db8:0:1::/64 2001:db8:0:1::/64;', output, output)
+        self.assertIn('address ip_2001:db8:0:2::/63 2001:db8:0:2::/63;', output, output)
+        self.assertIn('address ip_2001:db8:0:4::/62 2001:db8:0:4::/62;', output, output)
+        self.assertIn('address ip_2001:db8:0:8::/61 2001:db8:0:8::/61;', output, output)
         self.assertNotIn('10.0.0.0/24', output, output)
         self.assertNotIn('2001:db8::/64', output, output)
         print(output)
@@ -1510,10 +1509,10 @@ class JuniperSRXTest(absltest.TestCase):
             GOOD_HEADER + PLATFORM_EXCLUDE_ADDRESS_TERM + GOOD_TERM_19, self.naming
         )
         output = str(junipersrx.JuniperSRX(pol, EXP_INFO))
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_0 10.0.1.0/24;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_1 10.0.2.0/23;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_2 10.0.4.0/22;', output, output)
-        self.assertIn('address GOOD_TERM_19_SRC_EXCLUDE_3 10.0.8.0/21;', output, output)
+        self.assertIn('address ip_10.0.1.0/24 10.0.1.0/24;', output, output)
+        self.assertIn('address ip_10.0.2.0/23 10.0.2.0/23;', output, output)
+        self.assertIn('address ip_10.0.4.0/22 10.0.4.0/22;', output, output)
+        self.assertIn('address ip_10.0.8.0/21 10.0.8.0/21;', output, output)
         self.assertNotIn('10.0.0.0/24', output)
         self.assertNotIn('192.1.0.0/20', output)
         self.assertNotIn('platform-exclude-term', output)
@@ -2811,6 +2810,112 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
 #             EXP_INFO,
 #         )
 #         print(pol)
+
+
+SHARED_ADDRESS_TERMS = """
+term term-a {
+  destination-address:: FOO
+  action:: accept
+}
+term term-b {
+  destination-address:: BAR
+  action:: accept
+}
+"""
+
+BLOCKLIST_TERM = """
+term blocklist {
+  source-address:: BLOCKLIST
+  action:: deny
+}
+"""
+
+
+class JuniperSRXAddressNameTest(absltest.TestCase):
+    def _Render(self, header, terms, networks):
+        definitions = naming.Naming()
+        for name, values in networks.items():
+            definitions._ParseLine(f'{name} = {" ".join(values)}', 'networks')
+        pol = policy.ParsePolicy(header + terms, definitions)
+        return str(junipersrx.JuniperSRX(pol, EXP_INFO))
+
+    def testSharedAddressDefinedOnce(self):
+        networks = {'FOO': ['10.0.0.0/8', '192.0.2.0/24'], 'BAR': ['10.0.0.0/8', '2001:db8::/32']}
+        for header in (GOOD_HEADER, GOOD_HEADER_9):
+            output = self._Render(header, SHARED_ADDRESS_TERMS, networks)
+            self.assertEqual(output.count('address ip_10.0.0.0/8 10.0.0.0/8;'), 1, output)
+            self.assertEqual(output.count('address ip_10.0.0.0/8;'), 2, output)
+            self.assertIn('address ip_2001:db8::/32 2001:db8::/32;', output, output)
+
+    def _RenderFQDNs(self, fqdns):
+        definitions = naming.Naming()
+        definitions.ParseYaml(
+            "networks:\n  EXAMPLE_HOST:\n    values:\n"
+            + ''.join(f"      - fqdn: {fqdn}\n" for fqdn in fqdns),
+            file_name="",
+        )
+        term = """
+  - name: fqdn-term
+    destination-fqdn: EXAMPLE_HOST
+    action: accept
+"""
+        pol = _YamlParsePolicy(YAML_GOOD_HEADER + term, definitions=definitions)
+        assert pol is not None
+        return str(junipersrx.JuniperSRX(pol, EXP_INFO))
+
+    def testFQDNNames(self):
+        output = self._RenderFQDNs(['www.example.com'])
+        self.assertIn('address fqdn_www.example.com {', output, output)
+        self.assertIn('address fqdn_www.example.com;', output, output)
+
+    def testFQDNNameCollisionRaises(self):
+        with mock.patch.object(junipersrx, 'NameFQDN', return_value='fqdn_same'):
+            with self.assertRaises(junipersrx.AddressNameCollisionError):
+                self._RenderFQDNs(['www.example.com', 'mail.example.com'])
+
+    def testLongFQDNNameIsHashed(self):
+        self.assertEqual(junipersrx.NameFQDN('www.example.com'), 'fqdn_www.example.com')
+        # A real FQDN can't produce a shortened name's fqdn-hash_ prefix.
+        self.assertEqual(
+            junipersrx.NameFQDN('43c9a14c_.example.com'), 'fqdn_43c9a14c_.example.com'
+        )
+        cases = {
+            # Whole labels from the right are kept, with a leading dot.
+            'a' * 60 + '.example.com': 'fqdn-hash_43c9a14c_.example.com',
+            'b' * 60 + '.example.com': 'fqdn-hash_3cec2dab_.example.com',
+            'a' * 40 + '.lb.us-east-1.example.com': 'fqdn-hash_0e825b49_.lb.us-east-1.example.com',
+            # A label too long to keep whole is cut from the left.
+            'c' * 60: 'fqdn-hash_6b15af55_cccccccccccccccccccccccccccccccccccccccccccc',
+            # Labels with nonstandard characters, and all labels left of them, are dropped.
+            '!.foo.bar': 'fqdn-hash_fc06c335_.foo.bar',
+            'a~b.foo.bar': 'fqdn-hash_f16c7177_.foo.bar',
+            'x$y.sub.example.com': 'fqdn-hash_292e0874_.sub.example.com',
+        }
+        for fqdn, expected in cases.items():
+            name = junipersrx.NameFQDN(fqdn)
+            self.assertEqual(name, expected)
+            self.assertLessEqual(len(name), junipersrx.MAX_ADDRESS_NAME_LENGTH)
+        # Names that differ only in dropped labels stay distinct.
+        self.assertNotEqual(
+            junipersrx.NameFQDN('a' * 60 + '.example.com'),
+            junipersrx.NameFQDN('b' * 60 + '.example.com'),
+        )
+
+    def testAddingAddressToLargeTermHasSmallDiff(self):
+        # Non-adjacent /24s so nothing collapses; 1200 entries split into 3 chunks.
+        blocklist = [f'10.{i // 64}.{i % 64 * 4}.0/24' for i in range(1200)]
+        before = self._Render(GOOD_HEADER, BLOCKLIST_TERM, {'BLOCKLIST': blocklist})
+        after = self._Render(
+            GOOD_HEADER, BLOCKLIST_TERM, {'BLOCKLIST': blocklist + ['10.0.2.0/24']}
+        )
+        changed = [
+            line
+            for line in difflib.unified_diff(before.splitlines(), after.splitlines(), n=0)
+            if line[:1] in '+-' and line[:3] not in ('+++', '---')
+        ]
+        # The new address and its set member, plus one member moving across each
+        # of the two chunk boundaries.
+        self.assertLen(changed, 6, '\n'.join(changed))
 
 
 if __name__ == '__main__':
