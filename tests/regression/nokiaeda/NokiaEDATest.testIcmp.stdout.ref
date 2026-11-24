@@ -13,11 +13,11 @@ spec:
     ipEntry:
       action: Accept
       protocolNumber: 1
-      icmpTypeNumber: 8
+      icmpTypeNumber: 0
   - description: term-icmp
     type: IPv4
     ipEntry:
       action: Accept
       protocolNumber: 1
-      icmpTypeNumber: 0
+      icmpTypeNumber: 8
 

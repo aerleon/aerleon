@@ -203,12 +203,6 @@ spec:
     ipEntry:
       action: Accept
       protocolNumber: 1
-      icmpTypeNumber: 8
-  - description: accept-icmp
-    type: IPv4
-    ipEntry:
-      action: Accept
-      protocolNumber: 1
       icmpTypeNumber: 0
   - description: accept-icmp
     type: IPv4
@@ -216,6 +210,12 @@ spec:
       action: Accept
       protocolNumber: 1
       icmpTypeNumber: 3
+  - description: accept-icmp
+    type: IPv4
+    ipEntry:
+      action: Accept
+      protocolNumber: 1
+      icmpTypeNumber: 8
   - description: accept-icmp
     type: IPv4
     ipEntry:
@@ -246,18 +246,6 @@ spec:
     ipEntry:
       action: Accept
       protocolNumber: 58
-      icmpTypeNumber: 135
-  - description: accept-neighbor-discovery
-    type: IPv6
-    ipEntry:
-      action: Accept
-      protocolNumber: 58
-      icmpTypeNumber: 136
-  - description: accept-neighbor-discovery
-    type: IPv6
-    ipEntry:
-      action: Accept
-      protocolNumber: 58
       icmpTypeNumber: 133
   - description: accept-neighbor-discovery
     type: IPv6
@@ -265,6 +253,18 @@ spec:
       action: Accept
       protocolNumber: 58
       icmpTypeNumber: 134
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 135
+  - description: accept-neighbor-discovery
+    type: IPv6
+    ipEntry:
+      action: Accept
+      protocolNumber: 58
+      icmpTypeNumber: 136
   - description: accept-tcp-established
     type: IPv6
     ipEntry:

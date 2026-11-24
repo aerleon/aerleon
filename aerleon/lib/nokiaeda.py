@@ -171,13 +171,14 @@ class EDATerm(aclgenerator.Term):
         dports = self.term.destination_port or [(0, 0)]
         protos: list[Any] = own_protos or [None]
 
+        # ICMP type names differ between families (unreachable is
+        # destination-unreachable in ICMPv6): raise on a name unknown to this
+        # family instead of dropping it, which would narrow the term.
         icmp_types: list[int | None] = [None]
         if self.term.icmp_type:
-            icmp_map = self.ICMP_TYPE[term_af]
-            resolved = [icmp_map[t] for t in self.term.icmp_type if t in icmp_map]
-            if not resolved:
-                return []
-            icmp_types = resolved  # type: ignore[assignment]
+            icmp_types = self.NormalizeIcmpTypes(  # type: ignore[assignment]
+                self.term.icmp_type, own_protos, self.inet_version
+            )
 
         opts = [str(x) for x in self.term.option]
         flag_opts = [o for o in self.TCP_FLAGS if o in opts]

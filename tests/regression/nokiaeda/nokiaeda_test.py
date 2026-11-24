@@ -248,6 +248,46 @@ term term-icmpv6 {
 }
 """
 
+TERM_ICMPV6_UNREACHABLE = """
+term term-icmpv6-unreachable {
+  protocol:: icmpv6
+  icmp-type:: echo-request destination-unreachable
+  action:: deny
+}
+"""
+
+TERM_ICMPV6_V4_NAME = """
+term term-icmpv6-v4-name {
+  protocol:: icmpv6
+  icmp-type:: echo-request unreachable
+  action:: deny
+}
+"""
+
+TERM_ICMP_BOTH_AF_ECHO = """
+term term-icmp-both-af-echo {
+  protocol:: icmp icmpv6
+  icmp-type:: echo-request
+  action:: accept
+}
+"""
+
+TERM_ICMP_BOTH_AF_V4_NAME = """
+term term-icmp-both-af-v4-name {
+  protocol:: icmp icmpv6
+  icmp-type:: unreachable
+  action:: accept
+}
+"""
+
+TERM_TCP_ICMP_TYPE = """
+term term-tcp-icmp-type {
+  protocol:: tcp icmp
+  icmp-type:: echo-request
+  action:: accept
+}
+"""
+
 TERM_ICMP_CODE = """
 term term-icmp-code {
   protocol:: icmp
@@ -637,7 +677,7 @@ class NokiaEDATest(absltest.TestCase):
                 TERM_SADDR: [v4, v6],
                 TERM_SADDR_V4_ONLY: [v4],
                 TERM_DADDR_V6_ONLY: [v6_dst],
-                TERM_ICMP: [icmp, icmp[:1] + ({**icmp[1], 'icmpTypeNumber': 0},)],
+                TERM_ICMP: [icmp[:1] + ({**icmp[1], 'icmpTypeNumber': 0},), icmp],
                 TERM_ICMPV6: [icmpv6],
                 TERM_ICMP_BOTH_AF: [icmp_any, icmpv6_any],
                 TERM_TCP_ICMP: [tcp_v4, icmp_any, tcp_v6],
@@ -761,8 +801,34 @@ class NokiaEDATest(absltest.TestCase):
     def testIcmp(self):
         acl = self._make_acl(HEADER_INET, TERM_ICMP)
         entries = [e['ipEntry'] for e in self._resource(acl)['spec']['entries']]
-        self.assertEqual([e['icmpTypeNumber'] for e in entries], [8, 0])
+        self.assertEqual([e['icmpTypeNumber'] for e in entries], [0, 8])
         print(acl)
+
+    def testIcmpTypeNamesPerFamily(self):
+        """ICMP type names resolve in the family of each protocol."""
+        self.assertEqual(
+            [e['icmpTypeNumber'] for e in self._ip_entries(HEADER_INET6, TERM_ICMPV6_UNREACHABLE)],
+            [1, 128],
+        )
+        self.assertEqual(
+            [
+                (e['type'], e['ipEntry']['icmpTypeNumber'])
+                for e in self._entries(HEADER_MIXED, TERM_ICMP_BOTH_AF_ECHO)
+            ],
+            [('IPv4', 8), ('IPv6', 128)],
+        )
+
+    def testIcmpTypeErrors(self):
+        """An ICMP type unknown to the family raises instead of being dropped."""
+        cases = {
+            (HEADER_INET6, TERM_ICMPV6_V4_NAME): aclgenerator.UnknownIcmpTypeError,
+            (HEADER_MIXED, TERM_ICMP_BOTH_AF_V4_NAME): aclgenerator.UnknownIcmpTypeError,
+            (HEADER_INET, TERM_TCP_ICMP_TYPE): aclgenerator.UnsupportedFilterError,
+        }
+        for (header, term), error in cases.items():
+            with self.subTest(term.split()[1]):
+                with self.assertRaises(error):
+                    self._make_acl(header, term)
 
     def testIcmpCode(self):
         self.assertEqual(
