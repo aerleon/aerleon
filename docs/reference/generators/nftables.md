@@ -15,7 +15,7 @@ There is no filter name: the address family must come first and the hook second.
 |---|---|---|
 | `inet` | IPv4 only. | Renders `table ip filtering_policies`. |
 | `inet6` | IPv6 only. | Renders `table ip6 filtering_policies`. |
-| `mixed` | IPv4 and IPv6. | Renders `table inet filtering_policies`. Every rule is currently rendered twice; see _[Known Issues](#known-issues)_. |
+| `mixed` | IPv4 and IPv6. | Renders `table inet filtering_policies`. A protocol without ports is matched with `meta l4proto`, which covers both families. |
 | `input`, `output`, `forward` | Netfilter hook for the base chain. | `forward` is for routed/transit traffic; pair it with `source-interface` / `destination-interface`. |
 | `ACCEPT` | Default policy `accept` for unmatched packets. | Without it the default policy is `drop`. Must be uppercase. |
 | `priority` | An integer: the base chain priority. | Optional. Defaults to `0`. Only one integer is allowed. |
@@ -164,5 +164,4 @@ Each policy file renders to one file with the same name and a `.nft` extension, 
 ## Known Issues
 
 !!! bug "Known issues"
-    * **`mixed` filters render every rule twice.** With a `mixed` header, each address is combined with the protocol/port statements from both address families. Every rule appears twice, and a term with a protocol but no ports also gets both an `ip protocol` and a `meta l4proto` rule.
     * **A single `icmp-type` value crashes the generator.** A term such as `icmp-type: echo-request` fails with `TypeError: can only concatenate str (not "list") to str`, for both `icmp` and `icmpv6`. Two or more values work.
