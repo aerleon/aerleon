@@ -17,12 +17,24 @@
 
 from absl.testing import absltest
 
-from aerleon.lib import naming, policy, windows
+from aerleon.lib import aclgenerator, naming, policy, windows
 
 GOOD_HEADER = """
 header {
   comment:: "this is a test acl"
   target:: windows test-filter
+}
+"""
+
+DEFAULT_ACTION_HEADER = """
+header {
+  target:: windows test-filter block
+}
+"""
+
+UNSUPPORTED_OPTION_HEADER = """
+header {
+  target:: windows test-filter bogus
 }
 """
 
@@ -70,6 +82,14 @@ term udp-established-term {
 }
 """
 
+SYN_OPTION_TERM = """
+term syn-only {
+  protocol:: tcp
+  option:: syn
+  action:: accept
+}
+"""
+
 SUPPORTED_TOKENS = {
     'action',
     'comment',
@@ -92,6 +112,7 @@ SUPPORTED_TOKENS = {
 
 SUPPORTED_SUB_TOKENS = {
     'action': {'accept', 'deny'},
+    'option': {'established', 'tcp-established'},
     'icmp_type': {
         'alternate-address',
         'certification-path-advertisement',
@@ -177,6 +198,32 @@ class WindowsGeneratorTest(absltest.TestCase):
             EXP_INFO,
         )
         self.assertEqual(len(pol.windows_policies[0][4]), 1)
+
+    def testDefaultActionRejected(self):
+        with self.assertRaisesRegex(
+            aclgenerator.UnsupportedTargetOptionError, 'does not support default actions'
+        ):
+            windows.WindowsGenerator(
+                policy.ParsePolicy(DEFAULT_ACTION_HEADER + MULTIPLE_PROTOCOLS_TERM, self.naming),
+                EXP_INFO,
+            )
+
+    def testUnsupportedHeaderOptionRejected(self):
+        with self.assertRaisesRegex(
+            aclgenerator.UnsupportedTargetOptionError, 'Unsupported option found in.*bogus'
+        ):
+            windows.WindowsGenerator(
+                policy.ParsePolicy(
+                    UNSUPPORTED_OPTION_HEADER + MULTIPLE_PROTOCOLS_TERM, self.naming
+                ),
+                EXP_INFO,
+            )
+
+    def testUnsupportedOptionRejected(self):
+        with self.assertRaisesRegex(aclgenerator.UnsupportedFilterError, 'syn'):
+            windows.WindowsGenerator(
+                policy.ParsePolicy(GOOD_HEADER + SYN_OPTION_TERM, self.naming), EXP_INFO
+            )
 
 
 if __name__ == '__main__':
