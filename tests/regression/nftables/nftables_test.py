@@ -154,6 +154,88 @@ header {
 }
 """
 
+GOOD_HEADER_INET_INPUT = """
+header {
+  target:: nftables inet INPUT
+}
+"""
+
+ICMPV6_ONLY_TERM = """
+term icmpv6-only {
+  protocol:: icmpv6
+  icmp-type:: router-solicit router-advertisement
+  action:: accept
+}
+"""
+
+ICMP_ONLY_TERM = """
+term icmp-only {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+ICMPV6_PLUS_TCP_TERM = """
+term icmpv6-plus-tcp {
+  protocol:: icmpv6 tcp
+  action:: accept
+}
+"""
+
+GOOD_HEADER_MIXED_INPUT = """
+header {
+  target:: nftables mixed INPUT
+}
+"""
+
+SSH_FROM_V6_ONLY_TERM = """
+term ssh-from-v6-only {
+  protocol:: tcp
+  destination-port:: SSH
+  source-address:: V6_HOST
+  action:: accept
+}
+"""
+
+SSH_TO_V4_ONLY_TERM = """
+term ssh-to-v4-only {
+  protocol:: tcp
+  destination-port:: SSH
+  destination-address:: V4_HOST
+  action:: accept
+}
+"""
+
+HTTPS_V4_TO_V6_TERM = """
+term https-v4-to-v6 {
+  protocol:: tcp
+  destination-port:: HTTPS
+  source-address:: V4_HOST
+  destination-address:: V6_HOST
+  action:: accept
+}
+"""
+
+SSH_FROM_DUAL_TERM = """
+term ssh-from-dual {
+  protocol:: tcp
+  destination-port:: SSH
+  source-address:: DUAL_HOST
+  action:: accept
+}
+"""
+
+SSH_ALL_EXCLUDED_TERM = """
+term ssh-all-excluded {
+  protocol:: tcp
+  destination-port:: SSH
+  source-address:: V4_HOST
+  source-exclude:: V4_HOST
+  action:: accept
+}
+"""
+
 ESTABLISHED_OPTION_TERM = """
 term established-term {
   protocol:: udp
@@ -441,6 +523,106 @@ class NftablesTest(parameterized.TestCase):
     def testPortsAndProtocols(self, af, proto, src_p, dst_p, icmp_type, expected):
         result = self.dummyterm.PortsAndProtocols(af, proto, src_p, dst_p, icmp_type)
         self.assertEqual(result, expected)
+
+    def testIcmpv6OnlyTermSkippedInIPv4Table(self):
+        """An icmpv6-only term must not render in an inet (IPv4) filter.
+
+        PortsAndProtocols drops icmpv6 in an IPv4 table, which previously left
+        the term with no match statement -- rendering a bare verdict that
+        matched every packet reaching the chain.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + ICMPV6_ONLY_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertNotIn('icmpv6-only', nft, f'AF-incompatible term was rendered:\n{nft}')
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
+
+    def testIcmpOnlyTermSkippedInIPv6Table(self):
+        """The symmetric case: an icmp-only term must not render in inet6."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + ICMP_ONLY_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertNotIn('icmp-only', nft, f'AF-incompatible term was rendered:\n{nft}')
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
+
+    def testPartiallyCompatibleTermStillRenders(self):
+        """A term keeping at least one compatible protocol must still render."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + ICMPV6_PLUS_TCP_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmpv6-plus-tcp', nft, f'compatible term was dropped:\n{nft}')
+        self.assertIn('ip protocol tcp', nft, f'tcp match missing:\n{nft}')
+        self.assertNotIn('icmpv6', nft.split('chain icmpv6-plus-tcp')[1].split('}')[0])
+
+    def _AddressTokens(self):
+        self.naming.ParseServiceList(['SSH = 22/tcp', 'HTTPS = 443/tcp'])
+        self.naming.ParseNetworkList(
+            [
+                'V4_HOST = 192.0.2.10/32',
+                'V6_HOST = 2001:db8::10/128',
+                'DUAL_HOST = 192.0.2.10/32',
+                '            2001:db8::10/128',
+            ]
+        )
+
+    def _Render(self, text):
+        return str(nftables.Nftables(policy.ParsePolicy(text, self.naming), EXP_INFO))
+
+    def _AssertNoUnrestrictedPort(self, nft, port):
+        """No rule may match the port without an address match."""
+        for line in nft.splitlines():
+            if f'dport {port}' in line:
+                self.assertTrue(
+                    'saddr' in line or 'daddr' in line,
+                    f'port {port} rendered without an address match:\n{nft}',
+                )
+
+    @parameterized.parameters(
+        (GOOD_HEADER_INET_INPUT, SSH_FROM_V6_ONLY_TERM, 'ssh-from-v6-only', 22),
+        (GOOD_HEADER_1, SSH_TO_V4_ONLY_TERM, 'ssh-to-v4-only', 22),
+        (GOOD_HEADER_MIXED_INPUT, HTTPS_V4_TO_V6_TERM, 'https-v4-to-v6', 443),
+        (GOOD_HEADER_INET_INPUT, SSH_ALL_EXCLUDED_TERM, 'ssh-all-excluded', 22),
+    )
+    def testAddressFamilyMismatchTermSkipped(self, header, term, name, port):
+        """A term left with no addresses to match in the table's family must
+        not render.
+
+        _AddrStatement emits a match only for the families present, so such a
+        term previously rendered as a bare port match: in an IPv4 table, a
+        term allowing SSH from an IPv6 host accepted SSH from any IPv4 source.
+        The same holds in a mixed table when source and destination share no
+        family, and when excludes remove every address.
+        """
+        self._AddressTokens()
+        nft = self._Render(header + term)
+        self.assertNotIn(name, nft, f'term with no addresses of the family rendered:\n{nft}')
+        self._AssertNoUnrestrictedPort(nft, port)
+
+    def testDualFamilyTermStillRendersItsFamily(self):
+        """A term with addresses of both families renders in an IPv4 table,
+        matching only its IPv4 addresses."""
+        self._AddressTokens()
+        nft = self._Render(GOOD_HEADER_INET_INPUT + SSH_FROM_DUAL_TERM)
+        self.assertIn('ip saddr 192.0.2.10/32 tcp dport 22', nft)
+        self.assertNotIn('2001:db8::10', nft)
+        self._AssertNoUnrestrictedPort(nft, 22)
+
+    def testMixedTableRendersEachFamilyItHas(self):
+        """In a mixed table a single-family source renders for that family."""
+        self._AddressTokens()
+        nft = self._Render(GOOD_HEADER_MIXED_INPUT + SSH_FROM_V6_ONLY_TERM)
+        self.assertIn('ip6 saddr 2001:db8::10/128 tcp dport 22', nft)
+        self._AssertNoUnrestrictedPort(nft, 22)
 
     @parameterized.parameters(
         'chain_name input 0 inet extraneous_target_option',

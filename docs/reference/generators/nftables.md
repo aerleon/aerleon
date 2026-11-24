@@ -21,6 +21,15 @@ There is no filter name: the address family must come first and the hook second.
 | `priority` | An integer: the base chain priority. | Optional. Defaults to `0`. Only one integer is allowed. |
 | `noverbose` | Leave out header and term comments. | Optional. |
 
+### Terms outside the filter's address family
+
+A term is not rendered, and a warning is logged, when nothing in it can match in the filter's address family:
+
+* every protocol it lists belongs to the other family: an `icmpv6` term in an `inet` filter, or an `icmp` term in an `inet6` filter.
+* it names source or destination addresses and, after excludes, none of them belong to the family: a term allowing SSH from an IPv6 host in an `inet` filter, or one whose excludes remove every address. In a `mixed` filter, a term naming both source and destination addresses needs a family that has both.
+
+Rendering such a term would leave a rule with no protocol or address match, matching every packet that reaches its chain. A term keeping at least one protocol and address valid for the family is rendered as normal, minus what is not.
+
 ## ICMP Types
 
 Some Aerleon ICMP type names are changed to the names nftables expects. Names with no nftables equivalent are passed through unchanged, and `nft` will reject them.
