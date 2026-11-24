@@ -12,8 +12,6 @@ netsh ipsec static add filteraction name=t_multi-proto-action action=permit
 netsh ipsec static add filter filterlist=t_multi-proto-list mirrored=yes srcaddr=any  dstaddr=any  protocol=tcp
 netsh ipsec static add filter filterlist=t_multi-proto-list mirrored=yes srcaddr=any  dstaddr=any  protocol=udp
 netsh ipsec static add filter filterlist=t_multi-proto-list mirrored=yes srcaddr=any  dstaddr=any  protocol=icmp
-netsh ipsec static add filterlist name=t_multi-proto-list 
-netsh ipsec static add filteraction name=t_multi-proto-action action=permit
-netsh ipsec static add rule name=t_multi-proto-rule policy=test-filter filterlist=t_multi-proto-list filteraction=t_multi-proto-action 
+netsh ipsec static add rule name=t_multi-proto-rule policy=test-filter-policy filterlist=t_multi-proto-list filteraction=t_multi-proto-action 
 
 
