@@ -698,10 +698,9 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         return port_list
 
     def _GenerateAddresses(self, token: str, ips, fqdns):
+        """Render addresses from an already collapsed IP list."""
         target = IndentList(self.INDENT)
         counter: int = 0
-        ips = nacaddr.SortAddrList(ips)
-        ips = nacaddr.CollapseAddrList(ips)
         for ip in ips:
             target.IndentAppend(4, f"address {token}_{counter!s} {ip!s};")
             counter += 1
@@ -713,10 +712,11 @@ class JuniperSRX(aclgenerator.ACLGenerator):
         return target
 
     def _GenerateAddressSets(self, group, ips, fqdns) -> IndentList:
+        """Render members using the same collapsed IP list as the address definitions."""
         target = IndentList(self.INDENT)
         target.IndentAppend(4, f"address-set {group} {{")
         counter: int = 0
-        for _ in nacaddr.CollapseAddrList(ips):
+        for _ in ips:
             target.IndentAppend(5, f"address {group}_{counter!s};")
             counter += 1
         for _ in fqdns:
@@ -741,6 +741,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 addrs = []
                 addr_sets = []
                 for _, group, ips, fqdns in global_addressbook.Walk('global'):
+                    ips = nacaddr.CollapseAddrList(ips)
                     addrs.extend(self._GenerateAddresses(group, ips, fqdns))
                     addr_sets.extend(self._GenerateAddressSets(group, ips, fqdns))
                 target.extend(addrs)
@@ -756,6 +757,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                 target.IndentAppend(2, f"security-zone {zone} {{")
                 target.IndentAppend(3, 'replace: address-book {')
                 for _, group, ips, fqdns in self.addressbook.Walk(zone):
+                    ips = nacaddr.CollapseAddrList(ips)
                     target.extend(self._GenerateAddresses(group, ips, fqdns))
                     target.extend(self._GenerateAddressSets(group, ips, fqdns))
                 target.IndentAppend(3, '}')
