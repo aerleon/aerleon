@@ -630,7 +630,7 @@ class Naming:
 
             net = net.strip()
             if self.token_re.match(net):
-                returnlist.extend(self.GetNet(net))
+                returnlist.extend(self._GetNet(net))
             else:
                 try:
                     addr = nacaddr.IP(net, strict=False)
