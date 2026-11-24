@@ -503,6 +503,12 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         for j in term.source_address:
                             j.token = new_src_token
                             j.parent_token = new_src_parent_token
+                    if not term.source_address and not term.source_fqdn:
+                        logging.warning(
+                            'WARNING: Term %s has 0 source IPs after exclusion, skipping.',
+                            term.name,
+                        )
+                        continue
 
                 if term.destination_address_exclude:
                     if not term.destination_address:
@@ -519,6 +525,12 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                         for j in term.destination_address:
                             j.token = new_dst_token
                             j.parent_token = new_dst_parent_token
+                    if not term.destination_address and not term.destination_fqdn:
+                        logging.warning(
+                            'WARNING: Term %s has 0 destination IPs after exclusion, skipping.',
+                            term.name,
+                        )
+                        continue
 
                 # SRX policies are controlled by addresses that are used within, so
                 # policy can be at the same time inet and inet6.

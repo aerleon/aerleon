@@ -1526,15 +1526,21 @@ class JuniperSRXTest(parameterized.TestCase):
 
     @parameterized.named_parameters(*EXCLUDE_ALL_CASES)
     def testSourceExcludeCoversAllAddresses(self, af, large, small):
-        output = self._ExcludeOutput(af, GOOD_TERM_19, large, small)
+        with self.assertLogs(level='WARNING') as logs:
+            output = self._ExcludeOutput(af, GOOD_TERM_19, large, small)
         self.assertNotIn('source-address any;', output, output)
         self.assertNotIn('policy good_term_19 {', output, output)
+        self.assertIn('good_term_19 has 0 source IPs after exclusion', '\n'.join(logs.output))
 
     @parameterized.named_parameters(*EXCLUDE_ALL_CASES)
     def testDestinationExcludeCoversAllAddresses(self, af, large, small):
-        output = self._ExcludeOutput(af, DST_EXCLUDE_TERM, large, small)
+        with self.assertLogs(level='WARNING') as logs:
+            output = self._ExcludeOutput(af, DST_EXCLUDE_TERM, large, small)
         self.assertNotIn('destination-address any;', output, output)
         self.assertNotIn('policy dst-exclude-term {', output, output)
+        self.assertIn(
+            'dst-exclude-term has 0 destination IPs after exclusion', '\n'.join(logs.output)
+        )
 
     def testSourceExcludeCoversOneFamily(self):
         # Removing all IPv4 from a mixed term must still render the IPv6 part.
