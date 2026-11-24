@@ -154,6 +154,60 @@ term term-daddr-v6 {
 }
 """
 
+TERM_SADDR_ALL_EXCLUDED = """
+term term-saddr-all-excluded {
+  source-address:: NET4
+  source-exclude:: NET4
+  action:: accept
+}
+"""
+
+TERM_DADDR_ALL_EXCLUDED = """
+term term-daddr-all-excluded {
+  destination-address:: NET4
+  destination-exclude:: NET4
+  action:: accept
+}
+"""
+
+TERM_SADDR_PARTIAL_EXCLUDE = """
+term term-saddr-partial-exclude {
+  source-address:: NET4
+  source-exclude:: NET4_LOW
+  action:: accept
+}
+"""
+
+TERM_DADDR_PARTIAL_EXCLUDE = """
+term term-daddr-partial-exclude {
+  destination-address:: NET4
+  destination-exclude:: NET4_LOW
+  action:: accept
+}
+"""
+
+TERM_SADDR_DUAL_V4_EXCLUDED = """
+term term-saddr-dual-v4-excluded {
+  source-address:: NET_DUAL
+  source-exclude:: NET4
+  action:: accept
+}
+"""
+
+TERM_SADDR_EXCLUDE_ONLY = """
+term term-saddr-exclude-only {
+  source-exclude:: NET4
+  action:: accept
+}
+"""
+
+TERM_DADDR_EXCLUDE_ONLY = """
+term term-daddr-exclude-only {
+  destination-exclude:: NET4
+  action:: accept
+}
+"""
+
 TERM_SPORT = """
 term term-sport {
   protocol:: tcp
@@ -397,6 +451,9 @@ class NokiaEDATest(absltest.TestCase):
         self.naming._ParseLine('CORP_EXTERNAL = 10.2.3.4/32 2001:4860:8000::5/128', 'networks')
         self.naming._ParseLine('V4_ONLY = 10.2.3.4/32', 'networks')
         self.naming._ParseLine('V6_ONLY = 2001:4860:8000::5/128', 'networks')
+        self.naming._ParseLine('NET4 = 10.0.0.0/8', 'networks')
+        self.naming._ParseLine('NET4_LOW = 10.0.0.0/9', 'networks')
+        self.naming._ParseLine('NET_DUAL = 10.0.0.0/8 2001:db8::/32', 'networks')
         self.naming._ParseLine('DNS = 53/tcp 53/udp', 'services')
         self.naming._ParseLine('BGP = 179/tcp', 'services')
         self.naming._ParseLine('HIGH_PORTS = 1024-65535/tcp 1024-65535/udp', 'services')
@@ -592,6 +649,54 @@ class NokiaEDATest(absltest.TestCase):
                 with self.subTest(af=af, term=term.split()[1]):
                     entries = self._entries(headers[af], term)
                     self.assertEqual([(e['type'], e['ipEntry']) for e in entries], want)
+
+    def testAddressExclude(self):
+        """Excludes are removed from the addresses, in source and destination."""
+        cases = {
+            TERM_SADDR_PARTIAL_EXCLUDE: [{'action': 'Accept', 'sourcePrefix': '10.128.0.0/9'}],
+            TERM_DADDR_PARTIAL_EXCLUDE: [
+                {'action': 'Accept', 'destinationPrefix': '10.128.0.0/9'}
+            ],
+        }
+        for term, want in cases.items():
+            with self.subTest(term.split()[1]):
+                self.assertEqual(self._ip_entries(HEADER_INET, term), want)
+
+    @mock.patch.object(nokiaeda.logging, 'warning')
+    def testAllAddressesExcluded(self, mock_warning):
+        """A term whose addresses are all excluded is skipped, not rendered as any."""
+        v6 = ('IPv6', {'action': 'Accept', 'sourcePrefix': '2001:db8::/32'})
+        expected = {
+            'inet': {
+                TERM_SADDR_ALL_EXCLUDED: [],
+                TERM_DADDR_ALL_EXCLUDED: [],
+                TERM_SADDR_DUAL_V4_EXCLUDED: [],
+            },
+            'inet6': {TERM_SADDR_DUAL_V4_EXCLUDED: [v6]},
+            'mixed': {
+                TERM_SADDR_ALL_EXCLUDED: [],
+                TERM_DADDR_ALL_EXCLUDED: [],
+                TERM_SADDR_DUAL_V4_EXCLUDED: [v6],
+            },
+        }
+        headers = {'inet': HEADER_INET, 'inet6': HEADER_INET6, 'mixed': HEADER_MIXED}
+        for af, cases in expected.items():
+            for term, want in cases.items():
+                with self.subTest(af=af, term=term.split()[1]):
+                    entries = self._entries(headers[af], term)
+                    self.assertEqual([(e['type'], e['ipEntry']) for e in entries], want)
+
+        mock_warning.reset_mock()
+        self._entries(HEADER_INET, TERM_DADDR_ALL_EXCLUDED)
+        mock_warning.assert_called_once()
+        self.assertIn('excluded', mock_warning.call_args.args[0])
+        self.assertEqual(mock_warning.call_args.args[2], 'destination')
+
+    def testExcludeWithoutAddress(self):
+        for term in (TERM_SADDR_EXCLUDE_ONLY, TERM_DADDR_EXCLUDE_ONLY):
+            with self.subTest(term.split()[1]):
+                with self.assertRaises(nokiaeda.ExcludeWithoutAddressError):
+                    self._make_acl(HEADER_INET, term)
 
     @mock.patch.object(nokiaeda.logging, 'warning')
     def testOtherFamilyProtocolWarning(self, mock_warning):

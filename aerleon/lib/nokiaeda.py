@@ -59,7 +59,7 @@ from typing import Any
 import yaml
 from absl import logging
 
-from aerleon.lib import aclgenerator
+from aerleon.lib import aclgenerator, nacaddr
 from aerleon.lib.policy import Term as PolicyTerm
 
 API_VERSION = 'filters.eda.nokia.com/v1'
@@ -109,6 +109,10 @@ class EstablishedWithNonTcpUdpError(Error):
     pass
 
 
+class ExcludeWithoutAddressError(Error):
+    pass
+
+
 class EDATerm(aclgenerator.Term):
     """Converts a policy term into EDA filter entries."""
 
@@ -120,7 +124,15 @@ class EDATerm(aclgenerator.Term):
         super().__init__(term)
         self.inet_version = inet_version
         self.mixed = mixed
-        self.term.FlattenAll()
+        # EDA entries cannot match "any except", so an exclude needs a list of
+        # addresses to subtract it from.
+        for direction in ('source', 'destination'):
+            if getattr(self.term, f'{direction}_address_exclude') and not getattr(
+                self.term, f'{direction}_address'
+            ):
+                raise ExcludeWithoutAddressError(
+                    f'Term {self.term.name}: {direction}-exclude needs a {direction}-address'
+                )
 
     def ConvertToEntries(self) -> list[dict[str, Any]]:
         """Explode this term into a list of EDA filter entries."""
@@ -149,16 +161,12 @@ class EDATerm(aclgenerator.Term):
                 self.inet_version,
             )
 
-        saddrs = self.term.GetAddressOfVersion('flattened_saddr', term_af)
-        if self.term.flattened_saddr and not saddrs:
-            self._LogNoAF('source')
+        saddrs = self._Addresses('source', term_af)
+        if saddrs is None:
             return []
-        daddrs = self.term.GetAddressOfVersion('flattened_daddr', term_af)
-        if self.term.flattened_daddr and not daddrs:
-            self._LogNoAF('destination')
+        daddrs = self._Addresses('destination', term_af)
+        if daddrs is None:
             return []
-        saddrs = saddrs or ['any']
-        daddrs = daddrs or ['any']
         sports = self.term.source_port or [(0, 0)]
         dports = self.term.destination_port or [(0, 0)]
         protos: list[Any] = own_protos or [None]
@@ -239,6 +247,33 @@ class EDATerm(aclgenerator.Term):
                                     }
                                 )
         return entries
+
+    def _Addresses(self, direction: str, term_af: int) -> list[Any] | None:
+        """Return this family's addresses for direction, minus the excludes.
+
+        Returns ['any'] when the term has no address in that direction, and None
+        when the term must be skipped: it has addresses, but none of this family
+        are left after the excludes. Rendering 'any' then would widen the term.
+        """
+        addrs = self.term.GetAddressOfVersion(f'{direction}_address', term_af)
+        excludes = self.term.GetAddressOfVersion(f'{direction}_address_exclude', term_af)
+        if not getattr(self.term, f'{direction}_address'):
+            return ['any']
+        if not addrs:
+            self._LogNoAF(direction)
+            return None
+        if excludes:
+            addrs = nacaddr.ExcludeAddrs(addrs, excludes, collapse_addrs=False)
+            if not addrs:
+                logging.warning(
+                    'Term %s: all %s addresses of %s address family are excluded,'
+                    ' not rendered.',
+                    self.term.name,
+                    direction,
+                    self.inet_version,
+                )
+                return None
+        return addrs
 
     def _LogNoAF(self, direction: str) -> None:
         if not self.mixed:
