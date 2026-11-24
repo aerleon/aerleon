@@ -20,7 +20,7 @@ import datetime
 import re
 from unittest import mock
 
-from absl.testing import absltest
+from absl.testing import absltest, parameterized
 
 from aerleon.lib import aclgenerator, junipersrx, nacaddr, naming, policy
 from aerleon.lib import yaml as yaml_frontend
@@ -533,6 +533,15 @@ term platform-exclude-term {
 }
 """
 
+DST_EXCLUDE_TERM = """
+term dst-exclude-term {
+  destination-address:: LARGE
+  destination-exclude:: SMALL
+  protocol:: tcp
+  action:: accept
+}
+"""
+
 SUPPORTED_TOKENS = frozenset(
     {
         'action',
@@ -619,8 +628,22 @@ SUPPORTED_SUB_TOKENS = {
 # This is normally passed from command line.
 EXP_INFO = 2
 
+# (name, address family, LARGE, SMALL) where SMALL removes all of LARGE.
+EXCLUDE_ALL_CASES = (
+    ('ExactInet', 'inet', '10.0.0.0/24', '10.0.0.0/24'),
+    ('ExactInet6', 'inet6', '2001:db8::/64', '2001:db8::/64'),
+    ('ExactMixed', 'mixed', '10.0.0.0/24 2001:db8::/64', '10.0.0.0/24 2001:db8::/64'),
+    ('BroaderInet', 'inet', '10.0.0.0/24', '10.0.0.0/8'),
+    ('BroaderInet6', 'inet6', '2001:db8::/64', '2001:db8::/32'),
+    ('BroaderMixed', 'mixed', '10.0.0.0/24 2001:db8::/64', '10.0.0.0/8 2001:db8::/32'),
+    # Each exclude removes a different LARGE member.
+    ('PiecewiseInet', 'inet', '10.0.0.0/24 10.1.0.0/24', '10.0.0.0/16 10.1.0.0/16'),
+    ('PiecewiseInet6', 'inet6', '2001:db8::/64 2001:db9::/64', '2001:db8::/32 2001:db9::/32'),
+    ('PiecewiseMixed', 'mixed', '10.0.0.0/24 2001:db8::/64', '10.0.0.0/16 2001:db8::/32'),
+)
 
-class JuniperSRXTest(absltest.TestCase):
+
+class JuniperSRXTest(parameterized.TestCase):
     def setUp(self):
         super().setUp()
         self.naming = naming.Naming()
@@ -1518,6 +1541,49 @@ class JuniperSRXTest(absltest.TestCase):
         self.assertNotIn('192.1.0.0/20', output)
         self.assertNotIn('platform-exclude-term', output)
         print(output)
+
+    def _ExcludeOutput(self, af, term, large, small):
+        self.naming._ParseLine(f'LARGE = {large}', 'networks')
+        self.naming._ParseLine(f'SMALL = {small}', 'networks')
+        # Resolve headers at call time so the YAML subclass's patched fixtures apply.
+        header = {'inet': GOOD_HEADER_3, 'inet6': GOOD_HEADER_4, 'mixed': GOOD_HEADER}[af]
+        pol = policy.ParsePolicy(header + term, self.naming)
+        return str(junipersrx.JuniperSRX(pol, EXP_INFO))
+
+    @parameterized.named_parameters(*EXCLUDE_ALL_CASES)
+    def testSourceExcludeCoversAllAddresses(self, af, large, small):
+        with self.assertLogs(level='WARNING') as logs:
+            output = self._ExcludeOutput(af, GOOD_TERM_19, large, small)
+        self.assertNotIn('source-address any;', output, output)
+        self.assertNotIn('policy good_term_19 {', output, output)
+        self.assertIn('good_term_19 has 0 source IPs after exclusion', '\n'.join(logs.output))
+
+    @parameterized.named_parameters(*EXCLUDE_ALL_CASES)
+    def testDestinationExcludeCoversAllAddresses(self, af, large, small):
+        with self.assertLogs(level='WARNING') as logs:
+            output = self._ExcludeOutput(af, DST_EXCLUDE_TERM, large, small)
+        self.assertNotIn('destination-address any;', output, output)
+        self.assertNotIn('policy dst-exclude-term {', output, output)
+        self.assertIn(
+            'dst-exclude-term has 0 destination IPs after exclusion', '\n'.join(logs.output)
+        )
+
+    def testSourceExcludeCoversOneFamily(self):
+        # Removing all IPv4 from a mixed term must still render the IPv6 part.
+        output = self._ExcludeOutput(
+            'mixed', GOOD_TERM_19, '10.0.0.0/24 2001:db8::/64', '10.0.0.0/8'
+        )
+        self.assertIn('policy good_term_19 {', output, output)
+        self.assertIn('2001:db8::/64', output, output)
+        self.assertNotIn('10.0.0.0/24', output, output)
+
+    def testDestinationExcludeCoversOneFamily(self):
+        output = self._ExcludeOutput(
+            'mixed', DST_EXCLUDE_TERM, '10.0.0.0/24 2001:db8::/64', '10.0.0.0/8'
+        )
+        self.assertIn('policy dst-exclude-term {', output, output)
+        self.assertIn('2001:db8::/64', output, output)
+        self.assertNotIn('10.0.0.0/24', output, output)
 
     @capture.stdout
     def testMixedVersionIcmp(self):
@@ -2603,6 +2669,14 @@ YAML_PLATFORM_EXCLUDE_ADDRESS_TERM = """
     action: accept
 """
 
+YAML_DST_EXCLUDE_TERM = """
+  - name: dst-exclude-term
+    destination-address: LARGE
+    destination-exclude: SMALL
+    protocol: tcp
+    action: accept
+"""
+
 FQDN_DST_TERM = """
   - name: fqdn-term
     destination-fqdn: GOOGLE_DNS
@@ -2729,7 +2803,26 @@ class JuniperSRXYAMLTest(JuniperSRXTest):
             PLATFORM_EXCLUDE_TERM=YAML_PLATFORM_EXCLUDE_TERM,
             PLATFORM_TERM=YAML_PLATFORM_TERM,
             PLATFORM_EXCLUDE_ADDRESS_TERM=YAML_PLATFORM_EXCLUDE_ADDRESS_TERM,
+            DST_EXCLUDE_TERM=YAML_DST_EXCLUDE_TERM,
         )
+
+    # FQDNs are YAML-only, so these tests live here rather than in the base class.
+    @parameterized.named_parameters(('Source', 'source'), ('Destination', 'destination'))
+    def testExcludeCoversAllAddressesKeepsFqdn(self, side):
+        self.naming.ParseYaml(
+            'networks:\n  DNS:\n    values:\n      - fqdn: dns.google.com\n', file_name=''
+        )
+        term = f"""
+  - name: fqdn-exclude-term
+    {side}-address: LARGE
+    {side}-fqdn: DNS
+    {side}-exclude: SMALL
+    protocol: tcp
+    action: accept
+"""
+        output = self._ExcludeOutput('mixed', term, '10.0.0.0/24', '10.0.0.0/8')
+        self.assertIn(f'{side}-address [ DNS_FQDN ];', output, output)
+        self.assertNotIn('10.0.0.0', output, output)
 
 
 #     @capture.stdout
