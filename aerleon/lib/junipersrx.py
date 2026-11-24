@@ -537,7 +537,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     for addr in term.source_address:
                         if addr.version in self._AF_MAP[filter_type]:
                             valid_addrs.append(addr)
-                    if not valid_addrs:
+                    if not valid_addrs and not term.source_fqdn:
                         logging.warning(
                             'WARNING: Term %s has 0 valid source IPs, skipping.', term.name
                         )
@@ -554,7 +554,7 @@ class JuniperSRX(aclgenerator.ACLGenerator):
                     for addr in term.destination_address:
                         if addr.version in self._AF_MAP[filter_type]:
                             valid_addrs.append(addr)
-                    if not valid_addrs:
+                    if not valid_addrs and not term.destination_fqdn:
                         logging.warning(
                             'WARNING: Term %s has 0 valid destination IPs, skipping.', term.name
                         )
