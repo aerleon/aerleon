@@ -1,0 +1,20 @@
+---
+apiVersion: filters.eda.nokia.com/v1
+kind: ControlPlaneFilter
+metadata:
+  name: my-cpm
+  namespace: my-ns
+  annotations:
+    aerleon/revision: $Id:$ $Date:$ $Revision:$
+spec:
+  nodeSelectors:
+  - eda.nokia.com/role=leaf
+  nodes:
+  - leaf1
+  - leaf2
+  entries:
+  - description: term-deny
+    type: IPv4
+    ipEntry:
+      action: Drop
+

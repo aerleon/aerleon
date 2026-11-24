@@ -1,0 +1,86 @@
+header {
+  comment:: "Edge ingress filter: drops bogons, allows replies to internal"
+  comment:: "hosts and DNS, then drops the rest."
+  comment:: "mixed puts the IPv4 and IPv6 entries in a single Filter."
+  target:: nokiaeda edge-in mixed stats namespace eda
+}
+
+term deny-bogons {
+  comment:: "Drop traffic sourced from bogon space."
+  source-address:: BOGON
+  action:: deny
+  logging:: true
+}
+
+term accept-to-honestdns {
+  comment:: "Allow name resolution using honestdns."
+  destination-address:: GOOGLE_DNS
+  destination-port:: DNS
+  protocol:: udp
+  action:: accept
+}
+
+term accept-tcp-replies {
+  comment:: "Allow tcp replies to internal hosts (IPv4 only)."
+  destination-address:: INTERNAL
+  protocol:: tcp
+  option:: tcp-established
+  action:: accept
+}
+
+term deny-fragments {
+  comment:: "Drop fragmented packets."
+  option:: fragments
+  action:: deny
+}
+
+term deny-all {
+  action:: deny
+  logging:: true
+}
+
+header {
+  comment:: "IPv4 control plane filter deployed on all leaf nodes."
+  target:: nokiaeda leaf-cpm-v4 cpm inet stats namespace eda node-selector eda.nokia.com/role leaf
+}
+
+term accept-ssh-internal {
+  comment:: "Allow management SSH from internal networks."
+  source-address:: INTERNAL
+  destination-port:: SSH
+  protocol:: tcp
+  action:: accept
+}
+
+term accept-icmp {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply unreachable time-exceeded
+  action:: accept
+}
+
+term deny-all {
+  action:: deny
+  logging:: true
+}
+
+header {
+  comment:: "IPv6 control plane filter deployed on two named nodes."
+  target:: nokiaeda leaf-cpm-v6 cpm inet6 namespace eda node leaf1 node leaf2
+}
+
+term accept-neighbor-discovery {
+  protocol:: icmpv6
+  icmp-type:: neighbor-solicit neighbor-advertisement router-solicit router-advertisement
+  action:: accept
+}
+
+term accept-tcp-established {
+  protocol:: tcp
+  option:: established
+  action:: accept
+}
+
+term deny-all {
+  action:: deny
+  logging:: true
+}
