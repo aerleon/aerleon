@@ -214,6 +214,7 @@ class WindowsIPSec(windows.WindowsGenerator):
     _POLICY_SUFFIX = '-policy'
 
     _GOOD_AFS = ['inet']
+    _DEFAULT_AF = 'inet'
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.

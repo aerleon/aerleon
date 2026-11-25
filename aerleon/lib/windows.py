@@ -46,7 +46,7 @@ class Term(aclgenerator.Term):
           term: A policy.Term object to represent in windows_ipsec.
           filter_name: The name of the filter chan to attach the term to.
           filter_action: The default action of the filter.
-          af: Which address family ('inet' or 'inet6') to apply the term to.
+          af: Which address family ('inet', 'inet6' or 'mixed') to apply the term to.
 
         Raises:
           UnsupportedFilterError: Filter is not supported.
@@ -56,6 +56,10 @@ class Term(aclgenerator.Term):
         self.filter = filter_name  # actual name of filter
         self.default_action = filter_action
         self.options = []
+        # Under a mixed filter an ICMP-only term still belongs to one family:
+        # icmp-type numbering and the icmp/icmpv6 keyword both depend on it.
+        if af == 'mixed' and term.protocol in (['icmp'], ['icmpv6']):
+            af = 'inet6' if term.protocol == ['icmpv6'] else 'inet'
         self.af = af
 
         if af == 'inet6':
@@ -247,7 +251,11 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
     _DEFAULT_ACTION = 'block'
     _TERM = Term
 
-    _GOOD_AFS = ['inet', 'inet6']
+    _GOOD_AFS = ['inet', 'inet6', 'mixed']
+    _DEFAULT_AF = 'mixed'
+    # Header default actions the generator can render (_HandleDefaultAction);
+    # any other raises during validation.
+    _DEFAULT_ACTIONS: tuple[str, ...] = ()
 
     def _BuildTokens(self) -> tuple[set[str], dict[str, set[str]]]:
         """Build supported tokens for platform.
@@ -272,21 +280,28 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
     def _TranslatePolicy(self, pol: Policy, exp_info: int) -> None:
         """Translate a policy from objects into strings."""
         self.windows_policies = []
-        default_action = None
-        unsupported_default_actions = ['permit', 'block']
         good_options = []
 
         for header, terms in pol.filters:
             filter_type = None
+            default_action = None
             filter_options = header.FilterOptions(self._PLATFORM)[1:]
             filter_name = header.FilterName(self._PLATFORM)
 
             # ensure all options after the filter name are expected
             for opt in filter_options:
-                if opt in unsupported_default_actions:
-                    raise aclgenerator.UnsupportedTargetOptionError(
-                        'Windows generator does not support default actions'
-                    )
+                if opt in ('permit', 'block'):
+                    if opt not in self._DEFAULT_ACTIONS:
+                        raise aclgenerator.UnsupportedTargetOptionError(
+                            'Windows generator does not support default actions'
+                        )
+                    if default_action is not None:
+                        raise aclgenerator.UnsupportedTargetOptionError(
+                            f'May only specify one default action in filter options: '
+                            f'{filter_options}'
+                        )
+                    default_action = opt
+                    continue
                 if opt not in self._GOOD_AFS + good_options:
                     raise aclgenerator.UnsupportedTargetOptionError(
                         '%s %s %s %s'
@@ -314,7 +329,7 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
                         )
                     filter_type = address_family
             if filter_type is None:
-                filter_type = 'inet'
+                filter_type = self._DEFAULT_AF
 
             # add the terms
             new_terms = []
@@ -357,6 +372,9 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
             target.extend(aclgenerator.AddRepositoryTags(': '))
             target.append(f": {filter_type}")
 
+            if default_action:
+                self._HandleDefaultAction(header, default_action, target)
+
             # add the terms
             for term in terms:
                 term_str = str(term)
@@ -369,6 +387,10 @@ class WindowsGenerator(aclgenerator.ACLGenerator):
 
     def _HandlePolicyHeader(self, header: Header, target: list[str]) -> None:
         pass
+
+    def _HandleDefaultAction(self, header: Header, default_action: str, target: list[str]) -> None:
+        """Render the filter's default action, one of _DEFAULT_ACTIONS."""
+        raise NotImplementedError
 
     def _HandleTermFooter(self, header: Header, term: Term, target: list[str]) -> None:
         pass

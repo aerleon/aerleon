@@ -112,6 +112,35 @@ term good-term-icmpv6 {
 }
 """
 
+GOOD_TERM_ICMPV6_TYPES = """
+term good-term-icmpv6-types {
+  protocol:: icmpv6
+  icmp-type:: neighbor-solicit
+  action:: accept
+}
+"""
+
+GOOD_HEADER_IN_MIXED = """
+header {
+  comment:: "mixed test acl"
+  target:: windows_advfirewall in mixed
+}
+"""
+
+GOOD_HEADER_IN_BLOCK = """
+header {
+  comment:: "default block in"
+  target:: windows_advfirewall in block
+}
+"""
+
+GOOD_HEADER_OUT_PERMIT = """
+header {
+  comment:: "default permit out"
+  target:: windows_advfirewall out permit
+}
+"""
+
 BAD_TERM_ICMP = """
 term test-icmp {
   icmp-type:: echo-request echo-reply
@@ -485,6 +514,77 @@ class WindowsAdvFirewallTest(absltest.TestCase):
             for term in terms:
                 term.filter = 'input'
         self.assertRaises(aclgenerator.UnsupportedFilterError, str, acl)
+
+    def _Render(self, header, *terms):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(header + ''.join(terms), self.naming), EXP_INFO
+        )
+        return self._RuleLines(str(acl))
+
+    def testDefaultAddressFamilyIsMixed(self):
+        """A header without an address family renders icmpv6, as mixed does.
+
+        The default used to be inet, which silently dropped icmpv6 terms from
+        a filter that otherwise rendered IPv6 addresses.
+        """
+        rules = self._Render(GOOD_HEADER_IN_DEDUP, GOOD_TERM_ICMP, GOOD_TERM_ICMPV6)
+        self.assertIn('protocol=icmpv4', ' '.join(rules))
+        self.assertIn('protocol=icmpv6', ' '.join(rules))
+
+    def testMixedRendersBothFamiliesInOneRule(self):
+        self.naming._ParseLine('SRC_NET = 10.0.0.0/8 2001:db8::/32', 'networks')
+        self.naming._ParseLine('HTTPS = 443/tcp', 'services')
+        rules = self._Render(GOOD_HEADER_IN_MIXED, DEDUP_TERM)
+        self.assertEqual(len(rules), 1, f'expected a single rule, got: {rules}')
+        self.assertIn('remoteip=10.0.0.0/8,2001:db8::/32', rules[0])
+
+    def testMixedIcmpTypesUseTermFamily(self):
+        """icmp-type numbering follows the ICMP protocol under mixed."""
+        rules = self._Render(GOOD_HEADER_IN_MIXED, GOOD_TERM_ICMP_TYPES, GOOD_TERM_ICMPV6_TYPES)
+        joined = ' '.join(rules)
+        self.assertIn('protocol=icmpv4:0,any', joined)
+        self.assertIn('protocol=icmpv6:135,any', joined)
+
+    def testInetStillDropsIcmpv6(self):
+        rules = self._Render(GOOD_HEADER_IN, GOOD_TERM_ICMP, GOOD_TERM_ICMPV6)
+        self.assertIn('protocol=icmpv4', ' '.join(rules))
+        self.assertNotIn('icmpv6', ' '.join(rules))
+
+    def _Policy(self, header, *terms):
+        acl = windows_advfirewall.WindowsAdvFirewall(
+            policy.ParsePolicy(header + ''.join(terms), self.naming), EXP_INFO
+        )
+        return [line for line in str(acl).splitlines() if line.startswith('netsh advfirewall set')]
+
+    def testDefaultActionBlockIn(self):
+        lines = self._Policy(GOOD_HEADER_IN_BLOCK, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy blockinbound,notconfigured']
+        )
+
+    def testDefaultActionPermitOut(self):
+        lines = self._Policy(GOOD_HEADER_OUT_PERMIT, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy notconfigured,allowoutbound']
+        )
+
+    def testDefaultActionDoesNotCarryToNextFilter(self):
+        """A default action on one filter must not apply to the filters after it."""
+        lines = self._Policy(GOOD_HEADER_IN_BLOCK + GOOD_SIMPLE + GOOD_HEADER_OUT, GOOD_SIMPLE)
+        self.assertEqual(
+            lines, ['netsh advfirewall set allprofiles firewallpolicy blockinbound,notconfigured']
+        )
+
+    def testDefaultActionTwiceRejected(self):
+        header = """
+header {
+  target:: windows_advfirewall in permit block
+}
+"""
+        with self.assertRaisesRegex(
+            aclgenerator.UnsupportedTargetOptionError, 'only specify one default action'
+        ):
+            self._Policy(header, GOOD_SIMPLE)
 
     def testBuildTokens(self):
         pol1 = windows_advfirewall.WindowsAdvFirewall(
