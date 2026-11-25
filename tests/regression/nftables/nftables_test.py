@@ -47,6 +47,8 @@ SUPPORTED_TOKENS = frozenset(
         'destination_port',
         'expiration',
         'icmp_type',
+        'logging',
+        'counter',
         'name',  # obj attribute, not token
         'option',
         'protocol',
@@ -151,6 +153,54 @@ header {
 GOOD_HEADER_FORWARD = """
 header {
   target:: nftables inet FORWARD
+}
+"""
+
+GOOD_HEADER_INET_INPUT = """
+header {
+  target:: nftables inet INPUT
+}
+"""
+
+MULTI_ICMPV4_TYPE_TERM = """
+term multi-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request echo-reply
+  action:: accept
+}
+"""
+
+SINGLE_ICMPV4_TYPE_TERM = """
+term single-icmp-type {
+  protocol:: icmp
+  icmp-type:: echo-request
+  action:: accept
+}
+"""
+
+SINGLE_ICMPV6_TYPE_TERM = """
+term single-icmpv6-type {
+  protocol:: icmpv6
+  icmp-type:: multicast-listener-query
+  action:: accept
+}
+"""
+
+COUNTER_LOGGING_TERM = """
+term counted-and-logged {
+  protocol:: tcp
+  destination-port:: SSH
+  counter:: ssh-hits
+  logging:: true
+  action:: accept
+}
+"""
+
+NDP_TERM = """
+term ndp {
+  protocol:: icmpv6
+  icmp-type:: router-solicit router-advertisement
+  action:: accept
 }
 """
 
@@ -437,10 +487,59 @@ class NftablesTest(parameterized.TestCase):
             [],
             ['ip protocol { tcp, udp }', 'meta l4proto { tcp, udp }'],
         ),
+        # mixed AF with icmp+icmpv6 — both types present, use multi-element list
+        # to avoid single-item Add() path; verifies v4/v6 separation
+        (
+            'inet',
+            ['icmp', 'icmpv6'],
+            [],
+            [],
+            ['echo-request', 'echo-reply'],
+            ['icmp type { echo-request, echo-reply }', 'icmpv6 type { echo-request, echo-reply }'],
+        ),
+        # icmp-only on mixed should not produce icmpv6
+        (
+            'inet',
+            ['icmp'],
+            [],
+            [],
+            ['echo-request', 'echo-reply'],
+            ['icmp type { echo-request, echo-reply }'],
+        ),
+        # icmpv6-only on mixed should not produce icmp
+        (
+            'inet',
+            ['icmpv6'],
+            [],
+            [],
+            ['echo-request', 'echo-reply'],
+            ['icmpv6 type { echo-request, echo-reply }'],
+        ),
     )
     def testPortsAndProtocols(self, af, proto, src_p, dst_p, icmp_type, expected):
         result = self.dummyterm.PortsAndProtocols(af, proto, src_p, dst_p, icmp_type)
         self.assertEqual(result, expected)
+
+    def testGroupExpressionsNoMixedAFCrossPairing(self):
+        """ip saddr must never pair with icmpv6 type, ip6 saddr never with icmp type."""
+        address_expr = [
+            'ip saddr 10.0.0.1/32',
+            'ip6 saddr 2001:db8::1/128',
+        ]
+        pp_expr = ['icmp type echo-request', 'icmpv6 type echo-request']
+        result = self.dummyterm.GroupExpressions(address_expr, pp_expr, '', 'accept')
+        for rule in result:
+            self.assertFalse(
+                'ip saddr' in rule and 'icmpv6' in rule,
+                f"Cross-pairing: ip saddr with icmpv6 in rule: {rule!r}",
+            )
+            self.assertFalse(
+                'ip6 saddr' in rule
+                and rule.lstrip().startswith('ip6')
+                and 'icmp type' in rule
+                and 'icmpv6' not in rule,
+                f"Cross-pairing: ip6 saddr with icmp (v4) in rule: {rule!r}",
+            )
 
     @parameterized.parameters(
         'chain_name input 0 inet extraneous_target_option',
@@ -640,6 +739,103 @@ class NftablesTest(parameterized.TestCase):
         term = DictObj(term_dict)
         result = self.dummyterm._OptionsHandler(term)
         self.assertEqual(result, expected_output)
+
+    def testSingleIcmpv4TypeRenders(self):
+        """One icmp-type must render as a bare type, not raise.
+
+        The single-type branch passed the type *list* to Add(), which
+        concatenates onto a string, so a term naming exactly one ICMP type
+        raised TypeError.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + SINGLE_ICMPV4_TYPE_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmp type echo-request', nft, f'single icmp type not rendered:\n{nft}')
+
+    def testSingleIcmpv6TypeRenders(self):
+        """The IPv6 path had the same defect."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + SINGLE_ICMPV6_TYPE_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn(
+            'icmpv6 type mld-listener-query', nft, f'single icmpv6 type not rendered:\n{nft}'
+        )
+
+    def testMultipleIcmpTypesStillRenderAsSet(self):
+        """Several types keep rendering as an anonymous set."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + MULTI_ICMPV4_TYPE_TERM, self.naming),
+                EXP_INFO,
+            )
+        )
+        self.assertIn('icmp type {', nft, f'multi-type set not rendered:\n{nft}')
+
+    def testCounterAndLoggingAreDeclaredSupported(self):
+        """counter and logging are emitted, so they must not warn as unsupported.
+
+        Both are in aclgenerator.WARN_IF_UNSUPPORTED, so omitting them from
+        supported_tokens produced a warning that the generator does not support
+        keywords it in fact renders.
+        """
+        supported, _ = nftables.Nftables._BuildTokens(nftables.Nftables.__new__(nftables.Nftables))
+        self.assertIn('counter', supported)
+        self.assertIn('logging', supported)
+
+    def testCounterAndLoggingRender(self):
+        """Both keywords must actually appear in the rendered ruleset."""
+        self.naming._ParseLine('SSH = 22/tcp', 'services')
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_1 + COUNTER_LOGGING_TERM, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn('counter', nft, f'counter statement missing:\n{nft}')
+        self.assertIn('log prefix "counted-and-logged"', nft, f'log statement missing:\n{nft}')
+
+    def testIcmpv6OnlyTermOmitsConntrackState(self):
+        """icmpv6-only terms must not be gated on 'ct state new'.
+
+        NDP (neighbor/router discovery) is stateless and untracked, so requiring
+        conntrack state new would drop legitimate NDP traffic. The rule must
+        still carry its icmpv6 type match.
+        """
+        nft = str(
+            nftables.Nftables(policy.ParsePolicy(GOOD_HEADER_1 + NDP_TERM, self.naming), EXP_INFO)
+        )
+        rules = [l.strip() for l in nft.splitlines() if l.strip().startswith('icmpv6 type')]
+        self.assertTrue(rules, f'icmpv6 rule not rendered:\n{nft}')
+        for rule in rules:
+            self.assertNotIn('ct state new', rule, f'NDP gated on conntrack: {rule!r}')
+            self.assertTrue(rule.endswith('accept'), f'unexpected verdict: {rule!r}')
+
+    def testNonIcmpv6TermKeepsConntrackState(self):
+        """Ordinary terms must still be gated on 'ct state new'."""
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + GOOD_TERM_1, self.naming), EXP_INFO
+            )
+        )
+        self.assertIn('ct state new', nft, f'conntrack state dropped from tcp term:\n{nft}')
+
+    def testIcmpv6OnlyTermInIpTableKeepsConntrackState(self):
+        """An ip table has no icmpv6 to match, so the exception must not apply.
+
+        The term's rule there has no protocol match; without 'ct state new' it
+        would be a bare accept for every packet reaching the chain.
+        """
+        nft = str(
+            nftables.Nftables(
+                policy.ParsePolicy(GOOD_HEADER_INET_INPUT + NDP_TERM, self.naming), EXP_INFO
+            )
+        )
+        for line in nft.splitlines():
+            self.assertNotEqual(line.strip(), 'accept', f'bare accept rule emitted:\n{nft}')
 
     def testBuildTokens(self):
         pol1 = nftables.Nftables(

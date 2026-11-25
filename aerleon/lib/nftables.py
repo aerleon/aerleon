@@ -255,10 +255,9 @@ class Term(aclgenerator.Term):
         if address_family == 'ip':
             # IPv4 stuff.
             if icmp_type and ('icmp' in ip_protocol):
-                if len(icmp_type) > 1:
-                    statement_lines.append(f"icmp type{Add(self.CreateAnonymousSet(icmp_type))}")
-                else:
-                    statement_lines.append(f"icmp type{Add(icmp_type)}")
+                # CreateAnonymousSet returns the bare element for a single
+                # type and a { ... } set for several.
+                statement_lines.append(f"icmp type{Add(self.CreateAnonymousSet(icmp_type))}")
                 ip_protocol.remove('icmp')
             if 'icmpv6' in ip_protocol:
                 # No IPv6 protocols in IPv4 family.
@@ -279,10 +278,9 @@ class Term(aclgenerator.Term):
         if address_family == 'ip6':
             # IPv6 stuff.
             if icmp_type and ('icmpv6' in ip6_protocol):
-                if len(icmp_type) > 1:
-                    statement_lines.append(f"icmpv6 type{Add(self.CreateAnonymousSet(icmp_type))}")
-                else:
-                    statement_lines.append(f"icmpv6 type{Add(icmp_type)}")
+                # CreateAnonymousSet returns the bare element for a single
+                # type and a { ... } set for several.
+                statement_lines.append(f"icmpv6 type{Add(self.CreateAnonymousSet(icmp_type))}")
                 ip6_protocol.remove('icmpv6')
             if 'icmp' in ip6_protocol:
                 # No IPv4 protocols in IPv6 family.
@@ -329,7 +327,21 @@ class Term(aclgenerator.Term):
         # Base chain already allows all return traffic of
         # state (ESTABLISHED, RELATED)
         # This should prevent invalid, untracked packets from being accepted.
-        if 'deny' not in term.action:
+        # Exception: icmpv6. Neighbor/router discovery and MLD are marked
+        # IP_CT_UNTRACKED by the kernel, and the icmpv6 error types are tracked
+        # as RELATED (or INVALID when the original flow is unknown). Neither is
+        # ever NEW, so requiring 'ct state new' silently prevents such a rule
+        # from matching -- which breaks NDP, and breaks PMTUD via
+        # packet-too-big. echo-request is the only icmpv6 type the match suits,
+        # and the base chain already accepts its replies as established.
+        # An ip table has no icmpv6 to match, so the exception does not apply
+        # there: the rule would have no protocol match left.
+        is_icmpv6_only = (
+            self.address_family != 'ip'
+            and bool(term.protocol)
+            and set(term.protocol) == {'icmpv6'}
+        )
+        if 'deny' not in term.action and not is_icmpv6_only:
             options.append('ct state new')
 
         # 'logging' handling.
@@ -404,13 +416,18 @@ class Term(aclgenerator.Term):
             for addr in address_expr:
                 if pp_expr:
                     for pstat in pp_expr:
-                        if pstat.startswith('icmp type') or addr.startswith('ip '):
-                            # Handle IPv4 ports and proto statements.
-                            if addr.startswith('ip '):
-                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
-                        elif pstat.startswith('icmpv6 type') or addr.startswith('ip6'):
+                        if pstat.startswith('icmpv6 type'):
+                            # ICMPv6 must only pair with IPv6 address statements.
                             if addr.startswith('ip6'):
                                 statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif pstat.startswith('icmp type'):
+                            # ICMPv4 must only pair with IPv4 address statements.
+                            if addr.startswith('ip '):
+                                statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip '):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
+                        elif addr.startswith('ip6'):
+                            statement.append(addr + Add(pstat) + Add(options) + Add(verdict))
                 else:
                     statement.append(addr + Add(options) + Add(verdict))
         elif pp_expr:
@@ -637,6 +654,8 @@ class Nftables(aclgenerator.ACLGenerator):
             'destination_port',
             'expiration',
             'icmp_type',
+            'logging',
+            'counter',
             'name',  # obj attribute, not token
             'option',
             'protocol',

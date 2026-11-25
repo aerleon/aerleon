@@ -113,13 +113,13 @@ Nftables also reads the following tokens.
 
 | Action | Rendered as | Notes |
 |---|---|---|
-| `accept` | `accept` | Adds `ct state new`. |
+| `accept` | `accept` | Adds `ct state new`, except in a term whose only protocol is `icmpv6`. |
 | `deny` | `drop` | |
 
 ## Option
 
 !!! info "Stateful firewall"
-    Nftables tracks sessions, so return traffic is allowed without a separate term. Every base chain starts with `ct state established,related accept`, and every non-deny rule gets `ct state new`, using [conntrack](https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation). Invalid packets fall through to the default policy. Terms that use `established` or `tcp-established` are skipped with a warning. See _[Stateful firewalls](common.md#stateful-firewalls)_.
+    Nftables tracks sessions, so return traffic is allowed without a separate term. Every base chain starts with `ct state established,related accept`, and every non-deny rule gets `ct state new`, using [conntrack](https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation). Invalid packets fall through to the default policy. A term whose only protocol is `icmpv6` gets no `ct state new`: the kernel leaves neighbor discovery and MLD untracked, and tracks ICMPv6 errors such as `packet-too-big` as `related`, so the match would stop the rule from ever matching. Terms that use `established` or `tcp-established` are skipped with a warning. See _[Stateful firewalls](common.md#stateful-firewalls)_.
 
 | Option | Description | Example | Notes |
 |---|---|---|---|
